@@ -25,6 +25,7 @@ require "storage"
 require "y2storage"
 require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
+require_relative "#{TEST_PATH}/support/candidate_devices_context"
 
 describe Y2Storage::GuidedProposal do
   using Y2Storage::Refinements::SizeCasts
@@ -35,61 +36,16 @@ describe Y2Storage::GuidedProposal do
   let(:scenario) { "empty_hard_disk_gpt_25GiB" }
 
   describe ".initial" do
-    subject(:proposal) { described_class.initial(settings: settings) }
-
     it "generates a proposal" do
-      expect(proposal).to be_a(Y2Storage::GuidedProposal)
-    end
-
-    context "when settings are not passed" do
-      let(:current_settings) { nil }
-
-      before do
-        allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
-          .and_call_original
-      end
-
-      it "creates initial proposal settings based on the product (control.xml)" do
-        expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
-          .and_call_original
-        proposal
-      end
-    end
-
-    context "when settings has legacy format" do
-      let(:settings_format) { :legacy }
-
-      it "uses Legacy strategy to generate the initial proposal" do
-        expect(Y2Storage::Proposal::InitialStrategies::Legacy).to receive(:new).and_call_original
-        proposal
-      end
-    end
-
-    context "when settings has ng format" do
-      let(:settings_format) { :ng }
-
-      let(:control_file_content) do
-        {
-          "partitioning" => {
-            "proposal" => {
-              "lvm" => false
-            },
-            "volumes"  => []
-          }
-        }
-      end
-
-      it "uses Ng strategy to generate the initial proposal" do
-        expect(Y2Storage::Proposal::InitialStrategies::Ng).to receive(:new).and_call_original
-        proposal
-      end
+      expect(described_class.initial(settings: settings))
+        .to be_a(Y2Storage::GuidedProposal)
     end
 
     # Regression test for bsc#1067349
     context "with a BIOS MD RAID" do
       let(:scenario) { "rste_swraid.xml" }
 
-      it "does not rise an exception" do
+      it "does not raise an exception" do
         expect { described_class.initial(settings: settings) }.to_not raise_error
       end
 
@@ -104,7 +60,7 @@ describe Y2Storage::GuidedProposal do
     context "with only an unformatted ECKD DASD" do
       let(:scenario) { "unformatted-eckd-dasd" }
 
-      it "does not rise an exception" do
+      it "does not raise an exception" do
         expect { described_class.initial(settings: settings) }.to_not raise_error
       end
 
@@ -118,6 +74,104 @@ describe Y2Storage::GuidedProposal do
 
   describe "#propose" do
     subject(:proposal) { described_class.new(settings: settings) }
+
+    context "when the candidate devices are given" do
+      include_context "candidate devices"
+
+      let(:candidate_devices) { ["/dev/sdb", "/dev/sdc"] }
+
+      it "only uses the given devices to make a proposal" do
+        proposal.propose
+
+        expect(candidate_devices).to include(*used_devices)
+      end
+
+      context "and the root device is given" do
+        let(:root_device) { "/dev/sdc" }
+
+        let(:sdc_usb) { true }
+
+        it "uses the given root device to install root" do
+          proposal.propose
+
+          expect(disk_for("/").name).to eq("/dev/sdc")
+        end
+      end
+
+      context "and the root device is not given" do
+        let(:root_device) { nil }
+
+        let(:sdb_usb) { true }
+
+        let(:sdc_usb) { false }
+
+        it "uses the first candidate device to install root" do
+          proposal.propose
+
+          expect(disk_for("/").name).to eq("/dev/sdb")
+        end
+      end
+    end
+
+    context "when the candidate devices are not given" do
+      include_context "candidate devices"
+
+      let(:candidate_devices) { nil }
+
+      it "uses the available devices to make a proposal" do
+        proposal.propose
+
+        available_devices = ["/dev/sda", "/dev/sdb", "/dev/sdc"]
+
+        expect(available_devices).to include(*used_devices)
+      end
+
+      context "and the root device is given" do
+        let(:root_device) { "/dev/sdc" }
+
+        let(:sdc_usb) { true }
+
+        it "uses the given root device to install root" do
+          proposal.propose
+
+          expect(disk_for("/").name).to eq("/dev/sdc")
+        end
+      end
+
+      context "and the root device is not given" do
+        let(:root_device) { nil }
+
+        context "and the candidate devices have none USB devices" do
+          it "uses the first candidate device to install root" do
+            proposal.propose
+
+            expect(disk_for("/").name).to eq("/dev/sda")
+          end
+        end
+
+        context "and the candidate devices have both, USB and non USB devices" do
+          let(:sda_usb) { true }
+
+          it "uses the first non USB candidate device to install root" do
+            proposal.propose
+
+            expect(disk_for("/").name).to eq("/dev/sdb")
+          end
+        end
+
+        context "and there only USB candidate devices" do
+          let(:sda_usb) { true }
+          let(:sdb_usb) { true }
+          let(:sdc_usb) { true }
+
+          it "uses the first USB candidate device to install root" do
+            proposal.propose
+
+            expect(disk_for("/").name).to eq("/dev/sda")
+          end
+        end
+      end
+    end
 
     context "when forced to create a small partition" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }
@@ -184,68 +238,22 @@ describe Y2Storage::GuidedProposal do
       end
     end
 
-    context "when USB devices available" do
-      def proposed_disks
-        proposal_partitions = proposal.devices.partitions
-        fake_partitions_sids = fake_devicegraph.partitions.map(&:sid)
-        proposed_partitions_sids = proposal_partitions.map(&:sid) - fake_partitions_sids
-        new_partitions = proposal_partitions.select { |p| proposed_partitions_sids.include?(p.sid) }
-
-        new_partitions.map(&:disk).uniq
-      end
-
-      let(:scenario) { "empty_disks" }
-      let(:sda) { fake_devicegraph.find_by_name("/dev/sda") }
-      let(:sdb) { fake_devicegraph.find_by_name("/dev/sdb") }
-      let(:sdc) { fake_devicegraph.find_by_name("/dev/sdc") }
-
-      before do
-        allow(sda).to receive(:usb?).and_return(true)
-        allow(disk_analyzer).to receive(:candidate_disks).and_return([sda, sdb, sdc])
-      end
-
-      context "and is possible to use other non USB candidate" do
-        it "do not make the proposal on it" do
-          proposal.propose
-
-          expect(proposed_disks).to_not include(sda)
-        end
-      end
-
-      context "but is not possible to use other non USB candidate" do
-        before do
-          sdb.size = 10.MiB
-          sdc.size = 10.MiB
-        end
-
-        it "makes the proposal on a USB device" do
-          proposal.propose
-
-          expect(proposed_disks).to include(sda)
-        end
-      end
-
-      context "and there are not non USB candidates" do
-        before do
-          allow(sdb).to receive(:usb?).and_return(true)
-          allow(sdc).to receive(:usb?).and_return(true)
-
-          sda.size = 1.GiB
-        end
-
-        it "makes the proposal in the first USB device with enough space" do
-          proposal.propose
-
-          expect(proposed_disks).to eq([sdb])
-        end
-      end
-    end
-
     context "when installing in a DM RAID" do
       let(:scenario) { "empty-dm_raids_no_sda.xml" }
       let(:windows_partitions) { {} }
       let(:separate_home) { false }
       let(:lvm) { false }
+
+      before do
+        settings.candidate_devices = candidate_devices
+        settings.root_device = root_device
+      end
+
+      let(:candidate_devices) { [raid_name] }
+
+      let(:root_device) { raid_name }
+
+      let(:raid_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
 
       it "does not fail to make a proposal" do
         expect { proposal.propose }.to_not raise_error
@@ -253,8 +261,10 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions in the DM RAID" do
         proposal.propose
-        raids = proposal.devices.dm_raids.map(&:partitions).flatten
-        expect(raids).to contain_exactly(
+
+        partitions = proposal.devices.find_by_name(raid_name).partitions
+
+        expect(partitions).to contain_exactly(
           an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
           an_object_having_attributes(filesystem_mountpoint: "/"),
           an_object_having_attributes(filesystem_mountpoint: "swap")
@@ -263,12 +273,13 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions with correct device names" do
         proposal.propose
-        # note: potentially order dependent; there are two raids defined
-        raid0 = proposal.devices.dm_raids.first
-        expect(raid0.partitions.map(&:name)).to contain_exactly(
-          "#{raid0.name}-part1",
-          "#{raid0.name}-part2",
-          "#{raid0.name}-part3"
+
+        partitions = proposal.devices.find_by_name(raid_name).partitions
+
+        expect(partitions.map(&:name)).to contain_exactly(
+          "#{raid_name}-part1",
+          "#{raid_name}-part2",
+          "#{raid_name}-part3"
         )
       end
     end
@@ -399,21 +410,15 @@ describe Y2Storage::GuidedProposal do
         settings.root_device = root_device
       end
 
-      def disk_for(mountpoint)
-        proposal.devices.disks.detect do |disk|
-          disk.partitions.any? { |p| p.filesystem_mountpoint == mountpoint }
-        end
-      end
-
       context "if no disk is enforced for '/'" do
         let(:root_device) { nil }
-        let(:yaml_suffix) { "sdb_root_device" }
+        let(:yaml_suffix) { "sda_root_device" }
 
         include_examples "proposed layout"
 
-        it "allocates the root device in the biggest suitable disk" do
+        it "allocates the root device in the first candidate device" do
           proposal.propose
-          expect(disk_for("/").name).to eq "/dev/sdb"
+          expect(disk_for("/").name).to eq "/dev/sda"
         end
       end
 

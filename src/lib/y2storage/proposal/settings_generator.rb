@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,13 +21,12 @@
 
 module Y2Storage
   module Proposal
-    # Namespace to group the different strategies to plan devices. The planner
-    # strategy depends on the format of the proposal settings.
-    module InitialStrategies
+    # Namespace to group the different settings generators used by {InitialGuidedProposal}
+    module SettingsGenerator
     end
   end
 end
 
-require "y2storage/proposal/initial_strategies/base"
-require "y2storage/proposal/initial_strategies/legacy"
-require "y2storage/proposal/initial_strategies/ng"
+require "y2storage/proposal/settings_generator/base"
+require "y2storage/proposal/settings_generator/legacy"
+require "y2storage/proposal/settings_generator/ng"

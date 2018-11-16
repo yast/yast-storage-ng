@@ -75,6 +75,7 @@ module Y2Storage
           # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
           @disk_analyzer ||= StorageManager.instance.probed_disk_analyzer
         end
+
         # Create new disk analyzer when devicegraph is passed but not disk analyzer
         @disk_analyzer ||= DiskAnalyzer.new(@initial_devicegraph)
       end

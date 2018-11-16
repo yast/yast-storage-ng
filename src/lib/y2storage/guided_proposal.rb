@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2016-2017] SUSE LLC
+# Copyright (c) [2016-2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,9 +20,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/proposal"
 require "y2storage/proposal_settings"
 require "y2storage/exceptions"
-require "y2storage/proposal"
 
 module Y2Storage
   # Class to calculate a storage proposal to install the system
@@ -39,11 +39,14 @@ module Y2Storage
   #   proposal.proposed?                          # => true
   #   proposal.devices                            # => Proposed layout
   #   proposal.settings.use_separate_home = false # raises RuntimeError
-  #
   class GuidedProposal < Proposal::Base
-    # Settings used to calculate the proposal. They cannot be altered after
-    # calculating the proposal
-    # @return [ProposalSettings]
+    # @overload settings
+    #
+    #   Settings for calculating the proposal.
+    #
+    #   @note The settings cannot be modified once the proposal has been calculated
+    #
+    #   @return [ProposalSettings]
     attr_reader :settings
 
     class << self
@@ -51,105 +54,135 @@ module Y2Storage
       #
       # If a proposal is not possible by honoring current settings, other settings
       # are tried. For example, a proposal without separate home or without snapshots
-      # will be calculated. The settings modifications depends on the strategy used for
-      # generating the initial proposal.
+      # will be calculated.
       #
-      # @see GuidedProposal#initialize
-      # @see Proposal::InitialStragegies::Legacy#initial_proposal
-      # @see Proposal::InitialStragegies::Ng#initial_proposal
+      # @see InitialGuidedProposal
+      # @see #initialize
       #
-      # @param settings [ProposalSettings] if nil, default settings will be used
-      # @param devicegraph [Devicegraph] starting point. If nil, the probed
-      #   devicegraph will be used
-      # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
-      #   based on the initial devicegraph.
+      # @param settings [ProposalSettings]
+      # @param devicegraph [Devicegraph]
+      # @param disk_analyzer [DiskAnalyzer]
       #
-      # @return [GuidedProposal]
+      # @return [InitialGuidedProposal]
       def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
-        settings ||= ProposalSettings.new_for_current_product
-
-        strategy = initial_strategy(settings)
-
-        strategy.new.initial_proposal(
+        proposal = InitialGuidedProposal.new(
           settings:      settings,
           devicegraph:   devicegraph,
           disk_analyzer: disk_analyzer
         )
-      end
 
-    private
-
-      # Stragegy to create an initial proposal
-      #
-      # The strategy depends on the settings format.
-      #
-      # @see ProposalSettings#format
-      #
-      # @param settings [ProposalSettings]
-      # @return [Proposal::InitialStrategies::Legacy, Proposal::InitialStrategies::Ng]
-      def initial_strategy(settings)
-        if settings.format == ProposalSettings::LEGACY_FORMAT
-          Proposal::InitialStrategies::Legacy
-        else
-          Proposal::InitialStrategies::Ng
-        end
+        proposal.propose
+        proposal
+      rescue Y2Storage::Error
+        log.error("Initial proposal failed")
+        proposal
       end
     end
 
     # Constructor
     #
     # @param settings [ProposalSettings] if nil, default settings will be used
-    # @param devicegraph [Devicegraph] starting point. If nil, the probed
-    #   devicegraph will be used
+    # @param devicegraph [Devicegraph] starting point. If nil, the probed devicegraph
+    #   will be used.
     # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
     #   based on the initial {devicegraph} or will use the one in {StorageManager} if
-    #   starting from probed (i.e. {devicegraph} argument is also missing)
+    #   starting from probed (i.e. {devicegraph} argument is also missing).
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
+
       @settings = settings || ProposalSettings.new_for_current_product
     end
 
   private
 
+    # @return [ProposalSettings]
+    attr_writer :settings
+
+    # @return [Proposal::SpaceMaker]
+    attr_writer :space_maker
+
     # Calculates the proposal
     #
+    # @see #try_proposal
+    #
     # @raise [Error, NoDiskSpaceError] if there is no enough space to perform the installation
+    #
+    # @return [true]
     def calculate_proposal
+      try_proposal
+    ensure
       settings.freeze
+    end
 
-      exception = nil
-      saved_root_device = populated_settings.root_device
+    # Tries to perform a proposal
+    #
+    # Settings might be completed with default values for candidate devices and root device.
+    #
+    # This method is intended to be redefined for derived classes, see {InitialGuidedProposal}.
+    #
+    # @raise [Error, NoDiskSpaceError] if it was not possible to calculate the proposal
+    #
+    # @return [true]
+    def try_proposal
+      complete_settings
 
-      groups = group_candidate_devices
-      target_sizes.product(groups).each do |target, devices|
-        # reset root_device, else #candidate_roots will just use it
-        populated_settings.root_device = saved_root_device
-        populated_settings.candidate_devices = devices
+      try_with_each_target_size
+    end
 
-        candidate_roots.each do |disk_name|
-          log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
+    # Helper method to do a proposal attempt for each possible target size
+    #
+    # @see #target_sizes
+    #
+    # @raise [Error, NoDiskSpaceError] if it was not possible to calculate the proposal
+    #
+    # @return [true]
+    def try_with_each_target_size
+      error = default_proposal_error
 
-          populated_settings.root_device = disk_name
-          exception = nil
+      target_sizes.each do |target_size|
+        begin
+          log.info "Trying to make a proposal with target size: #{target_size}"
 
-          begin
-            @planned_devices = planned_devices_list(target)
-            @devices = devicegraph(@planned_devices)
-          rescue Error => error
-            log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
-            exception = error
-          end
-
-          return true unless exception
+          @planned_devices = planned_devices_list(target_size)
+          @devices = devicegraph(@planned_devices)
+          return true
+        rescue Error => error
+          log.info "Failed to make a proposal with target size: #{target_size}"
+          log.info "Error: #{error.message}"
+          next
         end
       end
 
-      raise exception || NoDiskSpaceError.new("No usable disks detected")
+      raise error
+    end
+
+    # All possible target sizes to make the proposal
+    #
+    # @return [Array<Symbol>]
+    def target_sizes
+      [:desired, :min]
+    end
+
+    # Default error when it is not possible to create a proposal
+    #
+    # @return [NoDiskSpaceError]
+    def default_proposal_error
+      NoDiskSpaceError.new("No usable disks detected")
+    end
+
+    # Completes the current settings with reasonable fallback values
+    #
+    # All settings coming from the control file have a fallback value, but there are some
+    # settings that are only given by the user, for example: candidate_devices and
+    # root_device. For those settings, some reasonable fallback values are given.
+    def complete_settings
+      settings.candidate_devices ||= candidate_devices
+      settings.root_device ||= candidate_devices.first
     end
 
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
-      generator = Proposal::DevicesPlanner.new(populated_settings, clean_graph)
+      generator = Proposal::DevicesPlanner.new(settings, clean_graph)
       generator.planned_devices(target)
     end
 
@@ -159,12 +192,12 @@ module Y2Storage
     # @param planned_devices [Array<Planned::Device>] devices to accomodate
     # @return [Devicegraph]
     def devicegraph(planned_devices)
-      generator = Proposal::DevicegraphGenerator.new(populated_settings)
+      generator = Proposal::DevicegraphGenerator.new(settings)
       generator.devicegraph(planned_devices, clean_graph, space_maker)
     end
 
     def space_maker
-      @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, populated_settings)
+      @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, settings)
     end
 
     # Copy of #initial_devicegraph without all the partitions that must be wiped out
@@ -201,82 +234,28 @@ module Y2Storage
     # @param devicegraph [Y2Storage::Devicegraph]
     # @return [Array<Y2Storage::BlkDevice>]
     def candidate_devices_with_empty_partition_table(devicegraph)
-      device_names = populated_settings.candidate_devices
+      device_names = settings.candidate_devices
       devices = device_names.map { |n| devicegraph.find_by_name(n) }
       devices.select { |d| d.partition_table && d.partitions.empty? }
     end
 
-    # Returns the target sizes to make the proposal
+    # Candidate devices to make a proposal
     #
-    # @return [Array<Symbol>]
-    def target_sizes
-      [:desired, :min]
-    end
+    # The candidate devices are calculated when current settings have not contain any
+    # candidate device. In that case, the possible candidate devices are sorted, placing
+    # USB devices at the end.
+    #
+    # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
+    def candidate_devices
+      return settings.candidate_devices unless settings.candidate_devices.nil?
 
-    # Settings used by each attempt of proposal
-    #
-    # A copy of original settings, which is intended to be populated during the process of making a
-    # proposal. E.g, setting a value that was not given, such as the candidate devices or root
-    # device.
-    #
-    # @return [ProposalSettings]
-    def populated_settings
-      @populated_settings ||= settings.dup
-    end
-
-    # Candidate devices grouped for different proposal attempts
-    #
-    # When some candidate devices are indicated in the settings, the proposal is tried with all of
-    # them. However, when no candidate devices are given, different attempts should be done using
-    # different sets of candidate devices. First, each available device is used lonely to make the
-    # proposal, and if no proposal was possible with any individual disk, a last attempt is done by
-    # using all available devices as candidate disks.
-    #
-    # @example
-    #
-    #   settings.candidate_devices #=> ["/dev/sda", "/dev/sdb"]
-    #   settings.group_candidate_devices #=> [["/dev/sda", "/dev/sdb"]]
-    #
-    #   settings.candidate_devices #=> nil
-    #   settings.group_candidate_devices #=> [["/dev/sda"], ["/dev/sdb"], ["/dev/sda", "/dev/sdb"]]
-    #
-    # @return [Array<String>]
-    def group_candidate_devices
-      return [settings.candidate_devices] if settings.candidate_devices
-
-      candidates = reorder_candidate_disks.map(&:name)
-      candidates.zip.append(candidates).uniq
-    end
-
-    # Sorts candidate disk based on their type: not USB first
-    #
-    # @return [Array<Disk>]
-    def reorder_candidate_disks
       # NOTE: sorb_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
       # in two groups and moving one of them to the end.
-      disk_analyzer.candidate_disks.partition do |d|
-        d.respond_to?(:usb?) && !d.usb?
-      end.flatten
-    end
-
-    # Sorted list of disks to be tried as root_device.
-    #
-    # If the current settings already specify a root_device, the list will
-    # contain only that one.
-    #
-    # Otherwise, it will contain all the candidate devices, sorted from bigger
-    # to smaller disk size.
-    #
-    # @return [Array<String>] names of the chosen devices
-    def candidate_roots
-      return [populated_settings.root_device] if populated_settings.root_device
-
-      disk_names = populated_settings.candidate_devices
-      candidate_disks = initial_devicegraph.blk_devices.select { |d| disk_names.include?(d.name) }
-      candidate_disks = candidate_disks.sort_by(&:size).reverse
-      candidate_disks.map(&:name)
+      candidates = disk_analyzer.candidate_disks
+      candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
+      candidates.map(&:name)
     end
   end
 end

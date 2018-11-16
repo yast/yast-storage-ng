@@ -25,6 +25,8 @@ require "storage"
 require "y2storage"
 require "y2partitioner/device_graphs"
 
+Yast.import "ProductFeatures"
+
 module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific helpers
@@ -208,6 +210,10 @@ module Yast
           crypt_options: values[3])
 
         Y2Storage::SimpleEtcCrypttabEntry.new(storage_entry)
+      end
+
+      def stub_product_features(features)
+        Yast::ProductFeatures.Import(features)
       end
     end
     # rubocop:enable all
