@@ -119,7 +119,7 @@ module Y2Storage
         prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
 
         disks_for(result).each do |disk|
-          prospects.unwanted_partition_entries(disk).each do |entry|
+          prospects.unwanted_partition_prospects(disk).each do |entry|
             sids = partition_killer.delete_by_sid(entry.sid)
             @all_deleted_sids.concat(sids)
           end
@@ -247,7 +247,7 @@ module Y2Storage
 
         prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
-          prospects.add_entries(disk, lvm_helper, keep)
+          prospects.add_prospects(disk, lvm_helper, keep)
         end
 
         until success?(planned_partitions)
@@ -266,7 +266,7 @@ module Y2Storage
       # @return [Boolean] true if some operation was performed. False if nothing
       #   else could be done to reach the goal.
       def execute_next_action(planned_partitions, prospects, disk_name = nil)
-        prospect_action = prospects.next_available_entry
+        prospect_action = prospects.next_available_prospect
         if !prospect_action
           log.info "No more prospects for SpaceMaker (disk_name: #{disk_name})"
           return false

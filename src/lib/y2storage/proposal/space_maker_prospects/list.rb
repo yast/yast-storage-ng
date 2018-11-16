@@ -39,15 +39,15 @@ module Y2Storage
           @settings = settings
           @analyzer = disk_analyzer
 
-          @all_delete_partition_entries = {
+          @all_delete_partition_prospects = {
             linux:   [],
             windows: [],
             other:   []
           }
 
-          @resize_partition_without_linux_entries = []
-          @resize_partition_with_linux_entries = []
-          @wipe_disk_entries = []
+          @resize_partition_without_linux_prospects = []
+          @resize_partition_with_linux_prospects = []
+          @wipe_disk_prospects = []
         end
 
         # Adds to the set all the prospect actions for the given disk
@@ -56,17 +56,17 @@ module Y2Storage
         # @param lvm_helper [Proposal::LvmHelper] contains information about the
         #     planned LVM logical volumes and how to make space for them
         # @param keep [Array<Integer>] sids of partitions that should not be deleted
-        def add_entries(disk, lvm_helper, keep = [])
-          add_delete_partition_entries(disk, keep)
-          add_resize_entries(disk)
-          add_wipe_entries(disk, lvm_helper)
+        def add_prospects(disk, lvm_helper, keep = [])
+          add_delete_partition_prospects(disk, keep)
+          add_resize_prospects(disk)
+          add_wipe_prospects(disk, lvm_helper)
         end
 
         # Next prospect action that should be executed by SpaceMaker
         #
         # @return [SpaceMakerProspects::Base, nil] nil if there are no more
         #   available prospects
-        def next_available_entry
+        def next_available_prospect
           # As long as there are non-Windows partitions to delete, we refuse to
           # resize Windows systems that share disk with a Linux. See
           # #next_resize_partition for the rationale.
@@ -95,7 +95,7 @@ module Y2Storage
         #
         # @param sids [Array<Integer>]
         def mark_deleted(sids)
-          prospects = delete_partition_entries + resize_partition_entries
+          prospects = delete_partition_prospects + resize_partition_prospects
           prospects.select { |i| sids.include?(i.sid) }.each do |affected|
             affected.available = false
           end
@@ -108,7 +108,7 @@ module Y2Storage
         #
         # @param disk [Disk] disk to act upon
         # @return [Array<DeletePartition>]
-        def unwanted_partition_entries(disk)
+        def unwanted_partition_prospects(disk)
           delete_prospects_for_disk(disk, for_delete_all: true)
         end
 
@@ -122,7 +122,7 @@ module Y2Storage
         attr_reader :settings
 
         # @return [Array<WipeDisk>]
-        attr_reader :wipe_disk_entries
+        attr_reader :wipe_disk_prospects
 
         # Next available prospect of type #{DeletePartition}
         #
@@ -133,7 +133,7 @@ module Y2Storage
 
           [false, true].each do |last_resort|
             types.each do |type|
-              entry = delete_partition_entries(type).find do |e|
+              entry = delete_partition_prospects(type).find do |e|
                 e.available? and e.last_resort? == last_resort
               end
               return entry if entry
@@ -159,9 +159,9 @@ module Y2Storage
         # @return [ResizePartition, nil] nil if there are no available prospect
         #   actions
         def next_resize_partition(allow_linux_in_disk: true)
-          entry = next_useful_resize(@resize_partition_without_linux_entries)
+          entry = next_useful_resize(@resize_partition_without_linux_prospects)
           if entry.nil? && allow_linux_in_disk
-            entry = next_useful_resize(@resize_partition_with_linux_entries)
+            entry = next_useful_resize(@resize_partition_with_linux_prospects)
           end
           entry
         end
@@ -170,29 +170,29 @@ module Y2Storage
         #
         # @return [WipeDisk, nil] nil if there are no available prospect actions
         def next_wipe_disk
-          wipe_disk_entries.find(&:available?)
+          wipe_disk_prospects.find(&:available?)
         end
 
         # Adds to the set all the prospect actions about deleting partitions of
-        # the given disk (i.e. entries of type {SpaceMakerProspects::DeletePartition})
+        # the given disk (i.e. prospects of type {SpaceMakerProspects::DeletePartition})
         #
         # @param disk [Disk] disk to act upon
         # @param keep [Array<Integer>] sids of partitions that should not be deleted
-        def add_delete_partition_entries(disk, keep = [])
-          entries = delete_prospects_for_disk(disk, keep: keep)
-          linux, non_linux = entries.partition { |e| e.partition_type == :linux }
+        def add_delete_partition_prospects(disk, keep = [])
+          prospects = delete_prospects_for_disk(disk, keep: keep)
+          linux, non_linux = prospects.partition { |e| e.partition_type == :linux }
           windows, other = non_linux.partition { |e| e.partition_type == :windows }
 
-          delete_partition_entries(:linux).concat(sort_delete_part_prospects(linux))
-          delete_partition_entries(:windows).concat(sort_delete_part_prospects(windows))
-          delete_partition_entries(:other).concat(sort_delete_part_prospects(other))
+          delete_partition_prospects(:linux).concat(sort_delete_part_prospects(linux))
+          delete_partition_prospects(:windows).concat(sort_delete_part_prospects(windows))
+          delete_partition_prospects(:other).concat(sort_delete_part_prospects(other))
         end
 
         # Adds to the set all the prospect actions about resizing partitions of
-        # the given disk (i.e. entries of type {SpaceMakerProspects::ResizePartition})
+        # the given disk (i.e. prospects of type {SpaceMakerProspects::ResizePartition})
         #
         # @param disk [Disk] disk to act upon
-        def add_resize_entries(disk)
+        def add_resize_prospects(disk)
           part_names = analyzer.windows_partitions(disk.name).map(&:name)
           return if part_names.empty?
 
@@ -201,17 +201,17 @@ module Y2Storage
           prospects = resize_prospects_for_disk(disk, part_names)
           with_linux, without_linux = prospects.partition(&:linux_in_disk?)
 
-          @resize_partition_without_linux_entries.concat(without_linux)
-          @resize_partition_with_linux_entries.concat(with_linux)
+          @resize_partition_without_linux_prospects.concat(without_linux)
+          @resize_partition_with_linux_prospects.concat(with_linux)
         end
 
         # If possible, adds to the set a prospect action about cleaning the disk
-        # content (i.e. entries of type {SpaceMakerProspects::WipeDisk})
+        # content (i.e. prospects of type {SpaceMakerProspects::WipeDisk})
         #
         # @param disk [Disk] disk to act upon
         # @param lvm_helper [Proposal::LvmHelper] contains information about the
         #     planned LVM logical volumes and how to make space for them
-        def add_wipe_entries(disk, lvm_helper)
+        def add_wipe_prospects(disk, lvm_helper)
           log.info "Checking if the disk #{disk.name} has a partition table"
 
           return unless disk.has_children? && disk.partition_table.nil?
@@ -222,10 +222,10 @@ module Y2Storage
             return
           end
 
-          @wipe_disk_entries << SpaceMakerProspects::WipeDisk.new(disk)
+          @wipe_disk_prospects << SpaceMakerProspects::WipeDisk.new(disk)
         end
 
-        # @see #add_resize_entries
+        # @see #add_resize_prospects
         #
         # @return [Array<ResizePartition>]
         def resize_prospects_for_disk(disk, part_names)
@@ -240,8 +240,8 @@ module Y2Storage
           end
         end
 
-        # @see #add_delete_partition_entries
-        # @see #unwanted_partition_entries
+        # @see #add_delete_partition_prospects
+        # @see #unwanted_partition_prospects
         #
         # @return [Array<DeletePartition>]
         def delete_prospects_for_disk(disk, keep: [], for_delete_all: false)
@@ -258,15 +258,15 @@ module Y2Storage
           end
         end
 
-        def next_useful_resize(entries)
-          entries.select { |e| e.available? && !e.recoverable_size.zero? }
+        def next_useful_resize(prospects)
+          prospects.select { |e| e.available? && !e.recoverable_size.zero? }
                  .sort_by(&:recoverable_size).last
         end
 
         # Whether a given DeletePartition prospect should be considered only
         # at the end, after having tried all possible resize operations.
         #
-        # @see #next_available_entry
+        # @see #next_available_prospect
         #
         # @param delete_partition [DeletePartition]
         # @return [Boolean]
@@ -283,19 +283,19 @@ module Y2Storage
           list.sort_by(&:region_start).reverse.partition(&:last_resort?).reverse.flatten
         end
 
-        # Entries of type #{SpaceMakerProspects::DeletePartition}
+        # prospects of type #{SpaceMakerProspects::DeletePartition}
         #
         # @param type [Symbol, nil] optional type to filter the result
-        def delete_partition_entries(type = nil)
+        def delete_partition_prospects(type = nil)
           if type.nil?
-            @all_delete_partition_entries.values.flatten
+            @all_delete_partition_prospects.values.flatten
           else
-            @all_delete_partition_entries[type]
+            @all_delete_partition_prospects[type]
           end
         end
 
-        def resize_partition_entries
-          @resize_partition_without_linux_entries + @resize_partition_with_linux_entries
+        def resize_partition_prospects
+          @resize_partition_without_linux_prospects + @resize_partition_with_linux_prospects
         end
       end
     end
