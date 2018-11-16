@@ -39,7 +39,6 @@ describe Y2Storage::Proposal::SettingsGenerator::Legacy do
     end
 
     let(:try_separate_home) { true }
-
     let(:proposal_snapshots) { true }
 
     let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
@@ -92,7 +91,6 @@ describe Y2Storage::Proposal::SettingsGenerator::Legacy do
 
       context "when neither try_separate_home nor proposal_snaphots options are active" do
         let(:try_separate_home) { false }
-
         let(:proposal_snapshots) { false }
 
         it "returns nil" do

@@ -59,11 +59,11 @@ devices, reducing the size expectations as much as possible. If the devicegraph
 generator also fails to allocate that smaller version of the planned devices, an
 exception is raised.
 
-During the installation a first proposal is automatically calculated when the
+During the installation a first proposal is automatically calculated when
 the installer reaches the proposal step. This initial proposal is performed
 without user interaction, and it is based on the settings defined for the current
 product. There is a specialized class `InititalGuidedProposal` to calculate this
-proposal. The initial proposal considers all available devices in the system as possible
+proposal, considering all available devices in the system as possible
 candidate devices. Firstly, it will try to make a valid proposal by using each disk
 individually. A new disk is not considered until all possible attempts have been carried
 out. That is, it will try to disable some settings properties (e.g., snapshots) before
