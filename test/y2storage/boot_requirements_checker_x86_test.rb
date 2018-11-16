@@ -27,6 +27,56 @@ require_relative "#{TEST_PATH}/support/boot_requirements_uefi"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
+  RSpec.shared_examples "needs no volume" do
+    it "does not require any particular volume" do
+      expect(checker.needed_partitions).to be_empty
+    end
+  end
+
+  RSpec.shared_examples "needs /boot partition" do
+    it "requires a new /boot partition" do
+      expect(checker.needed_partitions).to contain_exactly(
+        an_object_having_attributes(
+          mount_point: "/boot", filesystem_type: Y2Storage::Filesystems::Type::EXT4
+        )
+      )
+    end
+  end
+
+  RSpec.shared_examples "needs grub partition" do
+    it "requires a new GRUB partition" do
+      expect(checker.needed_partitions).to contain_exactly(
+        an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
+      )
+    end
+  end
+
+  RSpec.shared_examples "no warnings" do
+    it "shows no warnings" do
+      expect(checker.warnings).to be_empty
+    end
+  end
+
+  RSpec.shared_examples "warns: unsupported bootloader setup" do
+    it "shows a warning that the setup is not supported" do
+      expect(checker.warnings.size).to be >= 1
+      expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+      messages = checker.warnings.map(&:message)
+      expect(messages).to include(match(/setup is not supported/))
+    end
+  end
+
+  RSpec.shared_examples "warns: invalid bootloader setup" do
+    it "shows a warning that the bootloader cannot be installed" do
+      expect(checker.warnings.size).to be >= 1
+      expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+      messages = checker.warnings.map(&:message)
+      expect(messages).to include(match(/not be possible to install/))
+    end
+  end
+
   describe "#needed_partitions in a x86 system" do
     using Y2Storage::Refinements::SizeCasts
 
@@ -38,14 +88,14 @@ describe Y2Storage::BootRequirementsChecker do
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
     let(:sda_part_table) { pt_msdos }
-    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
+    let(:mbr_gap_for_grub?) { false }
 
     # Just to shorten
     let(:bios_boot_id) { Y2Storage::PartitionId::BIOS_BOOT }
 
     before do
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
-      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
+      allow(dev_sda).to receive(:mbr_gap_for_grub?).and_return mbr_gap_for_grub?
       allow(dev_sda).to receive(:grub_partitions).and_return grub_partitions
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
       allow(dev_sda).to receive(:partitions).and_return(grub_partitions + efi_partitions)
@@ -74,19 +124,13 @@ describe Y2Storage::BootRequirementsChecker do
           context "if there is no GRUB partition" do
             let(:grub_partitions) { [] }
 
-            it "requires a new GRUB partition" do
-              expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
-              )
-            end
+            include_examples("needs grub partition")
           end
 
           context "if there is already a GRUB partition" do
             let(:grub_partitions) { [grub_partition] }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
-            end
+            include_examples("needs no volume")
           end
         end
 
@@ -96,19 +140,13 @@ describe Y2Storage::BootRequirementsChecker do
           context "if there is no GRUB partition" do
             let(:grub_partitions) { [] }
 
-            it "requires a new GRUB partition" do
-              expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
-              )
-            end
+            include_examples("needs grub partition")
           end
 
           context "if there is already a GRUB partition" do
             let(:grub_partitions) { [grub_partition] }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
-            end
+            include_examples("needs no volume")
           end
         end
 
@@ -119,19 +157,13 @@ describe Y2Storage::BootRequirementsChecker do
           context "if there is no GRUB partition" do
             let(:grub_partitions) { [] }
 
-            it "requires a new GRUB partition" do
-              expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
-              )
-            end
+            include_examples("needs grub partition")
           end
 
           context "if there is already a GRUB partition" do
             let(:grub_partitions) { [grub_partition] }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
-            end
+            include_examples("needs no volume")
           end
         end
       end
@@ -139,92 +171,67 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a MS-DOS partition table" do
         let(:grub_partitions) { [] }
         let(:boot_ptable_type) { :msdos }
+        let(:boot_fs_can_embed_grub?) { false }
 
         context "if the MBR gap is big enough to embed Grub" do
-          let(:mbr_gap_size) { 256.KiB }
+          let(:mbr_gap_for_grub?) { true }
 
           context "in a partitions-based proposal" do
             let(:use_lvm) { false }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
-            end
+            include_examples("needs no volume")
           end
 
           context "in a LVM-based proposal" do
             let(:use_lvm) { true }
 
-            context "if the MBR gap has additional space for grubenv" do
-              let(:mbr_gap_size) { 260.KiB }
-
-              it "does not require any particular volume" do
-                expect(checker.needed_partitions).to be_empty
-              end
-            end
-
-            context "if the MBR gap has no additional space" do
-              it "requires only a /boot partition" do
-                expect(checker.needed_partitions).to contain_exactly(
-                  an_object_having_attributes(mount_point: "/boot")
-                )
-              end
-            end
+            include_examples("needs no volume")
           end
 
           context "in an encrypted proposal" do
             let(:use_lvm) { false }
             let(:use_encryption) { true }
 
-            context "if the MBR gap has additional space for grubenv" do
-              let(:mbr_gap_size) { 260.KiB }
-
-              it "does not require any particular volume" do
-                expect(checker.needed_partitions).to be_empty
-              end
-            end
-
-            context "if the MBR gap has no additional space" do
-              it "requires only a /boot partition" do
-                expect(checker.needed_partitions).to contain_exactly(
-                  an_object_having_attributes(mount_point: "/boot")
-                )
-              end
-            end
+            include_examples("needs no volume")
           end
         end
 
         context "with too small MBR gap" do
-          let(:mbr_gap_size) { 16.KiB }
+          let(:mbr_gap_for_grub?) { false }
 
           context "in a partitions-based proposal" do
             let(:use_lvm) { false }
 
-            context "if proposing root (/) as Btrfs" do
-              let(:use_btrfs) { true }
+            context "if / can embed grub" do
+              let(:embed_grub) { true }
 
-              it "does not require any particular volume" do
-                expect(checker.needed_partitions).to be_empty
-              end
+              include_examples("needs no volume")
+              include_examples("warns: unsupported bootloader setup")
             end
 
-            context "if proposing root (/) as non-Btrfs" do
-              let(:use_btrfs) { false }
+            context "if / can not embed grub" do
+              let(:embed_grub) { false }
 
-              it "raises an exception" do
-                expect { checker.needed_partitions }.to raise_error(
-                  Y2Storage::BootRequirementsChecker::Error
-                )
-              end
+              include_examples("needs /boot partition")
+              include_examples("warns: invalid bootloader setup")
             end
           end
 
           context "in a LVM-based proposal" do
             let(:use_lvm) { true }
 
-            it "raises an exception" do
-              expect { checker.needed_partitions }.to raise_error(
-                Y2Storage::BootRequirementsChecker::Error
-              )
+            context "if / can embed grub" do
+              let(:embed_grub) { true }
+
+              include_examples("needs /boot partition")
+              include_examples("warns: invalid bootloader setup")
+            end
+
+            context "if /boot can not embed grub" do
+              let(:embed_grub) { false }
+
+              include_examples("needs /boot partition")
+              include_examples("warns: invalid bootloader setup")
             end
           end
 
@@ -232,11 +239,56 @@ describe Y2Storage::BootRequirementsChecker do
             let(:use_lvm) { false }
             let(:use_encryption) { true }
 
-            it "raises an exception" do
-              expect { checker.needed_partitions }.to raise_error(
-                Y2Storage::BootRequirementsChecker::Error
-              )
+            context "if / can embed grub" do
+              let(:embed_grub) { true }
+
+              include_examples("needs /boot partition")
+              include_examples("warns: invalid bootloader setup")
             end
+
+            context "if / can not embed grub" do
+              let(:embed_grub) { false }
+
+              include_examples("needs /boot partition")
+              include_examples("warns: invalid bootloader setup")
+            end
+          end
+        end
+      end
+
+      context "with no partition table" do
+        let(:boot_ptable_type) { nil }
+        let(:use_lvm) { false }
+
+        context "in an unencrypted proposal" do
+          let(:use_encryption) { false }
+
+          context "if / can embed grub" do
+            let(:embed_grub) { true }
+
+            include_examples("warns: unsupported bootloader setup")
+          end
+
+          context "if / can not embed grub" do
+            let(:embed_grub) { false }
+
+            include_examples("warns: invalid bootloader setup")
+          end
+        end
+
+        context "in an encrypted proposal" do
+          let(:use_encryption) { true }
+
+          context "if / can embed grub" do
+            let(:embed_grub) { true }
+
+            include_examples("warns: invalid bootloader setup")
+          end
+
+          context "if / can not embed grub" do
+            let(:embed_grub) { false }
+
+            include_examples("warns: invalid bootloader setup")
           end
         end
       end
@@ -247,7 +299,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:efiboot) { false }
         let(:use_lvm) { true }
         let(:sda_part_table) { pt_msdos }
-        let(:mbr_gap_size) { 256.KiB }
+        let(:mbr_gap_for_grub?) { false }
 
         include_examples "proposed boot partition"
       end

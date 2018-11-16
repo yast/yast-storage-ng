@@ -223,6 +223,18 @@ module Y2Storage
       partition_table.mbr_gap
     end
 
+    # Whether there is a MBR gap big enough for grub
+    #
+    # @see PartitionTables::Msdos#mbr_gap_for_grub?
+    #
+    # @return [Boolean] true if there is a MS-DOS partition table and the mbr gap is big
+    #   enough for grub; else false
+    def mbr_gap_for_grub?
+      return false unless partition_table
+      return false unless partition_table.respond_to?(:mbr_gap_for_grub?)
+      partition_table.mbr_gap_for_grub?
+    end
+
     # Free spaces inside the device
     #
     # @return [Array<FreeDiskSpace>]

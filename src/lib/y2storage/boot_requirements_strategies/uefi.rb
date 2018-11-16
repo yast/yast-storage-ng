@@ -44,6 +44,10 @@ module Y2Storage
       # @return [Array<SetupError>]
       def warnings
         res = super
+        res_new = []
+
+        res_new << esp_encrypted_error if encrypted_esp?
+        res_new << esp_lvm_error if esp_in_lvm?
 
         # EFI in RAID can work, but it is not much reliable.
         # See bsc#1081578#c9, FATE#322485, FATE#314829
@@ -51,22 +55,43 @@ module Y2Storage
         #   the disk. libstorage-ng currently uses "mdadm --metadata=1.0" which is OK
         # - The partition boot flag must be on
         # - The partition RAID flag must be on (but setting it resets the boot flag)
-        if analyzer.efi_in_md_raid1?
-          msg = _(
-            "/boot/efi is in a software RAID. That setup is not guaranteed \n" \
-            "to boot in all cases. Proceed only if you know the implications."
-          )
-          res << SetupError.new(message: msg)
+        res_new << esp_raid_error if esp_in_software_raid?
+
         # Missing EFI does not need to be a fatal (e.g. when boot from network).
         # User just has to not select grub2-efi bootloader.
-        elsif missing_partition_for?(efi_volume)
-          res << SetupError.new(missing_volume: efi_volume)
-        end
+        res_new << esp_missing_warning if res_new.empty? && missing_partition_for?(efi_volume)
 
-        res
+        res + res_new
       end
 
     protected
+
+      def esp_encrypted_error
+        msg = _("EFI System Partition cannot be encrypted.")
+        SetupError.new(message: msg)
+      end
+
+      def esp_lvm_error
+        msg = _("EFI System Partition cannot be on LVM.")
+        SetupError.new(message: msg)
+      end
+
+      def esp_raid_error
+        if esp_in_software_raid1?
+          msg =
+            _(
+              "EFI System Partition is on a software RAID1. " \
+              "That setup is not guaranteed to boot in all cases."
+            )
+        else
+          msg = _("EFI System Partition cannot be on software RAID.")
+        end
+        SetupError.new(message: msg)
+      end
+
+      def esp_missing_warning
+        SetupError.new(missing_volume: efi_volume)
+      end
 
       def efi_missing?
         free_mountpoint?("/boot/efi")

@@ -499,13 +499,17 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     context "if the boot disk contains no partition table" do
       let(:disk_name) { "/dev/sde" }
 
-      it "returns true for GPT (the default proposal type)" do
-        expect(analyzer.boot_ptable_type?(:gpt)).to eq true
+      it "returns false for GPT (the default proposal type)" do
+        expect(analyzer.boot_ptable_type?(:gpt)).to eq false
       end
 
       it "returns false for any other type" do
         expect(analyzer.boot_ptable_type?(:msdos)).to eq false
         expect(analyzer.boot_ptable_type?(:dasd)).to eq false
+      end
+
+      it "returns true for nil" do
+        expect(analyzer.boot_ptable_type?(nil)).to eq true
       end
     end
 

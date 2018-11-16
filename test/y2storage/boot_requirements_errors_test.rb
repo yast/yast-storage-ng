@@ -90,11 +90,21 @@ describe Y2Storage::BootRequirementsChecker do
 
     RSpec.shared_examples "missing boot partition" do
       it "contains an error for missing boot partition" do
-        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings.size).to be >= 1
         expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
         message = checker.warnings.first.message
-        expect(message).to match(/Missing device for \/boot/)
+        expect(message).to match(/Missing device for \/boot|Not enough space/)
+      end
+    end
+
+    RSpec.shared_examples "missing mbr gap" do
+      it "contains an error for missing/too small mbr gap" do
+        expect(checker.warnings.size).to be >= 1
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.warnings.first.message
+        expect(message).to match(/Not enough space before the first partition/)
       end
     end
 
@@ -192,7 +202,7 @@ describe Y2Storage::BootRequirementsChecker do
             expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
             message = checker.warnings.first.message
-            expect(message).to match(/\/boot\/efi.*software RAID/)
+            expect(message).to match(/software RAID/)
           end
         end
       end
@@ -210,11 +220,11 @@ describe Y2Storage::BootRequirementsChecker do
             let(:scenario) { "gpt_without_grub" }
 
             it "contains an error for missing grub partition" do
-              expect(checker.warnings.size).to eq(1)
+              expect(checker.warnings.size).to be >= 1
               expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
               message = checker.warnings.first.message
-              expect(message).to match(/There is no partition of type BIOS Boot/)
+              expect(message).to match(/partition of type BIOS Boot/)
             end
           end
 
@@ -228,33 +238,31 @@ describe Y2Storage::BootRequirementsChecker do
         context "with a MS-DOS partition table" do
           context "with a too small MBR gap" do
             before do
-              # it have to be set here, as mbr_gap in yml set only minimal size and not real one
-              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(0.KiB)
+              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?).and_return(false)
             end
 
             context "in a plain btrfs setup" do
               let(:scenario) { "dos_btrfs" }
 
-              include_examples "no errors"
+              include_examples "missing mbr gap"
             end
 
             context "in a not plain btrfs setup" do
               let(:scenario) { "dos_lvm" }
 
               it "contains an error for small MBR gap" do
-                expect(checker.warnings.size).to eq(1)
+                expect(checker.warnings.size).to be >= 1
                 expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
                 message = checker.warnings.first.message
-                expect(message).to match(/gap size is not enough/)
+                expect(message).to match(/not enough/i)
               end
             end
           end
 
           context "if the MBR gap is big enough to embed Grub" do
             before do
-              # it have to be set here, as mbr_gap in yml set only minimal size and not real one
-              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?).and_return(true)
             end
 
             context "in a partitions-based setup" do
@@ -263,13 +271,15 @@ describe Y2Storage::BootRequirementsChecker do
               include_examples "no errors"
             end
 
+            # FIXME: doesn't make sense logically anymore
             context "in a LVM-based setup" do
               # examples define own gap
               let(:scenario) { "dos_lvm" }
 
               context "if the MBR gap has additional space for grubenv" do
                 before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
+                    .and_return(true)
                 end
 
                 include_examples "no errors"
@@ -277,7 +287,8 @@ describe Y2Storage::BootRequirementsChecker do
 
               context "if the MBR gap has no additional space" do
                 before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
+                    .and_return(false)
                 end
 
                 context "if there is no separate /boot" do
@@ -287,7 +298,7 @@ describe Y2Storage::BootRequirementsChecker do
                 context "if there is separate /boot" do
                   let(:scenario) { "dos_lvm_boot_partition" }
 
-                  include_examples "no errors"
+                  include_examples "missing mbr gap"
                 end
               end
             end
@@ -300,7 +311,8 @@ describe Y2Storage::BootRequirementsChecker do
 
               context "if the MBR gap has additional space for grubenv" do
                 before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
+                    .and_return(true)
                 end
 
                 include_examples "no errors"
@@ -308,7 +320,8 @@ describe Y2Storage::BootRequirementsChecker do
 
               context "if the MBR gap has no additional space" do
                 before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
+                    .and_return(false)
                 end
 
                 context "if there is no separate /boot" do
@@ -318,7 +331,7 @@ describe Y2Storage::BootRequirementsChecker do
                 context "if there is separate /boot" do
                   let(:scenario) { "dos_encrypted_boot_partition" }
 
-                  include_examples "no errors"
+                  include_examples "missing mbr gap"
                 end
               end
 

@@ -65,6 +65,19 @@ module Y2Storage
       # If "/" is still not present in the devicegraph or the list of planned
       # devices, the first disk of the system is used as fallback.
       #
+      # FIXME: For RAID and LVM setups a list of disks would strictly be
+      #   correct (the disks that constitute the /boot file system).
+      #   The current approach is not that bad, though, as we don't have to
+      #   actually install the bootloader but just check if it will work.
+      #   Also, the extra partitions proposed are the *minimum* required to boot.
+      #
+      #   But particularly in asymmetric cases (like part of LVM on a GPT
+      #   disk, part on a MS-DOS disk) we have a problem: the requirements
+      #   will differ depending on which boot disk is picked (basically
+      #   random). For this to work properly we'd have to switch to tracking
+      #   all boot disks but this will also mean error messages like "BIOS
+      #   Boot on sda and (or?) MBR-GAP on sdb are missing".
+      #
       # @return [Disk]
       def boot_disk
         return @boot_disk if @boot_disk
@@ -76,6 +89,7 @@ module Y2Storage
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph
         @boot_disk ||= devicegraph.disk_devices.first
+        @boot_disk = boot_disk_raid1(@boot_disk) || @boot_disk
 
         @boot_disk
       end
@@ -136,6 +150,50 @@ module Y2Storage
         encrypted?(device_for_boot)
       end
 
+      # Whether the EFI system partition (/boot/efi) is in a LVM logical volume
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in an LVM logical volume. False if such filesystem is unknown
+      #   or is not placed in an LVM.
+      def esp_in_lvm?
+        in_lvm?(esp_filesystem)
+      end
+
+      # Whether the EFI system partition (/boot/efi) is over a Software RAID
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in a Software RAID. False if such filesystem is unknown or is
+      #   not placed over a Software RAID.
+      def esp_in_software_raid?
+        in_software_raid?(esp_filesystem)
+      end
+
+      # Whether the EFI system partition (/boot/efi) is over a Software RAID1
+      #
+      # This setup can be used to ensure the system can boot from any of the
+      # disks in the RAID, but it's not fully reliable.
+      # See bsc#1081578 and the related FATE#322485 and FATE#314829.
+      #
+      # @return [Boolean] false if there is no /boot/efi or it's not located in
+      #   an MD mirror RAID
+      def esp_in_software_raid1?
+        filesystem = esp_filesystem
+        return false if !filesystem
+        filesystem.ancestors.any? do |dev|
+          # see comment in #in_software_raid?
+          dev != boot_disk && dev.is?(:software_raid) && dev.md_level.is?(:raid1)
+        end
+      end
+
+      # Whether the EFI system partition (/boot/efi) is in an encrypted device
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in an encrypted device. False if such filesystem is unknown or
+      #   is not encrypted.
+      def encrypted_esp?
+        encrypted?(esp_filesystem)
+      end
+
       # Whether the root (/) filesystem is going to be Btrfs
       #
       # @return [Boolean] true if the root filesystem is going to be Btrfs.
@@ -144,6 +202,26 @@ module Y2Storage
       def btrfs_root?
         type = filesystem_type(device_for_root)
         type ? type.is?(:btrfs) : false
+      end
+
+      # Whether grub can be embedded into the boot (/boot) filesystem
+      #
+      # @return [Boolean] true if grub can be embedded into the boot filesystem.
+      #   False if the boot filesystem is unknown (not in the planned devices
+      #   or in the devicegraph) or can not embed grub.
+      def boot_fs_can_embed_grub?
+        type = boot_filesystem_type
+        type ? type.grub_ok? : false
+      end
+
+      # Whether grub can be embedded into the root (/) filesystem
+      #
+      # @return [Boolean] true if grub can be embedded into the root filesystem.
+      #   False if the root filesystem is unknown (not in the planned devices
+      #   or in the devicegraph) or can not embed grub.
+      def root_fs_can_embed_grub?
+        type = filesystem_type(device_for_root)
+        type ? type.grub_ok? : false
       end
 
       # Type of the filesystem (planned or from the devicegraph) containing /boot
@@ -157,14 +235,14 @@ module Y2Storage
       # Whether the partition table of the disk used for booting matches the
       # given type.
       #
-      # If the disk does not have a partition table, a GPT one will be assumed
-      # since it is the default type used in the proposal.
+      # It is possible to check for 'no partition table' by passing type nil.
       #
       # @return [Boolean] true if the partition table matches.
       #
       # @see #boot_disk
       def boot_ptable_type?(type)
-        return false if boot_ptable_type.nil?
+        return type.nil? if boot_ptable_type.nil?
+        return false if type.nil?
         boot_ptable_type.is?(type)
       end
 
@@ -202,25 +280,6 @@ module Y2Storage
       # @return [Float]
       def max_planned_weight
         @max_planned_weight ||= planned_devices.map { |dev| planned_weight(dev) }.compact.max
-      end
-
-      # Method to detect the specific situation in which /boot/efi is located
-      # in a mirror software raid.
-      #
-      # This setup can be used to ensure the system can boot from any of the
-      # disks in the RAID, but it's not fully reliable.
-      # See bsc#1081578 and the related FATE#322485 and FATE#314829.
-      #
-      # @return [Boolean] false if there is no /boot/efi or it's not located in
-      #   an MD mirror RAID
-      def efi_in_md_raid1?
-        filesystem = filesystem_for_mountpoint("/boot/efi")
-        return false unless filesystem
-
-        raid = filesystem.ancestors.find { |dev| dev.is?(:software_raid) }
-        return false unless raid
-
-        return raid.md_level.is?(:raid1)
       end
 
       # Method to return all prep partitions - newly created and also reused from graph.
@@ -264,12 +323,12 @@ module Y2Storage
         boot_planned_dev || boot_filesystem || root_planned_dev || root_filesystem || nil
       end
 
+      # Partition table type of boot disk
+      #
+      # @return [PartitionTables::Type, nil] partition table type of boot disk or nil
+      #   if it doesn't have a partition table
       def boot_ptable_type
-        return nil unless boot_disk
-        return boot_disk.partition_table.type unless boot_disk.partition_table.nil?
-
-        # If the disk end up being used, there will be a partition table on it
-        boot_disk.preferred_ptable_type
+        boot_disk.partition_table.type if boot_disk && !boot_disk.partition_table.nil?
       end
 
       # TODO: handle planned LV (not needed so far)
@@ -346,6 +405,13 @@ module Y2Storage
         @boot_filesystem ||= filesystem_for_mountpoint("/boot")
       end
 
+      # Filesystem mounted at /boot/efi
+      #
+      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot/efi
+      def esp_filesystem
+        @esp_filesystem ||= filesystem_for_mountpoint("/boot/efi")
+      end
+
       # Filesystem type used for the device
       #
       # The device can be a planned one or filesystem from the devicegraph.
@@ -403,8 +469,32 @@ module Y2Storage
         if device.is_a?(Planned::Device)
           device.is_a?(Planned::Md)
         else
-          device.ancestors.any? { |dev| dev.is?(:software_raid) }
+          device.ancestors.any? do |dev|
+            # Don't check boot_disk as it might validly be a RAID1 itself
+            # (full disks as RAID case) - we want to treat this as 'no RAID'.
+            dev.is?(:software_raid) && dev != boot_disk
+          end
         end
+      end
+
+      # Check if device is a direct member of a RAID1 (RAID over entire disks).
+      #
+      # FIXME: The check is possibly overly strict: currently it enforces
+      #   that the disk is a member of a single RAID.
+      #   That might not be necessary.
+      #
+      # @return [Y2Storage::Md, nil] the RAID device, else nil
+      def boot_disk_raid1(device)
+        return nil if device.nil?
+        raid1_dev = nil
+        device.children.each do |raid|
+          next if !raid.is?(:software_raid)
+          return nil if !raid.md_level.is?(:raid1)
+          return nil if raid1_dev && raid1_dev != raid
+          raid1_dev = raid
+        end
+
+        return raid1_dev
       end
     end
   end

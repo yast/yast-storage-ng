@@ -407,6 +407,38 @@ describe Y2Storage::Disk do
     end
   end
 
+  describe "#mbr_gap_for_grub?" do
+    let(:scenario) { "gpt_and_msdos" }
+
+    def disk(disk_name)
+      Y2Storage::Disk.find_by_name(fake_devicegraph, disk_name)
+    end
+
+    it "returns false for a disk without partition table" do
+      expect(disk("/dev/sde").mbr_gap_for_grub?).to eq false
+    end
+
+    it "returns false for a GPT disk without partitions" do
+      expect(disk("/dev/sdd").mbr_gap_for_grub?).to eq false
+    end
+
+    it "returns false for a GPT disk with partitions" do
+      expect(disk("/dev/sdb").mbr_gap_for_grub?).to eq false
+    end
+
+    it "returns true for a MS-DOS disk without partitions" do
+      expect(disk("/dev/sdc").mbr_gap_for_grub?).to be true
+    end
+
+    it "returns true for a MS-DOS disk with partitions and big enough gap" do
+      expect(disk("/dev/sda").mbr_gap_for_grub?).to be true
+    end
+
+    it "returns false for a MS-DOS disk with partitions and too small gap" do
+      expect(disk("/dev/sdf").mbr_gap_for_grub?).to be false
+    end
+  end
+
   describe "#efi_partitions" do
     let(:scenario) { "gpt_and_msdos" }
 

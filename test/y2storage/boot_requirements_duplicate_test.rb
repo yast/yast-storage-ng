@@ -39,11 +39,11 @@ describe Y2Storage::BootRequirementsChecker do
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
     let(:sda_part_table) { pt_msdos }
-    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
+    let(:mbr_gap_for_grub?) { false }
 
     before do
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
-      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
+      allow(dev_sda).to receive(:mbr_gap_for_grub?).and_return mbr_gap_for_grub?
       allow(dev_sda).to receive(:grub_partitions).and_return grub_partitions
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
       allow(dev_sda).to receive(:partitions).and_return(grub_partitions + efi_partitions)
@@ -113,7 +113,7 @@ describe Y2Storage::BootRequirementsChecker do
       # Default values to ensure boot is needed
       let(:use_lvm) { true }
       let(:sda_part_table) { pt_msdos }
-      let(:mbr_gap_size) { Y2Storage::DiskSize.KiB(256) }
+      let(:mbr_gap_for_grub?) { false }
 
       before do
         allow(analyzer).to receive(:free_mountpoint?).with("/boot")
