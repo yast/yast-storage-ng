@@ -103,10 +103,29 @@ module Y2Storage
 
     # Calculates the proposal
     #
+    # @see #try_proposal
+    #
     # @raise [Error, NoDiskSpaceError] if there is no enough space to perform the installation
     #
     # @return [true]
     def calculate_proposal
+      try_proposal
+    ensure
+      settings.freeze
+    end
+
+    # Tries to perform a proposal
+    #
+    # Settings might be completed with default values for candidate devices and root device.
+    #
+    # This method is intended to be redefined for derived classes, see {InitialGuidedProposal}.
+    #
+    # @raise [Error, NoDiskSpaceError] if it was not possible to calculate the proposal
+    #
+    # @return [true]
+    def try_proposal
+      complete_settings
+
       try_with_each_target_size
     end
 
@@ -118,8 +137,6 @@ module Y2Storage
     #
     # @return [true]
     def try_with_each_target_size
-      complete_settings
-
       error = default_proposal_error
 
       target_sizes.each do |target_size|
@@ -128,8 +145,6 @@ module Y2Storage
 
           @planned_devices = planned_devices_list(target_size)
           @devices = devicegraph(@planned_devices)
-          # freezes settings only when proposal was correctly calculated
-          settings.freeze
           return true
         rescue Error => error
           log.info "Failed to make a proposal with target size: #{target_size}"
@@ -226,7 +241,7 @@ module Y2Storage
 
     # Candidate devices to make a proposal
     #
-    # The candidate devices are calculated when the current settings has not contain any
+    # The candidate devices are calculated when current settings have not contain any
     # candidate device. In that case, the possible candidate devices are sorted, placing
     # USB devices at the end.
     #

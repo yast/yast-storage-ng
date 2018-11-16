@@ -55,7 +55,9 @@ module Y2Storage
     # @return [Proposal::SettingsGenerator::Base]
     attr_reader :settings_generator
 
-    # Calculates the initial proposal
+    # Tries to perform the initial proposal
+    #
+    # @see GuidedProposal#calculate_proposal
     #
     # The initial proposal will perform several attempts until a valid proposal is generated.
     # First, the proposal is tried over each individual candidate device. If a proposal was
@@ -74,7 +76,7 @@ module Y2Storage
     # @raise [Error, NoDiskSpaceError] when the proposal cannot be calculated
     #
     # @return [true]
-    def calculate_proposal
+    def try_proposal
       try_with_each_candidate_group
     end
 
