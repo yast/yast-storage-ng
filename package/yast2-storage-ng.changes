@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Fri Nov 16 16:08:38 UTC 2018 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- The Guided Proposal tries to preserve partitions of type IRST
+  (Intel Rapid Start Technology) when possible (bsc#1099187,
+  fate#325885).
+- Made the Guided Proposal algorithm more clear, so it's easier to
+  debug (bsc#1057436).
+- 4.1.35
+
+-------------------------------------------------------------------
 Fri Nov 16 14:59:05 UTC 2018 - jlopez@suse.com
 
 - Initial proposal tries all possible attempts over each candidate

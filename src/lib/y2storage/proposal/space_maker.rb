@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -29,6 +27,7 @@ require "y2storage/disk_size"
 require "y2storage/free_disk_space"
 require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_killer"
+require "y2storage/proposal/space_maker_prospects"
 
 module Y2Storage
   module Proposal
@@ -113,19 +112,20 @@ module Y2Storage
       # @return [Devicegraph] copy of #original_graph without the unwanted
       #   partitions
       def delete_unwanted_partitions(original_graph)
+        log.info "BEGIN SpaceMaker#delete_unwanted_partitions"
+
         result = original_graph.dup
         partition_killer = PartitionKiller.new(result, candidate_disk_names)
+        prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
 
-        [:windows, :linux, :other].each do |type|
-          next unless settings.delete_forced?(type)
-
-          log.info("Forcely deleting #{type} partitions")
-          deletion_candidate_partitions(result, type).each do |part_sid|
-            sids = partition_killer.delete_by_sid(part_sid)
+        disks_for(result).each do |disk|
+          prospects.unwanted_partition_prospects(disk).each do |entry|
+            sids = partition_killer.delete_by_sid(entry.sid)
             @all_deleted_sids.concat(sids)
           end
         end
 
+        log.info "END SpaceMaker#delete_unwanted_partitions"
         result
       end
 
@@ -148,29 +148,6 @@ module Y2Storage
       # @return [Array<Integer>]
       attr_reader :new_graph_deleted_sids
 
-      # Optional disk name to restrict operations to, if nil all disks can be
-      # used.
-      #
-      # The main process (see {#resize_and_delete}) can be executed several
-      # times, depending on the disk restrictions of the planned devices. This
-      # value is used by the auxiliary methods of {#resize_and_delete} to ensure
-      # they operate only in the relevant device for the current execution, if
-      # there is such restriction.
-      #
-      # @return [String, nil]
-      attr_reader :disk_name
-
-      # Sorted lists of sids of the partitions that can be deleted during this
-      # execution of {#resize_and_delete} (i.e. for the current value of
-      # {#disk_name}).
-      #
-      # Includes three separate lists indexed by type (:linux, :other, :windows),
-      # the first partition on every list will be the first of that type to be
-      # deleted (if needed, of course).
-      #
-      # @return [Hash{Symbol => Array<Integer>]
-      attr_reader :sorted_candidates
-
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
       #
@@ -182,7 +159,7 @@ module Y2Storage
       # @see #provide_space
       #
       # @param partitions [Array<Planned::Partition>] partitions to make space for
-      # @param keep [Array<String>] device names of partitions that should not be deleted
+      # @param keep [Array<Integer>] sids of partitions that should not be deleted
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
       def calculate_new_graph(partitions, keep, lvm_helper)
@@ -204,7 +181,7 @@ module Y2Storage
         # The result (if successful) is kept in @distribution.
         #
         planned_partitions_by_disk(partitions).each do |disk, parts|
-          resize_and_delete(parts, keep, lvm_helper, disk: disk)
+          resize_and_delete(parts, keep, lvm_helper, disk_name: disk)
         end
 
         # Doing something similar for #max_start_offset is more difficult and
@@ -254,14 +231,13 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] partitions
       #     to make space for
-      # @param keep [Array<String>] device names of partitions that should not
-      #     be deleted
+      # @param keep [Array<Integer>] sids of partitions that should not be deleted
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
-      # @param disk [String] optional disk name to restrict operations to
+      # @param disk_name [String, nil] optional disk name to restrict operations to
       #
-      def resize_and_delete(planned_partitions, keep, lvm_helper, disk: nil)
-        log.info "Resize and delete. disk: #{disk}, planned partitions:"
+      def resize_and_delete(planned_partitions, keep, lvm_helper, disk_name: nil)
+        log.info "Resize and delete. disk_name: #{disk_name}, planned partitions:"
         planned_partitions.each do |p|
           log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
         end
@@ -269,11 +245,13 @@ module Y2Storage
         # restart evaluation
         @distribution = nil
 
-        @disk_name = disk
-        calculate_sorted_candidates(keep)
+        prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
+        disks_for(new_graph, disk_name).each do |disk|
+          prospects.add_prospects(disk, lvm_helper, keep)
+        end
 
         until success?(planned_partitions)
-          break unless execute_next_action(planned_partitions, lvm_helper)
+          break unless execute_next_action(planned_partitions, prospects, disk_name)
         end
 
         raise Error unless @distribution
@@ -281,167 +259,69 @@ module Y2Storage
 
       # Performs the next action of {#resize_and_delete}
       #
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param prospects [SpaceMakerProspects::List] set of prospect actions
+      #   that could be executed
+      # @param disk_name [String] optional disk name to restrict operations to
       # @return [Boolean] true if some operation was performed. False if nothing
       #   else could be done to reach the goal.
-      def execute_next_action(planned_partitions, lvm_helper)
-        part_sid = next_partition_to_resize
-        if part_sid
-          part = new_graph.find_device(part_sid)
-          target_shrink_size = resizing_size(part, planned_partitions)
-          shrink_partition(part, target_shrink_size)
+      def execute_next_action(planned_partitions, prospects, disk_name = nil)
+        prospect_action = prospects.next_available_prospect
+        if !prospect_action
+          log.info "No more prospects for SpaceMaker (disk_name: #{disk_name})"
+          return false
+        end
+
+        case prospect_action.to_sym
+        when :resize_partition
+          execute_resize(prospect_action, planned_partitions, disk_name)
+        when :delete_partition
+          execute_delete(prospect_action, prospects)
         else
-          part_sid = next_partition_to_delete
-          if part_sid
-            # Strictly speaking, this could lead to deletion of a partition
-            # included in the keep array. In practice it doesn't matter because
-            # PVs and extended partitions are never marked to be reused as a
-            # planned partition.
-            sids = new_graph_part_killer.delete_by_sid(part_sid)
-            new_graph_deleted_sids.concat(sids)
-          else
-            wipe = next_disk_to_wipe(lvm_helper)
-            return false unless wipe
-            remove_content(wipe)
-          end
+          execute_wipe(prospect_action)
         end
 
         true
       end
 
-      # Fills up {#sorted_candidates} for the current execution of
-      # {#resize_and_delete}
-      def calculate_sorted_candidates(keep)
-        @sorted_candidates = {}
-        [:linux, :other, :windows].each do |type|
-          @sorted_candidates[type] =
-            if settings.delete_forbidden?(type)
-              []
-            else
-              deletion_candidate_partitions(new_graph, type, disk_name) - keep
-            end
-        end
-      end
-
-      # Plain list of all candidates to be deleted
+      # Performs the action described by a {SpaceMakerProspects::ResizePartition}
       #
-      # @return [Array<Integer>]
-      def all_sorted_candidates
-        sorted_candidates[:linux] + sorted_candidates[:other] + sorted_candidates[:windows]
+      # @param prospect [SpaceMakerProspects::ResizePartition] candidate action
+      #   to execute
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param disk_name [String, nil] optional disk name to restrict operations to
+      def execute_resize(prospect, planned_partitions, disk_name)
+        log.info "SpaceMaker#execute_resize - #{prospect}"
+
+        part = new_graph.find_device(prospect.sid)
+        target_shrink_size = resizing_size(part, planned_partitions, disk_name)
+        shrink_partition(part, target_shrink_size)
+        prospect.available = false
       end
 
-      # Sid of the next partition to be deleted by {#resize_and_delete}
+      # Performs the action described by a {SpaceMakerProspects::DeletePartition}
       #
-      # @return [Integer]
-      def next_partition_to_delete
-        result = (all_sorted_candidates - new_graph_deleted_sids).first
+      # @param prospect [SpaceMakerProspects::DeletePartition] candidate action
+      #   to execute
+      # @param prospects [SpaceMakerProspects::List] full set of prospect actions
+      def execute_delete(prospect, prospects)
+        log.info "SpaceMaker#execute_delete - #{prospect}"
 
-        log.info "Next partition to delete: #{result}"
-        result
+        sids = new_graph_part_killer.delete_by_sid(prospect.sid)
+        new_graph_deleted_sids.concat(sids)
+        prospects.mark_deleted(sids)
       end
 
-      # Additional space that needs to be freed while resizing a partition in
-      # order to reach the goal
+      # Performs the action described by a {SpaceMakerProspects::WipeDisk}
       #
-      # @return [DiskSize]
-      def resizing_size(partition, planned_partitions)
-        spaces = free_spaces(new_graph, disk_name)
-        dist_calculator.resizing_size(partition, planned_partitions, spaces)
-      end
+      # @param prospect [SpaceMakerProspects::DeletePartition] candidate action
+      #   to execute
+      def execute_wipe(prospect)
+        log.info "SpaceMaker#execute_wipe - #{prospect}"
 
-      # List of free spaces in the given devicegraph
-      #
-      # @param graph [Devicegraph]
-      # @param disk [String] optional disk name to restrict result to
-      # @return [Array<FreeDiskSpace>]
-      def free_spaces(graph, disk = nil)
-        disks_for(graph, disk).each_with_object([]) do |d, list|
-          list.concat(d.as_not_empty { d.free_spaces })
-        end
-      end
-
-      # List of candidate disk devices in the given devicegraph
-      #
-      # @param devicegraph [Devicegraph]
-      # @param device_name [String] optional device name to restrict result to
-      #
-      # @return [Array<Dasd, Disk>]
-      def disks_for(devicegraph, device_name = nil)
-        filter = device_name ? [device_name] : candidate_disk_names
-        devicegraph.blk_devices.select { |d| filter.include?(d.name) }
-      end
-
-      # @return [Array<String>]
-      def candidate_disk_names
-        settings.candidate_devices
-      end
-
-      # Sid of the next partition to be resized by {#resize_and_delete}
-      #
-      # @return [Integer, nil] nil if no partition should be resized
-      def next_partition_to_resize
-        log.info("Looking for Windows partitions to resize")
-
-        return nil unless settings.resize_windows
-        part_names = windows_part_names(disk_name)
-        return nil if part_names.empty?
-
-        log.info("Evaluating the following Windows partitions: #{part_names}")
-
-        parts_by_disk = partitions_by_disk(part_names)
-
-        # Historical behavior: if there are still any Linux or "other" partition
-        # to delete, the Windows systems that are in the same disk than any Linux
-        # partition are not resized.
-        # Rationale: Users having a Windows and a Linux in the same disk have
-        # likely already resized Windows once (when installing that Linux).
-        # So they probably don't want to resize it again. But if there are no
-        # more Linux or "other" partitions to delete, then the next partition to
-        # delete would be a Windows one. In that case, all Windows partitions
-        # are candidates to be resized (it's better to resize than to delete).
-        remove_linux_disks!(parts_by_disk) if any_linux_or_other_left?
-
-        partition = sorted_resizables(parts_by_disk.values.flatten).first
-        partition.nil? ? nil : partition.sid
-      end
-
-      # @see #next_partition_to_resize
-      #
-      # @return [Boolean]
-      def any_linux_or_other_left?
-        (sorted_candidates[:linux] + sorted_candidates[:other] - new_graph_deleted_sids).any?
-      end
-
-      # @return [Hash{String => Partition}]
-      def partitions_by_disk(part_names)
-        partitions = new_graph.partitions.select { |p| part_names.include?(p.name) }
-        partitions.each_with_object({}) do |partition, hash|
-          disk = partition.partitionable.name
-          hash[disk] ||= []
-          hash[disk] << partition
-        end
-      end
-
-      def remove_linux_disks!(parts_by_disk)
-        parts_by_disk.each do |disk, _p|
-          if linux_in_disk?(disk)
-            log.info "Linux partitions in #{disk}, Windows will not be resized"
-            parts_by_disk.delete(disk)
-          end
-        end
-      end
-
-      def linux_in_disk?(name)
-        linux_part_names(name).any?
-      end
-
-      # Sorted list of partitions that can be resized, partitions with more
-      # recoverable space appear first in the list
-      #
-      # @param partitions [Array<Partition>] list of partitions
-      # @return [Array<Partition>]
-      def sorted_resizables(partitions)
-        resizables = partitions.reject { |part| part.recoverable_size.zero? }
-        resizables.sort_by(&:recoverable_size).reverse
+        disk = new_graph.find_device(prospect.sid)
+        remove_content(disk)
+        prospect.available = false
       end
 
       # Reduces the size of a partition
@@ -459,79 +339,6 @@ module Y2Storage
         partition.resize(partition.size - shrink_size, align_type: nil)
       end
 
-      # Partitions of a given type to be deleted. The type can be:
-      #
-      #  * :windows Partitions with a Windows installation on it
-      #  * :linux Partitions that are part of a Linux installation
-      #  * :other Any other partition
-      #
-      # Extended partitions are ignored, they will be deleted by
-      # PartitionKiller if needed
-      #
-      # @param devicegraph [Devicegraph]
-      # @param type [Symbol]
-      # @param disk [String] optional disk name to restrict operations to
-      # @return [Array<Integer>] sids sorted by disk and by position
-      #     inside the disk (partitions at the end are presented first)
-      def deletion_candidate_partitions(devicegraph, type, disk = nil)
-        sids = []
-        names = []	# only for logging
-        disks_for(devicegraph, disk).each do |dsk|
-          partitions = devicegraph.partitions.select { |p| p.partitionable.name == dsk.name }
-          partitions.delete_if { |part| part.type.is?(:extended) }
-          filter_partitions_by_type!(partitions, type, dsk.name)
-          partitions = partitions.sort_by { |part| part.region.start }.reverse
-          sids += partitions.map(&:sid)
-          names += partitions.map(&:name)
-        end
-
-        log.info "Deletion candidates (#{type}): #{names}"
-        sids
-      end
-
-      def filter_partitions_by_type!(partitions, type, disk)
-        case type
-        when :windows
-          partitions.select! { |part| windows_part_names(disk).include?(part.name) }
-        when :linux
-          partitions.select! { |part| linux_part_names(disk).include?(part.name) }
-        when :other
-          partitions.select! do |part|
-            !linux_part_names(disk).include?(part.name) &&
-              !windows_part_names(disk).include?(part.name)
-          end
-        end
-      end
-
-      # Finds the next device that can be completely cleaned by {#resize_and_delete},
-      # nil if none meets the requirements.
-      #
-      # It searches for disk-like devices not containining a partition table,
-      # like disks directly formatted or used as members of an LVM or software RAID.
-      #
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
-      # @return [BlkDevice, nil]
-      def next_disk_to_wipe(lvm_helper)
-        log.info "Searching next disk to wipe (disk_name: #{disk_name})"
-
-        disks_for(new_graph, disk_name).each do |disk|
-          log.info "Checking if the disk #{disk.name} has a partition table"
-
-          next unless disk.has_children? && disk.partition_table.nil?
-          log.info "Found something that is not a partition table"
-
-          if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
-            log.info "Not cleaning up #{disk.name} because its VG must be reused"
-            next
-          end
-
-          return disk
-        end
-
-        nil
-      end
-
       # Remove descendants of a disk and also partitions from other disks that
       # are not longer useful afterwards
       #
@@ -543,28 +350,40 @@ module Y2Storage
         disk.remove_descendants
       end
 
-      # Device names of windows partitions detected by disk_analyzer
+      # Additional space that needs to be freed while resizing a partition in
+      # order to reach the goal
       #
-      # @return [array<string>]
-      def windows_part_names(disk = nil)
-        parts = if disk
-          disk_analyzer.windows_partitions(disk)
-        else
-          disk_analyzer.windows_partitions
-        end
-        parts.map(&:name)
+      # @return [DiskSize]
+      def resizing_size(partition, planned_partitions, disk_name)
+        spaces = free_spaces(new_graph, disk_name)
+        dist_calculator.resizing_size(partition, planned_partitions, spaces)
       end
 
-      # Device names of linux partitions detected by disk_analyzer
+      # List of free spaces in the given devicegraph
       #
-      # @return [array<string>]
-      def linux_part_names(disk = nil)
-        parts = if disk
-          disk_analyzer.linux_partitions(disk)
-        else
-          disk_analyzer.linux_partitions
+      # @param graph [Devicegraph]
+      # @param disk [String, nil] optional disk name to restrict result to
+      # @return [Array<FreeDiskSpace>]
+      def free_spaces(graph, disk = nil)
+        disks_for(graph, disk).each_with_object([]) do |d, list|
+          list.concat(d.as_not_empty { d.free_spaces })
         end
-        parts.map(&:name)
+      end
+
+      # List of candidate disk devices in the given devicegraph
+      #
+      # @param devicegraph [Devicegraph]
+      # @param device_name [String, nil] optional device name to restrict result to
+      #
+      # @return [Array<Dasd, Disk>]
+      def disks_for(devicegraph, device_name = nil)
+        filter = device_name ? [device_name] : candidate_disk_names
+        devicegraph.blk_devices.select { |d| filter.include?(d.name) }
+      end
+
+      # @return [Array<String>]
+      def candidate_disk_names
+        settings.candidate_devices
       end
     end
   end
