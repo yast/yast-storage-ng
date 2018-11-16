@@ -49,24 +49,26 @@ That second step is performed by an instance of
 planned devices and a set of proposal settings, it will return a new devicegraph
 containing the final devices.
 
-This whole process is potentially repeated twice per `candidate_devices`. In the
-first attempt, the instance of `Proposal::PlannedDevicesGenerator` is asked for
-the desired set of planned devices, so it will aim for the best possible size
-for each planned device. If the instance of `Proposal::DevicegraphGenerator` is
-not able to accommodate those planned devices, a second attempt will be
-performed. On that second attempt, the device generator will aim for a
-minimalistic set of planned devices, reducing the size expectations as much as
-possible. If the devicegraph generator also fails to allocate that smaller
-version of the planned devices, an exception is raised.
+This whole process is potentially repeated twice. In the first attempt, the
+instance of `Proposal::PlannedDevicesGenerator` is asked for the desired set of
+planned devices, so it will aim for the best possible size for each planned
+device. If the instance of `Proposal::DevicegraphGenerator` is not able to
+accommodate those planned devices, a second attempt will be performed. On that
+second attempt, the device generator will aim for a minimalistic set of planned
+devices, reducing the size expectations as much as possible. If the devicegraph
+generator also fails to allocate that smaller version of the planned devices, an
+exception is raised.
 
-The `candidate_devices` could be
-
-* Available disks in the system, first using each of them singly and then
-  all together if proposal did not fit in any of them separately _(mainly for
-  initial proposal)_.
-
-* The set of disks selected by the user, without attempting to fit the proposal
-  individually in each of them.
+During the installation a first proposal is automatically calculated when the
+the installer reaches the proposal step. This initial proposal is performed
+without user interaction, and it is based on the settings defined for the current
+product. There is a specialized class `InititalGuidedProposal` to calculate this
+proposal. The initial proposal considers all available devices in the system as possible
+candidate devices. Firstly, it will try to make a valid proposal by using each disk
+individually. A new disk is not considered until all possible attempts have been carried
+out. That is, it will try to disable some settings properties (e.g., snapshots) before
+switching to another candidate device. When no proposal was possible by using each
+individual device, a last attempt is performed by using all the available devices together.
 
 Apart from the two main steps and the classes representing the set of planned
 devices, there is another relevant class in this level of zoom. `DiskAnalyzer`
