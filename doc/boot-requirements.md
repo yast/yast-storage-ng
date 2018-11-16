@@ -2,6 +2,122 @@
 [//]: # (document was automatically created using 'rake doc:bootspecs')
 
 # Y2Storage::BootRequirementsChecker
+## needed partitions in an aarch64 system
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
+
+## needed partitions in a PPC64 system
+- in a non-PowerNV system (KVM/LPAR)
+	- with a partitions-based proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+	- with a LVM-based proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+	- with an encrypted proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+- in bare metal (PowerNV)
+	- with a partitions-based proposal
+		- **does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+	- with a LVM-based proposal
+		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
+	- with an encrypted proposal
+		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
+- when proposing a boot partition
+	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
+	- when aiming for the recommended size
+		- **requires /boot to be at least 200 MiB large**
+	- when aiming for the minimal size
+		- **requires /boot to be at least 100 MiB large**
+- when proposing a PReP partition
+	- **requires it to be a non-encrypted partition**
+	- **requires it to be bootable (ms-dos partition table) for some firmwares to find it**
+	- **requires it to be primary since some firmwares cannot find logical partitions**
+	- **requires no particular position for it in the disk (since there is no evidence of such so far)**
+	- when aiming for the recommended size
+		- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
+	- when aiming for the minimal size
+		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
+
+## needed partitions in a S/390 system
+- trying to install in a FBA DASD disk
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+- trying to install in a zfcp disk (no DASD)
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+- trying to install in a (E)CKD DASD disk
+	- if the disk is formatted as LDL
+		- **raises an error (no proposal possible in such disk) - FIXME: why?**
+	- if the disk is formatted as CDL
+		- with a partitions-based proposal
+			- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+				- **does not require additional partitions (the firmware can find the kernel)**
+			- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+				- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+		- with a LVM-based proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- with an encrypted proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2)**
+- when proposing a /boot/zipl partition
+	- **proposes /boot/zipl to be a non-encrypted partition in the boot disk**
+	- **proposes /boot/zipl to be formated as ext2**
+	- **proposes /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)**
+	- when aiming for the recommended size (first proposal attempt)
+		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**
+	- when aiming for the minimal size
+		- **requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)**
+
 ## needed partitions in a x86 system
 - using UEFI
 	- with a partitions-based proposal
@@ -50,25 +166,42 @@
 			- in a partitions-based proposal
 				- **does not require any particular volume**
 			- in a LVM-based proposal
-				- if the MBR gap has additional space for grubenv
-					- **does not require any particular volume**
-				- if the MBR gap has no additional space
-					- **requires only a /boot partition**
+				- **does not require any particular volume**
 			- in an encrypted proposal
-				- if the MBR gap has additional space for grubenv
-					- **does not require any particular volume**
-				- if the MBR gap has no additional space
-					- **requires only a /boot partition**
+				- **does not require any particular volume**
 		- with too small MBR gap
 			- in a partitions-based proposal
-				- if proposing root (/) as Btrfs
+				- if / can embed grub
 					- **does not require any particular volume**
-				- if proposing root (/) as non-Btrfs
-					- **raises an exception**
+					- **shows a warning that the setup is not supported**
+				- if / can not embed grub
+					- **requires a new /boot partition**
+					- **shows a warning that the bootloader cannot be installed**
 			- in a LVM-based proposal
-				- **raises an exception**
+				- if / can embed grub
+					- **requires a new /boot partition**
+					- **shows a warning that the bootloader cannot be installed**
+				- if /boot can not embed grub
+					- **requires a new /boot partition**
+					- **shows a warning that the bootloader cannot be installed**
 			- in an encrypted proposal
-				- **raises an exception**
+				- if / can embed grub
+					- **requires a new /boot partition**
+					- **shows a warning that the bootloader cannot be installed**
+				- if / can not embed grub
+					- **requires a new /boot partition**
+					- **shows a warning that the bootloader cannot be installed**
+	- with no partition table
+		- in an unencrypted proposal
+			- if / can embed grub
+				- **shows a warning that the setup is not supported**
+			- if / can not embed grub
+				- **shows a warning that the bootloader cannot be installed**
+		- in an encrypted proposal
+			- if / can embed grub
+				- **shows a warning that the bootloader cannot be installed**
+			- if / can not embed grub
+				- **shows a warning that the bootloader cannot be installed**
 	- when proposing a boot partition
 		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
 		- when aiming for the recommended size
@@ -92,121 +225,3 @@
 		- when aiming for the minimal size
 			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
 			- **requires it to be at most 500 MiB (enough space for several operating systems)**
-
-## needed partitions in a PPC64 system
-- in a non-PowerNV system (KVM/LPAR)
-	- with a partitions-based proposal
-		- if there are no PReP partitions in the target disk
-			- **requires only a new PReP partition (to allocate Grub2)**
-			- **does not require a separate /boot partition (Grub2 can handle this setup)**
-		- if there is already a PReP partition in the disk
-			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
-	- with a LVM-based proposal
-		- if there are no PReP partitions in the target disk
-			- **requires only a new PReP partition (to allocate Grub2)**
-			- **does not require a separate /boot partition (Grub2 can handle this setup)**
-		- if there is already a PReP partition in the disk
-			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
-	- with an encrypted proposal
-		- if there are no PReP partitions in the target disk
-			- **requires only a new PReP partition (to allocate Grub2)**
-			- **does not require a separate /boot partition (Grub2 can handle this setup)**
-		- if there is already a PReP partition in the disk
-			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
-- in bare metal (PowerNV)
-	- with a partitions-based proposal
-		- **does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)**
-	- with a LVM-based proposal
-		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
-		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
-	- with an encrypted proposal
-		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
-		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
-- when proposing a boot partition
-	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
-	- when aiming for the recommended size
-		- **requires /boot to be at least 200 MiB large**
-	- when aiming for the minimal size
-		- **requires /boot to be at least 100 MiB large**
-- when proposing a PReP partition
-	- **requires it to be a non-encrypted partition**
-	- **requires it to be bootable (ms-dos partition table) for some firmwares to find it**
-	- **requires it to be primary since some firmwares cannot find logical partitions**
-	- **requires no particular position for it in the disk (since there is no evidence of such so far)**
-	- when aiming for the recommended size
-		- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
-		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
-	- when aiming for the minimal size
-		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
-		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
-
-## needed partitions in an aarch64 system
-- with a partitions-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
-			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- **only requires to use the existing EFI partition**
-- with a LVM-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
-			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- **only requires to use the existing EFI partition**
-- with an encrypted proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
-			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- **only requires to use the existing EFI partition**
-
-## needed partitions in a S/390 system
-- trying to install in a FBA DASD disk
-	- with a partitions-based proposal
-		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
-			- **does not require additional partitions (the firmware can find the kernel)**
-		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
-	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
-	- with an encrypted proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
-- trying to install in a zfcp disk (no DASD)
-	- with a partitions-based proposal
-		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
-			- **does not require additional partitions (the firmware can find the kernel)**
-		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
-	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
-	- with an encrypted proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
-- trying to install in a (E)CKD DASD disk
-	- if the disk is formatted as LDL
-		- **raises an error (no proposal possible in such disk) - FIXME: why?**
-	- if the disk is formatted as CDL
-		- with a partitions-based proposal
-			- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
-				- **does not require additional partitions (the firmware can find the kernel)**
-			- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-				- **requires only a separate /boot/zipl partition (to allocate Grub2)**
-		- with a LVM-based proposal
-			- **requires only a /boot/zipl partition (to allocate Grub2)**
-		- with an encrypted proposal
-			- **requires only a /boot/zipl partition (to allocate Grub2)**
-- when proposing a /boot/zipl partition
-	- **proposes /boot/zipl to be a non-encrypted partition in the boot disk**
-	- **proposes /boot/zipl to be formated as ext2**
-	- **proposes /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)**
-	- when aiming for the recommended size (first proposal attempt)
-		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**
-	- when aiming for the minimal size
-		- **requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)**
-
-
