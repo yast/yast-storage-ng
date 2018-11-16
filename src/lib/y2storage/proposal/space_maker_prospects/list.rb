@@ -260,7 +260,7 @@ module Y2Storage
 
         def next_useful_resize(prospects)
           prospects.select { |e| e.available? && !e.recoverable_size.zero? }
-                 .sort_by(&:recoverable_size).last
+                   .sort_by(&:recoverable_size).last
         end
 
         # Whether a given DeletePartition prospect should be considered only
