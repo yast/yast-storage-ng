@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Nov 16 14:59:05 UTC 2018 - jlopez@suse.com
+
+- Initial proposal tries all possible attempts over each candidate
+  device before switching to another device.
+- Related to bug#1115819 and fate#326573.
+- 4.1.34
+
+-------------------------------------------------------------------
 Fri Nov 16 14:56:26 UTC 2018 - snwint@suse.com
 
 - adjust boot requirements to handle RAID cases (fate#326573)
