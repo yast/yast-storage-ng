@@ -199,10 +199,8 @@ module Y2Storage
           return if part_names.empty?
 
           log.info("Evaluating the following Windows partitions: #{part_names}")
-          prospects = disk.partitions.select { |p| part_names.include?(p.name) }.map do |part|
-            SpaceMakerProspects::ResizePartition.new(part, analyzer)
-          end
-          prospects.select! { |action| action.allowed?(settings) }
+
+          prospects = resize_prospects_for_disk(disk, part_names)
           with_linux, without_linux = prospects.partition(&:linux_in_disk?)
 
           @resize_partition_without_linux_entries.concat(without_linux)
@@ -229,13 +227,37 @@ module Y2Storage
           @wipe_disk_entries << SpaceMakerProspects::WipeDisk.new(disk)
         end
 
+        # @see #add_resize_entries
+        #
+        # @return [Array<ResizePartition>]
+        def resize_prospects_for_disk(disk, part_names)
+          prospects = disk.partitions.select { |p| part_names.include?(p.name) }.map do |part|
+            SpaceMakerProspects::ResizePartition.new(part, analyzer)
+          end
+
+          prospects.select do |action|
+            allowed = action.allowed?(settings)
+            log.info "SpaceMakerProspects::ResizePartition allowed? #{allowed} -> #{action}"
+            allowed
+          end
+        end
+
+        # @see #add_delete_partition_entries
+        # @see #unwanted_partition_entries
+        #
+        # @return [Array<DeletePartition>]
         def delete_prospects_for_disk(disk, keep: [], for_delete_all: false)
           partitions = disk.partitions.reject { |part| part.type.is?(:extended) }
 
           prospects = partitions.map do |part|
             SpaceMakerProspects::DeletePartition.new(part, analyzer)
           end
-          prospects.select { |action| action.allowed?(settings, keep, for_delete_all) }
+
+          prospects.select do |action|
+            allowed = action.allowed?(settings, keep, for_delete_all)
+            log.info "SpaceMakerProspects::DeletePartition allowed? #{allowed} -> #{action}"
+            allowed
+          end
         end
 
         def next_useful_resize(entries)

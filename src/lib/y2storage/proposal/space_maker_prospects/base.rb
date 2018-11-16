@@ -33,6 +33,8 @@ module Y2Storage
       # actions. SpaceMaker can then use such information to take decisions
       # about what to do next.
       class Base
+        include Yast::Logger
+
         # Identifier of the target device
         # @return [Integer]
         attr_reader :sid

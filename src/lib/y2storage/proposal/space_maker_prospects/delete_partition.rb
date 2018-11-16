@@ -64,8 +64,8 @@ module Y2Storage
 
           allowed = allowed_type?(settings, partition_type, for_delete_all)
           if irst? && windows_in_disk? && allowed
-            # Second line of defense for IRST partitions that seem to be used by
-            # a Windows installation
+            # Second line of defense for IRST partitions
+            log.info "#{device_name} seems to be used by a Windows installation, double-checking"
             allowed_type?(settings, :windows, for_delete_all)
           else
             allowed

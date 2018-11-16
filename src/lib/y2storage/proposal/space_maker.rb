@@ -114,6 +114,8 @@ module Y2Storage
       # @return [Devicegraph] copy of #original_graph without the unwanted
       #   partitions
       def delete_unwanted_partitions(original_graph)
+        log.info "BEGIN SpaceMaker#delete_unwanted_partitions"
+
         result = original_graph.dup
         partition_killer = PartitionKiller.new(result, candidate_disk_names)
         prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
@@ -125,6 +127,7 @@ module Y2Storage
           end
         end
 
+        log.info "END SpaceMaker#delete_unwanted_partitions"
         result
       end
 
