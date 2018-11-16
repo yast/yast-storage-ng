@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Fri Nov 16 14:56:26 UTC 2018 - snwint@suse.com
 
-- adjust boot requirements to handle RAID cases
+- adjust boot requirements to handle RAID cases (fate#326573)
 - 4.1.33
 
 -------------------------------------------------------------------
