@@ -146,5 +146,13 @@ module Y2Storage
     def nfs_root?
       devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
     end
+
+    VENDOR_MODEL_PATH = "/proc/device-tree/model"
+    # Special boot strategy for raspebery pi. See fate#323484
+    def raspberry_pi?
+      return false unless File.exist?(VENDOR_MODEL_PATH)
+
+      File.read(VENDOR_MODEL_PATH).match?(/Raspberry Pi/i)
+    end
   end
 end
