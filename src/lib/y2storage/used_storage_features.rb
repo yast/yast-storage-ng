@@ -95,7 +95,8 @@ module Y2Storage
         # system: Only if the user wishes to delete a partition (e.g. his
         # Windows partition) the EFI bootloader could boot from. Adding a
         # partition to it is handled by yast-bootloader in the inst-sys.
-        UF_EFIBOOT:       "efibootmgr"
+        UF_EFIBOOT:       "efibootmgr",
+        UF_UDF:           "udftools"
       }
 
     # Storage-related packages that are nice to have, but not absolutely
