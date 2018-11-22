@@ -21,7 +21,6 @@
 
 require "yast"
 require "y2storage"
-require "set"
 
 module Y2Storage
   #
@@ -158,23 +157,23 @@ module Y2Storage
     #
     # @param features [Array<Symbol>] feature list
     # @return [Array<Symbol>] package list
-    #
     def self.packages_for(features)
-      feature_packages = Set.new
+      feature_packages = []
 
       features.each do |feature|
-        pkg = FEATURE_PACKAGES[feature]
-        next unless pkg
-        log.info("Feature #{feature} requires pkg #{pkg}")
-        if pkg.respond_to?(:each)
-          feature_packages.merge(pkg)
-        else
-          feature_packages << pkg
-        end
+        next unless FEATURE_PACKAGES.key?(feature)
+
+        required_packages = [FEATURE_PACKAGES.fetch(feature)].flatten
+
+        log.info("Feature #{feature} requires #{required_packages}")
+
+        feature_packages.concat(required_packages)
       end
 
-      log.info("Storage feature packages: #{feature_packages.to_a}")
-      feature_packages.to_a
+      feature_packages.uniq!
+      log.info("Storage feature packages: #{feature_packages}")
+
+      feature_packages
     end
 
     # Return a list of software packages required for the storage features
