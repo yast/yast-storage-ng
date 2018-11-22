@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Nov 22 15:56:50 UTC 2018 - jlopez@suse.com
+
+- Partitioner: add support for UDF filesystem (fate#326877).
+- 4.1.36
+
+-------------------------------------------------------------------
 Fri Nov 16 16:08:38 UTC 2018 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - The Guided Proposal tries to preserve partitions of type IRST
