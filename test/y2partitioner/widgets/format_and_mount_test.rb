@@ -40,10 +40,37 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::FormatOptions do
-    let(:parent) { double("FormatMountOptions") }
     subject { described_class.new(controller, parent) }
 
+    let(:parent) { double("FormatMountOptions") }
+
     include_examples "CWM::CustomWidget"
+
+    describe "#handle" do
+      before do
+        allow(Y2Partitioner::Widgets::BlkDeviceFilesystem).to receive(:new).and_return(fs_selector)
+
+        allow(fs_selector).to receive(:value).and_return(selected_fs)
+        allow(fs_selector).to receive(:refresh)
+        allow(fs_selector).to receive(:disable)
+
+        allow(parent).to receive(:refresh_others)
+      end
+
+      let(:fs_selector) { instance_double(Y2Partitioner::Widgets::BlkDeviceFilesystem) }
+
+      let(:selected_fs) { :udf }
+
+      context "when the format option is selected" do
+        let(:event) { { "ID" => :format_device } }
+
+        it "creates a new filesystem with the selected filesystem type" do
+          expect(controller).to receive(:new_filesystem).with(:udf)
+
+          subject.handle(event)
+        end
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::MountOptions do
@@ -143,6 +170,42 @@ describe Y2Partitioner::Widgets do
     subject { described_class.new(controller) }
 
     include_examples "CWM::AbstractWidget"
+
+    describe "#items" do
+      let(:options) { subject.items.map(&:first) }
+
+      it "contains swap option" do
+        expect(options).to include(:swap)
+      end
+
+      it "contains btrfs option" do
+        expect(options).to include(:btrfs)
+      end
+
+      it "contains ext2 option" do
+        expect(options).to include(:ext2)
+      end
+
+      it "contains ext3 option" do
+        expect(options).to include(:ext3)
+      end
+
+      it "contains ext4 option" do
+        expect(options).to include(:ext4)
+      end
+
+      it "contains vfat option" do
+        expect(options).to include(:vfat)
+      end
+
+      it "contains xfs option" do
+        expect(options).to include(:xfs)
+      end
+
+      it "contains udf option" do
+        expect(options).to include(:udf)
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::MountPoint do
