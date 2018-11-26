@@ -122,22 +122,27 @@ module Y2Storage
     end
 
     def strategy
-      return @strategy unless @strategy.nil?
+      @strategy ||= strategy_class.new(devicegraph, planned_devices, boot_disk_name)
+    end
 
-      klass =
-        if nfs_root?
-          BootRequirementsStrategies::NfsRoot
-        elsif arch.efiboot?
-          BootRequirementsStrategies::UEFI
-        elsif arch.s390?
-          BootRequirementsStrategies::ZIPL
-        elsif arch.ppc?
-          BootRequirementsStrategies::PReP
-        else
-          # Fallback to Legacy as default
-          BootRequirementsStrategies::Legacy
-        end
-      @strategy = klass.new(devicegraph, planned_devices, boot_disk_name)
+    # @see #strategy
+    #
+    # @return [BootRequirementsStrategies::Base]
+    def strategy_class
+      if nfs_root?
+        BootRequirementsStrategies::NfsRoot
+      elsif raspberry_pi?
+        BootRequirementsStrategies::Raspi
+      elsif arch.efiboot?
+        BootRequirementsStrategies::UEFI
+      elsif arch.s390?
+        BootRequirementsStrategies::ZIPL
+      elsif arch.ppc?
+        BootRequirementsStrategies::PReP
+      else
+        # Fallback to Legacy as default
+        BootRequirementsStrategies::Legacy
+      end
     end
 
     # Whether the root filesystem is NFS
@@ -147,8 +152,13 @@ module Y2Storage
       devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
     end
 
+    # @see #raspberry_pi?
     VENDOR_MODEL_PATH = "/proc/device-tree/model"
-    # Special boot strategy for raspebery pi. See fate#323484
+    private_constant :VENDOR_MODEL_PATH
+
+    # Whether this is a Raspberry Pi. See fate#323484
+    #
+    # @return [Boolean]
     def raspberry_pi?
       return false unless File.exist?(VENDOR_MODEL_PATH)
 

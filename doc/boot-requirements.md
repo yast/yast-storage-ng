@@ -75,6 +75,73 @@
 		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
 		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
 
+## needed partitions in a Raspberry Pi
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- when proposing an new EFI partition
+	- **requires /boot/efi to be a non-encrypted vfat partition**
+	- **requires /boot/efi to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
+	- when aiming for the minimal size
+		- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+		- **requires it to be at most 500 MiB (enough space for several operating systems)**
+
 ## needed partitions in a S/390 system
 - trying to install in a FBA DASD disk
 	- with a partitions-based proposal

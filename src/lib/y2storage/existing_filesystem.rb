@@ -43,6 +43,7 @@ module Y2Storage
       @filesystem = filesystem
       @root = root
       @mount_point = mount_point
+      @rpi_boot = false
       @processed = false
     end
 
@@ -77,6 +78,15 @@ module Y2Storage
       @crypttab
     end
 
+    # Whether the filesystem contains the Raspberry Pi boot code in
+    # the root path
+    #
+    # @return [Boolean]
+    def rpi_boot?
+      set_attributes unless processed?
+      @rpi_boot
+    end
+
   protected
 
     # @return [Boolean] if the filesystem was already mounted to read all the relevant info
@@ -88,6 +98,7 @@ module Y2Storage
       @release_name = read_release_name
       @fstab = read_fstab
       @crypttab = read_crypttab
+      @rpi_boot = check_rpi_boot
       umount
     rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
       log.error("CAUGHT exception: #{ex} for #{device.name}")
@@ -144,6 +155,21 @@ module Y2Storage
       return nil unless File.exist?(crypttab_path)
 
       Crypttab.new(crypttab_path, filesystem)
+    end
+
+    # Checks whether a the Raspberry Pi boot code is in the root of the
+    # filesystem
+    #
+    # @return [Boolean]
+    def check_rpi_boot
+      # Only lower-case is expected, but since casing is usually tricky in FAT
+      # filesystem, let's do a second check just in case
+      ["bootcode.bin", "BOOTCODE.BIN"].each do |name|
+        path = File.join(@mount_point, name)
+        return true if File.exist?(path)
+      end
+
+      false
     end
   end
 end
