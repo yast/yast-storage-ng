@@ -36,7 +36,6 @@ describe Y2Storage::BootRequirementsChecker do
     let(:efi_partitions) { [] }
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
-    let(:sda_part_table) { pt_msdos }
 
     # it's always UEFI
     let(:efiboot) { true }

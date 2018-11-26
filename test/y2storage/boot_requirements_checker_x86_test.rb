@@ -87,7 +87,6 @@ describe Y2Storage::BootRequirementsChecker do
     let(:efi_partitions) { [] }
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
-    let(:sda_part_table) { pt_msdos }
     let(:mbr_gap_for_grub?) { false }
 
     # Just to shorten
@@ -298,7 +297,6 @@ describe Y2Storage::BootRequirementsChecker do
         # Default values to ensure proposal of boot
         let(:efiboot) { false }
         let(:use_lvm) { true }
-        let(:sda_part_table) { pt_msdos }
         let(:mbr_gap_for_grub?) { false }
 
         include_examples "proposed boot partition"
