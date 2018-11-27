@@ -6,68 +6,65 @@ module Y2Partitioner
   # Icons used by partitioner
   module Icons
     # icon
-    ALL = "yast-disk.png".freeze
+    ALL = "computer".freeze
 
     # icon
-    HD = "yast-disk.png".freeze
+    HD = "drive-harddisk".freeze
 
     # icon
-    HD_PART = "yast-partitioning.png".freeze
+    HD_PART = "drive-partition".freeze
 
     # icon
-    LVM = "yast-lvm_config.png".freeze
+    LVM = "drive-multipartition".freeze
     # icon
-    LVM_LV = "yast-partitioning.png".freeze
+    LVM_LV = HD_PART
 
     # icon
-    RAID = "yast-raid.png".freeze
+    RAID = "drive-multidisk".freeze
 
     # icon
-    LOOP = "yast-encrypted.png".freeze
+    LOOP = HD
 
     # icon
-    DM = "yast-device-mapper.png".freeze
+    DM = "view-list-tree".freeze
 
     # icon
     MULTIPATH = DM
 
     # icon
-    NFS = "yast-nfs.png".freeze
+    NFS = "folder-remote".freeze
 
     # icon
-    BTRFS = NFS
+    BTRFS = LVM
 
     # icon
-    UNUSED = "yast-unused-device.png".freeze
+    UNUSED = "emblem-warning".freeze
 
     # icon
-    GRAPH = "yast-device-tree.png".freeze
+    GRAPH = DM
 
     # icon
-    SUMMARY = "yast-disk.png".freeze
+    SUMMARY = "view-list".freeze
 
     # icon
-    SETTINGS = "yast-spanner.png".freeze
+    SETTINGS = "configure".freeze
 
     # icon
-    LOG = "yast-messages.png".freeze
+    LOG = "view-list-text".freeze
 
     # icon
-    ENCRYPTED = "yast-encrypted.png".freeze
+    ENCRYPTED = "drive-harddisk-encrypted".freeze
 
     # Default device icon
-    DEFAULT_DEVICE = "yast-hdd-controller-kernel-module.png".freeze
+    DEFAULT_DEVICE = "media-removable".freeze
 
     # icon
     BCACHE = HD
 
-    # path to small icons, fits nicely in table
-    SMALL_ICONS_PATH = (Yast::Directory.icondir + "22x22/apps/").freeze
-
     # helper to get full path to small version of icon
     # @param icon [String] icon filename including suffix
     def self.small_icon(icon)
-      SMALL_ICONS_PATH + icon
+      icon
     end
   end
 end
