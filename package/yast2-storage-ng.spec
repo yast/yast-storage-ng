@@ -101,7 +101,7 @@ rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
 %{yast_scrconfdir}/*.scr
 
 # icons
-%{_datadir}/icons/*
+%{yast_icondir}
 
 %license COPYING
 %doc README.md
