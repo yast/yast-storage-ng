@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:	4.1.36
+Version:	4.1.37
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
@@ -99,6 +99,9 @@ rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
+
+# icons
+%{yast_icondir}
 
 %license COPYING
 %doc README.md

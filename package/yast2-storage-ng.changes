@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 27 05:34:41 UTC 2018 - Noah Davis <noahadvs@gmail.com>
+
+- Provide icon with module (boo#1109310)
+- 4.1.37
+
+-------------------------------------------------------------------
 Thu Nov 22 15:56:50 UTC 2018 - jlopez@suse.com
 
 - Partitioner: add support for UDF filesystem (fate#326877).
