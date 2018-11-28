@@ -81,9 +81,128 @@ describe Y2Storage::BootRequirementsChecker do
     end
   end
 
+  context "#errors and #warnings when using NFS for the root filesystem" do
+    before do
+      fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
+      fs.create_mount_point("/")
+    end
+
+    context "in a diskless system" do
+      let(:scenario) { "nfs1.xml" }
+
+      # Regression test for bug#1090752
+      it "does not crash" do
+        expect { checker.warnings }.to_not raise_error
+        expect { checker.errors }.to_not raise_error
+      end
+
+      it "returns no warnings or errors" do
+        expect(checker.warnings).to be_empty
+        expect(checker.errors).to be_empty
+      end
+    end
+
+    context "in a system with local disks" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      # This used to consider the local disk as the one to boot from, so it
+      # reported wrong errors assuming "/" was going to be there.
+      it "returns no warnings or errors" do
+        expect(checker.warnings).to be_empty
+        expect(checker.errors).to be_empty
+      end
+    end
+  end
+
+  def format_dev(name, type, path)
+    fs = fake_devicegraph.find_by_name(name).create_filesystem(type)
+    fs.mount_path = path
+  end
+
+  def format_zipl(name)
+    format_dev(name, Y2Storage::Filesystems::Type::EXT4, "/boot/zipl")
+  end
+
   describe "#errors" do
-    RSpec.shared_examples "no errors" do
-      it "does not contain an error" do
+    RSpec.shared_examples "unknown boot disk" do
+      it "contains an fatal error for unknown boot disk" do
+        expect(checker.errors.size).to eq(1)
+        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.errors.first.message
+        expect(message).to match(/no device mounted at '\/'/)
+      end
+    end
+
+    let(:efiboot) { false }
+
+    context "/boot is too small" do
+      let(:scenario) { "small_boot" }
+
+      before do
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_space_info)
+          .and_return(double(free: Y2Storage::DiskSize.MiB(1)))
+      end
+
+      it "contains an error when there is /boot that is not big enough" do
+        expect(checker.errors.size).to eq(1)
+        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.errors.first.message
+        expect(message).to match(/does not have enough space/)
+      end
+    end
+
+    context "in a x86 system not using UEFI (legacy PC)" do
+      let(:architecture) { :x86 }
+      let(:efiboot) { false }
+
+      context "when there is no root" do
+        let(:scenario) { "false-swaps" }
+        include_examples "unknown boot disk"
+      end
+    end
+
+    context "in a PPC64 system" do
+      let(:architecture) { :ppc }
+      let(:efiboot) { false }
+      let(:power_nv) { false }
+
+      context "when there is no root" do
+        let(:scenario) { "false-swaps" }
+        include_examples "unknown boot disk"
+      end
+    end
+
+    context "in a S/390 system" do
+      let(:architecture) { :s390 }
+      let(:efiboot) { false }
+      let(:scenario) { "several-dasds" }
+
+      context "when there is no root" do
+        include_examples "unknown boot disk"
+      end
+
+      context "if / is in the plain implicit partition of an FBA device" do
+        before { format_dev(root_name, root_type, "/") }
+
+        let(:root_name) { "/dev/dasdc3" }
+        let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
+        let(:root_name) { "/dev/dasdb1" }
+
+        # Regression test for bug#1070265. It wrongly claimed booting
+        # from FBA DASDs was not supported. See the similar test for #warnings
+        # below
+        it "contains no error about unsupported disk" do
+          expect(checker.errors).to be_empty
+        end
+      end
+    end
+  end
+
+  describe "#warnings" do
+    RSpec.shared_examples "no warnings" do
+      it "does not contain any warning" do
         expect(checker.warnings).to be_empty
       end
     end
@@ -128,16 +247,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    RSpec.shared_examples "unknown boot disk" do
-      it "contains an fatal error for unknown boot disk" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
-
-        message = checker.errors.first.message
-        expect(message).to match(/no device mounted at '\/'/)
-      end
-    end
-
     RSpec.shared_examples "unsupported boot disk" do
       it "contains an error for unsupported boot disk" do
         expect(checker.warnings.size).to eq(1)
@@ -164,26 +273,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "when there is a /boot/efi partition in the system" do
         let(:scenario) { "efi" }
 
-        include_examples("no errors")
-      end
-    end
-
-    let(:efiboot) { false }
-
-    context "/boot is too small" do
-      let(:scenario) { "small_boot" }
-
-      before do
-        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_space_info)
-          .and_return(double(free: Y2Storage::DiskSize.MiB(1)))
-      end
-
-      it "contains an error when there is /boot that is not big enough" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
-
-        message = checker.errors.first.message
-        expect(message).to match(/does not have enough space/)
+        include_examples("no warnings")
       end
     end
 
@@ -210,11 +300,6 @@ describe Y2Storage::BootRequirementsChecker do
       context "not using UEFI (legacy PC)" do
         let(:efiboot) { false }
 
-        context "when there is no root" do
-          let(:scenario) { "false-swaps" }
-          include_examples "unknown boot disk"
-        end
-
         context "when boot device has a GPT partition table" do
           context "and there is no a grub partition in the system" do
             let(:scenario) { "gpt_without_grub" }
@@ -229,7 +314,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "and there is a grub partition in the system" do
-            it "does not contain errors" do
+            it "does not contain warnings" do
               expect(checker.warnings).to be_empty
             end
           end
@@ -268,7 +353,7 @@ describe Y2Storage::BootRequirementsChecker do
             context "in a partitions-based setup" do
               let(:scenario) { "dos_btrfs" }
 
-              include_examples "no errors"
+              include_examples "no warnings"
             end
 
             # FIXME: doesn't make sense logically anymore
@@ -282,7 +367,7 @@ describe Y2Storage::BootRequirementsChecker do
                     .and_return(true)
                 end
 
-                include_examples "no errors"
+                include_examples "no warnings"
               end
 
               context "if the MBR gap has no additional space" do
@@ -315,7 +400,7 @@ describe Y2Storage::BootRequirementsChecker do
                     .and_return(true)
                 end
 
-                include_examples "no errors"
+                include_examples "no warnings"
               end
 
               context "if the MBR gap has no additional space" do
@@ -334,7 +419,6 @@ describe Y2Storage::BootRequirementsChecker do
                   include_examples "missing mbr gap"
                 end
               end
-
             end
           end
         end
@@ -353,11 +437,6 @@ describe Y2Storage::BootRequirementsChecker do
       let(:efiboot) { false }
       let(:power_nv) { false }
 
-      context "when there is no root" do
-        let(:scenario) { "false-swaps" }
-        include_examples "unknown boot disk"
-      end
-
       context "in a non-PowerNV system (KVM/LPAR)" do
         let(:power_nv) { false }
 
@@ -365,7 +444,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           context "there is a PReP partition" do
             let(:scenario) { "prep" }
-            include_examples "no errors"
+            include_examples "no warnings"
           end
 
           context "there is too big PReP partition" do
@@ -389,7 +468,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "with a LVM-based proposal" do
           context "there is a PReP partition" do
             let(:scenario) { "prep_lvm" }
-            include_examples "no errors"
+            include_examples "no warnings"
           end
 
           context "PReP partition missing" do
@@ -403,7 +482,7 @@ describe Y2Storage::BootRequirementsChecker do
         xcontext "with a Software RAID proposal" do
           context "there is a PReP partition" do
             let(:scenario) { "prep_raid" }
-            include_examples "no errors"
+            include_examples "no warnings"
           end
 
           context "PReP partition missing" do
@@ -415,7 +494,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "with an encrypted proposal" do
           context "there is a PReP partition" do
             let(:scenario) { "prep_encrypted" }
-            include_examples "no errors"
+            include_examples "no warnings"
           end
 
           context "PReP partition missing" do
@@ -431,7 +510,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "with a partitions-based proposal" do
           let(:scenario) { "trivial" }
 
-          include_examples "no errors"
+          include_examples "no warnings"
         end
 
         context "with a LVM-based proposal" do
@@ -444,7 +523,7 @@ describe Y2Storage::BootRequirementsChecker do
           context "and there is a /boot partition in the system" do
             let(:scenario) { "lvm_with_boot" }
 
-            include_examples "no errors"
+            include_examples "no warnings"
           end
         end
 
@@ -459,7 +538,7 @@ describe Y2Storage::BootRequirementsChecker do
           context "and there is a /boot partition in the system" do
             let(:scenario) { "raid_with_boot" }
 
-            include_examples "no errors"
+            include_examples "no warnings"
           end
         end
 
@@ -473,7 +552,7 @@ describe Y2Storage::BootRequirementsChecker do
           context "and there is a /boot partition in the system" do
             let(:scenario) { "encrypted_with_boot" }
 
-            include_examples "no errors"
+            include_examples "no warnings"
           end
         end
       end
@@ -484,20 +563,11 @@ describe Y2Storage::BootRequirementsChecker do
       let(:efiboot) { false }
       let(:scenario) { "several-dasds" }
 
-      def format_dev(name, type, path)
-        fs = fake_devicegraph.find_by_name(name).create_filesystem(type)
-        fs.mount_path = path
-      end
-
-      def format_zipl(name)
-        format_dev(name, Y2Storage::Filesystems::Type::EXT4, "/boot/zipl")
-      end
-
       RSpec.shared_examples "zipl needed if missing" do
         context "and there is a /boot/zipl partition" do
           before { format_zipl("/dev/dasdc2") }
 
-          include_examples "no errors"
+          include_examples "no warnings"
         end
 
         context "and there is no /boot/zipl partition" do
@@ -509,11 +579,11 @@ describe Y2Storage::BootRequirementsChecker do
         context "and there is a /boot/zipl partition" do
           before { format_zipl("/dev/dasdc2") }
 
-          include_examples "no errors"
+          include_examples "no warnings"
         end
 
         context "and there is no /boot/zipl partition" do
-          include_examples "no errors"
+          include_examples "no warnings"
         end
       end
 
@@ -545,10 +615,6 @@ describe Y2Storage::BootRequirementsChecker do
         end
       end
 
-      context "when there is no root" do
-        include_examples "unknown boot disk"
-      end
-
       context "if / is in a plain partition" do
         before { format_dev(root_name, root_type, "/") }
 
@@ -564,11 +630,10 @@ describe Y2Storage::BootRequirementsChecker do
         context "in the implicit partition table of an FBA device" do
           let(:root_name) { "/dev/dasdb1" }
 
-          # Regression test for bug#1070265. It wrongly claimed booting
-          # from FBA DASDs was not supported
+          # Regression test for bug#1070265. It wrongly claimed booting from FBA DASDs
+          # was not supported. See also similar test above for #errors
           it "contains no error about unsupported disk" do
             expect(checker.warnings).to be_empty
-            expect(checker.errors).to be_empty
           end
         end
 
@@ -653,39 +718,6 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "if there is no separate /boot partition" do
           include_examples "zipl not accessible root"
-        end
-      end
-    end
-
-    context "using NFS for the root filesystem" do
-      before do
-        fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
-        fs.create_mount_point("/")
-      end
-
-      context "in a diskless system" do
-        let(:scenario) { "nfs1.xml" }
-
-        # Regression test for bug#1090752
-        it "does not crash" do
-          expect { checker.warnings }.to_not raise_error
-          expect { checker.errors }.to_not raise_error
-        end
-
-        it "returns no warnings or errors" do
-          expect(checker.warnings).to be_empty
-          expect(checker.errors).to be_empty
-        end
-      end
-
-      context "in a system with local disks" do
-        let(:scenario) { "empty_hard_disk_50GiB" }
-
-        # This used to consider the local disk as the one to boot from, so it
-        # reported wrong errors assuming "/" was going to be there.
-        it "returns no warnings or errors" do
-          expect(checker.warnings).to be_empty
-          expect(checker.errors).to be_empty
         end
       end
     end
