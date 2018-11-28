@@ -98,9 +98,9 @@ module Y2Storage
       # @param disk [Partitionable] disk to analyze
       # @return [Partition, nil] nil if no suitable partition is found
       def suitable_rpi_boot(disk)
-        return nil unless disk.partition_table && disk.partition_table.type.is?(:msdos)
+        return nil unless msdos_ptable?(disk)
 
-        partition = disk.partitions.sort_by { |p| p.region.start }.first
+        partition = first_partition(disk)
         # In our experience, partition ids are too often set to a wrong value
         # and even the firmwares are kind of relaxed about the ids they accept
         # for a given purpose.
@@ -118,6 +118,23 @@ module Y2Storage
         return false if filesystem.nil? || !filesystem.type.is?(:vfat)
 
         ExistingFilesystem.new(filesystem).rpi_boot?
+      end
+
+      # First partition in a disk
+      #
+      # @param disk [Disk]
+      # @return [Partition, nil] nil if the disk contains no partitions
+      def first_partition(disk)
+        disk.partitions.sort_by { |p| p.region.start }.first
+      end
+
+      # Whether the disk contains an MS-DOS style (a.k.a. MBR) partition table
+      #
+      # @param disk [Disk]
+      # @return [Boolean] false if there is no partition table or if there is
+      #   one of the wrong type
+      def msdos_ptable?(disk)
+        disk.partition_table && disk.partition_table.type.is?(:msdos)
       end
     end
   end

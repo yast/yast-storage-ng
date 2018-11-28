@@ -133,7 +133,16 @@ module Y2Storage
         BootRequirementsStrategies::NfsRoot
       elsif raspberry_pi?
         BootRequirementsStrategies::Raspi
-      elsif arch.efiboot?
+      else
+        arch_strategy_class
+      end
+    end
+
+    # @see #strategy
+    #
+    # @return [BootRequirementsStrategies::Base]
+    def arch_strategy_class
+      if arch.efiboot?
         BootRequirementsStrategies::UEFI
       elsif arch.s390?
         BootRequirementsStrategies::ZIPL
