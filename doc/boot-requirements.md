@@ -236,39 +236,22 @@
 				- **does not require any particular volume**
 			- in an encrypted proposal
 				- **does not require any particular volume**
-		- with too small MBR gap
+		- with a MBR gap too small to accommodate Grub
 			- in a partitions-based proposal
-				- if / can embed grub
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
 					- **does not require any particular volume**
-					- **shows a warning that the setup is not supported**
-				- if / can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 			- in a LVM-based proposal
-				- if / can embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-				- if /boot can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 			- in an encrypted proposal
-				- if / can embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-				- if / can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-	- with no partition table
-		- in an unencrypted proposal
-			- if / can embed grub
-				- **shows a warning that the setup is not supported**
-			- if / can not embed grub
-				- **shows a warning that the bootloader cannot be installed**
-		- in an encrypted proposal
-			- if / can embed grub
-				- **shows a warning that the bootloader cannot be installed**
-			- if / can not embed grub
-				- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 	- when proposing a boot partition
 		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
 		- when aiming for the recommended size

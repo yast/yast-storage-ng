@@ -34,7 +34,7 @@ describe Y2Storage::BootRequirementsChecker do
   end
 
   RSpec.shared_examples "needs /boot partition" do
-    it "requires a new /boot partition" do
+    it "requires a new /boot partition to install Grub into it" do
       expect(checker.needed_partitions).to contain_exactly(
         an_object_having_attributes(
           mount_point: "/boot", filesystem_type: Y2Storage::Filesystems::Type::EXT4
@@ -48,32 +48,6 @@ describe Y2Storage::BootRequirementsChecker do
       expect(checker.needed_partitions).to contain_exactly(
         an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
       )
-    end
-  end
-
-  RSpec.shared_examples "no warnings" do
-    it "shows no warnings" do
-      expect(checker.warnings).to be_empty
-    end
-  end
-
-  RSpec.shared_examples "warns: unsupported bootloader setup" do
-    it "shows a warning that the setup is not supported" do
-      expect(checker.warnings.size).to be >= 1
-      expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
-
-      messages = checker.warnings.map(&:message)
-      expect(messages).to include(match(/setup is not supported/))
-    end
-  end
-
-  RSpec.shared_examples "warns: invalid bootloader setup" do
-    it "shows a warning that the bootloader cannot be installed" do
-      expect(checker.warnings.size).to be >= 1
-      expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
-
-      messages = checker.warnings.map(&:message)
-      expect(messages).to include(match(/not be possible to install/))
     end
   end
 
@@ -195,42 +169,38 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
 
-        context "with too small MBR gap" do
+        context "with a MBR gap too small to accommodate Grub" do
           let(:mbr_gap_for_grub?) { false }
 
           context "in a partitions-based proposal" do
             let(:use_lvm) { false }
 
-            context "if / can embed grub" do
+            context "if the file-system selected for / can embed grub (ext2/3/4 or btrfs)" do
               let(:embed_grub) { true }
 
-              include_examples("needs no volume")
-              include_examples("warns: unsupported bootloader setup")
+              include_examples "needs no volume"
             end
 
-            context "if / can not embed grub" do
+            context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples("needs /boot partition")
-              include_examples("warns: invalid bootloader setup")
+              include_examples "needs /boot partition"
             end
           end
 
           context "in a LVM-based proposal" do
             let(:use_lvm) { true }
 
-            context "if / can embed grub" do
+            context "if the file-system selected for / can embed grub (ext2/3/4 or btrfs)" do
               let(:embed_grub) { true }
 
-              include_examples("needs /boot partition")
-              include_examples("warns: invalid bootloader setup")
+              include_examples "needs /boot partition"
             end
 
-            context "if /boot can not embed grub" do
+            context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples("needs /boot partition")
-              include_examples("warns: invalid bootloader setup")
+              include_examples "needs /boot partition"
             end
           end
 
@@ -238,56 +208,17 @@ describe Y2Storage::BootRequirementsChecker do
             let(:use_lvm) { false }
             let(:use_encryption) { true }
 
-            context "if / can embed grub" do
+            context "if the file-system selected for / can embed grub (ext2/3/4 or btrfs)" do
               let(:embed_grub) { true }
 
-              include_examples("needs /boot partition")
-              include_examples("warns: invalid bootloader setup")
+              include_examples "needs /boot partition"
             end
 
-            context "if / can not embed grub" do
+            context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples("needs /boot partition")
-              include_examples("warns: invalid bootloader setup")
+              include_examples "needs /boot partition"
             end
-          end
-        end
-      end
-
-      context "with no partition table" do
-        let(:boot_ptable_type) { nil }
-        let(:use_lvm) { false }
-
-        context "in an unencrypted proposal" do
-          let(:use_encryption) { false }
-
-          context "if / can embed grub" do
-            let(:embed_grub) { true }
-
-            include_examples("warns: unsupported bootloader setup")
-          end
-
-          context "if / can not embed grub" do
-            let(:embed_grub) { false }
-
-            include_examples("warns: invalid bootloader setup")
-          end
-        end
-
-        context "in an encrypted proposal" do
-          let(:use_encryption) { true }
-
-          context "if / can embed grub" do
-            let(:embed_grub) { true }
-
-            include_examples("warns: invalid bootloader setup")
-          end
-
-          context "if / can not embed grub" do
-            let(:embed_grub) { false }
-
-            include_examples("warns: invalid bootloader setup")
           end
         end
       end

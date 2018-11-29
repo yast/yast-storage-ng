@@ -209,21 +209,21 @@ describe Y2Storage::BootRequirementsChecker do
 
     RSpec.shared_examples "missing boot partition" do
       it "contains an error for missing boot partition" do
-        expect(checker.warnings.size).to be >= 1
         expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
-
-        message = checker.warnings.first.message
-        expect(message).to match(/Missing device for \/boot|Not enough space/)
+        messages = checker.warnings.map(&:message)
+        expect(messages).to include(
+          match(/Missing device for \/boot/)
+        )
       end
     end
 
     RSpec.shared_examples "missing mbr gap" do
       it "contains an error for missing/too small mbr gap" do
-        expect(checker.warnings.size).to be >= 1
         expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
-
-        message = checker.warnings.first.message
-        expect(message).to match(/Not enough space before the first partition/)
+        messages = checker.warnings.map(&:message)
+        expect(messages).to include(
+          match(/Not enough space before the first partition/)
+        )
       end
     end
 
@@ -300,16 +300,34 @@ describe Y2Storage::BootRequirementsChecker do
       context "not using UEFI (legacy PC)" do
         let(:efiboot) { false }
 
+        RSpec.shared_examples "unsupported bootloader setup" do
+          it "shows a warning that the setup is not supported" do
+            expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+            messages = checker.warnings.map(&:message)
+            expect(messages).to include(match(/setup is not supported/))
+          end
+        end
+
+        RSpec.shared_examples "invalid bootloader setup" do
+          it "shows a warning that the bootloader cannot be installed" do
+            expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+            messages = checker.warnings.map(&:message)
+            expect(messages).to include(match(/not be possible to install/))
+          end
+        end
+
         context "when boot device has a GPT partition table" do
           context "and there is no a grub partition in the system" do
             let(:scenario) { "gpt_without_grub" }
 
             it "contains an error for missing grub partition" do
-              expect(checker.warnings.size).to be >= 1
               expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
-
-              message = checker.warnings.first.message
-              expect(message).to match(/partition of type BIOS Boot/)
+              messages = checker.warnings.map(&:message)
+              expect(messages).to include(
+                match(/partition of type BIOS Boot/)
+              )
             end
           end
 
@@ -321,7 +339,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "with a MS-DOS partition table" do
-          context "with a too small MBR gap" do
+          context "with a too small MBR gap (no room to allocate Grub there)" do
             before do
               allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?).and_return(false)
             end
@@ -330,17 +348,38 @@ describe Y2Storage::BootRequirementsChecker do
               let(:scenario) { "dos_btrfs" }
 
               include_examples "missing mbr gap"
+              include_examples "unsupported bootloader setup"
             end
 
-            context "in a not plain btrfs setup" do
+            context "in a LVM-based setup" do
               let(:scenario) { "dos_lvm" }
 
-              it "contains an error for small MBR gap" do
-                expect(checker.warnings.size).to be >= 1
-                expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+              context "if there is no separate /boot" do
+                include_examples "missing mbr gap"
+                include_examples "invalid bootloader setup"
+              end
 
-                message = checker.warnings.first.message
-                expect(message).to match(/not enough/i)
+              context "if there is separate /boot" do
+                let(:scenario) { "dos_lvm_boot_partition" }
+
+                include_examples "missing mbr gap"
+                include_examples "unsupported bootloader setup"
+              end
+            end
+
+            context "in an encrypted setup" do
+              let(:scenario) { "dos_encrypted" }
+
+              context "if there is no separate /boot" do
+                include_examples "missing mbr gap"
+                include_examples "invalid bootloader setup"
+              end
+
+              context "if there is separate /boot" do
+                let(:scenario) { "dos_encrypted_boot_partition" }
+
+                include_examples "missing mbr gap"
+                include_examples "unsupported bootloader setup"
               end
             end
           end
@@ -356,69 +395,54 @@ describe Y2Storage::BootRequirementsChecker do
               include_examples "no warnings"
             end
 
-            # FIXME: doesn't make sense logically anymore
             context "in a LVM-based setup" do
               # examples define own gap
               let(:scenario) { "dos_lvm" }
 
-              context "if the MBR gap has additional space for grubenv" do
-                before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
-                    .and_return(true)
-                end
-
-                include_examples "no warnings"
-              end
-
-              context "if the MBR gap has no additional space" do
-                before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
-                    .and_return(false)
-                end
-
-                context "if there is no separate /boot" do
-                  include_examples "missing boot partition"
-                end
-
-                context "if there is separate /boot" do
-                  let(:scenario) { "dos_lvm_boot_partition" }
-
-                  include_examples "missing mbr gap"
-                end
-              end
-            end
-
-            xcontext "in a Software RAID setup" do
+              include_examples "no warnings"
             end
 
             context "in an encrypted setup" do
               let(:scenario) { "dos_encrypted" }
 
-              context "if the MBR gap has additional space for grubenv" do
-                before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
-                    .and_return(true)
-                end
+              include_examples "no warnings"
+            end
 
-                include_examples "no warnings"
-              end
+            xcontext "in a Software RAID setup" do
+            end
+          end
+        end
 
-              context "if the MBR gap has no additional space" do
-                before do
-                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap_for_grub?)
-                    .and_return(false)
-                end
+        context "with the root (/) file-system directly on disk (no partition table)" do
+          context "if / is not encrypted" do
+            context "and the / file-system can embed grub (ext2/3/4 or btrfs)" do
+              let(:scenario) { "btrfs_on_disk" }
 
-                context "if there is no separate /boot" do
-                  include_examples "missing boot partition"
-                end
+              include_examples "unsupported bootloader setup"
+            end
 
-                context "if there is separate /boot" do
-                  let(:scenario) { "dos_encrypted_boot_partition" }
+            context "and the / file-system cannot embed grub (eg. XFS)" do
+              let(:scenario) { "xfs_on_disk" }
 
-                  include_examples "missing mbr gap"
-                end
-              end
+              include_examples "invalid bootloader setup"
+            end
+          end
+
+          context "if / is encrypted" do
+            before do
+              fake_devicegraph.disks.first.create_encryption("cr_device")
+            end
+
+            context "and the / file-system can embed grub (ext2/3/4 or btrfs)" do
+              let(:scenario) { "btrfs_on_disk" }
+
+              include_examples "invalid bootloader setup"
+            end
+
+            context "and the / file-system cannot embed grub (eg. XFS)" do
+              let(:scenario) { "xfs_on_disk" }
+
+              include_examples "invalid bootloader setup"
             end
           end
         end
