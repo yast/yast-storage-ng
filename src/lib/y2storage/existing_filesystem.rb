@@ -157,7 +157,7 @@ module Y2Storage
       Crypttab.new(crypttab_path, filesystem)
     end
 
-    # Checks whether a the Raspberry Pi boot code is in the root of the
+    # Checks whether the Raspberry Pi boot code is in the root of the
     # filesystem
     #
     # @return [Boolean]

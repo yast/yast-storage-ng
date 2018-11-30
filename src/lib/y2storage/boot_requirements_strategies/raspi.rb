@@ -112,6 +112,7 @@ module Y2Storage
 
       # @see #suitable_rpi_boot
       #
+      # @param partition [Partition]
       # @return [Boolean]
       def rpi_boot?(partition)
         filesystem = partition.direct_blk_filesystem
@@ -122,7 +123,7 @@ module Y2Storage
 
       # First partition in a disk
       #
-      # @param disk [Disk]
+      # @param disk [Partitionable]
       # @return [Partition, nil] nil if the disk contains no partitions
       def first_partition(disk)
         disk.partitions.sort_by { |p| p.region.start }.first
@@ -130,7 +131,7 @@ module Y2Storage
 
       # Whether the disk contains an MS-DOS style (a.k.a. MBR) partition table
       #
-      # @param disk [Disk]
+      # @param disk [Partitionable]
       # @return [Boolean] false if there is no partition table or if there is
       #   one of the wrong type
       def msdos_ptable?(disk)
