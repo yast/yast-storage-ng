@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Nov 30 14:35:44 UTC 2018 - ancor@suse.com
+
+- Support for Raspberry Pi in Guided Proposal: it suggests to keep
+  the firmware partition and mount it as /boot/vc (fate#323484).
+- 4.1.38
+
+-------------------------------------------------------------------
 Tue Nov 27 05:34:41 UTC 2018 - Noah Davis <noahadvs@gmail.com>
 
 - Provide icon with module (boo#1109310)
