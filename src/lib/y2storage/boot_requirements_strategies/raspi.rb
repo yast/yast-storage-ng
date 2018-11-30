@@ -78,11 +78,9 @@ module Y2Storage
         @reusable_rpi_checked = true
 
         # First check if there is a firmware partition in the target disk
-        @reusable_rpi_boot = suitable_rpi_boot(boot_disk)
-        return @reusable_rpi_boot if @reusable_rpi_boot
-
-        # If not, any firmware partition we can find
-        devicegraph.disk_devices.each do |disk|
+        # If not, keep searching any firmware partition in the other devices
+        disks = ([boot_disk] + devicegraph.disk_devices).uniq
+        disks.each do |disk|
           @reusable_rpi_boot = suitable_rpi_boot(disk)
           return @reusable_rpi_boot if @reusable_rpi_boot
         end
