@@ -57,7 +57,7 @@ module Y2Storage
     # (the mechanism used by the Partitioner to find and report wrong setups).
     # See {#errors} and {#warnings} for that.
     #
-    # @raise [BootRequirementsStrategies::Error] if adding partitions is not
+    # @raise [BootRequirementsChecker::Error] if adding partitions is not
     #     enough to make the system bootable
     #
     # @param target [Symbol] :desired means the sizes of the partitions should
