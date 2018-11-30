@@ -44,8 +44,8 @@ RSpec.shared_examples "Mount and umount actions" do
       subject.send(tested_method)
     end
 
-    it "returns nil" do
-      expect(subject.send(tested_method)).to be_nil
+    it "returns nil (or false for boolean methods)" do
+      expect(subject.send(tested_method)).to eq result_if_mount_fails
     end
   end
 
@@ -67,6 +67,7 @@ describe Y2Storage::ExistingFilesystem do
   let(:mount_point) { "" }
   let(:mount_cmd) { Regexp.new("mount -o ro #{device.name}") }
   let(:umount_cmd) { Regexp.new("umount -R") }
+  let(:result_if_mount_fails) { nil }
 
   let(:filesystem) { instance_double(Storage::BlkFilesystem, blk_devices: [device]) }
   let(:device) { instance_double(Storage::BlkDevice, name: "/dev/sda") }
@@ -159,6 +160,44 @@ describe Y2Storage::ExistingFilesystem do
 
       it "returns the crypttab" do
         expect(subject.crypttab).to be_a(Y2Storage::Crypttab)
+      end
+    end
+  end
+
+  describe "#rpi_boot?" do
+    let(:tested_method) { :rpi_boot? }
+    let(:existing_files) { [] }
+    let(:result_if_mount_fails) { false }
+
+    before do
+      allow(File).to receive(:exist?) do |name|
+        existing_files.include?(name)
+      end
+    end
+
+    include_examples "Mount and umount actions"
+
+    context "when there is no file called bootcode.bin or BOOTCODE.bin" do
+      let(:existing_files) { %w(/foo /bar) }
+
+      it "returns false" do
+        expect(subject.rpi_boot?).to eq false
+      end
+    end
+
+    context "when there is a file called bootcode.bin" do
+      let(:existing_files) { %w(/foo /bar /bootcode.bin) }
+
+      it "returns true" do
+        expect(subject.rpi_boot?).to eq true
+      end
+    end
+
+    context "when there is a file called BOOTCODE.BIN" do
+      let(:existing_files) { %w(/BOOTCODE.BIN) }
+
+      it "returns true" do
+        expect(subject.rpi_boot?).to eq true
       end
     end
   end
