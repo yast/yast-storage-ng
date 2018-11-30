@@ -82,8 +82,6 @@ module Y2Storage
     #
     # So far, this is mainly used by {SetupError} (which is the mechanism used
     # by the partitioner). The proposals rely on {#needed_partitions} instead.
-    # The proposals only call this method in exceptional cases for reporting
-    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def warnings
@@ -95,8 +93,6 @@ module Y2Storage
     #
     # So far, this is mainly used by {SetupError} (which is the mechanism used
     # by the partitioner). The proposals rely on {#needed_partitions} instead.
-    # The proposals only call this method in exceptional cases for reporting
-    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def errors
