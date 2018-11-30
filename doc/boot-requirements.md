@@ -75,6 +75,73 @@
 		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
 		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
 
+## needed partitions in a Raspberry Pi
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- and there are firmware partitions in several disks, including the target
+			- **requires a new /boot/efi partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires a new /boot/efi partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **requires only a new /boot/efi partition**
+	- if there is suitable EFI partition
+		- and there are firmware partitions in several disks, including the target
+			- **requires to use the existing EFI partition**
+			- **requires to mount at /boot/vc the firmware partition from the target disk**
+		- and there is a firmware partition in another disk
+			- **requires to use the existing EFI partition**
+			- **requires to mount the existing firmware partition at /boot/vc**
+		- and there is no firmware partition in the system
+			- **only requires to use the existing EFI partition**
+- when proposing an new EFI partition
+	- **requires /boot/efi to be a non-encrypted vfat partition**
+	- **requires /boot/efi to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
+	- when aiming for the minimal size
+		- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+		- **requires it to be at most 500 MiB (enough space for several operating systems)**
+
 ## needed partitions in a S/390 system
 - trying to install in a FBA DASD disk
 	- with a partitions-based proposal
@@ -169,39 +236,22 @@
 				- **does not require any particular volume**
 			- in an encrypted proposal
 				- **does not require any particular volume**
-		- with too small MBR gap
+		- with a MBR gap too small to accommodate Grub
 			- in a partitions-based proposal
-				- if / can embed grub
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
 					- **does not require any particular volume**
-					- **shows a warning that the setup is not supported**
-				- if / can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 			- in a LVM-based proposal
-				- if / can embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-				- if /boot can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 			- in an encrypted proposal
-				- if / can embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-				- if / can not embed grub
-					- **requires a new /boot partition**
-					- **shows a warning that the bootloader cannot be installed**
-	- with no partition table
-		- in an unencrypted proposal
-			- if / can embed grub
-				- **shows a warning that the setup is not supported**
-			- if / can not embed grub
-				- **shows a warning that the bootloader cannot be installed**
-		- in an encrypted proposal
-			- if / can embed grub
-				- **shows a warning that the bootloader cannot be installed**
-			- if / can not embed grub
-				- **shows a warning that the bootloader cannot be installed**
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
 	- when proposing a boot partition
 		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
 		- when aiming for the recommended size

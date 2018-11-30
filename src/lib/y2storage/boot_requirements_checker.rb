@@ -57,7 +57,7 @@ module Y2Storage
     # (the mechanism used by the Partitioner to find and report wrong setups).
     # See {#errors} and {#warnings} for that.
     #
-    # @raise [BootRequirementsStrategies::Error] if adding partitions is not
+    # @raise [BootRequirementsChecker::Error] if adding partitions is not
     #     enough to make the system bootable
     #
     # @param target [Symbol] :desired means the sizes of the partitions should
@@ -82,8 +82,6 @@ module Y2Storage
     #
     # So far, this is mainly used by {SetupError} (which is the mechanism used
     # by the partitioner). The proposals rely on {#needed_partitions} instead.
-    # The proposals only call this method in exceptional cases for reporting
-    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def warnings
@@ -95,8 +93,6 @@ module Y2Storage
     #
     # So far, this is mainly used by {SetupError} (which is the mechanism used
     # by the partitioner). The proposals rely on {#needed_partitions} instead.
-    # The proposals only call this method in exceptional cases for reporting
-    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def errors
@@ -122,22 +118,36 @@ module Y2Storage
     end
 
     def strategy
-      return @strategy unless @strategy.nil?
+      @strategy ||= strategy_class.new(devicegraph, planned_devices, boot_disk_name)
+    end
 
-      klass =
-        if nfs_root?
-          BootRequirementsStrategies::NfsRoot
-        elsif arch.efiboot?
-          BootRequirementsStrategies::UEFI
-        elsif arch.s390?
-          BootRequirementsStrategies::ZIPL
-        elsif arch.ppc?
-          BootRequirementsStrategies::PReP
-        else
-          # Fallback to Legacy as default
-          BootRequirementsStrategies::Legacy
-        end
-      @strategy = klass.new(devicegraph, planned_devices, boot_disk_name)
+    # @see #strategy
+    #
+    # @return [BootRequirementsStrategies::Base]
+    def strategy_class
+      if nfs_root?
+        BootRequirementsStrategies::NfsRoot
+      elsif raspberry_pi?
+        BootRequirementsStrategies::Raspi
+      else
+        arch_strategy_class
+      end
+    end
+
+    # @see #strategy
+    #
+    # @return [BootRequirementsStrategies::Base]
+    def arch_strategy_class
+      if arch.efiboot?
+        BootRequirementsStrategies::UEFI
+      elsif arch.s390?
+        BootRequirementsStrategies::ZIPL
+      elsif arch.ppc?
+        BootRequirementsStrategies::PReP
+      else
+        # Fallback to Legacy as default
+        BootRequirementsStrategies::Legacy
+      end
     end
 
     # Whether the root filesystem is NFS
@@ -145,6 +155,19 @@ module Y2Storage
     # @return [Boolean]
     def nfs_root?
       devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
+    end
+
+    # @see #raspberry_pi?
+    VENDOR_MODEL_PATH = "/proc/device-tree/model"
+    private_constant :VENDOR_MODEL_PATH
+
+    # Whether this is a Raspberry Pi. See fate#323484
+    #
+    # @return [Boolean]
+    def raspberry_pi?
+      return false unless File.exist?(VENDOR_MODEL_PATH)
+
+      File.read(VENDOR_MODEL_PATH).match?(/Raspberry Pi/i)
     end
   end
 end

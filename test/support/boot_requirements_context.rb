@@ -75,6 +75,11 @@ RSpec.shared_context "boot requirements" do
     use_btrfs ? Y2Storage::Filesystems::Type::BTRFS : Y2Storage::Filesystems::Type::EXT4
   end
   let(:boot_ptable_type) { :msdos }
+
+  # Mocks for Raspberry Pi detection
+  let(:raspi_system) { false }
+  let(:model_file_content) { raspi_system ? "Raspberry Pi VERSION" : "Another thing" }
+
   # Assume the needed partitions are not already planned in advance
   let(:planned_prep_partitions) { [] }
   let(:planned_grub_partitions) { [] }
@@ -92,6 +97,12 @@ RSpec.shared_context "boot requirements" do
     allow(devicegraph).to receive(:nfs_mounts).and_return []
 
     allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
+
+    # Mocks for Raspberry Pi detection
+    allow(File).to receive(:exist?).and_call_original
+    allow(File).to receive(:exist?).with("/proc/device-tree/model").and_return raspi_system
+    allow(File).to receive(:read).with("/proc/device-tree/model").and_return model_file_content
+
     # Assume the needed partitions are not already planned in advance
     allow(analyzer).to receive(:free_mountpoint?).and_return true
   end

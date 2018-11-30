@@ -38,7 +38,6 @@ describe Y2Storage::BootRequirementsChecker do
     let(:efi_partitions) { [] }
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
-    let(:sda_part_table) { pt_msdos }
     let(:mbr_gap_for_grub?) { false }
 
     before do
@@ -112,7 +111,6 @@ describe Y2Storage::BootRequirementsChecker do
     context "when a separate /boot is needed" do
       # Default values to ensure boot is needed
       let(:use_lvm) { true }
-      let(:sda_part_table) { pt_msdos }
       let(:mbr_gap_for_grub?) { false }
 
       before do
