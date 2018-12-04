@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -81,6 +81,19 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
         it "shows an error message" do
           expect(Yast::Popup).to receive(:Error)
+          subject.validate
+        end
+
+        it "returns false" do
+          expect(subject.validate).to be(false)
+        end
+      end
+
+      context "when a path with unsafe characters is entered" do
+        let(:value) { "@/foo,bar" }
+
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error).with(/contains unsafe characters/)
           subject.validate
         end
 
