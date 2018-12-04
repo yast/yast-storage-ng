@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Dec  4 15:07:42 UTC 2018 - jlopez@suse.com
+
+- Partitioner: does not allow to create BTRFS subvolumes with
+  unsafe characters in its path (related to bsc#1059972).
+- 4.1.39
+
+-------------------------------------------------------------------
 Fri Nov 30 14:35:44 UTC 2018 - ancor@suse.com
 
 - Support for Raspberry Pi in Guided Proposal: it suggests to keep
