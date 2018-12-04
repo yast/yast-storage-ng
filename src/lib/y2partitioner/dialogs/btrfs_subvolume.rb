@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -98,6 +98,9 @@ module Y2Partitioner
         attr_reader :form
         attr_reader :filesystem
 
+        UNSAFE_CHARS = "\n\t\v\r\s,".freeze
+        private_constant :UNSAFE_CHARS
+
         # @param form [Dialogs::BtrfsSubvolume::Form]
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
         def initialize(form, filesystem: nil)
@@ -122,13 +125,21 @@ module Y2Partitioner
         #
         # The following conditions are checked:
         # - The subvolume path is not empty
+        # - The subvolume path does not contain unsafe characters
         # - The subvolume path starts by the default subvolume path
         # - The subvolume path is unique for the filesystem
+        #
+        # An error popup is shown when the path contains some error.
+        #
+        # @return [Boolean] true if the subvolume path is valid
         def validate
           fix_path
 
-          valid = content_validation && uniqueness_validation && hierarchy_validation
-          return true if valid
+          error = presence_error || content_error || uniqueness_error || hierarchy_error
+
+          return true if error.nil?
+
+          Yast::Popup.Error(error)
 
           focus
           false
@@ -140,44 +151,49 @@ module Y2Partitioner
           Yast::UI.SetFocus(Id(widget_id))
         end
 
-        # Validates not empty path
-        # An error popup is shown when entered path is empty.
+        # Error when the given path is empty
         #
-        # @return [Boolean] true if path is not empty
-        def content_validation
-          return true unless value.empty?
+        # @return [String, nil] nil if the path is not empty
+        def presence_error
+          return nil unless value.empty?
 
-          Yast::Popup.Error(_("Empty subvolume path not allowed."))
-          false
+          _("Empty subvolume path not allowed.")
         end
 
-        # Validates not duplicated path
-        # An error popup is shown when entered path already exists in the filesystem.
+        # Error when the given path contains unsafe characters
         #
-        # @return [Boolean] true if path does not exist
-        def uniqueness_validation
-          return true unless exist_path?
+        # @return [String, nil] nil if the path does not contain unsafe characters
+        def content_error
+          return nil unless /[#{UNSAFE_CHARS}]/.match?(value)
 
-          Yast::Popup.Error(format(_("Subvolume name %s already exists."), value))
-          false
+          _("Subvolume path contains unsafe characters. Be sure it does\n" \
+            "not include white spaces, tabs, line breaks, commas or similar\n" \
+            "special characters.")
         end
 
-        # Validate proper hierarchy
-        # An error popup is shown when entered path is part of an already existing path.
+        # Error when the given path already exists in the filesystem
         #
-        # @return [Boolean] true if path is part of an already existing path
-        def hierarchy_validation
-          return true if filesystem.subvolume_can_be_created?(value)
+        # @return [String, nil] nil if the path does not exist yet
+        def uniqueness_error
+          return nil unless exist_path?
 
-          msg = format(_("Cannot create subvolume %s."), value)
+          format(_("Subvolume name %s already exists."), value)
+        end
+
+        # Error when the given path is part of an already existing path
+        #
+        # @return [String, nil] nil if the path is not part of an already existing path
+        def hierarchy_error
+          return nil if filesystem.subvolume_can_be_created?(value)
+
+          error = format(_("Cannot create subvolume %s."), value)
 
           sv = filesystem.subvolume_descendants(value).first
           if sv
-            msg << "\n" << format(_("Delete subvolume %s first."), sv.path)
+            error << "\n" << format(_("Delete subvolume %s first."), sv.path)
           end
 
-          Yast::Popup.Error(msg)
-          false
+          error
         end
 
         # Updates #value by adding the subvolumes prefix
