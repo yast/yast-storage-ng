@@ -166,9 +166,9 @@ module Y2Partitioner
         def content_error
           return nil unless /[#{UNSAFE_CHARS}]/.match?(value)
 
-          _("Subvolume path contains unsafe characters. Be sure it does\n" \
-            "not include white spaces, tabs, line breaks, commas or similar\n" \
-            "special characters.")
+          _("Subvolume path contains unsafe characters. Be sure it\n" \
+            "does not include spaces, tabs, line breaks, commas or\n" \
+            "similar special characters.")
         end
 
         # Error when the given path already exists in the filesystem
