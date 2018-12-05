@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Dec  4 15:07:42 UTC 2018 - jlopez@suse.com
+
+- Partitioner: does not allow to create BTRFS subvolumes with
+  unsafe characters in its path (related to bsc#1059972).
+- 4.0.216
+
+-------------------------------------------------------------------
 Wed Nov 14 15:15:04 CET 2018 - schubi@suse.de
 
 - SkipListValue.size_k returns the correct value (bsc#1115508).
