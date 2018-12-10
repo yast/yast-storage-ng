@@ -21,6 +21,7 @@
 
 require "yast"
 require "fileutils"
+require "yast2/execute"
 require "y2storage/fstab"
 
 Yast.import "OSRelease"
@@ -107,26 +108,46 @@ module Y2Storage
       @processed = true
     end
 
-    # Mount the device.
+    # Mounts the device
     #
-    # This is a temporary workaround until the new libstorage can handle that.
+    # @see execute
     #
+    # @note libstorage-ng has a couple of ways for immediate mounting/unmounting devices, but
+    #   they cannot be easily used here.
+    #
+    #   For example, BlkFilesystem::detect_content_info uses an internal EnsureMounted object.
+    #   EnsureMounted mounts a given filesystem during its construction and unmounts it during
+    #   its destuction. In ruby there is no a clear way of calling the destructor of a binding
+    #   object, so EnsureMounted cannot be used for a temporary mount to inspect the filesystem
+    #   content from YaST and then unmount it.
+    #
+    #   Besides that, MountPoint offers MountPoint::immediate_activate and ::immediate_deactivate,
+    #   but these methods only can be used with probed mount points. Internally, these methods
+    #   use Mountable::Impl::immediate_activate and ::immediate_deactivate. Such methdos could
+    #   be offered in the public API, but they require to create a temporary mount point for the
+    #   filesystem to mount. Creating a mount point could have some implications, see
+    #   {Device#update_etc_status}, and moreover, a possible existing mount point should be
+    #   correctly restored.
+    #
+    #   The library API needs to be extended to easily mount/umount a device in an arbitrary
+    #   path without modifying the device (i.e., without changing its current mount point).
+    #
+    # @raise [RuntimeError] when the device cannot be mounted
     def mount
-      # FIXME: use libstorage function when available
-      cmd = "/usr/bin/mount -o ro #{device.name} #{@mount_point} >/dev/null 2>&1"
-      log.debug("Trying to mount #{device.name}: #{cmd}")
-      raise "mount failed for #{device.name}" unless system(cmd)
+      cmd = ["/usr/bin/mount", "-o", "ro", device.name, @mount_point]
+
+      raise "mount failed for #{device.name}" unless execute(*cmd)
     end
 
-    # Unmount a device.
+    # Unmounts the device
     #
-    # This is a temporary workaround until the new libstorage can handle that.
+    # @see mount
     #
+    # @raise [RuntimeError] when the device cannot be unmounted
     def umount
-      # FIXME: use libstorage function when available
-      cmd = "/usr/bin/umount -R #{@mount_point}"
-      log.debug("Unmounting: #{cmd}")
-      raise "umount failed for #{@mount_point}" unless system(cmd)
+      cmd = ["/usr/bin/umount", "-R", @mount_point]
+
+      raise "umount failed for #{@mount_point}" unless execute(*cmd)
     end
 
     # Tries to read the release name
@@ -169,6 +190,18 @@ module Y2Storage
         return true if File.exist?(path)
       end
 
+      false
+    end
+
+    # Executes a given command
+    #
+    # For possible parameters, see Yast::Execute.locally!.
+    #
+    # @return [Boolean] true if the command finishes correctly; false otherwise.
+    def execute(*args)
+      Yast::Execute.locally!(*args)
+      true
+    rescue Cheetah::ExecutionFailed
       false
     end
   end
