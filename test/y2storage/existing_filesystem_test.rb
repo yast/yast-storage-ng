@@ -25,18 +25,21 @@ require "y2storage"
 
 RSpec.shared_examples "Mount and umount actions" do
   it "mounts the device" do
-    expect(subject).to receive(:system).with(mount_cmd).and_return true
+    expect(Yast::Execute).to receive(:locally!).with(*mount_cmd)
     subject.send(tested_method)
   end
 
   it "umounts the device" do
-    expect(subject).to receive(:system).with(umount_cmd).and_return true
+    expect(Yast::Execute).to receive(:locally!).with(*umount_cmd)
     subject.send(tested_method)
   end
 
+  let(:cheetah_error) { Cheetah::ExecutionFailed.new([], "", nil, nil) }
+
   context "when mount fails" do
     before do
-      allow(subject).to receive(:system).with(mount_cmd).and_return(false)
+      allow(Yast::Execute).to receive(:locally!).with(*mount_cmd)
+        .and_raise(cheetah_error)
     end
 
     it "does not perform the corresponding action" do
@@ -51,7 +54,8 @@ RSpec.shared_examples "Mount and umount actions" do
 
   context "when umount fails" do
     before do
-      allow(subject).to receive(:system).with(umount_cmd).and_return(false)
+      allow(Yast::Execute).to receive(:locally!).with(*umount_cmd)
+        .and_raise(cheetah_error)
     end
 
     it "sets the value correctly" do
@@ -65,15 +69,15 @@ describe Y2Storage::ExistingFilesystem do
 
   let(:root) { "" }
   let(:mount_point) { "" }
-  let(:mount_cmd) { Regexp.new("mount -o ro #{device.name}") }
-  let(:umount_cmd) { Regexp.new("umount -R") }
+  let(:mount_cmd) { ["/usr/bin/mount", "-o", "ro", device.name, mount_point] }
+  let(:umount_cmd) { ["/usr/bin/umount", "-R", mount_point] }
   let(:result_if_mount_fails) { nil }
 
   let(:filesystem) { instance_double(Storage::BlkFilesystem, blk_devices: [device]) }
   let(:device) { instance_double(Storage::BlkDevice, name: "/dev/sda") }
 
   before do
-    allow(subject).to receive(:system).and_return true
+    allow(Yast::Execute).to receive(:locally!)
   end
 
   describe "#device" do
