@@ -92,5 +92,19 @@ module Y2Storage
     def types_for_is
       super << :disk
     end
+
+
+    # Whether this device can be in general treated like a disk for YaST
+    # purposes
+    #
+    # @see Devicegraph::disk_devices
+    #
+    # @return [Boolean]
+    def disk_device?
+      puts "xxxxx"
+      super
+#      basename.match?(xxxx) ? false : super
+    end
+
   end
 end
