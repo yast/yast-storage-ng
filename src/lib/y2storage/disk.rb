@@ -100,8 +100,9 @@ module Y2Storage
     #
     # @return [Boolean]
     def disk_device?
-      # Filter out all eMMC boot partitions (mmcblk*boot*)
-      basename =~ /^mmcblk\d+boot\d+/ ? false : super
+      # Filter out all MMC RPMB partitions
+      return false if basename.start_with?("mmcblk") && basename.match(/rpmb$|boot\d+$/)
+      super
     end
   end
 end
