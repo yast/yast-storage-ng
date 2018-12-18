@@ -93,7 +93,6 @@ module Y2Storage
       super << :disk
     end
 
-
     # Whether this device can be in general treated like a disk for YaST
     # purposes
     #
@@ -101,10 +100,8 @@ module Y2Storage
     #
     # @return [Boolean]
     def disk_device?
-      puts "xxxxx"
-      super
-#      basename.match?(xxxx) ? false : super
+      # Filter out all eMMC boot partitions (mmcblk*boot*)
+      basename.match(/mmcblk\d+boot\d+/) ? false : super
     end
-
   end
 end
