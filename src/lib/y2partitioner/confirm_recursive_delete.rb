@@ -61,13 +61,10 @@ module Y2Partitioner
     # @param button_term [Yast::UI::Term]
     # @return [Boolean]
     def fancy_question(headline, label_before, rich_text, label_after, button_term)
-      display_info = Yast::UI.GetDisplayInfo || {}
-      has_image_support = display_info["HasImageSupport"]
-
       layout = VBox(
         VSpacing(0.4),
         HBox(
-          has_image_support ? Top(Image(Yast::Icon.IconPath("question"))) : Empty(),
+          Top(Yast::Icon.Simple("question")),
           HSpacing(1),
           VBox(
             Left(Heading(headline)),
