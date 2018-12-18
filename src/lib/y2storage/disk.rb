@@ -103,7 +103,7 @@ module Y2Storage
       # Filter out all MMC RPMB partitions
       basename =~ /^mmcblk\d+boot\d+|^mmcblk\d+rpmb/ ? false : super
       #      return false if basename.start_with?("mmcblk") && basename.match(/rpmb$|boot\d+$/)
-      super
+#      super
     end
   end
 end
