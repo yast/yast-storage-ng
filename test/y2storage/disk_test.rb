@@ -371,7 +371,7 @@ describe Y2Storage::Disk do
       let(:scenario) { "eMMC_boot_partitions" }
       let(:disk_name) { "/dev/mmcblk0boot0"}
 
-      it "returns true for values whose symbol is :disk_device" do
+      it "returns false for values whose symbol is :disk_device" do
         expect(disk.is?(:disk_device)).to eq false
       end
     end
