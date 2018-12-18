@@ -366,6 +366,24 @@ describe Y2Storage::Disk do
         expect(disk.is?("disk_device")).to eq true
       end
     end
+
+    context "when the disk is an eMMC boot partitions" do
+      let(:scenario) { "eMMC_boot_partitions" }
+      let(:disk_name) { "/dev/mmcblk0boot0" }
+
+      it "returns false for values whose symbol is :disk_device" do
+        expect(disk.is?(:disk_device)).to eq false
+      end
+    end
+
+    context "when the disk is an eMMC rpmb partitions" do
+      let(:scenario) { "eMMC_boot_partitions" }
+      let(:disk_name) { "/dev/mmcblk1rpmb" }
+
+      it "returns false for values whose symbol is :disk_device" do
+        expect(disk.is?(:disk_device)).to eq false
+      end
+    end
   end
 
   describe "#usb?" do
