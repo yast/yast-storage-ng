@@ -8,7 +8,7 @@ Tue Dec  4 15:07:42 UTC 2018 - jlopez@suse.com
 -------------------------------------------------------------------
 Wed Nov 14 15:15:04 CET 2018 - schubi@suse.de
 
-- SkipListValue.size_k returns the correct value (bsc#1115508).
+- SkipListValue.size_k returns the correct value (bsc#1115507).
 - 4.0.215
 
 -------------------------------------------------------------------
