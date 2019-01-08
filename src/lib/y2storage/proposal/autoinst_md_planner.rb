@@ -121,13 +121,20 @@ module Y2Storage
         md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
       end
 
+      # Tries to find a planned MD RAID in the devicegraph
+      #
+      # @param md [Planned::Md] Planned MD RAID
+      def find_existing_md(md)
+        devicegraph.md_raids.find { |m| m.name == md.name or md.name.include?(m.sysfs_name) }
+      end
+
       # Sets 'reusing' attributes for a MD RAID
       #
       # @param md      [Planned::Md] Planned MD RAID
       # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST specification
       def add_md_reuse(md, section)
         # TODO: fix when not using named raids
-        md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
+        md_to_reuse = find_existing_md(md)
         if md_to_reuse.nil?
           issues_list.add(:missing_reusable_device, section)
           return
