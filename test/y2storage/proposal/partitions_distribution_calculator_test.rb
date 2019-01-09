@@ -25,6 +25,8 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::Proposal::PartitionsDistributionCalculator do
+  using Y2Storage::Refinements::SizeCasts
+
   let(:lvm_volumes) { [] }
   let(:settings) { Y2Storage::ProposalSettings.new }
   let(:enc_password) { nil }
@@ -34,17 +36,12 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
   before do
     settings.encryption_password = enc_password
     settings.lvm_vg_strategy = lvm_vg_strategy
+    fake_scenario(scenario)
   end
 
   subject(:calculator) { described_class.new(lvm_helper) }
 
   describe "#best_distribution" do
-    using Y2Storage::Refinements::SizeCasts
-
-    before do
-      fake_scenario(scenario)
-    end
-
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { [vol1, vol2, vol3] }
@@ -646,6 +643,120 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
 
       it "raises an exception" do
         expect { distribution }.to raise_error ArgumentError
+      end
+    end
+  end
+
+  describe "#resizing_size" do
+    let(:volumes) { [vol1, vol2] }
+    let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: vol1_size) }
+    let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: vol2_size) }
+
+    let(:spaces) { fake_devicegraph.free_spaces }
+    let(:partition) { fake_devicegraph.find_by_name(partition_name) }
+    let(:partition_name) { "/dev/sda5" }
+
+    context "if the existing spaces can be used (not affected by primary partitions limit)" do
+      let(:scenario) { "windows_resizing1" }
+
+      context "but none of the planned partitions fit in the existing spaces" do
+        let(:vol1_size) { 11.GiB }
+        let(:vol2_size) { 12.GiB }
+
+        it "returns the sum size of all the planned partitions" do
+          # 2 extra MiB for the logical overhead (one MiB for each new logical
+          # partition)
+          result = calculator.resizing_size(partition, volumes, spaces)
+          expect(result).to eq(vol1_size + vol2_size + 2.MiB)
+        end
+      end
+
+      context "and some planned partitions fit in the existing spaces" do
+        let(:vol1_size) { 9.GiB }
+        let(:vol2_size) { 14.GiB }
+
+        it "returns the sum size of the remaining planned partitions" do
+          result = calculator.resizing_size(partition, volumes, spaces)
+          # One extra MiB for the logical overhead
+          expect(result).to eq(vol2_size + 1.MiB)
+        end
+      end
+    end
+
+    context "if the existing spaces cannot be used (primary partitions limit)" do
+      let(:scenario) { "windows_resizing2" }
+
+      context "and none of the planned partitions would have fitted in the existing spaces" do
+        let(:vol1_size) { 11.GiB }
+        let(:vol2_size) { 12.GiB }
+
+        it "returns the sum size of all the planned partitions" do
+          # 2 extra MiB for the logical overhead (one MiB for each new logical
+          # partition)
+          result = calculator.resizing_size(partition, volumes, spaces)
+          expect(result).to eq(vol1_size + vol2_size + 2.MiB)
+        end
+      end
+
+      context "and some planned partitions would have fitted in the existing spaces" do
+        let(:vol1_size) { 9.GiB }
+        let(:vol2_size) { 14.GiB }
+
+        it "returns the sum size of all the planned partitions" do
+          # 2 extra MiB for the logical overhead (one MiB for each new logical
+          # partition)
+          result = calculator.resizing_size(partition, volumes, spaces)
+          expect(result).to eq(vol1_size + vol2_size + 2.MiB)
+        end
+      end
+    end
+
+    context "if there is a space right after the partition being resized" do
+      let(:scenario) { "windows_resizing1" }
+      let(:partition_name) { "/dev/sda1" }
+      let(:vol1_size) { 11.GiB }
+      let(:vol2_size) { 12.GiB }
+
+      it "takes that extra space into account" do
+        result = calculator.resizing_size(partition, volumes, spaces)
+        space_size = spaces.first.disk_size
+        expect(result).to eq(vol1_size + vol2_size - space_size)
+      end
+    end
+
+    context "with misaligned partitions" do
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
+      let(:ptable) { fake_devicegraph.find_by_name("/dev/sda").partition_table }
+      let(:partition_name) { "/dev/sda1" }
+      let(:block_size) { 512 }
+      let(:vol1_size) { 11.GiB }
+      let(:vol2_size) { 12.GiB }
+
+      before do
+        # One partition with misaligned start and end
+        ptable.create_partition("/dev/sda1", Y2Storage::Region.create(640, 52427776, block_size),
+          Y2Storage::PartitionType::PRIMARY)
+        # One partition with misaligned start
+        ptable.create_partition("/dev/sda2", Y2Storage::Region.create(52428416, 52429184, block_size),
+          Y2Storage::PartitionType::PRIMARY)
+      end
+
+      def end_aligned?(end_block)
+        mod = (block_size * (end_block + 1)) % ptable.align_grain.to_i
+        mod.zero?
+      end
+
+      it "ensures the end of the resized partition will be aligned" do
+        expect(end_aligned?(partition.end)).to eq false
+        result = calculator.resizing_size(partition, volumes, spaces)
+        new_end = partition.end - result.to_i / block_size
+        expect(end_aligned?(new_end)).to eq true
+      end
+
+      it "reclaims enough space to ensure the new partitions can be aligned" do
+        result = calculator.resizing_size(partition, volumes, spaces)
+        useless_space = partition.region.end_overhead(ptable.align_grain)
+        expect(result).to eq(vol1_size + vol2_size + useless_space)
       end
     end
   end
