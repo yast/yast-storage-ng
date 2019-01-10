@@ -54,17 +54,11 @@ module Y2Storage
         # First, make sure the whole attempt makes sense
         return nil if impossible?(partitions, spaces)
 
-        log.info "Selecting the candidate spaces for each planned partition"
         begin
-          disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
+          dist_hashes = distribute_partitions(partitions, spaces)
         rescue NoDiskSpaceError
           return nil
         end
-
-        log.info "Calculate all the possible distributions of planned partitions into spaces"
-        dist_hashes = distribution_hashes(disk_spaces_by_part)
-        add_unused_spaces(dist_hashes, spaces)
-
         candidates = distributions_from_hashes(dist_hashes)
 
         if lvm?
@@ -241,6 +235,28 @@ module Y2Storage
         max_offset = partition.max_start_offset
         return false if max_offset && space.start_offset > max_offset
         true
+      end
+
+      # All possible combinations of spaces and planned partitions.
+      #
+      # The result is an array in which each entry represents a potential
+      # distribution of partitions into spaces taking into account the
+      # restrictions impossed by the planned partitions.
+      #
+      # All disk spaces are present in the result, including those that cannot
+      # host any planned partition.
+      #
+      # @param partitions [Array<Planned::Partitions>]
+      # @param spaces [Array<FreeDiskSpace>]
+      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      def distribute_partitions(partitions, spaces)
+        log.info "Selecting the candidate spaces for each planned partition"
+        disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
+
+        log.info "Calculate all the possible distributions of planned partitions into spaces"
+        dist_hashes = distribution_hashes(disk_spaces_by_part)
+        add_unused_spaces(dist_hashes, spaces)
+        dist_hashes
       end
 
       # Cartesian product (that is, all the possible combinations) of hash
