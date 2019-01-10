@@ -244,6 +244,14 @@ module Y2Storage
       min
     end
 
+    # Distance between the end of the partition and the latest aligned block.
+    # Zero if the end of the partition is aligned.
+    #
+    # @return [DiskSize]
+    def end_overhead
+      region.end_overhead(align_grain)
+    end
+
     # Whether it is an implicit partition
     #
     # @see Y2Storage::PartitionTables::ImplicitPt
