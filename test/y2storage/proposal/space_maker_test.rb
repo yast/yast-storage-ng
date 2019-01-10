@@ -296,7 +296,7 @@ describe Y2Storage::Proposal::SpaceMaker do
             it "resizes Windows partitions to free additional needed space" do
               result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
               expect(result[:devicegraph].partitions).to contain_exactly(
-                an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 2.MiB)
+                an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 1.MiB)
               )
             end
           end
