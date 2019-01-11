@@ -509,6 +509,21 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
       end
 
+      context "if the guided setup returns :cancel" do
+        before do
+          allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
+          allow(guided_dialog).to receive(:run).and_return :cancel
+        end
+
+        it "opens a new proposal dialog again with the same values" do
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .and_return(proposal_dialog)
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .with(proposal, devicegraph, anything).and_return(second_proposal_dialog)
+          client.run
+        end
+      end
+
       context "if the guided setup returns :back" do
         before do
           allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)

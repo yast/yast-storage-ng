@@ -61,7 +61,7 @@ module Y2Storage
       def run
         log.info("BEGIN of inst_disk_proposal")
 
-        until [:back, :next, :abort].include?(@result)
+        until [:back, :cancel, :next, :abort].include?(@result)
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
           @result = dialog.run
           @proposal = dialog.proposal

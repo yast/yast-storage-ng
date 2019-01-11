@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 10 14:59:32 UTC 2019 - jlopez@suse.com
+
+- Allow to cancel Guided Setup (bsc#1121442).
+- Link to storage client from installation summary (bsc#1099485).
+- 4.1.44
+
+-------------------------------------------------------------------
 Tue Dec 18 12:43:21 CET 2018 - schubi@suse.de
 
 - Do not touch eMMC boot partitions (mmcblk*boot*) (bsc#1119316)
