@@ -26,9 +26,8 @@ require "y2storage"
 require "y2storage/actions_presenter"
 require "y2storage/dump_manager"
 require "installation/proposal_client"
-require "y2partitioner/dialogs/main"
 
-Yast.import "Popup"
+Yast.import "Wizard"
 
 module Y2Storage
   module Clients
@@ -67,11 +66,11 @@ module Y2Storage
       def ask_user(param)
         event = param["chosen_id"]
 
-        # Also run the expert partitioner as default option if no id was
+        # Also run the storage client as default option if no id was
         # specified by the caller (bsc#1076732)
         if event == description["id"] || event.nil?
-          result = expert_partitioner
-          result = { next: :again, back: :back, abort: :finish }[result]
+          result = run_storage_client
+          result = { next: :again, cancel: :back, back: :back, abort: :finish }[result]
         elsif actions_presenter.can_handle?(event)
           actions_presenter.update_status(event)
           result = :again
@@ -185,13 +184,20 @@ module Y2Storage
         storage_manager.proposal = proposal
       end
 
-      def expert_partitioner
-        probed = storage_manager.probed
-        staging = storage_manager.staging
-        dialog = Y2Partitioner::Dialogs::Main.new(probed, staging)
-        result = without_title_on_left { dialog.run }
-        storage_manager.staging = dialog.device_graph if result == :next
-        result
+      # Runs the storage client, opening a new wizard dialog with only Cancel
+      # and Acept buttons.
+      #
+      # @return [Symbol] client result
+      def run_storage_client
+        Yast::Wizard.OpenAcceptDialog
+
+        # It is necessary to enable back and next for the Guided Setup wizard
+        Yast::WFM.CallFunction(
+          "inst_disk_proposal",
+          [{ "enable_back" => true, "enable_next" => true }]
+        )
+      ensure
+        Yast::Wizard.CloseDialog
       end
     end
   end

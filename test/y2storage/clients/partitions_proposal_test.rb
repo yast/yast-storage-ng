@@ -222,22 +222,20 @@ describe Y2Storage::Clients::PartitionsProposal do
     end
 
     describe "#ask_user" do
-      RSpec.shared_context "run expert partitioner" do
+      RSpec.shared_context "run storage client" do
         before do
-          allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(expert_dialog)
-          allow(expert_dialog).to receive(:run).and_return(result)
+          allow(Yast::WFM).to receive(:CallFunction).and_return(result)
           allow(Y2Storage::StorageManager.instance).to receive(:staging=)
         end
 
-        let(:expert_dialog) { instance_double(Y2Partitioner::Dialogs::Main) }
         let(:result) { :back }
 
-        it "it executes the expert partitioner" do
-          expect(expert_dialog).to receive(:run)
+        it "it executes the storage client" do
+          expect(Yast::WFM).to receive(:CallFunction).with("inst_disk_proposal", anything)
           subject.ask_user(param)
         end
 
-        context "and the expert partitioner returns :abort" do
+        context "and the storage client returns :abort" do
           let(:result) { :abort }
 
           it "returns a hash with :finish for 'workflow_sequence' key" do
@@ -247,7 +245,7 @@ describe Y2Storage::Clients::PartitionsProposal do
           end
         end
 
-        context "and the expert partitioner returns :back" do
+        context "and the storage client returns :back" do
           let(:result) { :back }
 
           it "returns a hash with :back for 'workflow_sequence' key" do
@@ -257,20 +255,18 @@ describe Y2Storage::Clients::PartitionsProposal do
           end
         end
 
-        context "and the expert partitioner returns :next" do
+        context "and the storage client returns :cancel" do
+          let(:result) { :cancel }
+
+          it "returns a hash with :back for 'workflow_sequence' key" do
+            result = subject.ask_user(param)
+            expect(result).to be_a(Hash)
+            expect(result["workflow_sequence"]).to eq :back
+          end
+        end
+
+        context "and the storage client returns :next" do
           let(:result) { :next }
-
-          before do
-            allow(expert_dialog).to receive(:device_graph).and_return(new_devicegraph)
-          end
-
-          let(:new_devicegraph) { instance_double(Y2Storage::Devicegraph) }
-
-          it "sets the new calculated devicegraph" do
-            expect(Y2Storage::StorageManager.instance).to receive(:staging=)
-              .with(new_devicegraph)
-            subject.ask_user(param)
-          end
 
           it "returns a hash with :again for 'workflow_sequence' key" do
             result = subject.ask_user(param)
@@ -283,14 +279,14 @@ describe Y2Storage::Clients::PartitionsProposal do
       context "when 'chosen_id' is equal to the description id" do
         let(:param) { { "chosen_id" => subject.description["id"] } }
 
-        include_context "run expert partitioner"
+        include_context "run storage client"
       end
 
       # Used by yast-caasp
       context "when called with empty params" do
         let(:param) { {} }
 
-        include_context "run expert partitioner"
+        include_context "run storage client"
       end
 
       context "when 'chosen_id' is an actions presenter event" do
