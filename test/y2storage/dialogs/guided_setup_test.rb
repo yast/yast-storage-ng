@@ -205,6 +205,16 @@ describe Y2Storage::Dialogs::GuidedSetup do
       end
     end
 
+    context "when some dialog is canceled" do
+      before do
+        allow_run_select_scheme { :cancel }
+      end
+
+      it "returns :cancel" do
+        expect(subject.run).to eq(:cancel)
+      end
+    end
+
     context "when some dialog aborts" do
       before do
         allow_run_select_scheme { :abort }
