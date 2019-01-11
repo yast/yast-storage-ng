@@ -28,6 +28,7 @@ require "y2storage/dialogs/guided_setup/select_scheme"
 require "y2storage/dialogs/guided_setup/select_filesystem"
 require "y2storage/partitioning_features"
 
+Yast.import "Wizard"
 Yast.import "Sequencer"
 
 module Y2Storage
@@ -81,8 +82,10 @@ module Y2Storage
         @analyzer = analyzer
       end
 
-      # Executes steps of the wizard.
-      # @return [Symbol] last step result.
+      # Executes steps of the wizard. A new wizard dialog is opened, where
+      # the Abort button is replaced by Cancel.
+      #
+      # @return [Symbol] Last step result
       def run
         aliases = {
           "select_disks"      => -> { run_dialog(SelectDisks) },
@@ -91,15 +94,22 @@ module Y2Storage
           "select_filesystem" => -> { run_dialog(select_filesystem_class) }
         }
 
+        common_actions = { back: :back, cancel: :cancel, abort: :abort }
+
         sequence = {
           "ws_start"          => "select_disks",
-          "select_disks"      => { next: "select_root_disk", back: :back, abort: :abort },
-          "select_root_disk"  => { next: "select_scheme", back: :back, abort: :abort },
-          "select_scheme"     => { next: "select_filesystem", back: :back,  abort: :abort },
-          "select_filesystem" => { next: :next, back: :back,  abort: :abort }
+          "select_disks"      => common_actions.merge(next: "select_root_disk"),
+          "select_root_disk"  => common_actions.merge(next: "select_scheme"),
+          "select_scheme"     => common_actions.merge(next: "select_filesystem"),
+          "select_filesystem" => common_actions.merge(next: :next)
         }
 
+        Yast::Wizard.OpenNextBackDialog
+        Yast::Wizard.SetAbortButton(:cancel, Yast::Label.CancelButton)
+
         Yast::Sequencer.Run(aliases, sequence)
+      ensure
+        Yast::Wizard.CloseDialog
       end
 
       # Whether is is allowed to use the Guided Setup
