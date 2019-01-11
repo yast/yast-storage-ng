@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.216
+Version:        4.0.217
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
