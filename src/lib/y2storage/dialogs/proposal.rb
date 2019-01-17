@@ -20,6 +20,7 @@
 # find current contact information at www.novell.com.
 
 require "yast"
+require "yast2/popup"
 require "ui/installation_dialog"
 require "y2storage"
 require "y2storage/actions_presenter"
@@ -51,7 +52,6 @@ module Y2Storage
         @excluded_buttons = excluded_buttons
 
         propose! if proposal && !proposal.proposed?
-        actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
         @actions_presenter = ActionsPresenter.new(actiongraph)
 
         DumpManager.dump(@actions_presenter)
@@ -278,6 +278,26 @@ module Y2Storage
       # Shortcut for Yast::HTML.List
       def list(items)
         Yast::HTML.List(items)
+      end
+
+      # Actions needed to reach the desired devicegraph
+      #
+      # If a libstorage-ng exception is raised while calculating the
+      # actiongraph, it is rescued and a pop-up is presented to the user.
+      #
+      # @return [Actiongraph, nil] nil if it's not possible to calculate the actions
+      def actiongraph
+        @devicegraph ? @devicegraph.actiongraph : nil
+      rescue ::Storage::Exception => error
+        msg = _(
+          "Error calculating the set of actions to perform on the disks.\n" \
+          "The information displayed may not be accurate and the\n" \
+          "installation may fail if you continue."
+        )
+        hint = _("Click below to see more details (English only).")
+
+        Yast2::Popup.show("#{msg}\n\n#{hint}", details: error.what)
+        nil
       end
     end
   end
