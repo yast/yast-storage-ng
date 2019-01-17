@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 17 13:46:54 UTC 2019 - ancor@suse.com
+
+- Specific error pop-up for exceptions raised while calculating the
+  storage actions (mitigation of bsc#1120070).
+- 4.1.45
+
+-------------------------------------------------------------------
 Thu Jan 10 14:59:32 UTC 2019 - jlopez@suse.com
 
 - Allow to cancel Guided Setup (bsc#1121442).
