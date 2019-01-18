@@ -289,8 +289,14 @@ module Y2Storage
       def actiongraph
         @devicegraph ? @devicegraph.actiongraph : nil
       rescue ::Storage::Exception => error
+        # TODO: the code capturing the exception and displaying the error pop-up
+        # should not be directly in this dialog. It should be in some common
+        # place ensuring we also catch the exception in other places where we
+        # calculate/display the actiongraph (like the Expert Partitioner).
+        # That should be part of a bigger effort in reporting invalid devicegraphs.
+        # See https://trello.com/c/iMoOGVxg/
         msg = _(
-          "Error calculating the set of actions to perform on the disks.\n" \
+          "An error was found in one of the devices in the system.\n" \
           "The information displayed may not be accurate and the\n" \
           "installation may fail if you continue."
         )
