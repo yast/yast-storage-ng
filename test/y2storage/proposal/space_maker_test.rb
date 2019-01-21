@@ -927,7 +927,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           .and_return(resize_info)
       end
 
-      # This is a regression test. In the past, the gap existing between the
+      # Regression test for bsc#1121286. In the past, the gap existing between the
       # "recovery" and "windows" partitions confused SpaceMaker, which tried to
       # reduce the Windows less than really needed. As a consequence, SpaceMaker
       # wrongly concluded that reducing "windows" was not enough and it ended up
@@ -938,7 +938,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect(devicegraph.partitions.size).to eq 2
       end
 
-      # This is a regression test. In the past, the end of the resulting partition
+      # Regression test for bsc#1121286. In the past, the end of the resulting partition
       # was misaligned by -16.5 KiB, something that is mandatory when the
       # partition extends up to the end of the GPT disk, but that should have been
       # fixed while resizing it (otherwise we will have two 16.5 KiB gaps after creating

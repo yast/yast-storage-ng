@@ -759,5 +759,52 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         expect(result).to eq(vol1_size + vol2_size + useless_space)
       end
     end
+
+    context "when resizing does not seem to open new possibilities" do
+      let(:scenario) { "windows_resizing1" }
+      let(:partition_name) { "/dev/sda1" }
+      let(:vol1_size) { 10.GiB }
+      let(:vol2_size) { 10.GiB }
+
+      context "due to limit of primary partitions" do
+        let(:volumes) { [vol1, vol2, vol3] }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 10.GiB) }
+
+        # This behavior could be reconsidered to return something more
+        # informative if the general algorithm is improved in the future
+        it "returns the size of the full partition" do
+          result = calculator.resizing_size(partition, volumes, spaces)
+          expect(result).to eq(partition.size)
+        end
+      end
+
+      context "due to the restrictions allocating partitions into disks" do
+        let(:vol1) do
+          planned_vol(disk: "/dev/nowhere", mount_point: "/1", type: :ext4, min: vol1_size)
+        end
+
+        # Same as above, this behavior could be reconsidered in the future
+        it "returns the size of the full partition" do
+          result = calculator.resizing_size(partition, volumes, spaces)
+          expect(result).to eq(partition.size)
+        end
+      end
+    end
+
+    # This test is here to ensure we cover the internal code that performs
+    # stable sorting of the planned volumes
+    context "when the planned partitions look equal to each other" do
+      let(:scenario) { "windows_resizing2" }
+      let(:partition_name) { "/dev/sda5" }
+      let(:vol1_size) { 10.GiB }
+      let(:vol2_size) { 10.GiB }
+
+      it "returns the expected result" do
+        result = calculator.resizing_size(partition, volumes, spaces)
+        # 2 extra MiB for the logical overhead (one MiB for each new logical
+        # partition)
+        expect(result).to eq(vol1_size + vol2_size + 2.MiB)
+      end
+    end
   end
 end
