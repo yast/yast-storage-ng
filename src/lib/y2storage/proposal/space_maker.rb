@@ -176,16 +176,25 @@ module Y2Storage
         # anywhere but sometimes it is known in advance on which disk they
         # should be created.
         #
-        # Start by assigning space to them.
-        #
-        # The result (if successful) is kept in @distribution.
-        #
-        planned_partitions_by_disk(partitions).each do |disk, parts|
-          resize_and_delete(parts, keep, lvm_helper, disk_name: disk)
-        end
-
         # Doing something similar for #max_start_offset is more difficult and
         # doesn't pay off (#max_start_offset is used just in one case)
+
+        parts_by_disk = planned_partitions_by_disk(partitions)
+
+        # In some cases (for example, if there is only one candidate disk),
+        # executing #resize_and_delete with a particular disk name and its
+        # restricted set of planned partitions brings no value. It just makes
+        # the whole thing harder to debug (bsc#1057436).
+        if several_passes?(parts_by_disk)
+          # Start by freeing space to the planned partitions that are restricted
+          # to a certain disk.
+          #
+          # The result (if successful) is kept in @distribution.
+          #
+          parts_by_disk.each do |disk, parts|
+            resize_and_delete(parts, keep, lvm_helper, disk_name: disk)
+          end
+        end
 
         # Now repeat the process with the full set of planned partitions and all the candidate
         # disks.
@@ -384,6 +393,26 @@ module Y2Storage
       # @return [Array<String>]
       def candidate_disk_names
         settings.candidate_devices
+      end
+
+      # Whether {#resize_and_delete} should be executed several times,
+      # see {#calculate_new_graph} for details.
+      #
+      # @param parts_by_disk [Hash{String => Array<Planned::Partition>}] see
+      #   {#planned_partitions_by_disk}
+      # @return [Boolean]
+      def several_passes?(parts_by_disk)
+        # In this case the result is not much relevant since #resize_and_delete
+        # wouldn't be executed for particular disks anyway
+        return false if parts_by_disk.empty?
+
+        return true if parts_by_disk.size > 1
+
+        # In theory, the specific disk mentioned in the planned partitions
+        # (note that, at this point, we are sure there is only one) should be
+        # included in the set of candidate disks. Return false if that's not the
+        # case or if there is more than one candidate disk.
+        parts_by_disk.keys != candidate_disk_names
       end
     end
   end
