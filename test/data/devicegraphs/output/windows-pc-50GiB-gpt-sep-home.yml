@@ -9,7 +9,7 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 36171759.5 KiB (34.50 GiB)
+        size: 35324 MiB
         name: "/dev/sda1"
         type: primary
         id: windows_basic_data
