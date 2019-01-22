@@ -246,6 +246,9 @@ module Y2Storage
       # @param disk_name [String, nil] optional disk name to restrict operations to
       #
       def resize_and_delete(planned_partitions, keep, lvm_helper, disk_name: nil)
+        # Note that only the execution with disk_name == nil is the final one.
+        # In other words, if disk_name contains something, it means there will
+        # be at least a subsequent call to the method.
         log.info "Resize and delete. disk_name: #{disk_name}, planned partitions:"
         planned_partitions.each do |p|
           log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
