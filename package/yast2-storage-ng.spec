@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-storage-ng
 #
-# Copyright (c) 2018 SUSE LLC.
+# Copyright (c) 2019 SUSE LLC.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:	4.1.45
+Version:	4.1.46
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
