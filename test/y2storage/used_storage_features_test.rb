@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017,2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -87,6 +87,21 @@ describe Y2Storage::UsedStorageFeatures do
     it "requires exactly the expected storage-related packages" do
       expect(subject.feature_packages)
         .to contain_exactly("btrfsprogs", "e2fsprogs", "ntfs-3g", "ntfsprogs", "xfsprogs")
+    end
+  end
+
+  context "Created with a XML devicegraph containing FC devices" do
+    before { fake_scenario(scenario) }
+    let(:scenario) { "empty-dasd-and-multipath.xml" }
+    subject { described_class.new(fake_devicegraph) }
+
+    it "has exactly the expected storage features" do
+      expect(subject.collect_features).to contain_exactly(:UF_FC, :UF_FCOE, :UF_MULTIPATH)
+    end
+
+    it "requires exactly the expected storage-related packages" do
+      expect(subject.feature_packages)
+        .to contain_exactly("device-mapper", "multipath-tools", "fcoe-utils")
     end
   end
 end

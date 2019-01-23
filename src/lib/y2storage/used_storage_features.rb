@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2016-2017] SUSE LLC
+# Copyright (c) [2016-2017,2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -43,7 +43,7 @@ module Y2Storage
     # Configurable part starts here
     #
     # Software packages required for storage features.
-    # Any map value may be a string, a list of strings, or 'nil'.
+    # Any map value may be a string or a list of strings.
     #
     # Packages that are part of a minimal installation (e.g., "util-linux")
     # are not listed here.
@@ -82,7 +82,7 @@ module Y2Storage
         # Data transport methods
         UF_ISCSI:         "open-iscsi",
         UF_FCOE:          "fcoe-utils",
-        UF_FC:            nil,
+        UF_FC:            [],
 
         # Other
         UF_QUOTA:         "quota",

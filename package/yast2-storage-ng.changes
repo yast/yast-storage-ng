@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jan 23 10:11:58 CET 2019 - aschnell@suse.com
+
+- do not include nil in package list of used storage features
+  for FC devices (bsc#1122781)
+- 4.1.46
+
+-------------------------------------------------------------------
 Thu Jan 17 13:46:54 UTC 2019 - ancor@suse.com
 
 - Specific error pop-up for exceptions raised while calculating the
