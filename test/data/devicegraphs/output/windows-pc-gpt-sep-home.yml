@@ -6,14 +6,14 @@
     partitions:
 
     - partition:
-        size: 745467 MiB
+        size: 745468 MiB
         name: /dev/sda1
         id: windows_basic_data
         file_system: ntfs
         label: windows
 
     - partition:
-        size: 5 MiB
+        size: 4 MiB
         name: "/dev/sda3"
         id: bios_boot
 

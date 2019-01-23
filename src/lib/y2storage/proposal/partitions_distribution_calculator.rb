@@ -142,11 +142,13 @@ module Y2Storage
       # missing LVM part in the free spaces
       def impossible?(planned_partitions, free_spaces)
         needed = DiskSize.sum(planned_partitions.map(&:min))
+        log.info "#impossible? - initially needed: #{needed}"
         if lvm?
           # Let's assume the best possible case - if we need to create a PV it
           # will be only one
           pvs_to_create = 1
           needed += lvm_space_to_make(pvs_to_create)
+          log.info "#impossible? with LVM - needed: #{needed}"
         end
         needed > available_space(free_spaces)
       end
