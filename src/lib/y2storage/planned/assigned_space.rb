@@ -153,7 +153,11 @@ module Y2Storage
       #
       # @return [DiskSize]
       def total_missing_size
-        total_needed_size - disk_space.disk_size
+        if disk_space.disk_size >= total_needed_size
+          DiskSize.zero
+        else
+          total_needed_size - disk_space.disk_size
+        end
       end
 
       # Space consumed by the EBR of one logical partition in a given disk
