@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 24 16:44:15 UTC 2019 - ancor@suse.com
+
+- Partitioning proposal: improved the calculation about how much
+  each Windows partition must be resized (bsc#1121286).
+- 4.1.48
+
+-------------------------------------------------------------------
 Wed Jan 23 10:14:20 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Make the storage proposal (i.e. the Guided Setup) easier to
