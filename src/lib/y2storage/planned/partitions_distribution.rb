@@ -384,6 +384,7 @@ module Y2Storage
       # @param num [Integer] number of partitions that should be logical
       # @return [Boolean]
       def room_for_logical?(assigned_space, num)
+        return true if assigned_space.disk_space.growing?
         overhead = assigned_space.overhead_of_logical
         assigned_space.extra_size >= overhead * num
       end

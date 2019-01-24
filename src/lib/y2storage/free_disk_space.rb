@@ -38,6 +38,18 @@ module Y2Storage
     #   @return [Region]
     attr_reader :region
 
+    # @overload growing=(value)
+    #   Setter for {#growing?}
+    #
+    #   @param [Boolean] value
+    attr_writer :growing
+
+    # @overload exists=(value)
+    #   Setter for {#exists?}
+    #
+    #   @param [Boolean] value
+    attr_writer :exists
+
     # Constructor
     #
     # @param disk [Disk]
@@ -48,12 +60,44 @@ module Y2Storage
       # deleted (don't trust the garbage collector when SWIG is involved)
       region = Storage::Region.new(region.to_storage_value)
       @region = Y2Storage::Region.new(region)
+      @growing = false
+      @exists = true
+    end
+
+    # Whether this space is the one that will grow during the resize operation
+    # that is being calculated.
+    #
+    # This is an auxiliary method to simplify resizing partitions during the
+    # storage proposal.
+    #
+    # False by default, this is only set to true for one of the free spaces
+    # while a candidate resize operation for a particular partition is being
+    # checked.
+    #
+    # @return [Boolean]
+    def growing?
+      @growing
+    end
+
+    # Whether this space was already there before the resize operation
+    # that is being calculated.
+    #
+    # This is an auxiliary method to simplify resizing partitions during the
+    # storage proposal.
+    #
+    # True by default, false only for a new free space being added as result
+    # of the resize operation that is currently being checked.
+    #
+    # @return [Boolean]
+    def exists?
+      @exists
     end
 
     # Whether the region belongs to a partition that is going to be reused
     #
     # @return [Boolean]
     def reused_partition?
+      return false if growing?
       disk.partitions.map(&:region).include?(region)
     end
 
@@ -68,7 +112,7 @@ module Y2Storage
     #
     # @return [DiskSize]
     def disk_size
-      region.size
+      exists? ? region.size : DiskSize.zero
     end
 
     # Offset of the slot relative to the beginning of the disk

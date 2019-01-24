@@ -296,7 +296,7 @@ describe Y2Storage::Proposal::SpaceMaker do
             it "resizes Windows partitions to free additional needed space" do
               result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
               expect(result[:devicegraph].partitions).to contain_exactly(
-                an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 2.MiB)
+                an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 1.MiB)
               )
             end
           end
@@ -910,6 +910,45 @@ describe Y2Storage::Proposal::SpaceMaker do
         ]
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Error
+      end
+    end
+
+    context "when a Windows partition needs to be resized" do
+      let(:scenario) { "windows-pc-gpt-with-gap" }
+      let(:resize_info) do
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB, max_size: 780.GiB,
+          reasons: 0, reason_texts: [])
+      end
+      let(:windows_partitions) { [partition_double("/dev/sda2")] }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 20.GiB) }
+
+      before do
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      # Regression test for bsc#1121286. In the past, the gap existing between the
+      # "recovery" and "windows" partitions confused SpaceMaker, which tried to
+      # reduce the Windows less than really needed. As a consequence, SpaceMaker
+      # wrongly concluded that reducing "windows" was not enough and it ended up
+      # deleting it.
+      it "does not delete the Windows partition if resizing is enough" do
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        devicegraph = result[:devicegraph]
+        expect(devicegraph.partitions.size).to eq 2
+      end
+
+      # Regression test for bsc#1121286. In the past, the end of the resulting partition
+      # was misaligned by -16.5 KiB, something that is mandatory when the
+      # partition extends up to the end of the GPT disk, but that should have been
+      # fixed while resizing it (otherwise we will have two 16.5 KiB gaps after creating
+      # the partitions - the mandatory one that will reappear at the end of the disk
+      # and the one at the end of the partition labeled "windows").
+      it "aligns the new end of the partition" do
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        ptable = result[:devicegraph].disks.first.partition_table
+        aligned = ptable.partitions.map { |part| part.region.end_aligned?(ptable.align_grain) }
+        expect(aligned).to eq [true, true]
       end
     end
   end
