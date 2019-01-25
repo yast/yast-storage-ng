@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,31 +23,30 @@
 require_relative "spec_helper"
 require "y2storage"
 
-describe Y2Storage::Bcache do
+describe Y2Storage::FlashBcache do
   using Y2Storage::Refinements::SizeCasts
 
   before do
     fake_scenario(scenario)
   end
 
-  let(:scenario) { "bcache1.xml" }
+  let(:scenario) { "bcache2.xml" }
 
-  let(:bcache_name) { "/dev/bcache0" }
+  let(:bcache_name) { "/dev/bcache1" }
 
-  subject(:bcache) { Y2Storage::Bcache.find_by_name(fake_devicegraph, bcache_name) }
+  subject(:bcache) { Y2Storage::FlashBcache.find_by_name(fake_devicegraph, bcache_name) }
 
-  describe ".find_free_name" do
-    it "returns bcache name that is not used yet" do
-      expect(fake_devicegraph.bcaches.map(&:name)).to_not(
-        include(described_class.find_free_name(fake_devicegraph))
-      )
+  describe "#bcache_cset" do
+    it "returns the associated caching set" do
+      expect(subject.bcache_cset).to be_a Y2Storage::BcacheCset
+      expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("sdb1")
     end
   end
 
   describe "#is?" do
-    it "returns true for values whose symbol is :bcache" do
-      expect(bcache.is?(:bcache)).to eq true
-      expect(bcache.is?("bcache")).to eq true
+    it "returns true for values whose symbol is :flash_bcache" do
+      expect(bcache.is?(:flash_bcache)).to eq true
+      expect(bcache.is?("flash_bcache")).to eq true
     end
 
     it "returns false for a different string like \"Disk\"" do
@@ -59,28 +58,31 @@ describe Y2Storage::Bcache do
       expect(bcache.is?(:filesystem)).to eq false
     end
 
-    it "returns true for a list of names containing :bcache" do
-      expect(bcache.is?(:bcache, :partition)).to eq true
+    it "returns true for a list of names containing :flash_bcache" do
+      expect(bcache.is?(:flash_bcache, :partition)).to eq true
     end
 
-    it "returns false for a list of names not containing :bcache" do
+    it "returns false for a list of names not containing :flash_bcache" do
       expect(bcache.is?(:filesystem, :partition)).to eq false
     end
   end
 
+  describe "#inspect" do
+    it "includes the caching set info" do
+      expect(subject.inspect).to include("BcacheCset")
+    end
+  end
+
   describe ".all" do
-    it "returns a list of Y2Storage::Bcache objects" do
-      bcaches = Y2Storage::Bcache.all(fake_devicegraph)
+    it "returns a list of Y2Storage::FlashBcache objects" do
+      bcaches = Y2Storage::FlashBcache.all(fake_devicegraph)
       expect(bcaches).to be_an Array
-      expect(bcaches).to all(be_a(Y2Storage::Bcache))
+      expect(bcaches).to all(be_a(Y2Storage::FlashBcache))
     end
 
-    it "includes all bcaches in the devicegraph and nothing else" do
-      bcaches = Y2Storage::Bcache.all(fake_devicegraph)
-
-      expect(bcaches.map(&:basename)).to contain_exactly(
-        "bcache0", "bcache1", "bcache2"
-      )
+    it "includes all Flash-only Bcache devices in the devicegraph and nothing else" do
+      bcaches = Y2Storage::FlashBcache.all(fake_devicegraph)
+      expect(bcaches.map(&:basename)).to contain_exactly("bcache1", "bcache2")
     end
   end
 end

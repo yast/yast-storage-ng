@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,46 +25,12 @@ require "y2storage/partitionable"
 module Y2Storage
   # A Bcache device
   #
+  # A Bcache device can use a backing device to store the data (see BackedBcache)
+  # or it can be directly created over a caching set (see FlashBcache).
+  #
   # This is a wrapper for Storage::Bcache
   class Bcache < Partitionable
-    wrap_class Storage::Bcache
-
-    # @!method bcache_cset
-    #   @return [BcacheCset, nil] returns associated bcache cset
-    storage_forward :bcache_cset, as: "BcacheCset", check_with: :has_bcache_cset
-
-    # @!method attach_bcache_cset(set)
-    #   @param set [BcacheCset] set to attach
-    #   @raise if attaching failed
-    storage_forward :attach_bcache_cset
-
-    # @!method blk_device
-    #   @return [BlkDevice] returns a backing device for cache
-    storage_forward :blk_device, as: "BlkDevice"
-
-    # @!attribute cache_mode
-    #   Mode in which cache operates.
-    #   @return [CacheMode]
-    storage_forward :cache_mode, as: "CacheMode"
-    storage_forward :cache_mode=
-
-    # @!attribute writeback_percent
-    #   Target percent of dirty pages in writeback mode.
-    #   @return [Integer]
-    storage_forward :writeback_percent
-    storage_forward :writeback_percent=
-
-    # @!attribute sequential_cutoff
-    #   Size for cache consider read as sequential and do not cache it.
-    #   @return [DiskSize]
-    storage_forward :sequential_cutoff, as: "DiskSize"
-    storage_forward :sequential_cutoff=
-
-    # @!method self.create(devicegraph, name)
-    #   @param devicegraph [Devicegraph]
-    #   @param name [String]
-    #   @return [Bcache]
-    storage_class_forward :create, as: "Bcache"
+    wrap_class Storage::Bcache, downcast_to: ["BackedBcache", "FlashBcache"]
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
@@ -83,10 +49,6 @@ module Y2Storage
     #   @param devicegraph [Devicegraph] in which search for free name
     #   @return [String] full path to new bcache device like "/dev/bcache3"
     storage_class_forward :find_free_name
-
-    def inspect
-      "<Bcache #{name} #{bcache_cset.inspect} -> #{blk_device}>"
-    end
 
   protected
 

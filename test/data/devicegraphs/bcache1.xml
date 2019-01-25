@@ -91,7 +91,7 @@
       <uuid>4zAUmA-3FL3-de79-DkMh-jpPc-ZmrB-AoqhN0</uuid>
       <stripes>1</stripes>
     </LvmLv>
-    <Bcache>
+    <BackedBcache>
       <sid>50</sid>
       <name>/dev/bcache0</name>
       <sysfs-name>bcache0</sysfs-name>
@@ -102,8 +102,8 @@
       </region>
       <topology/>
       <range>128</range>
-    </Bcache>
-    <Bcache>
+    </BackedBcache>
+    <BackedBcache>
       <sid>51</sid>
       <name>/dev/bcache1</name>
       <sysfs-name>bcache1</sysfs-name>
@@ -114,8 +114,8 @@
       </region>
       <topology/>
       <range>128</range>
-    </Bcache>
-    <Bcache>
+    </BackedBcache>
+    <BackedBcache>
       <sid>52</sid>
       <name>/dev/bcache2</name>
       <sysfs-name>bcache2</sysfs-name>
@@ -126,7 +126,7 @@
       </region>
       <topology/>
       <range>128</range>
-    </Bcache>
+    </BackedBcache>
     <BcacheCset>
       <sid>53</sid>
       <uuid>acb129b8-b55e-45bb-aa99-41a6f0a0ef07</uuid>
