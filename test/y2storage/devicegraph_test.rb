@@ -711,7 +711,7 @@ describe Y2Storage::Devicegraph do
 
     context "when the bcache does not exist in the devicegraph" do
       before do
-        Y2Storage::Bcache.create(other_devicegraph, bcache1_name)
+        Y2Storage::BackedBcache.create(other_devicegraph, bcache1_name)
       end
 
       let(:other_devicegraph) { devicegraph.dup }
@@ -922,7 +922,7 @@ describe Y2Storage::Devicegraph do
 
   describe "#bcaches" do
     before do
-      fake_scenario("bcache1.xml")
+      fake_scenario("bcache2.xml")
     end
 
     subject(:list) { fake_devicegraph.bcaches }
@@ -932,14 +932,47 @@ describe Y2Storage::Devicegraph do
       expect(list).to all(be_a(Y2Storage::Bcache))
     end
 
-    it "finds all the devices" do
-      expect(list.size).to eq(3), "found devices: #{list.inspect}"
+    it "finds all the Bcache devices" do
+      expect(list.size).to eq(3)
+      expect(list.map(&:name)).to contain_exactly(
+        "/dev/bcache0", "/dev/bcache1", "/dev/bcache2"
+      )
+    end
+  end
+
+  describe "#backed_bcaches" do
+    before do
+      fake_scenario("bcache2.xml")
     end
 
-    it "does not include other devices like volume groups" do
-      expect(fake_devicegraph.lvm_vgs).to_not be_empty
-      vg1 = fake_devicegraph.lvm_vgs.first
-      expect(list).to_not include vg1
+    subject(:list) { fake_devicegraph.backed_bcaches }
+
+    it "returns an array of Backed Bcache devices" do
+      expect(list).to be_a Array
+      expect(list).to all(be_a(Y2Storage::BackedBcache))
+    end
+
+    it "finds all the Backed Bcache devices" do
+      expect(list.size).to eq(1)
+      expect(list.map(&:name)).to contain_exactly("/dev/bcache0")
+    end
+  end
+
+  describe "#flash_bcaches" do
+    before do
+      fake_scenario("bcache2.xml")
+    end
+
+    subject(:list) { fake_devicegraph.flash_bcaches }
+
+    it "returns an array of Flash-only Bcache devices" do
+      expect(list).to be_a Array
+      expect(list).to all(be_a(Y2Storage::FlashBcache))
+    end
+
+    it "finds all the Flash-only Bcache devices" do
+      expect(list.size).to eq(2)
+      expect(list.map(&:name)).to contain_exactly("/dev/bcache1", "/dev/bcache2")
     end
   end
 

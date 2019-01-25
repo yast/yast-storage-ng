@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,8 @@ require "pp"
 require "tempfile"
 require "y2storage/actiongraph"
 require "y2storage/bcache"
+require "y2storage/backed_bcache"
+require "y2storage/flash_bcache"
 require "y2storage/bcache_cset"
 require "y2storage/blk_device"
 require "y2storage/disk"
@@ -293,6 +295,16 @@ module Y2Storage
       Bcache.all(self)
     end
 
+    # @return [Array<BackedBcache>]
+    def backed_bcaches
+      BackedBcache.all(self)
+    end
+
+    # @return [Array<FlashBcache>]
+    def flash_bcaches
+      FlashBcache.all(self)
+    end
+
     # @return [Array<BcacheCset>]
     def bcache_csets
       BcacheCset.all(self)
@@ -391,6 +403,7 @@ module Y2Storage
       raise(ArgumentError, "Incorrect device #{bcache.inspect}") unless bcache && bcache.is?(:bcache)
       bcache_cset = bcache.bcache_cset
       remove_with_dependants(bcache)
+      # FIXME: Actually we want to automatically remove the cset?
       remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
     end
 
