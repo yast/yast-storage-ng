@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -218,19 +218,19 @@ module Y2Storage
     alias_method :create_filesystem, :create_blk_filesystem
 
     # @!method create_bcache(name)
-    #   Creates backing device build on current block device with given name.
+    #   Creates Backed Bcache device build on current block device with given name.
     #
     #   If the blk device has children, the children will become children of
-    #   the bcache device.
+    #   the Backed Bcache device.
     #
-    #   @param name [String] name of bcache device
-    #   @return [Bcache]
-    storage_forward :create_bcache, as: "Bcache", raise_errors: true
+    #   @param name [String] name of Backed Bcache device
+    #   @return [BackedBcache]
+    storage_forward :create_bcache, as: "BackedBcache", raise_errors: true
 
     # @!method create_bcache_cset
     #   Creates caching set build on current block device.
     #
-    #   Blk device have to not contain any children.
+    #   Blk device must not contain any children.
     #
     #   @raise [Storage::WrongNumberOfChildren] if there is any children
     #   @return [BcacheCset]
@@ -395,12 +395,13 @@ module Y2Storage
       children.find { |dev| dev.is?(:multipath) }
     end
 
-    # Bcache device defined on top of the device, i.e. a Bcache device that uses
-    # this one as backing device
+    # Backed Bcache using this device as backing device
     #
-    # @return [Bcache, nil] nil if the device is not part of any bcache
+    # @return [BackedBcache, nil] nil if the device is not used as backing device
     def bcache
-      descendants.detect { |dev| dev.is?(:bcache) && dev.blk_device.plain_device == plain_device }
+      descendants.detect do |dev|
+        dev.is?(:backed_bcache) && dev.backing_device.plain_device == plain_device
+      end
     end
 
     # Bcache caching set device defined on top of the device
@@ -433,7 +434,7 @@ module Y2Storage
     #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [in_bcache_cset]).compact
+      (dm_raids + [vg, md, multipath, bcache, in_bcache_cset]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a
