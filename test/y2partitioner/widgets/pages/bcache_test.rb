@@ -30,13 +30,15 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
     devicegraph_stub(scenario)
   end
 
-  let(:scenario) { "bcache1.xml" }
+  let(:scenario) { "bcache2.xml" }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject { described_class.new(bcache, pager) }
 
-  let(:bcache) { current_graph.bcaches.first }
+  let(:bcache) { current_graph.find_by_name(device_name) }
+
+  let(:device_name) { "/dev/bcache0" }
 
   let(:pager) { double("Pager") }
 
@@ -69,9 +71,22 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
         expect(description).to_not be_nil
       end
 
-      it "shows a button for deleting the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-        expect(button).to_not be_nil
+      context "when the device is a Backed Bcache" do
+        let(:device_name) { "/dev/bcache0" }
+
+        it "shows a button for deleting the device" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+          expect(button).to_not be_nil
+        end
+      end
+
+      context "when the device is a Flash-only Bcache" do
+        let(:device_name) { "/dev/bcache1" }
+
+        it "does not show a button for deleting the device" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+          expect(button).to be_nil
+        end
       end
     end
   end

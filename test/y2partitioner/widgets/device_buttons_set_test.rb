@@ -99,21 +99,64 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
     end
 
     context "when targeting a Bcache device" do
-      let(:scenario) { "bcache1.xml" }
-      let(:device) { device_graph.bcaches.first }
+      let(:scenario) { "bcache2.xml" }
 
-      it "replaces the content with buttons to modify and to manage partitions" do
-        expect(widget).to receive(:replace) do |content|
-          widgets = Yast::CWM.widgets_in_contents([content])
-          expect(widgets.map(&:class)).to contain_exactly(
-            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BcacheModifyButton,
-            Y2Partitioner::Widgets::PartitionsButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
-          )
+      let(:device) { device_graph.find_by_name(device_name) }
+
+      context "and the device is a Backed Bcache" do
+        let(:device_name) { "/dev/bcache0" }
+
+        it "replaces the content with buttons to modify and to manage partitions" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to include(
+              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+              Y2Partitioner::Widgets::BcacheModifyButton,
+              Y2Partitioner::Widgets::PartitionsButton
+            )
+          end
+
+          widget.device = device
         end
 
-        widget.device = device
+        it "includes a button to delete the device" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to include(
+              Y2Partitioner::Widgets::DeviceDeleteButton
+            )
+          end
+
+          widget.device = device
+        end
+      end
+
+      context "and the device is a Flash-only Bcache" do
+        let(:device_name) { "/dev/bcache1" }
+
+        it "replaces the content with buttons to modify and to manage partitions" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to contain_exactly(
+              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+              Y2Partitioner::Widgets::BcacheModifyButton,
+              Y2Partitioner::Widgets::PartitionsButton
+            )
+          end
+
+          widget.device = device
+        end
+
+        it "does not include a button to delete the device" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to_not include(
+              Y2Partitioner::Widgets::DeviceDeleteButton
+            )
+          end
+
+          widget.device = device
+        end
       end
     end
 

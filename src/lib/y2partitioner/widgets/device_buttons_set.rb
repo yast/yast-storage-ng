@@ -130,11 +130,15 @@ module Y2Partitioner
 
       # Buttons to display if {#device} is a bcache device
       def bcache_buttons
-        [
+        buttons = [
           BcacheModifyButton.new(device),
-          PartitionsButton.new(device, pager),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          PartitionsButton.new(device, pager)
         ]
+
+        # TODO: Delete Flash-only Bcache devices
+        buttons << DeviceDeleteButton.new(pager: pager, device: device) if device.is?(:backed_bcache)
+
+        buttons
       end
 
       # Buttons to display if {#device} is a disk device
