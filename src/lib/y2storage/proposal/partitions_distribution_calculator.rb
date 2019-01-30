@@ -199,7 +199,7 @@ module Y2Storage
       #
       # @param disk_spaces_by_partition [Hash{Planned::Partition => Array<FreeDiskSpace>}]
       #     which spaces are acceptable for each planned partition
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       def distribution_hashes(disk_spaces_by_partition)
         return [{}] if disk_spaces_by_partition.empty?
 
@@ -237,7 +237,7 @@ module Y2Storage
       #
       # @param partitions [Array<Planned::Partitions>]
       # @param spaces [Array<FreeDiskSpace>]
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       def distribute_partitions(partitions, spaces)
         log.info "Selecting the candidate spaces for each planned partition"
         disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
@@ -322,10 +322,10 @@ module Y2Storage
 
       # Add unused spaces to a distributions hash
       #
-      # @param dist_hashes [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes
       # @param spaces      [Array<FreeDiskSpace>] Free spaces
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes considering all free disk spaces.
       def add_unused_spaces(dist_hashes, spaces)
         spaces_hash = Hash[spaces.product([[]])]
@@ -415,9 +415,9 @@ module Y2Storage
       # Size that is missing in the space marked as "growing" in order to
       # guarantee that at least one valid distribution is possible.
       #
-      # @param dist_hashes [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes
-      # @param align_grain [DiskSize] align grain of the device that host the
+      # @param align_grain [DiskSize] align grain of the device that hosts the
       #   partition been resized
       #
       # @return [Disksize, nil] nil if it's not possible to guarantee a valid
