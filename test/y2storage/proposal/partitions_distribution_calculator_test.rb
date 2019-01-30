@@ -724,6 +724,29 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       end
     end
 
+    context "if there is an empty extended partition right after the partition being resized" do
+      let(:scenario) { "windows_resizing2" }
+      let(:extended) { fake_devicegraph.find_by_name("/dev/sda4") }
+
+      before do
+        extended.partition_table.delete_partition(extended.children.first)
+      end
+
+      let(:partition_name) { "/dev/sda3" }
+      let(:volumes) { [vol1] }
+      let(:vol1_size) { extended.size + 20.MiB }
+
+      it "distinguishes the space inside the extended and the new space before it" do
+        result = calculator.resizing_size(partition, volumes, spaces)
+        # If the method would consider that the space at the beginning of the
+        # extended /dev/sda4 would be affected by the resizing of /dev/sda3, the
+        # result would be ~20 MiB. Fortunatelly, it's not the case and the method
+        # returns the whole size of /dev/sda3 (meaning that resizing the partition
+        # is not enough to make space for vol1).
+        expect(result).to eq(partition.size)
+      end
+    end
+
     context "with misaligned partitions" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:ptable) { fake_devicegraph.find_by_name("/dev/sda").partition_table }
