@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 31 12:35:36 UTC 2019 - jlopez@suse.com
+
+- Partitioner: properly show Flash-only Bcache devices.
+- Part of fate#325346.
+- 4.1.50
+
+-------------------------------------------------------------------
 Thu Jan 31 12:23:49 CET 2019 - aschnell@suse.com
 
 - do not show hint for details button if button does not exist
