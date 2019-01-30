@@ -22,6 +22,7 @@
 require "yast"
 require "y2partitioner/dialogs/bcache"
 require "y2partitioner/device_graphs"
+require "y2storage/bcache"
 
 Yast.import "Popup"
 

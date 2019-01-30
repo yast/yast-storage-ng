@@ -48,7 +48,7 @@ module Y2Partitioner
                                     format(_("Backing Device: %s"), backing_device),
                                     format(_("Caching UUID: %s"), uuid),
                                     format(_("Caching Device: %s"), caching_device),
-                                    format(_("Cache mode: %s"), device.cache_mode.to_human_string)
+                                    format(_("Cache mode: %s"), cache_mode)
                                   ])
       end
 
@@ -62,10 +62,22 @@ module Y2Partitioner
         device.bcache_cset ? device.bcache_cset.blk_devices.map(&:name).join(",") : ""
       end
 
+      # Backing device name or an empty string if the device is a flash-only bcache
+      #
+      # @return [String]
       def backing_device
-        return "" unless device.blk_device
+        return "" if device.flash_only?
 
-        device.blk_device.name
+        device.backing_device.name
+      end
+
+      # Cache mode or an empty string if the device is a flash-only bcache
+      #
+      # @return [String]
+      def cache_mode
+        return "" if device.flash_only?
+
+        device.cache_mode.to_human_string
       end
     end
   end
