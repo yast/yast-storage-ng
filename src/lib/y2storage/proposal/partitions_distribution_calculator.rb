@@ -199,7 +199,7 @@ module Y2Storage
       #
       # @param disk_spaces_by_partition [Hash{Planned::Partition => Array<FreeDiskSpace>}]
       #     which spaces are acceptable for each planned partition
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       def distribution_hashes(disk_spaces_by_partition)
         return [{}] if disk_spaces_by_partition.empty?
 
@@ -237,7 +237,7 @@ module Y2Storage
       #
       # @param partitions [Array<Planned::Partitions>]
       # @param spaces [Array<FreeDiskSpace>]
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       def distribute_partitions(partitions, spaces)
         log.info "Selecting the candidate spaces for each planned partition"
         disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
@@ -322,10 +322,10 @@ module Y2Storage
 
       # Add unused spaces to a distributions hash
       #
-      # @param dist_hashes [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes
       # @param spaces      [Array<FreeDiskSpace>] Free spaces
-      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes considering all free disk spaces.
       def add_unused_spaces(dist_hashes, spaces)
         spaces_hash = Hash[spaces.product([[]])]
@@ -346,7 +346,7 @@ module Y2Storage
       #   (added to the list or replacing the original space affected by the resizing)
       def add_or_mark_growing_space(free_spaces, partition)
         result = free_spaces.map do |space|
-          if space.disk == partition.disk && space.region.start == partition.region.end + 1
+          if space_right_after_partition?(space, partition)
             new_space = space.dup
             new_space.growing = true
             new_space
@@ -365,6 +365,20 @@ module Y2Storage
         end
 
         result
+      end
+
+      # Whether the given free space is located right at the end of the given
+      # partition, implying the space will grow if the partition is shrunk.
+      #
+      # Note that if the space is at the beginning of an extended partition this
+      # always returns false, that space can only be reclaimed by deleting
+      # partitions, not via resizing.
+      #
+      # @param free_space [FreeDiskSpace]
+      # @param partition [Partition] partition to be resized
+      # @return [Boolean]
+      def space_right_after_partition?(free_space, partition)
+        free_space.disk == partition.disk && free_space.region.start == partition.region.end + 1
       end
 
       # All planned partitions to consider when resizing an existing partition
@@ -398,11 +412,28 @@ module Y2Storage
         res
       end
 
+      # Size that is missing in the space marked as "growing" in order to
+      # guarantee that at least one valid distribution is possible.
+      #
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
+      #   Distribution hashes
+      # @param align_grain [DiskSize] align grain of the device that hosts the
+      #   partition been resized
+      #
+      # @return [Disksize, nil] nil if it's not possible to guarantee a valid
+      #   distribution, no matter how much the growing space is enlarged
+      #
       def missing_size_in_growing_space(dist_hashes, align_grain)
         # Group all the distributions based on the partitions assigned
         # to the growing space
         alternatives_for_growing = group_dist_hashes_by_growing_space(dist_hashes)
 
+        # We don't want to know all the valid distributions, we just want to find
+        # one valid distribution that minimizes the space to be allocated in
+        # growing space.
+        #
+        # So, first of all, sort all the candidate distribution hashes so we
+        # explore first the ones that demands less space in the growing space.
         sorted_keys = alternatives_for_growing.keys.sort do |parts_in_a, parts_in_b|
           compare_planned_parts_sets_size(parts_in_a, parts_in_b, align_grain)
         end
@@ -411,11 +442,14 @@ module Y2Storage
           distros = distributions_from_hashes(alternatives_for_growing[parts])
           next if distros.empty?
 
+          # At least one distribution is valid
           assigned_spaces = distros.map { |i| i.spaces.find { |a| a.disk_space.growing? } }
           missing = assigned_spaces.map(&:total_missing_size).min
           return missing.ceil(align_grain)
         end
 
+        # No valid distributions were found, no matter which planned partitions
+        # we assign to the growing space
         nil
       end
 
