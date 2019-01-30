@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,40 +29,99 @@ describe Y2Storage::Bcache do
   before do
     fake_scenario(scenario)
   end
-  let(:scenario) { "bcache1.xml" }
+
+  let(:scenario) { "bcache2.xml" }
+
   let(:bcache_name) { "/dev/bcache0" }
+
   subject(:bcache) { Y2Storage::Bcache.find_by_name(fake_devicegraph, bcache_name) }
 
-  describe "#blk_device" do
-    it "returns BlkDevice" do
-      expect(subject.blk_device).to be_a Y2Storage::BlkDevice
+  describe "#backing_device" do
+    it "returns the backing device" do
+      expect(subject.backing_device).to be_a(Y2Storage::BlkDevice)
+      expect(subject.backing_device.basename).to eq("sdb2")
     end
 
-    it "returns backing device for bcache" do
-      expect(subject.blk_device.basename).to eq "vdc"
+    context "when it is a Flash-only bcache" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "returns nil" do
+        expect(subject.backing_device).to be_nil
+      end
     end
   end
 
   describe "#bcache_cset" do
-    it "returns associated BcacheCset" do
-      expect(subject.bcache_cset).to be_a Y2Storage::BcacheCset
-      expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("vdb")
+    context "when the bcache is using caching" do
+      let(:bcache_name) { "/dev/bcache0" }
+
+      it "returns the associated caching set" do
+        expect(subject.bcache_cset).to be_a(Y2Storage::BcacheCset)
+        expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("sdb1")
+      end
+    end
+
+    context "when the bcache is not using caching" do
+      before do
+        sdb3 = fake_devicegraph.find_by_name("/dev/sdb3")
+        sdb3.create_bcache("/dev/bcache99")
+      end
+
+      let(:bcache_name) { "/dev/bcache99" }
+
+      it "returns nil" do
+        expect(subject.bcache_cset).to be_nil
+      end
+    end
+
+    context "when the bcache is flash-only" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "returns the caching set that holds it" do
+        expect(subject.type).to eq(Y2Storage::BcacheType::FLASH_ONLY)
+
+        expect(subject.bcache_cset).to be_a(Y2Storage::BcacheCset)
+        expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("sdb1")
+      end
     end
   end
 
   describe "#attach_bcache_cset" do
-    it "attach set to bcache device" do
-      new_bcache = described_class.create(fake_devicegraph, "/dev/bcache99")
-      cset = fake_devicegraph.bcache_csets.first
+    before do
+      described_class.create(fake_devicegraph, bcache_name)
+    end
 
-      expect(new_bcache.bcache_cset).to eq nil
-      new_bcache.attach_bcache_cset(cset)
-      expect(new_bcache.bcache_cset).to eq cset
+    let(:bcache_name) { "/dev/bcache99" }
+
+    let(:cset) { fake_devicegraph.bcache_csets.first }
+
+    it "attach a caching set to bcache device" do
+      expect(subject.bcache_cset).to be_nil
+
+      subject.attach_bcache_cset(cset)
+
+      expect(subject.bcache_cset).to eq(cset)
+    end
+
+    context "when the bcache already has an associated caching set" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "raises an exception" do
+        expect { subject.attach_bcache_cset(cset) }.to raise_error(Storage::LogicException)
+      end
+    end
+
+    context "when the bcache is flash-only" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "raises an exception" do
+        expect { subject.attach_bcache_cset(cset) }.to raise_error(Storage::LogicException)
+      end
     end
   end
 
   describe ".find_free_name" do
-    it "returns bcache name that is not yet used" do
+    it "returns bcache name that is not used yet" do
       expect(fake_devicegraph.bcaches.map(&:name)).to_not(
         include(described_class.find_free_name(fake_devicegraph))
       )
@@ -70,7 +129,6 @@ describe Y2Storage::Bcache do
   end
 
   describe "#is?" do
-
     it "returns true for values whose symbol is :bcache" do
       expect(bcache.is?(:bcache)).to eq true
       expect(bcache.is?("bcache")).to eq true
@@ -91,6 +149,60 @@ describe Y2Storage::Bcache do
 
     it "returns false for a list of names not containing :bcache" do
       expect(bcache.is?(:filesystem, :partition)).to eq false
+    end
+  end
+
+  describe "#flash_only?" do
+    context "when the bcache is flash-only" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "returns true" do
+        expect(subject.flash_only?).to eq(true)
+      end
+    end
+
+    context "when the bcache is not flash-only" do
+      let(:bcache_name) { "/dev/bcache0" }
+
+      it "returns false" do
+        expect(subject.flash_only?).to eq(false)
+      end
+    end
+  end
+
+  describe "#inspect" do
+    context "when the bcache has an associated caching set" do
+      let(:bcache_name) { "/dev/bcache0" }
+
+      it "includes the caching set info" do
+        expect(subject.inspect).to include("BcacheCset")
+      end
+    end
+
+    context "when the bcache has no associated caching set" do
+      before do
+        sdb3 = fake_devicegraph.find_by_name("/dev/sdb3")
+        sdb3.create_bcache(bcache_name)
+      end
+
+      let(:bcache_name) { "/dev/bcache99" }
+
+      it "does not include the caching set info" do
+        expect(subject.inspect).to_not include("BcacheCset")
+        expect(subject.inspect).to include("without caching set")
+      end
+    end
+
+    context "when the bcache is flash-only" do
+      let(:bcache_name) { "/dev/bcache1" }
+
+      it "includes the caching set info" do
+        expect(subject.inspect).to include("BcacheCset")
+      end
+
+      it "includes the 'flash-only' mark" do
+        expect(subject.inspect).to include("flash-only")
+      end
     end
   end
 

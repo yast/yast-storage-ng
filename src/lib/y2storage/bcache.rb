@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,9 +21,13 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
+require "y2storage/bcache_type"
 
 module Y2Storage
   # A Bcache device
+  #
+  # A Bcache device can use a backing device to store the data or it can be
+  # directly created over a caching set (Flash-only Bcache).
   #
   # This is a wrapper for Storage::Bcache
   class Bcache < Partitionable
@@ -33,36 +37,66 @@ module Y2Storage
     #   @return [BcacheCset, nil] returns associated bcache cset
     storage_forward :bcache_cset, as: "BcacheCset", check_with: :has_bcache_cset
 
-    # @!method attach_bcache_cset(set)
-    #   @param set [BcacheCset] set to attach
-    #   @raise if attaching failed
-    storage_forward :attach_bcache_cset
+    # @!method type
+    #   @return [BcacheType] type of the Bcache device
+    storage_forward :type, as: "BcacheType"
 
-    # @!method blk_device
-    #   @return [BlkDevice] returns a backing device for cache
-    storage_forward :blk_device, as: "BlkDevice"
+    # @!method backing_device
+    #   Backing device used by this bcache.
+    #
+    #   This method does not make sense for Flash-only Bcache devices.
+    #
+    #   @return [BlkDevice, nil] nil for Flash-only Bcache
+    storage_forward :backing_device, as: "BlkDevice"
+
+    # @!method attach_bcache_cset(set)
+    #   This method does not make sense for Flash-only Bcache devices.
+    #
+    #   @raise [storage::Exception] if attaching failed
+    #   @raise [storage::LogicException] for a Flash-only Bcache device or when
+    #     the Bcache device already has a caching set.
+    #
+    #   @param set [BcacheCset] set to attach
+    storage_forward :attach_bcache_cset
 
     # @!attribute cache_mode
     #   Mode in which cache operates.
+    #
+    #   This method does not make sense for Flash-only Bcache devices and its value
+    #   should not be taken into account. If setter is called for a Flash-only Bcache,
+    #   the value will be ignored by libstorage-ng when creating or editing the device.
+    #
     #   @return [CacheMode]
     storage_forward :cache_mode, as: "CacheMode"
     storage_forward :cache_mode=
 
     # @!attribute writeback_percent
     #   Target percent of dirty pages in writeback mode.
+    #
+    #   This method does not make sense for Flash-only Bcache devices and its value
+    #   should not be taken into account. If setter is called for a Flash-only Bcache,
+    #   the value will be ignored by libstorage-ng when creating or editing the device.
+    #
     #   @return [Integer]
     storage_forward :writeback_percent
     storage_forward :writeback_percent=
 
     # @!attribute sequential_cutoff
     #   Size for cache consider read as sequential and do not cache it.
+    #
+    #   This method does not make sense for Flash-only Bcache devices and its value
+    #   should not be taken into account. If setter is called for a Flash-only Bcache,
+    #   the value will be ignored by libstorage-ng when creating or editing the device.
+    #
     #   @return [DiskSize]
     storage_forward :sequential_cutoff, as: "DiskSize"
     storage_forward :sequential_cutoff=
 
-    # @!method self.create(devicegraph, name)
+    # @!method self.create(devicegraph, name, type = BcacheType::BACKED)
     #   @param devicegraph [Devicegraph]
     #   @param name [String]
+    #   @param type [BcacheType]
+    #
     #   @return [Bcache]
     storage_class_forward :create, as: "Bcache"
 
@@ -84,14 +118,33 @@ module Y2Storage
     #   @return [String] full path to new bcache device like "/dev/bcache3"
     storage_class_forward :find_free_name
 
+    # Whether the Bcache is flash-only
+    #
+    # @return [Boolean]
+    def flash_only?
+      type.is?(:flash_only)
+    end
+
     def inspect
-      "<Bcache #{name} #{bcache_cset.inspect} -> #{blk_device}>"
+      flash_only? ? flash_only_inspect : backed_inspect
     end
 
   protected
 
     def types_for_is
       super << :bcache
+    end
+
+    def backed_inspect
+      if bcache_cset
+        "<Bcache #{name} #{bcache_cset.inspect} -> #{backing_device.inspect}>"
+      else
+        "<Bcache #{name} without caching set -> #{backing_device.inspect}>"
+      end
+    end
+
+    def flash_only_inspect
+      "<Bcache #{name} flash-only (#{size}) -> #{bcache_cset.inspect}>"
     end
   end
 end

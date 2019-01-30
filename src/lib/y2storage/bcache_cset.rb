@@ -34,7 +34,12 @@ module Y2Storage
     storage_forward :blk_devices, as: "BlkDevice"
 
     # @!method bcaches
-    #   @return [Array<Bcache>] returns a list of bcaches that use this caching set
+    #   All Bcache devices using this caching set.
+    #
+    #   Note that a caching set can be used for caching data, and also by Flash-only Bcache
+    #   devices for storing data.
+    #
+    #   @return [Array<Bcache>] returns a list of bcaches using this caching set
     storage_forward :bcaches, as: "Bcache"
 
     # @!method uuid
