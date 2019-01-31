@@ -78,7 +78,12 @@ module Y2Storage
         desc = error_description(what)
         hint = _("Click below to see more details (English only).")
         question = _("Continue despite the error?")
-        msg = "#{message}\n\n#{desc}\n\n#{hint}\n\n#{question}"
+
+        msg = if what.empty?
+          "#{message}\n\n#{desc}\n\n#{question}"
+        else
+          "#{message}\n\n#{desc}\n\n#{hint}\n\n#{question}"
+        end
 
         buttons = { yes: Yast::Label.ContinueButton, no: abort_button_label }
         focus = default_answer_to_error ? :yes : :no
