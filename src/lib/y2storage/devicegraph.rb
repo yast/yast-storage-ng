@@ -391,6 +391,7 @@ module Y2Storage
       raise(ArgumentError, "Incorrect device #{bcache.inspect}") unless bcache && bcache.is?(:bcache)
       bcache_cset = bcache.bcache_cset
       remove_with_dependants(bcache)
+      # FIXME: Actually we want to automatically remove the cset?
       remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
     end
 

@@ -94,14 +94,22 @@ module Y2Partitioner
           @contents ||=
             VBox(
               BcacheDeviceDescription.new(@bcache),
-              Left(
-                HBox(
-                  BlkDeviceEditButton.new(device: @bcache),
-                  DeviceDeleteButton.new(device: @bcache),
-                  PartitionTableAddButton.new(device: @bcache)
-                )
-              )
+              Left(HBox(*buttons))
             )
+        end
+
+      private
+
+        # @return [Array<Widgets::DeviceButton>]
+        def buttons
+          buttons = [BlkDeviceEditButton.new(device: @bcache)]
+
+          # TODO: Allow to delete flash-only bcache devices
+          buttons << DeviceDeleteButton.new(device: @bcache) unless @bcache.flash_only?
+
+          buttons << PartitionTableAddButton.new(device: @bcache)
+
+          buttons
         end
       end
     end

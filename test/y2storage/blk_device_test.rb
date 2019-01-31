@@ -678,6 +678,41 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#bcache" do
+    let(:scenario) { "bcache2.xml" }
+
+    context "when the device is not used as backing device by a bcache" do
+      let(:device_name) { "/dev/sdb3" }
+
+      it "returns nil" do
+        expect(device.bcache).to be_nil
+      end
+    end
+
+    context "when the device is used as backing device by a bcache" do
+      let(:device_name) { "/dev/sdb2" }
+
+      it "returns the Bcache device" do
+        bcache = device.bcache
+
+        expect(bcache).to be_a(Y2Storage::Bcache)
+        expect(bcache.type).to eq(Y2Storage::BcacheType::BACKED)
+        expect(bcache.name).to eq("/dev/bcache0")
+      end
+    end
+
+    context "when the device is used as caching device and the cset has flash-only bcaches" do
+      let(:device_name) { "/dev/sdb1" }
+
+      it "does not return the flash-only bcache device" do
+        cset = device.in_bcache_cset
+
+        expect(cset.bcaches.any? { |d| d.type == Y2Storage::BcacheType::FLASH_ONLY }).to eq(true)
+        expect(device.bcache).to be_nil
+      end
+    end
+  end
+
   describe "#component_of" do
     context "for a device not used in an LVM or in a RAID or in multipath" do
       let(:scenario) { "mixed_disks" }

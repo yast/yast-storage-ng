@@ -28,15 +28,17 @@ require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
   module Dialogs
-    # Form to set the backing and caching device for bcache.
+    # Form to set the backing and caching device for a Bcache device
+
     # Part of {Actions::AddBcache}.
     class Bcache < Base
       # @param suitable_backing [Array<Y2Storage::BlkDevice>] devices that can be used for backing
-      # @param suitable_caching [Array<Y2Storage::BlkDevice,Y2Storage::BcacheCset>]
+      # @param suitable_caching [Array<Y2Storage::BlkDevice, Y2Storage::BcacheCset>]
       #   devices that can be used for caching
-      # @param device [Y2Storage::Bcache] device if already exists or nil for newly created one.
+      # @param device [Y2Storage::Bcache] existing Bcache device or nil if it is a new one.
       def initialize(suitable_backing, suitable_caching, device = nil)
         textdomain "storage"
+
         @caching = CachingDevice.new(device, suitable_caching)
         @backing = BackingDevice.new(device, suitable_backing, @caching)
         @cache_mode = CacheMode.new(device)
@@ -86,11 +88,11 @@ module Y2Partitioner
 
       # Widget to select the backing device
       class BackingDevice < CWM::ComboBox
-        # @param device [Y2Storage::BlkDevice,nil] existing backing device or nil if it is new bcache
-        # @param devices [Array<Y2Storage::BlkDevice>] possible devices that can be used
-        #   as backing device for bcache
+        # @param device [Y2Storage::BlkDevice, nil] existing backing device or nil if it is a new bcache.
+        # @param devices [Array<Y2Storage::BlkDevice>] possible devices that can be used as backing
+        #   device for the Bcache.
         # @param caching [Y2Partitioner::Dialogs::Bcache::CachingDevice] reference to caching widget.
-        #   Used for validation if both caching and backing device is not identical.
+        #   Used to check that caching and backing devices are not identical.
         def initialize(device, devices, caching)
           textdomain "storage"
           @device = device
@@ -163,9 +165,9 @@ module Y2Partitioner
 
       # Widget to select the caching device
       class CachingDevice < CWM::ComboBox
-        # @param device [Y2Storage::BcacheCset,nil] existing caching device or nil if it is new bcache
-        # @param devices [Array<Y2Storage::BlkDevice,Y2Storage::BcacheCset>] possible devices
-        #   that can be used as caching device for bcache
+        # @param device [Y2Storage::BcacheCset,nil] existing caching device or nil if it is a new bcache
+        # @param devices [Array<Y2Storage::BlkDevice,Y2Storage::BcacheCset>] possible devices that can be
+        #   used as caching device for the Bcache
         def initialize(device, devices)
           textdomain "storage"
           @device = device
@@ -222,7 +224,7 @@ module Y2Partitioner
 
       # Widget to select the cache mode
       class CacheMode < CWM::ComboBox
-        # @param device [Y2Storage::Bcache,nil] existing caching device or nil if it is new bcache
+        # @param device [Y2Storage::Bcache,nil] existing caching device or nil if it is a new bcache
         def initialize(device)
           textdomain "storage"
           @device = device
