@@ -54,6 +54,16 @@ RSpec.shared_examples "general #error examples" do
     end
   end
 
+  context "with an empty what" do
+    it "displays a generic error message to the user without hint about details" do
+      expect(Yast::Report).to receive(:yesno_popup) do |message|
+        expect(message).to include "the message"
+        expect(message).not_to include "below to see more details"
+      end
+      subject.error("the message", "")
+    end
+  end
+
   context "with an error produced by a duplicated PV" do
     let(:what) do
       <<-eos
