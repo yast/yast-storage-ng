@@ -38,7 +38,7 @@ describe Y2Storage::AutoinstProposal do
 
   describe "#propose" do
     before { fake_scenario(scenario) }
-    let(:scenario) { "bug_1120979" }
+    let(:scenario) { "bug_1120979.xml" }
 
     let(:partitioning) do
       [
