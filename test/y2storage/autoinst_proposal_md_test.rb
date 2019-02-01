@@ -96,136 +96,150 @@ describe Y2Storage::AutoinstProposal do
       ]
     end
 
-    RSpec.shared_examples "format MD with no issues" do
-      it "does not register any issue" do
-        proposal.propose
-        expect(issues_list).to be_empty
-      end
-
-      it "formats the RAID as specified in the profile" do
-        proposal.propose
-        raid = proposal.devices.raids.first
-        expect(raid.filesystem.type).to eq Y2Storage::Filesystems::Type::XFS
-        expect(raid.filesystem.mount_path).to eq "/home"
-      end
-    end
-
-    # Regression test for bsc#1120979 and bsc#1121720, since libstorage-ng
-    # uses names like /dev/md/0 and Planned::Md did use /dev/md0, reusing
-    # MDs failed in several scenarios.
-    context "when reusing an existing Md" do
-      let(:create) { false }
-      let(:create_vdb1) { false }
-
-      RSpec.shared_examples "reuse Md" do
-        it "keeps the existing RAID and its devices" do
-          raid_sid = fake_devicegraph.raids.first.sid
-
+    RSpec.shared_examples "all MD create/reuse combinations" do
+      RSpec.shared_examples "format MD with no issues" do
+        it "does not register any issue" do
           proposal.propose
-          raids = proposal.devices.raids
-
-          expect(raids.size).to eq 1
-          expect(raids.first.sid).to eq raid_sid
-          expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
+          expect(issues_list).to be_empty
         end
 
-        include_examples "format MD with no issues"
-      end
-
-      context "if raid_name is specified as /dev/mdX" do
-        let(:md_name_in_profile) { "/dev/md0" }
-
-        include_examples "reuse Md"
-      end
-
-      context "if raid_name is specified as /dev/md/X" do
-        let(:md_name_in_profile) { "/dev/md/0" }
-
-        include_examples "reuse Md"
-      end
-    end
-
-    context "when re-creating an Md instead of reusing the existing one" do
-      let(:create) { true }
-
-      RSpec.shared_examples "recreate Md" do
-        it "creates a new RAID with the specified devices" do
-          raid_sid = fake_devicegraph.raids.first.sid
-
+        it "formats the RAID as specified in the profile" do
           proposal.propose
-          raids = proposal.devices.raids
-
-          expect(raids.size).to eq 1
-          expect(raids.first.sid).to_not eq raid_sid
-          expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
+          raid = proposal.devices.raids.first
+          expect(raid.filesystem.type).to eq Y2Storage::Filesystems::Type::XFS
+          expect(raid.filesystem.mount_path).to eq "/home"
         end
-
-        include_examples "format MD with no issues"
       end
 
-      context "reusing the block devices of the original MD" do
+      # Regression test for bsc#1120979 and bsc#1121720, since libstorage-ng
+      # uses names like /dev/md/0 and Planned::Md did use /dev/md0, reusing
+      # MDs failed in several scenarios.
+      context "when reusing an existing Md" do
+        let(:create) { false }
         let(:create_vdb1) { false }
 
-        RSpec.shared_examples "reuse partitions" do
-          it "reuses the block devices" do
-            vdb1_sid = fake_devicegraph.find_by_name("/dev/vdb1").sid
-            vdc1_sid = fake_devicegraph.find_by_name("/dev/vdc1").sid
+        RSpec.shared_examples "reuse Md" do
+          it "keeps the existing RAID and its devices" do
+            raid_sid = fake_devicegraph.raids.first.sid
 
             proposal.propose
-            vdb1 = proposal.devices.find_by_name("/dev/vdb1")
-            vdc1 = proposal.devices.find_by_name("/dev/vdc1")
+            raids = proposal.devices.raids
 
-            expect(vdb1.sid).to eq vdb1_sid
-            expect(vdc1.sid).to eq vdc1_sid
+            expect(raids.size).to eq 1
+            expect(raids.first.sid).to eq raid_sid
+            expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
           end
+
+          include_examples "format MD with no issues"
         end
 
         context "if raid_name is specified as /dev/mdX" do
           let(:md_name_in_profile) { "/dev/md0" }
 
-          include_examples "recreate Md"
-          include_examples "reuse partitions"
+          include_examples "reuse Md"
         end
 
         context "if raid_name is specified as /dev/md/X" do
           let(:md_name_in_profile) { "/dev/md/0" }
 
-          include_examples "recreate Md"
-          include_examples "reuse partitions"
+          include_examples "reuse Md"
         end
       end
 
-      context "re-creating the block devices of the original MD" do
-        let(:create_vdb1) { true }
+      context "when re-creating an Md instead of reusing the existing one" do
+        let(:create) { true }
 
-        RSpec.shared_examples "recreate partitions" do
-          it "recreates the block devices as requested" do
-            vdb1_sid = fake_devicegraph.find_by_name("/dev/vdb1").sid
-            vdc1_sid = fake_devicegraph.find_by_name("/dev/vdc1").sid
+        RSpec.shared_examples "recreate Md" do
+          it "creates a new RAID with the specified devices" do
+            raid_sid = fake_devicegraph.raids.first.sid
 
             proposal.propose
-            vdb1 = proposal.devices.find_by_name("/dev/vdb1")
-            vdc1 = proposal.devices.find_by_name("/dev/vdc1")
+            raids = proposal.devices.raids
 
-            expect(vdb1.sid).to_not eq vdb1_sid
-            expect(vdc1.sid).to eq vdc1_sid
+            expect(raids.size).to eq 1
+            expect(raids.first.sid).to_not eq raid_sid
+            expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
+          end
+
+          include_examples "format MD with no issues"
+        end
+
+        context "reusing the block devices of the original MD" do
+          let(:create_vdb1) { false }
+
+          RSpec.shared_examples "reuse partitions" do
+            it "reuses the block devices" do
+              vdb1_sid = fake_devicegraph.find_by_name("/dev/vdb1").sid
+              vdc1_sid = fake_devicegraph.find_by_name("/dev/vdc1").sid
+
+              proposal.propose
+              vdb1 = proposal.devices.find_by_name("/dev/vdb1")
+              vdc1 = proposal.devices.find_by_name("/dev/vdc1")
+
+              expect(vdb1.sid).to eq vdb1_sid
+              expect(vdc1.sid).to eq vdc1_sid
+            end
+          end
+
+          context "if raid_name is specified as /dev/mdX" do
+            let(:md_name_in_profile) { "/dev/md0" }
+
+            include_examples "recreate Md"
+            include_examples "reuse partitions"
+          end
+
+          context "if raid_name is specified as /dev/md/X" do
+            let(:md_name_in_profile) { "/dev/md/0" }
+
+            include_examples "recreate Md"
+            include_examples "reuse partitions"
           end
         end
 
-        context "if raid_name is specified as /dev/mdX" do
-          let(:md_name_in_profile) { "/dev/md0" }
+        context "re-creating the block devices of the original MD" do
+          let(:create_vdb1) { true }
 
-          include_examples "recreate Md"
-          include_examples "recreate partitions"
-        end
+          RSpec.shared_examples "recreate partitions" do
+            it "recreates the block devices as requested" do
+              vdb1_sid = fake_devicegraph.find_by_name("/dev/vdb1").sid
+              vdc1_sid = fake_devicegraph.find_by_name("/dev/vdc1").sid
 
-        context "if raid_name is specified as /dev/md/X" do
-          let(:md_name_in_profile) { "/dev/md/0" }
+              proposal.propose
+              vdb1 = proposal.devices.find_by_name("/dev/vdb1")
+              vdc1 = proposal.devices.find_by_name("/dev/vdc1")
 
-          include_examples "recreate Md"
-          include_examples "recreate partitions"
+              expect(vdb1.sid).to_not eq vdb1_sid
+              expect(vdc1.sid).to eq vdc1_sid
+            end
+          end
+
+          context "if raid_name is specified as /dev/mdX" do
+            let(:md_name_in_profile) { "/dev/md0" }
+
+            include_examples "recreate Md"
+            include_examples "recreate partitions"
+          end
+
+          context "if raid_name is specified as /dev/md/X" do
+            let(:md_name_in_profile) { "/dev/md/0" }
+
+            include_examples "recreate Md"
+            include_examples "recreate partitions"
+          end
         end
       end
+    end
+
+    context "with current libstorage-ng behavior (Md#name like /dev/md/0)" do
+      include_examples "all MD create/reuse combinations"
+    end
+
+    context "with libstorage-ng reporting Md#name with format like /dev/md0" do
+      before do
+        fake_devicegraph.find_by_name("/dev/md/0").name = "/dev/md0"
+      end
+
+      include_examples "all MD create/reuse combinations"
     end
   end
 end

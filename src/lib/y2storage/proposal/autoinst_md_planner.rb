@@ -126,8 +126,7 @@ module Y2Storage
       # @param md      [Planned::Md] Planned MD RAID
       # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST specification
       def add_md_reuse(md, section)
-        # TODO: fix when not using named raids
-        md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
+        md_to_reuse = devicegraph.md_raids.find { |m| md.name?(m.name) }
         if md_to_reuse.nil?
           issues_list.add(:missing_reusable_device, section)
           return
