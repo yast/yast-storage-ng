@@ -38,7 +38,9 @@ module Y2Storage
     storage_forward :bcache_cset, as: "BcacheCset", check_with: :has_bcache_cset
 
     # @!method type
-    #   @return [BcacheType] type of the Bcache device
+    #   Type of the Bcache device (backed or flash-only)
+    #
+    #   @return [BcacheType]
     storage_forward :type, as: "BcacheType"
 
     # @!method backing_device
@@ -70,27 +72,23 @@ module Y2Storage
     storage_forward :cache_mode, as: "CacheMode"
     storage_forward :cache_mode=
 
-    # @!attribute writeback_percent
+    # @!method writeback_percent
     #   Target percent of dirty pages in writeback mode.
     #
     #   This method does not make sense for Flash-only Bcache devices and its value
-    #   should not be taken into account. If setter is called for a Flash-only Bcache,
-    #   the value will be ignored by libstorage-ng when creating or editing the device.
+    #   should not be taken into account.
     #
     #   @return [Integer]
     storage_forward :writeback_percent
-    storage_forward :writeback_percent=
 
-    # @!attribute sequential_cutoff
+    # @!method sequential_cutoff
     #   Size for cache consider read as sequential and do not cache it.
     #
     #   This method does not make sense for Flash-only Bcache devices and its value
-    #   should not be taken into account. If setter is called for a Flash-only Bcache,
-    #   the value will be ignored by libstorage-ng when creating or editing the device.
+    #   should not be taken into account.
     #
     #   @return [DiskSize]
     storage_forward :sequential_cutoff, as: "DiskSize"
-    storage_forward :sequential_cutoff=
 
     # @!method self.create(devicegraph, name, type = BcacheType::BACKED)
     #   @param devicegraph [Devicegraph]
