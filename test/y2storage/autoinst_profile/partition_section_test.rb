@@ -728,7 +728,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
       context "if there is no <raid_options> section" do
         it "returns a name based on partition_nr" do
-          expect(section.name_for_md).to eq "/dev/md3"
+          expect(section.name_for_md).to eq "/dev/md/3"
         end
       end
 
@@ -738,7 +738,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
         context "if <raid_options> contains an nil raid_name attribute" do
           it "returns a name based on partition_nr" do
-            expect(section.name_for_md).to eq "/dev/md3"
+            expect(section.name_for_md).to eq "/dev/md/3"
           end
         end
 
@@ -746,7 +746,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           before { raid_options.raid_name = "" }
 
           it "returns a name based on partition_nr" do
-            expect(section.name_for_md).to eq "/dev/md3"
+            expect(section.name_for_md).to eq "/dev/md/3"
           end
         end
 
@@ -763,7 +763,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     context "if #raid_name (attribute directly in the partition) is nil" do
       context "if there is no <raid_options> section" do
         it "returns a name based on partition_nr" do
-          expect(section.name_for_md).to eq "/dev/md3"
+          expect(section.name_for_md).to eq "/dev/md/3"
         end
       end
 
