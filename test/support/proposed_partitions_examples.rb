@@ -88,7 +88,7 @@ RSpec.shared_examples "proposed GRUB partition" do
   end
 end
 
-RSpec.shared_examples "proposed EFI partition" do
+RSpec.shared_examples "proposed EFI partition basics" do
   using Y2Storage::Refinements::SizeCasts
 
   let(:target) { nil }
@@ -102,6 +102,10 @@ RSpec.shared_examples "proposed EFI partition" do
   it "requires /boot/efi to be close enough to the beginning of disk" do
     expect(efi_part.max_start_offset).to eq 2.TiB
   end
+end
+
+RSpec.shared_examples "flexible size EFI partition" do
+  using Y2Storage::Refinements::SizeCasts
 
   context "when aiming for the recommended size" do
     let(:target) { :desired }
@@ -121,6 +125,28 @@ RSpec.shared_examples "proposed EFI partition" do
 
     it "requires it to be at most 500 MiB (enough space for several operating systems)" do
       expect(efi_part.max).to eq 500.MiB
+    end
+  end
+end
+
+RSpec.shared_examples "minimalistic EFI partition" do
+  using Y2Storage::Refinements::SizeCasts
+
+  context "when aiming for the recommended size" do
+    let(:target) { :desired }
+
+    it "requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)" do
+      expect(efi_part.min_size).to eq 256.MiB
+      expect(efi_part.max_size).to eq 256.MiB
+    end
+  end
+
+  context "when aiming for the minimal size" do
+    let(:target) { :min }
+
+    it "requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)" do
+      expect(efi_part.min_size).to eq 256.MiB
+      expect(efi_part.max_size).to eq 256.MiB
     end
   end
 end
