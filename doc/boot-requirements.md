@@ -270,8 +270,11 @@
 	- when proposing an new EFI partition
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
-		- when aiming for the recommended size
-			- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
-		- when aiming for the minimal size
-			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
-			- **requires it to be at most 500 MiB (enough space for several operating systems)**
+		- if aarch64
+			- ** requires /boot/efi to always have the min size (256 MiB for FAT32 min size)**
+		- for all other architectures
+			- when aiming for the recommended size
+				- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
+			- when aiming for the minimal size
+				- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+				- **requires it to be at most 500 MiB (enough space for several operating systems)**
