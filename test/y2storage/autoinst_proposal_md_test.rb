@@ -43,13 +43,13 @@ describe Y2Storage::AutoinstProposal do
     let(:partitioning) do
       [
         {
-          "device" => "/dev/md",
+          "device" => drive_device,
           "type" => :CT_MD, "use" => "all", "disklabel" => "msdos",
           "partitions" =>
             [
               {
                 "create" => create, "filesystem" => :xfs, "format" => create, "mount" => "/home",
-                "mountby" => :uuid, "partition_nr" => 0,
+                "mountby" => :uuid, "partition_nr" => partition_nr,
                 "raid_options" => { "raid_type" => "raid1" }
               }
             ]
@@ -118,6 +118,15 @@ describe Y2Storage::AutoinstProposal do
         let(:create) { false }
         let(:create_vdb1) { false }
 
+        before do
+          # Mock the system lookup performed as last resort to find a device:
+          # by default, find nothing...
+          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).and_return(nil)
+          # unless we are looking for "/dev/md0"
+          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).with(anything, "/dev/md0")
+            .and_return(fake_devicegraph.find_by_name("/dev/md/0"))
+        end
+
         RSpec.shared_examples "reuse Md" do
           it "keeps the existing RAID and its devices" do
             raid_sid = fake_devicegraph.raids.first.sid
@@ -133,16 +142,38 @@ describe Y2Storage::AutoinstProposal do
           include_examples "format MD with no issues"
         end
 
-        context "if raid_name is specified as /dev/mdX" do
-          let(:md_name_in_profile) { "/dev/md0" }
+        RSpec.shared_examples "missing Md" do
+          it "registers a MissingReusableDevice issue" do
+            proposal.propose
+            issues = issues_list.to_a
 
-          include_examples "reuse Md"
+            expect(issues.size).to eq 1
+            expect(issues.first).to be_a(Y2Storage::AutoinstIssues::MissingReusableDevice)
+          end
+        end
+
+        context "if raid_name is specified as /dev/mdX" do
+          context "and the MD exists" do
+            let(:md_name_in_profile) { "/dev/md0" }
+            include_examples "reuse Md"
+          end
+
+          context "and the MD does not exist" do
+            let(:md_name_in_profile) { "/dev/md1" }
+            include_examples "missing Md"
+          end
         end
 
         context "if raid_name is specified as /dev/md/X" do
-          let(:md_name_in_profile) { "/dev/md/0" }
+          context "and the MD exists" do
+            let(:md_name_in_profile) { "/dev/md/0" }
+            include_examples "reuse Md"
+          end
 
-          include_examples "reuse Md"
+          context "and the MD does not exist" do
+            let(:md_name_in_profile) { "/dev/md/1" }
+            include_examples "missing Md"
+          end
         end
       end
 
@@ -231,7 +262,19 @@ describe Y2Storage::AutoinstProposal do
     end
 
     context "with current libstorage-ng behavior (Md#name like /dev/md/0)" do
-      include_examples "all MD create/reuse combinations"
+      context "and a classic profile (using /dev/md in <device>)" do
+        let(:drive_device) { "/dev/md" }
+        let(:partition_nr) { md_name_in_profile[-1].to_i }
+
+        include_examples "all MD create/reuse combinations"
+      end
+
+      context "and a profile using the whole MD name in <device>" do
+        let(:drive_device) { md_name_in_profile }
+        let(:partition_nr) { 0 }
+
+        include_examples "all MD create/reuse combinations"
+      end
     end
 
     context "with libstorage-ng reporting Md#name with format like /dev/md0" do
@@ -239,7 +282,19 @@ describe Y2Storage::AutoinstProposal do
         fake_devicegraph.find_by_name("/dev/md/0").name = "/dev/md0"
       end
 
-      include_examples "all MD create/reuse combinations"
+      context "and a classic profile (using /dev/md in <device>)" do
+        let(:drive_device) { "/dev/md" }
+        let(:partition_nr) { md_name_in_profile[-1].to_i }
+
+        include_examples "all MD create/reuse combinations"
+      end
+
+      context "and a profile using the whole MD name in <device>" do
+        let(:drive_device) { md_name_in_profile }
+        let(:partition_nr) { 0 }
+
+        include_examples "all MD create/reuse combinations"
+      end
     end
   end
 end
