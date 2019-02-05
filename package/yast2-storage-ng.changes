@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Feb  4 15:55:56 UTC 2019 - jlopez@suse.com
+
+- Remove setters for bcache attributes that cannot be permanent
+  saved (writeback_percent and sequential_cutoff).
+- Part of fate#325346.
+- 4.1.52
+
+-------------------------------------------------------------------
 Mon Feb  4 15:54:13 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Limit ESP to min size on aarch64 (bsc#1119318)
