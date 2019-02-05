@@ -95,6 +95,9 @@ describe Y2Storage::Encryption do
     context "when a device indicated in a crypttab entry is not found" do
       let(:device_name) { "/dev/sdb1" }
 
+      # Mock the system lookup performed as last resort to find a device
+      before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
       it "does not fail" do
         expect { described_class.use_crypttab_names(devicegraph, "path_to_crypttab") }
           .to_not raise_error
