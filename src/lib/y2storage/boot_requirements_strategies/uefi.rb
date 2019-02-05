@@ -23,6 +23,8 @@ require "y2storage/boot_requirements_strategies/base"
 require "y2storage/partition_id"
 require "y2storage/filesystems/type"
 
+Yast.import "Arch"
+
 module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in UEFI systems
@@ -99,7 +101,17 @@ module Y2Storage
 
       # @return [VolumeSpecification]
       def efi_volume
-        @efi_volume ||= volume_specification_for("/boot/efi")
+        if @efi_volume.nil?
+          @efi_volume = volume_specification_for("/boot/efi")
+          limit_volume_size_to_min(@efi_volume) if Yast::Arch.aarch64 # bsc#1119318
+        end
+        @efi_volume
+      end
+
+      def limit_volume_size_to_min(vol)
+        vol.max_size = vol.min_size
+        vol.desired_size = vol.min_size
+        vol
       end
 
       # @return [Planned::Partition]

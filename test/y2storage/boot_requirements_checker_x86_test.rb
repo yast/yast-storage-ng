@@ -233,7 +233,7 @@ describe Y2Storage::BootRequirementsChecker do
         include_examples "proposed boot partition"
       end
 
-      context "when proposing an new GRUB partition" do
+      context "when proposing a new GRUB partition" do
         let(:grub_part) { find_vol(nil, checker.needed_partitions(target)) }
         # Default values to ensure a GRUB partition
         let(:boot_ptable_type) { :gpt }
@@ -243,13 +243,15 @@ describe Y2Storage::BootRequirementsChecker do
         include_examples "proposed GRUB partition"
       end
 
-      context "when proposing an new EFI partition" do
+      context "when proposing a new EFI partition" do
         let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
+        let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
         # Default values to ensure proposal of EFI partition
         let(:efiboot) { true }
         let(:efi_partitions) { [] }
 
-        include_examples "proposed EFI partition"
+        include_examples "proposed EFI partition basics"
+        include_examples "flexible size EFI partition"
       end
     end
   end

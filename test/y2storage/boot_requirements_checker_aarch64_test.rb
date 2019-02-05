@@ -49,6 +49,5 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     include_context "plain UEFI"
-
   end
 end

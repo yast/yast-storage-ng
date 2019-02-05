@@ -133,14 +133,13 @@
 			- **requires to mount the existing firmware partition at /boot/vc**
 		- and there is no firmware partition in the system
 			- **only requires to use the existing EFI partition**
-- when proposing an new EFI partition
+- when proposing a new EFI partition
 	- **requires /boot/efi to be a non-encrypted vfat partition**
 	- **requires /boot/efi to be close enough to the beginning of disk**
 	- when aiming for the recommended size
-		- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
+		- **requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)**
 	- when aiming for the minimal size
-		- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
-		- **requires it to be at most 500 MiB (enough space for several operating systems)**
+		- **requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)**
 
 ## needed partitions in a S/390 system
 - trying to install in a FBA DASD disk
@@ -258,7 +257,7 @@
 			- **requires /boot to be at least 200 MiB large**
 		- when aiming for the minimal size
 			- **requires /boot to be at least 100 MiB large**
-	- when proposing an new GRUB partition
+	- when proposing a new GRUB partition
 		- **requires it to have the correct id**
 		- **requires it to be a non-encrypted partition**
 		- when aiming for the recommended size
@@ -267,7 +266,7 @@
 		- when aiming for the minimal size
 			- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
 			- **requires it to be at most 8 MiB (anything bigger would mean wasting space)**
-	- when proposing an new EFI partition
+	- when proposing a new EFI partition
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
 		- when aiming for the recommended size

@@ -190,14 +190,15 @@ describe Y2Storage::BootRequirementsChecker do
       include_context "Raspberry Pi partitions"
     end
 
-    context "when proposing an new EFI partition" do
+    context "when proposing a new EFI partition" do
       let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
       # FIXME: Default values to ensure proposal of EFI partition
       let(:sda_partitions) { [] }
       let(:sdb_partitions) { [] }
       let(:efi_partitions) { [] }
 
-      include_examples "proposed EFI partition"
+      include_examples "proposed EFI partition basics"
+      include_examples "minimalistic EFI partition"
     end
   end
 end

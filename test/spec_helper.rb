@@ -69,13 +69,24 @@ require_relative "support/storage_helpers"
 RSpec.configure do |c|
   c.include Yast::RSpec::StorageHelpers
 
-  # Y2Packager is not loaded in tests to avoid cyclic dependencies with
-  # yast-installation package at build time. Here, all usage of Y2Packager
-  # is mocked.
   c.before do
+    # Y2Packager is not loaded in tests to avoid cyclic dependencies with
+    # yast-installation package at build time. Here, all usage of Y2Packager
+    # is mocked.
     stub_const("Y2Packager::Repository", double("Y2Packager::Repository"))
     allow(Y2Packager::Repository).to receive(:all).and_return([])
+
     allow(Y2Storage::DumpManager.instance).to receive(:dump)
+
+    if respond_to?(:architecture) # Match mocked architecture in Arch module
+      # In a test, define a symbol :architecture accordingly:
+      #   let(:architecture) { :aarch64 }
+      allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86_64)
+      allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
+      allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
+      allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
+      allow(Yast::Arch).to receive(:aarch64).and_return(architecture == :aarch64)
+    end
   end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize

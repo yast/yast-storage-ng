@@ -43,10 +43,9 @@ describe Y2Storage::DiskAnalyzer do
 
       context "for disks with some Windows in a PC system" do
         let(:scenario) { "windows-pc-gpt" }
+        let(:architecture) { :x86_64 }
 
         before do
-          allow(Yast::Arch).to receive(:x86_64).and_return true
-
           # A bit ugly mock, but what we want to achieve is to simulate that one of available
           # windows partitions cannot be properly detected due an Storage exception (bsc#1101979).
           allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info) do |fs|
@@ -67,10 +66,7 @@ describe Y2Storage::DiskAnalyzer do
     end
 
     context "in a non-PC system" do
-      before do
-        allow(Yast::Arch).to receive(:x86_64).and_return false
-        allow(Yast::Arch).to receive(:i386).and_return false
-      end
+      let(:architecture) { :s390 }
 
       it "returns an empty array" do
         expect(analyzer.windows_partitions.empty?).to eq(true)
@@ -80,13 +76,13 @@ describe Y2Storage::DiskAnalyzer do
 
   describe "#installed_systems" do
     before do
-      allow(Yast::Arch).to receive(:x86_64).and_return true
       allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
         .and_return(content_info)
       allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:release_name)
         .and_return release_name
     end
 
+    let(:architecture) { :x86_64 }
     let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
 
     let(:release_name) { "openSUSE" }

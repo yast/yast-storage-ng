@@ -26,13 +26,6 @@ require "y2storage"
 Yast.import "Arch"
 
 describe Y2Storage::SubvolSpecification do
-  before do
-    allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86_64)
-    allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
-    allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
-    allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
-  end
-
   let(:architecture) { :x86_64 }
 
   subject { Y2Storage::SubvolSpecification.new(path, archs: archs) }
