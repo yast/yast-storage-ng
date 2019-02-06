@@ -86,6 +86,11 @@ describe Y2Partitioner::Clients::Main do
           allow(Y2Partitioner::Dialogs::Main).to receive(:new)
             .and_return(partitioner_dialog, other_partitioner_dialog)
           allow(partitioner_dialog).to receive(:run).and_return(partitioner_result)
+
+          allow(Yast::Execute).to receive(:locally!)
+            .with("/sbin/udevadm", any_args)
+          allow(Yast::Execute).to receive(:locally!)
+            .with("/usr/lib/YaST2/bin/mask-systemd-units", any_args)
         end
 
         let(:partitioner_dialog) { instance_double(Y2Partitioner::Dialogs::Main) }
@@ -95,6 +100,20 @@ describe Y2Partitioner::Clients::Main do
         let(:partitioner_result) { nil }
 
         let(:storage_manager) { Y2Storage::StorageManager.instance }
+
+        context "but probing fails" do
+          before { allow(storage_manager).to receive(:probed).and_return nil }
+
+          it "does not run the partitioner dialog" do
+            expect(Y2Partitioner::Dialogs::Main).to_not receive(:new)
+
+            subject.run
+          end
+
+          it "returns nil" do
+            expect(subject.run).to be_nil
+          end
+        end
 
         it "runs the partitioner dialog" do
           expect(partitioner_dialog).to receive(:run)
@@ -116,11 +135,6 @@ describe Y2Partitioner::Clients::Main do
 
           before do
             allow(partitioner_dialog).to receive(:device_graph).and_return(device_graph)
-
-            allow(Yast::Execute).to receive(:locally!)
-              .with("/sbin/udevadm", any_args)
-            allow(Yast::Execute).to receive(:locally!)
-              .with("/usr/lib/YaST2/bin/mask-systemd-units", any_args)
           end
 
           let(:device_graph) { instance_double(Y2Storage::Devicegraph) }

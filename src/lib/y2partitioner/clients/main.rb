@@ -51,6 +51,9 @@ module Y2Partitioner
           inhibitors = Y2Storage::Inhibitors.new
           inhibitors.inhibit
 
+          # Quit immediately if probing failed
+          return nil unless storage_manager.probed
+
           return nil if partitioner_dialog.run != :next
           allow_commit ? commit : forbidden_commit_warning
         ensure
