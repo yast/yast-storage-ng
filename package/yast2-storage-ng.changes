@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Feb  6 11:54:41 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: when running standalone (in an installed system)
+  abort gracefully if probing fails (bsc#1123837).
+- 4.1.53
+
+-------------------------------------------------------------------
 Mon Feb  4 15:55:56 UTC 2019 - jlopez@suse.com
 
 - Remove setters for bcache attributes that cannot be permanent
