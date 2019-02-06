@@ -98,7 +98,8 @@ module Y2Partitioner
       def partitioner_dialog
         return @partitioner_dialog if @partitioner_dialog
 
-        # Force quitting if probing failed
+        # Force quitting if probing failed, which (with default callbacks) means
+        # the user got an error pop-up and decided to abort.
         return nil unless storage_manager.probed
 
         @partitioner_dialog = Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
