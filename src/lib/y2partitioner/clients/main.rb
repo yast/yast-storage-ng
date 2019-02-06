@@ -51,10 +51,7 @@ module Y2Partitioner
           inhibitors = Y2Storage::Inhibitors.new
           inhibitors.inhibit
 
-          # Quit immediately if probing failed
-          return nil unless storage_manager.probed
-
-          return nil if partitioner_dialog.run != :next
+          return nil if partitioner_dialog.nil? || partitioner_dialog.run != :next
           allow_commit ? commit : forbidden_commit_warning
         ensure
           inhibitors.uninhibit
@@ -96,9 +93,15 @@ module Y2Partitioner
 
       # Partitioner dialog is initalized with the probed and staging devicegraphs
       #
-      # @return [Dialogs::Main]
+      # @return [Dialogs::Main, nil] nil if it was not possible to get the
+      #   devicegraphs (probing failed)
       def partitioner_dialog
-        @partitioner_dialog ||= Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
+        return @partitioner_dialog if @partitioner_dialog
+
+        # Force quitting if probing failed
+        return nil unless storage_manager.probed
+
+        @partitioner_dialog = Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
       end
 
       # Popup to alert the user about using the Partitioner
