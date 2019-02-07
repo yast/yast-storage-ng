@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,34 +24,57 @@ require "y2partitioner/dialogs/bcache"
 require "y2partitioner/device_graphs"
 require "y2storage/bcache"
 
-Yast.import "Popup"
-
 module Y2Partitioner
   module Actions
-    # Action following click on Add Bcache button.
+    # Action for adding a bcache device
     class AddBcache
-      # Runs dialogs for adding bcache and also modify device graph if user confirm that dialog.
+      # Runs dialogs for adding a bcache and also modify device graph if user confirm
+      # the dialog.
+      #
+      # @return [Symbol] :finish
       def run
-        dialog = Dialogs::Bcache.new(usable_blk_devices, usable_blk_devices + existing_caches)
+        dialog = Dialogs::Bcache.new(suitable_backing_devices, suitable_caching_devices)
 
         create_device(dialog) if dialog.run == :next
+
         :finish
       end
 
     private
 
-      # Creates device according to user input to dialog.
-      # @return [void]
+      # Creates a bcache device according to the user input
+      #
+      # @param dialog [Dialogs::Bcache]
       def create_device(dialog)
         backing = dialog.backing_device
-        raise "Invalid result #{dialog.inspect}. Backing not found." unless backing
 
-        caching = dialog.caching_device
-        raise "Invalid result #{dialog.inspect}. Caching not found." unless caching
+        raise "Invalid result #{dialog.inspect}. Backing not found." unless backing
 
         bcache = backing.create_bcache(Y2Storage::Bcache.find_free_name(device_graph))
 
-        set_options(bcache, dialog.options)
+        apply_options(bcache, dialog.options)
+
+        attach(bcache, dialog.caching_device) if dialog.caching_device
+      end
+
+      # Applies options to the bcache device
+      #
+      # Right now, the dialog only allows to indicate the cache mode.
+      #
+      # @param bcache [Y2Storage::Bcache]
+      # @param options [Hash<Symbol, Object>]
+      def apply_options(bcache, options)
+        options.each_pair do |key, value|
+          bcache.public_send(:"#{key}=", value)
+        end
+      end
+
+      # Attaches the selected caching to the bcache
+      #
+      # @param bcache [Y2Storage::Bcache]
+      # @param caching [Y2Storage::BcacheCset, Y2Storage::BlkDevice, nil]
+      def attach(bcache, caching)
+        return if caching.nil?
 
         if !caching.is?(:bcache_cset)
           caching.remove_descendants
@@ -61,19 +84,29 @@ module Y2Partitioner
         bcache.attach_bcache_cset(caching)
       end
 
-      def set_options(bcache, options)
-        options.each_pair do |key, value|
-          bcache.public_send(:"#{key}=", value)
-        end
-      end
-
-      # Device graph on which action operates
+      # Device graph in which the action operates on
+      #
       # @return [Y2Storage::Devicegraph]
       def device_graph
         DeviceGraphs.instance.current
       end
 
-      # returns block devices that can be used for backing or caching device
+      # Suitable devices to be used as backing device
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
+      def suitable_backing_devices
+        usable_blk_devices
+      end
+
+      # Suitable devices to be used for caching
+      #
+      # @return [Array<Y2Storage::BcacheCset, Y2Storage::BlkDevice>]
+      def suitable_caching_devices
+        existing_caches + usable_blk_devices
+      end
+
+      # Block devices that can be used as backing or caching device
+      #
       # @return [Array<Y2Storage::BlkDevice>]
       def usable_blk_devices
         device_graph.blk_devices.select do |dev|
@@ -85,7 +118,8 @@ module Y2Partitioner
         end
       end
 
-      # returns existing caches for bcache.
+      # Currently existing caching sets
+      #
       # @return [Array<Y2Storage::BcacheCset>]
       def existing_caches
         device_graph.bcache_csets

@@ -61,7 +61,7 @@ module Y2Partitioner
 
       # Deletes the indicated Bcache (see {DeleteDevice#device})
       def delete
-        log.info "deleting bcache raid #{device}"
+        log.info "deleting bcache #{device}"
         device_graph.remove_bcache(device)
       end
 
@@ -89,7 +89,7 @@ module Y2Partitioner
         )
       end
 
-      # Checks if there is only single bcache cset used by this bcache, so it will be delited
+      # Checks if there is only single bcache cset used by this bcache, so it will be deleted
       def single_bcache_cset?
         device.bcache_cset && device.bcache_cset.bcaches.size == 1
       end
