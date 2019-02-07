@@ -15,10 +15,26 @@ plugins:
       - ruby
 
 checks:
-  method-lines:
-    config:
-      threshold: 30 # Same limit than YaST's Rubocop config
-
+  # disable most of the checks, they are already checked by Rubocop in Travis
+  argument-count:
+    enabled: false
+  complex-logic:
+    enabled: false
+  file-lines:
+    enabled: false
+  method-complexity:
+    enabled: false
   method-count:
-    config:
-      threshold: 50 # FIXME: temporarily raised to an absurdly high value to postpone the discussion
+    enabled: false
+  method-lines:
+    enabled: false
+  nested-control-flow:
+    enabled: false
+  return-statements:
+    enabled: false
+
+  # these are not supported by Rubocop so enable them
+  similar-code:
+    enabled: true
+  identical-code:
+    enabled: true
