@@ -20,19 +20,29 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast/i18n"
+require "yast2/popup"
+require "y2storage/bcache"
 require "y2partitioner/dialogs/bcache"
 require "y2partitioner/device_graphs"
-require "y2storage/bcache"
 
 module Y2Partitioner
   module Actions
     # Action for adding a bcache device
     class AddBcache
+      include Yast::I18n
+
+      def initialize
+        textdomain "storage"
+      end
+
       # Runs dialogs for adding a bcache and also modify device graph if user confirm
       # the dialog.
       #
-      # @return [Symbol] :finish
+      # @return [Symbol] :back, :finish
       def run
+        return :back unless validate
+
         dialog = Dialogs::Bcache.new(suitable_backing_devices, suitable_caching_devices)
 
         create_device(dialog) if dialog.run == :next
@@ -41,6 +51,37 @@ module Y2Partitioner
       end
 
     private
+
+      # Validations before performing the action
+      #
+      # @note The action can be performed is there are no errors (see #errors).
+      #   Only the first error is shown.
+      #
+      # @return [Boolean]
+      def validate
+        current_errors = errors
+        return true if current_errors.empty?
+
+        Yast2::Popup.show(current_errors.first, headline: :error)
+        false
+      end
+
+      # List of errors that avoid to create a Bcache
+      #
+      # @return [Array<String>]
+      def errors
+        [no_backing_devices_error].compact
+      end
+
+      # Error when there is no suitable backing devices for creating a Bcache
+      #
+      # @return [String, nil] nil if there are devices.
+      def no_backing_devices_error
+        return nil if suitable_backing_devices.any?
+
+        # TRANSLATORS: Error message.
+        _("There are not enough suitable unused devices to create a Bcache.")
+      end
 
       # Creates a bcache device according to the user input
       #

@@ -89,13 +89,15 @@ describe Y2Partitioner::Dialogs::Bcache do
   end
 
   describe Y2Partitioner::Dialogs::Bcache::BackingDeviceSelector do
-    subject { described_class.new(bcache, suitable_backing, double(value: "test")) }
-
     before do
       allow(subject).to receive(:value).and_return(suitable_backing.first.sid.to_s)
     end
 
+    subject { described_class.new(bcache, suitable_backing, double(value: caching_value)) }
+
     let(:bcache) { nil }
+
+    let(:caching_value) { "test" }
 
     include_examples "CWM::ComboBox"
 
@@ -124,18 +126,51 @@ describe Y2Partitioner::Dialogs::Bcache do
     end
 
     describe "#validate" do
-      it "shows error popup if same device is used for backing and caching" do
-        allow(subject).to receive(:value).and_return("test")
+      before do
+        allow(subject).to receive(:value).and_return(value)
 
-        expect(Yast2::Popup).to receive(:show)
-        subject.validate
+        allow(Yast2::Popup).to receive(:show)
       end
 
-      it "shows error popup if backing device is not selected" do
-        allow(subject).to receive(:value).and_return("")
+      context "when no backing device has been selected" do
+        let(:value) { "" }
 
-        expect(Yast2::Popup).to receive(:show)
-        subject.validate
+        it "raises an error" do
+          expect { subject.validate }.to raise_error(RuntimeError)
+        end
+      end
+
+      context "when a backing device has been selected" do
+        let(:value) { "device" }
+
+        context "and it is different to the selected caching device" do
+          let(:caching_value) { "another_device" }
+
+          it "does not show a popup" do
+            expect(Yast2::Popup).to_not receive(:show)
+              .with(/cannot be identical/, anything)
+
+            subject.validate
+          end
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        context "and the same device was selected as caching device" do
+          let(:caching_value) { "device" }
+
+          it "shows an error popup" do
+            expect(Yast2::Popup).to receive(:show)
+
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to eq(false)
+          end
+        end
       end
     end
 

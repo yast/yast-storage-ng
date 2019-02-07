@@ -30,19 +30,36 @@ describe Y2Partitioner::Widgets::BcacheAddButton do
 
   before do
     devicegraph_stub("bcache1.xml")
-    allow(Y2Partitioner::Actions::AddBcache).to receive(:new).and_return(double(run: :finish))
+
+    allow(Y2Partitioner::Actions::AddBcache).to receive(:new)
+      .and_return(double(run: action_result))
   end
+
+  let(:action_result) { :finish }
 
   include_examples "CWM::PushButton"
 
   describe "#handle" do
-    it "starts an AddBcache action" do
-      expect(Y2Partitioner::Actions::AddBcache).to receive(:new).and_return(double(run: :finish))
+    it "starts an action to create a bcache device" do
+      expect(Y2Partitioner::Actions::AddBcache).to receive(:new)
+
       button.handle
     end
 
-    it "returns :redraw" do
-      expect(button.handle).to eq :redraw
+    context "if the action returns :finish" do
+      let(:action_result) { :finish }
+
+      it "returns :redraw" do
+        expect(button.handle).to eq(:redraw)
+      end
+    end
+
+    context "if the action does not return :finish" do
+      let(:action_result) { :back }
+
+      it "returns nil" do
+        expect(button.handle).to be_nil
+      end
     end
   end
 end

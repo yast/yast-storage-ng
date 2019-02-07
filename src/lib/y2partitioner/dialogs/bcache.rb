@@ -212,25 +212,29 @@ module Y2Partitioner
           )
         end
 
+        # Validates the selected value
+        #
+        # An error popup is shown when the backing device and the caching device are
+        # the same.
+        #
         # @macro seeAbstractWidget
+        # @raise [RuntimeError] if no device has been selected.
+        #
+        # @return [Boolean]
         def validate
           log.info "selected value #{value.inspect}"
-          # value can be empty string if there is no items
-          if value.nil? || value.empty?
-            Yast2::Popup.show(
-              _("Empty backing device is not yet supported"),
-              headline: _("Cannot Create Bcache")
-            )
-            return false
-          elsif value == caching.value
-            Yast2::Popup.show(
-              _("Backing and Caching devices cannot be identical."),
-              headline: _("Cannot Create Bcache")
-            )
-            return false
-          else
-            true
-          end
+
+          # Value can be an empty string if there is no items
+          raise "Empty backing device is not supported" if value.nil? || value.empty?
+
+          return true if value != caching.value
+
+          Yast2::Popup.show(
+            _("Backing and Caching devices cannot be identical."),
+            headline: _("Cannot Create Bcache")
+          )
+
+          false
         end
 
       private

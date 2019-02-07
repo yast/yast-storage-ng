@@ -75,52 +75,103 @@ describe Y2Partitioner::Actions::AddBcache do
       end
     end
 
-    context "when the dialog is accepted" do
-      let(:dialog_result) { :next }
+    context "when there are no suitable backing devices" do
+      before do
+        allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
 
-      context "and a caching device was selected in the dialog" do
-        let(:selected_caching) { fake_devicegraph.find_by_name("/dev/sdc") }
+        allow(device_graphs).to receive(:current).and_return(fake_devicegraph)
 
-        include_examples "create new bcache"
+        allow(fake_devicegraph).to receive(:blk_devices).and_return([])
 
-        it "attaches the selected caching device" do
-          subject.run
-
-          expect(bcache.bcache_cset).to_not be_nil
-          expect(bcache.bcache_cset.blk_devices.first).to eq(selected_caching)
-        end
-
-        it "returns :finish" do
-          expect(subject.run).to eq :finish
-        end
+        allow(Yast2::Popup).to receive(:show)
       end
 
-      context "when no caching device was selected in the dialog" do
-        let(:selected_caching) { nil }
+      let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs) }
 
-        include_examples "create new bcache"
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(/not enough suitable unused devices/, anything)
 
-        it "does not attach a caching device" do
-          subject.run
-
-          expect(bcache.bcache_cset).to be_nil
-        end
-
-        it "returns :finish" do
-          expect(subject.run).to eq :finish
-        end
+        subject.run
       end
-    end
 
-    context "when the dialog is discarded" do
+      it "does not open a dialog to create a bcache device" do
+        expect(Y2Partitioner::Dialogs::Bcache).to_not receive(:new)
+
+        subject.run
+      end
+
       it "does not create a new bcache" do
         subject.run
 
         expect(fake_devicegraph.bcaches).to be_empty
       end
 
-      it "returns :finish" do
-        expect(subject.run).to eq :finish
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
+      end
+    end
+
+    context "when there are suitable backing devices" do
+      it "does not show an error popup" do
+        expect(Yast2::Popup).to_not receive(:show)
+
+        subject.run
+      end
+
+      it "opens a dialog to create a bcache device" do
+        expect(Y2Partitioner::Dialogs::Bcache).to receive(:new).and_call_original
+
+        subject.run
+      end
+
+      context "when the dialog is accepted" do
+        let(:dialog_result) { :next }
+
+        context "and a caching device was selected in the dialog" do
+          let(:selected_caching) { fake_devicegraph.find_by_name("/dev/sdc") }
+
+          include_examples "create new bcache"
+
+          it "attaches the selected caching device" do
+            subject.run
+
+            expect(bcache.bcache_cset).to_not be_nil
+            expect(bcache.bcache_cset.blk_devices.first).to eq(selected_caching)
+          end
+
+          it "returns :finish" do
+            expect(subject.run).to eq :finish
+          end
+        end
+
+        context "when no caching device was selected in the dialog" do
+          let(:selected_caching) { nil }
+
+          include_examples "create new bcache"
+
+          it "does not attach a caching device" do
+            subject.run
+
+            expect(bcache.bcache_cset).to be_nil
+          end
+
+          it "returns :finish" do
+            expect(subject.run).to eq :finish
+          end
+        end
+      end
+
+      context "when the dialog is discarded" do
+        it "does not create a new bcache" do
+          subject.run
+
+          expect(fake_devicegraph.bcaches).to be_empty
+        end
+
+        it "returns :finish" do
+          expect(subject.run).to eq :finish
+        end
       end
     end
   end

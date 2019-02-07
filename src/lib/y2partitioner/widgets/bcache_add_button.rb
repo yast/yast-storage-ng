@@ -41,8 +41,8 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       # @see Actions::AddBcache
       def handle
-        Actions::AddBcache.new.run
-        :redraw
+        res = Actions::AddBcache.new.run
+        res == :finish ? :redraw : nil
       end
     end
   end
