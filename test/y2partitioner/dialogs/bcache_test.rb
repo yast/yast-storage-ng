@@ -40,21 +40,21 @@ describe Y2Partitioner::Dialogs::Bcache do
   describe "#contents" do
     it "contains a widget for entering the backing device" do
       widget = subject.contents.nested_find do |i|
-        i.is_a?(Y2Partitioner::Dialogs::Bcache::BackingDevice)
+        i.is_a?(Y2Partitioner::Dialogs::Bcache::BackingDeviceSelector)
       end
       expect(widget).to_not(be_nil, "Widget not found in '#{subject.contents.inspect}'")
     end
 
     it "contains a widget for entering the caching device" do
       widget = subject.contents.nested_find do |i|
-        i.is_a?(Y2Partitioner::Dialogs::Bcache::CachingDevice)
+        i.is_a?(Y2Partitioner::Dialogs::Bcache::CachingDeviceSelector)
       end
       expect(widget).to_not(be_nil, "Widget not found in '#{subject.contents.inspect}'")
     end
 
     it "contains a widget for entering the cache mode" do
       widget = subject.contents.nested_find do |i|
-        i.is_a?(Y2Partitioner::Dialogs::Bcache::CacheMode)
+        i.is_a?(Y2Partitioner::Dialogs::Bcache::CacheModeSelector)
       end
       expect(widget).to_not(be_nil, "Widget not found in '#{subject.contents.inspect}'")
     end
@@ -63,7 +63,7 @@ describe Y2Partitioner::Dialogs::Bcache do
 
   describe "#caching_device" do
     it "returns selected caching device" do
-      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::CachingDevice).to receive(:result)
+      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::CachingDeviceSelector).to receive(:result)
         .and_return(suitable_caching.first)
 
       expect(subject.caching_device).to eq suitable_caching.first
@@ -72,7 +72,7 @@ describe Y2Partitioner::Dialogs::Bcache do
 
   describe "#backing_device" do
     it "returns selected backing device" do
-      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::BackingDevice).to receive(:result)
+      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::BackingDeviceSelector).to receive(:result)
         .and_return(suitable_backing.first)
 
       expect(subject.backing_device).to eq suitable_backing.first
@@ -81,21 +81,47 @@ describe Y2Partitioner::Dialogs::Bcache do
 
   describe "#options" do
     it "returns hash containing cache_mode" do
-      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::CacheMode).to receive(:result)
+      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::CacheModeSelector).to receive(:result)
         .and_return(Y2Storage::CacheMode::WRITEAROUND)
 
       expect(subject.options[:cache_mode]).to eq Y2Storage::CacheMode::WRITEAROUND
     end
   end
 
-  describe Y2Partitioner::Dialogs::Bcache::BackingDevice do
-    subject { described_class.new(nil, suitable_backing, double(value: "test")) }
+  describe Y2Partitioner::Dialogs::Bcache::BackingDeviceSelector do
+    subject { described_class.new(bcache, suitable_backing, double(value: "test")) }
 
     before do
       allow(subject).to receive(:value).and_return(suitable_backing.first.sid.to_s)
     end
 
+    let(:bcache) { nil }
+
     include_examples "CWM::ComboBox"
+
+    describe "#init" do
+      context "when a new bcache is being created" do
+        let(:bcache) { nil }
+
+        it "selects the first suitable backing device" do
+          expect(subject).to receive(:value=).with(suitable_backing.first.sid.to_s)
+            .and_call_original
+
+          subject.init
+        end
+      end
+
+      context "when the bcache already exists" do
+        let(:bcache) { fake_devicegraph.find_by_name("/dev/bcache0") }
+
+        it "selects its backing device" do
+          expect(subject).to receive(:value=).with(bcache.backing_device.sid.to_s)
+            .and_call_original
+
+          subject.init
+        end
+      end
+    end
 
     describe "#validate" do
       it "shows error popup if same device is used for backing and caching" do
@@ -121,14 +147,58 @@ describe Y2Partitioner::Dialogs::Bcache do
     end
   end
 
-  describe Y2Partitioner::Dialogs::Bcache::CachingDevice do
-    subject { described_class.new(nil, suitable_caching) }
+  describe Y2Partitioner::Dialogs::Bcache::CachingDeviceSelector do
+    subject { described_class.new(bcache, suitable_caching) }
 
     before do
       allow(subject).to receive(:value).and_return(suitable_caching.last.sid.to_s)
     end
 
+    let(:bcache) { nil }
+
     include_examples "CWM::ComboBox"
+
+    describe "#init" do
+      context "when a new bcache is being created" do
+        let(:bcache) { nil }
+
+        it "selects the first suitable caching device" do
+          expect(subject).to receive(:value=).with(suitable_caching.first.sid.to_s)
+            .and_call_original
+
+          subject.init
+        end
+      end
+
+      context "when the bcache already exists" do
+        context "and the bcache has a caching set" do
+          let(:bcache) { fake_devicegraph.find_by_name("/dev/bcache0") }
+
+          it "selects its caching set" do
+            expect(subject).to receive(:value=).with(bcache.bcache_cset.sid.to_s)
+              .and_call_original
+
+            subject.init
+          end
+        end
+
+        context "and the bcache has no caching set" do
+          before do
+            vda1 = fake_devicegraph.find_by_name("/dev/vda1")
+            vda1.create_bcache("/dev/bcache99")
+          end
+
+          let(:bcache) { fake_devicegraph.find_by_name("/dev/bcache99") }
+
+          it "selects the first suitable caching device" do
+            expect(subject).to receive(:value=).with(suitable_caching.first.sid.to_s)
+              .and_call_original
+
+            subject.init
+          end
+        end
+      end
+    end
 
     describe "#result" do
       it "returns Y2Storage::BlkDevice or Y2Storage::BcacheCset according to selected name" do
@@ -136,16 +206,52 @@ describe Y2Partitioner::Dialogs::Bcache do
         expect(subject.result).to eq suitable_caching.last
       end
     end
+
+    describe "#items" do
+      it "includes an option to select none caching device" do
+        expect(subject.items).to include(["", "Without caching"])
+      end
+    end
   end
 
-  describe Y2Partitioner::Dialogs::Bcache::CacheMode do
-    subject { described_class.new(nil) }
+  describe Y2Partitioner::Dialogs::Bcache::CacheModeSelector do
+    subject { described_class.new(bcache) }
+
+    let(:bcache) { nil }
 
     before do
       allow(subject).to receive(:value).and_return(:writeback)
     end
 
     include_examples "CWM::ComboBox"
+
+    describe "#init" do
+      context "when a new bcache is being created" do
+        let(:bcache) { nil }
+
+        it "selects writethrough mode" do
+          expect(subject).to receive(:value=).with(Y2Storage::CacheMode::WRITETHROUGH.to_sym.to_s)
+            .and_call_original
+
+          subject.init
+        end
+      end
+
+      context "when the bcache already exists" do
+        let(:bcache) { fake_devicegraph.find_by_name("/dev/bcache0") }
+
+        before do
+          bcache.cache_mode = Y2Storage::CacheMode::WRITEBACK
+        end
+
+        it "selects its current cache mode" do
+          expect(subject).to receive(:value=).with(Y2Storage::CacheMode::WRITEBACK.to_sym.to_s)
+            .and_call_original
+
+          subject.init
+        end
+      end
+    end
 
     describe "#result" do
       it "returns CacheMode Symbol" do
@@ -154,5 +260,4 @@ describe Y2Partitioner::Dialogs::Bcache do
       end
     end
   end
-
 end
