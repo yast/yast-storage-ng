@@ -109,7 +109,7 @@ module Y2Partitioner
 
         # Device selected in widget
         #
-        # Only rely on this value when the dialog succeed and {#store} is called.
+        # Only rely on this value when the dialog succeeded and {#store} is called.
         #
         # @return [Y2Storage::BlkDevice, Y2Storage::BcacheCset]
         attr_reader :result
@@ -118,7 +118,7 @@ module Y2Partitioner
         #
         # @param bcache [Y2Storage::Bcache, nil] existing bcache or nil if it is a new one.
         # @param devices [Array<Y2Storage::BlkDevice, Y2Storage::BcacheCset>] possible devices
-        #   that can be used as backing device.
+        #   that can be used as backing or caching device.
         def initialize(bcache, devices)
           textdomain "storage"
 
@@ -138,7 +138,7 @@ module Y2Partitioner
 
       private
 
-        # sid of the device that is initally selected
+        # sid of the device that is initially selected
         #
         # @return [String, nil]
         def default_sid
@@ -205,8 +205,8 @@ module Y2Partitioner
           format(
             _("<p>" \
                 "<b>%{label}</b> is the device that will be used as backing device for bcache." \
-                "It will define the available space of bcache. " \
-                "The Device will be formatted so any previous content will be wiped out." \
+                "It will define the size of the resulting bcache device. " \
+                "The device will be formatted so any previous content will be wiped out." \
               "</p>"),
             label: label
           )
@@ -269,7 +269,7 @@ module Y2Partitioner
             _("<p>" \
                 "<b>%{label}</b> is the device that will be used as caching device for bcache." \
                 "It should be faster and usually is smaller than the backing device, " \
-                "but it is not required. The device will be formatted so any previous " \
+                "but that is not strictly required. The device will be formatted so any previous " \
                 "content will be wiped out." \
               "</p>" \
               "<p>" \
@@ -300,7 +300,7 @@ module Y2Partitioner
       class CacheModeSelector < CWM::ComboBox
         # Cache mode selected in widget
         #
-        # Only rely on this value when the dialog succeed and {#store} is called.
+        # Only rely on this value when the dialog succeeded and {#store} is called.
         attr_reader :result
 
         # Constructor
