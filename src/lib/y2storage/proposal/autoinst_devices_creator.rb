@@ -295,6 +295,17 @@ module Y2Storage
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, previous_result, devs_to_reuse)
         mds.reduce(previous_result) do |result, md|
+          # Normally, the profile will use the same naming convention
+          # (/dev/md0 vs /dev/md/0) to define the RAID itself (in its corresponding
+          # <drive> section) and to reference that RAID from its components
+          # (using <raid_name>). So populating the 'devices' list below could be
+          # as simple as matching Planned::Devices#raid_name with Planned::Md.name
+          #
+          # BUT if the old format is used to specify the RAID ("/dev/md" as name
+          # and a <partition_nr> to indicate the number), the name for the planned MD
+          # is auto-generated (with the /dev/md/0 format so far), so we must use
+          # Planned::Md#name? to ensure robust comparison no matter which format
+          # is used in #raid_name
           devices = result.created_names { |d| d.respond_to?(:raid_name) && md.name?(d.raid_name) }
           devices += devs_to_reuse.select { |d| md.name?(d.raid_name) }.map(&:reuse_name)
           result.merge(create_md(result.devicegraph, md, devices))
