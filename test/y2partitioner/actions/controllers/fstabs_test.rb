@@ -213,6 +213,9 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       let(:entry1_device) { "/dev/mapper/luks2" } # unknown
       let(:entry2_device) { "/dev/sdb1" }
 
+      # Mock #find_by_any_name that is called by SimpleEtcFstabEntry#find_device
+      before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
       include_examples "not importable entries error"
     end
 

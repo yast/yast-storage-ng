@@ -97,6 +97,9 @@ describe Y2Storage::SimpleEtcFstabEntry do
       context "and the block device is not found in the system" do
         let(:device) { "/dev/disk/by-id/does-not-exist" }
 
+        # Mock the system lookup performed as last resort to find a device
+        before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
         it "returns nil" do
           expect(subject.device(devicegraph)).to be_nil
         end

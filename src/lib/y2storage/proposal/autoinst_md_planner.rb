@@ -126,8 +126,7 @@ module Y2Storage
       # @param md      [Planned::Md] Planned MD RAID
       # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST specification
       def add_md_reuse(md, section)
-        # TODO: fix when not using named raids
-        md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
+        md_to_reuse = find_md_to_reuse(md)
         if md_to_reuse.nil?
           issues_list.add(:missing_reusable_device, section)
           return
@@ -155,6 +154,23 @@ module Y2Storage
       rescue NameError
         issues_list.add(:invalid_value, raid_options.raid_type, :raid_type, "raid1")
         Y2Storage::MdLevel::RAID1
+      end
+
+      # MD device to be reused by the given planned MD
+      #
+      # @param md      [Planned::Md] Planned MD RAID
+      def find_md_to_reuse(md)
+        # This method could directly call Devicegraph#find_by_any_name.
+        # But that's an expensive method that usually implies a lookup in the disk,
+        # so first we try to avoid that call in some obvious cases that can be
+        # resolved by Md#name?
+        dev_by_name = devicegraph.md_raids.find { |m| md.name?(m.name) }
+        return dev_by_name if dev_by_name
+
+        dev_by_name = devicegraph.find_by_any_name(md.name)
+        return dev_by_name if dev_by_name && dev_by_name.is?(:md)
+
+        nil
       end
     end
   end

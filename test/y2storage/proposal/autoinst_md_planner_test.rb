@@ -186,14 +186,14 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
         }
       end
 
-      it "returns a planned RAID using /dev/md + partition_nr as device name" do
+      it "returns a planned RAID using /dev/md/ + partition_nr as device name" do
         mds = planner.planned_devices(drive)
         expect(mds).to contain_exactly(
           an_object_having_attributes(
-            "name" => "/dev/md1", "md_level" => Y2Storage::MdLevel::RAID5
+            "name" => "/dev/md/1", "md_level" => Y2Storage::MdLevel::RAID5
           ),
           an_object_having_attributes(
-            "name" => "/dev/md2", "md_level" => Y2Storage::MdLevel::RAID1
+            "name" => "/dev/md/2", "md_level" => Y2Storage::MdLevel::RAID1
           )
         )
       end

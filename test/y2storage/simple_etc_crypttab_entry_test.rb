@@ -45,6 +45,9 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
   describe "#find_device" do
     let(:sda4) { devicegraph.find_by_name("/dev/sda4") }
 
+    # Mock the system lookup performed as last resort to find a device
+    before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
     context "when the crypttab device field contains an UUID" do
       let(:device) { "UUID=123456-789" }
 

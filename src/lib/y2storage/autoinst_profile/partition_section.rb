@@ -228,7 +228,7 @@ module Y2Storage
         name = raid_options && raid_options.raid_name
         return name unless name.nil? || name.empty?
 
-        "/dev/md#{partition_nr}"
+        "/dev/md/#{partition_nr}"
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
