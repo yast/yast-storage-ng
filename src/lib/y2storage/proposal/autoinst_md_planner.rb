@@ -160,16 +160,9 @@ module Y2Storage
       #
       # @param md      [Planned::Md] Planned MD RAID
       def find_md_to_reuse(md)
-        # This method could directly call Devicegraph#find_by_any_name.
-        # But that's an expensive method that usually implies a lookup in the disk,
-        # so first we try to avoid that call in some obvious cases that can be
-        # resolved by Md#name?
-        dev_by_name = devicegraph.md_raids.find { |m| md.name?(m.name) }
-        return dev_by_name if dev_by_name
+        dev_by_name = devicegraph.find_by_any_name(md.name, alternative_names: true)
 
-        dev_by_name = devicegraph.find_by_any_name(md.name)
         return dev_by_name if dev_by_name && dev_by_name.is?(:md)
-
         nil
       end
     end

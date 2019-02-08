@@ -187,12 +187,8 @@ describe Y2Storage::AutoinstProposal do
         let(:create_vdb1) { false }
 
         before do
-          # Mock the system lookup performed as last resort to find a device:
-          # by default, find nothing...
-          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).and_return(nil)
-          # unless we are looking for "/dev/md0"
-          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).with(anything, "/dev/md0")
-            .and_return(fake_devicegraph.find_by_name("/dev/md/0"))
+          # Mock the system lookup performed as last resort to find a device
+          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name)
         end
 
         context "if raid_name is specified as /dev/mdX" do

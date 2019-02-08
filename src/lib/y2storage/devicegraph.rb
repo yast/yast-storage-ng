@@ -21,6 +21,7 @@
 
 require "pp"
 require "tempfile"
+require "pathname"
 require "y2storage/actiongraph"
 require "y2storage/bcache"
 require "y2storage/bcache_cset"
@@ -350,27 +351,47 @@ module Y2Storage
     # * It avoids system lookup in potentially risky scenarios (like an outdated
     #   {StorageManager#probed}).
     #
-    # In case of LUKSes, the device might be found by using an alternative name,
+    # In case of LUKSes and MDs, the device might be found by using an alternative name,
     # see {#alternative_names}.
     #
-    # @see #deep_find
+    # @see #find_by_devicegraph_name
+    # @see #find_via_system_lookup
     #
-    # @param device_name [String] can be a kernel name like "/dev/sda1" or any symbolic
+    # @param dev_name [String] can be a kernel name like "/dev/sda1" or any symbolic
     #   link below the /dev directory
     # @param alternative_names [Boolean] whether to try the search with possible alternative names
     # @return [Device, nil] the found device, nil if no device matches the name
-    def find_by_any_name(device_name, alternative_names: true)
-      names = [device_name]
-      names = names.concat(alternative_names(device_name)) if alternative_names
-
-      device = nil
+    def find_by_any_name(dev_name, alternative_names: true)
+      names = [dev_name]
+      names = names.concat(alternative_names(dev_name)) if alternative_names
 
       names.each do |name|
-        device = deep_find(name)
-        break if device
+        device = find_by_devicegraph_name(name)
+        if device
+          log.info "Device #{dev_name} found by its libstorage-ng name #{name}: #{device.inspect}"
+          return device
+        end
       end
 
-      device
+      # If no device yet, there is still a chance using the slower
+      # BlkDevice.find_by_any_name. Unfortunatelly this only works in the
+      # probed devicegraph by design. Moreover it can only be safely called
+      # under certain circumstances.
+      if !udev_lookup_possible?
+        log.info "System lookup cannot be used to find #{dev_name}"
+        return nil
+      end
+
+      names.each do |name|
+        device = find_via_system_lookup(name)
+        if device
+          log.info "Device #{dev_name} found via system lookup of #{name}: #{device.inspect}"
+          return device
+        end
+      end
+
+      log.info "Device #{dev_name} not found via system lookup"
+      nil
     end
 
     # @return [Array<FreeDiskSpace>]
@@ -559,6 +580,18 @@ module Y2Storage
       !StorageManager.instance.committed?
     end
 
+    # Alternative versions of the name to be also considered by {#find_by_any_name}
+    #
+    # @param device_name [String] a kernel name, udev name or any other device name
+    # @return [Array<String>]
+    def alternative_names(device_name)
+      alternative_enc_names(device_name) + alternative_md_names(device_name)
+    end
+
+    # Alternative names for encryption devices
+    #
+    # @see #alternative_names
+    #
     # Encryption devices might be probed with a name that does not match the device name
     # indicated in the fstab file. For example, /etc/fstab could have an entry like:
     #
@@ -579,48 +612,56 @@ module Y2Storage
     #
     # @param device_name [String] a kernel name or udev name
     # @return [Array<String>]
-    def alternative_names(device_name)
+    def alternative_enc_names(device_name)
       devices = encryptions.select { |e| e.crypttab_name? && device_name.include?(e.crypttab_name) }
 
       devices.map { |d| device_name.sub(d.crypttab_name, d.dm_table_name) }
     end
 
-    # Performs the search of a device by any possible name (kernel name or udev name)
+    # Alternative names for MD devices
+    #
+    # @see #alternative_names
+    #
+    # @param device_name [String] a kernel name or link to it
+    # @return [Array<String>]
+    def alternative_md_names(device_name)
+      case Pathname.new(device_name).cleanpath.to_s
+      when /^\/dev\/md(\d+)$/
+        ["/dev/md/#{Regexp.last_match(1)}"]
+      when /^\/dev\/md\/(\d+)$/
+        ["/dev/md#{Regexp.last_match(1)}"]
+      else
+        []
+      end
+    end
+
+    # Performs the search of a device by any of its device names (kernel name or udev name)
+    # already present in the devicegraph
     #
     # @see #find_by_any_name
     #
     # @return [Device, nil] the found device, nil if no device matches the name
-    def deep_find(name)
+    def find_by_devicegraph_name(name)
       # First check using the device name
       device = find_by_name(name)
       # If not found, check udev names directly handled by libstorage-ng
       device ||= blk_devices.find { |dev| dev.udev_full_all.include?(name) }
 
-      if device
-        log.info "Device #{device.inspect} found by its libstorage-ng name #{name}"
-        return device
-      end
+      device
+    end
 
-      # If no device yet, there is still a chance using the slower
-      # BlkDevice.find_by_any_name. Unfortunatelly this only works in the
-      # probed devicegraph by design. Moreover it can only be safely called
-      # under certain circumstances.
-      if !udev_lookup_possible?
-        log.info "System lookup cannot be used to find #{name}"
-        return nil
-      end
-
+    # Performs a system lookup to find a device matching the given name
+    #
+    # @see #find_by_any_name
+    #
+    # @return [Device, nil] the found device, nil if no device matches the name
+    def find_via_system_lookup(name)
       probed = StorageManager.instance.raw_probed
       device = BlkDevice.find_by_any_name(probed, name)
 
-      if device.nil?
-        log.info "Device #{name} not found via system lookup"
-        return nil
-      end
+      return nil if device.nil?
 
-      device = find_device(device.sid)
-      log.info "Result of system lookup for #{name}: #{device.inspect}"
-      device
+      find_device(device.sid)
     end
   end
 end
