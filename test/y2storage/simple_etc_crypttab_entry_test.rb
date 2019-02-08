@@ -41,6 +41,9 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
   let(:scenario) { "encrypted_partition.xml" }
 
   describe "#find_device" do
+    # Mock the system lookup performed as last resort to find a device
+    before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
     context "when the crypttab device field contains a LUKS UUID (UUID= format)" do
       context "and a LUKS exists with such UUID" do
         let(:device) { "UUID=ccd40fe6-48df-491e-b862-02e5941e5d13" }

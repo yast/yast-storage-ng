@@ -110,6 +110,9 @@ describe Y2Storage::AutoinstProposal do
         { "filesystem" => :xfs, "mount" => "/home", "size" => "max", "create" => true }
       end
 
+      # Mock the system lookup performed as last resort to find a device
+      before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
       context "and no other kind of devices" do
         let(:scenario) { "xen-partitions.xml" }
 

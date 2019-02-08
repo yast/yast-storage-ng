@@ -101,6 +101,24 @@ module Y2Storage
         end
       end
 
+      # Whether the given name matches the name of the planned MD
+      #
+      # Apart from directly comparing the strings, this method is also
+      # able to compare a string with a format like "/dev/md0" (by default,
+      # the planned MD uses the libstorage-ng format for MD names, which looks
+      # like "/dev/md/0").
+      #
+      # @param value [String] name been searched for
+      # @return [Boolean] true if the names match
+      def name?(value)
+        return true if name == value
+
+        basename = name.split("/").last
+        return false unless basename =~ /^\d+$/
+
+        value == "/dev/md#{basename}"
+      end
+
       def self.to_string_attrs
         [:mount_point, :reuse_name, :name, :lvm_volume_group_name, :subvolumes]
       end
