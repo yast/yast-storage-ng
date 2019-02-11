@@ -21,11 +21,11 @@
 
 require "pp"
 require "tempfile"
-require "y2storage/actiongraph"
 require "y2storage/bcache"
 require "y2storage/bcache_cset"
 require "y2storage/blk_device"
 require "y2storage/disk"
+require "y2storage/device_finder"
 require "y2storage/dump_manager"
 require "y2storage/fake_device_factory"
 require "y2storage/filesystems/base"
@@ -332,45 +332,31 @@ module Y2Storage
     end
 
     # Find device with given name e.g. /dev/sda3
-    # @param [String] name
+    #
+    # In case of LUKSes and MDs, the device might be found by using an alternative name,
+    # see {DeviceFinder#alternative_names}.
+    #
+    # @param name [String]
+    # @param alternative_names [Boolean] whether to try the search with possible alternative names
     # @return [Device, nil] if found Device and if not, then nil
-    def find_by_name(name)
-      BlkDevice.find_by_name(self, name) || lvm_vgs.find { |vg| vg.name == name }
+    def find_by_name(name, alternative_names: true)
+      DeviceFinder.new(self).find_by_name(name, alternative_names)
     end
 
     # Finds a device by any name including any symbolic link in the /dev directory
     #
-    # This is different from {BlkDevice.find_by_any_name} in several ways:
+    # This is different from {BlkDevice.find_by_any_name} in several ways. See
+    # {DeviceFinder#find_by_any_name} for details.
     #
-    # * It will find any matching device, not only block devices (e.g. LVM VGs
-    #   also have a name but are not block devices).
-    # * It can be called on any devicegraph, not only probed.
-    # * It uses a system lookup only when necessary (i.e. all the cheaper
-    #   methods for finding the device have been unsuccessful).
-    # * It avoids system lookup in potentially risky scenarios (like an outdated
-    #   {StorageManager#probed}).
-    #
-    # In case of LUKSes, the device might be found by using an alternative name,
-    # see {#alternative_names}.
-    #
-    # @see #deep_find
+    # In case of LUKSes and MDs, the device might be found by using an alternative name,
+    # see {DeviceFinder#alternative_names}.
     #
     # @param device_name [String] can be a kernel name like "/dev/sda1" or any symbolic
     #   link below the /dev directory
     # @param alternative_names [Boolean] whether to try the search with possible alternative names
     # @return [Device, nil] the found device, nil if no device matches the name
     def find_by_any_name(device_name, alternative_names: true)
-      names = [device_name]
-      names = names.concat(alternative_names(device_name)) if alternative_names
-
-      device = nil
-
-      names.each do |name|
-        device = deep_find(name)
-        break if device
-      end
-
-      device
+      DeviceFinder.new(self).find_by_any_name(device_name, alternative_names)
     end
 
     # @return [Array<FreeDiskSpace>]
@@ -544,83 +530,6 @@ module Y2Storage
         dev.remove_descendants
         remove_device(dev)
       end
-    end
-
-    # Whether it's reasonably safe to use BlkDevice.find_by_any_name
-    #
-    # @return [Boolean]
-    def udev_lookup_possible?
-      # Checking when the operation is safe is quite tricky, since we must
-      # ensure than the list of block devices in #probed matches 1:1 the list
-      # of block devices in the system.
-      #
-      # Although it's not 100% precise, checking whether commit has not been
-      # called provides a seasonable result.
-      !StorageManager.instance.committed?
-    end
-
-    # Encryption devices might be probed with a name that does not match the device name
-    # indicated in the fstab file. For example, /etc/fstab could have an entry like:
-    #
-    #   /dev/mapper/cr_home   /home   ext4  defaults  0   0
-    #
-    # But that encryption device could be probed with a name like /dev/mapper/cr-auto-1. In that
-    # case, the device could not be found in the devicegraph when searching for the device name in the
-    # fstab entry. But, if the crypttab file was previously parsed (see Encryption#save_crypttab_names),
-    # the Encryption devices are populated in the devicegraph with their corresponding name indicated
-    # in the crypttab. This information can be used to try possible alternative names for the encryption
-    # device. For example, when the devicegraph contains a Encryption layer /dev/mapper/cr-auto-1 over
-    # the device /dev/sda1, and the /etc/crypttab has the following entry:
-    #
-    #   cr_home   /dev/sda1
-    #
-    # a possible alternative name for /dev/mapper/cr_home would be /dev/mapper/cr-auto-1, due to the
-    # encryption device cr-auto-1 has "cr_home" as crypttab_name (after parsing the crypttab file).
-    #
-    # @param device_name [String] a kernel name or udev name
-    # @return [Array<String>]
-    def alternative_names(device_name)
-      devices = encryptions.select { |e| e.crypttab_name? && device_name.include?(e.crypttab_name) }
-
-      devices.map { |d| device_name.sub(d.crypttab_name, d.dm_table_name) }
-    end
-
-    # Performs the search of a device by any possible name (kernel name or udev name)
-    #
-    # @see #find_by_any_name
-    #
-    # @return [Device, nil] the found device, nil if no device matches the name
-    def deep_find(name)
-      # First check using the device name
-      device = find_by_name(name)
-      # If not found, check udev names directly handled by libstorage-ng
-      device ||= blk_devices.find { |dev| dev.udev_full_all.include?(name) }
-
-      if device
-        log.info "Device #{device.inspect} found by its libstorage-ng name #{name}"
-        return device
-      end
-
-      # If no device yet, there is still a chance using the slower
-      # BlkDevice.find_by_any_name. Unfortunatelly this only works in the
-      # probed devicegraph by design. Moreover it can only be safely called
-      # under certain circumstances.
-      if !udev_lookup_possible?
-        log.info "System lookup cannot be used to find #{name}"
-        return nil
-      end
-
-      probed = StorageManager.instance.raw_probed
-      device = BlkDevice.find_by_any_name(probed, name)
-
-      if device.nil?
-        log.info "Device #{name} not found via system lookup"
-        return nil
-      end
-
-      device = find_device(device.sid)
-      log.info "Result of system lookup for #{name}: #{device.inspect}"
-      device
     end
   end
 end

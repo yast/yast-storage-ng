@@ -190,6 +190,10 @@ describe Y2Partitioner::Widgets::FstabSelector do
       context "when the next fstab is the last one" do
         let(:selected_fstab) { fstab2 }
 
+        # Mock #find_by_any_name that is called by SimpleEtcFstabEntry#find_device.
+        # FIXME: that happens many times, which shows some caching is missing in the widget.
+        before { allow(Y2Storage::BlkDevice).to receive(:find_by_any_name) }
+
         it "disables button to 'select next' fstab" do
           expect(Yast::UI).to receive(:ChangeWidget).with(Id(:show_next), :Enabled, false)
 
@@ -222,6 +226,8 @@ describe Y2Partitioner::Widgets::FstabSelector do
   describe "#validate" do
     before do
       allow(Yast2::Popup).to receive(:show).and_return(accept)
+      # See comment above about #find_by_any_name and SimpleEtcFstabEntry#find_device
+      allow(Y2Storage::BlkDevice).to receive(:find_by_any_name)
     end
 
     let(:accept) { nil }
