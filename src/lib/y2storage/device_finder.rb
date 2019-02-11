@@ -38,7 +38,7 @@ module Y2Storage
     # Find device with given name e.g. /dev/sda3
     #
     # In case of LUKSes and MDs, the device might be found by using an alternative name,
-    # see {#with_alternatives}.
+    # see {#alternative_names}.
     #
     # @param name [String]
     # @param with_alternatives [Boolean] whether to try the search with possible alternative names
@@ -66,7 +66,7 @@ module Y2Storage
     #   {StorageManager#probed}).
     #
     # In case of LUKSes and MDs, the device might be found by using an alternative name,
-    # see {#with_alternatives}.
+    # see {#alternative_names}.
     #
     # @param name [String] can be a kernel name like "/dev/sda1" or any symbolic
     #   link below the /dev directory
@@ -106,7 +106,7 @@ module Y2Storage
     # @param name [String] original name to be searched
     # @param with_alternatives [Boolean] whether to include alternative names in
     #   the search to be performed
-    # @param [Array<String>] the original name followed by all the alternative
+    # @return [Array<String>] the original name followed by all the alternative
     #   names that must be taken into account
     def all_names(name, with_alternatives)
       all = [name]
