@@ -22,6 +22,8 @@
 require "yast"
 require "yast/i18n"
 require "y2storage/devicegraph"
+require "y2storage/bcache"
+require "y2storage/bcache_cset"
 
 Yast.import "Mode"
 
@@ -29,7 +31,7 @@ module Y2Storage
   # Class to sanitize a devicegraph
   #
   # A devicegraph can contain certain errors, for example, an LVM VG with missing PVs.
-  # This class fix wrong devices (typically by removing them).
+  # This class fixes wrong devices (typically by removing them).
   #
   # @example
   #   sanitizer = DevicegraphSanitizer.new(devicegraph)
@@ -88,6 +90,7 @@ module Y2Storage
       device = error.device
 
       fix_error_for_lvm_vg(devicegraph, device) if device.is?(:lvm_vg)
+      fix_error_for_bcache(devicegraph, device) if device.is?(:bcache) || device.is?(:bcache_cset)
       devicegraph
     end
 
@@ -108,7 +111,8 @@ module Y2Storage
     # @param devicegraph [Y2Storage::Devicegraph]
     # @return [Array<DevicegraphSanitizer::Error>]
     def errors_for(devicegraph)
-      errors_for_lvm_vgs(devicegraph)
+      errors = errors_for_lvm_vgs(devicegraph)
+      errors.concat(errors_for_bcache(devicegraph))
     end
 
     # Errors related to LVM VGs in the given devicegraph
@@ -160,6 +164,45 @@ module Y2Storage
     # @return [Boolean]
     def missing_pvs?(vg)
       vg.lvm_pvs.any? { |p| p.blk_device.nil? }
+    end
+
+    # Errors related to LVM VGs in the given devicegraph
+    #
+    # @param devicegraph [Y2Storage::Devicegraph]
+    # @return [Array<DevicegraphSanitizer::Error>]
+    def errors_for_bcache(devicegraph)
+      return [] if Bcache.supported?
+      bcache_dev = first_bcache_device(devicegraph)
+      return [] if bcache_dev.nil?
+      [Error.new(bcache_dev, msg_no_bcache_support)]
+    end
+
+    # Find the first Bcache of BcacheCset device in the devicegraph
+    # or nil if there is none.
+    #
+    # @return [Y2Storage::Device, nil]
+    def first_bcache_device(devicegraph)
+      Bcache.all(devicegraph).first || BcacheCset.all(devicegraph).first
+    end
+
+    # Error message for missing bcache support on this platform
+    #
+    # @return [String]
+    def msg_no_bcache_support
+      msg = _("Bcache detected, but bcache is not supported on this platform!")
+      msg << "\n\n"
+      msg << _("This may or may not work. Use at your own risk.\n" \
+               "The safe way is to remove this bcache manually\n" \
+               "with command line tools and then restart YaST.")
+    end
+
+    # Fix an error for a Bcache or BcacheCset in a devicegraph.
+    #
+    # @param devicegraph [Y2Storage::Devicegraph]
+    # @param _device [Y2Storage::Device] not used
+    # @return [Y2Storage::Devicegraph]
+    def fix_error_for_bcache(devicegraph, _device)
+      devicegraph
     end
 
     # Class to represent an error in a devicegraph

@@ -23,6 +23,8 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
 require "y2storage/bcache_type"
 
+Yast.import "Arch"
+
 module Y2Storage
   # A Bcache device
   #
@@ -125,6 +127,15 @@ module Y2Storage
 
     def inspect
       flash_only? ? flash_only_inspect : backed_inspect
+    end
+
+    # Check if bcache is supported on this platform.
+    # Notice that this is for both bcache and bcache_cset.
+    #
+    # @return [Boolean]
+    def self.supported?
+      # So far, bcache is only supported on x86_64 (JIRA#SLE-4329)
+      Yast::Arch.x86_64
     end
 
   protected
