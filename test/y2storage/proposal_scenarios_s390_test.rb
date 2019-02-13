@@ -147,9 +147,13 @@ describe Y2Storage::GuidedProposal do
             context "and a partition already exists" do
               let(:scenario) { "dasd_50GiB" }
 
-              it "proposes the expected layout" do
+              it "proposes the expected layout without recreating the partition table" do
                 proposal.propose
                 expect(proposal.devices.to_str).to eq expected.to_str
+
+                dasda = Y2Storage::Dasd.find_by_name(proposal.devices, "/dev/dasda")
+                expect(dasda).to_not eq(nil)
+                expect(dasda.partition_table.exists_in_probed?).to eq(true)
               end
             end
           end

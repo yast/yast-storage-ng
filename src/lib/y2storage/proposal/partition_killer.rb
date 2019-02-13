@@ -72,10 +72,11 @@ module Y2Storage
       #
       # @note If the partition was the only remaining logical one, it also deletes the
       #   now empty extended partition. The partition table is also deleted when
-      #   the last partition is deleted. In case of AutoYaST, deletion of the partition
-      #   table is avoided because AutoYaST uses its own logic to reuse partition tables.
-      #   In case of a single implicit partition, the partition is not deleted, but only
-      #   wiped (leaving the partition empty).
+      #   the last partition is deleted unless it is a DASD partition table. In case of
+      #   AutoYaST, deletion of the partition table is avoided because AutoYaST uses
+      #   its own logic to reuse partition tables. In case of a single implicit
+      #   partition, the partition is not deleted, but only wiped (leaving the
+      #   partition empty).
       #
       # @param partition [Partition]
       # @return [Array<Integer>] device sids of all the deleted partitions
@@ -98,7 +99,8 @@ module Y2Storage
         # AutoYaST has its own logic to reuse partition tables.
         return deleted_partitions if Yast::Mode.auto
 
-        device.delete_partition_table if device.partitions.empty?
+        device.delete_partition_table if device.partitions.empty? && !device.dasd_partition_table?
+
         deleted_partitions
       end
 

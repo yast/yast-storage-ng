@@ -313,6 +313,17 @@ module Y2Storage
       remove_descendants
     end
 
+    # Whether the device contains an DASD partition table
+    #
+    # @see Y2Storage::PartitionTables::Dasd
+    #
+    # @return [Boolean]
+    def dasd_partition_table?
+      return false unless partition_table
+
+      partition_table.type.is?(:dasd)
+    end
+
     # Whether the device contains an implicit partition table
     #
     # @see Y2Storage::PartitionTables::ImplicitPt
