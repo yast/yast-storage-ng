@@ -28,7 +28,7 @@ describe Y2Storage::PartitionTables::Dasd do
     fake_scenario("empty_dasd_50GiB")
   end
 
-  let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+  let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda") }
   let(:partition_table_type) { Y2Storage::PartitionTables::Type.find(:dasd) }
 
   subject { disk.create_partition_table(partition_table_type) }

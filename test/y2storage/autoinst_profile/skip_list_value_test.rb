@@ -104,7 +104,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
 
   describe "#dasd_format" do
     let(:scenario) { "dasd_50GiB" }
-    let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+    let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda") }
 
     it "returns format" do
       expect(value.dasd_format).to eq("cdl")
@@ -158,7 +158,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
 
   describe "#dasd_type" do
     let(:scenario) { "dasd_50GiB" }
-    let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+    let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda") }
 
     it "returns type" do
       expect(value.dasd_type).to eq("eckd")

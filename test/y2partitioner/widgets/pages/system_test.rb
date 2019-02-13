@@ -93,8 +93,8 @@ describe Y2Partitioner::Widgets::Pages::System do
 
       it "contains all DASDs and their partitions" do
         expect(items).to contain_exactly(
-          "/dev/sda",
-          "/dev/sda1"
+          "/dev/dasda",
+          "/dev/dasda1"
         )
       end
     end

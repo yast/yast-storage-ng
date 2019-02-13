@@ -62,7 +62,7 @@ describe Y2Partitioner::Widgets::BlkDeviceEditButton do
 
     context "when the device is a dasd" do
       let(:scenario) { "dasd_50GiB.yml" }
-      let(:device_name) { "/dev/sda" }
+      let(:device_name) { "/dev/dasda" }
       include_examples "run edit action"
     end
 
