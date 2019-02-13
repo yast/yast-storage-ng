@@ -122,5 +122,67 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
         expect(subject.settings.candidate_devices).to eq(selected_disks)
       end
     end
+
+    describe "dialog content" do
+      using Y2Storage::Refinements::SizeCasts
+
+      let(:usb) { Y2Storage::DataTransport::USB }
+      let(:sbp) { Y2Storage::DataTransport::SBP }
+      let(:ata) { Y2Storage::DataTransport::ATA }
+
+      before { allow(analyzer).to receive(:candidate_disks).and_return(disks) }
+
+      let(:content) { subject.send(:dialog_content) }
+
+      let(:first_disks) do
+        [
+          double("Disk", name: "/dev/sda", size: 10.GiB, transport: usb),
+          double("Disk", name: "/dev/sdb", size: 20.GiB, transport: sbp),
+          double("Disk", name: "/dev/sdc", size: 30.GiB, transport: ata),
+          double("Disk", name: "/dev/sdd", size: 40.GiB)
+        ]
+      end
+
+      RSpec.shared_examples "disk descriptions" do
+        it "includes the transport in the description of USB and SBP devices" do
+          sda_desc = disk_descriptions.find { |i| i.start_with?("/dev/sda") }
+          sdb_desc = disk_descriptions.find { |i| i.start_with?("/dev/sdb") }
+          expect(sda_desc).to match(/10.00 GiB, USB/)
+          expect(sdb_desc).to match(/20.00 GiB, IEEE 1394/)
+        end
+
+        it "does not include the transport for regular disks" do
+          sdc_desc = disk_descriptions.find { |i| i.start_with?("/dev/sdc") }
+          sdd_desc = disk_descriptions.find { |i| i.start_with?("/dev/sdd") }
+          expect(sdc_desc).to match(/30.00 GiB$/)
+          expect(sdd_desc).to match(/40.00 GiB$/)
+        end
+      end
+
+      context "with 10 or less candidate devices" do
+        let(:disks) { first_disks }
+        let(:disk_descriptions) { disks.map { |d| term_with_id(d.name, content).params.last } }
+
+        include_examples "disk descriptions"
+      end
+
+      context "with more than 10 candidate devices" do
+        let(:disks) do
+          first_disks + [
+            disk("/dev/sde"), disk("/dev/sdf"), disk("/dev/sdg"), disk("/dev/sdh"),
+            disk("/dev/sdi"), disk("/dev/sdj"), disk("/dev/sdk"), disk("/dev/sdl")
+          ]
+        end
+
+        let(:disk_descriptions) do
+          multi_select = content.nested_find do |nested|
+            nested.is_a?(Yast::Term) && nested.params.last.is_a?(Array)
+          end
+          multi_select.params.last.map { |i| i.params.last }
+        end
+
+        include_examples "disk descriptions"
+      end
+    end
   end
 end
