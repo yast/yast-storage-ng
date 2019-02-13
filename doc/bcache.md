@@ -18,3 +18,20 @@ YaST also prevents actions that would trigger such operations. For example, YaST
 editing or resizing an existing bcache device and removing a bcache device that shares
 its caching set. All those actions could imply detaching a cache, which is one of those slow
 and asynchronous processes.
+
+
+### Supported Platforms
+
+Since the SUSE bcache maintainer Coly Li <colyli@suse.com> considers bcache to
+be unreliable on architectures other than x86_64, YaST supports bcache only on
+that architecture.
+
+On other architectures, the installer and the partitioner will post a warning
+if an existing bcache is detected. No bcache operations are offered on those
+architectures.
+
+
+See also
+
+  https://jira.suse.de/browse/SLE-4329?focusedCommentId=918311
+
