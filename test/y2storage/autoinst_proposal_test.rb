@@ -265,6 +265,10 @@ describe Y2Storage::AutoinstProposal do
           { "mount" => "/", "partition_nr" => 1, "create" => false }
         end
 
+        let(:partitioning) do
+          [{ "device" => "/dev/dasda", "use" => "all", "partitions" => [root, home] }]
+        end
+
         # Regression test for bug#1098594:
         # the partitions are on an Dasd (not a Disk), so when the code did
         #   partition.disk
@@ -275,7 +279,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "reuses the partition with the given partition number" do
           proposal.propose
-          reused_part = proposal.devices.partitions.find { |p| p.name == "/dev/sda1" }
+          reused_part = proposal.devices.partitions.find { |p| p.name == "/dev/dasda1" }
           expect(reused_part).to have_attributes(
             filesystem_type:       Y2Storage::Filesystems::Type::EXT2,
             filesystem_mountpoint: "/"

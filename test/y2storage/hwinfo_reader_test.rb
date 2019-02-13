@@ -73,7 +73,7 @@ describe Y2Storage::HWInfoReader do
       expect(data).to be_nil
     end
 
-    context "when the system contains some zfcp multipath device" do
+    context "when the system contains some zFCP multipath device" do
       let(:hwinfo_file) { "hwinfo_bug1982536.txt" }
 
       # Regression test for bug#1982536

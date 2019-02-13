@@ -141,7 +141,7 @@ describe Y2Storage::Partition do
   describe "#start_aligned?" do
     let(:scenario) { "dasd_50GiB" }
 
-    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/dasda1") }
 
     before do
       partition.region.start = start
@@ -167,7 +167,7 @@ describe Y2Storage::Partition do
   describe "#end_aligned?" do
     let(:scenario) { "dasd_50GiB" }
 
-    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/dasda1") }
 
     before do
       partition.region.length = length

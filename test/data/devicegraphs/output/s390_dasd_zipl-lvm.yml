@@ -1,6 +1,6 @@
 ---
 - dasd:
-    name: "/dev/sda"
+    name: "/dev/dasda"
     type: eckd
     format: cdl
     size: 23 GiB
@@ -8,7 +8,7 @@
     partitions:
     - partition:
         size: 300 MiB
-        name: "/dev/sda1"
+        name: "/dev/dasda1"
         id: linux
         file_system: ext2
         mount_point: "/boot/zipl"
@@ -17,7 +17,7 @@
           - user_xattr
     - partition:
         size: 23809920 KiB (22.71 GiB)
-        name: "/dev/sda2"
+        name: "/dev/dasda2"
         id: lvm
 - lvm_vg:
     vg_name: system
@@ -36,4 +36,4 @@
         mount_point: swap
     lvm_pvs:
     - lvm_pv:
-        blk_device: "/dev/sda2"
+        blk_device: "/dev/dasda2"

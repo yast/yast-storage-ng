@@ -50,7 +50,7 @@ RSpec.shared_examples "boot disk in devicegraph" do
     let(:scenario) { "dasd_50GiB" }
 
     before do
-      partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+      partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/dasda1")
       partition.filesystem.mount_path = "/"
     end
 
@@ -59,7 +59,7 @@ RSpec.shared_examples "boot disk in devicegraph" do
     end
 
     it "returns the dasd device containing the '/' partition" do
-      expect(analyzer.boot_disk.name).to eq "/dev/sda"
+      expect(analyzer.boot_disk.name).to eq "/dev/dasda"
     end
   end
 

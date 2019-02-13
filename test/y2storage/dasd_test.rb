@@ -32,7 +32,7 @@ describe Y2Storage::Dasd do
 
   let(:scenario) { "empty_dasd_50GiB" }
 
-  let(:device_name) { "/dev/sda" }
+  let(:device_name) { "/dev/dasda" }
 
   describe "#usb?" do
     it "returns false" do
@@ -65,7 +65,7 @@ describe Y2Storage::Dasd do
     context "if the device has no partition table" do
       let(:scenario) { "empty_dasd_50GiB" }
 
-      let(:device_name) { "/dev/sda" }
+      let(:device_name) { "/dev/dasda" }
 
       it "returns false" do
         expect(subject.implicit_partition_table?).to eq(false)

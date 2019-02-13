@@ -144,8 +144,8 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
 
     context "With a S/390 DASD with one partition" do
       let(:scenario) { "dasd_50GiB.yml" }
-      let(:disk_name) { "/dev/sda" }
-      let(:original_partitions) { ["/dev/sda1"] }
+      let(:disk_name) { "/dev/dasda" }
+      let(:original_partitions) { ["/dev/dasda1"] }
 
       it "shows a confirmation dialog" do
         expect(action).to receive(:confirm_recursive_delete).with(disk, any_args)
