@@ -48,7 +48,7 @@ describe Y2Storage::GuidedProposal do
     let(:type) { Y2Storage::DasdType::UNKNOWN }
     let(:format) { Y2Storage::DasdFormat::NONE }
 
-    context "with a zfcp disk" do
+    context "with a zFCP disk" do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:expected_scenario) { "s390_zfcp_zipl" }
 

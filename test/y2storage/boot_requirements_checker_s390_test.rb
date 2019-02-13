@@ -95,7 +95,7 @@ describe Y2Storage::BootRequirementsChecker do
       include_context "supported device"
     end
 
-    context "trying to install in a zfcp disk (no DASD)" do
+    context "trying to install in a zFCP disk (no DASD)" do
       let(:dasd) { false }
       let(:type) { Y2Storage::DasdType::UNKNOWN }
       let(:format) { Y2Storage::DasdFormat::NONE }
