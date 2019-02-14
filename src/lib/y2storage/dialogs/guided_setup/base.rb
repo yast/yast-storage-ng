@@ -73,11 +73,13 @@ module Y2Storage
         end
 
         # Disk label used by dialogs.
-        # name, size and installed systems, for example:
-        #   "/dev/sda, 10GiB, Windows, OpenSUSE"
+        # name, size, [USB] and installed systems, for example:
+        #   "/dev/sda, 10.00 GiB, Windows, OpenSUSE"
+        #   "/dev/sdb, 8.00 GiB, USB"
         # @return [String]
         def disk_label(disk)
           data = [disk.name, disk.size.to_human_string]
+          data += disk_type_labels(disk)
           data += analyzer.installed_systems(disk)
           data.join(", ")
         end
@@ -122,6 +124,35 @@ module Y2Storage
         # Helper to set widget value
         def widget_update(id, value, attr: :Value)
           Yast::UI.ChangeWidget(Id(id), attr, value)
+        end
+
+        # Labels to help indentifying some kind of disks, like USB ones
+        #
+        # @see #disk_label
+        #
+        # @param disk [BlkDevice]
+        # @return [Array<String>]
+        def disk_type_labels(disk)
+          return [] unless disk.respond_to?(:transport)
+
+          trans = transport_label(disk.transport)
+          trans.empty? ? [] : [trans]
+        end
+
+        # Label for the given transport to be displayed in the dialogs
+        #
+        # @see #disk_type_labels
+        #
+        # @param transport [DataTransport]
+        # @return [String] empty string if the transport is not worth mentioning
+        def transport_label(transport)
+          if transport.is?(:usb)
+            _("USB")
+          elsif transport.is?(:sbp)
+            _("IEEE 1394")
+          else
+            ""
+          end
         end
       end
     end
