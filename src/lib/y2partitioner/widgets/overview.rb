@@ -30,6 +30,7 @@ require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
 require "y2storage/setup_checker"
 require "y2storage/used_storage_features"
+require "y2storage/bcache"
 
 Yast.import "UI"
 Yast.import "PackageSystem"
@@ -187,7 +188,7 @@ module Y2Partitioner
           btrfs_items
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # unused_items
-        ]
+        ].compact
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
       end
 
@@ -238,6 +239,7 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def bcache_items
+        return nil unless Y2Storage::Bcache.supported?
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }

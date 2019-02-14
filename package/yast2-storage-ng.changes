@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 14 12:49:25 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Limit bcache support to x86_64 arch (jsc#SLE-4329)
+- 4.1.58
+
+-------------------------------------------------------------------
 Thu Feb 14 12:19:58 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Guided Setup: improved the disk selection user interface to
