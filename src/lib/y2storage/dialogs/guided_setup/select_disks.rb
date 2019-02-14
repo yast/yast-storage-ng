@@ -118,7 +118,7 @@ module Y2Storage
         class DisksWidget
           include Yast::UIShortcuts
 
-          # @see SelectDisks#content
+          # @see SelectDisks#dialog_content
           #
           # @param label [String] heading of the widget
           # @param items [Array<Array<String>>] list of pairs (id, description)
@@ -155,7 +155,7 @@ module Y2Storage
         class ScrollableDisksWidget
           include Yast::UIShortcuts
 
-          # @see SelectDisks#content
+          # @see SelectDisks#dialog_content
           #
           # @param label [String] heading of the widget
           # @param items [Array<Array<String>>] list of pairs (id, description)
