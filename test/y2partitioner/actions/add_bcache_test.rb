@@ -29,6 +29,8 @@ require "y2partitioner/dialogs/bcache"
 describe Y2Partitioner::Actions::AddBcache do
   subject { described_class.new }
 
+  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
+
   before do
     devicegraph_stub(scenario)
 

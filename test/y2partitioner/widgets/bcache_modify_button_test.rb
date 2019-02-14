@@ -27,6 +27,7 @@ require "y2partitioner/widgets/bcache_modify_button"
 describe Y2Partitioner::Widgets::BcacheModifyButton do
   before { devicegraph_stub("bcache1.xml") }
 
+  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
   let(:device) { current_graph.bcaches.first }
 

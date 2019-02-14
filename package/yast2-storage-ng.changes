@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 14 17:03:05 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Force mocking arch to x86_64 for unit tests that depend on bcache
+  (part of jsc#SLE-4329)
+- 4.1.59
+
+-------------------------------------------------------------------
 Thu Feb 14 12:49:25 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Limit bcache support to x86_64 arch (jsc#SLE-4329)
