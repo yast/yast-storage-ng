@@ -71,15 +71,13 @@ describe Y2Storage::DevicegraphSanitizer do
     end
 
     context "with a bcache device in the devicegraph" do
-      let(:scenario) { "bcache2.xml" }
-      let(:devicegraph) { fake_devicegraph }
-      let(:bcache_name) { "/dev/bcache1" }
+      let(:devicegraph) { devicegraph_from("bcache2.xml") }
+      let(:bcache_name) { "/dev/bcache0" }
 
       context "on an architecture that supports bcache (x86_64)" do
         let(:architecture) { :x86_64 }
 
         it "does not contain an error" do
-          fake_scenario(scenario)
           expect(subject.errors).to be_empty
         end
       end
@@ -87,8 +85,13 @@ describe Y2Storage::DevicegraphSanitizer do
       context "on an architecture that does not support bcache (ppc)" do
         let(:architecture) { :ppc }
 
-        it "raises an error" do
-          expect { fake_scenario(scenario) }.to raise_error(Y2Storage::Error)
+        it "contains a bcache-related error" do
+          errors = subject.errors
+          expect(errors).not_to be_empty
+
+          err_devices = errors.map(&:device)
+          bcache = devicegraph.find_by_name(bcache_name)
+          expect(err_devices).to include(bcache)
         end
       end
     end
