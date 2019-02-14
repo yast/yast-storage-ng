@@ -30,7 +30,7 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
     devicegraph_stub(scenario)
   end
 
-  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
 
   let(:scenario) { "bcache2.xml" }
 

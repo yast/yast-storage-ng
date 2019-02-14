@@ -32,7 +32,7 @@ describe Y2Partitioner::Actions::DeleteBcache do
 
   subject { described_class.new(device) }
 
-  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
 
   let(:scenario) { "bcache1.xml" }
 

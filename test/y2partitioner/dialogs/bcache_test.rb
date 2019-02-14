@@ -30,7 +30,7 @@ require "y2partitioner/dialogs/bcache"
 describe Y2Partitioner::Dialogs::Bcache do
   before { devicegraph_stub("bcache1.xml") }
 
-  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
   let(:suitable_backing) { fake_devicegraph.blk_devices }
   let(:suitable_caching) { fake_devicegraph.blk_devices + fake_devicegraph.bcache_csets }
 
