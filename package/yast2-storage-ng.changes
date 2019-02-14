@@ -178,7 +178,7 @@ Fri Nov 16 14:56:26 UTC 2018 - snwint@suse.com
 -------------------------------------------------------------------
 Wed Nov 14 15:15:04 CET 2018 - schubi@suse.de
 
-- SkipListValue.size_k returns the correct value (bsc#1115508).
+- SkipListValue.size_k returns the correct value (bsc#1115507).
 - 4.1.32
 
 -------------------------------------------------------------------
