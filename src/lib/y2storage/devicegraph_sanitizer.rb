@@ -166,7 +166,7 @@ module Y2Storage
       vg.lvm_pvs.any? { |p| p.blk_device.nil? }
     end
 
-    # Errors related to LVM VGs in the given devicegraph
+    # Errors related to bcache in the given devicegraph
     #
     # @param devicegraph [Y2Storage::Devicegraph]
     # @return [Array<DevicegraphSanitizer::Error>]
