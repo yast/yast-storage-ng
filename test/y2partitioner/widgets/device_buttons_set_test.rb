@@ -29,6 +29,7 @@ require "y2partitioner/widgets/overview"
 describe Y2Partitioner::Widgets::DeviceButtonsSet do
   before { devicegraph_stub(scenario) }
 
+  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
   let(:scenario) { "nested_md_raids" }
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
   let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }

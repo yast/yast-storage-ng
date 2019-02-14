@@ -161,6 +161,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       end
 
       context "and the device is a bcache device" do
+        let(:architecture) { :x86_64 } # bcache is only supported on x86_64
         let(:scenario) { "bcache1.xml" }
         let(:dev_name) { "/dev/bcache1" }
 

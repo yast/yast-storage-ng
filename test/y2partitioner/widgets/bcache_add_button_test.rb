@@ -28,6 +28,8 @@ require "y2partitioner/widgets/bcache_add_button"
 describe Y2Partitioner::Widgets::BcacheAddButton do
   subject(:button) { described_class.new }
 
+  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+
   before do
     devicegraph_stub("bcache1.xml")
 

@@ -27,6 +27,9 @@ require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::Bcaches do
   before { devicegraph_stub(scenario) }
+
+  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+
   let(:scenario) { "bcache1.xml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }

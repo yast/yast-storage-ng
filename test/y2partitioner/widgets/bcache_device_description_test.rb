@@ -28,6 +28,8 @@ require "y2partitioner/widgets/bcache_device_description"
 describe Y2Partitioner::Widgets::BcacheDeviceDescription do
   before { devicegraph_stub("bcache1.xml") }
 
+  let(:architecture ) { :x86_64 } # bcache is only supported on x86_64
+
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   let(:bcache) { current_graph.bcaches.first }
