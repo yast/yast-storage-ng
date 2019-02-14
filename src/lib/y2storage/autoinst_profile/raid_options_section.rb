@@ -92,6 +92,7 @@ module Y2Storage
         # A number will be interpreted as KB, so we explicitly set the unit.
         @chunk_size = "#{md.chunk_size.to_i}B"
         @parity_algorithm = md.md_parity.to_s
+        @device_order = md.sorted_devices.map(&:name)
       end
     end
   end

@@ -103,14 +103,29 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
   describe ".new_from_storage" do
     let(:numeric?) { false }
 
+    let(:sda1) do
+      instance_double(
+        Y2Storage::Partition,
+        name: "/dev/sda1"
+      )
+    end
+
+    let(:sdb1) do
+      instance_double(
+        Y2Storage::Partition,
+        name: "/dev/sdb1"
+      )
+    end
+
     let(:md) do
       instance_double(
         Y2Storage::Md,
-        chunk_size: 1.MB,
-        md_parity:  Y2Storage::MdParity::LEFT_ASYMMETRIC,
-        md_level:   Y2Storage::MdLevel::RAID0,
-        name:       "/dev/md0",
-        numeric?:   numeric?
+        chunk_size:     1.MB,
+        md_parity:      Y2Storage::MdParity::LEFT_ASYMMETRIC,
+        md_level:       Y2Storage::MdLevel::RAID0,
+        name:           "/dev/md0",
+        numeric?:       numeric?,
+        sorted_devices: [sda1, sdb1]
       )
     end
 
@@ -129,7 +144,7 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
     end
 
     it "initializes device_order" do
-      skip ".new_from_storage is not fully implemented yet"
+      expect(raid_options.device_order).to eq(["/dev/sda1", "/dev/sdb1"])
     end
 
     context "when it is a named RAID" do
