@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -379,6 +379,15 @@ module Y2Storage
       remove_with_dependants(bcache)
       # FIXME: Actually we want to automatically remove the cset?
       remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
+    end
+
+    def remove_bcache_cset(bcache_cset)
+      if !(bcache_cset && bcache_cset.is?(:bcache_cset))
+        raise(ArgumentError, "Incorrect device #{bcache_cset.inspect}")
+      end
+
+      # Bcaches using this caching set are not removed
+      remove_device(bcache_cset)
     end
 
     # Removes a Md raid and all its descendants
