@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,15 +20,15 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_menu_button"
-require "y2partitioner/actions/edit_blk_device"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/edit_bcache"
-require "y2partitioner/actions/create_partition_table"
+
+Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying a Bcache device
-    class BcacheModifyButton < DeviceMenuButton
+    # Button for editing a bcache
+    class BcacheEditButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -36,32 +36,17 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("&Modify")
+        # TRANSLATORS: label for button to edit a bcache
+        _("Change Caching...")
       end
 
     private
 
-      # @see DeviceMenuButton#actions
+      # Returns the proper Actions class to edit the bcache
       #
-      # @return [Array<Hash>]
-      def actions
-        [
-          {
-            id:    :edit,
-            label: _("Edit Bcache..."),
-            class: Actions::EditBlkDevice
-          },
-          {
-            id:    :caching,
-            label: _("Change Caching..."),
-            class: Actions::EditBcache
-          },
-          {
-            id:    :ptable,
-            label: _("Create New Partition Table..."),
-            class: Actions::CreatePartitionTable
-          }
-        ]
+      # @see Actions::EditBcache
+      def actions_class
+        Actions::EditBcache
       end
     end
   end
