@@ -53,7 +53,7 @@ module Y2Storage
     #   @return [BlkDevice, nil] nil for Flash-only Bcache
     storage_forward :backing_device, as: "BlkDevice"
 
-    # @!method attach_bcache_cset(set)
+    # @!method add_bcache_cset(set)
     #   This method does not make sense for Flash-only Bcache devices.
     #
     #   @raise [storage::Exception] if attaching failed
@@ -61,7 +61,9 @@ module Y2Storage
     #     the Bcache device already has a caching set.
     #
     #   @param set [BcacheCset] set to attach
-    storage_forward :attach_bcache_cset
+    storage_forward :add_bcache_cset
+
+    storage_forward :remove_bcache_cset
 
     # @!attribute cache_mode
     #   Mode in which cache operates.
