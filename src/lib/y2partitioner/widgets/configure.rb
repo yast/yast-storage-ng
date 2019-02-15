@@ -66,8 +66,8 @@ module Y2Partitioner
         return nil unless action
         return nil unless warning_accepted?(action) && availability_ensured?(action)
 
-        Yast::WFM.call(action.client)
-        reprobe
+        Yast::WFM.call(action.client) if action.client
+        reprobe(activate: action.activate)
         :redraw
       end
 
@@ -183,6 +183,8 @@ module Y2Partitioner
 
         # Sorted list of actions
         ALL = [
+          new(:crypt, N_("Provide Crypt &Passwords..."), "yast-encrypted", nil,
+            ["cryptsetup"]),
           new(:iscsi, N_("Configure &iSCSI..."), "yast-iscsi-client", "iscsi-client",
             ["yast2-iscsi-client"]),
           new(:fcoe,  N_("Configure &FCoE..."),  "fcoe",              "fcoe-client",
@@ -202,6 +204,10 @@ module Y2Partitioner
         # are indexed in this constant in order to reuse the existing
         # translations from yast2-storage
         WARNING_TEXTS = {
+          crypt: N_(
+            "Rescanning crypt devices cancels all current changes.\n" \
+            "Really activate crypt devices?"
+          ),
           iscsi: N_(
             "Calling iSCSI configuration cancels all current changes.\n" \
             "Really call iSCSI configuration?"
@@ -274,6 +280,16 @@ module Y2Partitioner
         # @return [Boolean]
         def supported?
           S390_IDS.include?(id) ? Yast::Arch.s390 : true
+        end
+
+        # Value for the 'activate' argument of {Reprobe#reprobe}
+        #
+        # For most cases this returns nil, which implies simply honoring the
+        # default behavior.
+        #
+        # @return [Boolean, nil]
+        def activate
+          id == :crypt ? true : nil
         end
       end
     end
