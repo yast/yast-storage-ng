@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,48 +21,66 @@
 
 require "yast"
 require "y2partitioner/actions/delete_device"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/bcache"
 
 module Y2Partitioner
   module Actions
-    # Action for deleting a Bcache
-    #
-    # @see DeleteDevice
+    # Action for deleting a Bcache, see {Actions::DeleteBcache}
     class DeleteBcache < DeleteDevice
-      def initialize(*args)
+      # Constructor
+      #
+      # @param bcache [Y2Storage::Bcache]
+      def initialize(bcache)
         super
+
         textdomain "storage"
+
+        @bcache_controller = Controllers::Bcache.new(bcache)
       end
 
     private
 
-      # @see DeleteDevice#errors
-      def errors
-        errors = super + [shared_cset]
+      # @return [Controllers::Bcache]
+      attr_reader :bcache_controller
 
-        errors.compact
+      # @see Actions::Base#errors
+      def errors
+        (super + [flash_only_error, unsafe_detach_error]).compact
       end
 
-      # Error when the bcache shares cset with any other bcache.
+      # Error when the bcache is Flash-only
       #
-      # @see doc/bcache.md
-      # @return [String, nil] nil if there is no error
-      def shared_cset
-        return nil unless device.bcache_cset
-        system = Y2Partitioner::DeviceGraphs.instance.system
-        return nil if single_bcache_cset? || !device.exists_in_devicegraph?(system)
+      # @return [String, nil] nil if the bcache is not Flash-only.
+      def flash_only_error
+        return nil unless flash_only_bcache?
 
-        # TRANSLATORS: Error when trying to modify an existing bcache that shares caches.
-        _(
-          "The bcache shares its cache set with other devices.\nThis can result in unreachable space " \
-            "if done without detaching.\nDetaching can take a very long time in some situations."
+        # TRANSLATORS: error message, %{name} is replaced by a bcache name (e.g., /dev/bcache0)
+        format(
+          _("The device %{name} is a Flash-only Bcache. Deleting this kind of devices\n" \
+            "is not supported yet."),
+          name: bcache_controller.bcache.name
         )
       end
 
-      # Deletes the indicated Bcache (see {DeleteDevice#device})
+      # Error when the caching set cannot be detached safely
+      #
+      # @see doc/bcache.md
+      #
+      # @return [String, nil] nil if detach is safe
+      def unsafe_detach_error
+        return nil if safe_detach_bcache?
+
+        # TRANSLATORS: Error message when detach is not a safe action
+        _(
+          "The bcache cannot be deleted because it shares its cache set with other devices.\n" \
+          "Detaching is required to avoid possible unreachable space, but detaching action\n" \
+          "could take a very long time in some situations."
+        )
+      end
+
+      # Deletes the indicated Bcache (see {Actions::DeleteDevice#device})
       def delete
-        log.info "deleting bcache #{device}"
-        device_graph.remove_bcache(device)
+        bcache_controller.delete_bcache
       end
 
       # @see DeleteDevice
@@ -75,13 +93,12 @@ module Y2Partitioner
         bcache_cset_note + super
       end
 
-      # Note explaining that also bcache cset will be deleted
+      # Note explaining that the caching set will be deleted
       #
-      # @return [String] empty string if the bcache cset is not going
-      #   to be deleted
+      # @return [String] empty string if the caching set is not going to be deleted.
       def bcache_cset_note
         # no note if there is no bcache cset associated or if cset is shared by more devices
-        return "" unless single_bcache_cset?
+        return "" unless bcache_controller.single_committed_bcache_cset?
 
         _(
           "The selected Bcache is the only one using its caching set.\n" \
@@ -89,9 +106,20 @@ module Y2Partitioner
         )
       end
 
-      # Checks if there is only single bcache cset used by this bcache, so it will be deleted
-      def single_bcache_cset?
-        device.bcache_cset && device.bcache_cset.bcaches.size == 1
+      # Whether the bcache is Flash-only
+      #
+      # @return [Boolean]
+      def flash_only_bcache?
+        bcache_controller.bcache.flash_only?
+      end
+
+      # Whether the caching set can be safely detached
+      #
+      # @return [Boolean]
+      def safe_detach_bcache?
+        !bcache_controller.committed_bcache? ||
+          !bcache_controller.committed_bcache_cset? ||
+          bcache_controller.single_committed_bcache_cset?
       end
     end
   end

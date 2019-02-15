@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,11 +20,11 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "yast/i18n"
 require "yast2/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
 require "y2partitioner/immediate_unmount"
+require "y2partitioner/actions/base"
 require "y2partitioner/actions/controllers/blk_device"
 require "y2storage/filesystems/btrfs"
 require "abstract_method"
@@ -32,36 +32,21 @@ require "abstract_method"
 module Y2Partitioner
   module Actions
     # Base class for the action to delete a device
-    class DeleteDevice
+    class DeleteDevice < Base
       include Yast::Logger
-      include Yast::I18n
       include Yast::UIShortcuts
       include ConfirmRecursiveDelete
       include ImmediateUnmount
 
       # Constructor
+      #
       # @param device [Y2Storage::Device]
       def initialize(device)
+        super()
+
         textdomain "storage"
 
         @device = device
-      end
-
-      # Checks whether delete action can be performed and if so, a confirmation popup is shown.
-      # It only asks for unmounting the device it is currently mounted in the system.
-      #
-      # @note Delete action and refresh for shadowing of BtrFS subvolumes
-      #   are only performed when user confirms.
-      #
-      # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
-      #
-      # @return [Symbol, nil]
-      def run
-        return :back unless validate && try_unmount && confirm
-        delete
-        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
-
-        :finish
       end
 
     private
@@ -69,39 +54,34 @@ module Y2Partitioner
       # @return [Y2Storage::Device] device to delete
       attr_reader :device
 
+      # Deletes the indicated device
+      #
+      # Derived classes should implement this method.
+      abstract_method :delete
+
+      # Checks whether delete action can be performed and if so, a confirmation popup is shown.
+      # It only asks for unmounting the device it is currently mounted in the system.
+      #
+      # @see Actions::Base#run?
+      #
+      # @return [Boolean]
+      def run?
+        super && try_unmount && confirm
+      end
+
+      # Deletes the device and refreshes the shadowing BtrFS subvolumes
+      #
+      # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
+      def perform_action
+        delete
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
+      end
+
       # Current devicegraph
       #
       # @return [Y2Storage::Devicegraph]
       def device_graph
         DeviceGraphs.instance.current
-      end
-
-      # Deletes the indicated device
-      #
-      # @note Derived classes should implement this method.
-      abstract_method :delete
-
-      # Validations before performing the delete action
-      #
-      # @note The action can be performed is there are no errors (see #errors).
-      #   Only the first error is shown.
-      #
-      # @return [Boolean]
-      def validate
-        current_errors = errors
-        return true if current_errors.empty?
-
-        Yast2::Popup.show(current_errors.first, headline: :error)
-        false
-      end
-
-      # List of errors that avoid to delete the device
-      #
-      # @note Derived classes should overload this method.
-      #
-      # @return [Array<String>]
-      def errors
-        []
       end
 
       # Confirmation before performing the delete action
