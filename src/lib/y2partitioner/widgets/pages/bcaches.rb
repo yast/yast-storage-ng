@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/bcache_add_button"
 
@@ -43,7 +44,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _("Bcache")
+          UIState.instance.bcache_label
         end
 
       private

@@ -55,6 +55,15 @@ module Y2Partitioner
       _("Volume Management")
     end
 
+    # Title of the Bcache section
+    #
+    # @note See note on {.md_raids_label} about why this looks misplaced.
+    #
+    # @return [String]
+    def bcache_label
+      _("Bcache")
+    end
+
     # @return [Integer, nil] if a row must be selected in a table with devices,
     #   this returns the sid of the associated device
     attr_reader :row_sid
@@ -156,6 +165,8 @@ module Y2Partitioner
         [device.sid, device.lvm_vg.sid]
       elsif device.is?(:lvm_vg)
         [device.sid, lvm_label]
+      elsif device.is?(:bcache)
+        [device.sid, bcache_label]
       else
         [device.sid]
       end
