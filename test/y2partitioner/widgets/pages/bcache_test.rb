@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -73,22 +73,24 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
         expect(description).to_not be_nil
       end
 
-      context "when the device is not a flash-only bcache" do
-        let(:device_name) { "/dev/bcache0" }
-
-        it "shows a button for deleting the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-          expect(button).to_not be_nil
-        end
+      it "shows a button for editing the device" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+        expect(button).to_not be_nil
       end
 
-      context "when the device is a flash-only bcache" do
-        let(:device_name) { "/dev/bcache1" }
+      it "shows a button for changing the caching options" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheEditButton) }
+        expect(button).to_not be_nil
+      end
 
-        it "does not show a button for deleting the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-          expect(button).to be_nil
-        end
+      it "shows a button for deleting the device" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows a button for configuring the partition table" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
+        expect(button).to_not be_nil
       end
     end
   end
