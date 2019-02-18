@@ -61,7 +61,7 @@ module Y2Partitioner
       # @return [:redraw, nil] :redraw when some configuration client was
       #   executed; nil otherwise.
       def handle(event)
-        action = Action.find(event["ID"])
+        action = find_action(event["ID"])
 
         return nil unless action
         return nil unless warning_accepted?(action) && availability_ensured?(action)
@@ -108,11 +108,11 @@ module Y2Partitioner
         @actions ||=
           if Yast::Stage.initial
             # In the inst-sys, check which clients are available
-            Action.supported.select { |action| Yast::WFM.ClientExists(action.client) }
+            supported_actions.reject(&:client_missing?)
           else
             # In the installed system, we don't care if the client is there or not
             # as the user will be prompted to install the pkg anyway (in #handle).
-            Action.supported
+            supported_actions
           end
       end
 
@@ -156,130 +156,82 @@ module Y2Partitioner
         ret
       end
 
+      # Sorted list of actions
+      def supported_actions
+        @supported_actions ||= [
+          CryptAction.new(_("Provide Crypt &Passwords..."), "yast-encrypted"),
+          IscsiAction.new(_("Configure &iSCSI..."),         "yast-iscsi-client"),
+          FcoeAction.new(_("Configure &FCoE..."),           "fcoe"),
+          DasdAction.new(_("Configure &DASD..."),           "yast-dasd"),
+          ZfcpAction.new(_("Configure &zFCP..."),           "yast-zfcp"),
+          XpramAction.new(_("Configure &XPRAM..."),         "yast-xpram")
+        ].select(&:supported?)
+      end
+
+      # Action with the given id
+      #
+      # @param id [Symbol]
+      # @return [Action]
+      def find_action(id)
+        supported_actions.find { |action| action.id == id }
+      end
+
       # Each one of the configuration actions offered by the widget and that
-      # corresponds to a YaST client
+      # (usually) corresponds to a YaST client
       class Action
         include Yast::I18n
-        extend Yast::I18n
-
-        textdomain "storage"
 
         # Constructor
         #
-        # @param id [Symbol] see {#id}
-        # @param label [String] string marked for translation to be used by {#label}
+        # @param label [String] see {#label}
         # @param icon [String] see {#icon}
-        # @param client [String] see {#client}
-        # @param pkgs [Array<String>] see {#pkgs}
-        def initialize(id, label, icon, client, pkgs)
+        def initialize(label, icon)
           textdomain "storage"
 
-          @id = id
           @label = label
           @icon = icon
-          @client = client
-          @pkgs = pkgs
         end
 
-        # Sorted list of actions
-        ALL = [
-          new(:crypt, N_("Provide Crypt &Passwords..."), "yast-encrypted", nil,
-            ["cryptsetup"]),
-          new(:iscsi, N_("Configure &iSCSI..."), "yast-iscsi-client", "iscsi-client",
-            ["yast2-iscsi-client"]),
-          new(:fcoe,  N_("Configure &FCoE..."),  "fcoe",              "fcoe-client",
-            ["yast2-fcoe-client"]),
-          new(:dasd,  N_("Configure &DASD..."),  "yast-dasd",         "dasd",
-            ["yast2-s390"]),
-          new(:zfcp,  N_("Configure &zFCP..."),  "yast-zfcp",         "zfcp",
-            ["yast2-s390"]),
-          new(:xpram, N_("Configure &XPRAM..."), "yast-xpram",        "xpram",
-            ["yast2-s390"])
-        ].freeze
-        private_constant :ALL
-
-        # Texts for {#warning_text}
-        #
-        # Although all texts are almost identical, the whole literal strings
-        # are indexed in this constant in order to reuse the existing
-        # translations from yast2-storage
-        WARNING_TEXTS = {
-          crypt: N_(
-            "Rescanning crypt devices cancels all current changes.\n" \
-            "Really activate crypt devices?"
-          ),
-          iscsi: N_(
-            "Calling iSCSI configuration cancels all current changes.\n" \
-            "Really call iSCSI configuration?"
-          ),
-          fcoe:  N_(
-            "Calling FCoE configuration cancels all current changes.\n" \
-            "Really call FCoE configuration?"
-          ),
-          dasd:  N_(
-            "Calling DASD configuration cancels all current changes.\n" \
-            "Really call DASD configuration?"
-          ),
-          fzcp:  N_(
-            "Calling zFCP configuration cancels all current changes.\n" \
-            "Really call zFCP configuration?"
-          ),
-          xpram: N_(
-            "Calling XPRAM configuration cancels all current changes.\n" \
-            "Really call XPRAM configuration?"
-          )
-        }
-
-        # Actions that can only be executed on s390 systems
-        S390_IDS = [:dasd, :zfcp, :xpram].freeze
-        private_constant :S390_IDS
-
-        # Action with the given id
-        #
-        # @param id [Symbol]
-        # @return [Action]
-        def self.find(id)
-          ALL.find { |action| action.id == id }
+        # @return [Symbol] identifier for the action to use in the UI
+        def id
+          @id ||= self.class.name.split("::").last.to_sym
         end
 
-        # Actions that are supported in the current system
-        #
-        # @return [Array<Action>]
-        def self.supported
-          ALL.select(&:supported?)
-        end
-
-        # @return [Symbol] identifier for the action
-        attr_reader :id
+        # @return [String] Internationalized label
+        attr_reader :label
 
         # @return [String] name of the icon to display next to the label
         attr_reader :icon
 
-        # @return [Symbol] name of the YaST client implementing the action
-        attr_reader :client
-
-        # @return [Array<String>] name of the packages needed to run the action
-        attr_reader :pkgs
-
-        # Internationalized label
-        #
-        # @return [String]
-        def label
-          _(@label)
-        end
-
         # Internationalized text to be displayed as a warning before executing the action
+        #
+        # Although all texts are almost identical, the whole literal strings are used
+        # on each subclass in order to reuse the existing translations from yast2-storage
         #
         # @return [String]
         def warning_text
-          _(WARNING_TEXTS[id])
+          ""
+        end
+
+        # Name of the YaST client implementing the action
+        #
+        # @return [Symbol, nil] nil if no separate client needs to be called
+        def client
+          nil
+        end
+
+        # Names of the packages needed to run the action
+        #
+        # @return [Array<String>]
+        def pkgs
+          []
         end
 
         # Whether the action is supported in the current system
         #
         # @return [Boolean]
         def supported?
-          S390_IDS.include?(id) ? Yast::Arch.s390 : true
+          true
         end
 
         # Value for the 'activate' argument of {Reprobe#reprobe}
@@ -289,7 +241,140 @@ module Y2Partitioner
         #
         # @return [Boolean, nil]
         def activate
-          id == :crypt ? true : nil
+          nil
+        end
+
+        # Whether the client needed to run the action is missing
+        #
+        # @return [Boolean]
+        def client_missing?
+          return false unless client
+
+          !Yast::WFM.ClientExists(client)
+        end
+      end
+
+      # Specific class for the activation action
+      class CryptAction < Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Rescanning crypt devices cancels all current changes.\n" \
+            "Really activate crypt devices?"
+          )
+        end
+
+        # @see Action#pkgs
+        def pkgs
+          ["cryptsetup"]
+        end
+
+        # @see Action#activate
+        def activate
+          true
+        end
+      end
+
+      # Specific action for running the iSCSI configuration client
+      class IscsiAction < Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Calling iSCSI configuration cancels all current changes.\n" \
+            "Really call iSCSI configuration?"
+          )
+        end
+
+        # @see Action#client
+        def client
+          "iscsi-client"
+        end
+
+        # @see Action#pkgs
+        def pkgs
+          ["yast2-iscsi-client"]
+        end
+      end
+
+      # Specific action for running the FCoE configuration client
+      class FcoeAction < Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Calling FCoE configuration cancels all current changes.\n" \
+            "Really call FCoE configuration?"
+          )
+        end
+
+        # @see Action#client
+        def client
+          "fcoe-client"
+        end
+
+        # @see Action#pkgs
+        def pkgs
+          ["yast2-fcoe-client"]
+        end
+      end
+
+      # Common base class for all the actions that are specific for S390
+      class S390Action < Action
+        # @see Action#pkgs
+        def pkgs
+          ["yast2-s390"]
+        end
+
+        # @see Action#supported?
+        def supported?
+          Yast::Arch.s390
+        end
+      end
+
+      # Specific action for running the DASD activation client
+      class DasdAction < S390Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Calling DASD configuration cancels all current changes.\n" \
+            "Really call DASD configuration?"
+          )
+        end
+
+        # @see Action#client
+        def client
+          "dasd"
+        end
+      end
+
+      # Specific action for running the zFCP configuration client
+      class ZfcpAction < S390Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Calling zFCP configuration cancels all current changes.\n" \
+            "Really call zFCP configuration?"
+          )
+        end
+
+        # @see Action#client
+        def client
+          "zfcp"
+        end
+      end
+
+      # Specific action for running the XPRAM configuration client
+      class XpramAction < S390Action
+        # @see Action#warning_text
+        def warning_text
+          _(
+            "Calling XPRAM configuration cancels all current changes.\n" \
+            "Really call XPRAM configuration?"
+          )
+        end
+
+        # @see Action#client
+        def client
+          "xpram"
         end
       end
     end

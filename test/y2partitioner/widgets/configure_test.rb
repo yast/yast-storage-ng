@@ -67,8 +67,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for crypt, iSCI, FCoE, DASD, zFCP and XPRAM" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term))
-              .to contain_exactly(:crypt, :iscsi, :fcoe, :dasd, :zfcp, :xpram)
+            expect(menu_button_item_ids(term)) .to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction, :DasdAction, :ZfcpAction, :XpramAction
+            )
           end
         end
 
@@ -78,8 +79,10 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons only for the available clients" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(:crypt, :fcoe, :zfcp, :xpram)
-            expect(menu_button_item_ids(term)).to_not include(:iscsi, :dasd)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :FcoeAction, :ZfcpAction, :XpramAction
+            )
+            expect(menu_button_item_ids(term)).to_not include(:IscsiAction, :DasdAction)
           end
         end
 
@@ -89,7 +92,7 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with 'Crypt Passwords' as the only option" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:crypt]
+            expect(menu_button_item_ids(term)).to eq [:CryptAction]
           end
         end
       end
@@ -103,7 +106,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for crypt, iSCI and FCoE" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(:crypt, :iscsi, :fcoe)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction
+            )
           end
         end
 
@@ -113,8 +118,8 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons only for the available clients" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:crypt, :fcoe]
-            expect(menu_button_item_ids(term)).to_not include(:iscsi)
+            expect(menu_button_item_ids(term)).to eq [:CryptAction, :FcoeAction]
+            expect(menu_button_item_ids(term)).to_not include(:IscsiAction)
           end
         end
 
@@ -124,7 +129,7 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with 'Crypt Passwords' as the only option" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:crypt]
+            expect(menu_button_item_ids(term)).to eq [:CryptAction]
           end
         end
       end
@@ -142,8 +147,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for all actions" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term))
-              .to contain_exactly(:crypt, :iscsi, :fcoe, :dasd, :zfcp, :xpram)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction, :DasdAction, :ZfcpAction, :XpramAction
+            )
           end
         end
 
@@ -153,8 +159,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for all actions" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term))
-              .to contain_exactly(:crypt, :iscsi, :fcoe, :dasd, :zfcp, :xpram)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction, :DasdAction, :ZfcpAction, :XpramAction
+            )
           end
         end
       end
@@ -168,7 +175,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for all supported actions (crypt, iSCI and FCoE)" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(:crypt, :iscsi, :fcoe)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction
+            )
           end
         end
 
@@ -178,7 +187,9 @@ describe Y2Partitioner::Widgets::Configure do
           it "returns a menu button with buttons for all supported actions (crypt, iSCI and FCoE)" do
             term = widget.contents
             expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(:crypt, :iscsi, :fcoe)
+            expect(menu_button_item_ids(term)).to contain_exactly(
+              :CryptAction, :IscsiAction, :FcoeAction
+            )
           end
         end
       end
@@ -196,9 +207,9 @@ describe Y2Partitioner::Widgets::Configure do
     end
     let(:accepted) { false }
 
-    let(:handle_args) { [event_for(:fcoe)] }
+    let(:handle_args) { [event_for(:FcoeAction)] }
     let(:manager) { Y2Storage::StorageManager.instance }
-    let(:event) { event_for(:iscsi) }
+    let(:event) { event_for(:IscsiAction) }
 
     RSpec.shared_examples "configure nothing" do
       it "returns nil" do
@@ -225,8 +236,8 @@ describe Y2Partitioner::Widgets::Configure do
       it "displays the corresponding warning message" do
         expect(Yast::Popup).to receive(:YesNo).with(/FCoE/).ordered
         expect(Yast::Popup).to receive(:YesNo).with(/iSCSI/).ordered
-        widget.handle(event_for(:fcoe))
-        widget.handle(event_for(:iscsi))
+        widget.handle(event_for(:FcoeAction))
+        widget.handle(event_for(:IscsiAction))
       end
 
       context "if the user rejects the warning" do
@@ -246,7 +257,7 @@ describe Y2Partitioner::Widgets::Configure do
         let(:accepted) { true }
 
         context "for an action performed via a separate client" do
-          let(:event) { event_for(:iscsi) }
+          let(:event) { event_for(:IscsiAction) }
 
           it "calls the corresponding YaST client" do
             expect(Yast::WFM).to receive(:call).with("iscsi-client")
@@ -258,7 +269,7 @@ describe Y2Partitioner::Widgets::Configure do
         end
 
         context "for activation of crypt devices" do
-          let(:event) { event_for(:crypt) }
+          let(:event) { event_for(:CryptAction) }
 
           it "does not call any additional YaST client" do
             expect(Yast::WFM).to_not receive(:call)
@@ -274,6 +285,8 @@ describe Y2Partitioner::Widgets::Configure do
     context "in an already installed system" do
       let(:install) { false }
       let(:handle_args) { [event] }
+      # Ensure all actions are available
+      before { allow(Yast::Arch).to receive(:s390).and_return true }
 
       include_examples "show configure warning"
 
@@ -292,8 +305,8 @@ describe Y2Partitioner::Widgets::Configure do
             .to receive(:CheckAndInstallPackages).with(["yast2-s390"]).ordered
           expect(Yast::PackageSystem)
             .to receive(:CheckAndInstallPackages).with(["yast2-fcoe-client"]).ordered
-          widget.handle(event_for(:dasd))
-          widget.handle(event_for(:fcoe))
+          widget.handle(event_for(:DasdAction))
+          widget.handle(event_for(:FcoeAction))
         end
 
         context "if the packages were not installed" do
@@ -306,7 +319,7 @@ describe Y2Partitioner::Widgets::Configure do
           let(:installed_pkgs) { true }
 
           context "for an action performed via a separate client" do
-            let(:event) { event_for(:iscsi) }
+            let(:event) { event_for(:IscsiAction) }
 
             it "calls the corresponding YaST client" do
               expect(Yast::WFM).to receive(:call).with("iscsi-client")
@@ -322,7 +335,7 @@ describe Y2Partitioner::Widgets::Configure do
           end
 
           context "for activation of crypt devices" do
-            let(:event) { event_for(:crypt) }
+            let(:event) { event_for(:CryptAction) }
             before { allow(manager).to receive(:activate).and_return true }
 
             it "does not call any additional YaST client" do
