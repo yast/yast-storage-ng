@@ -502,8 +502,7 @@ module Y2Partitioner
           when :mount_point
             filesystem.mount_path
           when :label
-            # Copying the label from the filesystem in the disk looks unexpected
-            new?(filesystem) ? filesystem.label : nil
+            filesystem.label
           end
         end
 

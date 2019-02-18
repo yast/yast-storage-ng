@@ -595,13 +595,6 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         expect(subject.partition_id).to eq(type.default_partition_id)
       end
 
-      context "when the previous filesystem exists in the disk" do
-        it "does not preserve the label" do
-          subject.new_filesystem(type)
-          expect(subject.blk_device.filesystem.label).to be_empty
-        end
-      end
-
       context "when the previous filesystem does not exist in the disk" do
         before do
           subject
