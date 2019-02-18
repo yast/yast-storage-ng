@@ -233,6 +233,10 @@ describe Y2Partitioner::Actions::Controllers::Bcache do
 
     let(:options) { { cache_mode: Y2Storage::CacheMode::WRITEBACK } }
 
+    let(:system_backing_device) { system_graph.find_by_name(backing_device.name) }
+
+    let(:system_graph) { Y2Partitioner::DeviceGraphs.instance.system }
+
     it "creates a new bcache over the given backing device" do
       expect(current_graph.find_by_name("/dev/bcache3")).to be_nil
 
@@ -253,6 +257,37 @@ describe Y2Partitioner::Actions::Controllers::Bcache do
 
       expect(bcache).to_not be_nil
       expect(bcache.cache_mode).to eq(options[:cache_mode])
+    end
+
+    context "when the given backing device has some content on disk" do
+      it "creates a new bcache without the content of the backing device" do
+        expect(system_backing_device.descendants).to_not be_empty
+
+        subject.create_bcache(backing_device, caching_device, options)
+
+        bcache = current_graph.find_by_name("/dev/bcache3")
+
+        expect(bcache.descendants).to be_empty
+      end
+    end
+
+    context "when the given backing device has content only in memory" do
+      before do
+        backing_device.remove_descendants
+        backing_device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      end
+
+      it "creates a new bcache with the content of the backing device" do
+        content_before = backing_device.descendants
+        expect(content_before).to_not be_empty
+
+        subject.create_bcache(backing_device, caching_device, options)
+
+        bcache = current_graph.find_by_name("/dev/bcache3")
+
+        expect(bcache.descendants).to_not be_empty
+        expect(bcache.descendants).to eq(content_before)
+      end
     end
 
     context "when non caching device is given" do

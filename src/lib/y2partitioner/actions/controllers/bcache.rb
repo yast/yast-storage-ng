@@ -71,6 +71,8 @@ module Y2Partitioner
 
           BlkDeviceRestorer.new(backing_device).update_checkpoint
 
+          backing_device.remove_descendants if remove_backing_device_content?(backing_device)
+
           @bcache = backing_device.create_bcache(Y2Storage::Bcache.find_free_name(current_graph))
 
           apply_options(options)
@@ -244,7 +246,7 @@ module Y2Partitioner
           caching_device.create_bcache_cset
         end
 
-        # Whether the caching set can be removed
+        # Whether the caching set should be removed
         #
         # @param bcache_cset [Y2Storage::BcacheCset]
         def remove_bcache_cset?(bcache_cset)
@@ -264,6 +266,18 @@ module Y2Partitioner
           BlkDeviceRestorer.new(caching_device).restore_from_checkpoint
         end
 
+        # Whether the content of the backing device should be removed
+        #
+        # The content of the backing device should be removed when the backing device
+        # already contains something on the disk (e.g., a filesystem).
+        #
+        # @return [Boolean]
+        def remove_backing_device_content?(backing_device)
+          return false unless committed_device?(backing_device)
+
+          backing_device.descendants.any? { |d| committed_device?(d) }
+        end
+
         # Bcache existing on disk
         #
         # @return [Y2Storage::Bcache, nil] nil if the bcache is being created or
@@ -271,7 +285,7 @@ module Y2Partitioner
         def committed_bcache
           return nil unless bcache
 
-          system_graph.find_device(bcache.sid)
+          committed_device(bcache)
         end
 
         # Caching set of the bcache existing on disk
@@ -279,9 +293,25 @@ module Y2Partitioner
         # @return [Y2Storage::BcacheCset, nil] nil if the bcache does not exist
         #   on disk or it has no caching set.
         def committed_bcache_cset
-          return nil unless committed_bcache
+          return nil unless committed_bcache?
 
           committed_bcache.bcache_cset
+        end
+
+        # Whether the device already exists on disk
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def committed_device?(device)
+          !committed_device(device).nil?
+        end
+
+        # System version of the given device
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Y2Storage::Device, nil] nil if the device does not exist on disk.
+        def committed_device(device)
+          system_graph.find_device(device.sid)
         end
 
         # Current devicegraph in which the action operates on
