@@ -96,9 +96,7 @@ module Y2Storage
             included + missing
           end
 
-        sorted.each do |device|
-          md_device.add_device(device)
-        end
+        md_device.sorted_devices = sorted
       end
 
       # Whether the given name matches the name of the planned MD
