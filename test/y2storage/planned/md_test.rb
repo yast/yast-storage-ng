@@ -36,16 +36,14 @@ describe Y2Storage::Planned::Md do
     let(:real_md) { double("Y2Storage::Md") }
 
     it "calls Y2Storage::Md#add_device for all the devices" do
-      expect(real_md).to receive(:add_device).exactly(4).times
+      expect(real_md).to receive(:sorted_devices=).once
+
       planned_md.add_devices(real_md, devices)
     end
 
     context "if #devices_order is not set" do
       it "adds the devices in name's alphabetical order" do
-        expect(real_md).to receive(:add_device).with(sda1).ordered
-        expect(real_md).to receive(:add_device).with(sda2).ordered
-        expect(real_md).to receive(:add_device).with(sdb1).ordered
-        expect(real_md).to receive(:add_device).with(sdb2).ordered
+        expect(real_md).to receive(:sorted_devices=).with([sda1, sda2, sdb1, sdb2]).once
 
         planned_md.add_devices(real_md, devices)
       end
@@ -57,10 +55,7 @@ describe Y2Storage::Planned::Md do
       end
 
       it "adds the devices in the specified order" do
-        expect(real_md).to receive(:add_device).with(sdb2).ordered
-        expect(real_md).to receive(:add_device).with(sda1).ordered
-        expect(real_md).to receive(:add_device).with(sda2).ordered
-        expect(real_md).to receive(:add_device).with(sdb1).ordered
+        expect(real_md).to receive(:sorted_devices=).with([sdb2, sda1, sda2, sdb1]).once
 
         planned_md.add_devices(real_md, devices)
       end
@@ -71,16 +66,14 @@ describe Y2Storage::Planned::Md do
         end
 
         it "adds the devices in the specified order" do
-          expect(real_md).to receive(:add_device).with(sdb2).ordered
-          expect(real_md).to receive(:add_device).with(sda1).ordered
-          expect(real_md).to receive(:add_device).with(sda2).ordered
-          expect(real_md).to receive(:add_device).with(sdb1).ordered
+          expect(real_md).to receive(:sorted_devices=).with([sdb2, sda1, sda2, sdb1]).once
 
           planned_md.add_devices(real_md, devices)
         end
 
         it "does not try to add additional devices" do
-          expect(real_md).to receive(:add_device).exactly(4).times
+          expect(real_md).to receive(:sorted_devices=).once
+
           planned_md.add_devices(real_md, devices)
         end
       end
@@ -89,15 +82,13 @@ describe Y2Storage::Planned::Md do
         before { planned_md.devices_order = ["/dev/sdb2", "/dev/sda2"] }
 
         it "adds all the devices" do
-          expect(real_md).to receive(:add_device).exactly(4).times
+          expect(real_md).to receive(:sorted_devices=).once
+
           planned_md.add_devices(real_md, devices)
         end
 
         it "adds first the sorted devices and then the rest (alphabetically)" do
-          expect(real_md).to receive(:add_device).with(sdb2).ordered
-          expect(real_md).to receive(:add_device).with(sda2).ordered
-          expect(real_md).to receive(:add_device).with(sda1).ordered
-          expect(real_md).to receive(:add_device).with(sdb1).ordered
+          expect(real_md).to receive(:sorted_devices=).with([sdb2, sda2, sda1, sdb1]).once
 
           planned_md.add_devices(real_md, devices)
         end

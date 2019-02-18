@@ -50,7 +50,10 @@ describe Y2Storage::AutoinstProposal do
               {
                 "create" => create, "filesystem" => :xfs, "format" => create, "mount" => "/home",
                 "mountby" => :uuid, "partition_nr" => partition_nr,
-                "raid_options" => { "raid_type" => "raid1" }
+                "raid_options" => {
+                  "raid_type"    => "raid1",
+                  "device_order" => ["/dev/vdb1", "/dev/vdc1"]
+                }
               }
             ]
         },
@@ -140,11 +143,14 @@ describe Y2Storage::AutoinstProposal do
         raid_sid = fake_devicegraph.raids.first.sid
 
         proposal.propose
-        raids = proposal.devices.raids
 
+        raids = proposal.devices.raids
         expect(raids.size).to eq 1
-        expect(raids.first.sid).to_not eq raid_sid
-        expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
+
+        raid = raids.first
+        expect(raid.sid).to_not eq raid_sid
+        expect(raid.md_level).to eq Y2Storage::MdLevel::RAID1
+        expect(raid.sorted_devices.map(&:name)).to eq ["/dev/vdb1", "/dev/vdc1"]
       end
 
       include_examples "format MD with no issues"
