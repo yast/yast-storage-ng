@@ -112,7 +112,7 @@ module Y2Storage
           # TRANSLATORS: Help text for the partitioning scheme (LVM / encryption)
           _(
             "<p>" \
-            "Select the parititioning scheme:" \
+            "Select the partitioning scheme:" \
             "</p><p>" \
             "<ul>" \
             "<li>Plain partitions (no LVM), the simple traditional way</li>" \
