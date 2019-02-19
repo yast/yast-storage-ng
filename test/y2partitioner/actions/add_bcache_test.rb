@@ -165,6 +165,8 @@ describe Y2Partitioner::Actions::AddBcache do
       end
 
       context "when the dialog is discarded" do
+        let(:dialog_result) { :back }
+
         it "does not create a new bcache" do
           subject.run
 

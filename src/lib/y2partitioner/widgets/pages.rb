@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -44,4 +44,5 @@ require "y2partitioner/widgets/pages/nfs_mounts.rb"
 require "y2partitioner/widgets/pages/device_graph.rb"
 require "y2partitioner/widgets/pages/summary.rb"
 require "y2partitioner/widgets/pages/settings.rb"
+require "y2partitioner/widgets/pages/bcache.rb"
 require "y2partitioner/widgets/pages/bcaches.rb"

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Feb 19 14:15:16 UTC 2019 - jlopez@suse.com
+
+- Partitioner: allow to edit bcache devices (part of fate#325346).
+- 4.1.62
+
+-------------------------------------------------------------------
 Tue Feb 19 13:39:49 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Added help texts for guided setup (bsc#1121801)

@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -63,7 +63,7 @@ describe Y2Partitioner::Widgets::BcacheModifyButton do
       end
     end
 
-    context "when the option for editing the disk is selected" do
+    context "when the option for editing the bcache is selected" do
       let(:selected_option) { :"#{widget_id}_edit" }
 
       before do
@@ -72,6 +72,21 @@ describe Y2Partitioner::Widgets::BcacheModifyButton do
 
       it "opens the workflow for editing the device" do
         expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new)
+        button.handle(event)
+      end
+
+      include_examples "handle bcache action result"
+    end
+
+    context "when the option for changing the caching is selected" do
+      let(:selected_option) { :"#{widget_id}_caching" }
+
+      before do
+        allow(Y2Partitioner::Actions::EditBcache).to receive(:new).and_return action
+      end
+
+      it "opens the workflow for changing the caching options" do
+        expect(Y2Partitioner::Actions::EditBcache).to receive(:new)
         button.handle(event)
       end
 

@@ -23,6 +23,7 @@ require "cwm/widget"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/bcache_device_description"
 require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/bcache_edit_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/partition_table_add_button"
 require "y2partitioner/widgets/partitions_tab"
@@ -102,14 +103,12 @@ module Y2Partitioner
 
         # @return [Array<Widgets::DeviceButton>]
         def buttons
-          buttons = [BlkDeviceEditButton.new(device: @bcache)]
-
-          # TODO: Allow to delete flash-only bcache devices
-          buttons << DeviceDeleteButton.new(device: @bcache) unless @bcache.flash_only?
-
-          buttons << PartitionTableAddButton.new(device: @bcache)
-
-          buttons
+          [
+            BlkDeviceEditButton.new(device: @bcache),
+            BcacheEditButton.new(device: @bcache),
+            DeviceDeleteButton.new(device: @bcache),
+            PartitionTableAddButton.new(device: @bcache)
+          ]
         end
       end
     end

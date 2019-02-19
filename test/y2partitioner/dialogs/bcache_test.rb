@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,15 +26,28 @@ require "yast"
 require "cwm/rspec"
 require "y2storage"
 require "y2partitioner/dialogs/bcache"
+require "y2partitioner/actions/controllers/bcache"
 
 describe Y2Partitioner::Dialogs::Bcache do
-  before { devicegraph_stub("bcache1.xml") }
+  before do
+    devicegraph_stub("bcache1.xml")
+
+    allow(Y2Partitioner::Actions::Controllers::Bcache).to receive(:new).and_return(controller)
+
+    allow(controller).to receive(:bcache).and_return(bcache)
+    allow(controller).to receive(:suitable_caching_devices).and_return(suitable_caching)
+    allow(controller).to receive(:suitable_backing_devices).and_return(suitable_backing)
+  end
 
   let(:architecture) { :x86_64 } # bcache is only supported on x86_64
+
+  let(:controller) { instance_double(Y2Partitioner::Actions::Controllers::Bcache) }
+
+  let(:bcache) { nil }
   let(:suitable_backing) { fake_devicegraph.blk_devices }
   let(:suitable_caching) { fake_devicegraph.blk_devices + fake_devicegraph.bcache_csets }
 
-  subject { described_class.new(suitable_backing, suitable_caching) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::Dialog"
 

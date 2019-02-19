@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -101,63 +101,20 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
     context "when targeting a Bcache device" do
       let(:scenario) { "bcache2.xml" }
+      let(:device) { device_graph.find_by_name("/dev/bcache0") }
 
-      let(:device) { device_graph.find_by_name(device_name) }
-
-      context "and the device is not a flash-only bcache" do
-        let(:device_name) { "/dev/bcache0" }
-
-        it "replaces the content with buttons to modify and to manage partitions" do
-          expect(widget).to receive(:replace) do |content|
-            widgets = Yast::CWM.widgets_in_contents([content])
-            expect(widgets.map(&:class)).to include(
-              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-              Y2Partitioner::Widgets::BcacheModifyButton,
-              Y2Partitioner::Widgets::PartitionsButton
-            )
-          end
-
-          widget.device = device
+      it "replaces the content with buttons to modify, to delete and to manage partitions" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::BcacheModifyButton,
+            Y2Partitioner::Widgets::DeviceDeleteButton,
+            Y2Partitioner::Widgets::PartitionsButton
+          )
         end
 
-        it "includes a button to delete the device" do
-          expect(widget).to receive(:replace) do |content|
-            widgets = Yast::CWM.widgets_in_contents([content])
-            expect(widgets.map(&:class)).to include(
-              Y2Partitioner::Widgets::DeviceDeleteButton
-            )
-          end
-
-          widget.device = device
-        end
-      end
-
-      context "and the device is a flash-only bcache" do
-        let(:device_name) { "/dev/bcache1" }
-
-        it "replaces the content with buttons to modify and to manage partitions" do
-          expect(widget).to receive(:replace) do |content|
-            widgets = Yast::CWM.widgets_in_contents([content])
-            expect(widgets.map(&:class)).to contain_exactly(
-              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-              Y2Partitioner::Widgets::BcacheModifyButton,
-              Y2Partitioner::Widgets::PartitionsButton
-            )
-          end
-
-          widget.device = device
-        end
-
-        it "does not include a button to delete the device" do
-          expect(widget).to receive(:replace) do |content|
-            widgets = Yast::CWM.widgets_in_contents([content])
-            expect(widgets.map(&:class)).to_not include(
-              Y2Partitioner::Widgets::DeviceDeleteButton
-            )
-          end
-
-          widget.device = device
-        end
+        widget.device = device
       end
     end
 

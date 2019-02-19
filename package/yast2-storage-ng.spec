@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:	4.1.61
+Version:	4.1.62
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
@@ -26,8 +26,8 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.1.11
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# Probing Flash-only Bcache devices
-Requires:	libstorage-ng-ruby >= 4.1.81
+# Bcache#remove_bcache_cset
+Requires:	libstorage-ng-ruby >= 4.1.89
 # communicate with udisks
 Requires:	rubygem(ruby-dbus)
 # Y2Packager::Repository
@@ -36,8 +36,8 @@ Requires:	yast2-packager >= 3.3.7
 Requires:	findutils
 
 BuildRequires:	update-desktop-files
-# Probing Flash-only Bcache devices
-BuildRequires:	libstorage-ng-ruby >= 4.1.81
+# Bcache#remove_bcache_cset
+BuildRequires:	libstorage-ng-ruby >= 4.1.89
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
