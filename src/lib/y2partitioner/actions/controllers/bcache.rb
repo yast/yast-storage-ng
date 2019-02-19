@@ -22,7 +22,6 @@
 require "yast"
 require "y2storage/bcache"
 require "y2partitioner/device_graphs"
-require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
 
 module Y2Partitioner
@@ -39,8 +38,6 @@ module Y2Partitioner
         # @param bcache [Y2Storage::Bcache, nil] nil if a new bcache is being created.
         def initialize(bcache = nil)
           @bcache = bcache
-
-          UIState.instance.select_row(bcache) if bcache
         end
 
         # Suitable devices to be used as backing device

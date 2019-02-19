@@ -23,6 +23,7 @@ require "yast"
 require "y2partitioner/actions/base"
 require "y2partitioner/actions/controllers/bcache"
 require "y2partitioner/dialogs/bcache"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
@@ -37,6 +38,7 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = Controllers::Bcache.new(bcache)
+        UIState.instance.select_row(bcache)
       end
 
     private
