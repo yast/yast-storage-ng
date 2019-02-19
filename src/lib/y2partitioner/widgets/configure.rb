@@ -71,6 +71,20 @@ module Y2Partitioner
         :redraw
       end
 
+      # @macro seeAbstractWidget
+      def help
+        # TRANSLATORS: help text for the Partitioner
+        _(
+          "<p>The <b>Configure</b> button offers several options to activate devices " \
+          "that were not detected by the initial system analysis. After activating the " \
+          "devices of the choosen technology, the system will be rescanned and all the " \
+          "information about storage devices will be refreshed. " \
+          "Thus, the <b>Provide Crypt Passwords</b> option is also useful when no " \
+          "encryption is involved, to activate devices of other technologies like LVM " \
+          "or Multipath.</p>"
+        )
+      end
+
     private
 
       # @return [Array<Yast::WidgetTerm>]
