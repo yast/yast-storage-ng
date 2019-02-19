@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Feb 19 14:40:11 UTC 2019 - ancor@suse.com
+
+- Partitioner: new option "Provide Crypt Passwords" (bsc#1113515).
+- 4.1.63
+
+-------------------------------------------------------------------
 Tue Feb 19 14:15:16 UTC 2019 - jlopez@suse.com
 
 - Partitioner: allow to edit bcache devices (part of fate#325346).
