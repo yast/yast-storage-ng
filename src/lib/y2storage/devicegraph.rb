@@ -381,12 +381,16 @@ module Y2Storage
       remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
     end
 
+    # Removes a caching set
+    #
+    # Bcache devices using this caching set are not removed.
+    #
+    # @raise [ArgumentError] if the caching set does not exist in the devicegraph
     def remove_bcache_cset(bcache_cset)
       if !(bcache_cset && bcache_cset.is?(:bcache_cset))
         raise(ArgumentError, "Incorrect device #{bcache_cset.inspect}")
       end
 
-      # Bcaches using this caching set are not removed
       remove_device(bcache_cset)
     end
 

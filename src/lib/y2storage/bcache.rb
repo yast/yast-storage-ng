@@ -63,6 +63,12 @@ module Y2Storage
     #   @param set [BcacheCset] set to attach
     storage_forward :add_bcache_cset
 
+    # @!method remove_bcache_cset
+    #   This method does not make sense for Flash-only Bcache devices.
+    #
+    #   @raise [storage::Exception] if detaching failed
+    #   @raise [storage::LogicException] for a Flash-only Bcache device or when
+    #     the Bcache device has no caching set.
     storage_forward :remove_bcache_cset
 
     # @!attribute cache_mode
