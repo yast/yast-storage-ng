@@ -102,7 +102,19 @@ module Y2Partitioner
         uuid:             N_("<b>UUID</b> shows the Universally Unique\nIdentifier of the file " \
           "system."),
 
-        vendor:           N_("<b>Vendor</b> shows the device vendor.")
+        vendor:           N_("<b>Vendor</b> shows the device vendor."),
+
+        backing_device:   N_("<b>Backing Device</b> shows the device used as backing device " \
+                             "for bcache."),
+
+        caching_uuid:     N_("<b>Caching UUID</b> shows the UUID of the used caching set. This " \
+                             "field is empty if no caching is used."),
+
+        caching_device:   N_("<b>Caching Device</b> shows the device used for caching. This field " \
+                             "is empty if no caching is used."),
+
+        cache_mode:       N_("<b>Cache Mode</b> shows the operating mode for bcache. Currently there " \
+                             "are four supported modes: Writethrough, Writeback, Writearound and None.")
       }.freeze
 
       # help texts that are appended to the common help only in Mode.normal
