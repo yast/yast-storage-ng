@@ -76,9 +76,9 @@ module Y2Partitioner
 
         # TRANSLATORS: error message, %{name} is replaced by a bcache name (e.g., /dev/bcache0)
         format(
-          _("The Bcache %{name} is already created on disk and its caching\n" \
-            "cannot be modified. To modify the caching device, remove the Bcache\n" \
-            "and create it again."),
+          _("The Bcache %{name} is already created on disk. Such device cannot be modified\n" \
+            "because that might imply a detaching operation. Unfortunately detaching can take\n" \
+            "a very long time in some situations."),
           name: controller.bcache.name
         )
       end

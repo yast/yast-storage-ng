@@ -75,8 +75,8 @@ module Y2Partitioner
         # TRANSLATORS: Error message when detach is not a safe action
         _(
           "The bcache cannot be deleted because it shares its cache set with other devices.\n" \
-          "Detaching is required to avoid possible unreachable space, but detaching action\n" \
-          "could take a very long time in some situations."
+          "Deleting it without detaching the device first can result in unreachable space.\n" \
+          "Unfortunately detaching can take a very long time in some situations."
         )
       end
 

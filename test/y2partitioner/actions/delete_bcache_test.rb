@@ -148,7 +148,7 @@ describe Y2Partitioner::Actions::DeleteBcache do
           end
 
           it "shows an error message" do
-            expect(Yast2::Popup).to receive(:show).with(/Detaching is required/, headline: :error)
+            expect(Yast2::Popup).to receive(:show).with(/cannot be deleted/, headline: :error)
 
             subject.run
           end
