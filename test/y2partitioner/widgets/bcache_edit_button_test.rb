@@ -32,6 +32,9 @@ describe Y2Partitioner::Widgets::BcacheEditButton do
     allow(Y2Partitioner::Actions::EditBcache).to receive(:new).and_return(action)
   end
 
+  # Bcache is only supported on x86
+  let(:architecture) { :x86_64 }
+
   let(:action) { instance_double(Y2Partitioner::Actions::EditBcache, run: :finish) }
 
   subject(:button) { described_class.new(device: device) }
