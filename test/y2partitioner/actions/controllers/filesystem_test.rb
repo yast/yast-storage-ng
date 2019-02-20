@@ -82,7 +82,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
 
-    context "when the currently editing device has not a filesystem" do
+    context "when the currently editing device does not have a filesystem" do
       before do
         allow(device).to receive(:filesystem).and_return(nil)
         allow(subject).to receive(:blk_device).and_return(device)
@@ -95,7 +95,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   end
 
   describe "#to_be_formatted?" do
-    context "when the currently editing device has not a filesystem" do
+    context "when the currently editing device does not have a filesystem" do
       before do
         allow(device).to receive(:filesystem).and_return(nil)
         allow(subject).to receive(:blk_device).and_return(device)
@@ -132,7 +132,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
 
-    context "when the currently editing device has not a filesystem that existed previously" do
+    context "when the currently editing device does not have a filesystem that existed previously" do
       before do
         allow(subject).to receive(:encrypt).and_return(encrypt)
         allow(device).to receive(:encrypted?).and_return(encrypted)
@@ -193,7 +193,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
 
-    context "when the currently editing device has not a filesystem" do
+    context "when the currently editing device does not have a filesystem" do
       before do
         allow(device).to receive(:filesystem).and_return(nil)
         allow(subject).to receive(:blk_device).and_return(device)
@@ -224,7 +224,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
 
-    context "when the currently editing device has not a filesystem" do
+    context "when the currently editing device does not have a filesystem" do
       before do
         allow(device).to receive(:filesystem).and_return(nil)
         allow(subject).to receive(:blk_device).and_return(device)
@@ -604,7 +604,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   end
 
   describe "#dont_format" do
-    context "when the currently editing device has not a filesystem" do
+    context "when the currently editing device does not have a filesystem" do
       before do
         device.remove_descendants
       end
@@ -638,7 +638,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         end
       end
 
-      context "and there was not a previous filesystem" do
+      context "and there was no previous filesystem" do
         before do
           device.remove_descendants
         end

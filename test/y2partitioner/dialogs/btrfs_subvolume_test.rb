@@ -103,7 +103,7 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       end
 
       context "when a path is entered" do
-        context "and the filesystem has not a specific subvolumes prefix" do
+        context "and the filesystem does not have a specific subvolumes prefix" do
           let(:dev_name) { "/dev/sdd1" }
 
           context "and the entered path is an absolute path" do

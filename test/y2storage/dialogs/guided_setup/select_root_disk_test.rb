@@ -72,7 +72,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       select_widget(:other_delete_mode, :all)
     end
 
-    context "when settings has not a root disk" do
+    context "when settings does not have a root disk" do
       before { settings.root_device = nil }
 
       it "selects 'any' option by default" do

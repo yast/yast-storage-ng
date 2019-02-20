@@ -552,7 +552,7 @@ describe Y2Storage::Disk do
       end
     end
 
-    context "when the device has not a partition table" do
+    context "when the device does not have a partition table" do
       let(:scenario) { "empty_hard_disk_15GiB" }
 
       let(:disk_name) { "/dev/sda" }

@@ -514,7 +514,7 @@ describe Y2Storage::Partition do
 
     subject(:partition) { fake_devicegraph.find_by_name(device_name) }
 
-    context "when has not a swap id" do
+    context "when does not have a swap id" do
       let(:device_name) { "/dev/sda3" }
 
       it "returns false" do
