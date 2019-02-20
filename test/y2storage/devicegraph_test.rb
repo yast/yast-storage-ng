@@ -735,6 +735,9 @@ describe Y2Storage::Devicegraph do
       fake_scenario("bcache1.xml")
     end
 
+    # Bcache is only supported on x86
+    let(:architecture) { :x86_64 }
+
     it "removes the given caching set device" do
       bcache_cset = Y2Storage::BcacheCset.all(devicegraph).first
       expect(bcache_cset).to_not be_nil
