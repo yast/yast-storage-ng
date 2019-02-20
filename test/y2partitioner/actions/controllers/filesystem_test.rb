@@ -595,25 +595,10 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         expect(subject.partition_id).to eq(type.default_partition_id)
       end
 
-      context "when the previous filesystem exists in the disk" do
-        it "does not preserve the label" do
-          subject.new_filesystem(type)
-          expect(subject.blk_device.filesystem.label).to be_empty
-        end
-      end
-
-      context "when the previous filesystem does not exist in the disk" do
-        before do
-          subject
-          device.remove_descendants
-          device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-          device.filesystem.label = label
-        end
-
-        it "preserves the label" do
-          subject.new_filesystem(type)
-          expect(subject.blk_device.filesystem.label).to eq(label)
-        end
+      # label is kept to be consistent with old partitioner (bsc#1087229)
+      it "preserves the label" do
+        subject.new_filesystem(type)
+        expect(subject.blk_device.filesystem.label).to eq(label)
       end
     end
   end

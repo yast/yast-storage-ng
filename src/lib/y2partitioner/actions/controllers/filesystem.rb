@@ -502,8 +502,8 @@ module Y2Partitioner
           when :mount_point
             filesystem.mount_path
           when :label
-            # Copying the label from the filesystem in the disk looks unexpected
-            new?(filesystem) ? filesystem.label : nil
+            # label is kept to be consistent with old partitioner (bsc#1087229)
+            filesystem.label
           end
         end
 
