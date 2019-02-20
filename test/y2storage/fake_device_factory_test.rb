@@ -24,11 +24,11 @@ require_relative "spec_helper"
 
 describe Y2Storage::FakeDeviceFactory do
   describe ".load_yaml_file" do
-    let(:staging) do
-      environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-      storage = Storage::Storage.new(environment)
-      storage.staging
+    before do
+      Y2Storage::StorageManager.create_test_instance
     end
+
+    let(:staging) { Y2Storage::StorageManager.instance.probed.to_storage_value }
 
     let(:io) { StringIO.new(input) }
 
