@@ -1707,4 +1707,35 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
   end
+
+  describe "#suggested_mount_path" do
+    context "with an unmounted ESP" do
+      let(:scenario) { "efi_not_mounted" }
+      let(:dev_name) { "/dev/sda1" }
+
+      it "suggests /boot/efi as the mount point" do
+        expect(subject.suggested_mount_path).to be == "/boot/efi"
+        expect(subject.mount_paths.first).to be == "/boot/efi"
+      end
+    end
+
+    context "with swap partitions" do
+      let(:scenario) { "swaps" }
+      let(:dev_name) { "/dev/sda2" }
+
+      it "suggests swap as the mount point" do
+        expect(subject.suggested_mount_path).to be == "swap"
+        expect(subject.mount_paths.first).to be == "swap"
+      end
+    end
+
+    context "for other partitions" do
+      let(:scenario) { "mixed_disks" }
+      let(:dev_name) { "/dev/sda2" }
+
+      it "does not suggests a mount point" do
+        expect(subject.suggested_mount_path).to be_nil
+      end
+    end
+  end
 end
