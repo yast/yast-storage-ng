@@ -75,6 +75,26 @@ module Y2Storage
           settings.candidate_devices = selected_disks.map(&:name)
         end
 
+        def help_text
+          # TRANSLATORS: Help text for guided storage setup
+          _(
+            "<p>" \
+            "Select the disks to install on." \
+            "</p><p>" \
+            "In later dialogs, you can select which of those disks " \
+            "will be used for the root filesystem and what to do with " \
+            "any existing Linux, Windows or other partitions (keep, " \
+            "remove, sometimes resize)." \
+            "</p><p>" \
+            "How many of the disks you select here will actually be used " \
+            "depends on the exact scenario you choose (LVM, with or " \
+            "without separate home partition etc.)." \
+            "</p><p>" \
+            "Disks that are not selected here remain completely untouched." \
+            "</p>"
+          )
+        end
+
       private
 
         def valid?

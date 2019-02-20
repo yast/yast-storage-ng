@@ -1,4 +1,29 @@
 -------------------------------------------------------------------
+Tue Feb 19 14:40:11 UTC 2019 - ancor@suse.com
+
+- Partitioner: new option "Provide Crypt Passwords" (bsc#1113515).
+- 4.1.63
+
+-------------------------------------------------------------------
+Tue Feb 19 14:15:16 UTC 2019 - jlopez@suse.com
+
+- Partitioner: allow to edit bcache devices (part of fate#325346).
+- 4.1.62
+
+-------------------------------------------------------------------
+Tue Feb 19 13:39:49 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Added help texts for guided setup (bsc#1121801)
+- 4.1.61
+
+-------------------------------------------------------------------
+Mon Feb 18 14:54:15 CET 2019 - aschnell@suse.com
+
+- AutoYaST: handle device_order for MD RAIDs during installation
+  (bsc#1083542)
+- 4.1.60
+
+-------------------------------------------------------------------
 Thu Feb 14 17:03:05 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Force mocking arch to x86_64 for unit tests that depend on bcache

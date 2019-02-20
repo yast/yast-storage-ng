@@ -70,7 +70,7 @@ module Y2Partitioner
       #
       # @return [Array<Symbol>]
       def help_fields
-        blk_device_help_fields + disk_help_fields
+        blk_device_help_fields + disk_help_fields + filesystem_help_fields
       end
 
       DISK_HELP_FIELDS = [:vendor, :model, :bus, :sectors, :sector_size, :disk_label].freeze

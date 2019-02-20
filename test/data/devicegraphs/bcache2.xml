@@ -283,11 +283,11 @@
         <used>133128257536</used>
       </SpaceInfo>
       <server>192.168.56.1</server>
-      <path>/home/ivan/projects</path>
+      <path>/home/user/projects</path>
     </Nfs>
     <MountPoint>
       <sid>69</sid>
-      <path>/home/ivan/projects</path>
+      <path>/home/user/projects</path>
       <mount-by>device</mount-by>
       <mount-type>nfs</mount-type>
       <active>true</active>

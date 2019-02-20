@@ -107,6 +107,44 @@ module Y2Storage
           settings.encryption_password = password
         end
 
+        # rubocop:disable Metrics/MethodLength
+        def help_text
+          # TRANSLATORS: Help text for the partitioning scheme (LVM / encryption)
+          _(
+            "<p>" \
+            "Select the parititioning scheme:" \
+            "</p><p>" \
+            "<ul>" \
+            "<li>Plain partitions (no LVM), the simple traditional way</li>" \
+            "<li>LVM (Logical Volume Management): " \
+            "<p>" \
+            "This is a more flexible way of managing disk space. " \
+            "</p><p>" \
+            "You can spread single filesystems over multiple disks and add " \
+            "(or, to some extent, remove) disks later as necessary. " \
+            "</p><p>" \
+            "You define PVs (Physical Volumes) from partitions or whole disks " \
+            "and combine them into VGs (Volume Groups) that serve as storage " \
+            "pools. You can create LVs (logical volumes) to create filesystems " \
+            "(Btrfs, Ext2/3/4, XFS) on." \
+            "</p><p>" \
+            "In this <i>Guided Setup</i>, all this is done for you for the " \
+            "standard filesystem layout if you check <b>Enable LVM</b>." \
+            "</li>" \
+            "</ul>" \
+            "</p><p>" \
+            "<b>Enable Disk Encryption</b> (with or without LVM) adds a LUKS " \
+            " disk encryption layer to the partitioning setup. " \
+            "Notice that you will have to enter the correct password each time " \
+            "you boot the system. " \
+            "</p><p>" \
+            "<i>If you lose the password, there is no way to recover it, " \
+            "so make sure not to lose it!</i>" \
+            "</p>"
+          )
+          # rubocop:enable Metrics/MethodLength
+        end
+
       private
 
         def valid?

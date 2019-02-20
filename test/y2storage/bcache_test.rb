@@ -119,7 +119,7 @@ describe Y2Storage::Bcache do
       end
     end
 
-    describe "#attach_bcache_cset" do
+    describe "#add_bcache_cset" do
       before do
         described_class.create(fake_devicegraph, bcache_name)
       end
@@ -128,19 +128,19 @@ describe Y2Storage::Bcache do
 
       let(:cset) { fake_devicegraph.bcache_csets.first }
 
-      it "attach a caching set to bcache device" do
+      it "adds a caching set to bcache device" do
         expect(subject.bcache_cset).to be_nil
 
-        subject.attach_bcache_cset(cset)
+        subject.add_bcache_cset(cset)
 
         expect(subject.bcache_cset).to eq(cset)
       end
 
       context "when the bcache already has an associated caching set" do
-        let(:bcache_name) { "/dev/bcache1" }
+        let(:bcache_name) { "/dev/bcache0" }
 
         it "raises an exception" do
-          expect { subject.attach_bcache_cset(cset) }.to raise_error(Storage::LogicException)
+          expect { subject.add_bcache_cset(cset) }.to raise_error(Storage::LogicException)
         end
       end
 
@@ -148,7 +148,37 @@ describe Y2Storage::Bcache do
         let(:bcache_name) { "/dev/bcache1" }
 
         it "raises an exception" do
-          expect { subject.attach_bcache_cset(cset) }.to raise_error(Storage::LogicException)
+          expect { subject.add_bcache_cset(cset) }.to raise_error(Storage::LogicException)
+        end
+      end
+    end
+
+    describe "#remove_bcache_cset" do
+      let(:bcache_name) { "/dev/bcache0" }
+
+      it "removes the caching set" do
+        expect(subject.bcache_cset).to_not be_nil
+
+        subject.remove_bcache_cset
+
+        expect(subject.bcache_cset).to be_nil
+      end
+
+      context "when the bcache has no caching set" do
+        before do
+          subject.remove_bcache_cset
+        end
+
+        it "raises an exception" do
+          expect { subject.remove_bcache_cset }.to raise_error(Storage::LogicException)
+        end
+      end
+
+      context "when the bcache is flash-only" do
+        let(:bcache_name) { "/dev/bcache1" }
+
+        it "raises an exception" do
+          expect { subject.remove_bcache_cset }.to raise_error(Storage::LogicException)
         end
       end
     end

@@ -34,16 +34,14 @@ module Y2Partitioner
     class Bcache < Base
       # Constructor
       #
-      # @param suitable_backing [Array<Y2Storage::BlkDevice>] devices that can be used for backing.
-      # @param suitable_caching [Array<Y2Storage::BlkDevice, Y2Storage::BcacheCset>]
-      #   devices that can be used for caching.
-      # @param device [Y2Storage::Bcache] existing bcache device or nil if it is a new one.
-      def initialize(suitable_backing, suitable_caching, device = nil)
+      # @param controller [Actions::Controllers::Bcache]
+      def initialize(controller)
         textdomain "storage"
 
-        @caching = CachingDeviceSelector.new(device, suitable_caching)
-        @backing = BackingDeviceSelector.new(device, suitable_backing, @caching)
-        @cache_mode = CacheModeSelector.new(device)
+        @caching = CachingDeviceSelector.new(controller.bcache, controller.suitable_caching_devices)
+        @backing = BackingDeviceSelector.new(controller.bcache,
+          controller.suitable_backing_devices, @caching)
+        @cache_mode = CacheModeSelector.new(controller.bcache)
       end
 
       # @macro seeDialog
@@ -189,6 +187,12 @@ module Y2Partitioner
           @caching = caching
         end
 
+        def init
+          super
+
+          disable if bcache
+        end
+
         # @macro seeAbstractWidget
         def label
           _("Backing Device")
@@ -290,7 +294,7 @@ module Y2Partitioner
         # When the bcache exists, its caching set should be the default device.
         # Otherwise, the first available device is the default one.
         def default_device
-          return bcache.bcache_cset if bcache && bcache.bcache_cset
+          return bcache.bcache_cset if bcache
 
           super
         end

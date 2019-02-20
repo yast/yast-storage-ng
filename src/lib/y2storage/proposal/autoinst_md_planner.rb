@@ -119,6 +119,7 @@ module Y2Storage
         md.name = raid_options.raid_name if raid_options.raid_name
         md.chunk_size = chunk_size_from_string(raid_options.chunk_size) if raid_options.chunk_size
         md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
+        md.devices_order = raid_options.device_order if !raid_options.device_order.empty?
       end
 
       # Sets 'reusing' attributes for a MD RAID

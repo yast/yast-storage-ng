@@ -44,15 +44,29 @@ module Y2Partitioner
       # @return [String]
       def bcache_description
         output = Yast::HTML.Heading(_("Bcache Devices:"))
-        output << Yast::HTML.List([
-                                    format(_("Backing Device: %s"), backing_device),
-                                    format(_("Caching UUID: %s"), uuid),
-                                    format(_("Caching Device: %s"), caching_device),
-                                    format(_("Cache mode: %s"), cache_mode)
-                                  ])
+        output << Yast::HTML.List(bcache_attributes)
+      end
+
+      # Fields to show in help
+      #
+      # @return [Array<Symbol>]
+      def help_fields
+        super + bcache_help_fields
       end
 
     private
+
+      # Attributes for describing a bcache device
+      #
+      # @return [Array<String>]
+      def bcache_attributes
+        [
+          format(_("Backing Device: %s"), backing_device),
+          format(_("Caching UUID: %s"), uuid),
+          format(_("Caching Device: %s"), caching_device),
+          format(_("Cache Mode: %s"), cache_mode)
+        ]
+      end
 
       def uuid
         device.bcache_cset ? device.bcache_cset.uuid : ""
@@ -78,6 +92,15 @@ module Y2Partitioner
         return "" if device.flash_only?
 
         device.cache_mode.to_human_string
+      end
+
+      BCACHE_HELP_FIELDS = [:backing_device, :caching_uuid, :caching_device, :cache_mode].freeze
+
+      # Help fields for a bcache device
+      #
+      # @return [Array<Symbol>]
+      def bcache_help_fields
+        BCACHE_HELP_FIELDS.dup
       end
     end
   end

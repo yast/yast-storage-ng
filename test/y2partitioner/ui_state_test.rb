@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,7 +27,9 @@ require "y2partitioner/widgets/pages"
 describe Y2Partitioner::UIState do
   subject(:ui_state) { described_class.instance }
 
-  before { devicegraph_stub("complex-lvm-encrypt.yml") }
+  before { devicegraph_stub(scenario) }
+
+  let(:scenario) { "complex-lvm-encrypt.yml" }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
 
@@ -64,9 +66,10 @@ describe Y2Partitioner::UIState do
     let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
     let(:md_raids_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(pager) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
+    let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new([], pager) }
     let(:btrfs_page) { Y2Partitioner::Widgets::Pages::Btrfs.new(pager) }
 
-    let(:pages) { [system_page, disks_page, md_raids_page, lvm_page, btrfs_page] }
+    let(:pages) { [system_page, disks_page, md_raids_page, lvm_page, bcaches_page, btrfs_page] }
 
     context "if the user has still not visited any node" do
       before { described_class.create_instance }
@@ -215,6 +218,36 @@ describe Y2Partitioner::UIState do
 
         it "selects the general LVM page" do
           expect(ui_state.find_tree_node(pages)).to eq lvm_page
+        end
+      end
+    end
+
+    context "when the user has opened a Bcache page" do
+      # Bcache is only supported on x86
+      let(:architecture) { :x86_64 }
+
+      let(:scenario) { "bcache1.xml" }
+      let(:device) { fake_devicegraph.find_by_name("/dev/bcache0") }
+      let(:another_bcache) { fake_devicegraph.find_by_name("/dev/bcache1") }
+
+      let(:page) { Y2Partitioner::Widgets::Pages::Bcache.new(device, pager) }
+      let(:another_bcache_page) { Y2Partitioner::Widgets::Pages::Bcache.new(another_bcache, pager) }
+
+      before { ui_state.go_to_tree_node(page) }
+
+      context "if the Bcache is still there after redrawing" do
+        before { pages.concat [page, another_bcache_page] }
+
+        it "selects the correct Bcache page" do
+          expect(ui_state.find_tree_node(pages)).to eq page
+        end
+      end
+
+      context "if the Bcache is not longer there after redrawing" do
+        before { pages << another_bcache_page }
+
+        it "selects the general Bcache page" do
+          expect(ui_state.find_tree_node(pages)).to eq bcaches_page
         end
       end
     end
