@@ -41,10 +41,19 @@ module Y2Partitioner
       # @raise [Y2Partitioner::ForcedAbortError] When there is an error during probing
       #   and the user decides to abort, or probed devicegraph contains errors and the
       #   user decides to not sanitize.
-      def reprobe
+      #
+      # @param activate [Boolean, nil] whether to perform an activation, if nil
+      #   the (re)activation will be done only during installation
+      def reprobe(activate: nil)
         textdomain "storage"
+
+        # By default, (re)activation is only done during installation.
+        # In installed systems, activation is only triggered for actions that
+        # explicitly force it.
+        activate = !!Yast::Stage.initial if activate.nil?
+
         Yast::Popup.Feedback("", _("Rescanning disks...")) do
-          raise Y2Partitioner::ForcedAbortError unless activate_and_probe?
+          raise Y2Partitioner::ForcedAbortError unless activate_and_probe?(activate)
 
           probed = storage_manager.probed
           staging = storage_manager.staging
@@ -59,13 +68,12 @@ module Y2Partitioner
 
       # Performs storage reactivation (if needed) and reprobing
       #
-      # @note Activation is only done during installation, never in an already
-      #   installed system
-      #
+      # @param activate [Boolean] whether to perform a reactivation of devices
+      #   before the reprobing
       # @return [Boolean] false if something went wrong
-      def activate_and_probe?
+      def activate_and_probe?(activate)
         success = true
-        success &&= storage_manager.activate if Yast::Stage.initial
+        success &&= storage_manager.activate if activate
         success &&= storage_manager.probe
         success
       end

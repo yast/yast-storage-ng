@@ -51,3 +51,15 @@ RSpec.shared_examples "reprobing" do
     end
   end
 end
+
+RSpec.shared_examples "activation" do
+  it "runs activation (again)" do
+    expect(manager).to receive(:activate).and_return true
+    subject.handle(*handle_args)
+  end
+
+  it "raises an exception if activation fails" do
+    allow(manager).to receive(:activate).and_return false
+    expect { subject.handle(*handle_args) }.to raise_error(Y2Partitioner::ForcedAbortError)
+  end
+end

@@ -52,6 +52,15 @@ module Y2Partitioner
         :redraw
       end
 
+      # @macro seeAbstractWidget
+      def help
+        # TRANSLATORS: help text for the Partitioner
+        _(
+          "<p>The <b>Rescan Devices</b> button refreshes the information about storage " \
+          "devices.</p>"
+        )
+      end
+
     private
 
       def continue?
