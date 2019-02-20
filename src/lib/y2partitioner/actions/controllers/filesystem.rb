@@ -502,6 +502,7 @@ module Y2Partitioner
           when :mount_point
             filesystem.mount_path
           when :label
+            # label is kept to be consistent with old partitioner (bsc#1087229)
             filesystem.label
           end
         end
