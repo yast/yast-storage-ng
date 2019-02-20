@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -44,18 +44,61 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
 
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
-    let(:bcaches_and_parts) do
-      (device_graph.bcaches + device_graph.bcaches.map(&:partitions)).flatten.compact
+
+    it "shows a bcache devices tab" do
+      expect(Y2Partitioner::Widgets::Pages::BcachesTab).to receive(:new)
+      subject.contents
     end
 
-    it "shows a table with the bcache devices and their partitions" do
-      expect(table).to_not be_nil
+    it "shows a caching set devices tab" do
+      expect(Y2Partitioner::Widgets::Pages::BcacheCsetsTab).to receive(:new)
+      subject.contents
+    end
+  end
 
-      devices_name = bcaches_and_parts.map(&:name)
-      items_name = table.items.map { |i| i[1] }
+  describe Y2Partitioner::Widgets::Pages::BcachesTab do
+    subject { described_class.new(bcaches, pager) }
 
-      expect(items_name.sort).to eq(devices_name.sort)
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows a table with the bcache devices and their partitions" do
+        table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+
+        expect(table).to_not be_nil
+
+        devices = table.items.map { |i| i[1] }
+
+        expect(devices).to contain_exactly("/dev/bcache0", "/dev/bcache1", "/dev/bcache2",
+          "/dev/bcache0p1", "/dev/bcache2p1")
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Pages::BcacheCsetsTab do
+    subject { described_class.new(pager) }
+
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      before do
+        vda1 = device_graph.find_by_name("/dev/vda1")
+        vda1.create_bcache_cset
+      end
+
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows a table with the caching set devices" do
+        table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+
+        expect(table).to_not be_nil
+
+        devices = table.items.map { |i| i[1] }
+
+        expect(devices).to contain_exactly("/dev/vdb", "/dev/vda1")
+      end
     end
   end
 end

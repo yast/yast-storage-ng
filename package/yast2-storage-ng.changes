@@ -3,6 +3,13 @@ Wed Feb 20 11:55:30 UTC 2019 - jreidinger@suse.com
 
 - filesystem label is kept when using existing partitioning
   (bsc#108722)
+- 4.1.65
+
+-------------------------------------------------------------------
+Wed Feb 20 09:35:48 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: add new tab in Bcache section to show all caching
+  set devices (part of fate#325346).
 - 4.1.64
 
 -------------------------------------------------------------------
