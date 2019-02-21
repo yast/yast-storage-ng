@@ -212,7 +212,15 @@ describe Y2Partitioner::Actions::AddPartition do
         allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return(:next)
       end
 
-      let(:region) { disk.ensure_partition_table.unused_partition_slots.first.region }
+      # A new array of slots is generated each time that `PartitionTable::Base#unused_partition_slots`
+      # is called. The Garbage Collector might destroy the previous array (and all its slot objets)
+      # if that array is not explicitly referenced. As a consequence, the C++ slot destructor will
+      # also remove its region object. So, the following region could be pointing to a removed object
+      # if its slot was deleted by the Garbage Collector.
+      #
+      # The region object is duplicated here to avoid references to an object susceptible to be
+      # destroyed, see {Y2Storage::Region#dup}.
+      let(:region) { disk.ensure_partition_table.unused_partition_slots.first.region.dup }
 
       let(:type) { Y2Storage::PartitionType::PRIMARY }
 
