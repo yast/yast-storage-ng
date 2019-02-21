@@ -180,7 +180,7 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
 
-    context "when the filesystem has not a subvolume with the indicated path" do
+    context "when the filesystem does not have a subvolume with the indicated path" do
       let(:path) { "@/foo" }
 
       it "does not delete any subvolume" do

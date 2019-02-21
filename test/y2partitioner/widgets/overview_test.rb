@@ -159,7 +159,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         expect(sde_page).to_not be_nil
       end
 
-      it "disks pager has not a page for disks belonging to a multipath" do
+      it "disks pager does not have a page for disks belonging to a multipath" do
         sda_page = disks_pages.find { |p| p.device.name == "/dev/sda" }
         expect(sda_page).to be_nil
       end
@@ -209,7 +209,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         expect(sda_page).to_not be_nil
       end
 
-      it "disks pager has not a page for disks belonging to a BIOS RAID" do
+      it "disks pager does not have a page for disks belonging to a BIOS RAID" do
         sdb_page = disks_pages.find { |p| p.device.name == "/dev/sdb" }
         expect(sdb_page).to be_nil
 

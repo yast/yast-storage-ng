@@ -404,9 +404,17 @@ module Y2Partitioner
         #
         # @return [Array<String>]
         def mount_paths
-          mount_paths = all_mount_paths - mounted_paths
-          mount_paths.unshift("swap") if filesystem && filesystem.type.is?(:swap)
-          mount_paths
+          mount_paths = [suggested_mount_path] + all_mount_paths - mounted_paths
+          mount_paths.compact.uniq
+        end
+
+        # Return a suggested mount path based on the properties of this volume
+        #
+        # @return [String, nil]
+        def suggested_mount_path
+          return "swap" if filesystem_type && filesystem_type.is?(:swap)
+          return "/boot/efi" if partition_id && partition_id.is?(:esp)
+          nil
         end
 
         # All paths used by the preexisting subvolumes (those that will not be
@@ -567,7 +575,7 @@ module Y2Partitioner
         end
 
         # This implements the code that used to live in
-        # Yast::Filesystems::SuggestMPoints (whatever the rationle behind those
+        # Yast::Filesystems::SuggestMPoints (whatever the rationale behind those
         # mount paths was back then) with the only exception mentioned in
         # {#booting_paths}
         #

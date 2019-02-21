@@ -167,8 +167,8 @@ module Y2Storage
             "<p>" \
             "Select the disk where to create the root filesystem. " \
             "</p><p>" \
-            "This is also the disk where any boot-related partitions " \
-            "will be created as necessary: /boot, ESP (EFI System " \
+            "This is also the disk where boot-related partitions " \
+            "will typically be created as necessary: /boot, ESP (EFI System " \
             "Partition), BIOS-Grub. " \
             "That means that this disk should be usable by the machine's " \
             "BIOS / firmware." \
