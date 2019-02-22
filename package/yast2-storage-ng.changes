@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Fri Feb 22 15:11:37 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: improve "Import Mount Points" feature.
+  Now, a fstab entry cannot be imported when the filesystem type
+  is not supported. Moreover, the "mount by" type is assigned
+  according to the fstab entry and the label of the previous
+  filesystem is preserved (bsc#1103391).
+- 4.1.67
+
+-------------------------------------------------------------------
 Wed Feb 20 16:39:13 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Suggest /boot/efi as the mount point for EFI System Partitions
