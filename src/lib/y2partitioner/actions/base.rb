@@ -41,13 +41,13 @@ module Y2Partitioner
       # Runs a dialog for adding a bcache and also modifies the device graph if the user
       # confirms the dialog.
       #
-      # @return [Symbol] :back, :finish
+      # @return [Symbol]
       def run
         return :back unless run?
 
-        perform_action
+        action_result = perform_action
 
-        :finish
+        result(action_result)
       end
 
     private
@@ -55,6 +55,8 @@ module Y2Partitioner
       # Performs the action, see {#run}
       #
       # This method should be defined by derived classes.
+      #
+      # @return [Symbol, nil]
       abstract_method :perform_action
 
       # Checks whether the action can be performed
@@ -83,6 +85,17 @@ module Y2Partitioner
       # @return [Array<String>] translated error messages
       def errors
         []
+      end
+
+      # Result of the action
+      #
+      # Some actions could return a specific result depending on the result
+      # of {#perform_action}.
+      #
+      # @param _action_result [Symbol] result of {#permorm_action}
+      # @return [Symbol]
+      def result(_action_result)
+        :finish
       end
     end
   end

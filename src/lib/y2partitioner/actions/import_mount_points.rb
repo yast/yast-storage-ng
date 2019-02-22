@@ -22,40 +22,44 @@
 require "yast"
 require "yast/i18n"
 require "yast2/popup"
+require "y2partitioner/actions/base"
 require "y2partitioner/actions/controllers/fstabs"
 require "y2partitioner/dialogs/import_mount_points"
 
 module Y2Partitioner
   module Actions
     # Action for importing mount points from a fstab file
-    class ImportMountPoints
+    class ImportMountPoints < Base
       include Yast::I18n
 
       # Constructor
       def initialize
+        super
+
         textdomain "storage"
 
         @controller = Controllers::Fstabs.new
-      end
-
-      # Shows the dialog for importing mount points and performs the action
-      # if user selects to import
-      #
-      # @return [Symbol]
-      def run
-        return :back unless validate
-
-        dialog_result = import_dialog.run
-        return dialog_result unless dialog_result == :ok
-
-        controller.import_mount_points
-        :finish
       end
 
     private
 
       # @return [Controllers::Fstab]
       attr_reader :controller
+
+      # Opens a dialog to import mount points
+      #
+      # The mount points are imported only if the dialog is accepted.
+      #
+      # @see Actions::Base#perform_action
+      #
+      # @return [Symbol] result of the dialog
+      def perform_action
+        dialog_result = import_dialog.run
+
+        controller.import_mount_points if dialog_result == :ok
+
+        dialog_result
+      end
 
       # Dialog to import mount points from a fstab file
       #
@@ -64,18 +68,28 @@ module Y2Partitioner
         @import_dialog ||= Dialogs::ImportMountPoints.new(controller)
       end
 
-      # Checks whether the import dialog can be shown
+      # Result of the action
       #
-      # The dialog is shown if it was possible to read some fstab file.
+      # @see Actions::Base#result
       #
-      # @return [Boolean]
-      def validate
-        error = no_fstab_error
-        return true if error.nil?
+      # It returns `:finish` when the action is performed. Otherwise, it returns
+      # the result of the dialog, see {#perform_action}.
+      #
+      # @param action_result [Symbol] result of {#permorm_action}
+      # @return [Symbol]
+      def result(action_result)
+        return super if action_result == :ok
 
-        Yast2::Popup.show(error, headline: :error)
+        action_result
+      end
 
-        false
+      # List of errors that avoid to import mount points
+      #
+      # @see Actions::Base#errors
+      #
+      # @return [Array<String>]
+      def errors
+        (super + [no_fstab_error]).compact
       end
 
       # Error message when no fstab file was detected
