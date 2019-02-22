@@ -311,7 +311,11 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     let(:entry_mount_options) { ["rw"] }
 
     def device(devicegraph)
-      devicegraph.find_by_name(entry_device)
+      entry = entries.find { |e| !e.device(devicegraph).nil? }
+
+      return nil unless entry
+
+      entry.device(devicegraph)
     end
 
     shared_examples "import data" do
@@ -320,6 +324,76 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         expect(device(current_graph).filesystem.mount_path).to eq(entry_mount_point)
         expect(device(current_graph).filesystem.mount_options).to eq(entry_mount_options)
+      end
+
+      context "when the device is mounted by kernel name" do
+        let(:entry_device) { "/dev/sda2" }
+
+        it "sets mount by kernel name" do
+          subject.import_mount_points
+
+          mount_by = device(current_graph).filesystem.mount_point.mount_by
+
+          expect(mount_by.is?(:device)).to eq(true)
+        end
+      end
+
+      context "when the device is mounted by id" do
+        let(:scenario) { "encrypted_partition.xml" }
+
+        let(:entry_device) { "/dev/disk/by-id/ata-VBOX_HARDDISK_VB777f5d67-56603f01-part1" }
+
+        it "sets mount by id" do
+          subject.import_mount_points
+
+          mount_by = device(current_graph).filesystem.mount_point.mount_by
+
+          expect(mount_by.is?(:id)).to eq(true)
+        end
+      end
+
+      context "when the device is mounted by path" do
+        let(:scenario) { "encrypted_partition.xml" }
+
+        let(:entry_device) { "/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part1" }
+
+        it "sets mount by path" do
+          subject.import_mount_points
+
+          mount_by = device(current_graph).filesystem.mount_point.mount_by
+
+          expect(mount_by.is?(:path)).to eq(true)
+        end
+      end
+
+      context "when the device is mounted by LABEL" do
+        let(:entry_device) { "LABEL=root" }
+
+        it "sets mount by label" do
+          sid = device(system_graph).sid
+
+          subject.import_mount_points
+
+          mount_by = current_graph.find_device(sid).filesystem.mount_point.mount_by
+
+          expect(mount_by.is?(:label)).to eq(true)
+        end
+      end
+
+      context "when the device is mounted by UUID" do
+        let(:scenario) { "swaps.yml" }
+
+        let(:entry_device) { "UUID=11111111-1111-1111-1111-11111111" }
+
+        it "sets mount by uuid" do
+          sid = device(system_graph).sid
+
+          subject.import_mount_points
+
+          mount_by = current_graph.find_device(sid).filesystem.mount_point.mount_by
+
+          expect(mount_by.is?(:uuid)).to eq(true)
+        end
       end
     end
 
@@ -335,8 +409,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       context "and the fstab device is not formatted yet" do
         before do
-          device = system_graph.find_by_name(entry_device)
-          device.delete_filesystem
+          device(system_graph).delete_filesystem
         end
 
         it "formats the device with the filesystem type indicated in the fstab entry" do
@@ -395,10 +468,30 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       context "and the option for formatting system volumes was selected" do
         let(:format_system_volumes) { true }
 
-        it "formats the device with the filesystem type indicated in the fstab entry" do
-          subject.import_mount_points
+        context "and the fstab device is already formatted" do
+          it "formats the device with the filesystem type indicated in the fstab entry" do
+            subject.import_mount_points
 
-          expect(device(current_graph).filesystem.type).to eq(entry_fs)
+            expect(device(current_graph).filesystem.type).to eq(entry_fs)
+          end
+
+          it "preserves the filesytem label" do
+            subject.import_mount_points
+
+            expect(device(current_graph).filesystem.label).to eq("root")
+          end
+        end
+
+        context "and the fstab device is not formatted yet" do
+          before do
+            device(system_graph).delete_filesystem
+          end
+
+          it "formats the device with the filesystem type indicated in the fstab entry" do
+            subject.import_mount_points
+
+            expect(device(current_graph).filesystem.type).to eq(entry_fs)
+          end
         end
       end
 

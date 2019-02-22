@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -140,6 +140,56 @@ describe Y2Storage::SimpleEtcFstabEntry do
         it "returns nil" do
           expect(subject.device(devicegraph)).to be_nil
         end
+      end
+    end
+  end
+
+  describe "#mount_by" do
+    context "when the fstab entry indicates the device by its kernel name" do
+      let(:device) { "/dev/sda2" }
+
+      it "returns mount by device" do
+        expect(subject.mount_by.is?(:device)).to eq(true)
+      end
+    end
+
+    context "when the fstab entry indicates the device by id" do
+      let(:device) { "/dev/disk/by-id/ata-VBOX_HARDDISK_VB777f5d67-56603f01-part1" }
+
+      it "returns mount by id" do
+        expect(subject.mount_by.is?(:id)).to eq(true)
+      end
+    end
+
+    context "when the fstab entry indicates the device by path" do
+      let(:device) { "/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part1" }
+
+      it "returns mount by path" do
+        expect(subject.mount_by.is?(:path)).to eq(true)
+      end
+    end
+
+    context "when the fstab entry indicates the device by label" do
+      let(:device) { "LABEL=root" }
+
+      it "returns mount by label" do
+        expect(subject.mount_by.is?(:label)).to eq(true)
+      end
+    end
+
+    context "when the fstab entry indicates the device by uuid" do
+      let(:device) { "UUID=1111-2222-3333" }
+
+      it "returns mount by uuid" do
+        expect(subject.mount_by.is?(:uuid)).to eq(true)
+      end
+    end
+
+    context "when the device format is not recognized" do
+      let(:device) { "foo-bar" }
+
+      it "returns nil" do
+        expect(subject.mount_by).to be_nil
       end
     end
   end
