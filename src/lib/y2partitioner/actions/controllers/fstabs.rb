@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@
 require "yast"
 require "yast/i18n"
 require "y2partitioner/device_graphs"
+require "y2partitioner/filesystems"
 require "y2storage"
 
 Yast.import "Arch"
@@ -192,7 +193,7 @@ module Y2Partitioner
 
           return true unless must_be_formatted?(device, entry.mount_point)
 
-          known_fs_type?(entry) && can_be_formatted?(device)
+          usable_fs_type?(entry) && can_be_formatted?(device)
         end
 
         # Whether the device must be formatted in order to import the mount point
@@ -236,6 +237,16 @@ module Y2Partitioner
           @system_mount_points
         end
 
+        # Whether a fstab entry has an usable filesystem type
+        #
+        # A filesystem type is usable when it is known and supported.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @return [Boolean]
+        def usable_fs_type?(entry)
+          known_fs_type?(entry) && supported_fs_type?(entry)
+        end
+
         # Whether a fstab entry has a known filesystem type
         #
         # In case the fstab entry contains "auto" or "none" in the third
@@ -245,6 +256,16 @@ module Y2Partitioner
         # @return [Boolean]
         def known_fs_type?(entry)
           !entry.fs_type.is?(:auto) && !entry.fs_type.is?(:unknown)
+        end
+
+        # Whether a fstab entry has a filesystem type supported by the Partitioner
+        #
+        # Only some filesystem types are supported by Partitioner, see {Filesystems.all}.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @return [Boolean]
+        def supported_fs_type?(entry)
+          Filesystems.supported?(entry.fs_type)
         end
 
         # Whether a device can be formatted
@@ -278,7 +299,8 @@ module Y2Partitioner
         #
         # When the device needs to be formatted (see {#must_be_formatted?}), the filesystem type
         # indicated in the entry is used. In case the device is not a block device (e.g., NFS),
-        # the device is not formatted and only the mount point and mount options are assigned.
+        # the device is not formatted and only the mount point, mount by method and mount options
+        # are assigned.
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         def import_mount_point(entry)
@@ -286,7 +308,7 @@ module Y2Partitioner
           return unless device
 
           if must_be_formatted?(device, entry.mount_point)
-            filesystem = format_device(device, entry.fs_type)
+            filesystem = format_device(device, entry)
             create_mount_point(filesystem, entry)
             setup_blk_filesystem(filesystem)
           else
@@ -297,13 +319,31 @@ module Y2Partitioner
 
         # Formats the device indicated in the fstab entry
         #
+        # The filesystem label is preserved.
+        #
         # @param device [Y2Storage::BlkDevice]
-        # @param fs_type [Y2Storage::Filesystems::Type]
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
         #
         # @return [Y2Storage::Filesystems::Base]
-        def format_device(device, fs_type)
+        def format_device(device, entry)
+          label = filesystem_label(device)
+
           device.delete_filesystem
-          device.create_filesystem(fs_type)
+
+          filesystem = device.create_filesystem(entry.fs_type)
+          filesystem.label = label if label
+
+          filesystem
+        end
+
+        # Label of the current filesystem (if any)
+        #
+        # @param device [Y2Storage::BlkDevice]
+        # @return [String, nil] nil if the device is not formatted
+        def filesystem_label(device)
+          return nil unless device.formatted?
+
+          device.filesystem.label
         end
 
         # Creates the #{Y2Storage::MountPoint} object based on the imported
@@ -313,6 +353,7 @@ module Y2Partitioner
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         def create_mount_point(filesystem, entry)
           filesystem.mount_path = entry.mount_point
+          filesystem.mount_point.mount_by = entry.mount_by if entry.mount_by
           filesystem.mount_point.mount_options = entry.mount_options if entry.mount_options.any?
         end
 

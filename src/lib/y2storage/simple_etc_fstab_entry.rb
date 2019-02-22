@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_class_wrapper"
+require "y2storage/filesystems/mount_by_type"
 
 module Y2Storage
   # Information about one line in fstab
@@ -89,7 +90,20 @@ module Y2Storage
       end
     end
 
+    # Type of "mount by" extracted from the first column of the fstab entry
+    #
+    # @see #fstab_device
+    #
+    # @return [MountBytype, nil] nil when the mount by type cannot be determined
+    def mount_by
+      Filesystems::MountByType.from_fstab_spec(fstab_device)
+    end
+
   private
+
+    UUID_REGEX = /^UUID=(.*)/
+
+    LABEL_REGEX = /^LABEL=(.*)/
 
     # Tries to find the device for the fstab entry
     #
@@ -102,11 +116,11 @@ module Y2Storage
     end
 
     def start_with_uuid?
-      /^UUID=(.*)/.match?(fstab_device)
+      UUID_REGEX.match?(fstab_device)
     end
 
     def start_with_label?
-      /^LABEL=(.*)/.match?(fstab_device)
+      LABEL_REGEX.match?(fstab_device)
     end
   end
 end
