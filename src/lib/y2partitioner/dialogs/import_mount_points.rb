@@ -96,12 +96,30 @@ module Y2Partitioner
           _("Format System Volumes")
         end
 
+        def init
+          self.value = true
+
+          store
+        end
+
         def store
           controller.format_system_volumes = value
         end
 
-        def init
-          self.value = true
+        def opt
+          [:notify]
+        end
+
+        # Validations are performed before the {#store} method is automatically called, see
+        # {Widgets::FstabSelector#validate}.
+        #
+        # The controller needs to be updated with the current value of this checkbox before
+        # the validations are evaluated. Otherwise, the validation cannot be correctly done.
+        # For this reason, the checkbox value is stored every time that it changes its value.
+        def handle
+          store
+
+          nil
         end
       end
     end
