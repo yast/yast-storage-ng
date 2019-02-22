@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@
 require "yast"
 require "yast/i18n"
 require "y2partitioner/device_graphs"
+require "y2partitioner/filesystems"
 require "y2storage"
 
 Yast.import "Arch"
@@ -192,7 +193,7 @@ module Y2Partitioner
 
           return true unless must_be_formatted?(device, entry.mount_point)
 
-          known_fs_type?(entry) && can_be_formatted?(device)
+          usable_fs_type?(entry) && can_be_formatted?(device)
         end
 
         # Whether the device must be formatted in order to import the mount point
@@ -236,6 +237,16 @@ module Y2Partitioner
           @system_mount_points
         end
 
+        # Whether a fstab entry has an usable filesystem type
+        #
+        # A filesystem type is usable when it is known and supported.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @return [Boolean]
+        def usable_fs_type?(entry)
+          known_fs_type?(entry) && supported_fs_type?(entry)
+        end
+
         # Whether a fstab entry has a known filesystem type
         #
         # In case the fstab entry contains "auto" or "none" in the third
@@ -245,6 +256,16 @@ module Y2Partitioner
         # @return [Boolean]
         def known_fs_type?(entry)
           !entry.fs_type.is?(:auto) && !entry.fs_type.is?(:unknown)
+        end
+
+        # Whether a fstab entry has a filesystem type supported by the Partitioner
+        #
+        # Only some filesystem types are supported by Partitioner, see {Filesystems.all}.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @return [Boolean]
+        def supported_fs_type?(entry)
+          Filesystems.supported?(entry.fs_type)
         end
 
         # Whether a device can be formatted

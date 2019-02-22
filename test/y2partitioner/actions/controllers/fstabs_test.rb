@@ -271,7 +271,13 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
             include_examples "not importable entries error"
           end
 
-          context "and the filesystem type is known for that fstab entry" do
+          context "and the filesystem type is not supported for that fstab entry" do
+            let(:entry1_fs) { Y2Storage::Filesystems::Type::NTFS }
+
+            include_examples "not importable entries error"
+          end
+
+          context "and the filesystem type is known and supported for that fstab entry" do
             let(:entry1_fs) { ext3 }
 
             it "does not contain errors" do
