@@ -116,7 +116,9 @@ module Y2Storage
       #
       # @return [Boolean]
       def component?
-        (respond_to?(:lvm_pv?) && lvm_pv?) || (respond_to?(:md_member?) && md_member?)
+        (respond_to?(:lvm_pv?) && lvm_pv?) ||
+          (respond_to?(:md_member?) && md_member?) ||
+          (respond_to?(:bcache_member?) && bcache_member?)
       end
 
     protected
