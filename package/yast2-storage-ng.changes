@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Feb 27 09:57:10 UTC 2019 - David Díaz <dgonzalez@suse.com>
+
+- Do not export the partition_type attribute when it belongs to a
+  GPT partition table (bsc#1115751).
+
+-------------------------------------------------------------------
 Fri Feb 22 15:11:37 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: improve "Import Mount Points" feature.
