@@ -124,7 +124,7 @@ module Y2Storage
       #   @return [Integer] the partition number of this partition
 
       # @!attribute partition_type
-      #   @return [String] undocumented attribute that can only contain "primary"
+      #   @return [String, nil] the partition type of this partition (only can be "primary")
 
       # @!attribute subvolumes
       #   @return [Array<SubvolSpecification>,nil] list of subvolumes or nil if not
@@ -297,7 +297,7 @@ module Y2Storage
       def init_partition_fields(partition)
         @create = !NO_CREATE_IDS.include?(partition.id)
         @partition_nr = partition.number
-        @partition_type = "primary" if partition.type.is?(:primary)
+        @partition_type = "primary" if primary_partition?(partition)
         @partition_id = partition_id_from(partition)
         @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
@@ -430,6 +430,18 @@ module Y2Storage
       # @return [Boolean]
       def fixed_size?(device)
         device.is?(:disk_device, :software_raid)
+      end
+
+      # Determines whether given partition is primary or not
+      #
+      # Always false when the partition belongs to a GPT partition table.
+      #
+      # @param partition [Y2Storgae::Partition] the partition to check
+      # @return [Boolean] true when is a primary partition; false otherwise
+      def primary_partition?(partition)
+        return false if partition.partition_table.type.is?(:gpt)
+
+        partition.type.is?(:primary)
       end
     end
   end
