@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Feb 28 15:33:19 UTC 2019 - David Díaz <dgonzalez@suse.com>
+
+- Do not crash when using an old MD RAID schema and the
+  partition_nr attribute is missing. Instead, do not allow to
+  continue because a missing value issue (bsc#1126059).
+- 4.1.68
+
+-------------------------------------------------------------------
 Wed Feb 27 09:57:10 UTC 2019 - David Díaz <dgonzalez@suse.com>
 
 - Do not export the partition_type attribute when it belongs to a
