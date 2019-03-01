@@ -172,17 +172,19 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
         { "raid_type" => "raid5" }
       end
 
+      let(:root_partition_nr) { 1 }
       let(:root_raid_spec) do
         {
-          "mount" => "/", "filesystem" => "ext4", "size" => "max", "partition_nr" => 1,
-          "raid_options" => { "raid_type" => "raid5" }
+          "mount" => "/", "filesystem" => "ext4", "size" => "max",
+          "partition_nr" => root_partition_nr, "raid_options" => { "raid_type" => "raid5" }
         }
       end
 
+      let(:home_partition_nr) { 2 }
       let(:home_raid_spec) do
         {
-          "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 2,
-          "raid_options" => { "raid_type" => "raid1" }
+          "mount" => "/home", "filesystem" => "xfs", "size" => "max",
+          "partition_nr" => home_partition_nr, "raid_options" => { "raid_type" => "raid1" }
         }
       end
 
@@ -196,6 +198,25 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
             "name" => "/dev/md/2", "md_level" => Y2Storage::MdLevel::RAID1
           )
         )
+      end
+
+      context "when a partition number is missing" do
+        let(:home_partition_nr) { nil }
+
+        it "does not include the partition in the planned RAID" do
+          mds = planner.planned_devices(drive)
+          expect(mds).to contain_exactly(
+            an_object_having_attributes(
+              "name" => "/dev/md/1", "md_level" => Y2Storage::MdLevel::RAID5
+            )
+          )
+        end
+
+        it "registers an issue" do
+          planner.planned_devices(drive)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+          expect(issue).to_not be_nil
+        end
       end
     end
 

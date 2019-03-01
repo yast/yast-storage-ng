@@ -58,8 +58,9 @@ module Y2Storage
       #   devices (old-style AutoYaST)
       # @return [Array<Planned::Md>] List of planned MD RAID devices
       def non_partitioned_md_old_style(drive)
-        drive.partitions.map do |part_section|
-          md_from_partition_section(drive, part_section)
+        drive.partitions.each_with_object([]) do |part_section, mds|
+          md = md_from_partition_section(drive, part_section)
+          mds << md if md
         end
       end
 
@@ -97,15 +98,29 @@ module Y2Storage
       # @param drive        [AutoinstProfile::DriveSection] drive section describing the list of MD
       #   RAID devices (old-style AutoYaST)
       # @param part_section [AutoinstProfile::PartitionSection] partition section describing the
-      #   an MD RAID
-      # @return [Array<Planned::Md>] List of planned MD RAID devices
+      #   MD RAID
+      # @return [Planned::Md, nil] the planned MD RAID device; nil if could not be created
       def md_from_partition_section(drive, part_section)
+        return nil unless valid_part_section?(part_section)
+
         md = Planned::Md.new(name: part_section.name_for_md)
         device_config(md, part_section, drive)
         md.lvm_volume_group_name = part_section.lvm_group
         add_md_reuse(md, part_section) if part_section.create == false
         add_raid_options(md, part_section.raid_options)
         md
+      end
+
+      # Determines whether given partition section is valid and registers issues if not
+      #
+      # @param part_section [AutoinstProfile::PartitionSection]
+      # @return [Boolean] true when the partition section is valid; false otherwise
+      def valid_part_section?(part_section)
+        return true if part_section.partition_nr
+
+        issues_list.add(:missing_value, part_section, :partition_nr)
+
+        false
       end
 
       # Adds RAID options to a planned RAID
