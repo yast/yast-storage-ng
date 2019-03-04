@@ -18,10 +18,6 @@
 
 require "yast/rake"
 
-# Checking for bug/fate numbers in the changelog does not make sense at this
-# stage of the development
-Rake::Task["package"].prerequisites.delete("check:changelog")
-
 Yast::Tasks.configuration do |conf|
   conf.skip_license_check << /.*/
   conf.documentation_minimal = 87
