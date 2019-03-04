@@ -140,6 +140,11 @@ module Yast
         add_planned_attributes(disk, attrs)
       end
 
+      def planned_bcache(attrs = {})
+        bcache = Y2Storage::Planned::Bcache.new
+        add_planned_attributes(bcache, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
