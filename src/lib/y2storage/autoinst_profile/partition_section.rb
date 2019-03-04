@@ -48,6 +48,7 @@ module Y2Storage
       NO_CREATE_IDS = []
       private_constant :NO_CREATE_IDS
 
+      # rubocop:disable Metrics/MethodLength
       def self.attributes
         [
           { name: :create },
@@ -77,7 +78,9 @@ module Y2Storage
           { name: :pool },
           { name: :used_pool },
           { name: :stripes },
-          { name: :stripe_size, xml_name: :stripesize }
+          { name: :stripe_size, xml_name: :stripesize },
+          { name: :bcache_backing_for },
+          { name: :bcache_caching_for }
         ]
       end
 
@@ -161,6 +164,7 @@ module Y2Storage
         @subvolumes_prefix = hash["subvolumes_prefix"]
         @create_subvolumes = hash.fetch("create_subvolumes", true)
         @subvolumes = subvolumes_from_hashes(hash["subvolumes"]) if hash["subvolumes"]
+        @bcache_caching_for = hash.fetch("bcache_caching_for", [])
 
         @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end

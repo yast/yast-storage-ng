@@ -27,6 +27,7 @@ require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/proposal/autoinst_disk_device_planner"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
+require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/planned"
 
 module Y2Storage
@@ -65,6 +66,8 @@ module Y2Storage
               planned_for_vg(drive)
             when :CT_MD
               planned_for_md(drive)
+            when :CT_BCACHE
+              planned_for_bcache(drive)
             end
           memo.concat(planned_devs) if planned_devs
         end
@@ -101,9 +104,19 @@ module Y2Storage
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the MD RAID
-      # @return [Planned::Md] Planned MD RAID
+      # @return [Array<Planned::Md>] Planned MD RAID
       def planned_for_md(drive)
         planner = Y2Storage::Proposal::AutoinstMdPlanner.new(devicegraph, issues_list)
+        planner.planned_devices(drive)
+      end
+
+      # Returns a list of Bcache devices according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the Bcache device
+      # @return [Array<Planned::Bcache>] List containing a planned Bcache device
+      def planned_for_bcache(drive)
+        planner = Y2Storage::Proposal::AutoinstBcachePlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
       end
 

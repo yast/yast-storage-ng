@@ -257,6 +257,7 @@ module Y2Storage
         partition.lvm_volume_group_name = section.lvm_group
         partition.raid_name = section.raid_name unless container.is_a?(Planned::Md)
         partition.primary = section.partition_type == "primary" if section.partition_type
+        add_bcache_attrs(partition, section)
 
         device_config(partition, section, drive)
         add_partition_reuse(partition, section) if section.create == false
@@ -280,6 +281,15 @@ module Y2Storage
         partition.max_size = size_info.max
         partition.weight = 1 if size_info.unlimited?
         true
+      end
+
+      # Adds Bcache specific attributes
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_bcache_attrs(device, section)
+        device.bcache_backing_for = section.bcache_backing_for if section.bcache_backing_for
+        device.bcache_caching_for = section.bcache_caching_for if section.bcache_caching_for
       end
     end
   end

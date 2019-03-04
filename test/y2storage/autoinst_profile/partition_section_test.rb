@@ -542,6 +542,24 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.fstab_options).to eq(["ro", "acl"])
       end
     end
+
+    context "when bcache_caching_for is present" do
+      let(:hash) { { "bcache_caching_for" => ["/dev/bcache0"] } }
+
+      it "initializes bcache caching devices list" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.bcache_caching_for).to eq(["/dev/bcache0"])
+      end
+    end
+
+    context "when bcache_caching_for is not present" do
+      let(:hash) { { "create" => true } }
+
+      it "initializes bcache caching devices list to an empty array" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.bcache_caching_for).to eq([])
+      end
+    end
   end
 
   describe "#to_hashes" do

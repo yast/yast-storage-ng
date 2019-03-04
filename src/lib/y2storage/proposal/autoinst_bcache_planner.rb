@@ -51,7 +51,7 @@ module Y2Storage
         bcache = Y2Storage::Planned::Bcache.new(name: drive.device)
         part_section = drive.partitions.first
         device_config(bcache, part_section, drive)
-        # add_bcache_reuse(bcache, part_section) if part_section == false
+        add_bcache_reuse(bcache, part_section) if part_section.create == false
         bcache
       end
 
@@ -67,8 +67,32 @@ module Y2Storage
         bcache.partitions = drive.partitions.map do |part_section|
           plan_partition(bcache, drive, part_section)
         end
-        # add_bcache_reuse(bcache, drive) if md.partitions.any?(&:reuse)
+        add_bcache_reuse(bcache, drive) if bcache.partitions.any?(&:reuse?)
         bcache
+      end
+
+      # Sets 'reusing' attributes for a Bcache
+      #
+      # @param bcache  [Planned::Bcache] Planned Bcache
+      # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST
+      #   specification
+      def add_bcache_reuse(bcache, section)
+        bcache_to_reuse = find_bcache_to_reuse(bcache)
+        if bcache_to_reuse.nil?
+          issues_list.add(:missing_reusable_device, section)
+          return
+        end
+        bcache.reuse_name = bcache_to_reuse.name
+      end
+
+      # Bcache to be reused by the given planned Bcache
+      #
+      # @param bcache [Planned::Bcache] Planned Bcache
+      def find_bcache_to_reuse(bcache)
+        dev_by_name = devicegraph.find_by_any_name(bcache.name, alternative_names: true)
+
+        return dev_by_name if dev_by_name && dev_by_name.is?(:bcache)
+        nil
       end
     end
   end

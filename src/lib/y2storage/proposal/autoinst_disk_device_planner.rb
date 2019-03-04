@@ -96,6 +96,7 @@ module Y2Storage
         device_config(planned_disk, part, drive)
         planned_disk.lvm_volume_group_name = part.lvm_group
         planned_disk.raid_name = part.raid_name
+        add_bcache_attrs(planned_disk, part)
         add_device_reuse(planned_disk, disk, part)
 
         [planned_disk]

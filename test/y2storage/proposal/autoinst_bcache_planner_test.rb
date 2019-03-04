@@ -30,7 +30,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
-  let(:scenario) { "windows-linux-free-pc" }
+  let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   before do
@@ -49,7 +49,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     end
 
     let(:root_spec) do
-      { "mount" => "/", "filesystem" => "btrfs", "size" => "max" }
+      { "mount" => "/", "filesystem" => :btrfs, "size" => "max", "format" => true }
     end
 
     it "returns a planned Bcache device with the given device name" do
@@ -102,6 +102,49 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
       end
     end
 
-    context "snapshots"
+    context "reusing an Bcache partition" do
+      let(:root_spec) do
+        { "create" => false, "format" => false, "mount" => "/", "partition_nr" => 1 }
+      end
+
+      it "sets the bcache to be reused" do
+        bcache = planner.planned_devices(drive).first
+        expect(bcache.reuse_name).to eq("/dev/bcache0")
+      end
+    end
+
+    describe "snapshots" do
+      let(:bcache) do
+        {
+          "device" => "/dev/bcache0", "disklabel" => disklabel,
+          "partitions" => [root_spec], "enable_snapshots" => enable_snapshots
+        }
+      end
+
+      let(:enable_snapshots) { nil }
+
+      it "plans for snapshots by default" do
+        bcache = planner.planned_devices(drive).first
+        expect(bcache.partitions.first.snapshots?).to eq(true)
+      end
+
+      context "when snapshots are disabled" do
+        let(:enable_snapshots) { false }
+
+        it "does not plan for enabling snapshots" do
+          bcache = planner.planned_devices(drive).first
+          expect(bcache.partitions.first.snapshots?).to eq(false)
+        end
+      end
+
+      context "when snapshots are enabled" do
+        let(:enable_snapshots) { true }
+
+        it "plans for snapshots" do
+          bcache = planner.planned_devices(drive).first
+          expect(bcache.partitions.first.snapshots?).to eq(true)
+        end
+      end
+    end
   end
 end

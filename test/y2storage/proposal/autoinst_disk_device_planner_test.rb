@@ -22,6 +22,7 @@
 
 require_relative "../spec_helper"
 require_relative "../../support/autoinst_devices_planner_btrfs"
+require_relative "../../support/autoinst_devices_planner_bcache"
 require "y2storage/proposal/autoinst_disk_device_planner"
 Yast.import "Arch"
 
@@ -48,6 +49,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
     let(:root_spec) do
       { "mount" => "/", "filesystem" => "btrfs", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
     end
+
+    include_examples "handles Bcache configuration"
 
     context "specifying partition type" do
       context "when partition_type is set to 'primary'" do
@@ -529,6 +532,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       let(:disk_spec) do
         { "device" => "/dev/sda", "partitions" => [root_spec] }
       end
+
+      include_examples "handles Bcache configuration"
 
       context "when a partition_nr is set to '0'" do
         include_examples "handles Btrfs snapshots"
