@@ -30,7 +30,6 @@ module Y2Partitioner
   class FilesystemRole
     include Yast::I18n
     extend Yast::I18n
-    textdomain "storage"
 
     # Constructor, to be used internally by the class
     #
@@ -39,6 +38,8 @@ module Y2Partitioner
     # @param part_id [Symbol] used to initialize {#partition_id}
     # @param fs_type [Symbol, nil] used to initialize {#filesystem_type}
     def initialize(id, name, part_id, fs_type)
+      textdomain "storage"
+
       @id = id
       @name = name
       @partition_id = Y2Storage::PartitionId.find(part_id)
