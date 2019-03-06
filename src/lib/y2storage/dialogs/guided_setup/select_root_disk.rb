@@ -183,7 +183,7 @@ module Y2Storage
           )
 
           # TRANSLATORS: Help text for root disk selection, continued
-          msg << _(
+          msg += _(
             "<ul>" \
             "<li>Resize if needed (Windows partitions only)</li>" \
             "<li>Resize or remove if needed (Windows partitions only)</li>" \

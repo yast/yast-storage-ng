@@ -142,17 +142,17 @@ module Y2Storage
         # using AutoYaST), there is nothing else we can advise.
         return result.chomp if forced_multipath? && !Yast::Mode.auto
 
-        result << _(
+        result += _(
           "Maybe there are multipath devices in the system but multipath support\n" \
           "was not enabled.\n\n"
         )
 
         if Yast::Mode.auto
-          result << _(
+          result += _(
             "Use 'start_multipath' in the AutoYaST profile to enable multipath."
           )
         else
-          result << _(
+          result += _(
             "If YaST didn't offer the opportunity to enable multipath in a previous step,\n" \
             "try the 'LIBSTORAGE_MULTIPATH_AUTOSTART=ON' boot parameter.\n" \
             "More information at https://en.opensuse.org/SDB:Linuxrc"
