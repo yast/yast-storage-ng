@@ -94,6 +94,7 @@ module Y2Partitioner
 
       def detect_space_info
         return unless formatted? && controller.committed_device? && !swap?
+        return unless controller.committed_current_filesystem?
         @space_info = device.filesystem.detect_space_info
       end
 
