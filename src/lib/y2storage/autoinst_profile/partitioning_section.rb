@@ -121,6 +121,13 @@ module Y2Storage
         drives.select { |d| d.type == :CT_MD }
       end
 
+      # Drive sections with type :CT_BCACHE
+      #
+      # @return [Array<DriveSection>]
+      def bcache_drives
+        drives.select { |d| d.type == :CT_BCACHE }
+      end
+
       # Return section name
       #
       # @return [String] "partitioning"
