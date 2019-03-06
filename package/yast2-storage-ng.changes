@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Mar  6 11:21:49 UTC 2019 - Ladislav Slezák <lslezak@suse.cz>
+
+- Fixed "can't modify frozen String" crashes (related to
+  bsc#1125006)
+- Fixed missing translation (bsc#1127181)
+- 4.1.70
+
+-------------------------------------------------------------------
 Mon Mar  4 16:31:25 UTC 2019 - David Díaz <dgonzalez@suse.com>
 
 - Translates the filesystem roles properly (bsc#1127756).

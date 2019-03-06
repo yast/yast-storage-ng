@@ -190,8 +190,8 @@ module Y2Storage
     # @return [String]
     def msg_no_bcache_support
       msg = _("Bcache detected, but bcache is not supported on this platform!")
-      msg << "\n\n"
-      msg << _("This may or may not work. Use at your own risk.\n" \
+      msg += "\n\n"
+      msg + _("This may or may not work. Use at your own risk.\n" \
                "The safe way is to remove this bcache manually\n" \
                "with command line tools and then restart YaST.")
     end
