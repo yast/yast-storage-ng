@@ -121,8 +121,9 @@ module Y2Storage
       # Creates RAID partitions and set up them according to the plan
       #
       # @param devicegraph [Devicegraph] Devicegraph to work on
-      # @param planned_md [Planned::Md] Planned MD RAID
-      # @return [Proposal::CreatorResult] Result containing the formatted RAID
+      # @param md          [Md] MD RAID
+      # @param planned_md  [Planned::Md] Planned MD RAID
+      # @return [Proposal::CreatorResult] Result containing the partitioned RAID
       def partition_md(devicegraph, md, planned_md)
         PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
         new_partitions = planned_md.partitions.reject(&:reuse?)

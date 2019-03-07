@@ -275,7 +275,7 @@ module Y2Storage
 
       # Reuses MD RAIDs for the given devicegraph
       #
-      # @param reused_mds      [Array<Planned::Md>] Volume groups to reuse
+      # @param reused_mds      [Array<Planned::Md>] MD RAIDs to reuse
       # @param previous_result [Proposal::CreatorResult] Starting point
       #   to work on
       # @return [Proposal::CreatorResult] Result containing the reused MD RAID devices
@@ -312,10 +312,26 @@ module Y2Storage
         end
       end
 
+      # Creates a Bcaches in the given devicegraph
+      #
+      # @param bcaches         [Array<Planned::Bcache>] List of planned MD arrays to create
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
+      #   to reuse
+      # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
+      def create_bcaches(bcaches, previous_result, devs_to_reuse)
+        bcaches.reduce(previous_result) do |result, bcache|
+          backing_devname = find_backing_device(bcache.name, previous_result, devs_to_reuse)
+          caching_devname = find_caching_device(bcache.name, previous_result, devs_to_reuse)
+          new_result = create_bcache(result.devicegraph, bcache, backing_devname, caching_devname)
+          result.merge(new_result)
+        end
+      end
+
       # Create a MD RAID
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
-      # @param md          [Planned::Md] List of planned MD arrays to create
+      # @param md          [Planned::Md] Planned MD RAID
       # @param devices     [Array<Planned::Device>] List of devices to include in the RAID
       # @return            [Proposal::CreatorResult] Result containing the specified RAID
       #
