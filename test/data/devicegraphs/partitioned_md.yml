@@ -23,7 +23,7 @@
 
     - partition:
         size: 1 GiB
-        name: /dev/md0part1
+        name: /dev/md0p1
         type: primary
 
     md_devices:

@@ -94,12 +94,14 @@ module Y2Storage
         devs_to_reuse = parts_to_reuse + planned_disk_like_devs
 
         # Process planned Mds
-        mds_to_create, _mds_to_reuse, creator_result =
+        mds_to_create, mds_to_reuse, creator_result =
           process_mds(planned_devices, devs_to_reuse, creator_result)
+        devs_to_reuse.concat(mds_to_reuse.flat_map(&:partitions))
 
         # Process planned Bcaches
-        bcaches_to_create, _bcaches_to_reuse, creator_result =
+        bcaches_to_create, bcaches_to_reuse, creator_result =
           process_bcaches(planned_devices, devs_to_reuse, creator_result)
+        devs_to_reuse.concat(bcaches_to_reuse.flat_map(&:partitions))
 
         # Process planned Vgs
         planned_vgs, creator_result =

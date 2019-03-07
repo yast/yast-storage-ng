@@ -40,10 +40,10 @@ describe Y2Storage::AutoinstProposal do
 
   describe "#propose" do
     before { fake_scenario(scenario) }
+
     let(:scenario) { "bcache1.xml" }
     let(:drive_device) { "/dev/bcache0" }
     let(:create) { true }
-    let(:create_vdb1) { true }
     let(:init) { true }
     let(:ptable_type) { "msdos" }
     let(:root) do
@@ -76,16 +76,16 @@ describe Y2Storage::AutoinstProposal do
     end
 
     let(:vdb) do
-        {
-          "device" => "/dev/vdb",
-          "type" => :CT_DISK, "use" => "all", "disklabel" => "none", "initialize" => init,
-          "partitions" =>
-            [
-              {
-                "format" => create, "bcache_caching_for" => [drive_device]
-              }
-            ]
-        }
+      {
+        "device" => "/dev/vdb",
+        "type" => :CT_DISK, "use" => "all", "disklabel" => "none", "initialize" => init,
+        "partitions" =>
+          [
+            {
+              "format" => create, "bcache_caching_for" => [drive_device]
+            }
+          ]
+      }
     end
 
     let(:partitioning) { [bcache0, vda, vdb] }
@@ -127,7 +127,6 @@ describe Y2Storage::AutoinstProposal do
     context "reusing a Bcache" do
       let(:init) { false }
       let(:create) { false }
-      let(:create_vdb1) { false }
 
       it "does not create a new Bcache" do
         old_sid = fake_devicegraph.find_by_name("/dev/bcache0").sid
@@ -153,7 +152,7 @@ describe Y2Storage::AutoinstProposal do
         {
           "device" => "/dev/vdb",
           "type" => :CT_DISK, "use" => "all", "disklabel" => "none",
-          "partitions" => [ { "format" => create, "raid_name" => "/dev/md0" } ]
+          "partitions" => [{ "format" => create, "raid_name" => "/dev/md0" }]
         }
       end
 
@@ -161,7 +160,47 @@ describe Y2Storage::AutoinstProposal do
         {
           "device" => "/dev/vdc",
           "type" => :CT_DISK, "use" => "all", "disklabel" => "none",
-          "partitions" => [ { "format" => create, "raid_name" => "/dev/md0" } ]
+          "partitions" => [{ "format" => create, "raid_name" => "/dev/md0" }]
+        }
+      end
+
+      it "creates a Bcache on top of the MD RAID" do
+        proposal.propose
+        bcache = proposal.devices.bcaches.first
+        caching_device = bcache.bcache_cset.blk_devices.first
+        expect(caching_device.name).to eq("/dev/md0p1")
+      end
+    end
+
+    context "on top of an existing MD RAID" do
+      let(:scenario) { "partitioned_md" }
+      let(:partitioning) { [bcache0, md0, sda, sdb] }
+
+      let(:sda) do
+        {
+          "device" => "/dev/sda", "type" => :CT_DISK, "use" => "all",
+          "partitions" => [
+            { "create" => false, "partition_nr" => 1, "raid_name" => "/dev/md0" },
+            { "create" => false, "partition_nr" => 2, "raid_name" => "/dev/md0" }
+          ]
+        }
+      end
+
+      let(:sdb) do
+        {
+          "device" => "/dev/sdb", "type" => :CT_DISK, "use" => "all",
+          "partitions" => [
+            { "create" => true, "partition_nr" => 1, "bcache_backing_for" => "/dev/bcache0" }
+          ]
+        }
+      end
+
+      let(:md0) do
+        {
+          "device" => "/dev/md0", "type" => :CT_MD, "use" => "all",
+          "disklabel" => "msdos", "partitions" => [
+            { "create" => false, "partition_nr" => 1, "bcache_caching_for" => ["/dev/bcache0"] }
+          ]
         }
       end
 
