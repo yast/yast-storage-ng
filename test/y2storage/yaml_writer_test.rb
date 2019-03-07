@@ -646,6 +646,13 @@ describe Y2Storage::YamlWriter do
               - free:
                   size: 491519 MiB (480.00 GiB)
                   start: 20481 MiB (20.00 GiB)
+          - disk:
+              name: "/dev/sdb"
+              size: 500 GiB
+              block_size: 0.5 KiB
+              io_size: 0 B
+              min_grain: 1 MiB
+              align_ofs: 0 B
           - md:
               name: "/dev/md0"
               md_level: raid0
@@ -663,7 +670,7 @@ describe Y2Storage::YamlWriter do
               - partition:
                   size: 1 GiB
                   start: 1 MiB
-                  name: "/dev/md0part1"
+                  name: "/dev/md0p1"
                   type: primary
                   id: linux
               - free:

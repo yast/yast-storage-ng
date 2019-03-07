@@ -31,3 +31,7 @@
         blk_device: /dev/sda1
     - md_device:
         blk_device: /dev/sda2
+
+- disk:
+    name: /dev/sdb
+    size: 500 GiB
