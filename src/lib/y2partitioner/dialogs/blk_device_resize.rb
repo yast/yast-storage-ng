@@ -94,7 +94,25 @@ module Y2Partitioner
 
       def detect_space_info
         return unless controller.committed_current_filesystem? && !swap?
-        @space_info = device.filesystem.detect_space_info
+        begin
+          @space_info = device.filesystem.detect_space_info
+        rescue Storage::Exception => e
+          detect_space_info_failed_warning(e)
+        end
+      end
+
+      # Show a warning popup about an error during detect_space_info.
+      #
+      # @param err [Storage::Exception] libstorage-ng exception for details
+      def detect_space_info_failed_warning(err)
+        log.warn "detect_space_info for #{device.name} failed: #{err.what}"
+
+        # TRANSLATORS: Warning message when the user wanted to resize a filesystem
+        # and there was a problem getting information about that filesystem.
+        msg = _("Obtaining information about free space on this filesystem failed.\n" \
+          "Resizing it might or might not work. If you continue, there is a risk\n" \
+          "of losing all data on this filesystem.")
+        Yast2::Popup.show(msg, headline: :warning, details: err.what, buttons: :ok)
       end
 
       # Whether the device is formatted
