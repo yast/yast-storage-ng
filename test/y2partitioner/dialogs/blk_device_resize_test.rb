@@ -123,14 +123,29 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
         end
       end
 
-      context "and it is formatted and it is not swap" do
-        before do
-          allow(partition).to receive(:filesystem).and_return(filesystem)
-        end
-
+      # Regression test for bug#1124146, we were trying to detect the space
+      # information for a filesystem that was actually new (not in the system)
+      context "and is going to be reformatted" do
+        before { allow(partition).to receive(:filesystem).and_return(new_filesystem) }
+        let(:new_filesystem) { instance_double("Filesystem", type: ext3, sid: 42) }
         let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
-        let(:filesystem) { instance_double("Filesystem", detect_space_info: space_info, type: ext3) }
+
+        it "does not show the used size" do
+          label = find_label(subject.contents, "Currently used")
+          expect(label).to be_nil
+        end
+      end
+
+      context "and it is formatted, the filesystem will be kept and it is not swap" do
         let(:space_info) { instance_double(Y2Storage::SpaceInfo, used: 10.GiB) }
+
+        before do
+          # Every call to Partition#filesystem will return a new object representing the
+          # same partition, so using allow_any_instance_of is the easiest and more
+          # readable way to mock this
+          allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+            .to receive(:detect_space_info).and_return space_info
+        end
 
         it "shows the used size" do
           label = find_label(subject.contents, "Currently used")
