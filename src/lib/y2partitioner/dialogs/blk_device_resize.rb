@@ -93,8 +93,7 @@ module Y2Partitioner
       attr_reader :space_info
 
       def detect_space_info
-        return unless formatted? && controller.committed_device? && !swap?
-        return unless controller.committed_current_filesystem?
+        return unless controller.committed_current_filesystem? && !swap?
         @space_info = device.filesystem.detect_space_info
       end
 
