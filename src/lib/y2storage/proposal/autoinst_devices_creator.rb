@@ -97,12 +97,16 @@ module Y2Storage
         mds_to_create, _mds_to_reuse, creator_result =
           process_mds(planned_devices, devs_to_reuse, creator_result)
 
+        # Process planned Bcaches
+        bcaches_to_create, _bcaches_to_reuse, creator_result =
+          process_bcaches(planned_devices, devs_to_reuse, creator_result)
+
         # Process planned Vgs
         planned_vgs, creator_result =
           process_vgs(planned_devices, devs_to_reuse, creator_result)
 
         Y2Storage::Proposal::AutoinstCreatorResult.new(
-          creator_result, parts_to_create + mds_to_create + planned_vgs
+          creator_result, parts_to_create + mds_to_create + planned_vgs + bcaches_to_create
         )
       end
 
@@ -164,6 +168,23 @@ module Y2Storage
         creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
 
         [mds_to_create, mds_to_reuse, creator_result]
+      end
+
+      # Process planned Bcaches
+      #
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
+      # @param creator_result [CreatorResult] partial result
+      #
+      # @return [Array<Array<Planned::Bcache>, Array<Planned::Bcache>, CreatorResult>]
+      def process_bcaches(planned_devices, devs_to_reuse, creator_result)
+        bcaches_to_reuse, bcaches_to_create = planned_devices.bcaches.partition(&:reuse?)
+        reuse_bcaches(bcaches_to_reuse, creator_result)
+        creator_result.merge!(
+          create_bcaches(planned_devices.bcaches, creator_result, devs_to_reuse)
+        )
+
+        [bcaches_to_create, bcaches_to_reuse, creator_result]
       end
 
       # Process planned Vgs
@@ -286,6 +307,19 @@ module Y2Storage
         end
       end
 
+      # Reuses Bcaches for the given devicegraph
+      #
+      # @param reused_bcaches  [Array<Planned::Bcache>] Bcaches to reuse
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      #   to work on
+      # @return [Proposal::CreatorResult] Result containing the reused Bcache devices
+      def reuse_bcaches(reused_bcaches, previous_result)
+        reused_bcaches.each_with_object(previous_result) do |bcache, result|
+          bcache_creator = Proposal::BcacheCreator.new(result.devicegraph)
+          result.merge!(bcache_creator.reuse_partitions(bcache))
+        end
+      end
+
       # Creates MD RAID devices in the given devicegraph
       #
       # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
@@ -346,6 +380,48 @@ module Y2Storage
         md_creator.create_md(new_md, devices)
       end
 
+      # Creates a Bcache
+      #
+      # @param devicegraph     [Devicegraph] Starting devicegraph
+      # @param bcache          [Planned::Bcache] Planned Bcache
+      # @param backing_devname [String] Backing device name
+      # @param caching_devname [String] Caching device name
+      # @return [Proposal::CreatorResult] Result containing the specified Bcache
+      def create_bcache(devicegraph, bcache, backing_devname, caching_devname)
+        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
+        bcache_creator.create_bcache(bcache, backing_devname, caching_devname)
+      rescue NoDiskSpaceError
+        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
+        new_bcache = bcache.clone
+        new_bcache.partitions = flexible_devices(bcache.partitions)
+        bcache_creator.create_bcache(new_bcache, backing_devname, caching_devname)
+      end
+
+      def find_backing_device(bcache_name, result, devs_to_reuse)
+        backing_device_names = result.created_names do |dev|
+          dev.respond_to?(:bcache_backing_for) && bcache_name == dev.bcache_backing_for
+        end
+        return backing_device_names.first unless backing_device_names.empty?
+
+        device = devs_to_reuse.find do |dev|
+          dev.respond_to?(:bcache_backing_for) && bcache_name == dev.bcache_backing_for
+        end
+        device && device.reuse_name
+      end
+
+      def find_caching_device(bcache_name, result, devs_to_reuse)
+        # TODO: improve AutoinstDrivesMap API in order to reduce duplication here
+        caching_device_names = result.created_names do |dev|
+          dev.respond_to?(:bcache_caching_for) && dev.bcache_caching_for.include?(bcache_name)
+        end
+        return caching_device_names.first unless caching_device_names.empty?
+
+        device = devs_to_reuse.find do |dev|
+          dev.respond_to?(:bcache_caching_for) && dev.bcache_caching_for.include?(bcache_name)
+        end
+        device && device.reuse_name
+      end
+
       # Return a new planned devices with flexible limits
       #
       # The min_size is removed and a proportional weight is set for every device.
@@ -366,6 +442,14 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def reusable_by_md(planned_devices)
         planned_devices.select { |d| d.respond_to?(:raid_name) }
+      end
+
+      # Return devices which can be reused by a Bcache
+      #
+      # @param planned_devices [Planned::DevicesCollection] collection of planned devices
+      # @return [Array<Planned::Device>]
+      def reusable_by_bcache(planned_devices)
+        planned_devices.select { |d| d.respond_to?(:bcache_backing_for) }
       end
 
       # Returns a list of planned partitions adjusting the size
