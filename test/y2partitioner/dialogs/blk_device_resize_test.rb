@@ -123,26 +123,31 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
         end
       end
 
-      context "and it is formatted and it is not swap" do
-        before do
-          allow(partition).to receive(:filesystem).and_return(filesystem)
-          # This causes a segfault and dumping memory maps: (not sure why)
-          # allow(subject.controller).to receive(:committed_current_filesystem?).and_return true
-        end
-
+      # Regression test for bug#1124146, we were trying to detect the space
+      # information for a filesystem that was actually new (not in the system)
+      context "and is going to be reformatted" do
+        before { allow(partition).to receive(:filesystem).and_return(new_filesystem) }
+        let(:new_filesystem) { instance_double("Filesystem", type: ext3, sid: 42) }
         let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
+
+        it "does not show the used size" do
+          label = find_label(subject.contents, "Currently used")
+          expect(label).to be_nil
+        end
+      end
+
+      context "and it is formatted, the filesystem will be kept and it is not swap" do
         let(:space_info) { instance_double(Y2Storage::SpaceInfo, used: 10.GiB) }
-        let(:filesystem) do
-          instance_double("Filesystem",
-            detect_space_info: space_info,
-            type:              ext3,
-            sid:               42)
+
+        before do
+          # Every call to Partition#filesystem will return a new object representing the
+          # same partition, so using allow_any_instance_of is the easiest and more
+          # readable way to mock this
+          allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+            .to receive(:detect_space_info).and_return space_info
         end
 
-        xit "shows the used size" do
-          # FIXME: this test fails now because the check is now a lot stricter:
-          # It now also checks if the planned filesystem is the same as the one on disk.
-          # But mocking that as well failed with s segfault (see "before" block above).
+        it "shows the used size" do
           label = find_label(subject.contents, "Currently used")
           expect(label).to_not be_nil
         end
