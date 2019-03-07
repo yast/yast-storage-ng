@@ -54,6 +54,21 @@ module Y2Storage
       def bcache_backing_device?
         !bcache_backing_for.nil?
       end
+
+      # Determines whether the device will act as a caching device for a given Bcache
+      #
+      # @param name [String] Bcache name
+      def bcache_caching_for?(name)
+        bcache_caching_for.include?(name)
+      end
+
+      # Determines whether the device will act as a backing device for a given Bcache
+      #
+      # @param name [String] Bcache name
+      # @return [Boolean]
+      def bcache_backing_for?(name)
+        bcache_backing_for == name
+      end
     end
   end
 end

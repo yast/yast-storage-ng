@@ -100,4 +100,64 @@ describe Y2Storage::Planned::CanBeBcacheMember do
       end
     end
   end
+
+  describe "#bcache_caching_for?" do
+    let(:bcache_name) { "/dev/bcache0" }
+
+    context "when it is set as a Bcache caching device for the mentioned Bcache" do
+      before do
+        planned.bcache_caching_for = [bcache_name]
+      end
+
+      it "returns true" do
+        expect(planned.bcache_caching_for?("/dev/bcache0")).to eq(true)
+      end
+    end
+
+    context "when it is set as a Bcache caching device for a different Bcache" do
+      before do
+        planned.bcache_caching_for = ["/dev/bcache1"]
+      end
+
+      it "returns false" do
+        expect(planned.bcache_caching_for?(bcache_name)).to eq(false)
+      end
+    end
+
+    context "when it is not set as a Bcache caching device" do
+      it "returns false" do
+        expect(planned.bcache_caching_for?(bcache_name)).to eq(false)
+      end
+    end
+  end
+
+  describe "#bcache_backing_for?" do
+    let(:bcache_name) { "/dev/bcache0" }
+
+    context "when it is set as a Bcache backing device for the mentioned Bcache" do
+      before do
+        planned.bcache_backing_for = bcache_name
+      end
+
+      it "returns true" do
+        expect(planned.bcache_backing_for?("/dev/bcache0")).to eq(true)
+      end
+    end
+
+    context "when it is set as a Bcache backing device for a different Bcache" do
+      before do
+        planned.bcache_backing_for = "/dev/bcache1"
+      end
+
+      it "returns false" do
+        expect(planned.bcache_backing_for?(bcache_name)).to eq(false)
+      end
+    end
+
+    context "when it is not set as a Bcache backing device" do
+      it "returns false" do
+        expect(planned.bcache_backing_for?(bcache_name)).to eq(false)
+      end
+    end
+  end
 end

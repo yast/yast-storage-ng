@@ -25,7 +25,7 @@ module Y2Storage
   module Proposal
     # Result of executing one of the devices creators. See
     # {Proposal::PartitionCreator}, {Proposal::LvmCreator},
-    # {Proposal::MdCreator}
+    # {Proposal::MdCreator} and {Proposal::BcacheCreator}.
     #
     # FIXME: this class wouldn't be needed if each planned device would contain
     # an attribute with the name of the created device. That would also mean a

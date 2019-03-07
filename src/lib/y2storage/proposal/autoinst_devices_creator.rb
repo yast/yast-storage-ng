@@ -357,8 +357,8 @@ module Y2Storage
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_bcaches(bcaches, previous_result, devs_to_reuse)
         bcaches.reduce(previous_result) do |result, bcache|
-          backing_devname = find_backing_device(bcache.name, previous_result, devs_to_reuse)
-          caching_devname = find_caching_device(bcache.name, previous_result, devs_to_reuse)
+          backing_devname = find_bcache_member(bcache.name, :backing, previous_result, devs_to_reuse)
+          caching_devname = find_bcache_member(bcache.name, :caching, previous_result, devs_to_reuse)
           new_result = create_bcache(result.devicegraph, bcache, backing_devname, caching_devname)
           result.merge(new_result)
         end
@@ -399,29 +399,25 @@ module Y2Storage
         bcache_creator.create_bcache(new_bcache, backing_devname, caching_devname)
       end
 
-      def find_backing_device(bcache_name, result, devs_to_reuse)
-        backing_device_names = result.created_names do |dev|
-          dev.respond_to?(:bcache_backing_for) && bcache_name == dev.bcache_backing_for
-        end
-        return backing_device_names.first unless backing_device_names.empty?
-
-        device = devs_to_reuse.find do |dev|
-          dev.respond_to?(:bcache_backing_for) && bcache_name == dev.bcache_backing_for
-        end
+      # Finds the bcache member in the previous result and the list of devices to use
+      #
+      # @return [String] Device name
+      def find_bcache_member(bcache_name, role, result, devs_to_reuse)
+        names = result.created_names { |d| bcache_member_for?(d, bcache_name, role) }
+        return names.first unless names.empty?
+        device = devs_to_reuse.find { |d| bcache_member_for?(d, bcache_name, role) }
         device && device.reuse_name
       end
 
-      def find_caching_device(bcache_name, result, devs_to_reuse)
-        # TODO: improve AutoinstDrivesMap API in order to reduce duplication here
-        caching_device_names = result.created_names do |dev|
-          dev.respond_to?(:bcache_caching_for) && dev.bcache_caching_for.include?(bcache_name)
-        end
-        return caching_device_names.first unless caching_device_names.empty?
-
-        device = devs_to_reuse.find do |dev|
-          dev.respond_to?(:bcache_caching_for) && dev.bcache_caching_for.include?(bcache_name)
-        end
-        device && device.reuse_name
+      # Determines whether a device plays a given role in a Bcache
+      #
+      # @param device      [Planned::Device] Device to consider
+      # @param bcache_name [String] Bcache name
+      # @param role        [:caching, :backing] Role that the device plays in the Bcache device
+      # @return [Boolean]
+      def bcache_member_for?(device, bcache_name, role)
+        query_method = "bcache_#{role}_for?"
+        device.respond_to?(query_method) && device.send(query_method, bcache_name)
       end
 
       # Return a new planned devices with flexible limits
