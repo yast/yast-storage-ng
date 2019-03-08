@@ -99,8 +99,8 @@ module Y2Storage
         bcache
       end
 
-      # @param name        [String] Bcache name
       # @param devicegraph [Devicegraph] Devicegraph to search for the Bcache device
+      # @param name        [String] Bcache name
       # @return [Y2Storage::Bcache,nil] Bcache device; nil if it is not found
       def find_bcache(devicegraph, name)
         devicegraph.bcaches.find { |r| r.name == name }
@@ -146,7 +146,7 @@ module Y2Storage
 
       # Finds the best distribution of partitions within a Bcache
       #
-      # @param bcache                 [Bcache] Bcache
+      # @param bcache             [Bcache] Bcache
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
       # @return [PartitionsDistribution] Distribution of partitions
       def best_distribution(bcache, planned_partitions)

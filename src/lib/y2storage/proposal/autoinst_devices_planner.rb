@@ -104,7 +104,7 @@ module Y2Storage
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the MD RAID
-      # @return [Array<Planned::Md>] Planned MD RAID
+      # @return [Planned::Md] Planned MD RAID
       def planned_for_md(drive)
         planner = Y2Storage::Proposal::AutoinstMdPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
@@ -114,7 +114,7 @@ module Y2Storage
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the Bcache device
-      # @return [Array<Planned::Bcache>] List containing a planned Bcache device
+      # @return [Planned::Bcache] List containing a planned Bcache device
       def planned_for_bcache(drive)
         planner = Y2Storage::Proposal::AutoinstBcachePlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)

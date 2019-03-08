@@ -31,6 +31,8 @@ module Y2Storage
     class AutoinstBcachePlanner < AutoinstDrivePlanner
       # Returns a planned Bcache device.
       #
+      # This method registers an issue when not running on a x86_64 architecture.
+      #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the Bcache set up
       # @return [Array<Planned::Bcache>] Planned Bcache device
       def planned_devices(drive)
@@ -99,7 +101,7 @@ module Y2Storage
         bcache.reuse_name = bcache_to_reuse.name
       end
 
-      # Bcache to be reused by the given planned Bcache
+      # Finds the Bcache to be reused by the given planned Bcache
       #
       # @param bcache [Planned::Bcache] Planned Bcache
       def find_bcache_to_reuse(bcache)
@@ -111,10 +113,8 @@ module Y2Storage
 
       # Given a user specified RAID type, it returns the RAID level
       #
-      # @note If the raid_type is not specified or is invalid, falls back to RAID1.
-      #
       # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
-      #   options
+      #   options; `nil` if cache_mode is missing or invalid
       # @return [Y2Storage::CacheMode,nil] Bcache cache mode; nil if no cache mode was specified
       def cache_mode_from(bcache_options)
         return nil if bcache_options.nil? || bcache_options.cache_mode.nil?

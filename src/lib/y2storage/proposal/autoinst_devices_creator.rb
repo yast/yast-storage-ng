@@ -160,7 +160,7 @@ module Y2Storage
       #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
-      # @param creator_result [CreatorResult] partial result
+      # @param creator_result [CreatorResult] Partial result
       #
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_mds(planned_devices, devs_to_reuse, creator_result)
@@ -176,8 +176,7 @@ module Y2Storage
       #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
-      # @param creator_result [CreatorResult] partial result
-      #
+      # @param creator_result [CreatorResult] Partial result
       # @return [Array<Array<Planned::Bcache>, Array<Planned::Bcache>, CreatorResult>]
       def process_bcaches(planned_devices, devs_to_reuse, creator_result)
         bcaches_to_reuse, bcaches_to_create = planned_devices.bcaches.partition(&:reuse?)
@@ -193,7 +192,7 @@ module Y2Storage
       #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
-      # @param creator_result [CreatorResult] partial result
+      # @param creator_result [CreatorResult] Partial result
       #
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_vgs(planned_devices, devs_to_reuse, creator_result)

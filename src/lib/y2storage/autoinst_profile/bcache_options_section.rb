@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,8 +33,7 @@ module Y2Storage
       define_attr_accessors
 
       # @!attribute cache_mode
-      #   @return [String] Caching cache_mode
-      #   @return [String] Parity algorithm
+      #   @return [String] Cache mode
 
       # @param parent [#parent,#section_name] parent section
       def initialize(parent = nil)
@@ -43,8 +42,8 @@ module Y2Storage
 
       # Clones RAID device options into an AutoYaST <raid_options> profile section
       #
-      # @param device [Md] RAID device
-      # @return [RaidOptionsSection] RAID options section
+      # @param device [Bcache] Bcache device
+      # @return [BcacheOptionsSection] Bcache options section
       def self.new_from_storage(device)
         result = new
         result.init_from_bcache(device)
