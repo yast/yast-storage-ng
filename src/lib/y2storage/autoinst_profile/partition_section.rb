@@ -305,12 +305,14 @@ module Y2Storage
         @partition_id = partition_id_from(partition)
         @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
+        init_bcache_fields(partition)
       end
 
       def init_disk_device_fields(disk)
         @create = false
         @lvm_group = lvm_group_name(disk)
         @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
+        init_bcache_fields(disk)
       end
 
       def init_lv_fields(lv)
@@ -366,6 +368,14 @@ module Y2Storage
 
         @subvolumes = valid_subvolumes.map do |subvol|
           SubvolSpecification.create_from_btrfs_subvolume(subvol)
+        end
+      end
+
+      def init_bcache_fields(device)
+        if device.bcache
+          @bcache_backing_for = device.bcache.name
+        elsif device.in_bcache_cset
+          @bcache_caching_for = device.in_bcache_cset.bcaches.map(&:name)
         end
       end
 

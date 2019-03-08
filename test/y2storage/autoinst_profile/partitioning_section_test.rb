@@ -27,11 +27,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   subject(:section) { described_class.new }
   let(:sda) { { "device" => "/dev/sda", "use" => "linux" } }
   let(:sdb) { { "device" => "/dev/sdb", "use" => "all" } }
-  let(:disk_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:dasd_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:vg_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:md_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:stray_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
+  let(:disk_section) { double("disk_section") }
+  let(:dasd_section) { double("dasd_section") }
+  let(:vg_section) { double("vg_section") }
+  let(:md_section) { double("md_section") }
+  let(:stray_section) { double("stray_section") }
+  let(:bcache_section) { double("bcache_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -67,7 +68,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:devicegraph) do
         instance_double(
           Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
-          stray_blk_devices: [stray]
+          stray_blk_devices: [stray], bcaches: [bcache]
         )
       end
       let(:disks) { [disk, dasd] }
@@ -76,6 +77,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:vg) { instance_double(Y2Storage::LvmVg) }
       let(:md) { instance_double(Y2Storage::Md) }
       let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
+      let(:bcache) { instance_double(Y2Storage::Bcache) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -88,6 +90,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(md).and_return(md_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(stray).and_return(stray_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(bcache).and_return(bcache_section)
       end
 
       it "returns a new PartitioningSection object" do
@@ -97,7 +101,9 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       it "creates an entry in #drives for every relevant VG, disk and DASD" do
         section = described_class.new_from_storage(devicegraph)
         expect(section.drives)
-          .to eq([md_section, vg_section, disk_section, dasd_section, stray_section])
+          .to contain_exactly(
+            bcache_section, md_section, vg_section, disk_section, dasd_section, stray_section
+          )
       end
 
       it "ignores irrelevant drives" do
