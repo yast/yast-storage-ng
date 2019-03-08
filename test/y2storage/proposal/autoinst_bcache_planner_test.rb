@@ -32,9 +32,11 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:x86_64) { true }
 
   before do
     fake_scenario(scenario)
+    allow(Yast::Arch).to receive(:x86_64).and_return(x86_64)
   end
 
   describe "#planned_devices" do
@@ -61,6 +63,16 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     it "sets cache options" do
       bcache = planner.planned_devices(drive).first
       expect(bcache.cache_mode).to eq(Y2Storage::CacheMode::WRITEBACK)
+    end
+
+    context "when running on a different x86_64 architecture" do
+      let(:x86_64) { false }
+
+      it "registers an issue" do
+        planner.planned_devices(drive).first
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::UnsupportedDriveSection) }
+        expect(issue).to_not be_nil
+      end
     end
 
     context "when caching mode is set to an invalid value are not specified" do

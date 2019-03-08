@@ -22,6 +22,8 @@
 require "y2storage/proposal/autoinst_drive_planner"
 require "y2storage/planned/bcache"
 
+Yast.import "Arch"
+
 module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a Planned::Bcache in order
@@ -32,6 +34,7 @@ module Y2Storage
       # @param drive [AutoinstProfile::DriveSection] drive section describing the Bcache set up
       # @return [Array<Planned::Bcache>] Planned Bcache device
       def planned_devices(drive)
+        issues_list.add(:unsupported_drive_section, drive) unless Yast::Arch.x86_64
         bcaches =
           if drive.unwanted_partitions?
             non_partitioned_bcache(drive)
