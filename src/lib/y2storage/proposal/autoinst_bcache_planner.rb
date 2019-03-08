@@ -52,6 +52,7 @@ module Y2Storage
         part_section = drive.partitions.first
         device_config(bcache, part_section, drive)
         add_bcache_reuse(bcache, part_section) if part_section.create == false
+        add_bcache_options(bcache, drive.bcache_options)
         bcache
       end
 
@@ -68,7 +69,17 @@ module Y2Storage
           plan_partition(bcache, drive, part_section)
         end
         add_bcache_reuse(bcache, drive) if bcache.partitions.any?(&:reuse?)
+        add_bcache_options(bcache, drive.bcache_options)
         bcache
+      end
+
+      # Adds Bcache options
+      #
+      # @param bcache         [Planned::Bcache] Planned Bcache device
+      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
+      #   options
+      def add_bcache_options(bcache, bcache_options)
+        bcache.cache_mode = cache_mode_from(bcache_options)
       end
 
       # Sets 'reusing' attributes for a Bcache
@@ -92,6 +103,21 @@ module Y2Storage
         dev_by_name = devicegraph.find_by_any_name(bcache.name, alternative_names: true)
 
         return dev_by_name if dev_by_name && dev_by_name.is?(:bcache)
+        nil
+      end
+
+      # Given a user specified RAID type, it returns the RAID level
+      #
+      # @note If the raid_type is not specified or is invalid, falls back to RAID1.
+      #
+      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
+      #   options
+      # @return [Y2Storage::CacheMode,nil] Bcache cache mode; nil if no cache mode was specified
+      def cache_mode_from(bcache_options)
+        return nil if bcache_options.nil? || bcache_options.cache_mode.nil?
+        Y2Storage::CacheMode.find(bcache_options.cache_mode)
+      rescue NameError
+        issues_list.add(:invalid_value, bcache_options, :cache_mode, :skip)
         nil
       end
     end

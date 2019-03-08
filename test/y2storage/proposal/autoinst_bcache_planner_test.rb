@@ -44,6 +44,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     let(:bcache) do
       {
         "device" => "/dev/bcache0", "disklabel" => disklabel,
+        "bcache_options" => { "cache_mode" => "writeback" },
         "partitions" => [root_spec]
       }
     end
@@ -55,6 +56,48 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     it "returns a planned Bcache device with the given device name" do
       bcache = planner.planned_devices(drive).first
       expect(bcache.name).to eq("/dev/bcache0")
+    end
+
+    it "sets cache options" do
+      bcache = planner.planned_devices(drive).first
+      expect(bcache.cache_mode).to eq(Y2Storage::CacheMode::WRITEBACK)
+    end
+
+    context "when caching mode is set to an invalid value are not specified" do
+      let(:bcache) do
+        {
+          "device" => "/dev/bcache0", "disklabel" => disklabel,
+          "partitions" => [root_spec]
+        }
+      end
+
+      it "does not set caching options" do
+        bcache = planner.planned_devices(drive).first
+        expect(bcache.cache_mode).to eq(nil)
+      end
+    end
+
+    context "when caching mode is set to an invalid value" do
+      let(:bcache) do
+        {
+          "device" => "/dev/bcache0", "disklabel" => disklabel,
+          "bcache_options" => { "cache_mode" => "RANDOM" },
+          "partitions" => [root_spec]
+        }
+      end
+
+      it "does not set caching options" do
+        bcache = planner.planned_devices(drive).first
+        expect(bcache.cache_mode).to eq(nil)
+      end
+
+      it "registers an issue" do
+        planner.planned_devices(drive).first
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+        expect(issue.section).to eq(drive.bcache_options)
+        expect(issue.value).to eq("RANDOM")
+        expect(issue.new_value).to eq(:skip)
+      end
     end
 
     context "when a partition table type is specified" do

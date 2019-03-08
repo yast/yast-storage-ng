@@ -36,7 +36,8 @@ describe Y2Storage::Proposal::BcacheCreator do
 
   let(:planned_bcache0) do
     planned_bcache(
-      name: "/dev/bcache0", partitions: partitions, ptable_type: ptable_type
+      name: "/dev/bcache0", partitions: partitions, ptable_type: ptable_type,
+      cache_mode: Y2Storage::CacheMode::WRITEBACK
     )
   end
   let(:caching_devname) { "/dev/sda3" }
@@ -52,9 +53,14 @@ describe Y2Storage::Proposal::BcacheCreator do
   describe "#create_bcache" do
     it "creates a new bcache device" do
       result = creator.create_bcache(planned_bcache0, backing_devname, caching_devname)
-      devicegraph = result.devicegraph
-      bcache = devicegraph.bcaches.first
+      bcache = result.devicegraph.find_by_name("/dev/bcache0")
       expect(bcache.name).to eq("/dev/bcache0")
+    end
+
+    it "sets the bcache mode" do
+      result = creator.create_bcache(planned_bcache0, backing_devname, caching_devname)
+      bcache = result.devicegraph.find_by_name("/dev/bcache0")
+      expect(bcache.cache_mode).to eq(Y2Storage::CacheMode::WRITEBACK)
     end
 
     it "adds caching devices to bcache" do

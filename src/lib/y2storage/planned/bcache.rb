@@ -44,6 +44,9 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       attr_accessor :partitions
 
+      # @return [Y2Storage::CacheMode] Bcache cache mode
+      attr_accessor :cache_mode
+
       def initialize(name: nil)
         super()
         self.name = name

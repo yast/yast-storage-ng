@@ -87,14 +87,13 @@ module Y2Storage
         caching_device = find_blk_device(devicegraph, caching_devname)
 
         backing_device.remove_descendants
-        # FIXME: it does not look like the right condition
+
         if caching_device.descendants.none? { |d| d.is?(:bcache_cset) }
           caching_device.remove_descendants
         end
 
-        # FIXME: solve name collisions
         bcache = backing_device.create_bcache(planned_bcache.name)
-
+        bcache.cache_mode = planned_bcache.cache_mode if planned_bcache.cache_mode
         bcache_cset = caching_device.create_bcache_cset
         bcache.add_bcache_cset(bcache_cset)
         bcache
