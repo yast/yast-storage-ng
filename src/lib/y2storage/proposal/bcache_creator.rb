@@ -88,13 +88,9 @@ module Y2Storage
 
         backing_device.remove_descendants
 
-        if caching_device.descendants.none? { |d| d.is?(:bcache_cset) }
-          caching_device.remove_descendants
-        end
-
         bcache = backing_device.create_bcache(planned_bcache.name)
         bcache.cache_mode = planned_bcache.cache_mode if planned_bcache.cache_mode
-        bcache_cset = caching_device.create_bcache_cset
+        bcache_cset = find_or_create_bcache_cset(caching_device)
         bcache.add_bcache_cset(bcache_cset)
         bcache
       end
@@ -179,6 +175,16 @@ module Y2Storage
       def find_blk_device(devicegraph, dev_name)
         device = Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name)
         device.encryption || device
+      end
+
+      # Finds or creates the bcache cset for a caching device
+      #
+      # @param caching_device [Y2Storage::BlkDevice]
+      # @return [Y2Storage::BcacheCset]
+      def find_or_create_bcache_cset(caching_device)
+        return caching_device.in_bcache_cset if caching_device.in_bcache_cset
+        caching_device.remove_descendants
+        caching_device.create_bcache_cset
       end
     end
   end

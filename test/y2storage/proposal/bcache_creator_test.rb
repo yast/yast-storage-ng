@@ -132,6 +132,30 @@ describe Y2Storage::Proposal::BcacheCreator do
       end
     end
 
+    context "when the bcache cset already exists" do
+      let(:scenario) { "bcache1.xml" }
+
+      let(:caching_devname) { "/dev/vdb" }
+      let(:backing_devname) { "/dev/vdd3" }
+      let(:planned_bcache3) do
+        planned_bcache(name: "/dev/bcache3", partitions: [], ptable_type: ptable_type)
+      end
+
+      before do
+        # Remove /dev/bcache1
+        fake_devicegraph.find_by_name("/dev/vdd3").remove_descendants
+      end
+
+      it "shares the existing cset" do
+        result = creator.create_bcache(planned_bcache3, backing_devname, caching_devname)
+        caching_device = result.devicegraph.find_by_name(caching_devname)
+        bcache_cset = caching_device.in_bcache_cset
+        expect(bcache_cset.bcaches.map(&:name)).to contain_exactly(
+          "/dev/bcache0", "/dev/bcache2", "/dev/bcache3"
+        )
+      end
+    end
+
     context "reusing a bcache" do
       let(:scenario) { "bcache1.xml" }
       let(:real_bcache) { fake_devicegraph.bcaches.first }
