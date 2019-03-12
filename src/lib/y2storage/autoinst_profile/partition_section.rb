@@ -434,12 +434,12 @@ module Y2Storage
 
       # Determines whether given partition is primary or not
       #
-      # Always false when the partition belongs to a GPT partition table.
+      # Always false when the partition table does not allow extended partitions
       #
       # @param partition [Y2Storgae::Partition] the partition to check
       # @return [Boolean] true when is a primary partition; false otherwise
       def primary_partition?(partition)
-        return false if partition.partition_table.type.is?(:gpt)
+        return false unless partition.partition_table.extended_possible?
 
         partition.type.is?(:primary)
       end

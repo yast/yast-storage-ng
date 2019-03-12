@@ -70,14 +70,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
-      context "when the partition belongs to a GPT partition table" do
-        let(:dev) { device("sdh") }
-
-        it "does not include the partition_type" do
-          expect(section_for("sdh1").partition_type).to be_nil
-        end
-      end
-
       context "when the partition belongs to an MD RAID" do
         let(:dev) { device("sdb1") }
         let(:md) { instance_double(Y2Storage::Md, name: "/dev/md0") }
@@ -89,6 +81,14 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         it "initializes #raid_name" do
           section = described_class.new_from_storage(dev)
           expect(section.raid_name).to eq(md.name)
+        end
+      end
+
+      context "when the partition table does not have support for extended partitions" do
+        let(:dev) { device("sdh") }
+
+        it "does not include the partition_type" do
+          expect(section_for("sdh1").partition_type).to be_nil
         end
       end
     end

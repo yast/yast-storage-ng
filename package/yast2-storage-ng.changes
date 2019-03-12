@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Mar 11 22:19:33 UTC 2019 - David Díaz <dgonzalez@suse.com>
+
+- Only exports the partition_type attribute when it belongs to a
+  partition table with support for extended partitions
+  (bsc#1115751).
+
+-------------------------------------------------------------------
 Wed Mar  6 16:28:26 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Prevent crash if resizing a newly formatted filesystem (bsc#1124146)
