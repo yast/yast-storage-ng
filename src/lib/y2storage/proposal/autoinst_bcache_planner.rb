@@ -111,7 +111,7 @@ module Y2Storage
         nil
       end
 
-      # Given a user specified RAID type, it returns the RAID level
+      # Given a user specified bcache options, it returns the cache mode
       #
       # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
       #   options; `nil` if cache_mode is missing or invalid

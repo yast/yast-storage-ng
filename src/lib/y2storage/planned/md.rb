@@ -39,7 +39,7 @@ module Y2Storage
       include Planned::CanBePv
       include MatchVolumeSpec
 
-      # @return [name] device name of the MD RAID
+      # @return [String] tentative device name of the MD RAID
       attr_accessor :name
 
       # @return [DiskSize] see {Y2Storage::Md#chunk_size}

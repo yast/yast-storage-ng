@@ -35,7 +35,7 @@ module Y2Storage
       include Planned::CanBeEncrypted
       include MatchVolumeSpec
 
-      # @return [name] device name of the MD RAID
+      # @return [String] tentative device name of the bcache
       attr_accessor :name
 
       # @return [Y2Storage::PartitionTables::Type] Partition table type

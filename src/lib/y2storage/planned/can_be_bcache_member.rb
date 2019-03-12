@@ -27,7 +27,8 @@ module Y2Storage
       # @return [Array<String>] name of the Bcache devices to which this device will serve as
       #   caching
       attr_accessor :bcache_caching_for
-      # @return [String] name of the Bcache device to which this device will serve as backing
+      # @return [String,nil] name of the Bcache device to which this device will serve as backing
+      #   or nil if it is not a backing device
       attr_accessor :bcache_backing_for
 
       def initialize_can_be_bcache_member

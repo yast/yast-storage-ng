@@ -21,7 +21,7 @@
 
 module Y2Storage
   module AutoinstProfile
-    # Thin object oriented layer on top of a <raid_options> section of the
+    # Thin object oriented layer on top of a <bcache_options> section of the
     # AutoYaST profile.
     class BcacheOptionsSection < SectionWithAttributes
       def self.attributes
@@ -40,7 +40,7 @@ module Y2Storage
         @parent = parent
       end
 
-      # Clones RAID device options into an AutoYaST <raid_options> profile section
+      # Clones Bcache device options into an AutoYaST <bcache_options> profile section
       #
       # @param device [Bcache] Bcache device
       # @return [BcacheOptionsSection] Bcache options section
@@ -51,7 +51,7 @@ module Y2Storage
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
-      # cloning RAID options
+      # cloning bcache options
       #
       # @param bcache [Bcache] Bcache device
       def init_from_bcache(bcache)

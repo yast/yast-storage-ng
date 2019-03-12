@@ -48,40 +48,41 @@ module Y2Storage
       NO_CREATE_IDS = []
       private_constant :NO_CREATE_IDS
 
-      # rubocop:disable Metrics/MethodLength
+      ATTRIBUTES = [
+        { name: :create },
+        { name: :filesystem },
+        { name: :format },
+        { name: :label },
+        { name: :uuid },
+        { name: :lv_name },
+        { name: :lvm_group },
+        { name: :mount },
+        { name: :mountby },
+        { name: :partition_id },
+        { name: :partition_nr },
+        { name: :partition_type },
+        { name: :subvolumes },
+        { name: :size },
+        { name: :crypt_fs },
+        { name: :loop_fs },
+        { name: :crypt_key },
+        { name: :raid_name },
+        { name: :raid_options },
+        { name: :mkfs_options },
+        { name: :fstab_options, xml_name: :fstopt },
+        { name: :subvolumes_prefix },
+        { name: :create_subvolumes },
+        { name: :resize },
+        { name: :pool },
+        { name: :used_pool },
+        { name: :stripes },
+        { name: :stripe_size, xml_name: :stripesize },
+        { name: :bcache_backing_for },
+        { name: :bcache_caching_for }
+      ].freeze
+
       def self.attributes
-        [
-          { name: :create },
-          { name: :filesystem },
-          { name: :format },
-          { name: :label },
-          { name: :uuid },
-          { name: :lv_name },
-          { name: :lvm_group },
-          { name: :mount },
-          { name: :mountby },
-          { name: :partition_id },
-          { name: :partition_nr },
-          { name: :partition_type },
-          { name: :subvolumes },
-          { name: :size },
-          { name: :crypt_fs },
-          { name: :loop_fs },
-          { name: :crypt_key },
-          { name: :raid_name },
-          { name: :raid_options },
-          { name: :mkfs_options },
-          { name: :fstab_options, xml_name: :fstopt },
-          { name: :subvolumes_prefix },
-          { name: :create_subvolumes },
-          { name: :resize },
-          { name: :pool },
-          { name: :used_pool },
-          { name: :stripes },
-          { name: :stripe_size, xml_name: :stripesize },
-          { name: :bcache_backing_for },
-          { name: :bcache_caching_for }
-        ]
+        ATTRIBUTES
       end
 
       define_attr_accessors

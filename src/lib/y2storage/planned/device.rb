@@ -109,7 +109,7 @@ module Y2Storage
         !(reuse_name.nil? || reuse_name.empty?) || !reuse_sid.nil?
       end
 
-      # Determines whether the device is used as part of a VG or a MD
+      # Determines whether the device is used as part of a VG, a MD or a bcache
       #
       # @todo This method might be implemented in a way which is extended
       #   by each mixin.
