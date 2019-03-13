@@ -27,6 +27,7 @@ require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/proposal/autoinst_disk_device_planner"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
+require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/planned"
 
 module Y2Storage
@@ -65,12 +66,15 @@ module Y2Storage
               planned_for_vg(drive)
             when :CT_MD
               planned_for_md(drive)
+            when :CT_BCACHE
+              planned_for_bcache(drive)
             end
           memo.concat(planned_devs) if planned_devs
         end
 
         collection = Planned::DevicesCollection.new(devices)
         remove_shadowed_subvols(collection.mountable_devices)
+        add_bcache_issues(collection)
         collection
       end
 
@@ -107,6 +111,16 @@ module Y2Storage
         planner.planned_devices(drive)
       end
 
+      # Returns a list of Bcache devices according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the Bcache device
+      # @return [Planned::Bcache] List containing a planned Bcache device
+      def planned_for_bcache(drive)
+        planner = Y2Storage::Proposal::AutoinstBcachePlanner.new(devicegraph, issues_list)
+        planner.planned_devices(drive)
+      end
+
       def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
           device.shadowed_subvolumes(planned_devices).each do |subvol|
@@ -116,6 +130,28 @@ module Y2Storage
             device.subvolumes.delete(subvol)
           end
         end
+      end
+
+      # Adds a Bcache issue if needed
+      #
+      # @param collection [Planned::DevicesCollection] Planned devices
+      def add_bcache_issues(collection)
+        collection.bcaches.each do |bcache|
+          add_bcache_issues_for(bcache.name, collection, :caching)
+          add_bcache_issues_for(bcache.name, collection, :backing)
+        end
+      end
+
+      # Add an issue if more than one device is defined as a backing/caching bcache member
+      # @param bcache_name [String]
+      # @param collection [Planned::DevicesCollection] Planned devices
+      # @param role [Symbol] Bcache member role (:backing, :caching)
+      def add_bcache_issues_for(bcache_name, collection, role)
+        method = "bcache_#{role}_for?".to_sym
+        devs = collection.to_a.select do |dev|
+          dev.respond_to?(method) && dev.send(method, bcache_name)
+        end
+        issues_list.add(:multiple_bcache_members, role, bcache_name) if devs.size > 1
       end
     end
   end

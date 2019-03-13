@@ -83,7 +83,7 @@ module Y2Storage
       def self.new_from_storage(devicegraph)
         result = new
         # TODO: consider also NFS and TMPFS
-        devices = devicegraph.software_raids + devicegraph.lvm_vgs +
+        devices = devicegraph.bcaches + devicegraph.software_raids + devicegraph.lvm_vgs +
           devicegraph.disk_devices + devicegraph.stray_blk_devices
         result.drives = devices.each_with_object([]) do |dev, array|
           drive = DriveSection.new_from_storage(dev)
@@ -119,6 +119,13 @@ module Y2Storage
       # @return [Array<DriveSection>]
       def md_drives
         drives.select { |d| d.type == :CT_MD }
+      end
+
+      # Drive sections with type :CT_BCACHE
+      #
+      # @return [Array<DriveSection>]
+      def bcache_drives
+        drives.select { |d| d.type == :CT_BCACHE }
       end
 
       # Return section name

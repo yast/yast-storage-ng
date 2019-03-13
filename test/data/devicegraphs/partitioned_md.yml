@@ -23,7 +23,7 @@
 
     - partition:
         size: 1 GiB
-        name: /dev/md0part1
+        name: /dev/md0p1
         type: primary
 
     md_devices:
@@ -31,3 +31,7 @@
         blk_device: /dev/sda1
     - md_device:
         blk_device: /dev/sda2
+
+- disk:
+    name: /dev/sdb
+    size: 500 GiB

@@ -1,6 +1,7 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,11 +20,26 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned/can_be_encrypted"
-require "y2storage/planned/can_be_formatted"
-require "y2storage/planned/can_be_mounted"
-require "y2storage/planned/can_be_pv"
-require "y2storage/planned/can_be_bcache_member"
-require "y2storage/planned/can_be_md_member"
-require "y2storage/planned/can_be_resized"
-require "y2storage/planned/has_size"
+require_relative "../../spec_helper"
+require "y2storage/autoinst_issues/unsupported_drive_section"
+require "y2storage/autoinst_profile/drive_section"
+
+describe Y2Storage::AutoinstIssues::UnsupportedDriveSection do
+  subject(:issue) { described_class.new(section) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::DriveSection, type: :CT_BCACHE)
+  end
+
+  describe "#message" do
+    it "includes relevant information" do
+      expect(issue.message).to match(/A drive of type 'CT_BCACHE'/)
+    end
+  end
+
+  describe "#severity" do
+    it "returns :fatal" do
+      expect(issue.severity).to eq(:fatal)
+    end
+  end
+end

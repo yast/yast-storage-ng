@@ -57,6 +57,14 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
 
+      context "and device name starts by /dev/md" do
+        let(:hash) { { "device" => "/dev/bcache0" } }
+
+        it "initializes it to :CT_BCACHE" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_BCACHE)
+        end
+      end
+
       it "initializes partitions" do
         expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
           .with(root, Y2Storage::AutoinstProfile::DriveSection)
@@ -69,6 +77,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           .and_call_original
         section = described_class.new_from_hashes(hash)
         expect(section.raid_options.raid_type).to eq("raid0")
+      end
+
+      context "when bcache options are given" do
+        let(:hash) { { "partitions" => [root], "bcache_options" => bcache_options } }
+        let(:bcache_options) { { "cache_mode" => "writethrough" } }
+
+        it "initializes bcache options" do
+          section = described_class.new_from_hashes(hash)
+          expect(section.bcache_options.cache_mode).to eq("writethrough")
+        end
       end
 
       context "when the raid_name is specified in the raid_options" do
@@ -312,7 +330,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         before { fake_scenario("partitioned_md_raid.xml") }
 
         context "and snapshots are enabled for some partition" do
-          it "initializes enable_snapshot setting to true" do
+          it "initializes enable_snapshots setting to true" do
             expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
           end
         end
@@ -324,31 +342,33 @@ describe Y2Storage::AutoinstProfile::DriveSection do
             btrfs.btrfs_subvolumes.first.remove_descendants
           end
 
-          it "initializes enable_snapshot setting to false" do
+          it "initializes enable_snapshots setting to false" do
             expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
           end
         end
       end
 
-      context "when snapshots are enabled" do
-        before { fake_scenario("btrfs_md_raid.xml") }
+      context "when the RAID is not partitioned" do
+        context "when snapshots are enabled" do
+          before { fake_scenario("btrfs_md_raid.xml") }
 
-        it "initializes enable_snapshot setting" do
-          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
-        end
-      end
-
-      context "when snapshots are not enabled" do
-        before { fake_scenario("btrfs_md_raid.xml") }
-
-        before do
-          md = device("md/md0")
-          btrfs = md.filesystem
-          btrfs.btrfs_subvolumes.first.remove_descendants
+          it "initializes enable_snapshots setting" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+          end
         end
 
-        it "initializes enable_snapshot setting" do
-          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+        context "when snapshots are not enabled" do
+          before { fake_scenario("btrfs_md_raid.xml") }
+
+          before do
+            md = device("md/md0")
+            btrfs = md.filesystem
+            btrfs.btrfs_subvolumes.first.remove_descendants
+          end
+
+          it "initializes enable_snapshots setting" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+          end
         end
       end
     end
@@ -384,6 +404,67 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         it "initializes 'enable_snapshots' to false" do
           section = described_class.new_from_storage(lvm_vg("vg1"))
           expect(section.enable_snapshots).to eq(false)
+        end
+      end
+    end
+
+    context "given a Bcache" do
+      before { fake_scenario("btrfs_bcache.xml") }
+
+      it "initializes #type to :CT_BCACHE" do
+        expect(described_class.new_from_storage(device("bcache0")).type).to eq :CT_BCACHE
+      end
+
+      it "initializes device name" do
+        expect(described_class.new_from_storage(device("bcache0")).device).to eq("/dev/bcache0")
+      end
+
+      it "initializes Bcache options" do
+        expect(described_class.new_from_storage(device("bcache0")).bcache_options)
+          .to be_a(Y2Storage::AutoinstProfile::BcacheOptionsSection)
+      end
+
+      context "when the Bcache is partitioned" do
+        before { fake_scenario("partitioned_btrfs_bcache.xml") }
+
+        context "and snapshots are enabled for some partition" do
+          it "initializes enable_snapshots setting to true" do
+            expect(described_class.new_from_storage(device("bcache0")).enable_snapshots).to eq(true)
+          end
+        end
+
+        context "and snapshots are not enabled for any partition" do
+          before do
+            bcache = device("bcache0")
+            btrfs = bcache.partitions.first.filesystem
+            btrfs.btrfs_subvolumes.first.remove_descendants
+          end
+
+          it "initializes enable_snapshots setting to false" do
+            expect(described_class.new_from_storage(device("bcache0")).enable_snapshots).to eq(false)
+          end
+        end
+      end
+
+      context "when the Bcache is not partitioned" do
+        context "when snapshots are enabled" do
+          before { fake_scenario("btrfs_bcache.xml") }
+
+          it "initializes enable_snapshots setting" do
+            expect(described_class.new_from_storage(device("bcache0")).enable_snapshots).to eq(true)
+          end
+        end
+
+        context "when snapshots are not enabled" do
+          before do
+            bcache = device("bcache0")
+            btrfs = bcache.filesystem
+            btrfs.btrfs_subvolumes.first.remove_descendants
+          end
+
+          it "initializes enable_snapshots setting" do
+            expect(described_class.new_from_storage(device("bcache0")).enable_snapshots).to eq(false)
+          end
         end
       end
     end

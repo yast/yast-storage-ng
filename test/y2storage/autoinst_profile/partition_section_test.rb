@@ -29,7 +29,9 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
   subject(:section) { described_class.new }
 
-  before { fake_scenario("autoyast_drive_examples") }
+  let(:scenario) { "autoyast_drive_examples" }
+
+  before { fake_scenario(scenario) }
 
   include_examples "autoinst section"
 
@@ -89,6 +91,26 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
         it "does not include the partition_type" do
           expect(section_for("sdh1").partition_type).to be_nil
+        end
+      end
+
+      context "when the partition is a backing device for a Bcache" do
+        let(:scenario) { "btrfs_bcache.xml" }
+        let(:dev) { device("vdb") }
+
+        it "initializes #bcache_backing_for" do
+          section = described_class.new_from_storage(dev)
+          expect(section.bcache_backing_for).to eq("/dev/bcache0")
+        end
+      end
+
+      context "when the partition is a caching device for a Bcache" do
+        let(:scenario) { "btrfs_bcache.xml" }
+        let(:dev) { device("vda3") }
+
+        it "initializes #bcache_caching_for" do
+          section = described_class.new_from_storage(dev)
+          expect(section.bcache_caching_for).to eq(["/dev/bcache0"])
         end
       end
     end
@@ -176,11 +198,13 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       let(:md) do
         instance_double(
           Y2Storage::Md,
-          numeric?:   numeric?,
-          number:     0,
-          encrypted?: false,
-          filesystem: filesystem,
-          lvm_pv:     lvm_pv
+          numeric?:       numeric?,
+          number:         0,
+          encrypted?:     false,
+          filesystem:     filesystem,
+          lvm_pv:         lvm_pv,
+          bcache:         nil,
+          in_bcache_cset: nil
         )
       end
 
@@ -540,6 +564,24 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       it "initializes fstab_options" do
         section = described_class.new_from_hashes(hash)
         expect(section.fstab_options).to eq(["ro", "acl"])
+      end
+    end
+
+    context "when bcache_caching_for is present" do
+      let(:hash) { { "bcache_caching_for" => ["/dev/bcache0"] } }
+
+      it "initializes bcache caching devices list" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.bcache_caching_for).to eq(["/dev/bcache0"])
+      end
+    end
+
+    context "when bcache_caching_for is not present" do
+      let(:hash) { { "create" => true } }
+
+      it "initializes bcache caching devices list to an empty array" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.bcache_caching_for).to eq([])
       end
     end
   end

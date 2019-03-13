@@ -85,7 +85,7 @@ module Y2Storage
       #
       # @return [Array<Planned::Partition>]
       def partitions
-        @partitions ||= disk_partitions + md_partitions
+        @partitions ||= disk_partitions + md_partitions + bcache_partitions
       end
 
       # Returns the list of planned partitions for disks devices
@@ -93,14 +93,21 @@ module Y2Storage
       # @return [Array<Planned::Partition>]
       def disk_partitions
         @disk_partitions ||= devices.select { |d| d.is_a?(Planned::Partition) } +
-          disks.map(&:partitions).flatten
+          disks.flat_map(&:partitions)
       end
 
       # Returns the list of planned partitions for software RAID devices
       #
       # @return [Array<Planned::Partition>]
       def md_partitions
-        @md_partitions ||= mds.map(&:partitions).flatten
+        @md_partitions ||= mds.flat_map(&:partitions)
+      end
+
+      # Returns the list of planned partitions for Bcache devices
+      #
+      # @return [Array<Planned::Partition>]
+      def bcache_partitions
+        @bcache_partitions ||= bcaches.flat_map(&:partitions)
       end
 
       # Returns the list of planned disks
@@ -124,11 +131,18 @@ module Y2Storage
         @mds ||= devices.select { |d| d.is_a?(Planned::Md) }
       end
 
+      # Returns the list of planned Bcache devices
+      #
+      # @return [Array<Planned::Bcache>]
+      def bcaches
+        @bcaches ||= devices.select { |d| d.is_a?(Planned::Bcache) }
+      end
+
       # Returns the list of planned LVM logical volumes
       #
       # @return [Array<Planned::LvmLv>]
       def lvs
-        @lvs ||= vgs.map(&:all_lvs).flatten
+        @lvs ||= vgs.flat_map(&:all_lvs)
       end
 
       # Returns the list of planned stray block devices.
@@ -142,7 +156,7 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>]
       def all
-        @all ||= partitions + disks + stray_blk_devices + vgs + lvs + mds
+        @all ||= partitions + disks + stray_blk_devices + vgs + lvs + mds + bcaches
       end
 
       # Returns the list of devices that can be mounted

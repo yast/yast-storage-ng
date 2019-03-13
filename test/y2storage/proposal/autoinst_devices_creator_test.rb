@@ -276,6 +276,98 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
     end
 
+    describe "using Bcache" do
+      let(:backing_part) do
+        planned_partition(disk: "/dev/sda", bcache_backing_for: "/dev/bcache0", min_size: 20.GiB)
+      end
+
+      let(:caching_part) do
+        planned_partition(disk: "/dev/sdb", bcache_caching_for: "/dev/bcache0", min_size: 10.GiB)
+      end
+
+      let(:bcache0) do
+        planned_bcache(name: "/dev/bcache0")
+      end
+
+      let(:partitions) { [backing_part, caching_part] }
+
+      let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, bcache0]) }
+
+      it "adds the partition as Bcache backing/caching devices" do
+        result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+        devicegraph = result.devicegraph
+        bcache = devicegraph.bcaches.first
+        expect(bcache.backing_device.disk.name).to eq("/dev/sda")
+        caching_device = bcache.bcache_cset.blk_devices.first
+        expect(caching_device.disk.name).to eq("/dev/sdb")
+        expect(bcache).to be_a(Y2Storage::Bcache)
+      end
+
+      context "reusing a Bcache" do
+        let(:scenario) { "bcache1.xml" }
+
+        let(:backing_part) do
+          planned_partition(
+            disk: "/dev/vda2", bcache_backing_for: "/dev/bcache0", min_size: 20.GiB,
+            reuse_name: "/dev/vda2"
+          )
+        end
+
+        let(:caching_part) do
+          planned_partition(
+            disk: "/dev/vdb", bcache_caching_for: "/dev/bcache0", min_size: 10.GiB,
+            reuse_name: "/dev/vdb"
+          )
+        end
+
+        let(:root) do
+          planned_partition(
+            disk: "/dev/bcache0", reuse_name: "/dev/bcache0p1", mount_point: "/"
+          )
+        end
+
+        let(:bcache0) do
+          planned_bcache(name: "/dev/bcache0", reuse_name: "/dev/bcache0", partitions: [root])
+        end
+
+        it "reuses the device" do
+          old_sid = fake_devicegraph.find_by_name("/dev/bcache0").sid
+          result = creator.populated_devicegraph(planned_devices, ["/dev/vda", "/dev/vdb"])
+          bcache = result.devicegraph.find_by_name("/dev/bcache0")
+          expect(bcache.sid).to eq(old_sid)
+        end
+
+        it "reuses the partitions to be reused" do
+          result = creator.populated_devicegraph(planned_devices, ["/dev/vda", "/dev/vdb"])
+          bcache = result.devicegraph.find_by_name("/dev/bcache0")
+          partition = bcache.partitions.first
+          expect(partition.mount_point.path).to eq("/")
+        end
+      end
+
+      context "when a partition is too big" do
+        let(:bcache0) do
+          planned_bcache(name: "/dev/bcache0", partitions: [root])
+        end
+
+        let(:root) do
+          planned_partition(disk: "/dev/bcache0", mount_point: "/", min_size: 250.GiB)
+        end
+
+        it "shrinks the partition to make it fit into the bcache" do
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+          devicegraph = result.devicegraph
+          root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
+          expect(root.size).to eq(20.GiB)
+        end
+
+        it "registers which devices were shrinked" do
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+          expect(result.shrinked_partitions.map(&:planned)).to eq([root])
+        end
+      end
+    end
+
     describe "resizing partitions" do
       let(:root) do
         Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|

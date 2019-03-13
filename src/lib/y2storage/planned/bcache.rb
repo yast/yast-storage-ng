@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,42 +22,42 @@
 require "yast"
 require "y2storage/planned/device"
 require "y2storage/planned/mixins"
+require "y2storage/match_volume_spec"
 
 module Y2Storage
   module Planned
-    # Specification for a Y2Storage::Disk object to be used suring the storage
-    # or AutoYaST proposals
+    # Specification for a Y2Storage::Bcache object to be created during the proposal
     #
     # @see Device
-    class Disk < Device
+    class Bcache < Device
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
-      include Planned::CanBePv
-      include Planned::CanBeMdMember
-      include Planned::CanBeBcacheMember
       include MatchVolumeSpec
+
+      # @return [String] tentative device name of the bcache
+      attr_accessor :name
+
+      # @return [Y2Storage::PartitionTables::Type] Partition table type
+      attr_accessor :ptable_type
 
       # @return [Array<Planned::Partition>] List of planned partitions
       attr_accessor :partitions
 
-      # Constructor
-      def initialize
+      # @return [Y2Storage::CacheMode] Bcache cache mode
+      attr_accessor :cache_mode
+
+      def initialize(name: nil)
         super()
+        self.name = name
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
-        initialize_can_be_pv
-        initialize_can_be_md_member
-        initialize_can_be_bcache_member
-
         @partitions = []
       end
 
       def self.to_string_attrs
-        [
-          :mount_point, :reuse_name, :reuse_sid, :subvolumes
-        ]
+        [:mount_point, :reuse_name, :name, :subvolumes]
       end
 
     protected

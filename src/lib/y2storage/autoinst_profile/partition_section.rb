@@ -48,37 +48,42 @@ module Y2Storage
       NO_CREATE_IDS = []
       private_constant :NO_CREATE_IDS
 
+      ATTRIBUTES = [
+        { name: :create },
+        { name: :filesystem },
+        { name: :format },
+        { name: :label },
+        { name: :uuid },
+        { name: :lv_name },
+        { name: :lvm_group },
+        { name: :mount },
+        { name: :mountby },
+        { name: :partition_id },
+        { name: :partition_nr },
+        { name: :partition_type },
+        { name: :subvolumes },
+        { name: :size },
+        { name: :crypt_fs },
+        { name: :loop_fs },
+        { name: :crypt_key },
+        { name: :raid_name },
+        { name: :raid_options },
+        { name: :mkfs_options },
+        { name: :fstab_options, xml_name: :fstopt },
+        { name: :subvolumes_prefix },
+        { name: :create_subvolumes },
+        { name: :resize },
+        { name: :pool },
+        { name: :used_pool },
+        { name: :stripes },
+        { name: :stripe_size, xml_name: :stripesize },
+        { name: :bcache_backing_for },
+        { name: :bcache_caching_for }
+      ].freeze
+      private_constant :ATTRIBUTES
+
       def self.attributes
-        [
-          { name: :create },
-          { name: :filesystem },
-          { name: :format },
-          { name: :label },
-          { name: :uuid },
-          { name: :lv_name },
-          { name: :lvm_group },
-          { name: :mount },
-          { name: :mountby },
-          { name: :partition_id },
-          { name: :partition_nr },
-          { name: :partition_type },
-          { name: :subvolumes },
-          { name: :size },
-          { name: :crypt_fs },
-          { name: :loop_fs },
-          { name: :crypt_key },
-          { name: :raid_name },
-          { name: :raid_options },
-          { name: :mkfs_options },
-          { name: :fstab_options, xml_name: :fstopt },
-          { name: :subvolumes_prefix },
-          { name: :create_subvolumes },
-          { name: :resize },
-          { name: :pool },
-          { name: :used_pool },
-          { name: :stripes },
-          { name: :stripe_size, xml_name: :stripesize }
-        ]
+        ATTRIBUTES
       end
 
       define_attr_accessors
@@ -161,6 +166,7 @@ module Y2Storage
         @subvolumes_prefix = hash["subvolumes_prefix"]
         @create_subvolumes = hash.fetch("create_subvolumes", true)
         @subvolumes = subvolumes_from_hashes(hash["subvolumes"]) if hash["subvolumes"]
+        @bcache_caching_for = hash.fetch("bcache_caching_for", [])
 
         @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end
@@ -287,7 +293,7 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:disk_device, :software_raid, :stray_blk_device)
+        elsif device.is?(:disk_device, :software_raid, :stray_blk_device, :bcache)
           init_disk_device_fields(device)
         else
           init_partition_fields(device)
@@ -301,12 +307,14 @@ module Y2Storage
         @partition_id = partition_id_from(partition)
         @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
+        init_bcache_fields(partition)
       end
 
       def init_disk_device_fields(disk)
         @create = false
         @lvm_group = lvm_group_name(disk)
         @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
+        init_bcache_fields(disk)
       end
 
       def init_lv_fields(lv)
@@ -362,6 +370,14 @@ module Y2Storage
 
         @subvolumes = valid_subvolumes.map do |subvol|
           SubvolSpecification.create_from_btrfs_subvolume(subvol)
+        end
+      end
+
+      def init_bcache_fields(device)
+        if device.bcache
+          @bcache_backing_for = device.bcache.name
+        elsif device.in_bcache_cset
+          @bcache_caching_for = device.in_bcache_cset.bcaches.map(&:name)
         end
       end
 

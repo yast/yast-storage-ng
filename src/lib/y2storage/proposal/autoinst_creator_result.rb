@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2018] SUSE LLC
@@ -23,6 +21,7 @@
 
 require "y2storage"
 require "y2storage/proposal/device_shrinkage"
+require "y2storage/planned/devices_collection"
 require "forwardable"
 
 module Y2Storage
@@ -37,30 +36,27 @@ module Y2Storage
 
       def_delegators :@creator_result, :created_names, :devices_map, :devicegraph
 
-      # @return [Array<Planned::Device>] List of originally planned devices
-      attr_reader :planned_devices
-
       # Constructor
       #
       # @param creator_result  [CreatorResult] Original creator result object
       # @param planned_devices [Array<Planned::Device>] Planned devices
       def initialize(creator_result, planned_devices)
         @creator_result = creator_result
-        @planned_devices = planned_devices
+        @devices_collection = Planned::DevicesCollection.new(planned_devices)
       end
 
       # Return a list containing information about shrinked partitions
       #
       # @return [Array<DeviceShrinkage>] Partitions shrinkage details
       def shrinked_partitions
-        @shrinked_partitions ||= shrinked_devices(planned_partitions)
+        @shrinked_partitions ||= shrinked_devices(devices_collection.partitions)
       end
 
       # Return a list containing information about shrinked logical volumes
       #
       # @return [Array<DeviceShrinkage>] Logical volumes shrinkage details
       def shrinked_lvs
-        @shrinked_lvs ||= shrinked_devices(planned_lvs)
+        @shrinked_lvs ||= shrinked_devices(devices_collection.lvs)
       end
 
       # Calculate how much space is missing
@@ -83,23 +79,15 @@ module Y2Storage
         Y2Storage::BlkDevice.find_by_name(devicegraph, name)
       end
 
+      # @return [Array<Planned::Device>] List of originally planned devices
+      def planned_devices
+        devices_collection.to_a
+      end
+
     private
 
-      # Planned logical volumes
-      #
-      # @return [Array<Y2Storage::Planned::LvmLv>] Logical volumes
-      def planned_lvs
-        return @planned_lvs if @planned_lvs
-        vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
-        @planned_lvs = vgs.map(&:lvs).flatten
-      end
-
-      # Planned partitions
-      #
-      # @return [Array<Y2Storage::Planned::Partition>] Partitions
-      def planned_partitions
-        @planned_partitions ||= planned_devices.select { |d| d.is_a?(Planned::Partition) }
-      end
+      # @return [DevicesCollection] Planned devices collection
+      attr_reader :devices_collection
 
       # Return a list of DeviceShrinkage objects for a given collection
       #

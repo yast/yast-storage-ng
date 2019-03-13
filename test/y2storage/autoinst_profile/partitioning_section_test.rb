@@ -27,11 +27,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   subject(:section) { described_class.new }
   let(:sda) { { "device" => "/dev/sda", "use" => "linux" } }
   let(:sdb) { { "device" => "/dev/sdb", "use" => "all" } }
-  let(:disk_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:dasd_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:vg_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:md_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:stray_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
+  let(:disk_section) { double("disk_section") }
+  let(:dasd_section) { double("dasd_section") }
+  let(:vg_section) { double("vg_section") }
+  let(:md_section) { double("md_section") }
+  let(:stray_section) { double("stray_section") }
+  let(:bcache_section) { double("bcache_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -67,7 +68,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:devicegraph) do
         instance_double(
           Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
-          stray_blk_devices: [stray]
+          stray_blk_devices: [stray], bcaches: [bcache]
         )
       end
       let(:disks) { [disk, dasd] }
@@ -76,6 +77,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:vg) { instance_double(Y2Storage::LvmVg) }
       let(:md) { instance_double(Y2Storage::Md) }
       let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
+      let(:bcache) { instance_double(Y2Storage::Bcache) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -88,6 +90,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(md).and_return(md_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(stray).and_return(stray_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(bcache).and_return(bcache_section)
       end
 
       it "returns a new PartitioningSection object" do
@@ -97,7 +101,9 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       it "creates an entry in #drives for every relevant VG, disk and DASD" do
         section = described_class.new_from_storage(devicegraph)
         expect(section.drives)
-          .to eq([md_section, vg_section, disk_section, dasd_section, stray_section])
+          .to contain_exactly(
+            bcache_section, md_section, vg_section, disk_section, dasd_section, stray_section
+          )
       end
 
       it "ignores irrelevant drives" do
@@ -150,6 +156,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     let(:drive5) { double("DriveSection", device: "/dev/md", type: :CT_MD) }
     let(:drive6) { double("DriveSection", device: "/dev/md", type: :CT_MD) }
     let(:drive7) { double("DriveSection", type: :CT_DISK) }
+    let(:drive8) { double("DriveSection", type: :CT_BCACHE) }
     let(:wrongdrv1) { double("DriveSection", device: "/dev/md", type: :CT_DISK) }
     let(:wrongdrv2) { double("DriveSection", device: "/dev/sdc", type: :CT_MD) }
     let(:wrongdrv3) { double("DriveSection", device: "/dev/sdd", type: :CT_WRONG) }
@@ -158,7 +165,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
     before do
       section.drives = [
-        drive1, drive2, drive3, drive4, drive5, drive6, drive7,
+        drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8,
         wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
       ]
     end
@@ -182,6 +189,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
       it "does not include drives of other types with device='/dev/md'" do
         expect(section.md_drives).to_not include wrongdrv1
+      end
+    end
+
+    describe "#bcache_drives" do
+      it "returns drives which type is :CT_BCACHE, even if they look invalid" do
+        expect(section.bcache_drives).to contain_exactly(drive8)
       end
     end
   end

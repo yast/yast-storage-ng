@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Mar 12 17:30:49 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Add support for Bcache to AutoYaST (fate#325346).
+- Fix reuse of RAID partitions for LVM volume groups and bcache
+  devices.
+- 4.1.72
+
+-------------------------------------------------------------------
 Mon Mar 11 22:19:33 UTC 2019 - David Díaz <dgonzalez@suse.com>
 
 - Only exports the partition_type attribute when it belongs to a

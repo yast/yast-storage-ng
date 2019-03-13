@@ -63,6 +63,7 @@ module Y2Storage
         add_disks(partitioning.disk_drives, devicegraph)
         add_vgs(partitioning.lvm_drives)
         add_mds(partitioning.md_drives)
+        add_bcaches(partitioning.bcache_drives)
       end
 
       # Returns the list of disk names
@@ -184,6 +185,16 @@ module Y2Storage
         mds.each do |md|
           @drives[md.name_for_md] = md
         end
+      end
+
+      # Adds Bcaches to the device map
+      #
+      # All Bcaches should have a "device" property.
+      #
+      # @param bcaches [Array<AutoinstProfile::DriveSection>] List of Bcaches specifications from
+      #   AutoYaST
+      def add_bcaches(bcaches)
+        bcaches.each { |b| @drives[b.device] = b }
       end
 
       # Find a disk using any possible name

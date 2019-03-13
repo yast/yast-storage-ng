@@ -50,7 +50,8 @@ module Y2Storage
           { name: :type },
           { name: :use },
           { name: :skip_list },
-          { name: :raid_options }
+          { name: :raid_options },
+          { name: :bcache_options }
         ]
       end
 
@@ -102,6 +103,10 @@ module Y2Storage
       # @!attribute raid_options
       #   @return [RaidOptionsSection] RAID options
       #   @see RaidOptionsSection
+      #
+      # @!attribute bcache_options
+      #   @return [BcacheOptionsSection] Bcache options
+      #   @see BcacheOptionsSection
 
       # Constructor
       #
@@ -128,10 +133,14 @@ module Y2Storage
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
           @raid_options.raid_name = nil # This element is not supported here
         end
+        if hash["bcache_options"]
+          @bcache_options = BcacheOptionsSection.new_from_hashes(hash["bcache_options"], self)
+        end
       end
 
       def default_type_for(hash)
         return :CT_MD if hash["device"].to_s.start_with?("/dev/md")
+        return :CT_BCACHE if hash["device"].to_s.start_with?("/dev/bcache")
         :CT_DISK
       end
 
@@ -166,6 +175,8 @@ module Y2Storage
           init_from_vg(device)
         elsif device.is?(:stray_blk_device)
           init_from_stray_blk_device(device)
+        elsif device.is?(:bcache)
+          init_from_bcache(device)
         else
           init_from_disk(device)
         end
@@ -306,6 +317,26 @@ module Y2Storage
         @enable_snapshots = enabled_snapshots?(collection.map(&:filesystem).compact)
         @raid_options = RaidOptionsSection.new_from_storage(md)
         @raid_options.raid_name = nil if @raid_options # This element is not supported here
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning a Bcache.
+      #
+      # @param bcache [Y2Storage::Bcache] Bcache device
+      # @return [Boolean]
+      def init_from_bcache(bcache)
+        @type = :CT_BCACHE
+        @device = bcache.name
+        collection =
+          if bcache.filesystem
+            [bcache]
+          else
+            bcache.partitions
+          end
+        @partitions = partitions_from_collection(collection)
+        @enable_snapshots = enabled_snapshots?(collection.map(&:filesystem).compact)
+        @bcache_options = BcacheOptionsSection.new_from_storage(bcache)
         true
       end
 
