@@ -55,7 +55,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
       { "mount" => "/", "filesystem" => :btrfs, "size" => "max", "format" => true }
     end
 
-    it "returns a planned Bcache device with the given device name" do
+    it "returns a planned bcache device with the given device name" do
       bcache = planner.planned_devices(drive).first
       expect(bcache.name).to eq("/dev/bcache0")
     end
@@ -115,7 +115,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     context "when a partition table type is specified" do
       let(:disklabel) { "msdos" }
 
-      it "returns a planned Bcache with partitions" do
+      it "returns a planned bcache with partitions" do
         bcache = planner.planned_devices(drive).first
         expect(bcache.partitions).to contain_exactly(
           an_object_having_attributes("mount_point" => "/")
@@ -129,7 +129,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     end
 
     context "when a partition table type is specified" do
-      it "returns a planned Bcache with partitions" do
+      it "returns a planned bcache with partitions" do
         bcache = planner.planned_devices(drive).first
         expect(bcache.partitions).to contain_exactly(
           an_object_having_attributes("mount_point" => "/")
@@ -145,7 +145,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     context "when the partition table type is set to 'none'" do
       let(:disklabel) { "none" }
 
-      it "returns a planned Bcache with filesystem settings (no partitions)" do
+      it "returns a planned bcache with filesystem settings (no partitions)" do
         md = planner.planned_devices(drive).first
         expect(md.mount_point).to eq("/")
         expect(md.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
@@ -157,7 +157,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
       end
     end
 
-    context "reusing an Bcache partition" do
+    context "reusing an bcache partition" do
       let(:root_spec) do
         { "create" => false, "format" => false, "mount" => "/", "partition_nr" => 1 }
       end

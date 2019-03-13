@@ -94,7 +94,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
-      context "when the partition is a backing device for a Bcache" do
+      context "when the partition is a backing device for a bcache" do
         let(:scenario) { "btrfs_bcache.xml" }
         let(:dev) { device("vdb") }
 
@@ -104,7 +104,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
-      context "when the partition is a caching device for a Bcache" do
+      context "when the partition is a caching device for a bcache" do
         let(:scenario) { "btrfs_bcache.xml" }
         let(:dev) { device("vda3") }
 

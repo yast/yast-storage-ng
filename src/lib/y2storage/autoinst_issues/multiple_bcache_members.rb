@@ -30,9 +30,9 @@ module Y2Storage
       extend Yast::I18n
       include Yast::I18n
 
-      # @return [String] Bcache member role (:backing or :caching)
+      # @return [String] bcache member role (:backing or :caching)
       attr_reader :role
-      # @return [String] Bcache device name
+      # @return [String] bcache device name
       attr_reader :bcache_name
 
       ROLE = {
@@ -44,7 +44,7 @@ module Y2Storage
       # Constructor
       #
       # @param role        [Symbol] :backing or :caching
-      # @param bcache_name [String] Bcache device name
+      # @param bcache_name [String] bcache device name
       def initialize(role, bcache_name)
         super()
         textdomain "storage"

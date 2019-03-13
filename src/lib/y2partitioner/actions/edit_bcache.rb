@@ -46,7 +46,7 @@ module Y2Partitioner
       # @return [Controllers::Bcache]
       attr_reader :controller
 
-      # List of errors that avoid to edit a Bcache
+      # List of errors that avoid to edit a bcache
       #
       # @see Actions::Base#errors
       #
@@ -63,7 +63,7 @@ module Y2Partitioner
 
         # TRANSLATORS: error message, %{name} is replaced by a bcache name (e.g., /dev/bcache0)
         format(
-          _("The device %{name} is a Flash-only Bcache and its caching cannot be modified."),
+          _("The device %{name} is a flash-only bcache and its caching cannot be modified."),
           name: controller.bcache.name
         )
       end
@@ -76,16 +76,16 @@ module Y2Partitioner
 
         # TRANSLATORS: error message, %{name} is replaced by a bcache name (e.g., /dev/bcache0)
         format(
-          _("The Bcache %{name} is already created on disk. Such device cannot be modified\n" \
+          _("The bcache %{name} is already created on disk. Such device cannot be modified\n" \
             "because that might imply a detaching operation. Unfortunately detaching can take\n" \
             "a very long time in some situations."),
           name: controller.bcache.name
         )
       end
 
-      # Opens a dialog to edit a Bcache
+      # Opens a dialog to edit a bcache
       #
-      # The Bcache is updated only if the dialog is accepted.
+      # The bcache is updated only if the dialog is accepted.
       #
       # @see Actions::Base#perform_action
       def perform_action

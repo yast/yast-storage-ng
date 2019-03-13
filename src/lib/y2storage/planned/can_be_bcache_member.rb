@@ -21,13 +21,13 @@
 
 module Y2Storage
   module Planned
-    # Mixin for planned devices that can act as Bcache caching/backing devices
+    # Mixin for planned devices that can act as bcache caching/backing devices
     # @see Planned::Device
     module CanBeBcacheMember
-      # @return [Array<String>] name of the Bcache devices to which this device will serve as
+      # @return [Array<String>] name of the bcache devices to which this device will serve as
       #   caching
       attr_accessor :bcache_caching_for
-      # @return [String,nil] name of the Bcache device to which this device will serve as backing
+      # @return [String,nil] name of the bcache device to which this device will serve as backing
       #   or nil if it is not a backing device
       attr_accessor :bcache_backing_for
 
@@ -35,7 +35,7 @@ module Y2Storage
         @bcache_caching_for = []
       end
 
-      # Determines whether the device will be part of a Bcache device
+      # Determines whether the device will be part of a bcache device
       #
       # @return [Boolean]
       def bcache_member?
@@ -58,14 +58,14 @@ module Y2Storage
 
       # Determines whether the device will act as a caching device for a given Bcache
       #
-      # @param name [String] Bcache name
+      # @param name [String] bcache name
       def bcache_caching_for?(name)
         bcache_caching_for.include?(name)
       end
 
-      # Determines whether the device will act as a backing device for a given Bcache
+      # Determines whether the device will act as a backing device for a given bcache
       #
-      # @param name [String] Bcache name
+      # @param name [String] bcache name
       # @return [Boolean]
       def bcache_backing_for?(name)
         bcache_backing_for == name

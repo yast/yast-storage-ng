@@ -50,7 +50,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       { "mount" => "/", "filesystem" => "btrfs", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
     end
 
-    include_examples "handles Bcache configuration"
+    include_examples "handles bcache configuration"
 
     context "specifying partition type" do
       context "when partition_type is set to 'primary'" do
@@ -533,7 +533,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         { "device" => "/dev/sda", "partitions" => [root_spec] }
       end
 
-      include_examples "handles Bcache configuration"
+      include_examples "handles bcache configuration"
 
       context "when a partition_nr is set to '0'" do
         include_examples "handles Btrfs snapshots"

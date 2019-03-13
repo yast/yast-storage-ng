@@ -222,7 +222,7 @@ describe Y2Partitioner::UIState do
       end
     end
 
-    context "when the user has opened a Bcache page" do
+    context "when the user has opened a bcache page" do
       # Bcache is only supported on x86
       let(:architecture) { :x86_64 }
 
@@ -235,18 +235,18 @@ describe Y2Partitioner::UIState do
 
       before { ui_state.go_to_tree_node(page) }
 
-      context "if the Bcache is still there after redrawing" do
+      context "if the bcache is still there after redrawing" do
         before { pages.concat [page, another_bcache_page] }
 
-        it "selects the correct Bcache page" do
+        it "selects the correct bcache page" do
           expect(ui_state.find_tree_node(pages)).to eq page
         end
       end
 
-      context "if the Bcache is not longer there after redrawing" do
+      context "if the bcache is not longer there after redrawing" do
         before { pages << another_bcache_page }
 
-        it "selects the general Bcache page" do
+        it "selects the general bcache page" do
           expect(ui_state.find_tree_node(pages)).to eq bcaches_page
         end
       end

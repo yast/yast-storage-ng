@@ -26,7 +26,7 @@ require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
-    # Action for deleting a Bcache, see {Actions::DeleteBcache}
+    # Action for deleting a bcache, see {Actions::DeleteBcache}
     class DeleteBcache < DeleteDevice
       # Constructor
       #
@@ -58,7 +58,7 @@ module Y2Partitioner
 
         # TRANSLATORS: error message, %{name} is replaced by a bcache name (e.g., /dev/bcache0)
         format(
-          _("The device %{name} is a Flash-only Bcache. Deleting this kind of devices\n" \
+          _("The device %{name} is a flash-only bcache. Deleting this kind of devices\n" \
             "is not supported yet."),
           name: bcache_controller.bcache.name
         )
@@ -80,7 +80,7 @@ module Y2Partitioner
         )
       end
 
-      # Deletes the indicated Bcache (see {Actions::DeleteDevice#device})
+      # Deletes the indicated bcache (see {Actions::DeleteDevice#device})
       def delete
         bcache_controller.delete_bcache
       end
@@ -103,7 +103,7 @@ module Y2Partitioner
         return "" unless bcache_controller.single_committed_bcache_cset?
 
         _(
-          "The selected Bcache is the only one using its caching set.\n" \
+          "The selected bcache is the only one using its caching set.\n" \
           "The caching set will be also deleted.\n\n"
         )
       end

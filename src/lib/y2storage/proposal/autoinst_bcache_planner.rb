@@ -27,14 +27,14 @@ Yast.import "Arch"
 module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a Planned::Bcache in order
-    # to set up Bcache.
+    # to set up bcache.
     class AutoinstBcachePlanner < AutoinstDrivePlanner
-      # Returns a planned Bcache device.
+      # Returns a planned bcache device.
       #
       # This method registers an issue when not running on a x86_64 architecture.
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the Bcache set up
-      # @return [Array<Planned::Bcache>] Planned Bcache device
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the bcache set up
+      # @return [Array<Planned::Bcache>] Planned bcache device
       def planned_devices(drive)
         issues_list.add(:unsupported_drive_section, drive) unless Yast::Arch.x86_64
         bcaches =
@@ -48,10 +48,10 @@ module Y2Storage
 
     private
 
-      # Returns a non partitioned Bcache device
+      # Returns a non partitioned bcache device
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the Bcache set up
-      # @return [Planned::Bcache] Planned Bcache device
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the bcache set up
+      # @return [Planned::Bcache] Planned bcache device
       def non_partitioned_bcache(drive)
         bcache = Y2Storage::Planned::Bcache.new(name: drive.device)
         part_section = drive.partitions.first
@@ -61,10 +61,10 @@ module Y2Storage
         bcache
       end
 
-      # Returns a partitioned Bcache device
+      # Returns a partitioned bcache device
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the Bcache set up
-      # @return [Planned::Bcache] Planned Bcache device
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the bcache set up
+      # @return [Planned::Bcache] Planned bcache device
       def partition_bcache(drive)
         bcache = Y2Storage::Planned::Bcache.new(name: drive.device)
         if drive.disklabel
@@ -78,18 +78,18 @@ module Y2Storage
         bcache
       end
 
-      # Adds Bcache options
+      # Adds bcache options
       #
-      # @param bcache         [Planned::Bcache] Planned Bcache device
-      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
+      # @param bcache         [Planned::Bcache] Planned bcache device
+      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined bcache
       #   options
       def add_bcache_options(bcache, bcache_options)
         bcache.cache_mode = cache_mode_from(bcache_options)
       end
 
-      # Sets 'reusing' attributes for a Bcache
+      # Sets 'reusing' attributes for a bcache
       #
-      # @param bcache  [Planned::Bcache] Planned Bcache
+      # @param bcache  [Planned::Bcache] Planned bcache
       # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST
       #   specification
       def add_bcache_reuse(bcache, section)
@@ -101,9 +101,9 @@ module Y2Storage
         bcache.reuse_name = bcache_to_reuse.name
       end
 
-      # Finds the Bcache to be reused by the given planned Bcache
+      # Finds the bcache to be reused by the given planned bcache
       #
-      # @param bcache [Planned::Bcache] Planned Bcache
+      # @param bcache [Planned::Bcache] Planned bcache
       def find_bcache_to_reuse(bcache)
         dev_by_name = devicegraph.find_by_any_name(bcache.name, alternative_names: true)
 
@@ -113,9 +113,9 @@ module Y2Storage
 
       # Given a user specified bcache options, it returns the cache mode
       #
-      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined Bcache
+      # @param bcache_options [AutoinstProfile::BcacheOptionsSection,nil] User defined bcache
       #   options; `nil` if cache_mode is missing or invalid
-      # @return [Y2Storage::CacheMode,nil] Bcache cache mode; nil if no cache mode was specified
+      # @return [Y2Storage::CacheMode,nil] bcache cache mode; nil if no cache mode was specified
       def cache_mode_from(bcache_options)
         return nil if bcache_options.nil? || bcache_options.cache_mode.nil?
         Y2Storage::CacheMode.find(bcache_options.cache_mode)

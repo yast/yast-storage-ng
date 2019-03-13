@@ -177,7 +177,7 @@ module Y2Storage
       [Error.new(bcache_dev, msg_no_bcache_support)]
     end
 
-    # Find the first Bcache of BcacheCset device in the devicegraph
+    # Find the first bcache of BcacheCset device in the devicegraph
     # or nil if there is none.
     #
     # @return [Y2Storage::Device, nil]

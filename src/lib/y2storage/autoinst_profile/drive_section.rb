@@ -105,7 +105,7 @@ module Y2Storage
       #   @see RaidOptionsSection
       #
       # @!attribute bcache_options
-      #   @return [BcacheOptionsSection] Bcache options
+      #   @return [BcacheOptionsSection] bcache options
       #   @see BcacheOptionsSection
 
       # Constructor
@@ -321,9 +321,9 @@ module Y2Storage
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
-      # cloning a Bcache.
+      # cloning a bcache.
       #
-      # @param bcache [Y2Storage::Bcache] Bcache device
+      # @param bcache [Y2Storage::Bcache] bcache device
       # @return [Boolean]
       def init_from_bcache(bcache)
         @type = :CT_BCACHE

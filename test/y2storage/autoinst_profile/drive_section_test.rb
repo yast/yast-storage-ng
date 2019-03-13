@@ -408,7 +408,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
-    context "given a Bcache" do
+    context "given a bcache" do
       before { fake_scenario("btrfs_bcache.xml") }
 
       it "initializes #type to :CT_BCACHE" do
@@ -419,12 +419,12 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(described_class.new_from_storage(device("bcache0")).device).to eq("/dev/bcache0")
       end
 
-      it "initializes Bcache options" do
+      it "initializes bcache options" do
         expect(described_class.new_from_storage(device("bcache0")).bcache_options)
           .to be_a(Y2Storage::AutoinstProfile::BcacheOptionsSection)
       end
 
-      context "when the Bcache is partitioned" do
+      context "when the bcache is partitioned" do
         before { fake_scenario("partitioned_btrfs_bcache.xml") }
 
         context "and snapshots are enabled for some partition" do
@@ -446,7 +446,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
 
-      context "when the Bcache is not partitioned" do
+      context "when the bcache is not partitioned" do
         context "when snapshots are enabled" do
           before { fake_scenario("btrfs_bcache.xml") }
 

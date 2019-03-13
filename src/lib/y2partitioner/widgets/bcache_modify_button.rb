@@ -27,7 +27,7 @@ require "y2partitioner/actions/create_partition_table"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying a Bcache device
+    # Menu button for modifying a bcache device
     class BcacheModifyButton < DeviceMenuButton
       def initialize(*args)
         super

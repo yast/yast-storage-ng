@@ -22,7 +22,7 @@
 require "y2storage/storage_enum_wrapper"
 
 module Y2Storage
-  # Class to represent all the possible cache modes for Bcache
+  # Class to represent all the possible cache modes for bcache
   #
   # This is a wrapper for the Storage::CacheMode enum
   class CacheMode

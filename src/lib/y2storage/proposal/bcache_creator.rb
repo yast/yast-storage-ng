@@ -24,7 +24,7 @@ require "y2storage/proposal/creator_result"
 
 module Y2Storage
   module Proposal
-    # Class to create a Bcache device according to a Planned::Bcache object
+    # Class to create a bcache device according to a Planned::Bcache object
     class BcacheCreator
       include Yast::Logger
 
@@ -37,12 +37,12 @@ module Y2Storage
         @original_devicegraph = original_devicegraph
       end
 
-      # Creates the Bcache device
+      # Creates the bcache device
       #
-      # @param planned_bcache  [Planned::Bcache] Bcache device
+      # @param planned_bcache  [Planned::Bcache] bcache device
       # @param backing_devname [String] Backing device name
       # @param caching_devname [String] Caching device name
-      # @return [CreatorResult] Result containing the new Bcache device
+      # @return [CreatorResult] Result containing the new bcache device
       def create_bcache(planned_bcache, backing_devname, caching_devname)
         new_graph = original_devicegraph.duplicate
         bcache =
@@ -64,7 +64,7 @@ module Y2Storage
       # @note This method does not modify the original devicegraph but returns
       #   a new copy containing the changes.
       #
-      # @param planned_bcache [Planned::Bcache] Bcache device
+      # @param planned_bcache [Planned::Bcache] bcache device
       # @return [CreatorResult] result containing the reused partitions
       def reuse_partitions(planned_bcache)
         new_graph = original_devicegraph.duplicate
@@ -78,7 +78,7 @@ module Y2Storage
 
     private
 
-      # @param planned_bcache  [Planned::Bcache] Bcache device
+      # @param planned_bcache  [Planned::Bcache] bcache device
       # @param backing_devname [String] Backing device name
       # @param caching_devname [String] Caching device name
       # @return [Planned::Bcache]
@@ -95,54 +95,54 @@ module Y2Storage
         bcache
       end
 
-      # @param devicegraph [Devicegraph] Devicegraph to search for the Bcache device
-      # @param name        [String] Bcache name
-      # @return [Y2Storage::Bcache,nil] Bcache device; nil if it is not found
+      # @param devicegraph [Devicegraph] Devicegraph to search for the bcache device
+      # @param name        [String] bcache name
+      # @return [Y2Storage::Bcache,nil] bcache device; nil if it is not found
       def find_bcache(devicegraph, name)
         devicegraph.bcaches.find { |r| r.name == name }
       end
 
-      # Formats the Bcache to be used as a filesystem
+      # Formats the bcache to be used as a filesystem
       #
-      # @param devicegraph    [Devicegraph] Devicegraph to search for the Bcache device
-      # @param bcache         [Bcache] Bcache device to format
-      # @param planned_bcache [Planned::Bcache] Planned Bcache
-      # @return [Proposal::CreatorResult] Result containing the formatted Bcache
+      # @param devicegraph    [Devicegraph] Devicegraph to search for the bcache device
+      # @param bcache         [Bcache] bcache device to format
+      # @param planned_bcache [Planned::Bcache] Planned bcache
+      # @return [Proposal::CreatorResult] Result containing the formatted bcache
       def format_bcache(devicegraph, bcache, planned_bcache)
         planned_bcache.format!(bcache)
         CreatorResult.new(devicegraph, bcache.name => planned_bcache)
       end
 
-      # Creates Bcache partitions and set up them according to the plan
+      # Creates bcache partitions and set up them according to the plan
       #
       # @param devicegraph    [Devicegraph] Devicegraph to work on
-      # @param bcache         [Bcache] Bcache device to format
-      # @param planned_bcache [Planned::Bcache] Planned Bcache
-      # @return [Proposal::CreatorResult] Result containing the partitioned Bcache
+      # @param bcache         [Bcache] bcache device to format
+      # @param planned_bcache [Planned::Bcache] Planned bcache
+      # @return [Proposal::CreatorResult] Result containing the partitioned bcache
       def partition_bcache(devicegraph, bcache, planned_bcache)
         PartitionTableCreator.new.create_or_update(bcache, planned_bcache.ptable_type)
         new_partitions = planned_bcache.partitions.reject(&:reuse?)
         create_partitions(devicegraph, bcache, sized_partitions(new_partitions, bcache))
       end
 
-      # Creates Bcache partitions
+      # Creates bcache partitions
       #
       # @param devicegraph        [Devicegraph] Devicegraph to operate on
-      # @param bcache             [Bcache] Bcache
+      # @param bcache             [Bcache] bcache
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
       # @return [CreatorResult] Result of creating the partitions
       #
       # @raise NoDiskSpaceError
       def create_partitions(devicegraph, bcache, planned_partitions)
         dist = best_distribution(bcache, planned_partitions)
-        raise NoDiskSpaceError, "Partitions cannot be allocated into the Bcache" if dist.nil?
+        raise NoDiskSpaceError, "Partitions cannot be allocated into the bcache" if dist.nil?
         part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
       end
 
-      # Finds the best distribution of partitions within a Bcache
+      # Finds the best distribution of partitions within a bcache
       #
-      # @param bcache             [Bcache] Bcache
+      # @param bcache             [Bcache] bcache
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
       # @return [PartitionsDistribution] Distribution of partitions
       def best_distribution(bcache, planned_partitions)
@@ -157,7 +157,7 @@ module Y2Storage
       # sizes adjusted.
       #
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
-      # @param bcache             [Y2Storage::Bcache] Bcache
+      # @param bcache             [Y2Storage::Bcache] bcache
       # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
       def sized_partitions(planned_partitions, bcache)
         planned_partitions.map do |part|

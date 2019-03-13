@@ -22,7 +22,7 @@
 require "y2storage/storage_class_wrapper"
 
 module Y2Storage
-  # A Bcache caching set
+  # A bcache caching set
   #
   # This is a wrapper for Storage::BcacheCset
   class BcacheCset < Device
@@ -34,9 +34,9 @@ module Y2Storage
     storage_forward :blk_devices, as: "BlkDevice"
 
     # @!method bcaches
-    #   All Bcache devices using this caching set.
+    #   All bcache devices using this caching set.
     #
-    #   Note that a caching set can be used for caching data, and also by Flash-only Bcache
+    #   Note that a caching set can be used for caching data, and also by flash-only bcache
     #   devices for storing data.
     #
     #   @return [Array<Bcache>] returns a list of bcaches using this caching set

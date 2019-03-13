@@ -42,7 +42,7 @@ module Y2Partitioner
       # @return [Controllers::Bcache]
       attr_reader :controller
 
-      # List of errors that avoid to create a Bcache
+      # List of errors that avoid to create a bcache
       #
       # @see Actions::Base#errors
       #
@@ -51,19 +51,19 @@ module Y2Partitioner
         (super + [no_backing_devices_error]).compact
       end
 
-      # Error when there is no suitable backing devices for creating a Bcache
+      # Error when there is no suitable backing devices for creating a bcache
       #
       # @return [String, nil] nil if there are suitable backing devices.
       def no_backing_devices_error
         return nil if suitable_backing_devices?
 
         # TRANSLATORS: Error message.
-        _("There are not enough suitable unused devices to create a Bcache.")
+        _("There are not enough suitable unused devices to create a bcache.")
       end
 
-      # Opens a dialog to create a Bcache
+      # Opens a dialog to create a bcache
       #
-      # The Bcache is created only if the dialog is accepted.
+      # The bcache is created only if the dialog is accepted.
       #
       # @see Actions::Base#perform_action
       def perform_action

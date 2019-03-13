@@ -187,11 +187,11 @@ module Y2Storage
         end
       end
 
-      # Adds Bcaches to the device map
+      # Adds bcaches to the device map
       #
-      # All Bcaches should have a "device" property.
+      # All bcaches should have a "device" property.
       #
-      # @param bcaches [Array<AutoinstProfile::DriveSection>] List of Bcaches specifications from
+      # @param bcaches [Array<AutoinstProfile::DriveSection>] List of bcaches specifications from
       #   AutoYaST
       def add_bcaches(bcaches)
         bcaches.each { |b| @drives[b.device] = b }

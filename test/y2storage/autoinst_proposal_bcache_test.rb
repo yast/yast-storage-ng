@@ -103,10 +103,10 @@ describe Y2Storage::AutoinstProposal do
       expect(issues_list).to be_empty
     end
 
-    context "when the Bcache is not partitioned" do
+    context "when the bcache is not partitioned" do
       let(:ptable_type) { "none" }
 
-      it "formats the Bcache" do
+      it "formats the bcache" do
         proposal.propose
         bcache = proposal.devices.bcaches.first
         expect(bcache.filesystem.type).to eq(Y2Storage::Filesystems::Type::BTRFS)
@@ -114,7 +114,7 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
-    context "when the Bcache must be partitioned" do
+    context "when the bcache must be partitioned" do
       it "creates and mounts a partition" do
         proposal.propose
         bcache = proposal.devices.bcaches.first
@@ -158,11 +158,11 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
-    context "reusing a Bcache" do
+    context "reusing a bcache" do
       let(:init) { false }
       let(:create) { false }
 
-      it "does not create a new Bcache" do
+      it "does not create a new bcache" do
         old_sid = fake_devicegraph.find_by_name("/dev/bcache0").sid
         proposal.propose
         bcache = proposal.devices.find_by_name("/dev/bcache0")
@@ -198,7 +198,7 @@ describe Y2Storage::AutoinstProposal do
         }
       end
 
-      it "creates a Bcache on top of the MD RAID" do
+      it "creates a bcache on top of the MD RAID" do
         proposal.propose
         bcache = proposal.devices.bcaches.first
         caching_device = bcache.bcache_cset.blk_devices.first
@@ -238,7 +238,7 @@ describe Y2Storage::AutoinstProposal do
         }
       end
 
-      it "creates a Bcache on top of the MD RAID" do
+      it "creates a bcache on top of the MD RAID" do
         proposal.propose
         bcache = proposal.devices.bcaches.first
         caching_device = bcache.bcache_cset.blk_devices.first

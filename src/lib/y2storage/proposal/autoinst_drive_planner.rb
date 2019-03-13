@@ -283,7 +283,7 @@ module Y2Storage
         true
       end
 
-      # Adds Bcache specific attributes
+      # Adds bcache specific attributes
       #
       # @param device  [Planned::Device] Planned device
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification

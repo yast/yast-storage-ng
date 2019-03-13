@@ -111,11 +111,11 @@ module Y2Storage
         planner.planned_devices(drive)
       end
 
-      # Returns a list of Bcache devices according to an AutoYaST specification
+      # Returns a list of bcache devices according to an AutoYaST specification
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
-      #   the Bcache device
-      # @return [Planned::Bcache] List containing a planned Bcache device
+      #   the bcache device
+      # @return [Planned::Bcache] List containing a planned bcache device
       def planned_for_bcache(drive)
         planner = Y2Storage::Proposal::AutoinstBcachePlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
@@ -132,7 +132,7 @@ module Y2Storage
         end
       end
 
-      # Adds a Bcache issue if needed
+      # Adds a bcache issue if needed
       #
       # @param collection [Planned::DevicesCollection] Planned devices
       def add_bcache_issues(collection)
@@ -145,7 +145,7 @@ module Y2Storage
       # Add an issue if more than one device is defined as a backing/caching bcache member
       # @param bcache_name [String]
       # @param collection [Planned::DevicesCollection] Planned devices
-      # @param role [Symbol] Bcache member role (:backing, :caching)
+      # @param role [Symbol] bcache member role (:backing, :caching)
       def add_bcache_issues_for(bcache_name, collection, role)
         method = "bcache_#{role}_for?".to_sym
         devs = collection.to_a.select do |dev|

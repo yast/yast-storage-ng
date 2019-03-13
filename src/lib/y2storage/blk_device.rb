@@ -221,9 +221,9 @@ module Y2Storage
     #   Creates a bcache device with the given name, using this device as backing device
     #
     #   If the blk device has children, the children will become children of
-    #   the Bcache device.
+    #   the bcache device.
     #
-    #   @param name [String] name of the Bcache device
+    #   @param name [String] name of the bcache device
     #   @return [Bcache]
     storage_forward :create_bcache, as: "Bcache", raise_errors: true
 

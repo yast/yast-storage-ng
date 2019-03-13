@@ -693,7 +693,7 @@ describe Y2Storage::BlkDevice do
     context "when the device is used as backing device by a bcache" do
       let(:device_name) { "/dev/sdb2" }
 
-      it "returns the Bcache device" do
+      it "returns the bcache device" do
         bcache = device.bcache
 
         expect(bcache).to be_a(Y2Storage::Bcache)
