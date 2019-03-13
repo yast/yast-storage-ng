@@ -172,7 +172,7 @@ module Y2Storage
       disks.map { |d| @disks_data[data][d.name] }.flatten.compact
     end
 
-    # Obtains a list of disk devices, software RAIDs, and Bcaches
+    # Obtains a list of disk devices, software RAIDs, and bcaches
     #
     # @see #default_disks_collection for default values when disks are not given
     #
@@ -187,7 +187,7 @@ module Y2Storage
 
     # The default disks collection to be analyzed
     #
-    # @note software RAIDs and Bcache also could be analyzed because it is possible to find a Linux
+    # @note software RAIDs and bcache also could be analyzed because it is possible to find a Linux
     # system installed on them.
     #
     # @see #disks_collection

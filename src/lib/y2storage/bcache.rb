@@ -26,10 +26,10 @@ require "y2storage/bcache_type"
 Yast.import "Arch"
 
 module Y2Storage
-  # A Bcache device
+  # A bcache device
   #
-  # A Bcache device can use a backing device to store the data or it can be
-  # directly created over a caching set (Flash-only Bcache).
+  # A bcache device can use a backing device to store the data or it can be
+  # directly created over a caching set (flash-only bcache).
   #
   # This is a wrapper for Storage::Bcache
   class Bcache < Partitionable
@@ -40,7 +40,7 @@ module Y2Storage
     storage_forward :bcache_cset, as: "BcacheCset", check_with: :has_bcache_cset
 
     # @!method type
-    #   Type of the Bcache device (backed or flash-only)
+    #   Type of the bcache device (backed or flash-only)
     #
     #   @return [BcacheType]
     storage_forward :type, as: "BcacheType"
@@ -48,34 +48,34 @@ module Y2Storage
     # @!method backing_device
     #   Backing device used by this bcache.
     #
-    #   This method does not make sense for Flash-only Bcache devices.
+    #   This method does not make sense for flash-only bcache devices.
     #
-    #   @return [BlkDevice, nil] nil for Flash-only Bcache
+    #   @return [BlkDevice, nil] nil for flash-only bcache
     storage_forward :backing_device, as: "BlkDevice"
 
     # @!method add_bcache_cset(set)
-    #   This method does not make sense for Flash-only Bcache devices.
+    #   This method does not make sense for flash-only bcache devices.
     #
     #   @raise [storage::Exception] if attaching failed
-    #   @raise [storage::LogicException] for a Flash-only Bcache device or when
-    #     the Bcache device already has a caching set.
+    #   @raise [storage::LogicException] for a flash-only bcache device or when
+    #     the bcache device already has a caching set.
     #
     #   @param set [BcacheCset] set to attach
     storage_forward :add_bcache_cset
 
     # @!method remove_bcache_cset
-    #   This method does not make sense for Flash-only Bcache devices.
+    #   This method does not make sense for flash-only bcache devices.
     #
     #   @raise [storage::Exception] if detaching failed
-    #   @raise [storage::LogicException] for a Flash-only Bcache device or when
-    #     the Bcache device has no caching set.
+    #   @raise [storage::LogicException] for a flash-only bcache device or when
+    #     the bcache device has no caching set.
     storage_forward :remove_bcache_cset
 
     # @!attribute cache_mode
     #   Mode in which cache operates.
     #
-    #   This method does not make sense for Flash-only Bcache devices and its value
-    #   should not be taken into account. If setter is called for a Flash-only Bcache,
+    #   This method does not make sense for flash-only bcache devices and its value
+    #   should not be taken into account. If setter is called for a flash-only bcache,
     #   the value will be ignored by libstorage-ng when creating or editing the device.
     #
     #   @return [CacheMode]
@@ -85,7 +85,7 @@ module Y2Storage
     # @!method writeback_percent
     #   Target percent of dirty pages in writeback mode.
     #
-    #   This method does not make sense for Flash-only Bcache devices and its value
+    #   This method does not make sense for flash-only bcache devices and its value
     #   should not be taken into account.
     #
     #   @return [Integer]
@@ -94,7 +94,7 @@ module Y2Storage
     # @!method sequential_cutoff
     #   Size for cache consider read as sequential and do not cache it.
     #
-    #   This method does not make sense for Flash-only Bcache devices and its value
+    #   This method does not make sense for flash-only bcache devices and its value
     #   should not be taken into account.
     #
     #   @return [DiskSize]
@@ -126,7 +126,7 @@ module Y2Storage
     #   @return [String] full path to new bcache device like "/dev/bcache3"
     storage_class_forward :find_free_name
 
-    # Whether the Bcache is flash-only
+    # Whether the bcache is flash-only
     #
     # @return [Boolean]
     def flash_only?

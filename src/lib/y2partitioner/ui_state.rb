@@ -55,7 +55,7 @@ module Y2Partitioner
       _("Volume Management")
     end
 
-    # Title of the Bcache section
+    # Title of the bcache section
     #
     # @note See note on {.md_raids_label} about why this looks misplaced.
     #

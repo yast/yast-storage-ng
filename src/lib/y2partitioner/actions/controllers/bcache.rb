@@ -64,7 +64,7 @@ module Y2Partitioner
         # @param caching_device [Y2Storage::BlkDevice, Y2Storage::BcacheCset, nil]
         # @param options [Hash<Symbol, Object>]
         def create_bcache(backing_device, caching_device, options)
-          raise "A Bcache cannot be created without a Backing device." unless backing_device
+          raise "A bcache cannot be created without a backing device." unless backing_device
 
           BlkDeviceRestorer.new(backing_device).update_checkpoint
 

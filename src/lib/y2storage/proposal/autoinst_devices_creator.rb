@@ -98,7 +98,7 @@ module Y2Storage
           process_mds(planned_devices, devs_to_reuse, creator_result)
         devs_to_reuse.concat(mds_to_reuse.flat_map(&:partitions))
 
-        # Process planned Bcaches
+        # Process planned bcaches
         bcaches_to_create, bcaches_to_reuse, creator_result =
           process_bcaches(planned_devices, devs_to_reuse, creator_result)
         devs_to_reuse.concat(bcaches_to_reuse.flat_map(&:partitions))
@@ -172,7 +172,7 @@ module Y2Storage
         [mds_to_create, mds_to_reuse, creator_result]
       end
 
-      # Process planned Bcaches
+      # Process planned bcaches
       #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
@@ -308,12 +308,12 @@ module Y2Storage
         end
       end
 
-      # Reuses Bcaches for the given devicegraph
+      # Reuses bcaches for the given devicegraph
       #
-      # @param reused_bcaches  [Array<Planned::Bcache>] Bcaches to reuse
+      # @param reused_bcaches  [Array<Planned::Bcache>] bcaches to reuse
       # @param previous_result [Proposal::CreatorResult] Starting point
       #   to work on
-      # @return [Proposal::CreatorResult] Result containing the reused Bcache devices
+      # @return [Proposal::CreatorResult] Result containing the reused bcache devices
       def reuse_bcaches(reused_bcaches, previous_result)
         reused_bcaches.each_with_object(previous_result) do |bcache, result|
           bcache_creator = Proposal::BcacheCreator.new(result.devicegraph)
@@ -347,7 +347,7 @@ module Y2Storage
         end
       end
 
-      # Creates a Bcaches in the given devicegraph
+      # Creates a bcaches in the given devicegraph
       #
       # @param bcaches         [Array<Planned::Bcache>] List of planned MD arrays to create
       # @param previous_result [Proposal::CreatorResult] Starting point
@@ -381,13 +381,13 @@ module Y2Storage
         md_creator.create_md(new_md, devices)
       end
 
-      # Creates a Bcache
+      # Creates a bcache
       #
       # @param devicegraph     [Devicegraph] Starting devicegraph
-      # @param bcache          [Planned::Bcache] Planned Bcache
+      # @param bcache          [Planned::Bcache] Planned bcache
       # @param backing_devname [String] Backing device name
       # @param caching_devname [String] Caching device name
-      # @return [Proposal::CreatorResult] Result containing the specified Bcache
+      # @return [Proposal::CreatorResult] Result containing the specified bcache
       def create_bcache(devicegraph, bcache, backing_devname, caching_devname)
         bcache_creator = Proposal::BcacheCreator.new(devicegraph)
         bcache_creator.create_bcache(bcache, backing_devname, caching_devname)
@@ -408,11 +408,11 @@ module Y2Storage
         device && device.reuse_name
       end
 
-      # Determines whether a device plays a given role in a Bcache
+      # Determines whether a device plays a given role in a bcache
       #
       # @param device      [Planned::Device] Device to consider
-      # @param bcache_name [String] Bcache name
-      # @param role        [:caching, :backing] Role that the device plays in the Bcache device
+      # @param bcache_name [String] bcache name
+      # @param role        [:caching, :backing] Role that the device plays in the bcache device
       # @return [Boolean]
       def bcache_member_for?(device, bcache_name, role)
         query_method = "bcache_#{role}_for?"
@@ -441,7 +441,7 @@ module Y2Storage
         planned_devices.select { |d| d.respond_to?(:raid_name) }
       end
 
-      # Return devices which can be reused by a Bcache
+      # Return devices which can be reused by a bcache
       #
       # @param planned_devices [Planned::DevicesCollection] collection of planned devices
       # @return [Array<Planned::Device>]

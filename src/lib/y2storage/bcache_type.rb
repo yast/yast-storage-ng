@@ -22,11 +22,11 @@
 require "y2storage/storage_enum_wrapper"
 
 module Y2Storage
-  # Class to represent all the possible Bcache types
+  # Class to represent all the possible bcache types
   #
   # Bcache technology supports two types of bcache devices. Bcache devices with a backing
-  # device and also Bcache devices directly created over a caching set (without backing
-  # device associated to it). This second type is known as Flash-only Bcache.
+  # device and also bcache devices directly created over a caching set (without backing
+  # device associated to it). This second type is known as flash-only bcache.
   #
   # This is a wrapper for the Storage::BcacheType enum
   class BcacheType

@@ -120,7 +120,7 @@ describe Y2Storage::Planned::DevicesCollection do
   end
 
   describe "#bcaches" do
-    it "returns Bcache devices" do
+    it "returns bcache devices" do
       expect(collection.bcaches).to eq([bcache])
     end
   end

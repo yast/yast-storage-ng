@@ -103,7 +103,7 @@ module Y2Storage
         @md_partitions ||= mds.flat_map(&:partitions)
       end
 
-      # Returns the list of planned partitions for Bcache devices
+      # Returns the list of planned partitions for bcache devices
       #
       # @return [Array<Planned::Partition>]
       def bcache_partitions
@@ -131,7 +131,7 @@ module Y2Storage
         @mds ||= devices.select { |d| d.is_a?(Planned::Md) }
       end
 
-      # Returns the list of planned Bcache devices
+      # Returns the list of planned bcache devices
       #
       # @return [Array<Planned::Bcache>]
       def bcaches

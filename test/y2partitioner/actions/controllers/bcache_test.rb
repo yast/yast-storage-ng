@@ -151,11 +151,11 @@ describe Y2Partitioner::Actions::Controllers::Bcache do
     context "when there are bcaches" do
       let(:scenario) { "bcache2.xml" }
 
-      it "excludes Bcaches" do
+      it "excludes bcaches" do
         expect(name_of_devices).to_not include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
       end
 
-      it "excludes partitions from a Bcache" do
+      it "excludes partitions from a bcache" do
         expect(name_of_devices).to_not include("/dev/bcache1p1", "/dev/bcache1p2")
       end
 
