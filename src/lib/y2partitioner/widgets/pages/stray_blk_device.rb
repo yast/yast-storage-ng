@@ -52,11 +52,10 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::DEFAULT_DEVICE)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::DEFAULT_DEVICE, ""),
                 # TRANSLATORS: Heading for a generic storage device
                 # TRANSLATORS: String followed by name of the storage device
                 Heading(format(_("Device: %s"), device.name))

@@ -60,11 +60,5 @@ module Y2Partitioner
 
     # icon
     BCACHE = HD
-
-    # helper to get full path to small version of icon
-    # @param icon [String] icon filename including suffix
-    def self.small_icon(icon)
-      icon
-    end
   end
 end

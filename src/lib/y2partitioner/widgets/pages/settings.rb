@@ -46,11 +46,10 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::SETTINGS)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::SETTINGS, ""),
                 # TRANSLATORS: Heading for the expert partitioner page
                 Heading(_("Settings"))
               )

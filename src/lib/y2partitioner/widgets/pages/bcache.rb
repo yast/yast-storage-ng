@@ -56,11 +56,10 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          icon = Icons.small_icon(Icons::BCACHE)
           VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::BCACHE, ""),
                 # TRANSLATORS: Heading. String followed a device name like /dev/bcache0
                 Heading(format(_("Bcache: %s"), device.name))
               )

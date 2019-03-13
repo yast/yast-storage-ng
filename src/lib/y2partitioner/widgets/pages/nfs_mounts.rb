@@ -53,11 +53,10 @@ module Y2Partitioner
           # so some caching is required
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::NFS)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::NFS, ""),
                 # TRANSLATORS: Heading for the expert partitioner page
                 Heading(_("Network File System (NFS)"))
               )

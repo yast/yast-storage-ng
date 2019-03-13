@@ -54,11 +54,10 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::LVM_LV)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::LVM_LV, ""),
                 # TRANSLATORS: Heading. String followed by name of partition
                 Heading(format(_("Logical Volume: %s"), @lvm_lv.name))
               )

@@ -58,11 +58,10 @@ module Y2Partitioner
           # FIXME: this is called dozens of times per single click!!
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::HD_PART)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::HD_PART, ""),
                 # TRANSLATORS: Heading. String followed by name of partition
                 Heading(format(_("Partition: %s"), @partition.name))
               )
