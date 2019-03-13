@@ -62,11 +62,10 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          icon = Icons.small_icon(Icons::LVM)
           VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::LVM, ""),
                 Heading(format(_("Volume Group: %s"), "/dev/" + @lvm_vg.vg_name))
               )
             ),

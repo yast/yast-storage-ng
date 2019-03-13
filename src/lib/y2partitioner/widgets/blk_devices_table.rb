@@ -171,7 +171,7 @@ module Y2Partitioner
         return "" unless device.encrypted?
 
         if Yast::UI.GetDisplayInfo["HasIconSupport"]
-          cell(small_icon(Icons::ENCRYPTED))
+          cell(icon(Icons::ENCRYPTED))
         else
           "E"
         end
@@ -242,9 +242,9 @@ module Y2Partitioner
         return type_icon(device.plain_blk_device) if device.is?(:lvm_pv)
 
         type = DEVICE_ICONS.keys.find { |k| device.is?(k) }
-        icon = type.nil? ? Icons::DEFAULT_DEVICE : DEVICE_ICONS[type]
+        icon_name = type.nil? ? Icons::DEFAULT_DEVICE : DEVICE_ICONS[type]
 
-        small_icon(icon)
+        icon(icon_name)
       end
 
       DEVICE_LABELS = {
@@ -323,15 +323,6 @@ module Y2Partitioner
         # bcache has as vendor Disk, but we want to write bcache as type here
         data = "" if device.is?(:bcache)
         data.empty? ? default_type_label(device) : data.join("-")
-      end
-
-      # Small icon to show in tables
-      #
-      # @param icon [String] relative path
-      # @return [Yast::Term] icon
-      def small_icon(icon)
-        icon_path = Icons.small_icon(icon)
-        icon(icon_path)
       end
     end
   end

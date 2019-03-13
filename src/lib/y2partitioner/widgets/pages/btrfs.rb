@@ -24,11 +24,10 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::BTRFS)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::BTRFS, ""),
                 # TRANSLATORS: Heading
                 Heading(_("Btrfs Volumes"))
               )

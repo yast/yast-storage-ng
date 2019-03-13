@@ -75,7 +75,7 @@ module Y2Partitioner
         #
         # @return [String]
         def icon
-          Icons.small_icon(Icons::BCACHE)
+          Icons::BCACHE
         end
 
         # Tabs to show

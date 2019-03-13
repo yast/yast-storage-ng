@@ -59,11 +59,10 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          icon = Icons.small_icon(Icons::HD)
           VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::HD, ""),
                 # TRANSLATORS: Heading. String followed by device name of hard disk
                 Heading(format(_("Hard Disk: %s"), disk.name))
               )

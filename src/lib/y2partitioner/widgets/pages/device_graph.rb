@@ -54,12 +54,11 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::GRAPH)
           @tabs = Tabs.new(current_tab, system_tab)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::GRAPH, ""),
                 # TRANSLATORS: Heading for the expert partitioner page
                 Heading(_("Device Graphs"))
               )

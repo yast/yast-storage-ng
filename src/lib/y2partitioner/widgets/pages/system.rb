@@ -85,10 +85,8 @@ module Y2Partitioner
         #
         # @return [Yast::UI::Term]
         def header
-          icon = Icons.small_icon(Icons::ALL)
-
           HBox(
-            Image(icon, ""),
+            Image(Icons::ALL, ""),
             # TRANSLATORS: Heading. String followed by the hostname
             Heading(format(_("Available Storage on %s"), hostname))
           )

@@ -47,11 +47,10 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          icon_img = Icons.small_icon(icon)
           @contents = VBox(
             Left(
               HBox(
-                Image(icon_img, ""),
+                Image(icon, ""),
                 Heading(heading)
               )
             ),

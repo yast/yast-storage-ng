@@ -61,11 +61,10 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          icon = Icons.small_icon(Icons::RAID)
           VBox(
             Left(
               HBox(
-                Image(icon, ""),
+                Image(Icons::RAID, ""),
                 Heading(format(_("RAID: %s"), @md.name))
               )
             ),
