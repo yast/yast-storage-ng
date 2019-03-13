@@ -23,14 +23,23 @@ require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
-    # The proposal several backing or caching devices for the same bcache
+    # The proposal contains several backing or caching devices for the same bcache
     #
     # This is a fatal error.
     class MultipleBcacheMembers < Issue
+      extend Yast::I18n
+      include Yast::I18n
+
       # @return [String] Bcache member role (:backing or :caching)
       attr_reader :role
       # @return [String] Bcache device name
       attr_reader :bcache_name
+
+      ROLE = {
+        backing: N_("backing device"),
+        caching: N_("caching device")
+      }.freeze
+      private_constant :ROLE
 
       # Constructor
       #
@@ -57,10 +66,10 @@ module Y2Storage
       # @see Issue#message
       def message
         # TRANSLATORS: 'bcache_name is the bcache device name (e.g., '/dev/bcache0');
-        # 'role' is the kind of device (e.g., 'caching' or 'backing').
+        # 'role' is the kind of device (e.g., 'caching device').
         _(
-          "%{bcache_name}: only one %{role} device can be specified per bcache."
-        ) % { bcache_name: bcache_name, role: role }
+          "%{bcache_name}: only one %{role} can be specified per bcache."
+        ) % { bcache_name: bcache_name, role: _(ROLE[role]) }
       end
     end
   end

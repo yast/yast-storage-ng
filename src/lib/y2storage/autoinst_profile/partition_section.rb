@@ -80,6 +80,7 @@ module Y2Storage
         { name: :bcache_backing_for },
         { name: :bcache_caching_for }
       ].freeze
+      private_constant :ATTRIBUTES
 
       def self.attributes
         ATTRIBUTES
