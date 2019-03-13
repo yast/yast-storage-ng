@@ -19,7 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-RSpec.shared_examples "handles Bcache configuration" do
+RSpec.shared_examples "handles bcache configuration" do
   def planned_device(disk)
     if disk.partitions.empty?
       disk
