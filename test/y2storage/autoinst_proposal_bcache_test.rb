@@ -124,6 +124,40 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    context "when more than one backing device is specified for a bcache" do
+      let(:vdc) do
+        {
+          "device" => "/dev/vdc", "type" => :CT_DISK, "use" => "all",
+          "partitions" => [{ "format" => create, "bcache_caching_for" => [drive_device] }]
+        }
+      end
+      let(:partitioning) { [bcache0, vda, vdb, vdc] }
+
+      it "regiters an issue" do
+        proposal.propose
+        issue = issues_list.to_a.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers) }
+        expect(issue.bcache_name).to eq(drive_device)
+        expect(issue.role).to eq(:caching)
+      end
+    end
+
+    context "when more than one caching device is specified for a bcache" do
+      let(:vdc) do
+        {
+          "device" => "/dev/vdc", "type" => :CT_DISK, "use" => "all",
+          "partitions" => [{ "format" => create, "bcache_backing_for" => drive_device }]
+        }
+      end
+      let(:partitioning) { [bcache0, vda, vdb, vdc] }
+
+      it "registers an issue" do
+        proposal.propose
+        issue = issues_list.to_a.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers) }
+        expect(issue.bcache_name).to eq(drive_device)
+        expect(issue.role).to eq(:backing)
+      end
+    end
+
     context "reusing a Bcache" do
       let(:init) { false }
       let(:create) { false }

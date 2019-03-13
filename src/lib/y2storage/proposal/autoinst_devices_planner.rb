@@ -74,6 +74,7 @@ module Y2Storage
 
         collection = Planned::DevicesCollection.new(devices)
         remove_shadowed_subvols(collection.mountable_devices)
+        add_bcache_issues(collection)
         collection
       end
 
@@ -129,6 +130,28 @@ module Y2Storage
             device.subvolumes.delete(subvol)
           end
         end
+      end
+
+      # Adds a Bcache issue if needed
+      #
+      # @param collection [Planned::DevicesCollection] Planned devices
+      def add_bcache_issues(collection)
+        collection.bcaches.each do |bcache|
+          add_bcache_issues_for(bcache.name, collection, :caching)
+          add_bcache_issues_for(bcache.name, collection, :backing)
+        end
+      end
+
+      # Add an issue if more than one device is defined as a backing/caching bcache member
+      # @param bcache_name [String]
+      # @param collection [Planned::DevicesCollection] Planned devices
+      # @param role [Symbol] Bcache member role (:backing, :caching)
+      def add_bcache_issues_for(bcache_name, collection, role)
+        method = "bcache_#{role}_for?".to_sym
+        devs = collection.to_a.select do |dev|
+          dev.respond_to?(method) && dev.send(method, bcache_name)
+        end
+        issues_list.add(:multiple_bcache_members, role, bcache_name) if devs.size > 1
       end
     end
   end
