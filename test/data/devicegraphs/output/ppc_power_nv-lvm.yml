@@ -13,8 +13,6 @@
         mount_point: "/boot"
         fstab_options:
           - data=ordered
-          - acl
-          - user_xattr
     - partition:
         size: unlimited
         name: "/dev/sda2"
