@@ -22,6 +22,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/widgets/reprobe"
+require "y2partitioner/icons"
 
 Yast.import "Stage"
 Yast.import "Popup"
@@ -173,12 +174,12 @@ module Y2Partitioner
       # Sorted list of actions
       def supported_actions
         @supported_actions ||= [
-          CryptAction.new(_("Provide Crypt &Passwords..."), "yast-encrypted"),
-          IscsiAction.new(_("Configure &iSCSI..."),         "yast-iscsi-client"),
-          FcoeAction.new(_("Configure &FCoE..."),           "fcoe"),
-          DasdAction.new(_("Configure &DASD..."),           "yast-dasd"),
-          ZfcpAction.new(_("Configure &zFCP..."),           "yast-zfcp"),
-          XpramAction.new(_("Configure &XPRAM..."),         "yast-xpram")
+          CryptAction.new(_("Provide Crypt &Passwords..."), Icons::LOCK),
+          IscsiAction.new(_("Configure &iSCSI..."),         Icons::ISCSI),
+          FcoeAction.new(_("Configure &FCoE..."),           Icons::FCOE),
+          DasdAction.new(_("Configure &DASD..."),           Icons::DASD),
+          ZfcpAction.new(_("Configure &zFCP..."),           Icons::ZFCP),
+          XpramAction.new(_("Configure &XPRAM..."),         Icons::XPRAM)
         ].select(&:supported?)
       end
 

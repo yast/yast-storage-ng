@@ -60,5 +60,17 @@ module Y2Partitioner
 
     # icon
     BCACHE = HD
+
+    LOCK = "lock".freeze
+
+    ISCSI = "drive-iscsi".freeze
+
+    FCOE = "drive-fcoe".freeze
+
+    DASD = "drive-dasd".freeze
+
+    ZFCP = "drive-zfcp".freeze
+
+    XPRAM = "drive-xpram".freeze
   end
 end
