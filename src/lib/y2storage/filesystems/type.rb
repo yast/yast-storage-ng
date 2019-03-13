@@ -78,17 +78,16 @@ module Y2Storage
         },
         ext2:     {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
-          default_fstab_options: ACL_OPTIONS,
           name:                  "Ext2"
         },
         ext3:     {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          default_fstab_options: JOURNAL_OPTIONS + ACL_OPTIONS,
+          default_fstab_options: JOURNAL_OPTIONS,
           name:                  "Ext3"
         },
         ext4:     {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          default_fstab_options: JOURNAL_OPTIONS + ACL_OPTIONS,
+          default_fstab_options: JOURNAL_OPTIONS,
           name:                  "Ext4"
         },
         hfs:      {
