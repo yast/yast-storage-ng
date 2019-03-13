@@ -114,13 +114,13 @@ describe Y2Partitioner::Actions::DeleteBcache do
       end
     end
 
-    context "when the device is a Flash-only bcache" do
+    context "when the device is a flash-only bcache" do
       let(:scenario) { "bcache2.xml" }
 
       let(:device_name) { "/dev/bcache1" }
 
       it "shows an error message" do
-        expect(Yast2::Popup).to receive(:show).with(/is a Flash-only/, headline: :error)
+        expect(Yast2::Popup).to receive(:show).with(/is a flash-only/, headline: :error)
 
         subject.run
       end

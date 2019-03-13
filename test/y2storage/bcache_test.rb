@@ -75,7 +75,7 @@ describe Y2Storage::Bcache do
         expect(subject.backing_device.basename).to eq("sdb2")
       end
 
-      context "when it is a Flash-only bcache" do
+      context "when it is a flash-only bcache" do
         let(:bcache_name) { "/dev/bcache1" }
 
         it "returns nil" do
