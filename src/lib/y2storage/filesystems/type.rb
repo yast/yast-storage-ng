@@ -77,8 +77,8 @@ module Y2Storage
           name:          "BtrFS"
         },
         ext2:     {
-          fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
-          name:                  "Ext2"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
+          name:          "Ext2"
         },
         ext3:     {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
