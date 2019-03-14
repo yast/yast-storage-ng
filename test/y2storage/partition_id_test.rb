@@ -123,4 +123,68 @@ describe Y2Storage::PartitionId do
       end
     end
   end
+
+  describe "#sort_order" do
+    it "sorts Linux Native before Linux Swap" do
+      linux = Y2Storage::PartitionId::LINUX
+      swap = Y2Storage::PartitionId::SWAP
+      expect(linux.sort_order < swap.sort_order).to eq true
+    end
+
+    it "sorts Linux partition IDs naturally" do
+      unsorted = [
+        Y2Storage::PartitionId::RAID,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::LVM,
+        Y2Storage::PartitionId::LINUX
+      ]
+
+      sorted = [
+        Y2Storage::PartitionId::LINUX,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::LVM,
+        Y2Storage::PartitionId::RAID
+      ]
+
+      expect(unsorted.sort).to eq sorted
+    end
+
+    it "sorts misc partition IDs naturally" do
+      unsorted = [
+        Y2Storage::PartitionId::NTFS,
+        Y2Storage::PartitionId::BIOS_BOOT,
+        Y2Storage::PartitionId::ESP,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::LINUX
+      ]
+
+      sorted = [
+        Y2Storage::PartitionId::LINUX,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::ESP,
+        Y2Storage::PartitionId::BIOS_BOOT,
+        Y2Storage::PartitionId::NTFS
+      ]
+
+      expect(unsorted.sort).to eq sorted
+    end
+
+    it "sorts unknown IDs to the end of the list" do
+      unsorted = [
+        Y2Storage::PartitionId::NTFS,
+        4242,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::LINUX
+      ]
+
+      sorted = [
+        Y2Storage::PartitionId::LINUX,
+        Y2Storage::PartitionId::SWAP,
+        Y2Storage::PartitionId::NTFS,
+        4242
+      ]
+
+      expect(unsorted.sort).to eq sorted
+    end
+  end
 end
