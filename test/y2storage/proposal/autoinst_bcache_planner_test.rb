@@ -32,11 +32,10 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
-  let(:x86_64) { true }
+  let(:architecture) { :x86_64 }
 
   before do
     fake_scenario(scenario)
-    allow(Yast::Arch).to receive(:x86_64).and_return(x86_64)
   end
 
   describe "#planned_devices" do
@@ -66,7 +65,9 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     end
 
     context "when running on a different x86_64 architecture" do
-      let(:x86_64) { false }
+      before do
+        allow(Yast::Arch).to receive(:x86_64).and_return(false)
+      end
 
       it "registers an issue" do
         planner.planned_devices(drive).first

@@ -49,6 +49,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   end
 
   let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk]) }
+  let(:architecture) { :x86_64 }
 
   before { fake_scenario(scenario) }
 

@@ -49,6 +49,7 @@ describe Y2Storage::Proposal::BcacheCreator do
       mount_point: "/", type: Y2Storage::Filesystems::Type::BTRFS, min_size: 1.GiB, max_size: 1.GiB
     )
   end
+  let(:architecture) { :x86_64 }
 
   describe "#create_bcache" do
     it "creates a new bcache device" do
