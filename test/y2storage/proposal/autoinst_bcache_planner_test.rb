@@ -26,18 +26,15 @@ require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
 
-Yast.import "Arch"
-
 describe Y2Storage::Proposal::AutoinstBcachePlanner do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
-  let(:arch) { "x86_64" }
+  let(:architecture) { :x86_64 }
 
   before do
-    allow(Yast::Arch).to receive(:architecture).and_return(arch)
     fake_scenario(scenario)
   end
 

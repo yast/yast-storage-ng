@@ -25,8 +25,6 @@ require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_creator"
 require "y2storage/planned"
 
-Yast.import "Arch"
-
 describe Y2Storage::Proposal::AutoinstDevicesCreator do
   using Y2Storage::Refinements::SizeCasts
 
@@ -51,11 +49,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   end
 
   let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk]) }
+  let(:architecture) { :x86_64 }
 
-  before do
-    allow(Yast::Arch).to receive(:architecture).and_return("x86_64")
-    fake_scenario(scenario)
-  end
+  before { fake_scenario(scenario) }
 
   subject(:creator) do
     described_class.new(Y2Storage::StorageManager.instance.probed)

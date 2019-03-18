@@ -23,15 +23,12 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-Yast.import "Arch"
-
 describe Y2Storage::Proposal::BcacheCreator do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:creator) { described_class.new(fake_devicegraph) }
 
   before do
-    allow(Yast::Arch).to receive(:architecture).and_return("x86_64")
     fake_scenario(scenario)
   end
 
@@ -52,6 +49,7 @@ describe Y2Storage::Proposal::BcacheCreator do
       mount_point: "/", type: Y2Storage::Filesystems::Type::BTRFS, min_size: 1.GiB, max_size: 1.GiB
     )
   end
+  let(:architecture) { :x86_64 }
 
   describe "#create_bcache" do
     it "creates a new bcache device" do

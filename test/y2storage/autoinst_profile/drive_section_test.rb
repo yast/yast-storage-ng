@@ -409,10 +409,9 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "given a bcache" do
-      before do
-        allow(Yast::Arch).to receive(:x86_64).and_return("x86_64")
-        fake_scenario("btrfs_bcache.xml")
-      end
+      let(:architecture) { :x86_64 }
+
+      before { fake_scenario("btrfs_bcache.xml") }
 
       it "initializes #type to :CT_BCACHE" do
         expect(described_class.new_from_storage(device("bcache0")).type).to eq :CT_BCACHE
