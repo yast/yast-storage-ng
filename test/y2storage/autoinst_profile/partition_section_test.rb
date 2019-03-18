@@ -30,8 +30,12 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
   subject(:section) { described_class.new }
 
   let(:scenario) { "autoyast_drive_examples" }
+  let(:arch) { "x86_64" }
 
-  before { fake_scenario(scenario) }
+  before do
+    allow(Yast::Arch).to receive(:architecture).and_return(arch)
+    fake_scenario(scenario)
+  end
 
   include_examples "autoinst section"
 
@@ -98,6 +102,10 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         let(:scenario) { "btrfs_bcache.xml" }
         let(:dev) { device("vdb") }
 
+        before do
+          allow(Yast::Arch).to receive(:x86_64).and_return("x86_64")
+        end
+
         it "initializes #bcache_backing_for" do
           section = described_class.new_from_storage(dev)
           expect(section.bcache_backing_for).to eq("/dev/bcache0")
@@ -107,6 +115,11 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       context "when the partition is a caching device for a bcache" do
         let(:scenario) { "btrfs_bcache.xml" }
         let(:dev) { device("vda3") }
+
+        before do
+          allow(Yast::Arch).to receive(:x86_64).and_return("x86_64")
+        end
+
 
         it "initializes #bcache_caching_for" do
           section = described_class.new_from_storage(dev)

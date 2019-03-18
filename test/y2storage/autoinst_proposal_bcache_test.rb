@@ -36,6 +36,7 @@ describe Y2Storage::AutoinstProposal do
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)
+    allow(Yast::Arch).to receive(:architecture).and_return("x86_64")
   end
 
   describe "#propose" do

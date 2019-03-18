@@ -23,12 +23,15 @@
 require_relative "../spec_helper"
 require "y2storage"
 
+Yast.import "Arch"
+
 describe Y2Storage::Proposal::BcacheCreator do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:creator) { described_class.new(fake_devicegraph) }
 
   before do
+    allow(Yast::Arch).to receive(:architecture).and_return("x86_64")
     fake_scenario(scenario)
   end
 

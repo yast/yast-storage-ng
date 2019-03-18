@@ -26,17 +26,19 @@ require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
 
+Yast.import "Arch"
+
 describe Y2Storage::Proposal::AutoinstBcachePlanner do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
-  let(:x86_64) { true }
+  let(:arch) { "x86_64" }
 
   before do
+    allow(Yast::Arch).to receive(:architecture).and_return(arch)
     fake_scenario(scenario)
-    allow(Yast::Arch).to receive(:x86_64).and_return(x86_64)
   end
 
   describe "#planned_devices" do
@@ -66,7 +68,9 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
     end
 
     context "when running on a different x86_64 architecture" do
-      let(:x86_64) { false }
+      before do
+        allow(Yast::Arch).to receive(:x86_64).and_return(false)
+      end
 
       it "registers an issue" do
         planner.planned_devices(drive).first
