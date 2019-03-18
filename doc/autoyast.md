@@ -73,7 +73,7 @@ However, when the profile contains a `partitioning` section, these are the steps
 2. Associate each drive included in the profile with a real drive.
 3. Plan for new stuff by creating a set of *planned devices*.
 4. Delete unwanted stuff from the devicegraph.
-5. Modify the devicegraph to according to the list of planned devices.
+5. Modify the devicegraph according to the list of planned devices.
 
 ## The AutoYaST level 3 procedure
 
@@ -99,7 +99,7 @@ further details.
 
 The `partitioning` section of the AutoYaST profile is organized into drives
 containing a list of partitions each. The result must honor that organization.
-I.e., two partitions that are listed in the same drive will always end up in the
+E.g., two partitions that are listed in the same drive will always end up in the
 same disk and two partitions in different drives cannot end up sharing the disk.
 
 The matching between a drive and the real disk can be done explicitly in the
@@ -111,7 +111,7 @@ that "looks reasonable", but in reality it just uses whatever is not skipped,
 with no optimization in place or even without checking if the device is big
 enough.
 
-The relationship between profile and real drives is keep in an instance of
+The relationship between profile and real drives is kept in an instance of
 {Y2Storage::Proposal::AutoinstDrivesMap}.
 
 ### Phase three: planning new stuff
