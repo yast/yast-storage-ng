@@ -120,7 +120,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           allow(Yast::Arch).to receive(:x86_64).and_return("x86_64")
         end
 
-
         it "initializes #bcache_caching_for" do
           section = described_class.new_from_storage(dev)
           expect(section.bcache_caching_for).to eq(["/dev/bcache0"])
