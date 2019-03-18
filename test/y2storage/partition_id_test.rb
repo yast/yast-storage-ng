@@ -128,7 +128,7 @@ describe Y2Storage::PartitionId do
     it "sorts Linux Native before Linux Swap" do
       linux = Y2Storage::PartitionId::LINUX
       swap = Y2Storage::PartitionId::SWAP
-      expect(linux.sort_order < swap.sort_order).to eq true
+      expect(linux.sort_order).to be < swap.sort_order
     end
 
     it "sorts Linux partition IDs naturally" do
