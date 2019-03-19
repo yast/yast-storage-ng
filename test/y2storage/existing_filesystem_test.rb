@@ -67,6 +67,11 @@ end
 describe Y2Storage::ExistingFilesystem do
   before do
     fake_scenario(scenario)
+
+    allow(File).to receive(:exist?)
+    allow(Yast::Execute).to receive(:locally!)
+    allow_any_instance_of(Y2Storage::ELFArch).to receive(:value)
+
     allow(filesystem).to receive(:detect_content_info).and_return(content_info)
   end
 
@@ -330,7 +335,76 @@ describe Y2Storage::ExistingFilesystem do
     end
   end
 
+  describe "#elf_arch" do
+    context "when the filesystem contains a Windows system" do
+      let(:device_name) { "/dev/sda1" }
 
+      let(:windows_content) { true }
+
+      it "returns nil" do
+        expect(subject.elf_arch).to be_nil
+      end
+    end
+
+    context "when the filesystem does not contain a Windows system" do
+      let(:device_name) { "/dev/sda3" }
+
+      before do
+        allow_any_instance_of(Y2Storage::ELFArch).to receive(:value).and_return(elf_arch)
+      end
+
+      let(:elf_arch) { "x86_64" }
+
+      let(:tested_method) { :elf_arch }
+
+      include_examples "Mount and umount actions"
+
+      it "returns the ELF architecture" do
+        expect(subject.elf_arch).to eq(elf_arch)
+      end
+    end
+  end
+
+  describe "#incomplete_installation?" do
+    context "when the filesystem contains a Windows system" do
+      let(:device_name) { "/dev/sda1" }
+
+      let(:windows_content) { true }
+
+      it "returns false" do
+        expect(subject.incomplete_installation?).to eq(false)
+      end
+    end
+
+    context "when the filesystem does not contain a Windows system" do
+      let(:device_name) { "/dev/sda3" }
+
+      before do
+        allow(File).to receive(:exist?).with(/runme_at_boot/).and_return(exist_file)
+      end
+
+      let(:exist_file) { false }
+
+      let(:tested_method) { :incomplete_installation? }
+
+      let(:result_if_mount_fails) { false }
+
+      include_examples "Mount and umount actions"
+
+      context "when 'runme_at_boot' file exists" do
+        let(:exist_file) { true }
+
+        it "returns true" do
+          expect(subject.incomplete_installation?).to eq(true)
+        end
+      end
+
+      context "when 'runme_at_boot' file does not exist" do
+        let(:exist_file) { false }
+
+        it "returns false" do
+          expect(subject.incomplete_installation?).to eq(false)
+        end
       end
     end
   end

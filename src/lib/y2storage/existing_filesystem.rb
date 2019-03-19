@@ -23,8 +23,10 @@ require "yast"
 require "fileutils"
 require "yast2/execute"
 require "y2storage/fstab"
+require "y2storage/elf_arch"
 
 Yast.import "OSRelease"
+Yast.import "Installation"
 
 module Y2Storage
   # Class representing a filesystem in the system and providing
@@ -96,6 +98,23 @@ module Y2Storage
       @windows
     end
 
+    # Reads the Executable and Linkable Format of bash binary to determine the
+    # architecture in which the filesystem was created
+    #
+    # @return [String] architecture (e.g., "x86_64", "ppc", "s390", "unknown", etc)
+    def elf_arch
+      set_attributes unless processed?
+      @elf_arch
+    end
+
+    # Whether the filesystem contains an incomplete installation
+    #
+    # @return [Boolean]
+    def incomplete_installation?
+      set_attributes unless processed?
+      !!@incomplete_installation
+    end
+
   protected
 
     # @return [Boolean] if the filesystem was already mounted to read all the relevant info
@@ -145,6 +164,8 @@ module Y2Storage
       @fstab = read_fstab
       @crypttab = read_crypttab
       @rpi_boot = check_rpi_boot
+      @elf_arch = read_elf_arch
+      @incomplete_installation = check_incomplete_installation
       umount
     rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
       log.error("CAUGHT exception: #{ex} for #{device.name}")
@@ -234,6 +255,21 @@ module Y2Storage
       end
 
       false
+    end
+
+    # Tries to extract the architecture from the ELF of the bash binary
+    #
+    # @return [String] architecture (e.g., "x86_64", "ppc", "s390", "unknown", etc)
+    def read_elf_arch
+      ELFArch.new(@mount_point).value
+    end
+
+    # Checks whether the filesystem contains an incomplete installation
+    #
+    # @return [Boolean]
+    def check_incomplete_installation
+      file = File.join(@mount_point, Yast::Installation.run_yast_at_boot)
+      File.exist?(file)
     end
 
     # Executes a given command
