@@ -75,9 +75,7 @@ describe Y2Storage::ExistingFilesystem do
     allow(filesystem).to receive(:detect_content_info).and_return(content_info)
   end
 
-  subject { described_class.new(filesystem, root, mount_point) }
-
-  let(:root) { "" }
+  subject { described_class.new(filesystem, mount_point) }
 
   let(:mount_point) { "" }
 
