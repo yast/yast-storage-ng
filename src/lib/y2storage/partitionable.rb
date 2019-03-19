@@ -205,7 +205,7 @@ module Y2Storage
     def possible_windows_partitions
       # Sorting is not mandatory, but keeping the output stable looks like a
       # sane practice.
-      partitions.select { |p| p.type.is?(:primary) && p.id.is?(:windows_system) }.sort_by(&:number)
+      partitions.select(&:suitable_for_windows?).sort_by(&:number)
     end
 
     # Size between MBR and first partition.
