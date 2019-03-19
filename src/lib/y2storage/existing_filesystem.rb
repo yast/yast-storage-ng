@@ -38,11 +38,9 @@ module Y2Storage
     # Constructor
     #
     # @param filesystem [Filesystems::Base]
-    # @param root [String]
     # @param mount_point [String]
-    def initialize(filesystem, root = "/", mount_point = "/mnt")
+    def initialize(filesystem, mount_point = "/mnt")
       @filesystem = filesystem
-      @root = root
       @mount_point = mount_point
 
       @processed = false
