@@ -83,7 +83,6 @@
       <sid>48</sid>
       <path>/boot/zipl</path>
       <mount-by>path</mount-by>
-      <mount-options>acl,user_xattr</mount-options>
       <in-etc-fstab>true</in-etc-fstab>
       <freq>0</freq>
       <passno>0</passno>
@@ -108,7 +107,6 @@
       <sid>52</sid>
       <path>/</path>
       <mount-by>path</mount-by>
-      <mount-options>acl,user_xattr</mount-options>
       <in-etc-fstab>true</in-etc-fstab>
       <freq>0</freq>
       <passno>0</passno>

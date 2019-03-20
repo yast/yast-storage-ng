@@ -12,9 +12,6 @@
         id: linux
         file_system: ext2
         mount_point: "/boot/zipl"
-        fstab_options:
-          - acl
-          - user_xattr
     - partition:
         size: 23809920 KiB (22.71 GiB)
         name: "/dev/dasda2"
