@@ -125,13 +125,14 @@ module Y2Storage
           planned_partition.reuse_name = reusable_efi.name
         else
           planned_partition.max_start_offset = DiskSize.TiB(2)
+          planned_partition.disk = boot_disk.name
         end
 
         planned_partition
       end
 
       def reusable_efi
-        @reusable_efi = biggest_efi_in_boot_device || biggest_efi
+        @reusable_efi = biggest_efi_in_boot_device
       end
 
       def biggest_efi_in_boot_device
