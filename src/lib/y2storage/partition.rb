@@ -268,6 +268,13 @@ module Y2Storage
       id.is?(:swap) && formatted_as?(:swap)
     end
 
+    # Whether the partition fulfills conditions to be used for a Windows system
+    #
+    # @return [Boolean]
+    def suitable_for_windows?
+      type.is?(:primary) && id.is?(:windows_system)
+    end
+
   protected
 
     # Values for volume specification matching
