@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -59,11 +59,12 @@ module Y2Storage
       #
       # There is no way to query the system for such value, so this method
       # relies on #boot_disk_name. If that information is not available, the
-      # (first) disk hosting the root filesystem is considered to be the boot
-      # disk.
+      # disk hosting /boot or the first disk hosting the root filesystem is
+      # considered to be the boot disk.
       #
-      # If "/" is still not present in the devicegraph or the list of planned
-      # devices, the first disk of the system is used as fallback.
+      # If "/boot" or "/" are still not present neither in the devicegraph nor
+      # in the list of planned devices, the first disk of the system is used as
+      # fallback.
       #
       # FIXME: For RAID and LVM setups a list of disks would strictly be
       #   correct (the disks that constitute the /boot file system).
@@ -336,18 +337,45 @@ module Y2Storage
         # FIXME: This method is only able to find the boot disk when the planned
         # root is over a partition. This could not work properly in autoyast when
         # root is planned over logical volumes or software raids.
-        return nil unless root_planned_dev
-        return nil unless root_planned_dev.respond_to?(:disk)
+        planned_dev = [boot_planned_dev, root_planned_dev].find do |planned|
+          planned && planned.respond_to?(:disk)
+        end
 
-        devicegraph.disk_devices.find { |d| d.name == root_planned_dev.disk }
+        return nil unless planned_dev
+
+        devicegraph.disk_devices.find { |d| d.name == planned_dev.disk }
       end
 
       def boot_disk_from_devicegraph
         # FIXME: In case root filesystem is over a multidevice (vg, software raid),
         # the first disk is considered the boot disk. This could not work properly
         # for some scenarios.
-        return nil unless root_filesystem
-        root_filesystem.ancestors.find { |d| d.is?(:disk_device) }
+        filesystem = boot_filesystem || root_filesystem
+
+        return nil unless filesystem
+
+        filesystem_container(filesystem)
+      end
+
+      # Disk device that contains the filesystem
+      #
+      # Note that for a filesystem created over Bcache, the devices of the caching set
+      # must be discarded as possible containers. But, in case of Flash-only Bcache, the
+      # container is the device used for the caching set.
+      #
+      # @param filesystem [Y2Storage::Filesystems::Base]
+      # @return [Y2Storage::BlkDevice] disk device holding the filesystem
+      def filesystem_container(filesystem)
+        ancestors = filesystem.ancestors
+
+        bcache = ancestors.find { |d| d.is?(:bcache) }
+
+        if bcache && !bcache.flash_only?
+          backing_device = bcache.backing_device
+          ancestors = [backing_device] + backing_device.ancestors
+        end
+
+        ancestors.find { |d| d.is?(:disk_device) }
       end
 
       def planned_partitions_with_id(id)
