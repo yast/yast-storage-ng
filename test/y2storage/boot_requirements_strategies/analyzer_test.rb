@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,101 +23,165 @@
 require_relative "../spec_helper"
 require "y2storage"
 
+RSpec.shared_examples "planned root or disk in devicegraph" do
+  context "and '/' is planned" do
+    let(:planned_devs) { [planned_root] }
+
+    context "and the disk to allocate the planned '/' is known" do
+      before do
+        planned_root.disk = planned_root_disk
+      end
+
+      context "and such disk exists" do
+        let(:planned_root_disk) { "/dev/sda" }
+
+        it "returns a Disk object" do
+          expect(analyzer.boot_disk).to be_a(Y2Storage::Disk)
+        end
+
+        it "returns the disk where root is planned" do
+          expect(analyzer.boot_disk.name).to eq(planned_root.disk)
+        end
+      end
+
+      context "and such disk does not exist" do
+        let(:planned_root_disk) { "/dev/sdx" }
+
+        include_examples "boot disk in devicegraph"
+      end
+    end
+
+    context "and the disk to allocate the planned '/' is not known" do
+      include_examples "boot disk in devicegraph"
+    end
+  end
+
+  context "and '/' is not planned" do
+    let(:planned_devs) { [] }
+
+    include_examples "boot disk in devicegraph"
+  end
+end
+
 RSpec.shared_examples "boot disk in devicegraph" do
-  context "if no there is no filesystem configured as '/' in the devicegraph" do
+  before do
+    filesystem.mount_path = mount_point
+  end
+
+  context "if there is a filesystem configured as '/boot'" do
+    let(:mount_point) { "/boot" }
+
+    include_examples "filesystem in devicegraph"
+  end
+
+  context "if there is no filesystem configured as '/boot'" do
+    context "and there is a filesystem configured as '/'" do
+      let(:mount_point) { "/" }
+
+      include_examples "filesystem in devicegraph"
+    end
+
+    context "and there is no filesystem configured as '/'" do
+      let(:scenario) { "multi-linux-pc" }
+
+      let(:filesystem) { fake_devicegraph.find_by_name("/dev/sda1").filesystem }
+
+      let(:mount_point) { "" }
+
+      it "returns a Disk object" do
+        expect(analyzer.boot_disk).to be_a Y2Storage::Disk
+      end
+
+      it "returns the first disk in the system" do
+        expect(analyzer.boot_disk.name).to eq "/dev/sda"
+      end
+    end
+  end
+end
+
+RSpec.shared_examples "filesystem in devicegraph" do
+  def create_filesystem
+    part = device.partition_table.create_partition("#{device.name}-1",
+      Y2Storage::Region.create(2048, 1048576, 512),
+      Y2Storage::PartitionType::PRIMARY)
+    part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+  end
+
+  let(:device) { fake_devicegraph.find_by_name(device_name) }
+
+  let(:filesystem) { device.filesystem }
+
+  context "and the filesystem is over a partition in a disk" do
     let(:scenario) { "double-windows-pc" }
 
+    let(:device_name) { "/dev/sdb1" }
+
     it "returns a Disk object" do
       expect(analyzer.boot_disk).to be_a Y2Storage::Disk
     end
 
-    it "returns the first disk in the system" do
-      expect(analyzer.boot_disk.name).to eq "/dev/sda"
+    it "returns the disk containing the partition" do
+      expect(analyzer.boot_disk.name).to eq("/dev/sdb")
     end
   end
 
-  context "if a partition is configured as '/' in the devicegraph" do
-    it "returns a Disk object" do
-      expect(analyzer.boot_disk).to be_a Y2Storage::Disk
-    end
-
-    it "returns the disk containing the '/' partition" do
-      expect(analyzer.boot_disk.name).to eq "/dev/sdb"
-    end
-  end
-
-  context "if a partition over a Dasd device is configured as '/' in the devicegraph" do
+  context "and the filesystem is over a partition in a DASD device" do
     let(:scenario) { "dasd_50GiB" }
 
-    before do
-      partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/dasda1")
-      partition.filesystem.mount_path = "/"
-    end
+    let(:device_name) { "/dev/dasda1" }
 
     it "returns a Dasd object" do
       expect(analyzer.boot_disk).to be_a Y2Storage::Dasd
     end
 
-    it "returns the dasd device containing the '/' partition" do
+    it "returns the dasd device containing the partition" do
       expect(analyzer.boot_disk.name).to eq "/dev/dasda"
     end
   end
 
-  context "if a partition over a Multipath device is configured as '/' in the devicegraph" do
+  context "and the filesystem is over a partition in a Multipath device" do
     let(:scenario) { "empty-dasd-and-multipath.xml" }
 
-    let(:multipath_name) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
+    let(:device_name) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
 
-    before do
-      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, multipath_name)
-      part = device.partition_table.create_partition("/dev/#{multipath_name}-1",
-        Y2Storage::Region.create(2048, 1048576, 512),
-        Y2Storage::PartitionType::PRIMARY)
-      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-      fs.mount_path = "/"
-    end
+    let(:filesystem) { create_filesystem }
 
     it "returns a Multipath object" do
       expect(analyzer.boot_disk).to be_a Y2Storage::Multipath
     end
 
-    it "returns the Multipath device containing the '/' partition" do
-      expect(analyzer.boot_disk.name).to eq multipath_name
+    it "returns the Multipath device containing the partition" do
+      expect(analyzer.boot_disk.name).to eq device_name
     end
   end
 
-  context "if a partition over a BIOS RAID is configured as '/' in the devicegraph" do
+  context "and the filesystem is over a partition in a BIOS RAID" do
     let(:scenario) { "empty-dm_raids.xml" }
 
-    let(:raid_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
+    let(:device_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
 
-    before do
-      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, raid_name)
-      part = device.partition_table.create_partition("/dev/#{raid_name}-1",
-        Y2Storage::Region.create(2048, 1048576, 512),
-        Y2Storage::PartitionType::PRIMARY)
-      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-      fs.mount_path = "/"
-    end
+    let(:filesystem) { create_filesystem }
 
     it "returns a BIOS RAID" do
       expect(analyzer.boot_disk.is?(:bios_raid)).to eq(true)
     end
 
-    it "returns the BIOS RAID containing the '/' partition" do
-      expect(analyzer.boot_disk.name).to eq raid_name
+    it "returns the BIOS RAID containing the partition" do
+      expect(analyzer.boot_disk.name).to eq device_name
     end
   end
 
-  context "if a LVM LV is configured as '/' in the devicegraph" do
-    let(:scenario) { "complex-lvm-encrypt" }
+  context "and the filesystem is over a partition in a LVM LV" do
+    let(:scenario) { "lvm-two-vgs" }
+
+    let(:device_name) { "/dev/vg0/lv2" }
 
     it "returns a Disk object" do
       expect(analyzer.boot_disk).to be_a Y2Storage::Disk
     end
 
     it "returns the first disk containing a PV of the involved LVM VG" do
-      expect(analyzer.boot_disk.name).to eq "/dev/sdd"
+      expect(analyzer.boot_disk.name).to eq "/dev/sda"
     end
   end
 end
@@ -180,34 +244,42 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     context "if no name is given or there is no such disk" do
       let(:boot_name) { nil }
 
-      context "but '/' is in the list of planned devices" do
-        context "and the disk to allocate the planned device is known" do
-          context "and the disk exists" do
-            before { planned_root.disk = "/dev/sdb" }
+      context "and '/boot' is planned" do
+        let(:planned_devs) { [planned_boot] }
+
+        context "and the disk to allocate the planned '/boot' is known" do
+          before do
+            planned_boot.disk = planned_boot_disk
+          end
+
+          context "and such disk exists" do
+            let(:planned_boot_disk) { "/dev/sdb" }
 
             it "returns a Disk object" do
-              expect(analyzer.boot_disk).to be_a Y2Storage::Disk
+              expect(analyzer.boot_disk).to be_a(Y2Storage::Disk)
             end
 
-            it "returns the disk where root is planned" do
-              expect(analyzer.boot_disk.name).to eq planned_root.disk
+            it "returns the disk where boot is planned" do
+              expect(analyzer.boot_disk.name).to eq(planned_boot.disk)
             end
           end
 
-          context "but the disk does not exist" do
-            before { planned_root.disk = "/dev/sdx" }
+          context "and such disk does not exist" do
+            let(:planned_boot_disk) { "/dev/sdx" }
 
-            include_examples "boot disk in devicegraph"
+            include_examples "planned root or disk in devicegraph"
           end
         end
 
-        context "and the disk for '/' is not decided" do
-          include_examples "boot disk in devicegraph"
+        context "and the disk to allocate the planned '/boot' is not known" do
+          include_examples "planned root or disk in devicegraph"
         end
       end
 
-      context "and there is no planned device for '/'" do
-        include_examples "boot disk in devicegraph"
+      context "and '/boot' is not planned" do
+        let(:planned_devs) { [] }
+
+        include_examples "planned root or disk in devicegraph"
       end
     end
   end
