@@ -1,7 +1,7 @@
 ## Boot loader partitions in the Guided Proposal
 
 This document describes the locations of the separate `/boot` partition (if needed) and
-the boot loader partition (ESP, grub2 or zipl) the Guided Proposal assumes.
+the boot loader partition (BIOS GRUB, ESP, PReP, ZIPL) the Guided Proposal assumes.
 
 This does not imply that it is technically required to follow the Guided
 Proposal. Users can in fact use the Expert Partitioner to do as they please
@@ -14,7 +14,7 @@ the disk containing the root ('/') file system.
 
 It will never use an existing one.
 
-### Boot loader partition (ESP, grub2, zipl)
+### Boot loader partition (BIOS GRUB, ESP, PReP, ZIPL)
 
 The boot loader is usually installed into its own partition. Except on
 x86-legacy with msdos partition table that uses the mbr gap.
@@ -40,7 +40,7 @@ The goal here is to keep the core operating system on a single disk if at
 all possible. Having the boot loader elsewhere would be technically possible
 but is impractical.
 
-#### Pro
+#### Pros
 
 Experience shows that setups with operating system and boot loader on
 different disks tend to run into trouble as identifying the correct disk is
@@ -52,7 +52,7 @@ installed on the same machine.
 And, finally, the user might take 'the operating system disk' to another
 machine and have good chances it will simply 'just work'.
 
-ESPs could be shared but as they typically are of limited size having you
+ESPs could be shared but as they typically are of limited size having your
 'own' ESP looks better.
 
 #### Con
