@@ -39,8 +39,6 @@ describe Y2Partitioner::Dialogs::Bcache do
     allow(controller).to receive(:suitable_backing_devices).and_return(suitable_backing)
   end
 
-  let(:architecture) { :x86_64 } # bcache is only supported on x86_64
-
   let(:controller) { instance_double(Y2Partitioner::Actions::Controllers::Bcache) }
 
   let(:bcache) { nil }

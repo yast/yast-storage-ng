@@ -65,7 +65,6 @@ describe Y2Storage::Bcache do
 
     let(:scenario) { "bcache2.xml" }
     let(:bcache_name) { "/dev/bcache0" }
-    let(:architecture) { :x86_64 } # need an architecture where bcache is supported
 
     subject(:bcache) { Y2Storage::Bcache.find_by_name(fake_devicegraph, bcache_name) }
 

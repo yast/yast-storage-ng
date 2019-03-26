@@ -30,7 +30,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
   subject(:section) { described_class.new }
 
   let(:scenario) { "autoyast_drive_examples" }
-  let(:architecture) { :x86_64 }
 
   before { fake_scenario(scenario) }
 

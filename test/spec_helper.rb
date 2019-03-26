@@ -87,6 +87,16 @@ RSpec.configure do |c|
       allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
       allow(Yast::Arch).to receive(:aarch64).and_return(architecture == :aarch64)
     end
+
+    # Bcache is only supported for x86_64 architecture. The sanitizer complains when
+    # Bcache is used with another architecture. Bcache errors are mocked here to avoid
+    # to have to indicate x86_84 architecture in every test using Bcache (which has
+    # demonstrated to be quite error prone).
+    #
+    # This should be properly unmocked in the tests where real Bcache checking needs
+    # to be performed (e.g., DevicegraphSanitizer tests).
+    allow_any_instance_of(Y2Storage::DevicegraphSanitizer)
+      .to receive(:errors_for_bcache).and_return([])
   end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize

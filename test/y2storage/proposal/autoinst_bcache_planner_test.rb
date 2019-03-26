@@ -32,7 +32,6 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
-  let(:architecture) { :x86_64 }
 
   before do
     fake_scenario(scenario)
