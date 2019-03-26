@@ -184,6 +184,36 @@ RSpec.shared_examples "filesystem in devicegraph" do
       expect(analyzer.boot_disk.name).to eq "/dev/sda"
     end
   end
+
+  # Regression bsc#1129787
+  context "and the filesystem is over a Bcache" do
+    let(:scenario) { "bcache-root-ext4.xml" }
+
+    let(:device_name) { "/dev/bcache0" }
+
+    it "returns a Disk object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Disk
+    end
+
+    it "returns the disk containing the backing device of the Bcache" do
+      expect(analyzer.boot_disk.name).to eq "/dev/sda"
+    end
+  end
+
+  # Regression bsc#1129787
+  context "and the filesystem is over a Flash-only Bcache" do
+    let(:scenario) { "bcache2.xml" }
+
+    let(:device_name) { "/dev/bcache2" }
+
+    it "returns a Disk object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Disk
+    end
+
+    it "returns the first disk used as caching device" do
+      expect(analyzer.boot_disk.name).to eq "/dev/sdb"
+    end
+  end
 end
 
 describe Y2Storage::BootRequirementsStrategies::Analyzer do
