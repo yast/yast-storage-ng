@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -409,6 +409,25 @@ describe Y2Storage::BootRequirementsChecker do
             end
 
             xcontext "in a Software RAID setup" do
+            end
+          end
+        end
+
+        context "with a separate boot (/boot) file-system" do
+          context "and the /boot is over a partition" do
+            let(:scenario) { "separate_boot_partition" }
+
+            include_examples "no warnings"
+          end
+
+          context "and the /boot is directly on disk (no partition table)" do
+            let(:scenario) { "separate_boot_disk" }
+
+            it "shows a warning that the boot device has no partition table" do
+              expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+              messages = checker.warnings.map(&:message)
+              expect(messages).to include(match(/has no partition table/))
             end
           end
         end
