@@ -167,6 +167,7 @@ module Y2Storage
       def grub_partition(target)
         planned_partition = create_planned_partition(grub_volume, target)
         planned_partition.bootable = false
+        planned_partition.disk = boot_disk.name
         planned_partition
       end
 

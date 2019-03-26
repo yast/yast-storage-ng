@@ -214,12 +214,12 @@ describe Y2Storage::GuidedProposal do
 
         multipath0, multipath1 = proposal.devices.multipaths
         expect(multipath0.partitions).to contain_exactly(
+          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
           an_object_having_attributes(filesystem_mountpoint: "/"),
           an_object_having_attributes(filesystem_mountpoint: "/home")
         )
         expect(multipath1.partitions).to contain_exactly(
-          an_object_having_attributes(filesystem_mountpoint: "swap"),
-          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT)
+          an_object_having_attributes(filesystem_mountpoint: "swap")
         )
       end
 
@@ -228,12 +228,12 @@ describe Y2Storage::GuidedProposal do
         multipath0, multipath1 = proposal.devices.multipaths
         expect(multipath0.partitions.map(&:name)).to contain_exactly(
           "#{multipath0.name}-part1",
-          "#{multipath0.name}-part2"
+          "#{multipath0.name}-part2",
+          "#{multipath0.name}-part3"
         )
 
         expect(multipath1.partitions.map(&:name)).to contain_exactly(
-          "#{multipath1.name}-part1",
-          "#{multipath1.name}-part2"
+          "#{multipath1.name}-part1"
         )
       end
     end

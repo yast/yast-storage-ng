@@ -57,10 +57,24 @@ RSpec.shared_context "plain UEFI" do
       context "and it is a suitable EFI partition (enough size, valid filesystem)" do
         let(:match) { true }
 
-        it "only requires to use the existing EFI partition" do
-          expect(checker.needed_partitions).to contain_exactly(
-            an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
-          )
+        context "and it is on the boot disk" do
+          let(:boot_disk) { dev_sda }
+
+          it "only requires to use the existing EFI partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
+            )
+          end
+        end
+
+        context "and it is not on the boot disk" do
+          let(:boot_disk) { dev_sdb }
+
+          it "requires only a new /boot/efi partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
+            )
+          end
         end
       end
     end

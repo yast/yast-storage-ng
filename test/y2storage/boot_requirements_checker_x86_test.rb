@@ -51,6 +51,30 @@ describe Y2Storage::BootRequirementsChecker do
     end
   end
 
+  RSpec.shared_context "BIOS GRUB partition" do
+    context "if there is no GRUB partition" do
+      let(:grub_partitions) { [] }
+
+      include_examples("needs grub partition")
+    end
+
+    context "if there is already a GRUB partition" do
+      let(:grub_partitions) { [grub_partition] }
+
+      context "and it is on the boot disk" do
+        let(:boot_disk) { dev_sda }
+
+        include_examples("needs no volume")
+      end
+
+      context "and it is not on the boot disk" do
+        let(:boot_disk) { dev_sdb }
+
+        include_examples("needs grub partition")
+      end
+    end
+  end
+
   describe "#needed_partitions in a x86 system" do
     using Y2Storage::Refinements::SizeCasts
 
@@ -94,50 +118,20 @@ describe Y2Storage::BootRequirementsChecker do
         context "in a partitions-based proposal" do
           let(:use_lvm) { false }
 
-          context "if there is no GRUB partition" do
-            let(:grub_partitions) { [] }
-
-            include_examples("needs grub partition")
-          end
-
-          context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [grub_partition] }
-
-            include_examples("needs no volume")
-          end
+          include_context "BIOS GRUB partition"
         end
 
         context "in a LVM-based proposal" do
           let(:use_lvm) { true }
 
-          context "if there is no GRUB partition" do
-            let(:grub_partitions) { [] }
-
-            include_examples("needs grub partition")
-          end
-
-          context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [grub_partition] }
-
-            include_examples("needs no volume")
-          end
+          include_context "BIOS GRUB partition"
         end
 
         context "in an encrypted proposal" do
           let(:use_lvm) { false }
           let(:use_encryption) { true }
 
-          context "if there is no GRUB partition" do
-            let(:grub_partitions) { [] }
-
-            include_examples("needs grub partition")
-          end
-
-          context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [grub_partition] }
-
-            include_examples("needs no volume")
-          end
+          include_context "BIOS GRUB partition"
         end
       end
 
