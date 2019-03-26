@@ -666,7 +666,6 @@ describe Y2Storage::Devicegraph do
   end
 
   describe "#remove_bcache" do
-    let(:architecture) { :x86_64 } # bcache is only supported on x86_64
     subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
     before do
@@ -734,9 +733,6 @@ describe Y2Storage::Devicegraph do
     before do
       fake_scenario("bcache1.xml")
     end
-
-    # Bcache is only supported on x86
-    let(:architecture) { :x86_64 }
 
     it "removes the given caching set device" do
       bcache_cset = Y2Storage::BcacheCset.all(devicegraph).first
@@ -948,7 +944,6 @@ describe Y2Storage::Devicegraph do
       fake_scenario("bcache1.xml")
     end
 
-    let(:architecture) { :x86_64 } # bcache is only supported on x86_64
     subject(:list) { fake_devicegraph.bcaches }
 
     it "returns an array of bcache devices" do
@@ -972,7 +967,6 @@ describe Y2Storage::Devicegraph do
       fake_scenario("bcache1.xml")
     end
 
-    let(:architecture) { :x86_64 } # bcache is only supported on x86_64
     subject(:list) { fake_devicegraph.bcache_csets }
 
     it "returns an array of bcache csets" do

@@ -223,9 +223,6 @@ describe Y2Partitioner::UIState do
     end
 
     context "when the user has opened a bcache page" do
-      # Bcache is only supported on x86
-      let(:architecture) { :x86_64 }
-
       let(:scenario) { "bcache1.xml" }
       let(:device) { fake_devicegraph.find_by_name("/dev/bcache0") }
       let(:another_bcache) { fake_devicegraph.find_by_name("/dev/bcache1") }

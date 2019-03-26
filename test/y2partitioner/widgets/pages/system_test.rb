@@ -214,7 +214,6 @@ describe Y2Partitioner::Widgets::Pages::System do
     end
 
     context "when there are bcache devices" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
 
       it "contains all bcache devices" do

@@ -41,9 +41,6 @@ describe Y2Partitioner::Actions::EditBcache do
       .and_return(selected_options)
   end
 
-  # Bcache is only supported on x86
-  let(:architecture) { :x86_64 }
-
   let(:dialog_result) { nil }
 
   let(:selected_caching) { nil }

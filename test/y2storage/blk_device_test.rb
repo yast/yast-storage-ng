@@ -679,7 +679,6 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#bcache" do
-    let(:architecture) { :x86_64 } # bcache is only supported on x86_64
     let(:scenario) { "bcache2.xml" }
 
     context "when the device is not used as backing device by a bcache" do
@@ -811,7 +810,6 @@ describe Y2Storage::BlkDevice do
     end
 
     context "for a disk that is used as backing device for a bcache" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdc" }
 
@@ -823,7 +821,6 @@ describe Y2Storage::BlkDevice do
     end
 
     context "for a disk that is used as caching device for a bcache" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdb" }
 
@@ -835,7 +832,6 @@ describe Y2Storage::BlkDevice do
     end
 
     context "for a bcache device not used in an LVM or in a RAID" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/bcache0" }
 
@@ -850,7 +846,6 @@ describe Y2Storage::BlkDevice do
 
   describe "#component_of_names" do
     context "component has name" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdc" }
 
@@ -861,7 +856,6 @@ describe Y2Storage::BlkDevice do
     end
 
     context "component has display name" do
-      let(:architecture) { :x86_64 } # bcache is only supported on x86_64
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdb" }
 

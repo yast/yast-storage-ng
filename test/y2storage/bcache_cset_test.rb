@@ -30,7 +30,7 @@ describe Y2Storage::BcacheCset do
 
   let(:scenario) { "bcache1.xml" }
   let(:bcache_name) { "/dev/bcache0" }
-  let(:architecture) { :x86_64 } # need an architecture where bcache is supported
+
   subject(:bcache_cset) { Y2Storage::Bcache.find_by_name(fake_devicegraph, bcache_name).bcache_cset }
 
   describe "#blk_devices" do
