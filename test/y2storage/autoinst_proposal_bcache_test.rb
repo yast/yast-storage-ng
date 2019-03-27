@@ -33,6 +33,7 @@ describe Y2Storage::AutoinstProposal do
   end
 
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:architecture) { :x86_64 }
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)
