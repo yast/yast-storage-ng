@@ -56,7 +56,32 @@ module Y2Storage
       UNKNOWN.to_i            => N_("Unknown"),
       WINDOWS_BASIC_DATA.to_i => N_("Windows Data")
     }.freeze
-    private_constant :TRANSLATIONS
+
+    SORT_ORDER = [
+      # Linux partition IDs first
+      LINUX,
+      SWAP,
+      LVM,
+      RAID,
+      # Boot-related
+      ESP,
+      BIOS_BOOT,
+      PREP,
+      # Windows-related
+      NTFS,
+      DOS32,
+      DOS16,
+      DOS12,
+      WINDOWS_BASIC_DATA,
+      MICROSOFT_RESERVED,
+      # Other
+      IRST,
+      DIAG,
+      EXTENDED
+      # Eveything not listed here is sorted after this
+    ].freeze
+
+    private_constant :TRANSLATIONS, :SORT_ORDER
 
     def to_human_string
       textdomain "storage"
@@ -169,6 +194,19 @@ module Y2Storage
           name.to_sym == to_sym
         end
       end
+    end
+
+    # Get the sort order of this partition ID.
+    # @return [Integer]
+    def sort_order
+      SORT_ORDER.find_index(self) || SORT_ORDER.size
+    end
+
+    # Comparison operator for sorting.
+    # @return [Integer] -1, 0, 1
+    def <=>(other)
+      return -1 unless other.respond_to?(:sort_order)
+      sort_order <=> other.sort_order
     end
   end
 end

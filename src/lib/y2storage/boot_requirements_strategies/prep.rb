@@ -134,6 +134,7 @@ module Y2Storage
         # The PReP partition cannot be logical (see bsc#1082468 and
         # information in /doc and the RSpec tests)
         planned_partition.primary = true
+        planned_partition.disk = boot_disk.name
         planned_partition
       end
 

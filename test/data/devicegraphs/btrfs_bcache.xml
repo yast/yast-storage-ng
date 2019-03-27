@@ -85,7 +85,7 @@
       <sid>257</sid>
       <path>/boot</path>
       <mount-by>uuid</mount-by>
-      <mount-options>data=ordered,acl,user_xattr</mount-options>
+      <mount-options>data=ordered</mount-options>
       <mount-type>ext4</mount-type>
       <active>true</active>
       <in-etc-fstab>true</in-etc-fstab>

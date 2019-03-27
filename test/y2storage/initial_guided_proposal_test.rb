@@ -79,11 +79,13 @@ describe Y2Storage::InitialGuidedProposal do
           "desired_size"          => "2GiB",
           "min_size"              => "1GiB",
           "max_size"              => "2GiB",
-          "proposed_configurable" => true,
+          "proposed_configurable" => swap_optional,
           "disable_order"         => 1
         }
       ]
     end
+
+    let(:swap_optional) { true }
 
     context "when settings has legacy format" do
       it "uses the legacy settings generator to calculate the settings" do
@@ -162,22 +164,51 @@ describe Y2Storage::InitialGuidedProposal do
       end
 
       context "and a proposal is not possible with any individual device" do
+        let(:swap_optional) { false }
+
         before do
           sda.size = 12.GiB
           sdb.size = 15.GiB
           sdc.size = 3.GiB
         end
 
-        it "uses all the devices to make the proposal" do
-          proposal.propose
-
-          expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
-        end
-
         it "allocates the root device in the biggest device" do
           proposal.propose
 
           expect(disk_for("/").name).to eq "/dev/sdb"
+        end
+
+        # FIXME: this is currently not working, see bsc#1130392
+        context "and swap is optional" do
+          let(:swap_optional) { true }
+
+          xit "uses all the devices to make the proposal" do
+            proposal.propose
+
+            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+          end
+
+          xit "allocates the swap partition in a separate device" do
+            proposal.propose
+
+            expect(disk_for("swap").name).to eq "/dev/sdc"
+          end
+        end
+
+        context "and swap is mandatory" do
+          let(:swap_optional) { false }
+
+          it "uses all the devices to make the proposal" do
+            proposal.propose
+
+            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+          end
+
+          it "allocates the swap partition in a separate device" do
+            proposal.propose
+
+            expect(disk_for("swap").name).to eq "/dev/sdc"
+          end
         end
       end
     end

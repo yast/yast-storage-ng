@@ -197,34 +197,18 @@ module Y2Storage
 
     # @see #windows_partitions
     def find_windows_partitions(disk)
-      return nil unless windows_architecture?
-      disk.possible_windows_partitions.select { |p| windows_partition?(p) }
+      disk.partitions.select { |p| windows_partition?(p) }
     end
 
-    # Checks whether the architecture of the system is supported by
-    # MS Windows
+    # Check if the partition contains a MS Windows system that could possibly be resized.
     #
+    # @param partition [Partition] partition to check
     # @return [Boolean]
-    def windows_architecture?
-      # Should we include ARM here?
-      Yast::Arch.x86_64 || Yast::Arch.i386
-    end
-
-    # Check if 'partition' is a MS Windows partition that could possibly be resized.
-    #
-    # @param partition [Partition] partition to check.
-    # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
     def windows_partition?(partition)
-      log.info("Checking if #{partition.name} is a windows partition")
+      return false unless partition.formatted?
+
       filesystem = partition.filesystem
-      is_win = filesystem && filesystem.detect_content_info.windows?
-
-      log.info("#{partition.name} is a windows partition") if is_win
-      is_win
-
-    rescue Storage::Exception
-      log.warn("#{partition.name} content info cannot be detected")
-      false
+      ExistingFilesystem.new(filesystem).windows?
     end
 
     # Obtain release names of installed systems in a disk.
