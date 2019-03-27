@@ -23,9 +23,6 @@
         size: 30708 MiB
         file_system: ext4
         mount_point: "/"
-        fstab_options:
-          - acl
-          - user_xattr
     - lvm_lv:
         lv_name: var_lib_docker
         size: 20 GiB

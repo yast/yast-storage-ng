@@ -142,15 +142,15 @@ describe Y2Storage::Filesystems::Type do
   describe "#default_fstab_options" do
     context "for locale-independent filesystem types" do
       it "ext2 has the correct fstab options" do
-        expect(described_class::EXT2.default_fstab_options).to eq ["acl", "user_xattr"]
+        expect(described_class::EXT2.default_fstab_options).to eq []
       end
 
       it "ext3 has the correct fstab options" do
-        expect(described_class::EXT3.default_fstab_options).to eq ["data=ordered", "acl", "user_xattr"]
+        expect(described_class::EXT3.default_fstab_options).to eq ["data=ordered"]
       end
 
       it "ext4 has the correct fstab options" do
-        expect(described_class::EXT4.default_fstab_options).to eq ["data=ordered", "acl", "user_xattr"]
+        expect(described_class::EXT4.default_fstab_options).to eq ["data=ordered"]
       end
 
       it "xfs has the correct fstab options" do
@@ -186,15 +186,15 @@ describe Y2Storage::Filesystems::Type do
     context "for special paths" do
       context "for root filesystems" do
         it "ext2 has the correct fstab options" do
-          expect(described_class::EXT2.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+          expect(described_class::EXT2.default_fstab_options("/")).to eq []
         end
 
         it "ext3 has the correct fstab options" do
-          expect(described_class::EXT3.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+          expect(described_class::EXT3.default_fstab_options("/")).to eq []
         end
 
         it "ext4 has the correct fstab options" do
-          expect(described_class::EXT4.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+          expect(described_class::EXT4.default_fstab_options("/")).to eq []
         end
       end
 

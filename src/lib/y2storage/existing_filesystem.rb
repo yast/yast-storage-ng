@@ -38,13 +38,11 @@ module Y2Storage
     # Constructor
     #
     # @param filesystem [Filesystems::Base]
-    # @param root [String]
     # @param mount_point [String]
-    def initialize(filesystem, root = "/", mount_point = "/mnt")
+    def initialize(filesystem, mount_point = "/mnt")
       @filesystem = filesystem
-      @root = root
       @mount_point = mount_point
-      @rpi_boot = false
+
       @processed = false
     end
 
@@ -71,7 +69,7 @@ module Y2Storage
       @fstab
     end
 
-    # Read the crypttab file from the filesystem
+    # Reads the crypttab file from the filesystem
     #
     # @return [Crypttab, nil] nil if the crypttab file cannot be read
     def crypttab
@@ -85,7 +83,15 @@ module Y2Storage
     # @return [Boolean]
     def rpi_boot?
       set_attributes unless processed?
-      @rpi_boot
+      !!@rpi_boot
+    end
+
+    # Whether the filesystem contains a MS Windows system
+    #
+    # @return [Boolean]
+    def windows?
+      set_attributes unless processed?
+      @windows
     end
 
   protected
@@ -94,7 +100,44 @@ module Y2Storage
     attr_reader :processed
     alias_method :processed?, :processed
 
+    # Sets attributes depending on the kind of system it contains (Windows or Linux)
     def set_attributes
+      @windows = windows_filesystem?
+
+      read_filesystem unless @windows
+
+      @processed = true
+    end
+
+    # Whether the filesystem contains a Windows system
+    #
+    # @return [Boolean]
+    def windows_filesystem?
+      return false if !windows_architecture? || !windows_partition?
+
+      filesystem.detect_content_info.windows?
+    rescue Storage::Exception
+      log.warn("#{device.name} content info cannot be detected")
+      false
+    end
+
+    # Whether the architecture of the system is supported by MS Windows
+    #
+    # @return [Boolean]
+    def windows_architecture?
+      # Should we include ARM here?
+      Yast::Arch.x86_64 || Yast::Arch.i386
+    end
+
+    # Whether the filesystem is created over a Windows-suitable partition
+    #
+    # @return [Boolean]
+    def windows_partition?
+      device.is?(:partition) && device.suitable_for_windows?
+    end
+
+    # Reads needed info from the filesystem
+    def read_filesystem
       mount
       @release_name = read_release_name
       @fstab = read_fstab
@@ -104,8 +147,6 @@ module Y2Storage
     rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
       log.error("CAUGHT exception: #{ex} for #{device.name}")
       nil
-    ensure
-      @processed = true
     end
 
     # Mounts the device

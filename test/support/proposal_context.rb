@@ -29,7 +29,7 @@ RSpec.shared_context "proposal" do
 
     allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
     allow(disk_analyzer).to receive(:windows_partition?) do |partition|
-      !!(partition.filesystem.label =~ /indows/)
+      partition.filesystem && !!(partition.filesystem.label =~ /indows/)
     end
 
     allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)

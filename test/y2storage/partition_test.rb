@@ -543,4 +543,44 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  describe "#suitable_for_windows?" do
+    let(:scenario) { "mixed_disks" }
+
+    subject(:partition) { fake_devicegraph.find_by_name(device_name) }
+
+    before do
+      partition.id = id
+    end
+
+    let(:id) { Y2Storage::PartitionId::LINUX }
+
+    context "when it is not a primary partition" do
+      let(:device_name) { "/dev/sdb5" }
+
+      it "returns false" do
+        expect(subject.suitable_for_windows?).to eq(false)
+      end
+    end
+
+    context "when it is a primary partition" do
+      let(:device_name) { "/dev/sda1" }
+
+      context "and it has 'windows_system' id" do
+        let(:id) { Y2Storage::PartitionId::NTFS }
+
+        it "returns true" do
+          expect(subject.suitable_for_windows?).to eq(true)
+        end
+      end
+
+      context "and it has no 'windows_system' id" do
+        let(:id) { Y2Storage::PartitionId::LVM }
+
+        it "returns false" do
+          expect(subject.suitable_for_windows?).to eq(false)
+        end
+      end
+    end
+  end
 end

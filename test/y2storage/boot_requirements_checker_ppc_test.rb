@@ -41,6 +41,7 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sda).to receive(:grub_partitions).and_return []
       allow(dev_sda).to receive(:prep_partitions).and_return prep_partitions
       allow(dev_sda).to receive(:partitions).and_return(prep_partitions)
+      allow(dev_sdb).to receive(:partitions).and_return([])
       allow(prep_partition).to receive(:match_volume?).and_return(true)
     end
 
@@ -64,8 +65,22 @@ describe Y2Storage::BootRequirementsChecker do
       context "if there is already a suitable PReP partition in the disk" do
         let(:prep_partitions) { [prep_partition] }
 
-        it "does not require any partition (PReP will be reused and Grub2 can handle this setup)" do
-          expect(checker.needed_partitions).to be_empty
+        context "and it is on the boot disk" do
+          let(:boot_disk) { dev_sda }
+
+          it "does not require any partition (PReP will be reused and Grub2 can handle this setup)" do
+            expect(checker.needed_partitions).to be_empty
+          end
+        end
+
+        context "and it is not on the boot disk" do
+          let(:boot_disk) { dev_sdb }
+
+          it "requires only a new PReP partition (to allocate Grub2)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
+            )
+          end
         end
       end
     end

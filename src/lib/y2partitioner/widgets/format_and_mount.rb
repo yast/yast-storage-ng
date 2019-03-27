@@ -851,7 +851,7 @@ module Y2Partitioner
       def items
         blk_dev = @controller.blk_device
         if blk_dev.is?(:partition)
-          blk_dev.partition_table.supported_partition_ids.map do |part_id|
+          blk_dev.partition_table.supported_partition_ids.sort.map do |part_id|
             [part_id.to_sym, part_id.to_human_string]
           end
         else

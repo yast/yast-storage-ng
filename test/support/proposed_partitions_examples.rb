@@ -54,6 +54,10 @@ RSpec.shared_examples "proposed GRUB partition" do
 
   let(:target) { nil }
 
+  it "requires it to be on the boot disk" do
+    expect(grub_part.disk).to eq boot_disk.name
+  end
+
   it "requires it to have the correct id" do
     expect(grub_part.partition_id.is?(:bios_boot)).to eq true
   end
@@ -92,6 +96,10 @@ RSpec.shared_examples "proposed EFI partition basics" do
   using Y2Storage::Refinements::SizeCasts
 
   let(:target) { nil }
+
+  it "requires /boot/efi to be on the boot disk" do
+    expect(efi_part.disk).to eq boot_disk.name
+  end
 
   it "requires /boot/efi to be a non-encrypted vfat partition" do
     expect(efi_part).to be_a Y2Storage::Planned::Partition
@@ -156,6 +164,10 @@ RSpec.shared_examples "proposed PReP partition" do
 
   let(:target) { nil }
 
+  it "requires it to be on the boot disk" do
+    expect(prep_part.disk).to eq boot_disk.name
+  end
+
   it "requires it to be a non-encrypted partition" do
     expect(prep_part).to be_a Y2Storage::Planned::Partition
     expect(prep_part.encrypt?).to eq false
@@ -207,17 +219,20 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
 
   let(:target) { nil }
 
-  it "proposes /boot/zipl to be a non-encrypted partition in the boot disk" do
+  it "requires /boot/zipl to be on the boot disk" do
     expect(zipl_part.disk).to eq boot_disk.name
+  end
+
+  it "requires /boot/zipl to be a non-encrypted partition" do
     expect(zipl_part).to be_a Y2Storage::Planned::Partition
     expect(zipl_part.encrypt?).to eq false
   end
 
-  it "proposes /boot/zipl to be formated as ext2" do
+  it "requires /boot/zipl to be formated as ext2" do
     expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
   end
 
-  it "proposes /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)" do
+  it "requires /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)" do
     expect(zipl_part.max_size).to eq 300.MiB
   end
 
