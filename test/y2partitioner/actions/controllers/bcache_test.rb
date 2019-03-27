@@ -30,9 +30,6 @@ describe Y2Partitioner::Actions::Controllers::Bcache do
     devicegraph_stub(scenario)
   end
 
-  # Bcache is only supported on x86
-  let(:architecture) { :x86_64 }
-
   subject(:controller) { described_class.new(device) }
 
   let(:device) { nil }

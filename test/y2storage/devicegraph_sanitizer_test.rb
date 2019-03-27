@@ -74,6 +74,12 @@ describe Y2Storage::DevicegraphSanitizer do
       let(:devicegraph) { devicegraph_from("bcache2.xml") }
       let(:bcache_name) { "/dev/bcache0" }
 
+      before do
+        # Unmocking errors for Bcache
+        allow_any_instance_of(Y2Storage::DevicegraphSanitizer)
+          .to receive(:errors_for_bcache).and_call_original
+      end
+
       context "on an architecture that supports bcache (x86_64)" do
         let(:architecture) { :x86_64 }
 

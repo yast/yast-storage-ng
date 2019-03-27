@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Mar 26 11:51:34 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Improve unit tests: mocking architecture for Bcache is not needed
+  anymore (fix regression tests for bsc#1129787).
+- 4.1.77
+
+-------------------------------------------------------------------
 Mon Mar 25 14:20:54 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Fix boot disk detection (bsc#1129787).

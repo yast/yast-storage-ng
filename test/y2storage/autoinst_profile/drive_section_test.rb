@@ -409,8 +409,6 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "given a bcache" do
-      let(:architecture) { :x86_64 }
-
       before { fake_scenario("btrfs_bcache.xml") }
 
       it "initializes #type to :CT_BCACHE" do
