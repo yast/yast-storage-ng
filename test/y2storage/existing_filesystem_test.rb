@@ -105,6 +105,7 @@ describe Y2Storage::ExistingFilesystem do
       let(:device_name) { "/dev/sda1" }
 
       let(:windows_content) { true }
+      let(:architecture) { :x86_64 }
 
       it "returns nil" do
         expect(subject.release_name).to be_nil
@@ -147,6 +148,7 @@ describe Y2Storage::ExistingFilesystem do
       let(:device_name) { "/dev/sda1" }
 
       let(:windows_content) { true }
+      let(:architecture) { :x86_64 }
 
       it "returns nil" do
         expect(subject.fstab).to be_nil
