@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -582,6 +582,26 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       it "initializes bcache caching devices list to an empty array" do
         section = described_class.new_from_hashes(hash)
         expect(section.bcache_caching_for).to eq([])
+      end
+    end
+
+    context "when device is present" do
+      let(:hash) { { device: nfs_share } }
+
+      let(:nfs_share) { "192.168.56.1:/root" }
+
+      it "initializes device" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.device).to eq(nfs_share)
+      end
+    end
+
+    context "when device is not present" do
+      let(:hash) { {} }
+
+      it "initializes device to nil" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.device).to be_nil
       end
     end
   end

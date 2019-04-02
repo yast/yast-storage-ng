@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -139,9 +139,17 @@ module Y2Storage
       end
 
       def default_type_for(hash)
-        return :CT_MD if hash["device"].to_s.start_with?("/dev/md")
-        return :CT_BCACHE if hash["device"].to_s.start_with?("/dev/bcache")
-        :CT_DISK
+        device_name = hash["device"].to_s
+
+        if md_name?(device_name)
+          :CT_MD
+        elsif bcache_name?(device_name)
+          :CT_BCACHE
+        elsif nfs_name?(device_name)
+          :CT_NFS
+        else
+          :CT_DISK
+        end
       end
 
       # Clones a drive into an AutoYaST profile section by creating an instance
@@ -248,6 +256,31 @@ module Y2Storage
       end
 
     protected
+
+      # Whether the given name is a Md name
+      #
+      # @param device_name [String]
+      # @return [Boolean]
+      def md_name?(device_name)
+        device_name.start_with?("/dev/md")
+      end
+
+      # Whether the given name is a Bcache name
+      #
+      # @param device_name [String]
+      # @return [Boolean]
+      def bcache_name?(device_name)
+        device_name.start_with?("/dev/bcache")
+      end
+
+      # Whether the given name is a NFS name
+      #
+      # @param device_name [String]
+      # @return [Boolean]
+      def nfs_name?(device_name)
+        # TODO: with the new format, device_name would be "server:path"
+        device_name == "/dev/nfs"
+      end
 
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a disk or DASD device.
