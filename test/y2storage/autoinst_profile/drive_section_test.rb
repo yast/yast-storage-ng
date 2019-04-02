@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,11 +40,17 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   end
 
   describe ".new_from_hashes" do
-    context "when type is not specified" do
-      let(:root) { { "mount" => "/" } }
-      let(:hash) { { "partitions" => [root], "raid_options" => raid_options } }
-      let(:raid_options) { { "raid_type" => "raid0" } }
+    let(:hash) { { "partitions" => [root] } }
 
+    let(:root) { { "mount" => "/" } }
+
+    it "initializes partitions" do
+      expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
+        .with(root, Y2Storage::AutoinstProfile::DriveSection)
+      described_class.new_from_hashes(hash)
+    end
+
+    context "when type is not specified" do
       it "initializes it to :CT_DISK" do
         expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
       end
@@ -57,11 +63,18 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
 
-      it "initializes partitions" do
-        expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
-          .with(root, Y2Storage::AutoinstProfile::DriveSection)
-        described_class.new_from_hashes(hash)
+      context "and device name is /dev/nfs" do
+        let(:hash) { { "device" => "/dev/nfs" } }
+
+        it "initializes it to :CT_NFS" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_NFS)
+        end
       end
+    end
+
+    context "when the raid options are given" do
+      let(:hash) { { "partitions" => [root], "raid_options" => raid_options } }
+      let(:raid_options) { { "raid_type" => "raid0" } }
 
       it "initializes raid options" do
         expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_hashes)
@@ -71,7 +84,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(section.raid_options.raid_type).to eq("raid0")
       end
 
-      context "when the raid_name is specified in the raid_options" do
+      context "and the raid_type is specified" do
         let(:raid_options) { { "raid_type" => "raid0" } }
 
         it "ignores the raid_name element" do
