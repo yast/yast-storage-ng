@@ -127,6 +127,23 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         end
       end
     end
+
+    context "when NFS is used" do
+      let(:partitioning_array) do
+        [
+          {
+            "device"     => "/dev/nfs",
+            "partitions" => [{ "device" => "srv:/home/a" }]
+          }
+        ]
+      end
+
+      it "uses the device name" do
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+
+        expect(drives_map.disk_names).to include("/dev/nfs")
+      end
+    end
   end
 
   describe "#each" do
