@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr  2 15:37:22 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Add support for installing over NFS with AutoYaST (bsc#1130256).
+- 4.0.219
+
+-------------------------------------------------------------------
 Fri Feb  8 11:43:53 UTC 2019 - ancor@suse.com
 
 - AutoYaST: fix broken support for retaining existing MD RAIDs in
@@ -509,7 +515,7 @@ Wed Apr 18 10:37:17 UTC 2018 - ancor@suse.com
 -------------------------------------------------------------------
 Tue Apr 17 12:01:08 UTC 2018 - shundhammer@suse.com
 
-- Added missing help texts in the partitioner (bsc#1079591) 
+- Added missing help texts in the partitioner (bsc#1079591)
 - 4.0.157
 
 -------------------------------------------------------------------
