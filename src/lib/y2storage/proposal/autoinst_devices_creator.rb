@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,6 +22,7 @@
 require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/md_creator"
+require "y2storage/proposal/nfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
 
@@ -82,28 +81,12 @@ module Y2Storage
         log.info "planned devices = #{planned_devices.to_a.inspect}"
         log.info "disk names = #{disk_names.inspect}"
 
-        # Process planned partitions
-        parts_to_create, parts_to_reuse, creator_result =
-          process_partitions(planned_devices, disk_names, original_graph.duplicate)
+        reset
 
-        # Process planned disk like devices (Xen virtual partitions and full disks)
-        planned_disk_like_devs = process_disk_like_devs(planned_devices, creator_result.devicegraph)
+        @planned_devices = planned_devices
+        @disk_names = disk_names
 
-        # Add planned disk like devices to reuse list so they can be considered for lvm and raids
-        # later on.
-        devs_to_reuse = parts_to_reuse + planned_disk_like_devs
-
-        # Process planned Mds
-        mds_to_create, _mds_to_reuse, creator_result =
-          process_mds(planned_devices, devs_to_reuse, creator_result)
-
-        # Process planned Vgs
-        planned_vgs, creator_result =
-          process_vgs(planned_devices, devs_to_reuse, creator_result)
-
-        Y2Storage::Proposal::AutoinstCreatorResult.new(
-          creator_result, parts_to_create + mds_to_create + planned_vgs
-        )
+        process_devices
       end
 
     protected
@@ -111,14 +94,31 @@ module Y2Storage
       # @return [Devicegraph] Original devicegraph
       attr_reader :original_graph
 
+      # @return [Planned::DevicesCollection] Devices to create/reuse
+      attr_reader :planned_devices
+
+      # @return [Array<String>] Disks to consider
+      attr_reader :disk_names
+
+      # @return [Array<Planned::Device>] Devices to create
+      attr_reader :devices_to_create
+
+      # @return [Array<Planned::Device>] Devices to reuse
+      attr_reader :devices_to_reuse
+
+      # @return [Proposal::CreatorResult] Current result containing the devices that have been created
+      attr_reader :creator_result
+
+      # @return [Devicegraph] Current devicegraph
+      attr_reader :devicegraph
+
       # Finds the best distribution for the given planned partitions
       #
-      # @param devicegraph        [Devicegraph] Devicegraph to calculate the distribution
-      # @param planned_partitions [Array<Planned::Partition>] Partitions to add
-      # @param disk_names         [Array<String>]             Names of disks to consider
-      #
       # @see Proposal::PartitionsDistributionCalculator#best_distribution
-      def best_distribution(devicegraph, planned_partitions, disk_names)
+      #
+      # @param planned_partitions [Array<Planned::Partition>] Partitions to add
+      # @return [Planned::PartitionsDistribution]
+      def best_distribution(planned_partitions)
         disks = devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten
 
@@ -132,121 +132,105 @@ module Y2Storage
 
     private
 
+      # Sets the current creator result
+      #
+      # The current devicegraph is properly updated.
+      #
+      # @param result [Proposal::CreatorResult]
+      def creator_result=(result)
+        @creator_result = result
+        @devicegraph = result.devicegraph
+      end
+
+      # Adds devices to the list of devices to create
+      #
+      # @param planned_devices [Array<Planned::Device>]
+      def add_devices_to_create(planned_devices)
+        @devices_to_create.concat(planned_devices)
+      end
+
+      # Adds devices to the list of devices to reuse
+      #
+      # @param planned_devices [Array<Planned::Device>]
+      def add_devices_to_reuse(planned_devices)
+        @devices_to_reuse.concat(planned_devices)
+      end
+
+      # Resets values before create devices
+      #
+      # @see #populated_devicegraph
+      def reset
+        @devices_to_create = []
+        @devices_to_reuse = []
+        @creator_result = nil
+        @devicegraph = original_graph.duplicate
+      end
+
+      # Reuses and creates planned devices
+      #
+      # @return [AutoinstCreatorResult] Result with new devicegraph in which all the
+      #   planned devices have been allocated
+      def process_devices
+        process_partitions
+        # Process planned disk like devices (Xen virtual partitions and full disks)
+        process_disk_like_devs
+        process_mds
+        process_vgs
+        process_nfs_filesystems
+
+        Y2Storage::Proposal::AutoinstCreatorResult.new(creator_result, devices_to_create)
+      end
+
       # Process planned partitions
-      #
-      # The devicegraph object is modified.
-      #
-      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
-      # @param disk_names [Array<String>] Disks to consider
-      # @param devicegraph [Devicegraph] Devicegraph to work on
-      #
-      # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
-      def process_partitions(planned_devices, disk_names, devicegraph)
+      def process_partitions
         planned_partitions = sized_partitions(planned_devices.disk_partitions)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
-        reuse_partitions(parts_to_reuse, devicegraph)
-        creator_result = create_partitions(devicegraph, parts_to_create, disk_names)
+        reuse_partitions(parts_to_reuse)
 
-        [parts_to_create, parts_to_reuse, creator_result]
-      end
-
-      # Process planned Mds
-      #
-      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
-      # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
-      # @param creator_result [CreatorResult] partial result
-      #
-      # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
-      def process_mds(planned_devices, devs_to_reuse, creator_result)
-        mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
-        devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
-        reuse_mds(mds_to_reuse, creator_result)
-        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
-
-        [mds_to_create, mds_to_reuse, creator_result]
-      end
-
-      # Process planned Vgs
-      #
-      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
-      # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
-      # @param creator_result [CreatorResult] partial result
-      #
-      # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
-      def process_vgs(planned_devices, devs_to_reuse, creator_result)
-        planned_vgs = planned_devices.vgs
-        vgs_to_reuse = planned_vgs.select(&:reuse?)
-        creator_result = reuse_vgs(vgs_to_reuse, creator_result)
-        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
-
-        [planned_vgs, creator_result]
+        add_devices_to_create(parts_to_create)
+        add_devices_to_reuse(parts_to_reuse)
+        self.creator_result = create_partitions(parts_to_create)
       end
 
       # Formats and/or mounts the disk like block devices (Xen virtual partitions and full disks)
       #
-      # @param planned_devices [Array<Planned::Device>] all planned devices
-      # @param devicegraph     [Devicegraph] devicegraph containing the Xen
-      #   partitions or full disks. It will be modified.
-      # @return                [Array<Planned::StrayBlkDevice,Planned::Disk>] all disk like
-      #   block devices
-      def process_disk_like_devs(planned_devices, devicegraph)
+      # Add planned disk like devices to reuse list so they can be considered for lvm and raids
+      # later on.
+      def process_disk_like_devs
         planned_devs = planned_devices.select do |dev|
           dev.is_a?(Planned::StrayBlkDevice) || dev.is_a?(Planned::Disk)
         end
+
         planned_devs.each { |d| d.reuse!(devicegraph) }
 
-        planned_devs
+        add_devices_to_reuse(planned_devs)
       end
 
-      # Creates planned partitions in the given devicegraph
-      #
-      # @param new_partitions [Array<Planned::Partition>] Devices to create
-      # @param disk_names     [Array<String>]             Disks to consider
-      # @return [PartitionCreatorResult]
-      def create_partitions(devicegraph, new_partitions, disk_names)
-        log.info "Partitions to create: #{new_partitions}"
-        primary, non_primary = new_partitions.partition(&:primary)
-        parts_to_create = primary + non_primary
+      # Process planned Mds
+      def process_mds
+        mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
+        devs_to_reuse_in_md = reusable_by_md(devices_to_reuse)
+        reuse_mds(mds_to_reuse)
 
-        dist = best_distribution(devicegraph, parts_to_create, disk_names)
-        raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(devicegraph)
-        part_creator.create_partitions(dist)
+        add_devices_to_create(mds_to_create)
+        add_devices_to_reuse(mds_to_reuse.flat_map(&:partitions))
+        self.creator_result = create_mds(planned_devices.mds, devs_to_reuse_in_md)
       end
 
-      # Creates volume groups in the given devicegraph
-      #
-      # @param vgs             [Array<Planned::LvmVg>]     List of planned volume groups to add
-      # @param previous_result [Proposal::CreatorResult]   Starting point
-      # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse as Physical Volumes
-      # @return                [Proposal::CreatorResult] Result containing the specified volume groups
-      def set_up_lvm(vgs, previous_result, devs_to_reuse)
-        # log separately to be more readable
-        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect}"
-        log.info "BEGIN: set_up_lvm: previous_result=#{previous_result.inspect}"
-        log.info "BEGIN: set_up_lvm: devs_to_reuse=#{devs_to_reuse.inspect}"
-        vgs.reduce(previous_result) do |result, vg|
-          pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
-          pvs += devs_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
-          result.merge(create_logical_volumes(result.devicegraph, vg, pvs))
-        end
+      # Process planned Vgs
+      def process_vgs
+        planned_vgs = planned_devices.vgs
+        vgs_to_reuse = planned_vgs.select(&:reuse?)
+        reuse_vgs(vgs_to_reuse)
+
+        add_devices_to_create(planned_vgs)
+        self.creator_result = set_up_lvm(planned_vgs, devices_to_reuse)
       end
 
-      # Create volume group in the given devicegraph
-      #
-      # @param devicegraph [Devicegraph]                    Starting devicegraph
-      # @param vg          [Planned::LvmVg]                 Volume group
-      # @param pvs         [Planned::Partition,Planned::Md] List of physical volumes
-      # @return            [Proposal::CreatorResult] Result containing the specified volume group
-      def create_logical_volumes(devicegraph, vg, pvs)
-        lvm_creator = Proposal::LvmCreator.new(devicegraph)
-        lvm_creator.create_volumes(vg, pvs)
-      rescue RuntimeError
-        lvm_creator = Proposal::LvmCreator.new(devicegraph)
-        new_vg = vg.clone
-        new_vg.lvs = flexible_devices(vg.lvs)
-        lvm_creator.create_volumes(new_vg, pvs)
+      # Process planned NFS filesystems
+      def process_nfs_filesystems
+        add_devices_to_create(planned_devices.nfs_filesystems)
+        self.creator_result = create_nfs_filesystems(planned_devices.nfs_filesystems)
       end
 
       # Reuses partitions for the given devicegraph
@@ -255,46 +239,55 @@ module Y2Storage
       # some space for growing ones.
       #
       # @param reused_devices  [Array<Planned::Partition>] Partitions to reuse
-      # @param devicegraph     [Devicegraph] Devicegraph to reuse partitions
-      def reuse_partitions(reused_devices, devicegraph)
+      def reuse_partitions(reused_devices)
         shrinking, not_shrinking = reused_devices.partition { |d| d.shrink?(devicegraph) }
         (shrinking + not_shrinking).each { |d| d.reuse!(devicegraph) }
       end
 
-      # Reuses volume groups for the given devicegraph
-      #
-      # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
-      # @param previous_result [Proposal::CreatorResult] Result containing the devicegraph
-      #   to work on
-      def reuse_vgs(reused_vgs, previous_result)
-        reused_vgs.each_with_object(previous_result) do |vg, result|
-          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
-          result.merge!(lvm_creator.reuse_volumes(vg))
-        end
-      end
-
       # Reuses MD RAIDs for the given devicegraph
       #
-      # @param reused_mds      [Array<Planned::Md>] Volume groups to reuse
-      # @param previous_result [Proposal::CreatorResult] Starting point
-      #   to work on
-      # @return [Proposal::CreatorResult] Result containing the reused MD RAID devices
-      def reuse_mds(reused_mds, previous_result)
-        reused_mds.each_with_object(previous_result) do |md, result|
+      # @param reused_mds [Array<Planned::Md>] MD RAIDs to reuse
+      def reuse_mds(reused_mds)
+        reused_mds.each_with_object(creator_result) do |md, result|
           md_creator = Proposal::MdCreator.new(result.devicegraph)
           result.merge!(md_creator.reuse_partitions(md))
         end
       end
 
+      # Reuses volume groups for the given devicegraph
+      #
+      # @param reused_vgs [Array<Planned::LvmVg>] Volume groups to reuse
+      def reuse_vgs(reused_vgs)
+        reused_vgs.each_with_object(creator_result) do |vg, result|
+          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
+          result.merge!(lvm_creator.reuse_volumes(vg))
+        end
+      end
+
+      # Creates planned partitions
+      #
+      # @param new_partitions [Array<Planned::Partition>] Devices to create
+      # @return [PartitionCreatorResult]
+      def create_partitions(new_partitions)
+        log.info "Partitions to create: #{new_partitions}"
+        primary, non_primary = new_partitions.partition(&:primary)
+        parts_to_create = primary + non_primary
+
+        dist = best_distribution(parts_to_create)
+        raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
+        part_creator = Proposal::PartitionCreator.new(devicegraph)
+        part_creator.create_partitions(dist)
+      end
+
       # Creates MD RAID devices in the given devicegraph
       #
-      # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
-      # @param previous_result [Proposal::CreatorResult]   Starting point
-      # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
+      # @param mds [Array<Planned::Md>] List of planned MD arrays to create
+      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
       #   to reuse
-      # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
-      def create_mds(mds, previous_result, devs_to_reuse)
-        mds.reduce(previous_result) do |result, md|
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified MD RAIDs
+      def create_mds(mds, devs_to_reuse)
+        mds.reduce(creator_result) do |result, md|
           # Normally, the profile will use the same naming convention
           # (/dev/md0 vs /dev/md/0) to define the RAID itself (in its corresponding
           # <drive> section) and to reference that RAID from its components
@@ -312,7 +305,38 @@ module Y2Storage
         end
       end
 
-      # Create a MD RAID
+      # Creates volume groups
+      #
+      # @param vgs [Array<Planned::LvmVg>] List of planned volume groups to add
+      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
+      #   to reuse as Physical Volumes
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified volume groups
+      def set_up_lvm(vgs, devs_to_reuse)
+        # log separately to be more readable
+        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect}"
+        log.info "BEGIN: set_up_lvm: previous_result=#{creator_result.inspect}"
+        log.info "BEGIN: set_up_lvm: devs_to_reuse=#{devs_to_reuse.inspect}"
+
+        vgs.reduce(creator_result) do |result, vg|
+          pvs = creator_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
+          pvs += devs_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
+          result.merge(create_logical_volumes(result.devicegraph, vg, pvs))
+        end
+      end
+
+      # Creates NFS filesystems
+      #
+      # @param nfs_filesystems [Array<Planned::Nfs>] List of planned NFS filesystems
+      # @return [Proposal::CreatorResult] Result containing the specified NFS filesystems
+      def create_nfs_filesystems(nfs_filesystems)
+        nfs_filesystems.reduce(creator_result) do |result, planned_nfs|
+          new_result = create_nfs_filesystem(result.devicegraph, planned_nfs)
+          result.merge(new_result)
+        end
+      end
+
+      # Creates a MD RAID
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
       # @param md          [Planned::Md] List of planned MD arrays to create
@@ -328,6 +352,33 @@ module Y2Storage
         new_md = md.clone
         new_md.partitions = flexible_devices(md.partitions)
         md_creator.create_md(new_md, devices)
+      end
+
+      # Creates a volume group in the given devicegraph
+      #
+      # @param devicegraph [Devicegraph]                    Starting devicegraph
+      # @param vg          [Planned::LvmVg]                 Volume group
+      # @param pvs         [Planned::Partition,Planned::Md] List of physical volumes
+      # @return            [Proposal::CreatorResult] Result containing the specified volume group
+      def create_logical_volumes(devicegraph, vg, pvs)
+        lvm_creator = Proposal::LvmCreator.new(devicegraph)
+        lvm_creator.create_volumes(vg, pvs)
+      rescue RuntimeError
+        lvm_creator = Proposal::LvmCreator.new(devicegraph)
+        new_vg = vg.clone
+        new_vg.lvs = flexible_devices(vg.lvs)
+        lvm_creator.create_volumes(new_vg, pvs)
+      end
+
+      # Creates a NFS filesystem
+      #
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param planned_nfs [Planned::Nfs]
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified NFS
+      def create_nfs_filesystem(devicegraph, planned_nfs)
+        nfs_creator = Proposal::NfsCreator.new(devicegraph)
+        nfs_creator.create_nfs(planned_nfs)
       end
 
       # Return a new planned devices with flexible limits
