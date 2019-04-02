@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,6 +22,7 @@
 require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/md_creator"
+require "y2storage/proposal/nfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
 
@@ -89,27 +88,18 @@ module Y2Storage
         # Process planned disk like devices (Xen virtual partitions and full disks)
         planned_disk_like_devs = process_disk_like_devs(planned_devices, creator_result.devicegraph)
 
+        devs_to_create = parts_to_create
+
         # Add planned disk like devices to reuse list so they can be considered for lvm and raids
         # later on.
         devs_to_reuse = parts_to_reuse + planned_disk_like_devs
 
-        # Process planned Mds
-        mds_to_create, mds_to_reuse, creator_result =
-          process_mds(planned_devices, devs_to_reuse, creator_result)
-        devs_to_reuse.concat(mds_to_reuse.flat_map(&:partitions))
+        creator_result = add_mds(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        creator_result = add_bcaches(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        creator_result = add_vgs(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        creator_result = add_nfs_filesystems(planned_devices, devs_to_create, creator_result)
 
-        # Process planned bcaches
-        bcaches_to_create, bcaches_to_reuse, creator_result =
-          process_bcaches(planned_devices, devs_to_reuse, creator_result)
-        devs_to_reuse.concat(bcaches_to_reuse.flat_map(&:partitions))
-
-        # Process planned Vgs
-        planned_vgs, creator_result =
-          process_vgs(planned_devices, devs_to_reuse, creator_result)
-
-        Y2Storage::Proposal::AutoinstCreatorResult.new(
-          creator_result, parts_to_create + mds_to_create + planned_vgs + bcaches_to_create
-        )
+        Y2Storage::Proposal::AutoinstCreatorResult.new(creator_result, devs_to_create)
       end
 
     protected
@@ -154,6 +144,83 @@ module Y2Storage
         creator_result = create_partitions(devicegraph, parts_to_create, disk_names)
 
         [parts_to_create, parts_to_reuse, creator_result]
+      end
+
+      # Adds Md devices
+      #
+      # Note that `devs_to_create` and `devs_to_reuse` will be modified.
+      #
+      # @param planned_devices [Planned::DevicesCollection] Devices to create/reuse
+      # @param devs_to_create [Array<Planned::Device>]
+      # @param devs_to_reuse [Array<Planned::Device>]
+      # @param creator_result [AutoinstCreatorResult]
+      #
+      # @return [AutoinstCreatorResult]
+      def add_mds(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        mds_to_create, mds_to_reuse, creator_result =
+          process_mds(planned_devices, devs_to_reuse, creator_result)
+
+        devs_to_create.concat(mds_to_create)
+        devs_to_reuse.concat(mds_to_reuse.flat_map(&:partitions))
+
+        creator_result
+      end
+
+      # Adds Bcache devices
+      #
+      # Note that `devs_to_create` and `devs_to_reuse` will be modified.
+      #
+      # @param planned_devices [Planned::DevicesCollection] Devices to create/reuse
+      # @param devs_to_create [Array<Planned::Device>]
+      # @param devs_to_reuse [Array<Planned::Device>]
+      # @param creator_result [AutoinstCreatorResult]
+      #
+      # @return [AutoinstCreatorResult]
+      def add_bcaches(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        bcaches_to_create, bcaches_to_reuse, creator_result =
+          process_bcaches(planned_devices, devs_to_reuse, creator_result)
+
+        devs_to_create.concat(bcaches_to_create)
+        devs_to_reuse.concat(bcaches_to_reuse.flat_map(&:partitions))
+
+        creator_result
+      end
+
+      # Adds LVM Vg devices
+      #
+      # Note that `devs_to_create` will be modified.
+      #
+      # @param planned_devices [Planned::DevicesCollection] Devices to create/reuse
+      # @param devs_to_create [Array<Planned::Device>]
+      # @param devs_to_reuse [Array<Planned::Device>]
+      # @param creator_result [AutoinstCreatorResult]
+      #
+      # @return [AutoinstCreatorResult]
+      def add_vgs(planned_devices, devs_to_create, devs_to_reuse, creator_result)
+        planned_vgs, creator_result =
+          process_vgs(planned_devices, devs_to_reuse, creator_result)
+
+        devs_to_create.concat(planned_vgs)
+
+        creator_result
+      end
+
+      # Adds NFS filesystems
+      #
+      # Note that `devs_to_create` will be modified.
+      #
+      # @param planned_devices [Planned::DevicesCollection] Devices to create/reuse
+      # @param devs_to_create [Array<Planned::Device>]
+      # @param creator_result [AutoinstCreatorResult]
+      #
+      # @return [AutoinstCreatorResult]
+      def add_nfs_filesystems(planned_devices, devs_to_create, creator_result)
+        planned_nfs_filesystems, creator_result =
+          process_nfs_filesystems(planned_devices, creator_result)
+
+        devs_to_create.concat(planned_nfs_filesystems)
+
+        creator_result
       end
 
       # Process planned Mds
@@ -218,6 +285,20 @@ module Y2Storage
         planned_devs.each { |d| d.reuse!(devicegraph) }
 
         planned_devs
+      end
+
+      # Process planned NFS filesystems
+      #
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param creator_result [CreatorResult] Partial result
+      #
+      # @return [Array<Array<Planned::Nfs>, CreatorResult>]
+      def process_nfs_filesystems(planned_devices, creator_result)
+        creator_result.merge!(
+          create_nfs_filesystems(planned_devices.nfs_filesystems, creator_result)
+        )
+
+        [planned_devices.nfs_filesystems, creator_result]
       end
 
       # Creates planned partitions in the given devicegraph
@@ -347,7 +428,7 @@ module Y2Storage
         end
       end
 
-      # Creates a bcaches in the given devicegraph
+      # Creates bcaches in the given devicegraph
       #
       # @param bcaches         [Array<Planned::Bcache>] List of planned MD arrays to create
       # @param previous_result [Proposal::CreatorResult] Starting point
@@ -359,6 +440,19 @@ module Y2Storage
           backing_devname = find_bcache_member(bcache.name, :backing, previous_result, devs_to_reuse)
           caching_devname = find_bcache_member(bcache.name, :caching, previous_result, devs_to_reuse)
           new_result = create_bcache(result.devicegraph, bcache, backing_devname, caching_devname)
+          result.merge(new_result)
+        end
+      end
+
+      # Creates NFS filesystems in the given devicegraph
+      #
+      # @param nfs_filesystems [Array<Planned::Nfs>] List of planned NFS filesystems
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified NFS filesystems
+      def create_nfs_filesystems(nfs_filesystems, previous_result)
+        nfs_filesystems.reduce(previous_result) do |result, planned_nfs|
+          new_result = create_nfs_filesystem(result.devicegraph, planned_nfs)
           result.merge(new_result)
         end
       end
@@ -396,6 +490,17 @@ module Y2Storage
         new_bcache = bcache.clone
         new_bcache.partitions = flexible_devices(bcache.partitions)
         bcache_creator.create_bcache(new_bcache, backing_devname, caching_devname)
+      end
+
+      # Creates a NFS filesystem
+      #
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param planned_nfs [Planned::Nfs]
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified NFS
+      def create_nfs_filesystem(devicegraph, planned_nfs)
+        nfs_creator = Proposal::NfsCreator.new(devicegraph)
+        nfs_creator.create_nfs(planned_nfs)
       end
 
       # Finds the bcache member in the previous result and the list of devices to use
