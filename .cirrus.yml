@@ -1,0 +1,29 @@
+container:
+  image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
+
+task:
+  name: Rubocop
+  container:
+    cpu: 8
+  only_if: "changesInclude('.cirrus.yml', '.rubocop.yml', 'Rakefile', '**/*.rake', '*.rb', '**/*.rb')"
+  rubocop_script: yast-travis-ruby -o rubocop
+
+task:
+  name: Unit Tests
+  container:
+    cpu: 8
+  test_script: yast-travis-ruby -o tests
+
+yardoc_task:
+  yardoc_cache_cache:
+    folder: .yardoc
+  yardoc_script: rake check:doc
+
+task:
+  name: Package Build
+  # run the other steps
+  test_script: yast-travis-ruby -x tests -x rubocop -x yardoc
+
+task:
+  name: Debug
+  debug_script: uname -a; rpm -qa | sort; df -h; free -h
