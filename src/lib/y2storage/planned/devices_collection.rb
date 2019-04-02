@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -138,6 +138,13 @@ module Y2Storage
         @bcaches ||= devices.select { |d| d.is_a?(Planned::Bcache) }
       end
 
+      # Returns the list of planned NFS filesystems
+      #
+      # @return [Array<Planned::Nfs>]
+      def nfs_filesystems
+        @nfs_filesystems ||= devices.select { |d| d.is_a?(Planned::Nfs) }
+      end
+
       # Returns the list of planned LVM logical volumes
       #
       # @return [Array<Planned::LvmLv>]
@@ -156,7 +163,14 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>]
       def all
-        @all ||= partitions + disks + stray_blk_devices + vgs + lvs + mds + bcaches
+        @all ||= partitions +
+          disks +
+          stray_blk_devices +
+          vgs +
+          lvs +
+          mds +
+          bcaches +
+          nfs_filesystems
       end
 
       # Returns the list of devices that can be mounted
