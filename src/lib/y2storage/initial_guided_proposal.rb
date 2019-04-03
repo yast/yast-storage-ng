@@ -38,7 +38,7 @@ module Y2Storage
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       super
 
-      @initial_settings = Yast.deep_copy(self.settings)
+      @initial_settings = self.settings.dup
     end
 
   private
@@ -171,7 +171,7 @@ module Y2Storage
     #   devices have changed.
     def reset_settings
       self.space_maker = nil
-      self.settings = Yast.deep_copy(initial_settings)
+      self.settings = initial_settings.dup
     end
 
     # Creates a generator of settings
