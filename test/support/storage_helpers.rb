@@ -145,6 +145,11 @@ module Yast
         add_planned_attributes(bcache, attrs)
       end
 
+      def planned_nfs(attrs = {})
+        nfs = Y2Storage::Planned::Nfs.new
+        add_planned_attributes(nfs, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
