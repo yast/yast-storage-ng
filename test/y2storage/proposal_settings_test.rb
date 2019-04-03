@@ -65,8 +65,8 @@ describe Y2Storage::ProposalSettings do
     it "returns a deep copy of settings" do
       dup = settings.dup
 
-      # Let's simply check two nested levels: it's expected to found the same amount of objects with
-      # a different identity. In other words, object must looks equal but being different.
+      # Let's simply check two nested levels: it's expected to find the same amount of objects with
+      # a different identity. In other words, object must look equal but be different.
 
       dup_volumes = dup.volumes
       dup_volumes_ids = dup_volumes.map(&:object_id)
@@ -77,6 +77,10 @@ describe Y2Storage::ProposalSettings do
       settings_volumes_ids = settings_volumes.map(&:object_id)
       settings_volumes_desired_sizes = settings_volumes.map(&:desired_size)
       settings_volumes_desired_sizes_ids = settings_volumes_desired_sizes.map(&:object_id)
+
+      expect(dup_volumes.map(&:mount_point)).to eq(settings_volumes.map(&:mount_point))
+      expect(dup_volumes.map(&:fs_type)).to eq(settings_volumes.map(&:fs_type))
+      expect(dup_volumes_desired_sizes).to eq(settings_volumes_desired_sizes)
 
       expect(dup.object_id).to_not eq(settings.object_id)
       expect(dup_volumes_ids).to_not eq(settings_volumes_ids)
