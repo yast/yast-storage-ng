@@ -26,6 +26,10 @@ require "y2storage/proposal/settings_generator/legacy"
 describe Y2Storage::Proposal::SettingsGenerator::Legacy do
   subject { described_class.new(settings) }
 
+  def remove_object_ids(input)
+    input.gsub(/:0x\w+ /, "")
+  end
+
   describe "#next_settings" do
     before do
       stub_product_features("partitioning" => partitioning_features)
@@ -47,14 +51,17 @@ describe Y2Storage::Proposal::SettingsGenerator::Legacy do
       next_settings = subject.next_settings
 
       expect(next_settings).to be_a(Y2Storage::ProposalSettings)
-      expect(next_settings.object_id).to_not eq(settings.object_id)
+      expect(next_settings.to_s).to_not eq(settings.to_s)
     end
 
     context "when called for first time" do
       it "returns the same values as the initial settings" do
         next_settings = subject.next_settings
 
-        expect(next_settings.to_s).to eq(settings.to_s)
+        settings_content = remove_object_ids(settings.to_s)
+        next_settings_content = remove_object_ids(next_settings.to_s)
+
+        expect(next_settings_content).to eq(settings_content)
       end
     end
 

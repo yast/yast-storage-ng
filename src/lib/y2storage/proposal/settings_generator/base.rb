@@ -77,7 +77,7 @@ module Y2Storage
         #
         # @param settings [ProposalSettings]
         def initialize_settings(settings)
-          @settings = Yast.deep_copy(settings)
+          @settings = settings.deep_copy
         end
 
         # Sets the initial adjustments
@@ -104,7 +104,7 @@ module Y2Storage
         #
         # @return [ProposalSettings]
         def copy_settings
-          Yast.deep_copy(settings)
+          settings.deep_copy
         end
       end
     end
