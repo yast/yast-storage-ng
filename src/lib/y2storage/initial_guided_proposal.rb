@@ -38,7 +38,7 @@ module Y2Storage
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       super
 
-      @initial_settings = self.settings.deep_copy
+      @initial_settings = self.settings
     end
 
   private
@@ -171,7 +171,7 @@ module Y2Storage
     #   devices have changed.
     def reset_settings
       self.space_maker = nil
-      self.settings = initial_settings.deep_copy
+      self.settings = initial_settings
     end
 
     # Creates a generator of settings
