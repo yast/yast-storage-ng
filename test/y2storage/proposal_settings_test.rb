@@ -49,7 +49,6 @@ describe Y2Storage::ProposalSettings do
           "desired_size" => "20GiB", "max_size" => "40GiB"
         },
         { "mount_point" => "/home", "fs_type" => "xfs", "weight" => 40, "desired_size" => "10GiB" },
-        # This should reuse the existing logical swap
         { "mount_point" => "swap", "fs_type" => "swap", "desired_size" => "3GiB" }
       ]
     end
@@ -66,7 +65,7 @@ describe Y2Storage::ProposalSettings do
       copy = settings.deep_copy
 
       # Let's simply check two nested levels: it's expected to find the same amount of objects with
-      # a different identity. In other words, object must look equal but be different.
+      # a different identity. In other words, the objects must be equal but must be different instances.
 
       copy_volumes = copy.volumes
       copy_volumes_ids = copy_volumes.map(&:object_id)
