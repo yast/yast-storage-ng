@@ -351,9 +351,9 @@ module Y2Storage
       # @return [Proposal::CreatorResult] Result containing the specified volume groups
       def set_up_lvm(vgs, devs_to_reuse)
         # log separately to be more readable
-        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect}"
-        log.info "BEGIN: set_up_lvm: previous_result=#{creator_result.inspect}"
-        log.info "BEGIN: set_up_lvm: devs_to_reuse=#{devs_to_reuse.inspect}"
+        log.info "set_up_lvm: vgs=#{vgs.inspect}"
+        log.info "set_up_lvm: previous_result=#{creator_result.inspect}"
+        log.info "set_up_lvm: devs_to_reuse=#{devs_to_reuse.inspect}"
 
         vgs.reduce(creator_result) do |result, vg|
           pvs = creator_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
@@ -417,7 +417,8 @@ module Y2Storage
       def create_logical_volumes(devicegraph, vg, pvs)
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         lvm_creator.create_volumes(vg, pvs)
-      rescue RuntimeError
+      rescue RuntimeError => error
+        log.error error.message
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         new_vg = vg.clone
         new_vg.lvs = flexible_devices(vg.lvs)

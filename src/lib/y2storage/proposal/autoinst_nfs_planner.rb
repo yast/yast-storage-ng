@@ -38,11 +38,29 @@ module Y2Storage
 
     private
 
-      NEW_FORMAT_MANDATORY_VALUES = { drive: [:device], partition: [:mount] }.freeze
-
+      # This hash defines mandatory profile values for a NFS share using the old AutoYaST style.
+      #
+      # Keys are the name of the section, and values are the mandatory values for such section.
+      #
+      # With old format, the partition section must contain a device and a mount value, e.g.:
+      #
+      # <drive>
+      #   <device>/dev/nfs</device>
+      #   <partitions>
+      #     <partition>
+      #       <device>192.168.56.1:/root_fs</device>
+      #       <mount>/</mount>
+      #     </partition>
+      #   </partitions>
+      # </drive>
       OLD_FORMAT_MANDATORY_VALUES = { drive: [], partition: [:device, :mount] }.freeze
 
-      private_constant :NEW_FORMAT_MANDATORY_VALUES, :OLD_FORMAT_MANDATORY_VALUES
+      # Similar to {OLD_FORMAT_MANDATORY_VALUES}, but for the new AutoYaST style.
+      #
+      # TODO
+      NEW_FORMAT_MANDATORY_VALUES = {}.freeze
+
+      private_constant :OLD_FORMAT_MANDATORY_VALUES, :NEW_FORMAT_MANDATORY_VALUES
 
       # Returns a list of planned NFS filesystems from the old-style AutoYaST profile
       #
@@ -175,7 +193,8 @@ module Y2Storage
       # Mandatory values depending on the AutoYaST style
       #
       # @param format [:new, :old] new or old AutoYaST style
-      # @return [Hash<Symbol, Array<Symbol>>]
+      # @return [Hash<Symbol, Array<Symbol>>] see {OLD_FORMAT_MANDATORY_VALUES} and
+      #   {NEW_FORMAT_MANDATORY_VALUES}
       def mandatory_values(format)
         if format == :new
           NEW_FORMAT_MANDATORY_VALUES
@@ -187,7 +206,7 @@ module Y2Storage
       # Name of the server from a NFS share
       #
       # @param share [String] e.g., "192.168.56.1:/root_fs"
-      # @return [String]
+      # @return [String] e.g., "192.168.56.1"
       def server(share)
         server_and_path(share).first || ""
       end
@@ -195,17 +214,21 @@ module Y2Storage
       # Name of the shared directory from a NFS share
       #
       # @param share [String] e.g., "192.168.56.1:/root_fs"
-      # @return [String]
+      # @return [String] e.g., "/root_fs"
       def path(share)
         server_and_path(share).last || ""
       end
 
       # Name of the server and the shared directory from a NFS share
       #
+      # Note that the directory can be omitted (e.g., "192.168.56.1"). For more details,
+      # see {https://tools.ietf.org/html/rfc2224}.
+      #
       # @param share [String] e.g., "192.168.56.1:/root_fs"
-      # @return [Array<String>]
+      # @return [Array<String, nil>]
       def server_and_path(share)
-        share.split(":")
+        server, path = share.split(":")
+        [server, path]
       end
     end
   end
