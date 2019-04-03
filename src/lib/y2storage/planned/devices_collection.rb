@@ -163,14 +163,8 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>]
       def all
-        @all ||= partitions +
-          disks +
-          stray_blk_devices +
-          vgs +
-          lvs +
-          mds +
-          bcaches +
-          nfs_filesystems
+        @all ||= [].concat(partitions, disks, stray_blk_devices, vgs, lvs, mds,
+          bcaches, nfs_filesystems)
       end
 
       # Returns the list of devices that can be mounted
