@@ -206,7 +206,7 @@ module Y2Storage
     # Produces a deep copy of settings
     #
     # @return [ProposalSettings]
-    def dup
+    def deep_copy
       Marshal.load(Marshal.dump(self))
     end
 

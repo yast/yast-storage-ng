@@ -39,7 +39,7 @@ describe Y2Storage::ProposalSettings do
 
   let(:initial_partitioning_features) { {} }
 
-  describe "#dup" do
+  describe "#deep_copy" do
     subject(:settings) { described_class.new_for_current_product }
 
     let(:volumes) do
@@ -63,28 +63,28 @@ describe Y2Storage::ProposalSettings do
     end
 
     it "returns a deep copy of settings" do
-      dup = settings.dup
+      copy = settings.deep_copy
 
       # Let's simply check two nested levels: it's expected to find the same amount of objects with
       # a different identity. In other words, object must look equal but be different.
 
-      dup_volumes = dup.volumes
-      dup_volumes_ids = dup_volumes.map(&:object_id)
-      dup_volumes_desired_sizes = dup_volumes.map(&:desired_size)
-      dup_volumes_desired_sizes_ids = dup_volumes_desired_sizes.map(&:object_id)
+      copy_volumes = copy.volumes
+      copy_volumes_ids = copy_volumes.map(&:object_id)
+      copy_volumes_desired_sizes = copy_volumes.map(&:desired_size)
+      copy_volumes_desired_sizes_ids = copy_volumes_desired_sizes.map(&:object_id)
 
       settings_volumes = settings.volumes
       settings_volumes_ids = settings_volumes.map(&:object_id)
       settings_volumes_desired_sizes = settings_volumes.map(&:desired_size)
       settings_volumes_desired_sizes_ids = settings_volumes_desired_sizes.map(&:object_id)
 
-      expect(dup_volumes.map(&:mount_point)).to eq(settings_volumes.map(&:mount_point))
-      expect(dup_volumes.map(&:fs_type)).to eq(settings_volumes.map(&:fs_type))
-      expect(dup_volumes_desired_sizes).to eq(settings_volumes_desired_sizes)
+      expect(copy_volumes.map(&:mount_point)).to eq(settings_volumes.map(&:mount_point))
+      expect(copy_volumes.map(&:fs_type)).to eq(settings_volumes.map(&:fs_type))
+      expect(copy_volumes_desired_sizes).to eq(settings_volumes_desired_sizes)
 
-      expect(dup.object_id).to_not eq(settings.object_id)
-      expect(dup_volumes_ids).to_not eq(settings_volumes_ids)
-      expect(dup_volumes_desired_sizes_ids).to_not eq(settings_volumes_desired_sizes_ids)
+      expect(copy.object_id).to_not eq(settings.object_id)
+      expect(copy_volumes_ids).to_not eq(settings_volumes_ids)
+      expect(copy_volumes_desired_sizes_ids).to_not eq(settings_volumes_desired_sizes_ids)
     end
   end
 
