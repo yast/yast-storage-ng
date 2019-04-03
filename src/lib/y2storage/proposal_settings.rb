@@ -203,6 +203,13 @@ module Y2Storage
       load_features
     end
 
+    # Produces a deep copy of settings
+    #
+    # @return [ProposalSettings]
+    def dup
+      Marshal.load(Marshal.dump(self))
+    end
+
     # Whether encryption must be used
     # @return [Boolean]
     def use_encryption

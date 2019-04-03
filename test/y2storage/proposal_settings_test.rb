@@ -39,6 +39,51 @@ describe Y2Storage::ProposalSettings do
 
   let(:initial_partitioning_features) { {} }
 
+  describe "#dup" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    let(:volumes) do
+      [
+        {
+          "mount_point" => "/", "fs_type" => "xfs", "weight" => 60,
+          "desired_size" => "20GiB", "max_size" => "40GiB"
+        },
+        { "mount_point" => "/home", "fs_type" => "xfs", "weight" => 40, "desired_size" => "10GiB" },
+        # This should reuse the existing logical swap
+        { "mount_point" => "swap", "fs_type" => "swap", "desired_size" => "3GiB" }
+      ]
+    end
+
+    let(:partitioning) do
+      { "proposal" => {}, "volumes" => volumes }
+    end
+
+    before do
+      stub_partitioning_features(partitioning)
+    end
+
+    it "returns a deep copy of settings" do
+      dup = settings.dup
+
+      # Let's simply check two nested levels: it's expected to found the same amount of objects with
+      # a different identity. In other words, object must looks equal but being different.
+
+      dup_volumes = dup.volumes
+      dup_volumes_ids = dup_volumes.map(&:object_id)
+      dup_volumes_desired_sizes = dup_volumes.map(&:desired_size)
+      dup_volumes_desired_sizes_ids = dup_volumes_desired_sizes.map(&:object_id)
+
+      settings_volumes = settings.volumes
+      settings_volumes_ids = settings_volumes.map(&:object_id)
+      settings_volumes_desired_sizes = settings_volumes.map(&:desired_size)
+      settings_volumes_desired_sizes_ids = settings_volumes_desired_sizes.map(&:object_id)
+
+      expect(dup.object_id).to_not eq(settings.object_id)
+      expect(dup_volumes_ids).to_not eq(settings_volumes_ids)
+      expect(dup_volumes_desired_sizes_ids).to_not eq(settings_volumes_desired_sizes_ids)
+    end
+  end
+
   describe "#for_current_product" do
     subject(:settings) { described_class.new }
 
