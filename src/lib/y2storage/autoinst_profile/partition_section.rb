@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -48,41 +48,37 @@ module Y2Storage
       NO_CREATE_IDS = []
       private_constant :NO_CREATE_IDS
 
-      ATTRIBUTES = [
-        { name: :create },
-        { name: :filesystem },
-        { name: :format },
-        { name: :label },
-        { name: :uuid },
-        { name: :lv_name },
-        { name: :lvm_group },
-        { name: :mount },
-        { name: :mountby },
-        { name: :partition_id },
-        { name: :partition_nr },
-        { name: :partition_type },
-        { name: :subvolumes },
-        { name: :size },
-        { name: :crypt_fs },
-        { name: :loop_fs },
-        { name: :crypt_key },
-        { name: :raid_name },
-        { name: :raid_options },
-        { name: :mkfs_options },
-        { name: :fstab_options, xml_name: :fstopt },
-        { name: :subvolumes_prefix },
-        { name: :create_subvolumes },
-        { name: :resize },
-        { name: :pool },
-        { name: :used_pool },
-        { name: :stripes },
-        { name: :stripe_size, xml_name: :stripesize },
-        { name: :device }
-      ].freeze
-      private_constant :ATTRIBUTES
-
       def self.attributes
-        ATTRIBUTES
+        [
+          { name: :create },
+          { name: :filesystem },
+          { name: :format },
+          { name: :label },
+          { name: :uuid },
+          { name: :lv_name },
+          { name: :lvm_group },
+          { name: :mount },
+          { name: :mountby },
+          { name: :partition_id },
+          { name: :partition_nr },
+          { name: :partition_type },
+          { name: :subvolumes },
+          { name: :size },
+          { name: :crypt_fs },
+          { name: :loop_fs },
+          { name: :crypt_key },
+          { name: :raid_name },
+          { name: :raid_options },
+          { name: :mkfs_options },
+          { name: :fstab_options, xml_name: :fstopt },
+          { name: :subvolumes_prefix },
+          { name: :create_subvolumes },
+          { name: :resize },
+          { name: :pool },
+          { name: :used_pool },
+          { name: :stripes },
+          { name: :stripe_size, xml_name: :stripesize }
+        ]
       end
 
       define_attr_accessors
@@ -155,10 +151,6 @@ module Y2Storage
 
       # @!attribute subvolumes_prefix
       #   @return [String] Name of the default Btrfs subvolume
-
-      # @!attribute device
-      #   @return [String, nil] undocumented attribute, but used to indicate a NFS
-      #     share when installing over NFS
 
       def init_from_hashes(hash)
         super

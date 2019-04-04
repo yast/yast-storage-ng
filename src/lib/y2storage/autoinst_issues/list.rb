@@ -47,7 +47,7 @@ module Y2Storage
       # Add a problem to the list
       #
       # The type of the problem is identified as a symbol which name is the
-      # underscore version of the class which implements it. For instance,
+      # underscore version of the class which implements it.  For instance,
       # `MissingRoot` would be referred as `:missing_root`.
       #
       # If a given type of problem requires some additional arguments, they
