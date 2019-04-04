@@ -85,7 +85,7 @@ module Y2Storage
       #
       # @return [Planned::Nfs]
       def planned_device_old_format(drive, partition_section)
-        return nil unless valid_drive?(drive, partition: partition_section, format: :old)
+        return nil unless valid_drive?(drive, partition: partition_section, profile_format: :old)
 
         share = partition_section.device
 
@@ -111,14 +111,14 @@ module Y2Storage
       #
       # @param drive [AutoinstProfile::DriveSection]
       # @param partition [AutoinstProfile::PartitionSection]
-      # @param format [:new, :old] whether the section is using the new or old AutoYaST style
+      # @param profile_format [:new, :old] whether the section is using the new or old AutoYaST style
       #
       # @return [Boolean]
-      def valid_drive?(drive, partition: nil, format: :new)
+      def valid_drive?(drive, partition: nil, profile_format: :new)
         partition_section = partition || drive.partitions.first
 
-        !missing_drive_values?(drive, format) &&
-          !missing_partition_values?(partition_section, format)
+        !missing_drive_values?(drive, profile_format) &&
+          !missing_partition_values?(partition_section, profile_format)
       end
 
       # Whether any value is missing for the drive section
@@ -126,11 +126,11 @@ module Y2Storage
       # Errors are registered when values are missing.
       #
       # @param drive [AutoinstProfile::DriveSection]
-      # @param format [:new, :old] whether the section is using the new or old AutoYaST style
+      # @param profile_format [:new, :old] whether the section is using the new or old AutoYaST style
       #
       # @return [Boolean]
-      def missing_drive_values?(drive, format)
-        missing_any_value?(drive, mandatory_drive_values(format))
+      def missing_drive_values?(drive, profile_format)
+        missing_any_value?(drive, mandatory_drive_values(profile_format))
       end
 
       # Whether any value is missing for the partition section
@@ -138,11 +138,11 @@ module Y2Storage
       # Errors are registered when values are missing.
       #
       # @param partition_section [AutoinstProfile::PartitionSection]
-      # @param format [:new, :old] whether the section is using the new or old AutoYaST style
+      # @param profile_format [:new, :old] whether the section is using the new or old AutoYaST style
       #
       # @return [Boolean]
-      def missing_partition_values?(partition_section, format)
-        missing_any_value?(partition_section, mandatory_partition_values(format))
+      def missing_partition_values?(partition_section, profile_format)
+        missing_any_value?(partition_section, mandatory_partition_values(profile_format))
       end
 
       # Whether any of the given values is missing in the given section
@@ -176,27 +176,27 @@ module Y2Storage
 
       # Mandatory values for the drive section
       #
-      # @param format [:new, :old] whether the section is using the new or old AutoYaST style
+      # @param profile_format [:new, :old] whether the section is using the new or old AutoYaST style
       # @return [Array<Symbol>]
-      def mandatory_drive_values(format)
-        mandatory_values(format)[:drive]
+      def mandatory_drive_values(profile_format)
+        mandatory_values(profile_format)[:drive]
       end
 
       # Mandatory values for the partition section
       #
-      # @param format [:new, :old] whether the section is using the new or old AutoYaST style
+      # @param profile_format [:new, :old] whether the section is using the new or old AutoYaST style
       # @return [Array<Symbol>]
-      def mandatory_partition_values(format)
-        mandatory_values(format)[:partition]
+      def mandatory_partition_values(profile_format)
+        mandatory_values(profile_format)[:partition]
       end
 
       # Mandatory values depending on the AutoYaST style
       #
-      # @param format [:new, :old] new or old AutoYaST style
+      # @param profile_format [:new, :old] new or old AutoYaST style
       # @return [Hash<Symbol, Array<Symbol>>] see {OLD_FORMAT_MANDATORY_VALUES} and
       #   {NEW_FORMAT_MANDATORY_VALUES}
-      def mandatory_values(format)
-        if format == :new
+      def mandatory_values(profile_format)
+        if profile_format == :new
           NEW_FORMAT_MANDATORY_VALUES
         else
           OLD_FORMAT_MANDATORY_VALUES
