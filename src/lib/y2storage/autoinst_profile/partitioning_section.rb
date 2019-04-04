@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -69,7 +69,7 @@ module Y2Storage
       end
 
       # Clones a system into an AutoYaST profile section, creating an instance
-      # if this class from the information in a devicegraph.
+      # of this class from the information in a devicegraph.
       #
       # This implements the same behavior followed by the old AutoYaST
       # cloning/export, which includes some custom logic beyond the direct
@@ -119,6 +119,13 @@ module Y2Storage
       # @return [Array<DriveSection>]
       def md_drives
         drives.select { |d| d.type == :CT_MD }
+      end
+
+      # Drive sections with type :CT_NFS
+      #
+      # @return [Array<DriveSection>]
+      def nfs_drives
+        drives.select { |d| d.type == :CT_NFS }
       end
 
       # Return section name

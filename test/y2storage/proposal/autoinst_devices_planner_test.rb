@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -59,6 +59,21 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   describe "#planned_devices" do
+    context "using NFS" do
+      let(:partitioning_array) do
+        [{
+          "device" => "/dev/nfs", "partitions" => [{ "mount" => "/", "device" => "server:path" }]
+        }]
+      end
+
+      it "plans NFS filesystems" do
+        devices = planner.planned_devices(drives_map)
+
+        expect(devices.nfs_filesystems).to_not be_empty
+        expect(devices.nfs_filesystems.first.root?).to eq(true)
+      end
+    end
+
     context "using Btrfs" do
       let(:partitioning_array) do
         [{

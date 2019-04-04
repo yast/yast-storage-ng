@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,6 +25,7 @@ require "y2storage/planned/stray_blk_device"
 require "y2storage/planned/lvm_lv"
 require "y2storage/planned/lvm_vg"
 require "y2storage/planned/md"
+require "y2storage/planned/nfs"
 require "y2storage/planned/assigned_space"
 require "y2storage/planned/partitions_distribution"
 require "y2storage/planned/devices_collection"
