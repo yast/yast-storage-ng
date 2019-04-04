@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,7 +27,6 @@ require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/proposal/autoinst_disk_device_planner"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
-require "y2storage/proposal/autoinst_nfs_planner"
 require "y2storage/planned"
 
 module Y2Storage
@@ -50,13 +51,21 @@ module Y2Storage
         @issues_list = issues_list
       end
 
-      # Returns a collection of planned devices according to the drives map
+      # Returns an array of planned devices according to the drives map
       #
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
-      # @return [Planned::DevicesCollection]
+      # @return [Planned::DevicesCollection] Collection of planned devices
       def planned_devices(drives_map)
         devices = drives_map.each_pair.each_with_object([]) do |(disk_name, drive), memo|
-          planned_devs = planned_for_drive(drive, disk_name)
+          planned_devs =
+            case drive.type
+            when :CT_DISK
+              planned_for_disk_device(drive, disk_name)
+            when :CT_LVM
+              planned_for_vg(drive)
+            when :CT_MD
+              planned_for_md(drive)
+            end
           memo.concat(planned_devs) if planned_devs
         end
 
@@ -72,74 +81,34 @@ module Y2Storage
       # @return [AutoinstIssues::List] List of AutoYaST issues to register them
       attr_reader :issues_list
 
-      # Returns a list of planned devices according to an AutoYaST specification
-      #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the device
-      # @param disk_name [String]
-      #
-      # @return [Array<Planned::Device>, nil] nil if the device cannot be planned
-      def planned_for_drive(drive, disk_name)
-        case drive.type
-        when :CT_DISK
-          planned_for_disk_device(drive, disk_name)
-        when :CT_LVM
-          planned_for_vg(drive)
-        when :CT_MD
-          planned_for_md(drive)
-        when :CT_NFS
-          planned_for_nfs(drive)
-        end
-      end
-
-      # Returns a list of planned partitions (or disks) according to an AutoYaST specification
-      #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the partitions
-      # @param disk_name [String]
-      #
-      # @return [Array<Planned::Partition, Planned::StrayBlkDevice>]
       def planned_for_disk_device(drive, disk_name)
         planner = Y2Storage::Proposal::AutoinstDiskDevicePlanner.new(devicegraph, issues_list)
         drive.device = disk_name
         planner.planned_devices(drive)
       end
 
-      # Returns a list with the planned volume group according to an AutoYaST specification
+      # Returns a planned volume group according to an AutoYaST specification
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the volume group
-      # @return [Array<Planned::LvmVg>]
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the volume group
+      # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(drive)
         planner = Y2Storage::Proposal::AutoinstVgPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
       end
 
-      # Returns a list of planned MDs according to an AutoYaST specification
+      # Returns a MD array according to an AutoYaST specification
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
-      # @return [Array<Planned::Md>]
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the MD RAID
+      # @return [Planned::Md] Planned MD RAID
       def planned_for_md(drive)
         planner = Y2Storage::Proposal::AutoinstMdPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
       end
 
-      # Returns a list of planned NFS filesystems according to an AutoYaST specification
-      #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing the NFS share
-      # @return [Array<Planned::Nfs>]
-      def planned_for_nfs(drive)
-        planner = Y2Storage::Proposal::AutoinstNfsPlanner.new(devicegraph, issues_list)
-        planner.planned_devices(drive)
-      end
-
-      # Removes shadowed subvolumes from each planned device that can be mounted
-      #
-      # @param planned_devices [Array<Planned::Device>]
       def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
-          # Some planned devices could be mountable but not formattable (e.g., {Planned::Nfs}).
-          # Those devices might shadow some subvolumes but they do no have any subvolume to
-          # be shadowed.
-          next unless device.respond_to?(:shadowed_subvolumes)
-
           device.shadowed_subvolumes(planned_devices).each do |subvol|
             # TODO: this should be reported to the user when the shadowed
             # subvolumes was specified in the profile.

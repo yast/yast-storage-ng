@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,7 +34,7 @@ module Y2Storage
       extend Forwardable
 
       # @!method each_pair
-      #   Calls block once per each disk that contains the AutoYaST specification
+      #   Calls block once por each disk that contains the AutoYaST specification
       #   passing as arguments the disk name and the corresponding
       #   AutoinstProfile::DriveSection object.
       #
@@ -61,7 +63,6 @@ module Y2Storage
         add_disks(partitioning.disk_drives, devicegraph)
         add_vgs(partitioning.lvm_drives)
         add_mds(partitioning.md_drives)
-        add_nfs_filesystems(partitioning.nfs_drives)
       end
 
       # Returns the list of disk names
@@ -185,24 +186,10 @@ module Y2Storage
         end
       end
 
-      # Adds NFS filesystems to the device map
+      # Find a disk using any possible name
       #
-      # All NFS filesystems should have a "device" property.
-      #
-      # @param nfs_drives [Array<AutoinstProfile::DriveSection>] List of NFS specifications from
-      #   AutoYaST
-      def add_nfs_filesystems(nfs_drives)
-        nfs_drives.each { |d| @drives[d.device] = d }
-      end
-
-      # Finds a disk using any possible name
-      #
-      # @see Y2Storage::Devicegraph#find_by_any_name
-      #
-      # @param devicegraph [Devicegraph]
-      # @param device_name [String, nil] e.g., "/dev/sda"
-      #
-      # @return [Disk, nil] Usable disk or nil if none is found
+      # @return [Disk,nil] Usable disk or nil if none is found
+      # @see [Y2Storage::Devicegraph#find_by_any_name]
       def find_disk(devicegraph, device_name)
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device

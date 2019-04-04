@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,8 +35,7 @@ describe Y2Storage::Planned::DevicesCollection do
   let(:lv0) { planned_lv(mount_point: "/") }
   let(:lv1) { planned_lv }
   let(:vg) { planned_vg(lvs: [lv0, lv1]) }
-  let(:nfs) { planned_nfs }
-  let(:devices) { [partition, disk, stray_blk_device, md, vg, nfs] }
+  let(:devices) { [partition, disk, stray_blk_device, md, vg] }
 
   describe "#devices" do
     context "when there are no planned devices" do
@@ -70,7 +69,7 @@ describe Y2Storage::Planned::DevicesCollection do
   describe "#all" do
     it "returns all planned devices" do
       expect(collection.all).to contain_exactly(
-        partition, disk_partition, disk, stray_blk_device, md, md_partition, lv0, lv1, vg, nfs
+        partition, disk_partition, disk, stray_blk_device, md, md_partition, lv0, lv1, vg
       )
     end
   end
@@ -117,16 +116,10 @@ describe Y2Storage::Planned::DevicesCollection do
     end
   end
 
-  describe "#nfs_filesystems" do
-    it "returns NFS filesystems" do
-      expect(collection.nfs_filesystems).to eq([nfs])
-    end
-  end
-
   describe "#mountable_devices" do
     it "returns all devices that can be mounted" do
       expect(collection.mountable_devices).to contain_exactly(
-        partition, disk, disk_partition, stray_blk_device, lv0, lv1, md, md_partition, nfs
+        partition, disk, disk_partition, stray_blk_device, lv0, lv1, md, md_partition
       )
     end
   end
