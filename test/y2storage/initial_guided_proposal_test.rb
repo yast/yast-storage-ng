@@ -265,6 +265,37 @@ describe Y2Storage::InitialGuidedProposal do
       end
     end
 
+    # Test, at hight level, that settings are reset between candidates
+    #
+    # Related to bsc#113092, settings must be **correctly** reset after moving to another (group
+    # of) candidate device(s). To check that, the first candidate will be small enough to make not
+    # possible the proposal on it even **after adjust the initial settings**, expecting to have a
+    # valid proposal **with original settings** in the second candidate.
+    context "when a proposal is not possible for a candidate even after adjust the settings" do
+      include_context "candidate devices"
+
+      let(:candidate_devices) { ["/dev/sda", "/dev/sdb"] }
+
+      let(:control_file_content) { ng_partitioning_section }
+
+      before do
+        sda.size = 2.GiB
+      end
+
+      it "resets the settings before attempting a new proposal with next candidate" do
+        proposal.propose
+
+        partitions = proposal.devices.partitions
+        mount_points = partitions.map(&:filesystem_mountpoint).compact
+
+        expect(used_devices).to contain_exactly("/dev/sdb")
+
+        # having expected mount points means that settings were reset properly, since in the
+        # previous attempts swap and separated home should be deleted
+        expect(mount_points).to include("swap", "/home", "/")
+      end
+    end
+
     context "when a proposal is not possible" do
       include_context "candidate devices"
 
