@@ -154,6 +154,20 @@ module Y2Storage
     #
     # @return [Boolean]
     def nfs_root?
+      planned_nfs_root? || exist_nfs_root?
+    end
+
+    # Whether there is a planned NFS root
+    #
+    # @return [Boolean]
+    def planned_nfs_root?
+      planned_devices.find { |d| d.is_a?(Planned::Nfs) && d.mount_point == "/" }
+    end
+
+    # Whether a NFS root already exists
+    #
+    # @return [Boolean]
+    def exist_nfs_root?
       devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
     end
 
