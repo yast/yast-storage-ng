@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -273,28 +273,6 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           md = devicegraph.md_raids.first
           expect(md.devices.size).to eq(2)
         end
-      end
-    end
-
-    describe "using NFS" do
-      let(:nfs0) do
-        planned_nfs(
-          server:        "192.168.56.1",
-          path:          "/root_fs",
-          mount_point:   "/",
-          fstab_options: ["rw"]
-        )
-      end
-
-      let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([nfs0]) }
-
-      it "adds the NFS filesystem" do
-        result = creator.populated_devicegraph(planned_devices, [])
-        devicegraph = result.devicegraph
-        nfs = devicegraph.nfs_mounts.first
-
-        expect(nfs).to be_a(Y2Storage::Filesystems::Nfs)
-        expect(nfs.mount_path).to eq("/")
       end
     end
 
