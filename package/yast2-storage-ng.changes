@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr  2 15:37:22 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Add support for installing over NFS with AutoYaST (bsc#1130256).
+- 4.1.78
+
+-------------------------------------------------------------------
 Tue Mar 26 11:51:34 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Improve unit tests: mocking architecture for Bcache is not needed

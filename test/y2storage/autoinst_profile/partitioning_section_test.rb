@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -157,6 +157,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     let(:drive6) { double("DriveSection", device: "/dev/md", type: :CT_MD) }
     let(:drive7) { double("DriveSection", type: :CT_DISK) }
     let(:drive8) { double("DriveSection", type: :CT_BCACHE) }
+    let(:drive9) { double("DriveSection", type: :CT_NFS) }
     let(:wrongdrv1) { double("DriveSection", device: "/dev/md", type: :CT_DISK) }
     let(:wrongdrv2) { double("DriveSection", device: "/dev/sdc", type: :CT_MD) }
     let(:wrongdrv3) { double("DriveSection", device: "/dev/sdd", type: :CT_WRONG) }
@@ -165,7 +166,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
     before do
       section.drives = [
-        drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8,
+        drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8, drive9,
         wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
       ]
     end
@@ -195,6 +196,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "#bcache_drives" do
       it "returns drives which type is :CT_BCACHE, even if they look invalid" do
         expect(section.bcache_drives).to contain_exactly(drive8)
+      end
+    end
+
+    describe "#nfs_drives" do
+      it "returns drives which type is :CT_NFS, even if they look invalid" do
+        expect(section.nfs_drives).to contain_exactly(drive9)
       end
     end
   end

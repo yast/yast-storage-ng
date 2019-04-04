@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -78,7 +78,8 @@ module Y2Storage
         { name: :stripes },
         { name: :stripe_size, xml_name: :stripesize },
         { name: :bcache_backing_for },
-        { name: :bcache_caching_for }
+        { name: :bcache_caching_for },
+        { name: :device }
       ].freeze
       private_constant :ATTRIBUTES
 
@@ -156,6 +157,10 @@ module Y2Storage
 
       # @!attribute subvolumes_prefix
       #   @return [String] Name of the default Btrfs subvolume
+
+      # @!attribute device
+      #   @return [String, nil] undocumented attribute, but used to indicate a NFS
+      #     share when installing over NFS
 
       def init_from_hashes(hash)
         super
