@@ -1,6 +1,7 @@
 # YaST - rewrite of the storage module
 
 [![Build Status](https://travis-ci.org/yast/yast-storage-ng.svg?branch=master)](https://travis-ci.org/yast/yast-storage-ng)
+[![Build Status](https://api.cirrus-ci.com/github/yast/yast-storage-ng.svg?branch=master)](https://cirrus-ci.com/github/yast/yast-storage-ng/master)
 [![Coverage Status](https://img.shields.io/coveralls/yast/yast-storage-ng/master.svg)](https://coveralls.io/github/yast/yast-storage-ng?branch=master)
 [![Code
 Climate](https://codeclimate.com/github/yast/yast-storage-ng/badges/gpa.svg)](https://codeclimate.com/github/yast/yast-storage-ng)
