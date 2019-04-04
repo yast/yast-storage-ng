@@ -39,6 +39,47 @@ describe Y2Storage::ProposalSettings do
 
   let(:initial_partitioning_features) { {} }
 
+  describe "#deep_copy" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    let(:volumes) do
+      [
+        {
+          "mount_point" => "/", "fs_type" => "xfs", "weight" => 60,
+          "desired_size" => "20GiB", "max_size" => "40GiB"
+        },
+        { "mount_point" => "/home", "fs_type" => "xfs", "weight" => 40, "desired_size" => "10GiB" },
+        { "mount_point" => "swap", "fs_type" => "swap", "desired_size" => "3GiB" }
+      ]
+    end
+
+    let(:partitioning) do
+      { "proposal" => {}, "volumes" => volumes }
+    end
+
+    before do
+      stub_partitioning_features(partitioning)
+    end
+
+    it "creates a new object" do
+      expect(settings.deep_copy).to_not equal(settings)
+    end
+
+    it "creates an object with the same values" do
+      settings_values = Marshal.dump(settings)
+      settings_deep_copy_values = Marshal.dump(settings.deep_copy)
+
+      expect(settings_deep_copy_values).to eq(settings_values)
+    end
+
+    it "creates an object with different references" do
+      ids = settings.volumes.map(&:object_id).sort
+      new_ids = settings.deep_copy.volumes.map(&:object_id).sort
+
+      expect(new_ids).to_not eq(ids)
+    end
+  end
+
   describe "#for_current_product" do
     subject(:settings) { described_class.new }
 
