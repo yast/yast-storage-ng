@@ -61,29 +61,22 @@ describe Y2Storage::ProposalSettings do
       stub_partitioning_features(partitioning)
     end
 
-    it "returns a deep copy of settings" do
-      copy = settings.deep_copy
+    it "creates a new object" do
+      expect(settings.deep_copy).to_not equal(settings)
+    end
 
-      # Let's simply check two nested levels: it's expected to find the same amount of objects with
-      # a different identity. In other words, the objects must be equal but must be different instances.
+    it "creates an object with the same values" do
+      settings_values = Marshal.dump(settings)
+      settings_deep_copy_values = Marshal.dump(settings.deep_copy)
 
-      copy_volumes = copy.volumes
-      copy_volumes_ids = copy_volumes.map(&:object_id)
-      copy_volumes_desired_sizes = copy_volumes.map(&:desired_size)
-      copy_volumes_desired_sizes_ids = copy_volumes_desired_sizes.map(&:object_id)
+      expect(settings_deep_copy_values).to eq(settings_values)
+    end
 
-      settings_volumes = settings.volumes
-      settings_volumes_ids = settings_volumes.map(&:object_id)
-      settings_volumes_desired_sizes = settings_volumes.map(&:desired_size)
-      settings_volumes_desired_sizes_ids = settings_volumes_desired_sizes.map(&:object_id)
+    it "creates an object with different references" do
+      ids = settings.volumes.map(&:object_id).sort
+      new_ids = settings.deep_copy.volumes.map(&:object_id).sort
 
-      expect(copy_volumes.map(&:mount_point)).to eq(settings_volumes.map(&:mount_point))
-      expect(copy_volumes.map(&:fs_type)).to eq(settings_volumes.map(&:fs_type))
-      expect(copy_volumes_desired_sizes).to eq(settings_volumes_desired_sizes)
-
-      expect(copy.object_id).to_not eq(settings.object_id)
-      expect(copy_volumes_ids).to_not eq(settings_volumes_ids)
-      expect(copy_volumes_desired_sizes_ids).to_not eq(settings_volumes_desired_sizes_ids)
+      expect(new_ids).to_not eq(ids)
     end
   end
 
