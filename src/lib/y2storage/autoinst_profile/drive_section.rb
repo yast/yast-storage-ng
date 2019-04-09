@@ -156,7 +156,7 @@ module Y2Storage
       #
       # @param device [BlkDevice] a block device that can be cloned into a
       #   <drive> section, like a disk, a DASD or an LVM volume group.
-      # @return [DriveSection]
+      # @return [DriveSection, nil] nil if the device cannot be exported
       def self.new_from_storage(device)
         result = new
         # So far, only disks (and DASD) are supported
@@ -180,6 +180,8 @@ module Y2Storage
           init_from_vg(device)
         elsif device.is?(:stray_blk_device)
           init_from_stray_blk_device(device)
+        elsif device.is?(:nfs)
+          init_from_nfs(device)
         else
           init_from_disk(device)
         end
@@ -355,6 +357,16 @@ module Y2Storage
         @type = :CT_DISK
         @device = device.name
         @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(device)]
+
+        true
+      end
+
+      def init_from_nfs(device)
+        @type = :CT_NFS
+        @device = device.share
         @use = "all"
         @disklabel = "none"
         @partitions = [PartitionSection.new_from_storage(device)]

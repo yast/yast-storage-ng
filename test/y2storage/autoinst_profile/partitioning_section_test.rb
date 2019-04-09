@@ -25,13 +25,15 @@ require "y2storage"
 
 describe Y2Storage::AutoinstProfile::PartitioningSection do
   subject(:section) { described_class.new }
+
   let(:sda) { { "device" => "/dev/sda", "use" => "linux" } }
   let(:sdb) { { "device" => "/dev/sdb", "use" => "all" } }
-  let(:disk_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:dasd_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:vg_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:md_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
-  let(:stray_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
+  let(:disk_section) { double("disk_section") }
+  let(:dasd_section) { double("dasd_section") }
+  let(:vg_section) { double("vg_section") }
+  let(:md_section) { double("md_section") }
+  let(:stray_section) { double("stray_section") }
+  let(:nfs_section) { double("nfs_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -67,15 +69,17 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:devicegraph) do
         instance_double(
           Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
-          stray_blk_devices: [stray]
+          stray_blk_devices: [stray], nfs_mounts: [nfs]
         )
       end
+
       let(:disks) { [disk, dasd] }
       let(:disk) { instance_double(Y2Storage::Disk) }
       let(:dasd) { instance_double(Y2Storage::Dasd) }
       let(:vg) { instance_double(Y2Storage::LvmVg) }
       let(:md) { instance_double(Y2Storage::Md) }
       let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
+      let(:nfs) { instance_double(Y2Storage::Filesystems::Nfs) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -88,22 +92,44 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(md).and_return(md_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(stray).and_return(stray_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(nfs).and_return(nfs_section)
       end
+
+      subject(:section) { described_class.new_from_storage(devicegraph) }
 
       it "returns a new PartitioningSection object" do
-        expect(described_class.new_from_storage(devicegraph)).to be_a(described_class)
+        expect(section).to be_a(described_class)
       end
 
-      it "creates an entry in #drives for every relevant VG, disk and DASD" do
-        section = described_class.new_from_storage(devicegraph)
-        expect(section.drives)
-          .to eq([md_section, vg_section, disk_section, dasd_section, stray_section])
+      it "creates an entry in #drives for every relevant disk" do
+        expect(section.drives).to include(disk_section)
+      end
+
+      it "creates an entry in #drives for every relevant DASD" do
+        expect(section.drives).to include(dasd_section)
+      end
+
+      it "creates an entry in #drives for every relevant stray device" do
+        expect(section.drives).to include(stray_section)
+      end
+
+      it "creates an entry in #drives for every relevant LVM VG" do
+        expect(section.drives).to include(vg_section)
+      end
+
+      it "creates an entry in #drives for every relevant MD RAID" do
+        expect(section.drives).to include(md_section)
+      end
+
+      it "creates an entry in #drives for every relevant NFS" do
+        expect(section.drives).to include(nfs_section)
       end
 
       it "ignores irrelevant drives" do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(disk).and_return(nil)
-        section = described_class.new_from_storage(devicegraph)
+
         expect(section.drives).to_not include(disk_section)
       end
     end
@@ -115,13 +141,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
         fake_scenario("bug_1098594.xml")
       end
 
-      it "creates only one entry in #drives, of type CT_DISK, for the BIOS RAID" do
+      it "creates only one CT_DISK entry in #drives, for the BIOS RAID" do
         section = described_class.new_from_storage(fake_devicegraph)
-        expect(section.drives.size).to eq 1
+        drive = section.drives.find { |d| d.type == :CT_DISK }
 
-        drive = section.drives.first
-        expect(drive.device).to eq "/dev/md/Volume0_0"
-        expect(drive.type).to eq :CT_DISK
+        expect(drive).to_not be_nil
+        expect(drive.device).to eq("/dev/md/Volume0_0")
       end
     end
   end
