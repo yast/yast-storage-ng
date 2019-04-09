@@ -136,7 +136,7 @@ module Y2Storage
       def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
           # Some planned devices could be mountable but not formattable (e.g., {Planned::Nfs}).
-          # Those devices might shadow some subvolumes but they do no have any subvolume to
+          # Those devices might shadow some subvolumes but they do not have any subvolume to
           # be shadowed.
           next unless device.respond_to?(:shadowed_subvolumes)
 
