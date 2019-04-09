@@ -43,19 +43,7 @@ describe Y2Storage::AutoinstProposal do
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   describe "#propose" do
-    context "when installing over NFS" do
-      let(:nfs_drive) do
-        {
-          "device"     => "/dev/nfs",
-          "partitions" => [
-            {
-              "device" => "192.168.56.1:/root_fs",
-              "mount"  => "/"
-            }
-          ]
-        }
-      end
-
+    shared_examples "NFS proposal" do
       let(:disk_drive) do
         {
           "device" => "/dev/sda",
@@ -90,6 +78,41 @@ describe Y2Storage::AutoinstProposal do
       it "does not register any issue" do
         proposal.propose
         expect(issues_list).to be_empty
+      end
+
+    end
+
+    context "when installing over NFS" do
+      context "and the old NFS drive format is used" do
+        let(:nfs_drive) do
+          {
+            "device"     => "/dev/nfs",
+            "partitions" => [
+              {
+                "device" => "192.168.56.1:/root_fs",
+                "mount"  => "/"
+              }
+            ]
+          }
+        end
+
+        include_examples "NFS proposal"
+      end
+
+      context "and the new NFS drive format is used" do
+        let(:nfs_drive) do
+          {
+            "device"     => "192.168.56.1:/root_fs",
+            "type"       => :CT_NFS,
+            "partitions" => [
+              {
+                "mount" => "/"
+              }
+            ]
+          }
+        end
+
+        include_examples "NFS proposal"
       end
     end
   end
