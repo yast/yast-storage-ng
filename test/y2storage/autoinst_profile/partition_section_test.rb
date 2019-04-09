@@ -253,6 +253,60 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
+    context "given a NFS filesystem" do
+      let(:scenario) { "nfs1.xml" }
+
+      let(:nfs) do
+        Y2Storage::Filesystems::Nfs.find_by_server_and_path(fake_devicegraph, "srv", "/home/a")
+      end
+
+      subject(:section) { described_class.new_from_storage(nfs) }
+
+      it "initializes #create to false" do
+        expect(section.create).to eq(false)
+      end
+
+      it "initializes #size to nil" do
+        expect(section.size).to be_nil
+      end
+
+      context "if the NFS has mount point" do
+        before do
+          nfs.mount_point.mount_options = ["rw"]
+        end
+
+        it "initializes #mount" do
+          expect(section.mount).to eq("/test1")
+        end
+
+        it "initializes #mountby" do
+          expect(section.mountby).to eq(:device)
+        end
+
+        it "initializes #fstab_options" do
+          expect(section.fstab_options).to contain_exactly("rw")
+        end
+      end
+
+      context "if the NFS has no mount point" do
+        before do
+          nfs.remove_mount_point
+        end
+
+        it "initializes #mount to nil" do
+          expect(section.mount).to be_nil
+        end
+
+        it "initializes #mountby to nil" do
+          expect(section.mountby).to be_nil
+        end
+
+        it "initializes #fstab_options to nil" do
+          expect(section.fstab_options).to be_nil
+        end
+      end
+    end
+
     context "when filesystem is btrfs" do
       it "initializes subvolumes" do
         subvolumes = section_for("sdd3").subvolumes

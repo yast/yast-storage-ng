@@ -177,12 +177,12 @@ module Y2Storage
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance
-      # of this class from the information in a partition or LVM logical volume.
+      # of this class from the information of a device
       #
       # @see PartitioningSection.new_from_storage for more details
       #
-      # @param device [BlkDevice] a block device that can be cloned into a
-      #   <partition> section, like a partition, an LVM logical volume or an MD RAID.
+      # @param device [Device] a device that can be cloned into a <partition> section,
+      #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
       # @return [PartitionSection]
       def self.new_from_storage(device)
         result = new
@@ -248,15 +248,20 @@ module Y2Storage
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param device [BlkDevice] a block device that can be cloned into a
-      #   <partition> section, like a partition, an LVM logical volume or an MD RAID.
+      # @param device [Device] a device that can be cloned into a <partition> section,
+      #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
       def init_from_device(device)
         @create = true
         @resize = false
 
         init_fields_by_type(device)
-        init_encryption_fields(device)
-        init_filesystem_fields(device)
+
+        # Exporting these values only makes sense when the device is a block device. Note
+        # that some exported devices (e.g., NFS filesystems) are not block devices.
+        if device.is?(:blk_device)
+          init_encryption_fields(device)
+          init_filesystem_fields(device)
+        end
 
         # NOTE: The old AutoYaST exporter does not report the real size here.
         # It intentionally reports one cylinder less. Cylinders is an obsolete
@@ -300,6 +305,8 @@ module Y2Storage
           init_lv_fields(device)
         elsif device.is?(:disk_device, :software_raid, :stray_blk_device, :bcache)
           init_disk_device_fields(device)
+        elsif device.is?(:nfs)
+          init_nfs_fields(device)
         else
           init_partition_fields(device)
         end
@@ -384,6 +391,11 @@ module Y2Storage
         elsif device.in_bcache_cset
           @bcache_caching_for = device.in_bcache_cset.bcaches.map(&:name)
         end
+      end
+
+      def init_nfs_fields(device)
+        @create = false
+        init_mount_options(device)
       end
 
       # Whether the given existing partition should be reported as GRUB (GPT
