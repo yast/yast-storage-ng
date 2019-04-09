@@ -160,7 +160,7 @@ module Y2Storage
 
       # @!attribute device
       #   @return [String, nil] undocumented attribute, but used to indicate a NFS
-      #     share when installing over NFS
+      #     share when installing over NFS (with the old profile format)
 
       def init_from_hashes(hash)
         super

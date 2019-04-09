@@ -71,11 +71,35 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
 
+      # Old format for NFS shares
       context "and device name is /dev/nfs" do
         let(:hash) { { "device" => "/dev/nfs" } }
 
         it "initializes it to :CT_NFS" do
           expect(described_class.new_from_hashes(hash).type).to eq(:CT_NFS)
+        end
+      end
+    end
+
+    # New format for NFS shares
+    context "and the device is a NFS share (server:path)" do
+      let(:nfs_hash) { { "device" => "192.168.56.1:/root_fs" } }
+
+      context "and the type is specified (it must be CT_NFS)" do
+        let(:hash) { nfs_hash.merge("type" => :CT_NFS) }
+
+        it "sets the given type" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_NFS)
+        end
+      end
+
+      context "and the type is not specified" do
+        let(:hash) { nfs_hash }
+
+        # Type attribute is mandatory for NFS drives with the new format. Otherwise,
+        # the type would be wrongly initialized.
+        it "initializes it to :CT_DISK" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
         end
       end
     end
