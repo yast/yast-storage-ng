@@ -130,6 +130,13 @@ module Y2Storage
         end
       end
 
+      # Default drive type depending on the device name
+      #
+      # For NFS, the default type can only be inferred when using the old format. With the new
+      # format, type attribute is mandatory.
+      #
+      # @param hash [Hash]
+      # @return [Symbol]
       def default_type_for(hash)
         device_name = hash["device"].to_s
 
@@ -255,10 +262,14 @@ module Y2Storage
 
       # Whether the given name is a NFS name
       #
+      # Note that this method only recognizes a NFS name when the old format is used,
+      # that is, device attribute contains "/dev/nfs". With the new format, device
+      # contains the NFS share name (server:path), but in this case the type attribute
+      # is mandatory to identify the drive type.
+      #
       # @param device_name [String]
       # @return [Boolean]
       def nfs_name?(device_name)
-        # TODO: with the new format, device_name would be "server:path"
         device_name == "/dev/nfs"
       end
 
