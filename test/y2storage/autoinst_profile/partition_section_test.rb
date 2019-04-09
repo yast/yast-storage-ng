@@ -586,7 +586,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "when device is present" do
-      let(:hash) { { device: nfs_share } }
+      let(:hash) { { "device" => nfs_share } }
 
       let(:nfs_share) { "192.168.56.1:/root" }
 
