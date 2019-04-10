@@ -1304,6 +1304,80 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         end
       end
     end
+
+    context "when the device has an unused LvmPv" do
+      let(:scenario) { "unused_lvm_pvs.xml" }
+
+      let(:can_change_encrypt) { true }
+      let(:encrypt) { false }
+      let(:password) { "12345678" }
+
+      before do
+        allow(subject).to receive(:encrypt).and_return(encrypt)
+        allow(subject).to receive(:encrypt_password).and_return(password)
+      end
+
+      context "which was not encrypted" do
+        let(:dev_name) { "/dev/sda2" }
+
+        context "and it is marked to be encrypted" do
+          let(:encrypt) { true }
+
+          it "removes the unused LvmPv" do
+            subject.finish
+            expect(subject.blk_device.lvm_pv).to be_nil
+          end
+
+          it "encrypts the device" do
+            subject.finish
+            expect(subject.blk_device.encryption).to_not be_nil
+            expect(subject.blk_device.encryption.password).to eq(password)
+          end
+        end
+
+        context "and it is not marked to be encrypted" do
+          let(:encrypt) { false }
+
+          it "removes the unused LvmPv" do
+            subject.finish
+            expect(subject.blk_device.lvm_pv).to be_nil
+          end
+        end
+      end
+
+      context "which was already encrypted" do
+        let(:dev_name) { "/dev/sda3" }
+
+        context "and it is marked to keep the encryption" do
+          let(:encrypt) { true }
+
+          it "keeps the encryption" do
+            encryption = subject.blk_device.encryption
+            subject.finish
+            expect(subject.blk_device.encryption).to eq(encryption)
+          end
+
+          it "removes the unused LvmPv" do
+            subject.finish
+            expect(subject.blk_device.lvm_pv).to be_nil
+          end
+        end
+
+        context "and it is not marked to be encrypted" do
+          let(:encrypt) { false }
+
+          it "removes the encryption" do
+            subject.finish
+            expect(subject.blk_device.encryption).to be_nil
+          end
+
+          it "removes the unused LvmPv" do
+            subject.finish
+            expect(subject.blk_device.lvm_pv).to be_nil
+          end
+        end
+      end
+    end
   end
 
   describe "#format_options_supported?" do
