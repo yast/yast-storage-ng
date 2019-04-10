@@ -1,9 +1,8 @@
 -------------------------------------------------------------------
 Wed Apr 10 07:55:26 UTC 2019 - David Diaz <dgonzalez@suse.com>
 
-- Fix partitioner to not have not doable operations after editing
-  a partition that initially contains an LvmPv not associated with
-  any LvmVg (bsc#1129663).
+- Partitioner: when editing a block device, clean-up useless
+  LVM PV metadata from it (bsc#1129663)
 - 4.1.81
 
 -------------------------------------------------------------------
