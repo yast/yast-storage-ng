@@ -31,9 +31,9 @@ module Y2Storage
       # @param drive [AutoinstProfile::DriveSection] drive section describing NFS filesystems
       # @return [Array<Planned::Nfs>] Planned NFS filesystems
       def planned_devices(drive)
-        return planned_devices_old_format(drive) if old_format?(drive)
+        # TODO: planned device with new format
 
-        planned_devices_new_format(drive)
+        planned_devices_old_format(drive)
       end
 
     private
@@ -57,24 +57,10 @@ module Y2Storage
 
       # Similar to {OLD_FORMAT_MANDATORY_VALUES}, but for the new AutoYaST style.
       #
-      # With new format, drive section must contain a device and partition section must contain
-      # a mount value, e.g.:
-      #
-      # <drive>
-      #   <device>192.168.56.1:/root_fs</device>
-      #   <partitions>
-      #     <partition>
-      #       <mount>/</mount>
-      #     </partition>
-      #   </partitions>
-      # </drive>
-      NEW_FORMAT_MANDATORY_VALUES = { drive: [:device], partition: [:mount] }.freeze
+      # TODO
+      NEW_FORMAT_MANDATORY_VALUES = {}.freeze
 
       private_constant :OLD_FORMAT_MANDATORY_VALUES, :NEW_FORMAT_MANDATORY_VALUES
-
-      def old_format?(drive)
-        drive.device == "/dev/nfs" || drive.partitions.any?(&:device)
-      end
 
       # Returns a list of planned NFS filesystems from the old-style AutoYaST profile
       #
@@ -91,6 +77,7 @@ module Y2Storage
 
       # Creates a planned NFS filesystem from the old-style AutoYaST profile
       #
+      #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the list of NFS
       #   filesystems
       # @param partition_section [AutoinstProfile::PartitionSection] partition section describing
@@ -100,51 +87,22 @@ module Y2Storage
       def planned_device_old_format(drive, partition_section)
         return nil unless valid_drive?(drive, partition: partition_section, profile_format: :old)
 
-        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
-
         share = partition_section.device
 
-        create_planned_nfs(share, partition_section)
-      end
-
-      # Returns a list of planned NFS filesystems from the new-style AutoYaST profile
-      #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing a NFS share
-      # @return [Array<Planned::Nfs>] List containing the planned NFS filesystem
-      def planned_devices_new_format(drive)
-        [planned_device_new_format(drive)].compact
-      end
-
-      # Creates a planned NFS filesystem from the new-style AutoYaST profile
-      #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing a NFS share
-      # @return [Planned::Nfs]
-      def planned_device_new_format(drive)
-        return nil unless valid_drive?(drive, profile_format: :new)
-
-        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
-        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
-
-        share = drive.device
-        master_partition = drive.partitions.first
-
-        create_planned_nfs(share, master_partition)
-      end
-
-      # Creates a planned NFS filesystem
-      #
-      # @param share [String] NFS share name with the format server:path
-      # @param partition_section [AutoinstProfile::PartitionSection] partition section describing
-      #   a NFS filesystem
-      #
-      # @return [Planned::Nfs]
-      def create_planned_nfs(share, partition_section)
         planned_nfs = Planned::Nfs.new(server(share), path(share))
-
-        planned_nfs.mount_point = partition_section.mount
-        planned_nfs.fstab_options = partition_section.fstab_options || []
+        add_options(planned_nfs, partition_section)
 
         planned_nfs
+      end
+
+      # Adds options to the planned NFS filesystem
+      #
+      # @param planned_nfs [Planned::Nfs]
+      # @param partition_section [AutoinstProfile::PartitionSection] partition section describing
+      #   a NFS filesystem
+      def add_options(planned_nfs, partition_section)
+        planned_nfs.mount_point = partition_section.mount
+        planned_nfs.fstab_options = partition_section.fstab_options || []
       end
 
       # Whether the drive section is valid

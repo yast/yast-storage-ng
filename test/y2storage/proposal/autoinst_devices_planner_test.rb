@@ -59,7 +59,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   describe "#planned_devices" do
-    context "using NFS with the old format" do
+    context "using NFS" do
       let(:partitioning_array) do
         [{
           "device" => "/dev/nfs", "partitions" => [{ "mount" => "/", "device" => "server:path" }]
@@ -71,26 +71,6 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         expect(devices.nfs_filesystems).to_not be_empty
         expect(devices.nfs_filesystems.first.root?).to eq(true)
-      end
-    end
-
-    context "using NFS with the new format" do
-      let(:partitioning_array) do
-        [{
-          "device" => "192.168.56.1:/root_fs", "type" => :CT_NFS, "partitions" => [{ "mount" => "/" }]
-        }]
-      end
-
-      it "plans NFS filesystems" do
-        devices = planner.planned_devices(drives_map)
-
-        expect(devices.nfs_filesystems).to include(
-          an_object_having_attributes(
-            mount_point: "/",
-            server:      "192.168.56.1",
-            path:        "/root_fs"
-          )
-        )
       end
     end
 

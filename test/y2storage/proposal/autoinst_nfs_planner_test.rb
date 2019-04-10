@@ -37,13 +37,52 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   describe "#planned_devices" do
-    shared_examples "create planned NFS" do
-      it "does not register a 'missing value' issue" do
-        planner.planned_devices(drive)
+    let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(drive_section) }
 
-        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-        expect(issue).to be_nil
+    let(:drive_section) { { "device" => "/dev/nfs", "partitions" => [partition_section] } }
+
+    context "when the partition section does not contain a device value" do
+      let(:partition_section) do
+        { "mount" => "/", "fstopt" => "rw,wsize=8192" }
       end
+
+      it "does not plan a NFS filesystem" do
+        expect(planner.planned_devices(drive)).to be_empty
+      end
+
+      it "registers an issue" do
+        planner.planned_devices(drive)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+
+        expect(issue).to_not be_nil
+        expect(issue.attr).to eq(:device)
+      end
+    end
+
+    context "when the partition section does not contain a mount value" do
+      let(:partition_section) do
+        { "device" => "192.168.56.1:/root_fs", "fstopt" => "rw,wsize=8192" }
+      end
+
+      it "does not plan a NFS filesystem" do
+        expect(planner.planned_devices(drive)).to be_empty
+      end
+
+      it "registers an issue" do
+        planner.planned_devices(drive)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+
+        expect(issue).to_not be_nil
+        expect(issue.attr).to eq(:mount)
+      end
+    end
+
+    context "when the partition section contains a device and a mount value" do
+      let(:partition_section) do
+        { "mount" => "/", "device" => "192.168.56.1:/root_fs", "fstopt" => fstopt }
+      end
+
+      let(:fstopt) { nil }
 
       it "plans a NFS filesystem" do
         expect(planner.planned_devices(drive)).to_not be_empty
@@ -52,19 +91,25 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
       it "sets the server" do
         planned_nfs = planner.planned_devices(drive).first
 
-        expect(planned_nfs.server).to eq(server)
+        expect(planned_nfs.server).to eq("192.168.56.1")
       end
 
       it "sets the shared path" do
         planned_nfs = planner.planned_devices(drive).first
 
-        expect(planned_nfs.path).to eq(path)
+        expect(planned_nfs.path).to eq("/root_fs")
       end
 
       it "sets the mount point" do
         planned_nfs = planner.planned_devices(drive).first
 
-        expect(planned_nfs.mount_point).to eq(mount)
+        expect(planned_nfs.mount_point).to eq("/")
+      end
+
+      it "does not register an issue" do
+        planner.planned_devices(drive)
+
+        expect(issues_list).to be_empty
       end
 
       context "and the fstab options are not given" do
@@ -84,234 +129,6 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
           planned_nfs = planner.planned_devices(drive).first
 
           expect(planned_nfs.fstab_options).to contain_exactly("rw", "wsize=8192")
-        end
-      end
-    end
-
-    let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(drive_section) }
-
-    context "when using the old profile format" do
-      let(:drive_section) do
-        { "device" => "/dev/nfs", "disklabel" => disklabel, "partitions" => partitions }
-      end
-
-      let(:disklabel) { nil }
-
-      let(:partitions) { [partition_section1, partition_section2] }
-
-      let(:partition_section1) do
-        { "device" => "server:path1", "mount" => "/", "fstopt" => "rw,wsize=8192" }
-      end
-
-      let(:partition_section2) do
-        { "device" => "server:path2", "mount" => "/home", "fstopt" => "rw" }
-      end
-
-      it "plans a NFS for each valid partition section" do
-        planned_devices = planner.planned_devices(drive)
-
-        expect(planned_devices.size).to eq(2)
-        expect(planned_devices.map(&:mount_point)).to contain_exactly("/", "/home")
-      end
-
-      context "and the partition section does not contain a device value" do
-        let(:partition_section) do
-          { "mount" => "/", "fstopt" => "rw,wsize=8192" }
-        end
-
-        let(:partitions) { [partition_section] }
-
-        it "does not plan a NFS filesystem" do
-          expect(planner.planned_devices(drive)).to be_empty
-        end
-
-        it "registers a 'missing value' issue" do
-          planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-
-          expect(issue).to_not be_nil
-          expect(issue.attr).to eq(:device)
-        end
-      end
-
-      context "and the partition section does not contain a mount value" do
-        let(:partition_section) do
-          { "device" => "192.168.56.1:/root_fs", "fstopt" => "rw,wsize=8192" }
-        end
-
-        let(:partitions) { [partition_section] }
-
-        it "does not plan a NFS filesystem" do
-          expect(planner.planned_devices(drive)).to be_empty
-        end
-
-        it "registers a 'missing value' issue" do
-          planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-
-          expect(issue).to_not be_nil
-          expect(issue.attr).to eq(:mount)
-        end
-      end
-
-      context "and the partition section contains a device and a mount value" do
-        let(:partition_section) do
-          { "mount" => mount, "device" => device, "fstopt" => fstopt }
-        end
-
-        let(:partitions) { [partition_section] }
-
-        let(:mount) { "/" }
-
-        let(:device) { "#{server}:#{path}" }
-
-        let(:server) { "192.168.56.1" }
-
-        let(:path) { "/root_fs" }
-
-        let(:fstopt) { nil }
-
-        include_examples "create planned NFS"
-
-        context "and a partition table is not required" do
-          let(:disklabel) { "none" }
-
-          it "does not register a 'no partitionable' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
-
-            expect(issue).to be_nil
-          end
-        end
-
-        context "and a partition table is required" do
-          let(:disklabel) { "gpt" }
-
-          it "registers a 'no partitionable' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
-
-            expect(issue).to_not be_nil
-          end
-        end
-      end
-    end
-
-    context "when using the new profile format" do
-      let(:drive_section) { { "device" => device, "partitions" => partitions } }
-
-      let(:partitions) { [] }
-
-      context "and the drive section does not contain a device value" do
-        let(:device) { nil }
-
-        it "does not plan a NFS filesystem" do
-          expect(planner.planned_devices(drive)).to be_empty
-        end
-
-        it "registers a 'missing value' issue" do
-          planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-
-          expect(issue).to_not be_nil
-          expect(issue.attr).to eq(:device)
-        end
-      end
-
-      context "and the partition section does not contain a mount value" do
-        let(:device) { "192.168.56.1:/root_fs" }
-
-        let(:partitions) { [partition_section] }
-
-        let(:partition_section) { { "mount" => nil, "fstopt" => "rw,wsize=8192" } }
-
-        it "does not plan a NFS filesystem" do
-          expect(planner.planned_devices(drive)).to be_empty
-        end
-
-        it "registers a 'missing value' issue" do
-          planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-
-          expect(issue).to_not be_nil
-          expect(issue.attr).to eq(:mount)
-        end
-      end
-
-      context "and drive and partition sections contain all the mandatory values" do
-        let(:drive_section) do
-          { "device" => device, "disklabel" => disklabel, "partitions" => partitions }
-        end
-
-        let(:device) { "#{server}:#{path}" }
-
-        let(:server) { "192.168.56.1" }
-
-        let(:path) { "/root_fs" }
-
-        let(:disklabel) { nil }
-
-        let(:partitions) { [partition_section1] }
-
-        let(:partition_section1) { { "mount" => mount, "fstopt" => fstopt } }
-
-        let(:mount) { "/" }
-
-        let(:fstopt) { nil }
-
-        include_examples "create planned NFS"
-
-        context "and a partition table is not required" do
-          let(:disklabel) { "none" }
-
-          it "does not register a 'no partitionable' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
-
-            expect(issue).to be_nil
-          end
-        end
-
-        context "and a partition table is required" do
-          let(:disklabel) { "gpt" }
-
-          it "registers a 'no partitionable' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
-
-            expect(issue).to_not be_nil
-          end
-        end
-
-        context "and there is only one partition section" do
-          let(:partitions) { [partition_section1] }
-
-          it "does not register a 'surplus partitions' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::SurplusPartitions) }
-
-            expect(issue).to be_nil
-          end
-        end
-
-        context "and there is more than one partition section" do
-          let(:partition_section2) { { "mount" => "/home" } }
-
-          let(:partitions) { [partition_section1, partition_section2] }
-
-          it "registers a 'surplus partitions' issue" do
-            planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::SurplusPartitions) }
-
-            expect(issue).to_not be_nil
-          end
-
-          it "plans a NFS filesystem according to the first partition section" do
-            planned_devices = planner.planned_devices(drive)
-
-            expect(planned_devices.size).to eq(1)
-            expect(planned_devices.first.mount_point).to eq("/")
-          end
         end
       end
     end
