@@ -39,6 +39,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     fake_devicegraph.lvm_vgs.find { |v| v.vg_name == name }
   end
 
+  def nfs(server, path)
+    Y2Storage::Filesystems::Nfs.find_by_server_and_path(fake_devicegraph, server, path)
+  end
+
   describe ".new_from_hashes" do
     let(:hash) { { "partitions" => [root] } }
 
@@ -71,11 +75,35 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
 
+      # Old format for NFS shares
       context "and device name is /dev/nfs" do
         let(:hash) { { "device" => "/dev/nfs" } }
 
         it "initializes it to :CT_NFS" do
           expect(described_class.new_from_hashes(hash).type).to eq(:CT_NFS)
+        end
+      end
+    end
+
+    # New format for NFS shares
+    context "and the device is a NFS share (server:path)" do
+      let(:nfs_hash) { { "device" => "192.168.56.1:/root_fs" } }
+
+      context "and the type is specified (it must be CT_NFS)" do
+        let(:hash) { nfs_hash.merge("type" => :CT_NFS) }
+
+        it "sets the given type" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_NFS)
+        end
+      end
+
+      context "and the type is not specified" do
+        let(:hash) { nfs_hash }
+
+        # Type attribute is mandatory for NFS drives with the new format. Otherwise,
+        # the type would be wrongly initialized.
+        it "initializes it to :CT_DISK" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
         end
       end
     end
@@ -164,6 +192,11 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     it "returns a DriveSection object for a disk or DASD with exportable partitions" do
       expect(described_class.new_from_storage(device("dasdb"))).to be_a described_class
       expect(described_class.new_from_storage(device("sdc"))).to be_a described_class
+    end
+
+    it "returns a DriveSection object for a NFS filesystem" do
+      nfs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "srv", "/foo")
+      expect(described_class.new_from_storage(nfs)).to be_a described_class
     end
 
     it "stores the exportable partitions as PartitionSection objects" do
@@ -504,6 +537,36 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         it "returns nil" do
           expect(described_class.new_from_storage(device("xvda1"))).to be_nil
         end
+      end
+    end
+
+    context "given a NFS filesystems" do
+      before do
+        fake_scenario("nfs1.xml")
+      end
+
+      let(:section) { described_class.new_from_storage(nfs("srv", "/home/a")) }
+
+      it "initializes device name" do
+        expect(section.device).to eq("srv:/home/a")
+      end
+
+      it "initializes #type to :CT_NFS" do
+        expect(section.type).to eq(:CT_NFS)
+      end
+
+      it "initializes #disklabel to 'none'" do
+        expect(section.disklabel).to eq("none")
+      end
+
+      it "initializes #use to 'all'" do
+        expect(section.use).to eq("all")
+      end
+
+      it "initializes #partitions to a partition describing the NFS options" do
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes(mount: "/test1")
+        )
       end
     end
 
