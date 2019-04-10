@@ -82,13 +82,8 @@ module Y2Storage
       # @return [PartitioningSection]
       def self.new_from_storage(devicegraph)
         result = new
-        # TODO: consider also NFS and TMPFS
-        devices = devicegraph.bcaches + devicegraph.software_raids + devicegraph.lvm_vgs +
-          devicegraph.disk_devices + devicegraph.stray_blk_devices
-        result.drives = devices.each_with_object([]) do |dev, array|
-          drive = DriveSection.new_from_storage(dev)
-          array << drive if drive
-        end
+        result.drives = drives_from_storage(devicegraph)
+
         result
       end
 
@@ -141,6 +136,36 @@ module Y2Storage
       def section_name
         "partitioning"
       end
+
+      # All drive sections generated from a given devicegraph
+      #
+      # It creates a drive section for each exportable device, see {#exportable_devices}.
+      #
+      # @param devicegraph [Devicegraph]
+      # @return [Array<DriveSection>]
+      def self.drives_from_storage(devicegraph)
+        devices = exportable_devices(devicegraph)
+
+        devices.map { |d| DriveSection.new_from_storage(d) }.compact
+      end
+
+      # All devices that can be exported by AutoYaST
+      #
+      # @param devicegraph [Devicegraph]
+      # @return [Array<Device>]
+      def self.exportable_devices(devicegraph)
+        # TODO: consider also TMPFS
+        [].concat(
+          devicegraph.bcaches,
+          devicegraph.software_raids,
+          devicegraph.lvm_vgs,
+          devicegraph.disk_devices,
+          devicegraph.stray_blk_devices,
+          devicegraph.nfs_mounts
+        )
+      end
+
+      private_class_method :drives_from_storage, :exportable_devices
     end
   end
 end
