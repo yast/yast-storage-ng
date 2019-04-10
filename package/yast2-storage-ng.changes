@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Apr 10 07:55:26 UTC 2019 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: when editing a block device, clean-up useless
+  LVM PV metadata from it (bsc#1129663)
+- 4.2.4
+
+-------------------------------------------------------------------
 Wed Apr  3 08:09:10 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Fix NFS root detection when installing with AutoYaST

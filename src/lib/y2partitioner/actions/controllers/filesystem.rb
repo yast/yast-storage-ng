@@ -330,10 +330,14 @@ module Y2Partitioner
         end
 
         # Applies last changes to the block device at the end of the wizard, which
-        # mainly means encrypting the device or removing the encryption layer for
-        # non preexisting devices.
+        # mainly means
+        #
+        #   * removing unused LvmPv descendant (bsc#1129663)
+        #   * encrypting the device or removing the encryption layer for non preexisting devices.
         def finish
           return unless can_change_encrypt?
+
+          remove_unused_lvm_pv
 
           if to_be_encrypted?
             blk_device.encrypt(password: encrypt_password)
@@ -342,6 +346,15 @@ module Y2Partitioner
           end
         ensure
           @restorer.update_checkpoint
+        end
+
+        # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg
+        # (bsc#1129663)
+        def remove_unused_lvm_pv
+          device = blk_device.encryption || blk_device
+          lvm_pv = device.lvm_pv
+
+          device.remove_descendants if lvm_pv && lvm_pv.descendants.none?
         end
 
         # Whether is possible to define the generic format options for the current
