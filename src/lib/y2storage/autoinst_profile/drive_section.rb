@@ -130,6 +130,13 @@ module Y2Storage
         end
       end
 
+      # Default drive type depending on the device name
+      #
+      # For NFS, the default type can only be inferred when using the old format. With the new
+      # format, type attribute is mandatory.
+      #
+      # @param hash [Hash]
+      # @return [Symbol]
       def default_type_for(hash)
         device_name = hash["device"].to_s
 
@@ -149,7 +156,7 @@ module Y2Storage
       #
       # @param device [BlkDevice] a block device that can be cloned into a
       #   <drive> section, like a disk, a DASD or an LVM volume group.
-      # @return [DriveSection]
+      # @return [DriveSection, nil] nil if the device cannot be exported
       def self.new_from_storage(device)
         result = new
         # So far, only disks (and DASD) are supported
@@ -173,6 +180,8 @@ module Y2Storage
           init_from_vg(device)
         elsif device.is?(:stray_blk_device)
           init_from_stray_blk_device(device)
+        elsif device.is?(:nfs)
+          init_from_nfs(device)
         else
           init_from_disk(device)
         end
@@ -255,10 +264,14 @@ module Y2Storage
 
       # Whether the given name is a NFS name
       #
+      # Note that this method only recognizes a NFS name when the old format is used,
+      # that is, device attribute contains "/dev/nfs". With the new format, device
+      # contains the NFS share name (server:path), but in this case the type attribute
+      # is mandatory to identify the drive type.
+      #
       # @param device_name [String]
       # @return [Boolean]
       def nfs_name?(device_name)
-        # TODO: with the new format, device_name would be "server:path"
         device_name == "/dev/nfs"
       end
 
@@ -344,6 +357,16 @@ module Y2Storage
         @type = :CT_DISK
         @device = device.name
         @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(device)]
+
+        true
+      end
+
+      def init_from_nfs(device)
+        @type = :CT_NFS
+        @device = device.share
         @use = "all"
         @disklabel = "none"
         @partitions = [PartitionSection.new_from_storage(device)]
