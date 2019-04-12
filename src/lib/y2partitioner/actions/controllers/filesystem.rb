@@ -213,13 +213,6 @@ module Y2Partitioner
 
         # Makes the changes related to the option "do not format" in the UI, which
         # implies removing any new filesystem or respecting the preexisting one.
-        #
-        # @note With the current implementation there is a corner case that
-        # doesn't work like the traditional expert partitioner. If a partition
-        # preexisting in the disk is edited (e.g. replacing the filesystem with a
-        # new one) and then we the user tries to edit it again, "do not format"
-        # will actually mean leaving the partition unformatted, not respecting the
-        # filesystem on the system.
         def dont_format
           return if filesystem.nil?
           return unless new?(filesystem)
