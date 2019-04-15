@@ -102,6 +102,8 @@ module Y2Partitioner
         # @param bcaches [Array<Y2Storage::Bcache>]
         # @param pager [CWM::TreePager]
         def initialize(bcaches, pager)
+          textdomain "storage"
+
           @bcaches = bcaches
           @pager = pager
         end
@@ -160,6 +162,8 @@ module Y2Partitioner
         #
         # @param pager [CWM::TreePager]
         def initialize(pager)
+          textdomain "storage"
+
           @pager = pager
         end
 
