@@ -18,7 +18,7 @@ order to understand their basis.
 
 As already mentioned, this is not so different from the capabilities already
 offered by LVM or software RAIDs. It basically refers to the ability of Btrfs of
-distributing its data and metadata over several block filesystems. That can be
+distributing its data and metadata over several block devices. That can be
 done in several modes (for both the data and the metadata, that can be
 configured separately): single, dup, raid0, raid1, raid10, raid5 and raid6.
 
