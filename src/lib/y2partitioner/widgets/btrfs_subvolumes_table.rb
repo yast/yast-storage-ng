@@ -80,13 +80,7 @@ module Y2Partitioner
         end
       end
 
-      # FIXME: BtrFS could belong to several devices
-      def device(filesystem)
-        filesystem.plain_blk_devices.first
-      end
-
       # Column titles
-
       def path_title
         # TRANSLATORS: table header, subvolume path e.g. "@/home"
         _("Path")
