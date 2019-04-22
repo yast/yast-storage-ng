@@ -32,8 +32,16 @@ module Y2Partitioner
     # means default for each widget will be honored).
     def initialize
       textdomain "storage"
+
       @candidate_nodes = []
+      @overview_tree_pager = nil
     end
+
+    # A reference to the overview tree pager, which is a new instance every dialog redraw. See note
+    # in {Dialogs::Main#contents}
+    #
+    # @return [Widgets::OverviewTreePager]
+    attr_accessor :overview_tree_pager
 
     # Title of the section listing the MD RAIDs
     #

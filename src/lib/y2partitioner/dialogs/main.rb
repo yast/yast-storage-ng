@@ -57,10 +57,17 @@ module Y2Partitioner
       end
 
       def contents
+        # NOTE: Since this method is used as first parameter of {Yast::CWM.show} every time that
+        # {#run} calls `super`, a new {OverviewTreePager} will be created in every dialog redraw.
+        # So, let's keep a reference to it in the {UIState} to query the open items and preserve
+        # their state in new instances.
+        overview_tree_pager = Widgets::OverviewTreePager.new(hostname)
+        UIState.instance.overview_tree_pager = overview_tree_pager
+
         MarginBox(
           0.5,
           0.5,
-          Widgets::OverviewTreePager.new(hostname)
+          overview_tree_pager
         )
       end
 
