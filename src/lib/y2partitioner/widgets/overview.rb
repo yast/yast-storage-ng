@@ -104,6 +104,15 @@ module Y2Partitioner
         UIState.instance.find_tree_node(@pages) || super
       end
 
+      # Obtains the ids of open/expanded items
+      #
+      # @return [Array<String,Symbol>] ids of open/expanded items
+      def open_items_ids
+        Yast::UI
+          .QueryWidget(Id(tree.widget_id), :OpenItems)
+          .keys
+      end
+
       # Obtains the page associated to a specific device
       # @return [CWM::Page, nil]
       def device_page(device)
@@ -124,6 +133,8 @@ module Y2Partitioner
       end
 
     private
+
+      attr_reader :tree
 
       # Checks whether the current setup is valid, that is, it contains necessary
       # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).
