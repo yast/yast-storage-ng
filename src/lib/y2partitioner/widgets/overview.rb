@@ -86,8 +86,6 @@ module Y2Partitioner
           *graph_items,
           summary_item,
           settings_item
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
       end
 
@@ -188,15 +186,15 @@ module Y2Partitioner
       def system_items
         page = Pages::System.new(hostname, self)
         children = [
-          disks_items,
-          raids_items,
-          lvm_items,
-          bcache_items,
+          disks_section,
+          raids_section,
+          lvm_section,
+          bcache_section,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # crypt_files_items,
           # device_mapper_items,
-          nfs_items,
-          btrfs_items
+          nfs_section,
+          btrfs_section
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # unused_items
         ].compact
@@ -205,7 +203,7 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def disks_items
+      def disks_section
         devices = device_graph.disk_devices + device_graph.stray_blk_devices
 
         page = Pages::Disks.new(devices, self)
@@ -235,7 +233,7 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def raids_items
+      def raids_section
         devices = device_graph.software_raids
         page = Pages::MdRaids.new(self)
         children = devices.map { |m| raid_items(m) }
@@ -250,7 +248,7 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def bcache_items
+      def bcache_section
         return nil unless Y2Storage::Bcache.supported?
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
@@ -259,7 +257,7 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def lvm_items
+      def lvm_section
         devices = device_graph.lvm_vgs
         page = Pages::Lvm.new(self)
         children = devices.map { |v| lvm_vg_items(v) }
@@ -280,13 +278,13 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def nfs_items
+      def nfs_section
         page = Pages::NfsMounts.new(self)
         section_item(page, Icons::NFS)
       end
 
       # @return [CWM::PagerTreeItem]
-      def btrfs_items
+      def btrfs_section
         page = Pages::Btrfs.new(self)
         section_item(page, Icons::BTRFS)
       end
