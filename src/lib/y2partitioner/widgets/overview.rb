@@ -318,9 +318,9 @@ module Y2Partitioner
       # The OverviewTreePager has two kinds of items: section or device. Sections always has icon
       # and starts expanded; devices has not icon and starts collapsed. See also {device_item}.
       #
-      # @param [CWM::Page] page
-      # @param [Icons] icon
-      # @param [Array<CWM::PagerTreeItem>] children
+      # @param page [CWM::Page]
+      # @param icon [Icons]
+      # @param children [Array<CWM::PagerTreeItem>]
       #
       # @return [CWM::PagerTreeItem]
       def section_item(page, icon, children: [])
@@ -329,24 +329,24 @@ module Y2Partitioner
 
       # Generates a `device` tree item for given page
       #
-      # The OverviewTreePager has two kinds of items: section or device. Sections always has icon
-      # and starts expanded; devices has not icon and starts collapsed. See also {section_item}.
+      # @see #section_item
       #
-      # @param [CWM::Page] page
-      # @param [Array<CWM::PagerTreeItem>] children
+      # @param page [CWM::Page]
+      # @param children [Array<CWM::PagerTreeItem>]
       #
       # @return [CWM::PagerTreeItem]
       def device_item(page, children: [])
         CWM::PagerTreeItem.new(page, children: children, open: item_open?(page, false))
       end
 
-      # Whether the tree item for given page should be open (expanded) or close (collapsed)
+      # Whether the tree item for given page should be open or closed
       #
-      # If open items are unknown (i.e., during the overview initialization), it uses the default
-      # value.
+      # When open items are not initialized, the default value will be used. For better
+      # understanding, see the note about the {OverviewTreePager} redrawing in
+      # {Dialogs::Main#contents}
       #
-      # @param [CWM::Page] page
-      # @param [Boolean] default the value to be used the open items are unknown yet (first render)
+      # @param page [CWM::Page]
+      # @param default [Boolean] value when open items are not initialized yet
       #
       # @return [Boolean] true when item must be expanded; false if must be collapsed
       def item_open?(page, default)
