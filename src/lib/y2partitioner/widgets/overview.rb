@@ -339,7 +339,7 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, open: item_open?(page, false))
       end
 
-      # Whether the tree item for given page should be open or closed
+      # Whether the tree item for given page should be open (expanded) or closed (collapsed)
       #
       # When open items are not initialized, the default value will be used. For better
       # understanding, see the note about the {OverviewTreePager} redrawing in
