@@ -86,8 +86,6 @@ module Y2Partitioner
           *graph_items,
           summary_item,
           settings_item
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
       end
 
@@ -102,6 +100,15 @@ module Y2Partitioner
       # a redraw.
       def initial_page
         UIState.instance.find_tree_node(@pages) || super
+      end
+
+      # Obtains the ids of open/expanded items
+      #
+      # @return [Array<String,Symbol>] ids of open/expanded items
+      def open_items_ids
+        Yast::UI
+          .QueryWidget(Id(tree.widget_id), :OpenItems)
+          .keys
       end
 
       # Obtains the page associated to a specific device
@@ -124,6 +131,8 @@ module Y2Partitioner
       end
 
     private
+
+      attr_reader :tree
 
       # Checks whether the current setup is valid, that is, it contains necessary
       # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).
@@ -177,106 +186,107 @@ module Y2Partitioner
       def system_items
         page = Pages::System.new(hostname, self)
         children = [
-          disks_items,
-          raids_items,
-          lvm_items,
-          bcache_items,
+          disks_section,
+          raids_section,
+          lvm_section,
+          bcache_section,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # crypt_files_items,
           # device_mapper_items,
-          nfs_items,
-          btrfs_items
+          nfs_section,
+          btrfs_section
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # unused_items
         ].compact
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
+
+        section_item(page, Icons::ALL, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
-      def disks_items
+      def disks_section
         devices = device_graph.disk_devices + device_graph.stray_blk_devices
 
         page = Pages::Disks.new(devices, self)
         children = devices.map do |dev|
           dev.is?(:stray_blk_device) ? stray_blk_device_item(dev) : disk_items(dev)
         end
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
+        section_item(page, Icons::HD, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def disk_items(disk, page_class = Pages::Disk)
         page = page_class.new(disk, self)
         children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        CWM::PagerTreeItem.new(page, children: children)
+        device_item(page, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def partition_items(partition)
         page = Pages::Partition.new(partition)
-        CWM::PagerTreeItem.new(page)
+        device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
       def stray_blk_device_item(device)
         page = Pages::StrayBlkDevice.new(device)
-        CWM::PagerTreeItem.new(page)
+        device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
-      def raids_items
+      def raids_section
         devices = device_graph.software_raids
         page = Pages::MdRaids.new(self)
         children = devices.map { |m| raid_items(m) }
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::RAID)
+        section_item(page, Icons::RAID, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def raid_items(md)
         page = Pages::MdRaid.new(md, self)
         children = md.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        CWM::PagerTreeItem.new(page, children: children)
+        device_item(page, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
-      def bcache_items
+      def bcache_section
         return nil unless Y2Storage::Bcache.supported?
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::BCACHE)
+        section_item(page, Icons::BCACHE, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
-      def lvm_items
+      def lvm_section
         devices = device_graph.lvm_vgs
         page = Pages::Lvm.new(self)
         children = devices.map { |v| lvm_vg_items(v) }
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM)
+        section_item(page, Icons::LVM, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
         children = vg.all_lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
-        CWM::PagerTreeItem.new(page, children: children)
+        device_item(page, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def lvm_lv_items(lv)
         page = Pages::LvmLv.new(lv)
-        CWM::PagerTreeItem.new(page)
+        device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
-      def nfs_items
+      def nfs_section
         page = Pages::NfsMounts.new(self)
-        CWM::PagerTreeItem.new(page, icon: Icons::NFS)
+        section_item(page, Icons::NFS)
       end
 
       # @return [CWM::PagerTreeItem]
-      def btrfs_items
+      def btrfs_section
         page = Pages::Btrfs.new(self)
-        CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
+        section_item(page, Icons::BTRFS)
       end
 
       # @return [Array<CWM::PagerTreeItem>]
@@ -284,7 +294,7 @@ module Y2Partitioner
         return [] unless Yast::UI.HasSpecialWidget(:Graph)
 
         page = Pages::DeviceGraph.new(self)
-        dev_item = CWM::PagerTreeItem.new(page, icon: Icons::GRAPH)
+        dev_item = section_item(page, Icons::GRAPH)
         # TODO: Bring this back to life - disabled for now (bsc#1078849)
         # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
         # [dev_item, mount_item]
@@ -293,12 +303,56 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def summary_item
-        CWM::PagerTreeItem.new(Pages::Summary.new, icon: Icons::SUMMARY)
+        page = Pages::Summary.new
+        section_item(page, Icons::SUMMARY)
       end
 
       # @return [CWM::PagerTreeItem]
       def settings_item
-        CWM::PagerTreeItem.new(Pages::Settings.new, icon: Icons::SETTINGS)
+        page = Pages::Settings.new
+        section_item(page, Icons::SETTINGS)
+      end
+
+      # Generates a `section` tree item for given page
+      #
+      # The OverviewTreePager has two kinds of items: section or device. Sections always has icon
+      # and starts expanded; devices has not icon and starts collapsed. See also {device_item}.
+      #
+      # @param page [CWM::Page]
+      # @param icon [Icons]
+      # @param children [Array<CWM::PagerTreeItem>]
+      #
+      # @return [CWM::PagerTreeItem]
+      def section_item(page, icon, children: [])
+        CWM::PagerTreeItem.new(page, children: children, icon: icon, open: item_open?(page, true))
+      end
+
+      # Generates a `device` tree item for given page
+      #
+      # @see #section_item
+      #
+      # @param page [CWM::Page]
+      # @param children [Array<CWM::PagerTreeItem>]
+      #
+      # @return [CWM::PagerTreeItem]
+      def device_item(page, children: [])
+        CWM::PagerTreeItem.new(page, children: children, open: item_open?(page, false))
+      end
+
+      # Whether the tree item for given page should be open (expanded) or closed (collapsed)
+      #
+      # When open items are not initialized, the default value will be used. For better
+      # understanding, see the note about the {OverviewTreePager} redrawing in
+      # {Dialogs::Main#contents}
+      #
+      # @param page [CWM::Page]
+      # @param default [Boolean] value when open items are not initialized yet
+      #
+      # @return [Boolean] true when item must be expanded; false if must be collapsed
+      def item_open?(page, default)
+        return default if UIState.instance.open_items_ids.nil?
+
+        UIState.instance.open_items_ids.include?(page.widget_id)
       end
     end
   end

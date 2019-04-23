@@ -42,6 +42,9 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def handle
         return nil unless validate_presence
+
+        UIState.instance.save_open_items
+
         actions
       end
 

@@ -48,6 +48,8 @@ module Y2Partitioner
       def handle(event)
         return nil unless validate_presence
 
+        UIState.instance.save_open_items
+
         action = action_for_widget_id(event["ID"])
         return nil unless action
 
