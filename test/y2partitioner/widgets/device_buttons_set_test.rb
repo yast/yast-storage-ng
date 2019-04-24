@@ -171,6 +171,23 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       end
     end
 
+    context "when targeting a BTRFS filesystem" do
+      let(:scenario) { "mixed_disks" }
+      let(:device) { device_graph.find_by_name("/dev/sdb2").filesystem }
+
+      it "replaces the content with a single button to edit the filesystem" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::BtrfsEditButton
+          )
+        end
+
+        widget.device = device
+      end
+    end
+
     context "when an unsupported device is used" do
       let(:device) { device_graph.filesystems.first }
 
@@ -183,6 +200,5 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
         widget.device = device
       end
     end
-
   end
 end

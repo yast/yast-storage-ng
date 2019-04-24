@@ -114,6 +114,13 @@ module Y2Storage
         blk_devices.map(&:plain_device)
       end
 
+      # Whether it is a multidevice filesystem
+      #
+      # @return [Boolean]
+      def multidevice?
+        blk_devices.size > 1
+      end
+
       # Checks whether the filesystem has the capability of hosting Btrfs subvolumes
       #
       # It only should be true for Btrfs.

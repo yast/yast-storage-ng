@@ -283,6 +283,11 @@ module Y2Storage
       Filesystems::BlkFilesystem.all(self)
     end
 
+    # @return [Array<Filesystems::Btrfs>]
+    def btrfs_filesystems
+      blk_filesystems.select { |f| f.is?(:btrfs) }
+    end
+
     # @return [Array<Filesystem::Nfs>]
     def nfs_mounts
       Filesystems::Nfs.all(self)

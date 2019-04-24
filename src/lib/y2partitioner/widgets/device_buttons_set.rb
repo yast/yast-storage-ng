@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,6 +31,7 @@ require "y2partitioner/widgets/partitions_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/btrfs_edit_button"
 
 module Y2Partitioner
   module Widgets
@@ -47,7 +48,7 @@ module Y2Partitioner
       #
       # @return [Array<Symbol>]
       SUPPORTED_TYPES = [
-        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device
+        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device, :btrfs
       ]
       private_constant :SUPPORTED_TYPES
 
@@ -165,6 +166,13 @@ module Y2Partitioner
         [
           LvmLvModifyButton.new(device),
           DeviceDeleteButton.new(pager: pager, device: device)
+        ]
+      end
+
+      # Buttons to display if {#device} is a BTRFS filesystem
+      def btrfs_buttons
+        [
+          BtrfsEditButton.new(pager: pager, device: device)
         ]
       end
 
