@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,20 +20,18 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/widgets/device_description"
-require "y2partitioner/widgets/description_section/partition"
 require "y2partitioner/widgets/description_section/filesystem"
 
 module Y2Partitioner
   module Widgets
-    # Description for a partition
-    class PartitionDescription < DeviceDescription
+    # Description for a filesystem
+    class FilesystemDescription < DeviceDescription
     private
 
       # @see DeviceDescription#sections
       def sections
         [
-          DescriptionSection::Partition.new(device),
-          DescriptionSection::Filesystem.new(device.filesystem)
+          DescriptionSection::Filesystem.new(device)
         ]
       end
     end

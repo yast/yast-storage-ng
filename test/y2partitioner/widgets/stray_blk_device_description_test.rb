@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,24 +23,22 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/partition_description"
+require "y2partitioner/widgets/stray_blk_device_description"
 
-describe Y2Partitioner::Widgets::PartitionDescription do
-  before do
-    devicegraph_stub("mixed_disks")
-  end
+describe Y2Partitioner::Widgets::StrayBlkDeviceDescription do
+  before { devicegraph_stub("xen-disks-and-partitions.xml") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:partition) { current_graph.find_by_name("/dev/sda2") }
+  let(:device) { current_graph.find_by_name("/dev/xvdc") }
 
-  subject { described_class.new(partition) }
+  subject { described_class.new(device) }
 
   include_examples "CWM::RichText"
 
   describe "#init" do
-    it "includes a partition section" do
-      expect(Y2Partitioner::Widgets::DescriptionSection::Partition).to receive(:new)
+    it "includes a block device section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::BlkDevice).to receive(:new)
         .and_call_original
 
       subject.init

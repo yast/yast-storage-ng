@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017-2018] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,7 +22,7 @@
 require "cwm/pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/blk_device_description"
+require "y2partitioner/widgets/stray_blk_device_description"
 require "y2partitioner/dialogs"
 
 module Y2Partitioner
@@ -61,7 +61,7 @@ module Y2Partitioner
                 Heading(format(_("Device: %s"), device.name))
               )
             ),
-            BlkDeviceDescription.new(device),
+            StrayBlkDeviceDescription.new(device),
             Left(
               HBox(
                 BlkDeviceEditButton.new(device: device)

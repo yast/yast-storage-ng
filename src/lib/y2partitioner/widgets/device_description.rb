@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,13 +28,15 @@ Yast.import "HTML"
 module Y2Partitioner
   module Widgets
     # Base class for a device description
+    #
+    # A device description is composed by sections, see {DescriptionSection::Base}.
     class DeviceDescription < CWM::RichText
       include Yast::I18n
       include Help
 
       # Constructor
       #
-      # @param device [Y2Storage::Device] device to describe
+      # @param device [Y2Storage::Device]
       def initialize(device)
         textdomain "storage"
         @device = device
@@ -46,6 +48,8 @@ module Y2Partitioner
       end
 
       # @macro seeAbstractWidget
+      #
+      # Help texts are provided by {Help} module.
       def help
         help_texts = help_fields.map { |a| helptext_for(a) }.join("\n")
         help_header + help_texts
@@ -68,17 +72,27 @@ module Y2Partitioner
         )
       end
 
-      # @!method help_fields
-      #   Fields for help (see {#help})
+      # Fields for help
       #
-      #   @return [Array<Symbol>]
-      abstract_method :help_fields
+      # @see #help
+      #
+      # @return [Array<Symbol>]
+      def help_fields
+        sections.map(&:help_fields).flatten
+      end
 
-      # @!method device_description
-      #   Description for a device
+      # Description for a device
       #
-      #   @return [String]
-      abstract_method :device_description
+      # @return [String]
+      def device_description
+        sections.map(&:value).join
+      end
+
+      # @!method sections
+      #   Sections to describe a device
+      #
+      #   @return [Array<DescriptionSection::Base>]
+      abstract_method :sections
     end
   end
 end

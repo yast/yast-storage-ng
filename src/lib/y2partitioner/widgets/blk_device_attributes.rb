@@ -152,47 +152,6 @@ module Y2Partitioner
         # a partition table type (e.g., GPT, MS-DOS)
         format(_("Partition Table: %s"), label)
       end
-
-      # Information about the filesystem type
-      #
-      # @return [String]
-      def device_filesystem
-        fs_type = blk_device.filesystem_type
-        # TRANSLATORS: Filesystem type information, where %s is replaced by
-        # a filesystem type (e.g., VFAT, BTRFS)
-        format(_("File System: %s"), fs_type ? fs_type.to_human_string : "")
-      end
-
-      # Information about the mount point
-      #
-      # @return [String]
-      def device_filesystem_mount_point
-        # TRANSLATORS: Mount point information, where %s is replaced by a mount point
-        res = format(_("Mount Point: %s"), blk_device.filesystem_mountpoint || "")
-        # TRANSLATORS: note appended to mount point if mount point is not now mounted
-        res += _(" (not mounted)") if mount_point_inactive?
-
-        res
-      end
-
-      def mount_point_inactive?
-        fs = blk_device.blk_filesystem
-        return false unless fs
-
-        mp = fs.mount_point
-        return false unless mp
-
-        !mp.active?
-      end
-
-      # Information about the filesystem label
-      #
-      # @return [String]
-      def device_filesystem_label
-        # TRANSLATORS: Filesystem label information, where %s is replaced by the
-        # label associated to the filesystem
-        format(_("Label: %s"), blk_device.filesystem_label || "")
-      end
     end
   end
 end

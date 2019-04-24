@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,15 +30,32 @@ describe Y2Partitioner::Widgets::MdDescription do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:md) { current_graph.md_raids.first }
+  let(:md) { current_graph.find_by_name("/dev/md/md0") }
 
   subject { described_class.new(md) }
 
   include_examples "CWM::RichText"
 
   describe "#init" do
-    it "runs without failure" do
-      expect { subject.init }.to_not raise_error
+    it "includes a block device section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::BlkDevice).to receive(:new)
+        .and_call_original
+
+      subject.init
+    end
+
+    it "includes a MD device section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::Md).to receive(:new)
+        .and_call_original
+
+      subject.init
+    end
+
+    it "includes a filesystem section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::Filesystem).to receive(:new)
+        .and_call_original
+
+      subject.init
     end
   end
 end

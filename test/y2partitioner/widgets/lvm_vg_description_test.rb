@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,15 +30,25 @@ describe Y2Partitioner::Widgets::LvmVgDescription do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:lvm_vg) { current_graph.lvm_vgs.first }
+  let(:lvm_vg) { current_graph.find_by_name("/dev/vg0") }
 
   subject { described_class.new(lvm_vg) }
 
   include_examples "CWM::RichText"
 
   describe "#init" do
-    it "runs without failure" do
-      expect { subject.init }.to_not raise_error
+    it "includes a LVM VG device section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::LvmVgDevice).to receive(:new)
+        .and_call_original
+
+      subject.init
+    end
+
+    it "includes a LVM VG section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::LvmVg).to receive(:new)
+        .and_call_original
+
+      subject.init
     end
   end
 end

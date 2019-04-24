@@ -20,19 +20,19 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/widgets/device_description"
-require "y2partitioner/widgets/description_section/partition"
+require "y2partitioner/widgets/description_section/blk_device"
 require "y2partitioner/widgets/description_section/filesystem"
 
 module Y2Partitioner
   module Widgets
-    # Description for a partition
-    class PartitionDescription < DeviceDescription
+    # Description for a stray block device
+    class StrayBlkDeviceDescription < DeviceDescription
     private
 
-      # @see DeviceDescription#sections
+      # @see DiskDeviceDescription#sections
       def sections
         [
-          DescriptionSection::Partition.new(device),
+          DescriptionSection::BlkDevice.new(device),
           DescriptionSection::Filesystem.new(device.filesystem)
         ]
       end
