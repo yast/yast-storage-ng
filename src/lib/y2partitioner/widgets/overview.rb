@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -285,8 +285,18 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def btrfs_section
-        page = Pages::Btrfs.new(self)
-        section_item(page, Icons::BTRFS)
+        filesystems = device_graph.btrfs_filesystems
+
+        page = Pages::BtrfsFilesystems.new(filesystems, self)
+        children = filesystems.map { |f| btrfs_item(f) }
+
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::BTRFS)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def btrfs_item(filesystem)
+        page = Pages::Btrfs.new(filesystem, self)
+        CWM::PagerTreeItem.new(page)
       end
 
       # @return [Array<CWM::PagerTreeItem>]
