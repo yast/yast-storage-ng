@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/bcache"
 
@@ -60,24 +61,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::Bcache do
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [] }
 
-    it "includes a help field for the backing device" do
-      expect(subject.help_fields).to include(:backing_device)
-    end
-
-    it "includes a help field for the caching uuid" do
-      expect(subject.help_fields).to include(:caching_uuid)
-    end
-
-    it "includes a help field for the caching device" do
-      expect(subject.help_fields).to include(:caching_device)
-    end
-
-    it "includes a help field for the cache mode" do
-      expect(subject.help_fields).to include(:cache_mod)
-    end
+    include_examples "help fields"
   end
 end

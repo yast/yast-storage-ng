@@ -40,12 +40,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :device_stripes, help: :stripes }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # Required by mixin {LvmLvAttributes}
         alias_method :lvm_lv, :device
 
@@ -57,7 +51,16 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:stripes]
+        end
+
+        # Entry data about the stripes
+        #
+        # @see LvmLvAttributes
+        #
+        # @return [String]
+        def stripes_value
+          device_stripes
         end
       end
     end

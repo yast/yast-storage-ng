@@ -37,16 +37,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :filesystem_type,        help: :fs_type },
-          { value: :filesystem_mount_point, help: :mount_point },
-          { value: :filesystem_mount_by,    help: :mount_by },
-          { value: :filesystem_label,       help: :label },
-          { value: :filesystem_uuid,        help: :uuid }
-        ].freeze
-
-        private_constant :ENTRIES
-
         alias_method :filesystem, :device
 
         # @see DescriptionSection::Base#title
@@ -57,13 +47,13 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:fs_type, :mount_point, :mount_by, :label, :uuid]
         end
 
         # Information about the filesystem type
         #
         # @return [String]
-        def filesystem_type
+        def fs_type_value
           type = filesystem ? filesystem.type.to_human_string : ""
 
           # TRANSLATORS: Filesystem type information, where %s is replaced by
@@ -74,7 +64,7 @@ module Y2Partitioner
         # Information about the mount point
         #
         # @return [String]
-        def filesystem_mount_point
+        def mount_point_value
           mount_point = filesystem ? filesystem.mount_path : ""
           mount_point ||= ""
 
@@ -86,33 +76,33 @@ module Y2Partitioner
           res
         end
 
-        # Information about the mount by option
+        # Entry data about the mount by option
         #
         # @return [String]
-        def filesystem_mount_by
+        def mount_by_value
           # TRANSLATORS: Mount by information, where %s is replaced by a "mount by" option
           format(_("Mount By: %s"), mount_by)
         end
 
-        # Information about the filesystem label
+        # Entry data about the filesystem label
         #
         # @return [String]
-        def filesystem_label
+        def label_value
           label = filesystem ? filesystem.label : ""
 
           # TRANSLATORS: Filesystem label information, where %s is replaced by the
-          # label associated to the filesystem
+          # filesystem label
           format(_("Label: %s"), label)
         end
 
-        # Information about the filesystem label
+        # Entry data about the filesystem UUID
         #
         # @return [String]
-        def filesystem_uuid
+        def uuid_value
           uuid = filesystem ? filesystem.uuid : ""
 
-          # TRANSLATORS: Filesystem label information, where %s is replaced by the
-          # label associated to the filesystem
+          # TRANSLATORS: Filesystem UUID information, where %s is replaced by the
+          # filesystem UUID
           format(_("UUID: %s"), uuid)
         end
 

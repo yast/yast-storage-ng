@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/md"
 
@@ -56,29 +57,15 @@ describe Y2Partitioner::Widgets::DescriptionSection::Md do
     it "includes an entry about the parity algorithm" do
       expect(subject.value).to match(/Parity Algorithm:/)
     end
+
     it "includes an entry about the partition table type" do
       expect(subject.value).to match(/Partition Table:/)
     end
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [:raid_active] }
 
-    it "includes a help field for raid type" do
-      expect(subject.help_fields).to include(:raid_type)
-    end
-
-    it "includes a help field for the chunk size" do
-      expect(subject.help_fields).to include(:chunk_size)
-    end
-
-    it "includes a help field for the parity algorithm" do
-      expect(subject.help_fields).to include(:parity_algorithm)
-    end
-    it "includes a help field for the partition table type" do
-      expect(subject.help_fields).to include(:disk_label)
-    end
+    include_examples "help fields"
   end
 end

@@ -40,16 +40,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :device_name,         help: :device },
-          { value: :device_size,         help: :size },
-          { value: :device_encrypted,    help: :encrypted },
-          { value: :device_udev_by_path, help: :udev_path },
-          { value: :device_udev_by_id,   help: :udev_id }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # Required by mixin {BlkDeviceAttributes}
         alias_method :blk_device, :device
 
@@ -61,27 +51,52 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:device, :size, :encrypted, :udev_path, :udev_id]
         end
 
-        # Enty data about the udev by_path values
+        # Entry data about the device name
         #
-        # Note that this method is already provided by the mixin {BlkDeviceAttributes},
-        # but here the values are joined.
+        # @see BlkDeviceAttributes
         #
         # @return [String]
-        def device_udev_by_path
-          super.join(Yast::HTML.Newline)
+        def device_value
+          device_name
         end
 
-        # Enty data about the udev by_id values
+        # Entry data about the device size
         #
-        # Note that this method is already provided by the mixin {BlkDeviceAttributes},
-        # but here the values are joined.
+        # @see BlkDeviceAttributes
         #
         # @return [String]
-        def device_udev_by_id
-          super.join(Yast::HTML.Newline)
+        def size_value
+          device_size
+        end
+
+        # Entry data about the encryption
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def encrypted_value
+          device_encrypted
+        end
+
+        # Entry data about the udev by_path values
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def udev_path_value
+          device_udev_by_path.join(Yast::HTML.Newline)
+        end
+
+        # Entry data about the udev by_id values
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def udev_id_value
+          device_udev_by_id.join(Yast::HTML.Newline)
         end
       end
     end

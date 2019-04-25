@@ -37,15 +37,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :bcache_backing_device, help: :backing_device },
-          { value: :bcache_caching_uuid,   help: :caching_uuid },
-          { value: :bcache_caching_device, help: :caching_device },
-          { value: :bcache_cache_mode,     help: :cache_mod }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # @see DescriptionSection::Base#title
         def title
           # TRANSLATORS: title for section about Bcache details
@@ -54,34 +45,34 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:backing_device, :caching_uuid, :caching_device, :cache_mode]
         end
 
-        # Enty data about the backing device
+        # Entry data about the backing device
         #
         # @return [String]
-        def bcache_backing_device
+        def backing_device_value
           format(_("Backing Device: %s"), backing_device)
         end
 
-        # Enty data about the UUID of the caching set
+        # Entry data about the UUID of the caching set
         #
         # @return [String]
-        def bcache_caching_uuid
+        def caching_uuid_value
           format(_("Caching UUID: %s"), uuid)
         end
 
-        # Enty data about the caching device
+        # Entry data about the caching device
         #
         # @return [String]
-        def bcache_caching_device
+        def caching_device_value
           format(_("Caching Device: %s"), caching_device)
         end
 
-        # Enty data about the cache mode
+        # Entry data about the cache mode
         #
         # @return [String]
-        def bcache_cache_mode
+        def cache_mode_value
           format(_("Cache Mode: %s"), cache_mode)
         end
 

@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/lvm_vg_device"
 
@@ -52,16 +53,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::LvmVgDevice do
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [] }
 
-    it "includes a help field for the VG name" do
-      expect(subject.help_fields).to include(:device)
-    end
-
-    it "includes a help field for the VG size" do
-      expect(subject.help_fields).to include(:size)
-    end
+    include_examples "help fields"
   end
 end

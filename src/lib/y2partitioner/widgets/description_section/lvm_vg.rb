@@ -37,12 +37,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :extent_size, help: :pe_size }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # @see DescriptionSection::Base#title
         def title
           # TRANSLATORS: title for section about LVM VG details
@@ -51,13 +45,13 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:pe_size]
         end
 
-        # Information about the volume group extent size
+        # Entry data about the volume group extent size
         #
         # @return [String]
-        def extent_size
+        def pe_size_value
           # TRANSLATORS: Volume group extent size information, where %s is replaced by
           # a size (e.g., 8 KiB)
           format(_("PE Size: %s"), device.extent_size.to_human_string)

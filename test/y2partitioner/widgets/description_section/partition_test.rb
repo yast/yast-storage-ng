@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/partition"
 
@@ -68,32 +69,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::Partition do
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [] }
 
-    it "includes a help field for the device name" do
-      expect(subject.help_fields).to include(:device)
-    end
-
-    it "includes a help field for the device size" do
-      expect(subject.help_fields).to include(:size)
-    end
-
-    it "includes a help field for the encryption" do
-      expect(subject.help_fields).to include(:encrypted)
-    end
-
-    it "includes a help field for the udev by_path values" do
-      expect(subject.help_fields).to include(:udev_path)
-    end
-
-    it "includes a help field for the udev by_id values" do
-      expect(subject.help_fields).to include(:udev_id)
-    end
-
-    it "includes a help field for the partition ID" do
-      expect(subject.help_fields).to include(:partition_id)
-    end
+    include_examples "help fields"
   end
 end

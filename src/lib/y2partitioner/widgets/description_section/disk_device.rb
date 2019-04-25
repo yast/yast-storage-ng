@@ -42,17 +42,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :device_vendor,      help: :vendor },
-          { value: :device_model,       help: :model },
-          { value: :device_bus,         help: :bus },
-          { value: :device_sectors,     help: :sectors },
-          { value: :device_sector_size, help: :sector_size },
-          { value: :device_label,       help: :disk_label }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # Required by mixin {BlkDeviceAttributes}
         alias_method :blk_device, :device
 
@@ -64,7 +53,61 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:vendor, :model, :bus, :sectors, :sector_size, :disk_label]
+        end
+
+        # Entry data about the disk vendor
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def vendor_value
+          device_vendor
+        end
+
+        # Entry data about the disk model
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def model_value
+          device_model
+        end
+
+        # Entry data about the disk bus
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def bus_value
+          device_bus
+        end
+
+        # Entry data about the number of sectors
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def sectors_value
+          device_sectors
+        end
+
+        # Entry data about the sector size
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def sector_size_value
+          device_sector_size
+        end
+
+        # Entry data about the partition table type
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def disk_label_value
+          device_label
         end
       end
     end

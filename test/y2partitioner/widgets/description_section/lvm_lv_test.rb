@@ -23,6 +23,7 @@
 require_relative "../../test_helper"
 
 require "y2partitioner/widgets/description_section/lvm_lv"
+require_relative "help_fields_examples"
 
 describe Y2Partitioner::Widgets::DescriptionSection::LvmLv do
   before { devicegraph_stub("lvm-two-vgs") }
@@ -48,12 +49,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::LvmLv do
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [] }
 
-    it "includes a help field for the stripes" do
-      expect(subject.help_fields).to include(:stripes)
-    end
+    include_examples "help fields"
   end
 end

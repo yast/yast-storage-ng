@@ -40,16 +40,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :raid_active },
-          { value: :raid_type,       help: :raid_type },
-          { value: :raid_chunk_size, help: :chunk_size },
-          { value: :raid_parity,     help: :parity_algorithm },
-          { value: :device_label,    help: :disk_label }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # Required by mixin {BlkDeviceAttributes}
         alias_method :blk_device, :device
 
@@ -61,45 +51,54 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:raid_active, :raid_type, :chunk_size, :parity_algorithm, :disk_label]
         end
 
-        # Information about MD RAID being (in)active
+        # Entry data about MD RAID being (in)active
         #
         # @return [String]
-        def raid_active
+        def raid_active_value
           # TRANSLATORS: RAID being active (assembled), where %s is replaced by
           # 'Yes' when the device is active or by 'No' otherwise
           format(_("Active: %s"), device.active? ? _("Yes") : _("No"))
         end
 
-        # Information about MD RAID type
+        # Entry data about MD RAID type
         #
         # @return [String]
-        def raid_type
+        def raid_type_value
           # TRANSLATORS: RAID type information, where %s is replaced by a
           # raid type (e.g., RAID0)
           format(_("RAID Type: %s"), device.md_level.to_human_string)
         end
 
-        # Information about the MD RAID chunk size according to mdadm(8):
+        # Entry data about the MD RAID chunk size according to mdadm(8):
         # chunk size "is only meaningful for RAID0, RAID4, RAID5, RAID6, and RAID10"
         #
         # @return [String]
-        def raid_chunk_size
+        def chunk_size_value
           # TRANSLATORS: chunk size information of the MD RAID, where %s is replaced by
           # a size (e.g., 8 KiB)
           chunk_size = device.chunk_size
           format(_("Chunk Size: %s"), chunk_size.zero? ? "" : chunk_size.to_human_string)
         end
 
-        # Information about the MD RAID parity algorithm
+        # Entry data about the MD RAID parity algorithm
         #
         # @return [String]
-        def raid_parity
+        def parity_algorithm_value
           # TRANSLATORS: parity algorithm information of a MD RAID, where %s is replaced by
           # the name of the parity strategy
           format(_("Parity Algorithm: %s"), device.md_parity.to_human_string)
+        end
+
+        # Entry data about the partition table type
+        #
+        # @see BlkDeviceAttributes
+        #
+        # @return [String]
+        def disk_label_value
+          device_label
         end
       end
     end

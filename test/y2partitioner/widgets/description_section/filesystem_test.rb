@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/filesystem"
 
@@ -73,28 +74,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
   end
 
   describe "#help_fields" do
-    it "returns a list of symbols" do
-      expect(subject.help_fields).to all(be_a(Symbol))
-    end
+    let(:excluded_help_fields) { [] }
 
-    it "includes a help field for the filesystem type" do
-      expect(subject.help_fields).to include(:fs_type)
-    end
-
-    it "includes a help field for the mount point" do
-      expect(subject.help_fields).to include(:mount_point)
-    end
-
-    it "includes a help field for the mount by" do
-      expect(subject.help_fields).to include(:mount_by)
-    end
-
-    it "includes a help field for the fileystem label" do
-      expect(subject.help_fields).to include(:label)
-    end
-
-    it "includes a help field for the filesystem UUID" do
-      expect(subject.help_fields).to include(:uuid)
-    end
+    include_examples "help fields"
   end
 end

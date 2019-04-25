@@ -40,13 +40,6 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :vg_device, help: :device },
-          { value: :size,      help: :size }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # @see DescriptionSection::Base#title
         def title
           # TRANSLATORS: title for section about LVM VG details
@@ -55,20 +48,20 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          ENTRIES
+          [:device, :size]
         end
 
-        # Information about the LVM VG name
+        # Entry data about the LVM VG name
         #
         # @return [String]
-        def vg_device
+        def device_value
           format(_("Device: %s"), device.name)
         end
 
-        # Information about the LVM VG size
+        # Entry data about the LVM VG size
         #
         # @return [String]
-        def size
+        def size_value
           format(_("Size: %s"), device.size.to_human_string)
         end
       end

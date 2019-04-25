@@ -37,21 +37,15 @@ module Y2Partitioner
 
       private
 
-        ENTRIES = [
-          { value: :partition_id, help: :partition_id }
-        ].freeze
-
-        private_constant :ENTRIES
-
         # @see DescriptionSection::BlkDevice#entries
         def entries
-          super.dup.concat(ENTRIES)
+          super + [:partition_id]
         end
 
-        # Information about the partition id
+        # Entry data about the partition id
         #
         # @return [String]
-        def partition_id
+        def partition_id_value
           # TRANSLATORS: Partition Identifier, where %s is replaced by the partition id (e.g., SWAP)
           format(_("Partition ID: %s"), device.id.to_human_string)
         end
