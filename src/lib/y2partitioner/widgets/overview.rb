@@ -290,13 +290,13 @@ module Y2Partitioner
         page = Pages::BtrfsFilesystems.new(filesystems, self)
         children = filesystems.map { |f| btrfs_item(f) }
 
-        CWM::PagerTreeItem.new(page, children: children, icon: Icons::BTRFS)
+        section_item(page, Icons::BTRFS, children: children)
       end
 
       # @return [CWM::PagerTreeItem]
       def btrfs_item(filesystem)
         page = Pages::Btrfs.new(filesystem, self)
-        CWM::PagerTreeItem.new(page)
+        device_item(page)
       end
 
       # @return [Array<CWM::PagerTreeItem>]
