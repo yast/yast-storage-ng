@@ -67,9 +67,11 @@ describe Y2Partitioner::UIState do
     let(:md_raids_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(pager) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
     let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new([], pager) }
-    let(:btrfs_page) { Y2Partitioner::Widgets::Pages::Btrfs.new(pager) }
+    let(:btrfs_filesystems_page) { Y2Partitioner::Widgets::Pages::BtrfsFilesystems.new([], pager) }
 
-    let(:pages) { [system_page, disks_page, md_raids_page, lvm_page, bcaches_page, btrfs_page] }
+    let(:pages) do
+      [system_page, disks_page, md_raids_page, lvm_page, bcaches_page, btrfs_filesystems_page]
+    end
 
     context "if the user has still not visited any node" do
       before { described_class.create_instance }

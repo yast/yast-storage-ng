@@ -67,7 +67,7 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
       it "shows the description of the device" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheDeviceDescription) }
+        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheDescription) }
         expect(description).to_not be_nil
       end
 

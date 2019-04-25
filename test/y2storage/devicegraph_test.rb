@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -145,6 +145,23 @@ describe Y2Storage::Devicegraph do
 
     it "finds the filesystems on encrypted LVs" do
       expect(device_names).to include("/dev/mapper/cr_vg1_lv2")
+    end
+  end
+
+  describe "#btrfs_filesystems" do
+    before do
+      fake_scenario("mixed_disks_btrfs")
+    end
+
+    let(:list) { fake_devicegraph.btrfs_filesystems }
+
+    it "returns a array of BTRFS filesystems" do
+      expect(list).to be_a(Array)
+      expect(list.map { |i| i.is?(:btrfs) }).to all(be(true))
+    end
+
+    it "finds all the BTRFS filesystems" do
+      expect(list.size).to eq(5)
     end
   end
 

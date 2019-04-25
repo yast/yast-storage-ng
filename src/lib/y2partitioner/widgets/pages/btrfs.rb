@@ -1,66 +1,172 @@
-require "yast"
+# encoding: utf-8
+
+# Copyright (c) [2017-2019] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require "cwm/widget"
 require "y2partitioner/icons"
-require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/filesystem_description"
 require "y2partitioner/widgets/btrfs_edit_button"
+require "y2partitioner/widgets/tabs"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for Btrfs filesystems
+      # Page for a BTRFS filesystem
+      #
+      # This page contains a {FilesystemTab} and a {UsedDevicesTab}.
       class Btrfs < CWM::Page
-        def initialize(pager)
+        # @return [Y2Storage::Filesystems::Btrfs]
+        attr_reader :filesystem
+
+        # Needed for searching a device page, see {OverviewTreePager#device_page}
+        alias_method :device, :filesystem
+
+        # Constructor
+        #
+        # @param filesystem [Y2Storage::Filesystems::Btrfs]
+        # @param pager [CWM::TreePager]
+        def initialize(filesystem, pager)
           textdomain "storage"
 
+          @filesystem = filesystem
           @pager = pager
+
+          self.widget_id = "btrfs:" + filesystem.sid.to_s
         end
 
         # @macro seeAbstractWidget
         def label
-          _("Btrfs")
+          devices_info
         end
 
         # @macro seeCustomWidget
         def contents
-          return @contents if @contents
-
-          @contents = VBox(
+          VBox(
             Left(
               HBox(
-                Image(Icons::BTRFS, ""),
-                # TRANSLATORS: Heading
-                Heading(_("Btrfs Volumes"))
+                Image(icon, ""),
+                Heading(title)
               )
             ),
-            table,
-            HBox(BtrfsEditButton.new(table))
+            tabs
           )
         end
 
       private
 
-        # A Btrfs table is a table of devices formatted as BtrFS
+        # @return [CWM::TreePager]
+        attr_reader :pager
+
+        # Page icon
         #
-        # @return [ConfigurableBlkDevicesTable]
-        def table
-          return @table unless @table.nil?
-          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          @table.remove_columns(:start, :end)
-          @table
+        # @return [String]
+        def icon
+          Icons::BTRFS
         end
 
-        # Devices formatted as BtrFS
+        # Page title
+        #
+        # @return [String]
+        def title
+          # TRANSLATORS: BTRFS page title, where %{fs_type} is replaced by the filesystem
+          # type (i.e., Btrfs) and %{info} is replaced by the device basename (e.g., sda1).
+          format(
+            _("%{fs_type}: %{info}"),
+            fs_type: filesystem.type.to_human,
+            info:    devices_info
+          )
+        end
+
+        # Tabs to show the filesystem data
+        #
+        # There are two tabs: one for the filesystem info and another one with the devices
+        # used by the filesystem.
+        #
+        # @return [Tabs]
+        def tabs
+          tabs = [
+            FilesystemTab.new(filesystem, initial: true),
+            UsedDevicesTab.new(devices, pager)
+          ]
+
+          Tabs.new(*tabs)
+        end
+
+        # Short information about the devices used by the filesystem
+        #
+        # When the filesystem is a non-multidevice, this method simply returns the base
+        # name of the blk device (e.g., "sda1"). And for multidevice ones, it only returns
+        # the base name of the first blk device plus a "+" symbol to indicate that the
+        # filesystem is multidevice (e.g., "sda1+").
+        #
+        # @return [String]
+        def devices_info
+          info = devices.first.basename
+          info << "+" if filesystem.multidevice?
+
+          info
+        end
+
+        # Devices used by the filesystem
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          btrfs_filesystems.map { |f| f.plain_blk_devices.first }
+          filesystem.blk_devices
+        end
+      end
+
+      # A Tab for filesystem description
+      class FilesystemTab < CWM::Tab
+        # Constructor
+        #
+        # @param filesystem [Y2Storage::Filesystems::Btrfs]
+        # @param initial [Boolean]
+        def initialize(filesystem, initial: false)
+          textdomain "storage"
+
+          @filesystem = filesystem
+          @initial = initial
         end
 
-        # Returns all btrfs filesystems
-        #
-        # @return [Array<Y2Storage::Filesystems::BlkFilesystem>]
-        def btrfs_filesystems
-          DeviceGraphs.instance.current.filesystems.select { |f| f.type.is?(:btrfs) }
+        # @macro seeAbstractWidget
+        def label
+          _("&Overview")
+        end
+
+        # @macro seeCustomWidget
+        def contents
+          @contents ||=
+            VBox(
+              FilesystemDescription.new(@filesystem),
+              Left(HBox(*buttons))
+            )
+        end
+
+      private
+
+        # @return [Array<Widgets::DeviceButton>]
+        def buttons
+          [
+            BtrfsEditButton.new(device: @filesystem)
+          ]
         end
       end
     end

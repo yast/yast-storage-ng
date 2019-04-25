@@ -90,8 +90,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:overview_tree) { widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::OverviewTree) } }
 
+    let(:system_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::System) }
+    end
+
     let(:disks_pager) do
-      system_pager = overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::System) }
       system_pager.children.values.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
     end
 
@@ -99,6 +102,12 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:device_graph_page) do
       overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::DeviceGraph) }
+    end
+
+    let(:btrfs_filesystems_page) do
+      system_pager.children.values.find do |i|
+        i.page.is_a?(Y2Partitioner::Widgets::Pages::BtrfsFilesystems)
+      end
     end
 
     let(:summary_page) do
@@ -115,6 +124,10 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     it "has a pager for the disk devices" do
       expect(disks_pager).to_not be_nil
+    end
+
+    it "system pager includes a BTRFS filesystems page" do
+      expect(btrfs_filesystems_page).to_not be_nil
     end
 
     it "includes a 'Summary' page" do
@@ -236,6 +249,15 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "disk pager has not Software RAID pages" do
         md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }
         expect(md_pages).to be_empty
+      end
+    end
+
+    context "when there are non-multidevice BTRFS filesystems" do
+      let(:scenario) { "mixed_disks" }
+
+      it "disk pager has no BTRFS pages" do
+        btrfs_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::Btrfs) }
+        expect(btrfs_pages).to be_empty
       end
     end
 

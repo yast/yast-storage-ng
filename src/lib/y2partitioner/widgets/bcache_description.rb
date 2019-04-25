@@ -1,7 +1,6 @@
-#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,25 +19,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../test_helper"
+require "y2partitioner/widgets/disk_device_description"
+require "y2partitioner/widgets/description_section/bcache"
 
-require "cwm/rspec"
-require "y2partitioner/widgets/bcache_device_description"
+module Y2Partitioner
+  module Widgets
+    # Description for a Bcache device
+    class BcacheDescription < DiskDeviceDescription
+    private
 
-describe Y2Partitioner::Widgets::BcacheDeviceDescription do
-  before { devicegraph_stub("bcache1.xml") }
-
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  let(:bcache) { current_graph.bcaches.first }
-
-  subject { described_class.new(bcache) }
-
-  include_examples "CWM::RichText"
-
-  describe "#init" do
-    it "runs without failure" do
-      expect { subject.init }.to_not raise_error
+      # @see DiskDeviceDescription#sections
+      def sections
+        super << DescriptionSection::Bcache.new(device)
+      end
     end
   end
 end

@@ -92,7 +92,7 @@ module Y2Partitioner
       # Some actions could return a specific result depending on the result
       # of {#perform_action}.
       #
-      # @param _action_result [Symbol] result of {#permorm_action}
+      # @param _action_result [Symbol] result of {#perform_action}
       # @return [Symbol]
       def result(_action_result)
         :finish

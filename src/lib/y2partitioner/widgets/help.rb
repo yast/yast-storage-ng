@@ -114,7 +114,10 @@ module Y2Partitioner
                              "is empty if no caching is used."),
 
         cache_mode:       N_("<b>Cache Mode</b> shows the operating mode for bcache. Currently there " \
-                             "are four supported modes: Writethrough, Writeback, Writearound and None.")
+                             "are four supported modes: Writethrough, Writeback, Writearound and None."),
+
+        btrfs_devices:    N_("<b>Btrfs Devices</b> shows the kernel name of the devices used by a "\
+                             "Btrfs file system.")
       }.freeze
 
       # help texts that are appended to the common help only in Mode.normal

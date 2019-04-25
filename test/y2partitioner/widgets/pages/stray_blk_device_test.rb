@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,7 +40,7 @@ describe Y2Partitioner::Widgets::Pages::StrayBlkDevice do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
     it "shows the description of the device" do
-      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceDescription) }
+      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::StrayBlkDeviceDescription) }
       expect(description).to_not be_nil
     end
 

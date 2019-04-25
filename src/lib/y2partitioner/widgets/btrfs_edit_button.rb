@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,51 +20,33 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/dialogs"
-require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/device_button"
+require "y2partitioner/actions/edit_btrfs"
 
 Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Widget to edit a Btrfs filesystem
-    class BtrfsEditButton < CWM::PushButton
-      attr_reader :table
-
-      # @param table [Widgets::ConfigurableBlkDevicesTable]
-      def initialize(table)
+    # Button for editing a BTRFS filesystem
+    class BtrfsEditButton < DeviceButton
+      def initialize(*args)
+        super
         textdomain "storage"
-        @table = table
       end
 
-      # @see CWM::PushButton#Label
+      # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: label for button to edit a BTRFS filesystem
         _("Edit...")
-      end
-
-      # Opens a dialog to manage the list of subvolumes of the selected device
-      #
-      # @note In case of there is no selected table row, it shows an error.
-      def handle
-        filesystem = selected_filesystem
-
-        if filesystem.nil?
-          Yast::Popup.Error(_("There is no filesystem selected to edit."))
-        else
-          Dialogs::BtrfsSubvolumes.new(filesystem).run
-        end
-
-        nil
       end
 
     private
 
-      # Filesystem of the currently selected device
+      # Returns the proper Actions class to edit the BTRFS filesystem
       #
-      # @return [Y2Storage::Filesystems::BlkFilesystem, nil]
-      def selected_filesystem
-        device = table.selected_device
-        device.nil? ? nil : device.filesystem
+      # @see Actions::EditBtrfs
+      def actions_class
+        Actions::EditBtrfs
       end
     end
   end

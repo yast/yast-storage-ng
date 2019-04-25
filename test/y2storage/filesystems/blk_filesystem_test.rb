@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -34,6 +34,26 @@ describe Y2Storage::Filesystems::BlkFilesystem do
   let(:xfs_part)   { "/dev/sdb5" }
   let(:ntfs_part)  { "/dev/sda1" }
   subject(:filesystem) { blk_device.blk_filesystem }
+
+  describe "#multidevice?" do
+    context "when the filesystem is over one device only" do
+      let(:dev_name) { "/dev/sdb2" }
+
+      it "returns false" do
+        expect(subject.multidevice?).to eq(false)
+      end
+    end
+
+    context "when the filesystem is over several devices" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:dev_name) { "/dev/sdb1" }
+
+      it "returns true" do
+        expect(subject.multidevice?).to eq(true)
+      end
+    end
+  end
 
   describe "#supports_btrfs_subvolumes?" do
     context "for a Btrfs filesystem" do

@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,27 +26,36 @@ require "cwm/rspec"
 require "y2partitioner/widgets/lvm_lv_description"
 
 describe Y2Partitioner::Widgets::LvmLvDescription do
-  before { devicegraph_stub("lvm-two-vgs.yml") }
+  before { devicegraph_stub("lvm-striped-lvs") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:lvm_lv) { current_graph.lvm_lvs.first }
+  let(:lvm_lv) { current_graph.find_by_name("/dev/vg0/lv1") }
 
   subject { described_class.new(lvm_lv) }
 
   include_examples "CWM::RichText"
 
   describe "#init" do
-    it "runs without failure" do
-      expect { subject.init }.to_not raise_error
+    it "includes a block device section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::BlkDevice).to receive(:new)
+        .and_call_original
+
+      subject.init
     end
 
-    context "when using a striped LVM" do
-      before { devicegraph_stub("lvm-striped-lvs.yml") }
+    it "includes a LVM LV section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::LvmLv).to receive(:new)
+        .and_call_original
 
-      it "runs without failure" do
-        expect { subject.init }.to_not raise_error
-      end
+      subject.init
+    end
+
+    it "includes a filesystem section" do
+      expect(Y2Partitioner::Widgets::DescriptionSection::Filesystem).to receive(:new)
+        .and_call_original
+
+      subject.init
     end
   end
 end

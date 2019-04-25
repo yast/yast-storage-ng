@@ -76,7 +76,7 @@ module Y2Storage
 
       # @return [Boolean]
       def in_network?
-        return false
+        false
       end
 
       # Whether the current filesystem matches with a given fstab spec
