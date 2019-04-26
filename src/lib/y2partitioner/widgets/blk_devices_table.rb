@@ -240,65 +240,91 @@ module Y2Partitioner
         dasd:          N_("Disk"),
         multipath:     N_("Multipath"),
         nfs:           N_("NFS"),
-        bios_raid:     N_("BIOS RAID"),
-        software_raid: N_("MD RAID"),
+        bios_raid:     N_("RAID"),
+        software_raid: N_("RAID"),
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
         lvm_lv:        N_("LV"),
         stray:         N_("Xen"),
         thin_pool:     N_("Thin Pool"),
-        thin:          N_("Thin LV")
+        thin:          N_("Thin LV"),
+        partition:     N_("Partition")
       }
 
-      # Label for the device type (e.g., LVM, MD RAID)
+      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of BtrFS /home, etc)
       #
-      # @param device [Y2Storage::BlkDevice]
+      # @param device [Y2Storage::Device]
       # @return [String]
       def type_label(device)
+        return device.type.to_human_string if device.is?(:filesystem)
+        return device_label_for(device) if device.is?(:lvm_vg)
+
         fs = filesystem(device)
-        label = device_label(device)
 
         if fs && fs.multidevice?
-          "Part of Btrfs #{fs.mount_path}"
+          btrfs_multidevice_type_label(fs)
         elsif fs
-          [fs.type.to_human, label].join(" ")
+          formatted_device_type_label(device, fs)
         else
-          label
+          unformatted_device_type_label(device)
         end
       end
 
-      def device_label(device)
-        if device.is?(:lvm_vg)
-          "LVM"
-        elsif device.bcache
-          format(_("Part of %s"), device.bcache.basename)
+      # Label for ormatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @param fs [Y2Storage::Filesystem]
+      # @return [String]
+      def formatted_device_type_label(device, fs)
+        [fs.type.to_human_string, device_label_for(device)].join(" ")
+      end
+
+      # Label for unformatted device (e.g., LVM, RAID, Partition, etc)
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @return [String]
+      def unformatted_device_type_label(device)
+        if device.lvm_pv
+          lvm_pv_type_label(device.lvm_pv)
         elsif device.md
-          format(_("Part of %s"), device.md.basename)
-        elsif device.is?(:lvm_pv)
-          lvm_pv_type_label(device)
-        elsif device.is?(:lvm_lv)
-          lvm_lv_type_label(device)
-        elsif device.is?(:partition)
-          partition_type_label(device)
+          part_of_label(device.md)
+        elsif device.bcache
+          part_of_label(device.bcache)
+        elsif device.in_bcache_cset
+          bcache_cset_label
         else
           default_type_label(device)
         end
       end
 
-      # Default type label for the device
+      # Type label when the device is a LVM physical volume
       #
-      # @see DEVICE_LABELS
-      #
-      # @param device [Y2Storage::BlkDevice]
+      # @param device [Y2Storage::LvmPv]
       # @return [String]
-      def default_type_label(device)
-        type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
+      def lvm_pv_type_label(device)
+        vg = device.lvm_vg
 
-        if type
-          device_type_label(type)
-        else
-          ""
-        end
+        return _("Orphan PV") if vg.nil?
+
+        # TRANSLATORS: %s is the volume group name. E.g., "vg0"
+        format(_("PV of %s"), vg.basename)
+      end
+
+      # Type label when the device belongs to a multidevice BtrFS filesystem
+      #
+      # @param fs [Y2Storage::Filesystem]
+      # @return [String]
+      def btrfs_multidevice_type_label(fs)
+        # TRANSLATORS: %s is a mount path. E.g., "/", or "/home"
+        format(_("Part of BtrFS %s"), fs.mount_path)
+      end
+
+      # Type label when the device is used as caching device in Bcache
+      #
+      # @return [String]
+      def bcache_cset_label
+        # TRANSLATORS: an special type of device
+        _("Bcache cache")
       end
 
       # Type label when the device is a partition
@@ -311,38 +337,40 @@ module Y2Partitioner
         format(_("%s Partition"), device.id.to_human_string)
       end
 
-      # Type label when the device is a LVM logical volume
+      # Type label when the device is part of another one, like Bcache or RAID
       #
-      # @note Different label is shown depending on the logical volume type
-      #   (i.e., normal, thin pool or thin volume).
-      #
-      # @param device [Y2Storage::LvmLv]
+      # @param ancestor_device [Y2Storage::BlkDevice]
       # @return [String]
-      def lvm_lv_type_label(device)
-        return blk_device_type_label(device) if device.lv_type.is?(:normal)
-
-        type = device.lv_type.to_sym
-        device_type_label(type) || ""
+      def part_of_label(ancestor_device)
+        format(_("Part of %s"), ancestor_device.basename)
       end
 
-      def lvm_pv_type_label(device)
-        device_label = device_type_label(:lvm_pv)
-        vg_name = device.lvm_pv.lvm_vg.basename
-
-        # TODO: TRANSLATORS...
-        format(_("%s of %s"), device_label, vg_name)
-      end
-
-      # Type label when the device is not a partition
+      # Default type label for the device
+      #
+      # @see DEVICE_LABELS
       #
       # @param device [Y2Storage::BlkDevice]
       # @return [String]
-      def blk_device_type_label(device)
+      def default_type_label(device)
         data = [device.vendor, device.model].compact
-        data.empty? ? default_type_label(device) : data.join("-")
+
+        return data.join("-") unless data.empty?
+        return device.id.to_human_string if device.respond_to?(:id)
+
+        device_label_for(device)
       end
 
-      def device_type_label(type)
+      # Default device label based on its type
+      #
+      # @see DEVICE_LABELS
+      #
+      # @param device [Device]
+      # @return [String]
+      def device_label_for(device)
+        type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
+
+        return "" if type.nil?
+
         _(DEVICE_LABELS[type])
       end
     end
