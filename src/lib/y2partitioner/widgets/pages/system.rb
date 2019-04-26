@@ -133,7 +133,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches
+          disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches + multidevice_filesystems
         end
 
         # @return [Array<Y2Storage::Device>]
@@ -180,6 +180,11 @@ module Y2Partitioner
             devices << bcache
             devices.concat(bcache.partitions)
           end
+        end
+
+        # @return [Array<Y2Storage::Filesystem>]
+        def multidevice_filesystems
+          device_graph.filesystems.select { |fs| fs.respond_to?(:multidevice?) && fs.multidevice? }
         end
 
         def device_graph

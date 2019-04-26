@@ -144,7 +144,11 @@ module Y2Partitioner
       # Values
 
       def device_value(device)
-        device.name
+        if device.is?(:blk_filesystem)
+          device.type.to_human_string
+        else
+          device.name
+        end
       end
 
       def size_value(device)
