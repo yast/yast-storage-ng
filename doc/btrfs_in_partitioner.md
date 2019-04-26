@@ -189,29 +189,23 @@ intuituve, with many things happening behind user's back. If a subvolume
 becomes shadowed, it will simply disappear from the list with no trace and will
 re-appear as soon as the device that was shadowing it is modified or deleted.
 
-## Changes in the UI to accommodate the features
+## Changes implemented in the UI to accommodate the features
 
-This section describes how the Partitioner UI can be adapted to offer support
+This section describes how the Partitioner UI will be adapted to offer support
 for multi-device Btrfs filesystems and to improve the management of Btrfs
 subvolumes. There is no need to implement both things at once. Quite the
 opposite, multi-device filesystems is a clear priority that should be addressed
 as soon as possible while the management of subvolumes is not that relevant at
 this point of time.
 
-### The "File Systems" tree entry
-
-Likely, the current "Btrfs" entry in the left tree could be replaced with a
-"File Systems" one that will contain a list with all the filesystems, both the
-multi-device and the traditional ones based only in a block device.
-
-This will be the only view in which the traditional filesystems (backed by only
-one block device) would be visible as an entity on their own, instead of just
-some kind of property of the underlying block device.
+This section does not list all the options that were considered, only the ones
+that are planned to be actually implemented. See the next section to check some
+discarded changes.
 
 ### Changes in the general list of devices
 
 To better reflect the interactions between the different devices and to make
-possible to visualize the multi-device filesystems, some changes would also be
+possible to visualize the multi-device filesystems, some changes would be
 needed in the general lists of devices that are currently used all along the
 Partitioner.
 
@@ -245,13 +239,109 @@ root filesystem spreads over `sdb2` and `sdb7`.
 The logic of the new column for each possible element is described in [this
 gist](https://gist.github.com/joseivanlopez/06e92d5784da7efad7a6feeeb8e2eac6).
 
+### Revamping the Btrfs tree entry
+
+The current Btrfs tree entry is a lost opportunity to manage the Btrfs
+filesystems as entities on their own. That section of the Partitioner could be
+revamped to contain a table with the same behavior exposed for other types of
+devices like RAIDs. With a button to add a new Btrfs filesystem, a button to
+edit existing Btrfs filesystems (a real edit, not the pop-up for subvolumes),
+etc.
+
+On this revamped section, each Btrfs filesystem would have an overview page
+describing its details and a "used devices" tab similar to the one used for RAID
+devices. 
+
+Last but not least, the tree entry could contain subentries for every Btrfs
+filesystem, just like "Hard Disks" contains a subentry for every disk or "RAID"
+contains one for every RAID device.
+
+All that should raise the Btrfs filesystem to the category of first-class
+citizens in the Partitioner UI.
+
+In the general list of devices described in the previous subsection only the
+multi-device filesystems would be represented in their own extra row. That's
+not the case in the Btrfs section of the partitioner. All the Btrfs filesystems,
+would be listed in this section, no matter whether they are multi-device or not.
+That would allow to add more block devices to a Btrfs filesystem that was
+initially defined only on top of one block device.
+
+### More information about the device while editing it
+
+With the current UI, the consequences of selecting each possible options while
+editing an existing block device are not always clear. The existence of
+multi-device filesystems will only make this worse. Imagine for example a Btrfs
+filesystem on top of sda1 and sdb1. Editing sda1 and choosing to format it with
+a XFS filesystem will destroy the whole previous Btrfs filesystem, which also
+affects sdb1.
+
+Thus, the edit dialog for a block device needs to be enhanced with some
+information about the current state of the device and adapting the labels of the
+different options to better explain their implications.
+
+For example, imagine the process of editing a partition that already contains a
+Btrfs filesystem. The edit screen could look like the following screenshot.
+
+![Improved dialog to edit block device](btrfs_in_partitioner/edit_btrfs_part.png)
+
+Apart from the extra explanation about the status (which in case of multi-device
+filesystems would be something like "Currently part of a BtrFS"), note how the
+traditional option "Do not Format" has been re-labeled as "Keep Current
+Filesystem".
+
+### Edit screen for Btrfs filesystems
+
+Since the standard dialogs for editing block devices mix logic about modifying
+the device itself and defining its filesystem, those dialogs cannot be used when
+the user clicks "edit" for one of the entries in the revamped Btrfs section.
+
+A new simplified version of that main dialog would be needed. It would likely
+look similar to the following mockup.
+
+![Dialog to edit a Btrfs filesystem](btrfs_in_partitioner/edit_btrfs.png)
+
+### Better management of subvolumes
+
+TO BE WRITTEN: we have still not discussed how to improve the UI in order to
+manage subvolumes in a more convenient way.
+
+## Discarded or postponed changes in the UI
+
+This section lists several changes in the UI that could have been done to
+accommodate the new Btrfs features but that were finally discarded in the short
+term. They are documented for completeness and because some of them could be
+reconsidered in the future.
+
+### The "File Systems" tree entry
+
+Going one step further, the current "Btrfs" entry in the left tree could be
+replaced with a "File Systems" one that will contain a list with all the
+filesystems, including the multi-device Btrfs ones but also any other
+traditional filesystem of any type.
+
+This will be the only view in which the traditional filesystems (backed by only
+one block device) would be visible as an entity on their own, instead of just
+some kind of property of the underlying block device.
+
+This option was discarded because it would add too much duplication to the left
+tree and to the partitioner in general with no clear gain. The only case in
+which this extra section would be useful to do something that cannot be
+currently done would be with Btrfs filesystems.
+
 ### Rethinking the dialogs to create/edit filesystems
 
-Other aspect that would need a better organization is the dialogs and workflows
-to format a device (or a set of devices, now that multi-device filesystems are
-possible) and to modify existing filesystems.
+The solutions described in the section "Changes implemented in the UI to
+accommodate the features" fix the main problems in the short term but they
+expose some inconsistencies. Imagine a partition formatted as Btrfs, clicking
+"edit" for the partition and for its corresponding Btrfs filesystem would result
+in two different dialogs.
 
-Let's take a look at what would be the new workflow for creating and formating
+The experience could be smoother and make more sense (at several levels) with a
+better organization of the dialogs and workflows to format a device (or a set of
+devices, now that multi-device filesystems are possible) and to modify existing
+filesystems.
+
+Let's take a look at what could be a new workflow for creating and formating
 a new partition. It implies the same number of steps than in the classic
 workflow. But none of new steps mixes logic referred to the partition with logic
 related to the filesystem itself. That means filesystem-specific dialog(s) can
@@ -297,16 +387,16 @@ of the workflow described for the creation will very often be necessary for
 editing, except in those cases in which the block device does not contain a
 filesystem and it's not going to be formatted.
 
-On the bright side, providing the information in two more fine-grained steps
-would allow us to introduce more clarifications in the UI or to adapt the labels
-to better explain the implications of the different options. For example,
-imagine the process of editing a partition that already contains a Btrfs
-filesystem.
+On the bright side, with the information being provided in two more
+fine-grained steps, the dialogs are more clear and the improvements described
+in the section "More information about the device while editing it" would make
+even more sense.
 
-The first screen could already show some information and more adapted labels.
-For example, the option "Do not Format" could be re-labeled as "Keep Current
-Filesystem" if the partition is not going to be encrypted. Note also the extra
-warning in the "Encrypt Device" checkbox.
+For example, imagine the process of editing a partition that already contains a
+Btrfs filesystem. The first screen could already show some information and more
+adapted labels. For example, the option "Do not Format" could be re-labeled as
+"Keep Current Filesystem" if the partition is not going to be encrypted. Note
+also the extra warning in the "Encrypt Device" checkbox.
 
 ![Partition edit step 1](btrfs_in_partitioner/edit_btrfs_part_1.png)
 
@@ -319,8 +409,3 @@ Even more, such options could simply not be present at all. Once again, these
 are just mockups and the finally layout should be enhanced.
 
 ![Partition edit step 2 (option B)](btrfs_in_partitioner/edit_btrfs_part_2b.png)
-
-### Better management of subvolumes
-
-TO BE WRITTEN: we have still not discussed how to improve the UI in order to
-manage subvolumes in a more convenient way.
