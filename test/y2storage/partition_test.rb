@@ -583,4 +583,36 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  describe "#efi_system?" do
+    let(:scenario) { "efi_not_mounted" }
+
+    subject(:partition) { fake_devicegraph.find_by_name(device_name) }
+
+    context "when does have an EFI System id" do
+      context "and it is formatted as VFAT" do
+        let(:device_name) { "/dev/sda1" }
+
+        it "returns true" do
+          expect(subject.efi_system?).to eq(true)
+        end
+      end
+
+      context "and it is not formatted as VFAT" do
+        let(:device_name) { "/dev/sda3" }
+
+        it "returns false" do
+          expect(subject.efi_system?).to eq(false)
+        end
+      end
+    end
+
+    context "when does not have an EFI System id" do
+      let(:device_name) { "/dev/sda2" }
+
+      it "returns false" do
+        expect(subject.efi_system?).to eq(false)
+      end
+    end
+  end
 end
