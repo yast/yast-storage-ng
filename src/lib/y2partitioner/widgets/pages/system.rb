@@ -182,9 +182,9 @@ module Y2Partitioner
           end
         end
 
-        # @return [Array<Y2Storage::Filesystem>]
+        # @return [Array<Y2Storage::Filesystems::Base>]
         def multidevice_filesystems
-          device_graph.filesystems.select { |fs| fs.respond_to?(:multidevice?) && fs.multidevice? }
+          device_graph.blk_filesystems.select(&:multidevice?)
         end
 
         def device_graph

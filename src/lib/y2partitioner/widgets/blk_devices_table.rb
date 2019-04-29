@@ -244,7 +244,7 @@ module Y2Partitioner
         dasd:          N_("Disk"),
         multipath:     N_("Multipath"),
         nfs:           N_("NFS"),
-        bios_raid:     N_("RAID"),
+        bios_raid:     N_("BIOS RAID"),
         software_raid: N_("RAID"),
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
@@ -255,7 +255,7 @@ module Y2Partitioner
         partition:     N_("Partition")
       }
 
-      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of BtrFS /home, etc)
+      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of BtrFS sda1+, etc)
       #
       # @param device [Y2Storage::Device]
       # @return [String]
@@ -274,13 +274,32 @@ module Y2Partitioner
         end
       end
 
-      # Label for ormatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
+      # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
       #
       # @param device [Y2Storage::BlkDevice]
-      # @param fs [Y2Storage::Filesystem]
+      # @param fs [Y2Storage::Filesystems::Base]
       # @return [String]
       def formatted_device_type_label(device, fs)
-        [fs.type.to_human_string, device_label_for(device)].join(" ")
+        # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
+        #              %{device_label} is the device label. I.e., Partition, Disk, etc
+        format(
+          _("%{fs_type} %{device_label}"),
+          fs_type:      fs_type_for(device, fs),
+          device_label: device_label_for(device)
+        )
+      end
+
+      # Filesystem representation for given device and filesystem
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @param fs [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def fs_type_for(device, fs)
+        if device.is?(:partition) && device.efi_system?
+          device.id.to_human_string
+        else
+          fs.type.to_human_string
+        end
       end
 
       # Label for unformatted device (e.g., LVM, RAID, Partition, etc)
@@ -316,11 +335,11 @@ module Y2Partitioner
 
       # Type label when the device belongs to a multidevice BtrFS filesystem
       #
-      # @param fs [Y2Storage::Filesystem]
+      # @param fs [Y2Storage::Filesystems::Base]
       # @return [String]
       def btrfs_multidevice_type_label(fs)
-        # TRANSLATORS: %s is a mount path. E.g., "/", or "/home"
-        format(_("Part of BtrFS %s"), fs.mount_path)
+        # TRANSLATORS: %s is a device base name. E.g., sda1+
+        format(_("Part of BtrFS %s"), "#{fs.blk_devices.first.basename}+")
       end
 
       # Type label when the device is used as caching device in Bcache
@@ -329,16 +348,6 @@ module Y2Partitioner
       def bcache_cset_label
         # TRANSLATORS: an special type of device
         _("Bcache cache")
-      end
-
-      # Type label when the device is a partition
-      #
-      # @param device [Y2Storage::Partition]
-      # @return [String]
-      def partition_type_label(device)
-        return _("Partition") if device.filesystem
-
-        format(_("%s Partition"), device.id.to_human_string)
       end
 
       # Type label when the device is part of another one, like Bcache or RAID
