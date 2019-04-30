@@ -27,6 +27,8 @@ require "y2partitioner/widgets/btrfs_options"
 require "y2partitioner/actions/controllers/filesystem"
 
 describe Y2Partitioner::Widgets::BtrfsOptions do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     devicegraph_stub(scenario)
   end
@@ -103,6 +105,66 @@ describe Y2Partitioner::Widgets::BtrfsOptions do
 
         it "returns false" do
           expect(subject.validate).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#filesystem_errors" do
+    before do
+      allow(Yast::Mode).to receive(:installation).and_return(installation)
+
+      allow(filesystem).to receive(:configure_snapper).and_return(snapshots)
+
+      allow(subject).to receive(:min_size_for_snapshots).and_return(needed_size)
+    end
+
+    let(:installation) { true }
+
+    let(:needed_size) { 10.GiB }
+
+    let(:errors) { subject.filesystem_errors(controller.filesystem, new_size: size) }
+
+    context "when snapshots are not configured" do
+      let(:snapshots) { false }
+
+      let(:size) { 5.GiB }
+
+      it "does not contain a size error" do
+        expect(errors).to_not include(/small for snapshots/)
+      end
+    end
+
+    context "when snaphots are configured" do
+      let(:snapshots) { true }
+
+      context "and the filesystem is a single-device Btrfs" do
+        context "and the size is enough" do
+          let(:size) { 15.GiB }
+
+          it "does not contain a size error" do
+            expect(errors).to_not include(/small for snapshots/)
+          end
+        end
+
+        context "and the size is not enough" do
+          let(:size) { 5.GiB }
+
+          it "contains a size error" do
+            expect(errors).to include(/small for snapshots/)
+          end
+        end
+      end
+
+      context "when the filesystem is a multi-device Btrfs" do
+        let(:scenario) { "btrfs2-devicegraph.xml" }
+
+        let(:device_name) { "/dev/sdb1" }
+
+        let(:size) { 0.GiB }
+
+        it "does not contain a size error" do
+          expect(errors).to_not include(/small for snapshots/)
         end
       end
     end
