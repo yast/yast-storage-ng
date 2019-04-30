@@ -22,6 +22,7 @@
 require "yast"
 require "cwm/widget"
 require "y2partitioner/widgets/reprobe"
+require "y2partitioner/widgets/execute_and_redraw"
 
 Yast.import "Popup"
 Yast.import "Mode"
@@ -31,6 +32,7 @@ module Y2Partitioner
     # Button for rescanning system devices
     class RescanDevicesButton < CWM::PushButton
       include Reprobe
+      include ExecuteAndRedraw
 
       def initialize
         textdomain "storage"
@@ -48,8 +50,10 @@ module Y2Partitioner
       def handle
         return nil unless continue?
 
-        reprobe
-        :redraw
+        execute_and_redraw do
+          reprobe
+          :finish
+        end
       end
 
       # @macro seeAbstractWidget

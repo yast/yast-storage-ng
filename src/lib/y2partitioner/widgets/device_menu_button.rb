@@ -21,6 +21,7 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/widgets/execute_and_redraw"
 
 Yast.import "Popup"
 
@@ -32,6 +33,8 @@ module Y2Partitioner
     # Every subclass should implement {#actions} with the concrete list of
     # actions.
     class DeviceMenuButton < CWM::MenuButton
+      include ExecuteAndRedraw
+
       # Constructor
       # @param device [Y2Storage::Device]
       def initialize(device)
@@ -48,12 +51,10 @@ module Y2Partitioner
       def handle(event)
         return nil unless validate_presence
 
-        UIState.instance.save_open_items
-
         action = action_for_widget_id(event["ID"])
         return nil unless action
 
-        action_result(action)
+        execute_and_redraw { execute_action(action) }
       end
 
       # @macro seeItemsSelection
@@ -93,14 +94,6 @@ module Y2Partitioner
       # @return [Symbol] result of the action
       def execute_action(action)
         action[:class].new(device).run
-      end
-
-      # See {#handle}
-      #
-      # @param action [Hash]
-      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
-      def action_result(action)
-        execute_action(action) == :finish ? :redraw : nil
       end
 
       # Current devicegraph

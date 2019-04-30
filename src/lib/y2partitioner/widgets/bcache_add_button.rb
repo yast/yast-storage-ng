@@ -22,11 +22,14 @@
 require "yast"
 require "cwm"
 require "y2partitioner/actions/add_bcache"
+require "y2partitioner/widgets/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
     # Button for opening a wizard to add a new Bcache device
     class BcacheAddButton < CWM::PushButton
+      include ExecuteAndRedraw
+
       # Constructor
       def initialize
         textdomain "storage"
@@ -41,8 +44,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       # @see Actions::AddBcache
       def handle
-        res = Actions::AddBcache.new.run
-        res == :finish ? :redraw : nil
+        execute_and_redraw { Actions::AddBcache.new.run }
       end
     end
   end

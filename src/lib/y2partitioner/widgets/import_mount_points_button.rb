@@ -22,11 +22,14 @@
 require "yast"
 require "cwm/widget"
 require "y2partitioner/actions/import_mount_points"
+require "y2partitioner/widgets/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
     # Button for importing mount points from a fstab file
     class ImportMountPointsButton < CWM::PushButton
+      include ExecuteAndRedraw
+
       def initialize
         textdomain "storage"
       end
@@ -38,8 +41,7 @@ module Y2Partitioner
 
       # @return [Symbol, nil] nil when the action was not performed
       def handle
-        action_result = Actions::ImportMountPoints.new.run
-        action_result == :finish ? :redraw : nil
+        execute_and_redraw { Actions::ImportMountPoints.new.run }
       end
     end
   end
