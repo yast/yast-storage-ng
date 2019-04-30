@@ -65,9 +65,15 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def contents
           HBox(
-            @format_options,
+            Frame(
+              _("Formatting Options"),
+              MarginBox(1.45, 0.5, @format_options)
+            ),
             HSpacing(5),
-            @mount_options
+            Frame(
+              _("Mounting Options"),
+              MarginBox(1.45, 0.5, @mount_options)
+            )
           )
         end
 

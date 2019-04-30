@@ -118,31 +118,24 @@ module Y2Partitioner
       end
 
       def contents
-        Frame(
-          _("Formatting Options"),
-          MarginBox(
-            1.45,
-            0.5,
+        VBox(
+          RadioButtonGroup(
+            Id(:format),
             VBox(
-              RadioButtonGroup(
-                Id(:format),
+              Left(RadioButton(Id(:format_device), Opt(:notify), _("Format device"))),
+              HBox(
+                HSpacing(4),
                 VBox(
-                  Left(RadioButton(Id(:format_device), Opt(:notify), _("Format device"))),
-                  HBox(
-                    HSpacing(4),
-                    VBox(
-                      Left(@filesystem_widget),
-                      Left(@format_options)
-                    )
-                  ),
-                  Left(RadioButton(Id(:no_format_device), Opt(:notify), _("Do not format device"))),
-                  @partition_id
+                  Left(@filesystem_widget),
+                  Left(@format_options)
                 )
               ),
-              VSpacing(1),
-              Left(@encrypt_widget)
+              Left(RadioButton(Id(:no_format_device), Opt(:notify), _("Do not format device"))),
+              @partition_id
             )
-          )
+          ),
+          VSpacing(1),
+          Left(@encrypt_widget)
         )
       end
 
@@ -223,30 +216,23 @@ module Y2Partitioner
       end
 
       def contents
-        Frame(
-          _("Mounting Options"),
-          MarginBox(
-            1.45,
-            0.5,
+        VBox(
+          RadioButtonGroup(
+            Id(:mount),
             VBox(
-              RadioButtonGroup(
-                Id(:mount),
+              Left(RadioButton(Id(:mount_device), Opt(:notify), _("Mount device"))),
+              HBox(
+                HSpacing(4),
                 VBox(
-                  Left(RadioButton(Id(:mount_device), Opt(:notify), _("Mount device"))),
-                  HBox(
-                    HSpacing(4),
-                    VBox(
-                      Left(@mount_point_widget),
-                      Left(@fstab_options_widget)
-                    )
-                  ),
-                  Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
+                  Left(@mount_point_widget),
+                  Left(@fstab_options_widget)
                 )
               ),
-              VSpacing(1),
-              Left(@btrfs_subvolumes_widget)
+              Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
             )
-          )
+          ),
+          VSpacing(1),
+          Left(@btrfs_subvolumes_widget)
         )
       end
 

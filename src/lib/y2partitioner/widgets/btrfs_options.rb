@@ -29,7 +29,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def contents
         VBox(
-          HBox(mount_options_widget),
+          mount_options_widget,
           VSpacing(0.5),
           snapshots_widget
         )
