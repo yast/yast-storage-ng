@@ -54,7 +54,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          devices_info
+          filesystem.blk_device_basename
         end
 
         # @macro seeCustomWidget
@@ -86,13 +86,9 @@ module Y2Partitioner
         #
         # @return [String]
         def title
-          # TRANSLATORS: BTRFS page title, where %{fs_type} is replaced by the filesystem
-          # type (i.e., Btrfs) and %{info} is replaced by the device basename (e.g., sda1).
-          format(
-            _("%{fs_type}: %{info}"),
-            fs_type: filesystem.type.to_human,
-            info:    devices_info
-          )
+          # TRANSLATORS: BTRFS page title, where %{basename} is replaced by the device
+          # basename (e.g., sda1).
+          format(_("Btrfs %{basename}"), basename: filesystem.blk_device_basename)
         end
 
         # Tabs to show the filesystem data
@@ -108,21 +104,6 @@ module Y2Partitioner
           ]
 
           Tabs.new(*tabs)
-        end
-
-        # Short information about the devices used by the filesystem
-        #
-        # When the filesystem is a non-multidevice, this method simply returns the base
-        # name of the blk device (e.g., "sda1"). And for multidevice ones, it only returns
-        # the base name of the first blk device plus a "+" symbol to indicate that the
-        # filesystem is multidevice (e.g., "sda1+").
-        #
-        # @return [String]
-        def devices_info
-          info = devices.first.basename
-          info << "+" if filesystem.multidevice?
-
-          info
         end
 
         # Devices used by the filesystem

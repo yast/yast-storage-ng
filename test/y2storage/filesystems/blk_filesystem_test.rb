@@ -35,6 +35,29 @@ describe Y2Storage::Filesystems::BlkFilesystem do
   let(:ntfs_part)  { "/dev/sda1" }
   subject(:filesystem) { blk_device.blk_filesystem }
 
+  describe "#blk_device_basename" do
+    context "for a non-multidevice filesystem" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:dev_name) { "/dev/sdb2" }
+
+      it "returns the base name of its block device" do
+        expect(subject.blk_device_basename).to eq("sdb2")
+      end
+    end
+
+    context "for a multidevice filesystem" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:dev_name) { "/dev/sdb1" }
+
+      it "returns the base name of its first block device followed by '+'" do
+        basename = filesystem.blk_devices.first.basename
+        expect(subject.blk_device_basename).to eq(basename + "+")
+      end
+    end
+  end
+
   describe "#multidevice?" do
     context "when the filesystem is over one device only" do
       let(:dev_name) { "/dev/sdb2" }

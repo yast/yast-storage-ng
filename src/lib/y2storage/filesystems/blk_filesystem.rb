@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -112,6 +112,21 @@ module Y2Storage
       # @return [Array<BlkDevice>]
       def plain_blk_devices
         blk_devices.map(&:plain_device)
+      end
+
+      # Block device base name
+      #
+      # When the filesystem is a non-multidevice, this method simply returns the base
+      # name of the block device (e.g., "sda1"). And for multidevice ones, it only returns
+      # the base name of the first block device plus a "+" symbol to indicate that the
+      # filesystem is multidevice (e.g., "sda1+").
+      #
+      # @return [String]
+      def blk_device_basename
+        info = blk_devices.first.basename
+        info << "+" if multidevice?
+
+        info
       end
 
       # Whether it is a multidevice filesystem

@@ -45,7 +45,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          Y2Storage::Filesystems::Type::BTRFS.to_human
+          _("Btrfs")
         end
 
       private

@@ -46,29 +46,6 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
 
   include_examples "CWM::Page"
 
-  describe "label" do
-    context "for a non-multidevice BTRFS" do
-      let(:scenario) { "mixed_disks" }
-
-      let(:device_name) { "/dev/sdb2" }
-
-      it "returns the base name of its block device" do
-        expect(subject.label).to eq("sdb2")
-      end
-    end
-
-    context "for a multidevice BTRFS" do
-      let(:scenario) { "btrfs2-devicegraph.xml" }
-
-      let(:device_name) { "/dev/sdb1" }
-
-      it "returns the base name of its first block device followed by '+'" do
-        basename = filesystem.blk_devices.first.basename
-        expect(subject.label).to eq(basename + "+")
-      end
-    end
-  end
-
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
