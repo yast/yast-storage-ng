@@ -102,13 +102,16 @@ module Y2Partitioner
         UIState.instance.find_tree_node(@pages) || super
       end
 
-      # Obtains the ids of open/expanded items
+      # Status of open/expanded items in the UI
       #
-      # @return [Array<String,Symbol>] ids of open/expanded items
-      def open_items_ids
-        Yast::UI
-          .QueryWidget(Id(tree.widget_id), :OpenItems)
-          .keys
+      # @see UIState#open_items
+      #
+      # @return [Hash{String => Boolean}]
+      def open_items
+        items_with_children = with_children(tree.items)
+        open_items = Yast::UI.QueryWidget(Id(tree.widget_id), :OpenItems).keys
+
+        Hash[items_with_children.map { |i| [i.to_s, open_items.include?(i)] }]
       end
 
       # Obtains the page associated to a specific device
@@ -349,6 +352,16 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, open: item_open?(page, false))
       end
 
+      # For a list of tree entries, returns the ids of those that have children,
+      # including nested tree entries (i.e. recursively)
+      #
+      # @param items [Array<CWM::PagerTreeItem>]
+      # @return [Array<String, Symbol>]
+      def with_children(items)
+        items = items.select { |i| i.children.any? }
+        items.map(&:id) + items.flat_map { |i| with_children(i.children.values) }
+      end
+
       # Whether the tree item for given page should be open (expanded) or closed (collapsed)
       #
       # When open items are not initialized, the default value will be used. For better
@@ -360,9 +373,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true when item must be expanded; false if must be collapsed
       def item_open?(page, default)
-        return default if UIState.instance.open_items_ids.nil?
-
-        UIState.instance.open_items_ids.include?(page.widget_id)
+        UIState.instance.open_items.fetch(page.widget_id.to_s, default)
       end
     end
   end
