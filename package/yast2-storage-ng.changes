@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Apr 30 12:30:12 UTC 2019 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: unify the "Type" and "FS Type" columns.
+- Partitioner: show multidevice filesystems in the system section.
+- Part of jsd#SLE-3877.
+- 4.2.10
+
+-------------------------------------------------------------------
 Tue Apr 30 07:46:10 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: added option for editing Btrfs filesystems.
