@@ -20,13 +20,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
 require "cwm"
-require "y2partitioner/dialogs/btrfs_subvolumes"
-require "y2partitioner/widgets/fstab_options"
-require "y2partitioner/filesystems"
+require "y2storage"
 require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
+require "y2partitioner/filesystems"
+require "y2partitioner/widgets/fstab_options"
+require "y2partitioner/dialogs/btrfs_subvolumes"
 
 Yast.import "Popup"
 
@@ -665,23 +665,23 @@ module Y2Partitioner
           CWM::Empty.new("empty_widget")
         end
       end
+    end
 
-      # Button to manage btrfs subvolumes
-      class Button < CWM::PushButton
-        # @param controller [Actions::Controllers::Filesystem]
-        def initialize(controller)
-          textdomain "storage"
-          @controller = controller
-        end
+    # Button to manage btrfs subvolumes
+    class Button < CWM::PushButton
+      # @param controller [Actions::Controllers::Filesystem]
+      def initialize(controller)
+        textdomain "storage"
+        @controller = controller
+      end
 
-        def label
-          _("Subvolume Handling")
-        end
+      def label
+        _("Subvolume Handling")
+      end
 
-        def handle
-          Dialogs::BtrfsSubvolumes.new(@controller.filesystem).run
-          nil
-        end
+      def handle
+        Dialogs::BtrfsSubvolumes.new(@controller.filesystem).run
+        nil
       end
     end
 

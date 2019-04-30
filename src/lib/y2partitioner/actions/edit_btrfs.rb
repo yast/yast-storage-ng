@@ -20,52 +20,56 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/actions/base"
-require "y2partitioner/dialogs/btrfs_subvolumes"
+require "y2partitioner/actions/transaction_wizard"
+require "y2partitioner/actions/controllers/filesystem"
+require "y2partitioner/dialogs/btrfs_options"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
     # Action for editing a BTRFS filesystem, see {Actions::Base}
-    class EditBtrfs < Base
+    class EditBtrfs < TransactionWizard
       # Constructor
       #
       # @param filesystem [Y2Storage::Filesystems::Btrfs]
       def initialize(filesystem)
         super()
+
         textdomain "storage"
 
-        @filesystem = filesystem
+        @device_sid = filesystem.sid
         UIState.instance.select_row(filesystem)
       end
 
     private
 
-      # @return [Y2Storage::Filesystems::Btrfs]
-      attr_reader :filesystem
+      # @return [Controllers::Filesystem]
+      attr_reader :controller
 
-      # Opens a dialog to edit a BTRFS filesystem
+      # Wizard step title
       #
-      # @see Actions::Base#perform_action
-      def perform_action
-        dialog = Dialogs::BtrfsSubvolumes.new(filesystem)
-
-        dialog.run
+      # @return [String]
+      def title
+        # TRANSLATORS: Wizard step title, where %{basename} is replaced by the device
+        # base name (e.g., sda1).
+        format(_("Edit Btrfs %{basename}"), basename: device.blk_device_basename)
       end
 
-      # Result of the action
-      #
-      # @see Actions::Base#result
-      #
-      # It returns `:finish` when the action is performed. Otherwise, it returns
-      # the result of the dialog, see {#perform_action}.
-      #
-      # @param action_result [Symbol] result of {#perform_action}
-      # @return [Symbol]
-      def result(action_result)
-        return super if action_result == :ok
+      def init_transaction
+        @controller = Controllers::Filesystem.new(device, title)
+      end
 
-        action_result
+      def sequence_hash
+        {
+          "ws_start"      => "btrfs_options",
+          "btrfs_options" => { next: :finish }
+        }
+      end
+
+      # Opens a dialog to edit a BTRFS filesystem
+      def btrfs_options
+        dialog = Dialogs::BtrfsOptions.new(controller)
+        dialog.run
       end
     end
   end

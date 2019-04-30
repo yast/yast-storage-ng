@@ -39,12 +39,12 @@ describe Y2Partitioner::Actions::EditBtrfs do
 
   describe "#run" do
     before do
-      allow(Y2Partitioner::Dialogs::BtrfsSubvolumes).to receive(:new).and_return(dialog)
+      allow(Y2Partitioner::Dialogs::BtrfsOptions).to receive(:new).and_return(dialog)
 
       allow(dialog).to receive(:run).and_return(dialog_result)
     end
 
-    let(:dialog) { instance_double(Y2Partitioner::Dialogs::BtrfsSubvolumes) }
+    let(:dialog) { instance_double(Y2Partitioner::Dialogs::BtrfsOptions) }
 
     let(:dialog_result) { nil }
 
@@ -52,22 +52,30 @@ describe Y2Partitioner::Actions::EditBtrfs do
 
     let(:device_name) { "/dev/sdb2" }
 
-    it "shows the dialog for editing BTRFS subvolumes" do
+    let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
+
+    it "shows the dialog for editing a BTRFS filesystem" do
       expect(dialog).to receive(:run)
 
       subject.run
     end
 
+    it "includes the device base name in the title passed to the controller" do
+      expect(controller_class).to receive(:new).with(filesystem, /sdb2/)
+
+      subject.run
+    end
+
     context "and the dialog is not accepted" do
-      let(:dialog_result) { :cancel }
+      let(:dialog_result) { :abort }
 
       it "returns the result of the dialog" do
-        expect(subject.run).to eq(:cancel)
+        expect(subject.run).to eq(:abort)
       end
     end
 
     context "and the dialog is accepted" do
-      let(:dialog_result) { :ok }
+      let(:dialog_result) { :next }
 
       it "returns :finish" do
         expect(subject.run).to eq(:finish)
