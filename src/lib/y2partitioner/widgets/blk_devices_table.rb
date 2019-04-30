@@ -220,7 +220,8 @@ module Y2Partitioner
         partition: Icons::HD_PART,
         raid:      Icons::RAID,
         lvm_vg:    Icons::LVM,
-        lvm_lv:    Icons::LVM_LV
+        lvm_lv:    Icons::LVM_LV,
+        btrfs:     Icons::BTRFS
       }
 
       # Table icon for the device
