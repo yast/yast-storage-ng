@@ -94,6 +94,7 @@ module Y2Partitioner
     def small_size_for_snapshots?(filesystem, new_size: nil)
       return false unless filesystem && filesystem_with_snapshots?(filesystem)
 
+      # FIXME: Does this check make sense for multidevice Btrfs?
       size = new_size || filesystem.blk_devices.first.size
       min_size = min_size_for_snapshots(filesystem)
 

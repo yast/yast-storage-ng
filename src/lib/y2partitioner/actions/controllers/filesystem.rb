@@ -31,10 +31,22 @@ require "y2storage/subvol_specification"
 Yast.import "Mode"
 Yast.import "Stage"
 
-# TODO: This class is too long. Please, consider refactoring.
-# The code could be splitted in two kind of groups: one for actions
-# related to mount point options and another group for actions related
-# to filesystem options.
+# FIXME: refactoring needed.
+#
+# This controller contains logic related to a blk device:
+#   * Create a filesystem
+#   * Remove a filesystem
+#   * Edit format options
+#   * Edit partition id
+#   * Change encryption
+#
+# but it also includes logic related to a filesystem:
+#   * Set mount point
+#   * Set mount options
+#   * Edit subvolumes
+#   * Set snapshots
+#
+# It could be splitted into different classes.
 
 # rubocop:disable ClassLength
 
@@ -67,13 +79,19 @@ module Y2Partitioner
         # @return [String]
         attr_reader :wizard_title
 
-        # @param device [Y2Storage::BlkDevice] see {#blk_device)
+        # @param device [Y2Storage::BlkDevice, Y2Storage::Filesystems::BlkFilesystem]
         # @param wizard_title [String]
         def initialize(device, wizard_title)
-          @blk_device_name = device.name
-          @encrypt = blk_device.encrypted?
+          # Note that the controller could be used only for filesystem actions, see FIXME.
+          if device.is?(:filesystem)
+            @filesystem = device
+          else
+            @blk_device_name = device.name
+            @encrypt = blk_device.encrypted?
+            @restorer = BlkDeviceRestorer.new(blk_device)
+          end
+
           @wizard_title = wizard_title
-          @restorer = BlkDeviceRestorer.new(blk_device)
         end
 
         # Sets the id of the role to be used in subsequent operations
@@ -100,16 +118,18 @@ module Y2Partitioner
         # Note this is always the plain device, no matter if it is encrypted or
         # not.
         #
-        # @return [Y2Storage::BlkDevice]
+        # @return [Y2Storage::BlkDevice, nil]
         def blk_device
+          return nil unless blk_device_name
+
           Y2Storage::BlkDevice.find_by_name(working_graph, blk_device_name)
         end
 
         # Filesystem object being modified
         #
-        # @return [Y2Storage::BlkFilesystem]
+        # @return [Y2Storage::Filesystem::BlkFilesystem]
         def filesystem
-          blk_device.filesystem
+          @filesystem || blk_device.filesystem
         end
 
         # Type of the current filesystem
@@ -154,9 +174,10 @@ module Y2Partitioner
 
         # Partition id of the block device if it is a partition
         #
-        # @return [Y2Storage::PartitionId, nil] nil if {#blk_device} is not a
-        #   partition
+        # @return [Y2Storage::PartitionId, nil] nil if there is no block device or the
+        #   block device is not a partition
         def partition_id
+          return nil unless blk_device
           blk_device.is?(:partition) ? blk_device.id : nil
         end
 
