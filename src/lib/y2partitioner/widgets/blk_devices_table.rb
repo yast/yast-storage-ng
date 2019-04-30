@@ -187,7 +187,9 @@ module Y2Partitioner
 
       def filesystem_label_value(device)
         fs = filesystem(device)
-        # fs may be nil or a file system not supporting labels, like NFS
+        return "" if fs.nil?
+        return "" if part_of_multidevice?(device)
+        # fs may not supporting labels, like NFS
         return "" unless fs.respond_to?(:label)
         fs.label
       end
@@ -389,6 +391,17 @@ module Y2Partitioner
         return "" if type.nil?
 
         _(DEVICE_LABELS[type])
+      end
+
+      # Whether the device belongs to a multidevice filesystem
+      #
+      # @param device [Device]
+      # @return [Boolean]
+      def part_of_multidevice?(device)
+        return false unless device.is?(:blk_device)
+
+        fs = filesystem(device)
+        fs.multidevice?
       end
     end
   end
