@@ -145,7 +145,10 @@ module Y2Partitioner
 
       def device_value(device)
         if device.is?(:blk_filesystem)
-          device.type.to_human_string
+          device_name =  [device.type.to_human_string]
+          device_name << device.blk_device_basename if device.multidevice?
+
+          device_name.join(" ")
         else
           device.name
         end
