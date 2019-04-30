@@ -221,6 +221,17 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
     end
 
+    context "when there are multidevice filesystems" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+      let(:multidevice_filesystems) { current_graph.btrfs_filesystems.select(&:multidevice?) }
+
+      it "contains all multidevice filesystems" do
+        expected_items = multidevice_filesystems.map(&:type).map(&:to_human_string)
+
+        expect(items).to include(*expected_items)
+      end
+    end
+
     describe "caching" do
       let(:scenario) { "empty_hard_disk_15GiB" }
       let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }

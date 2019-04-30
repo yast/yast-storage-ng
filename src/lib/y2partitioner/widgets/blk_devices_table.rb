@@ -121,11 +121,6 @@ module Y2Partitioner
         _("Type")
       end
 
-      def filesystem_type_title
-        # TRANSLATORS: table header, file system type
-        _("FS Type")
-      end
-
       def filesystem_label_title
         # TRANSLATORS: table header, disk or partition label. Can be empty.
         _("Label")
@@ -149,7 +144,11 @@ module Y2Partitioner
       # Values
 
       def device_value(device)
-        device.name
+        if device.is?(:blk_filesystem)
+          device.type.to_human_string
+        else
+          device.name
+        end
       end
 
       def size_value(device)
@@ -181,14 +180,6 @@ module Y2Partitioner
         icon = type_icon(device)
         label = type_label(device)
         cell(icon, label)
-      end
-
-      def filesystem_type_value(device)
-        fs = filesystem(device)
-        return "" if fs.nil?
-
-        type = fs.type
-        type.nil? ? "" : type.to_human
       end
 
       def filesystem_label_value(device)
@@ -254,29 +245,117 @@ module Y2Partitioner
         multipath:     N_("Multipath"),
         nfs:           N_("NFS"),
         bios_raid:     N_("BIOS RAID"),
-        software_raid: N_("MD RAID"),
+        software_raid: N_("RAID"),
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
         lvm_lv:        N_("LV"),
         stray:         N_("Xen"),
         thin_pool:     N_("Thin Pool"),
-        thin:          N_("Thin LV")
+        thin:          N_("Thin LV"),
+        partition:     N_("Partition")
       }
 
-      # Label for the device type (e.g., LVM, MD RAID)
+      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of Btrfs sda1+, etc)
+      #
+      # @param device [Y2Storage::Device]
+      # @return [String]
+      def type_label(device)
+        return device.type.to_human_string if device.is?(:filesystem)
+        return device_label_for(device) if device.is?(:lvm_vg)
+
+        fs = filesystem(device)
+
+        if fs && fs.multidevice?
+          btrfs_multidevice_type_label(fs)
+        elsif fs
+          formatted_device_type_label(device, fs)
+        else
+          unformatted_device_type_label(device)
+        end
+      end
+
+      # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @param fs [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def formatted_device_type_label(device, fs)
+        # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
+        #              %{device_label} is the device label. I.e., Partition, Disk, etc
+        format(
+          _("%{fs_type} %{device_label}"),
+          fs_type:      fs_type_for(device, fs),
+          device_label: device_label_for(device)
+        )
+      end
+
+      # Filesystem representation for given device and filesystem
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @param fs [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def fs_type_for(device, fs)
+        if device.is?(:partition) && device.efi_system?
+          device.id.to_human_string
+        else
+          fs.type.to_human_string
+        end
+      end
+
+      # Label for unformatted device (e.g., LVM, RAID, Partition, etc)
       #
       # @param device [Y2Storage::BlkDevice]
       # @return [String]
-      def type_label(device)
-        return default_type_label(device) unless device.is_a?(Y2Storage::BlkDevice)
-
-        if device.is?(:partition)
-          partition_type_label(device)
-        elsif device.is?(:lvm_lv)
-          lvm_lv_type_label(device)
+      def unformatted_device_type_label(device)
+        if device.lvm_pv
+          lvm_pv_type_label(device.lvm_pv)
+        elsif device.md
+          part_of_label(device.md)
+        elsif device.bcache
+          part_of_label(device.bcache)
+        elsif device.in_bcache_cset
+          bcache_cset_label
         else
-          blk_device_type_label(device)
+          default_type_label(device)
         end
+      end
+
+      # Type label when the device is a LVM physical volume
+      #
+      # @param device [Y2Storage::LvmPv]
+      # @return [String]
+      def lvm_pv_type_label(device)
+        vg = device.lvm_vg
+
+        return _("Orphan PV") if vg.nil?
+
+        # TRANSLATORS: %s is the volume group name. E.g., "vg0"
+        format(_("PV of %s"), vg.basename)
+      end
+
+      # Type label when the device belongs to a multidevice Btrfs filesystem
+      #
+      # @param fs [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def btrfs_multidevice_type_label(fs)
+        # TRANSLATORS: %s is a device base name. E.g., sda1+
+        format(_("Part of Btrfs %s"), fs.blk_device_basename)
+      end
+
+      # Type label when the device is used as caching device in Bcache
+      #
+      # @return [String]
+      def bcache_cset_label
+        # TRANSLATORS: an special type of device
+        _("Bcache cache")
+      end
+
+      # Type label when the device is part of another one, like Bcache or RAID
+      #
+      # @param ancestor_device [Y2Storage::BlkDevice]
+      # @return [String]
+      def part_of_label(ancestor_device)
+        format(_("Part of %s"), ancestor_device.basename)
       end
 
       # Default type label for the device
@@ -286,43 +365,26 @@ module Y2Partitioner
       # @param device [Y2Storage::BlkDevice]
       # @return [String]
       def default_type_label(device)
+        data = [device.vendor, device.model].compact
+
+        return data.join("-") unless data.empty?
+        return device.id.to_human_string if device.respond_to?(:id)
+
+        device_label_for(device)
+      end
+
+      # Default device label based on its type
+      #
+      # @see DEVICE_LABELS
+      #
+      # @param device [Device]
+      # @return [String]
+      def device_label_for(device)
         type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
+
         return "" if type.nil?
 
         _(DEVICE_LABELS[type])
-      end
-
-      # Type label when the device is a partition
-      #
-      # @param device [Y2Storage::Partition]
-      # @return [String]
-      def partition_type_label(device)
-        device.id.to_human_string
-      end
-
-      # Type label when the device is a LVM logical volume
-      #
-      # @note Different label is shown depending on the logical volume type
-      #   (i.e., normal, thin pool or thin volume).
-      #
-      # @param device [Y2Storage::LvmLv]
-      # @return [String]
-      def lvm_lv_type_label(device)
-        return blk_device_type_label(device) if device.lv_type.is?(:normal)
-
-        type = device.lv_type.to_sym
-        _(DEVICE_LABELS[type]) || ""
-      end
-
-      # Type label when the device is not a partition
-      #
-      # @param device [Y2Storage::BlkDevice]
-      # @return [String]
-      def blk_device_type_label(device)
-        data = [device.vendor, device.model].compact
-        # bcache has as vendor Disk, but we want to write bcache as type here
-        data = "" if device.is?(:bcache)
-        data.empty? ? default_type_label(device) : data.join("-")
       end
     end
   end

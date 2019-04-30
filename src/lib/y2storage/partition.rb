@@ -275,6 +275,13 @@ module Y2Storage
       type.is?(:primary) && id.is?(:windows_system)
     end
 
+    # Whether it is a (valid) EFI System partition
+    #
+    # @return [Boolean]
+    def efi_system?
+      id.is?(:esp) && formatted_as?(:vfat)
+    end
+
   protected
 
     # Values for volume specification matching

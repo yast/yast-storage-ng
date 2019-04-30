@@ -160,7 +160,6 @@ module Y2Partitioner
         :format,
         :encrypted,
         :type,
-        :filesystem_type,
         :filesystem_label,
         :mount_point,
         :start,

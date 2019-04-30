@@ -17,5 +17,3 @@
         file_system:  ext4
         label:        root
         mount_point:  "/"
-
-

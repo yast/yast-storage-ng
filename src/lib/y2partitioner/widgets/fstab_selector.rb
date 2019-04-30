@@ -244,7 +244,7 @@ module Y2Partitioner
         attr_reader :fstab
 
         def columns
-          [:device, :size, :type, :filesystem_type, :filesystem_label, :mount_point]
+          [:device, :size, :type, :filesystem_label, :mount_point]
         end
 
         # For each row, the device is a fstab entry
