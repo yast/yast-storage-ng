@@ -17,11 +17,3 @@
         file_system:  ext4
         label:        root
         mount_point:  "/"
-
-    - partition:
-        size:         2 GiB
-        name:         /dev/sda3
-        file_system:   ext2
-        id:            esp
-
-

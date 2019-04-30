@@ -255,7 +255,7 @@ module Y2Partitioner
         partition:     N_("Partition")
       }
 
-      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of BtrFS sda1+, etc)
+      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of Btrfs sda1+, etc)
       #
       # @param device [Y2Storage::Device]
       # @return [String]
@@ -333,13 +333,13 @@ module Y2Partitioner
         format(_("PV of %s"), vg.basename)
       end
 
-      # Type label when the device belongs to a multidevice BtrFS filesystem
+      # Type label when the device belongs to a multidevice Btrfs filesystem
       #
       # @param fs [Y2Storage::Filesystems::Base]
       # @return [String]
       def btrfs_multidevice_type_label(fs)
         # TRANSLATORS: %s is a device base name. E.g., sda1+
-        format(_("Part of BtrFS %s"), "#{fs.blk_devices.first.basename}+")
+        format(_("Part of Btrfs %s"), fs.blk_device_basename)
       end
 
       # Type label when the device is used as caching device in Bcache

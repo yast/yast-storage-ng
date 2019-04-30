@@ -590,16 +590,19 @@ describe Y2Storage::Partition do
     subject(:partition) { fake_devicegraph.find_by_name(device_name) }
 
     context "when does have an EFI System id" do
-      context "and it is formatted as VFAT" do
-        let(:device_name) { "/dev/sda1" }
+      let(:device_name) { "/dev/sda1" }
 
+      context "and it is formatted as VFAT" do
         it "returns true" do
           expect(subject.efi_system?).to eq(true)
         end
       end
 
       context "and it is not formatted as VFAT" do
-        let(:device_name) { "/dev/sda3" }
+        before do
+          subject.delete_filesystem
+          subject.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
 
         it "returns false" do
           expect(subject.efi_system?).to eq(false)
