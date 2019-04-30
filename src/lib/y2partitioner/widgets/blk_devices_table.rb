@@ -335,6 +335,7 @@ module Y2Partitioner
         vg = device.lvm_vg
 
         return _("Orphan PV") if vg.nil?
+        return _("PV of LVM") if vg.basename.empty?
 
         # TRANSLATORS: %s is the volume group name. E.g., "vg0"
         format(_("PV of %s"), vg.basename)
