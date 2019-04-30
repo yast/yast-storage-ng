@@ -197,6 +197,7 @@ module Y2Partitioner
       def mount_point_value(device)
         fs = filesystem(device)
         return "" if fs.nil?
+        return "" if part_of_multidevice?(device)
 
         res = fs.mount_path
         res += " *" if fs.mount_point && !fs.mount_point.active?
