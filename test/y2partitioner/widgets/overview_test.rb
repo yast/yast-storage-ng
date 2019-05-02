@@ -422,4 +422,38 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       end
     end
   end
+
+  describe "#open_items" do
+    before do
+      allow(Yast::UI).to receive(:QueryWidget).with(anything, :OpenItems)
+        .and_return(ui_open_items)
+    end
+
+    let(:scenario) { "lvm-two-vgs.yml" }
+
+    let(:with_children) do
+      ["Y2Partitioner::Widgets::Pages::System", "Y2Partitioner::Widgets::Pages::Disks",
+       "Y2Partitioner::Widgets::Pages::Lvm", "disk:/dev/sda", "lvm_vg:vg0", "lvm_vg:vg1"]
+    end
+
+    let(:ui_open_items) do
+      { "Y2Partitioner::Widgets::Pages::System" => "ID", "disk:/dev/sda" => "ID" }
+    end
+
+    it "contains an entry for each item with children" do
+      expect(subject.open_items.keys).to contain_exactly(*with_children)
+    end
+
+    it "sets the value of open items to true" do
+      expect(subject.open_items["Y2Partitioner::Widgets::Pages::System"]).to eq true
+      expect(subject.open_items["disk:/dev/sda"]).to eq true
+    end
+
+    it "sets the value of closed items to false" do
+      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Disks"]).to eq false
+      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq false
+      expect(subject.open_items["lvm_vg:vg0"]).to eq false
+      expect(subject.open_items["lvm_vg:vg1"]).to eq false
+    end
+  end
 end
