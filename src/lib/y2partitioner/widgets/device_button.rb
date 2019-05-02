@@ -21,6 +21,7 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/widgets/execute_and_redraw"
 
 Yast.import "Popup"
 
@@ -29,6 +30,8 @@ module Y2Partitioner
     # Base class for a button that performs some action over a specificic device,
     # e.g., edit, resize, delete, etc.
     class DeviceButton < CWM::PushButton
+      include ExecuteAndRedraw
+
       # Constructor
       # @param pager [CWM::TreePager]
       # @param device [Y2Storage::Device]
@@ -43,9 +46,7 @@ module Y2Partitioner
       def handle
         return nil unless validate_presence
 
-        UIState.instance.save_open_items
-
-        actions
+        execute_and_redraw { actions }
       end
 
     protected
@@ -73,26 +74,18 @@ module Y2Partitioner
 
       # Actions to perform when the button is clicked
       #
-      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
+      # @return [Symbol, nil] result of the action, nil if nothing is executed
       def actions
         if actions_class.nil?
           Yast::Popup.Warning("Not yet implemented")
           return nil
         end
 
-        actions_result = actions_class.new(device).run
-        result(actions_result)
+        actions_class.new(device).run
       end
 
       # @return [Actions] an Actions class name to perform the expected actions
       abstract_method :actions_class
-
-      # By default, it returns :redraw when the action is performed; nil otherwise
-      #
-      # @return [:redraw, nil]
-      def result(actions_result)
-        actions_result == :finish ? :redraw : nil
-      end
 
       # Checks whether there is a device on which to act
       #

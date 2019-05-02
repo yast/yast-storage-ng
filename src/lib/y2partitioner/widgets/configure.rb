@@ -22,6 +22,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/widgets/reprobe"
+require "y2partitioner/widgets/execute_and_redraw"
 require "y2partitioner/icons"
 
 Yast.import "Stage"
@@ -39,6 +40,7 @@ module Y2Partitioner
     # Yast::PartitioningEpAllInclude from yast-storage
     class Configure < CWM::CustomWidget
       include Reprobe
+      include ExecuteAndRedraw
 
       # Constructor
       def initialize
@@ -67,9 +69,11 @@ module Y2Partitioner
         return nil unless action
         return nil unless warning_accepted?(action) && availability_ensured?(action)
 
-        Yast::WFM.call(action.client) if action.client
-        reprobe(activate: action.activate)
-        :redraw
+        execute_and_redraw do
+          Yast::WFM.call(action.client) if action.client
+          reprobe(activate: action.activate)
+          :finish
+        end
       end
 
       # @macro seeAbstractWidget

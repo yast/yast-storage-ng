@@ -348,12 +348,12 @@ describe Y2Partitioner::UIState do
     end
   end
 
-  describe "#open_items_ids" do
+  describe "#open_items" do
     context "if the open items has not been saved" do
       before { described_class.create_instance }
 
-      it "returns nil" do
-        expect(ui_state.open_items_ids).to be_nil
+      it "returns and empty hash" do
+        expect(ui_state.open_items).to eq({})
       end
     end
 
@@ -361,16 +361,16 @@ describe Y2Partitioner::UIState do
       let(:pager) { double("TreePager") }
 
       before do
-        # The first call returns [:first, :third] and the second returns [:second]
-        allow(pager).to receive(:open_items_ids)
-          .and_return([:first, :third], [:second])
+        # The first call returns {a: true, b: false} and the second returns {b: true}
+        allow(pager).to receive(:open_items)
+          .and_return({ a: true, b: false }, b: true)
 
         ui_state.overview_tree_pager = pager
         ui_state.save_open_items
       end
 
       it "returns the items that were expanded when #save_open_items was called" do
-        expect(ui_state.open_items_ids).to eq [:first, :third]
+        expect(ui_state.open_items).to eq(a: true, b: false)
       end
 
       # To ensure this does not interfere with other tests

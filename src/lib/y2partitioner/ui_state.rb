@@ -34,7 +34,7 @@ module Y2Partitioner
       textdomain "storage"
 
       @candidate_nodes = []
-      @open_items_ids = nil
+      @open_items = {}
       @overview_tree_pager = nil
     end
 
@@ -44,12 +44,14 @@ module Y2Partitioner
     # @return [Widgets::OverviewTreePager]
     attr_accessor :overview_tree_pager
 
-    # Items of the tree that should be expanded in the next redraw.
-    # @note Nil means that open items are not being saved yet and the default tree state should be
-    # used instead. See {Widgets::OverviewTreePager#item_open?}
+    # Hash listing all the items with children of the tree and specifying whether
+    # such item should be expanded (true) or collapsed (false) in the next redraw.
     #
-    # @return [nil, Array<String,Symbol>]
-    attr_reader :open_items_ids
+    # @note Only elements with children are stored, for the others the current state
+    # is not relevant (not having children, they are neither open or closed).
+    #
+    # @return [Hash{String => Boolean}]
+    attr_reader :open_items
 
     # Title of the section listing the MD RAIDs
     #
@@ -153,7 +155,7 @@ module Y2Partitioner
     def save_open_items
       return unless overview_tree_pager
 
-      @open_items_ids = overview_tree_pager.open_items_ids
+      @open_items = overview_tree_pager.open_items
     end
 
   protected

@@ -22,11 +22,14 @@
 require "yast"
 require "cwm"
 require "y2partitioner/actions/add_md"
+require "y2partitioner/widgets/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
     # Button for openng a wizard to add a new MD array
     class MdAddButton < CWM::PushButton
+      include ExecuteAndRedraw
+
       # Constructor
       def initialize
         textdomain "storage"
@@ -41,8 +44,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       # @see Actions::AddMd
       def handle
-        res = Actions::AddMd.new.run
-        res == :finish ? :redraw : nil
+        execute_and_redraw { Actions::AddMd.new.run }
       end
     end
   end
