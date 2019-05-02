@@ -226,7 +226,9 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:multidevice_filesystems) { current_graph.btrfs_filesystems.select(&:multidevice?) }
 
       it "contains all multidevice filesystems" do
-        expected_items = multidevice_filesystems.map(&:type).map(&:to_human_string)
+        expected_items = multidevice_filesystems.map do |fs|
+          "#{fs.type.to_human_string} #{fs.blk_device_basename}"
+        end
 
         expect(items).to include(*expected_items)
       end

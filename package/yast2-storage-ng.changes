@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Thu May  2 09:49:02 UTC 2019 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: fix the Btrfs filesystem icon used in "Type" column.
+- Partitioner: improve the value for the "Type" column when a volume
+  group does not have name.
+- Partitioner: fix the device name for a multidevice filesystem.
+- Partitioner: do not show label nor mount point for devices used by
+  a multidevice filesystem.
+- Part of jsc#SLE-3877.
+- 4.2.12
+
+-------------------------------------------------------------------
 Thu May  2 09:21:50 UTC 2019 - ancor@suse.com
 
 - Partitioner: fixes in the navigation tree (bsc#1133686).

@@ -144,10 +144,18 @@ module Y2Partitioner
       # Values
 
       def device_value(device)
-        if device.is?(:blk_filesystem)
-          device.type.to_human_string
+        return device.name unless device.is?(:blk_filesystem)
+
+        if device.multidevice?
+          format(
+            # TRANSLATORS: fs_type is the filesystem type. I.e., BtrFS
+            #              device_name is the base name of the block device. I.e., sda or sda1+
+            _("%{fs_type} %{device_name}"),
+            fs_type:     device.type.to_human_string,
+            device_name: device.blk_device_basename
+          )
         else
-          device.name
+          device.type.to_human_string
         end
       end
 
@@ -184,7 +192,9 @@ module Y2Partitioner
 
       def filesystem_label_value(device)
         fs = filesystem(device)
-        # fs may be nil or a file system not supporting labels, like NFS
+        return "" if fs.nil?
+        return "" if part_of_multidevice?(device)
+        # fs may not supporting labels, like NFS
         return "" unless fs.respond_to?(:label)
         fs.label
       end
@@ -192,6 +202,7 @@ module Y2Partitioner
       def mount_point_value(device)
         fs = filesystem(device)
         return "" if fs.nil?
+        return "" if part_of_multidevice?(device)
 
         res = fs.mount_path
         res += " *" if fs.mount_point && !fs.mount_point.active?
@@ -220,7 +231,8 @@ module Y2Partitioner
         partition: Icons::HD_PART,
         raid:      Icons::RAID,
         lvm_vg:    Icons::LVM,
-        lvm_lv:    Icons::LVM_LV
+        lvm_lv:    Icons::LVM_LV,
+        btrfs:     Icons::BTRFS
       }
 
       # Table icon for the device
@@ -328,6 +340,7 @@ module Y2Partitioner
         vg = device.lvm_vg
 
         return _("Orphan PV") if vg.nil?
+        return _("PV of LVM") if vg.basename.empty?
 
         # TRANSLATORS: %s is the volume group name. E.g., "vg0"
         format(_("PV of %s"), vg.basename)
@@ -385,6 +398,17 @@ module Y2Partitioner
         return "" if type.nil?
 
         _(DEVICE_LABELS[type])
+      end
+
+      # Whether the device belongs to a multidevice filesystem
+      #
+      # @param device [Device]
+      # @return [Boolean]
+      def part_of_multidevice?(device)
+        return false unless device.is?(:blk_device)
+
+        fs = filesystem(device)
+        fs.multidevice?
       end
     end
   end
