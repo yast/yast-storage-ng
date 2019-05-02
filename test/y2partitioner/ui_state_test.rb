@@ -352,7 +352,7 @@ describe Y2Partitioner::UIState do
     context "if the open items has not been saved" do
       before { described_class.create_instance }
 
-      it "returns and empty hasg" do
+      it "returns and empty hash" do
         expect(ui_state.open_items).to eq({})
       end
     end
