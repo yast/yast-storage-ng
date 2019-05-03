@@ -266,29 +266,6 @@ would be listed in this section, no matter whether they are multi-device or not.
 That would allow to add more block devices to a Btrfs filesystem that was
 initially defined only on top of one block device.
 
-### More information about the device while editing it
-
-With the current UI, the consequences of selecting each possible options while
-editing an existing block device are not always clear. The existence of
-multi-device filesystems will only make this worse. Imagine for example a Btrfs
-filesystem on top of sda1 and sdb1. Editing sda1 and choosing to format it with
-a XFS filesystem will destroy the whole previous Btrfs filesystem, which also
-affects sdb1.
-
-Thus, the edit dialog for a block device needs to be enhanced with some
-information about the current state of the device and adapting the labels of the
-different options to better explain their implications.
-
-For example, imagine the process of editing a partition that already contains a
-Btrfs filesystem. The edit screen could look like the following screenshot.
-
-![Improved dialog to edit block device](btrfs_in_partitioner/edit_btrfs_part.png)
-
-Apart from the extra explanation about the status (which in case of multi-device
-filesystems would be something like "Currently part of a BtrFS"), note how the
-traditional option "Do not Format" has been re-labeled as "Keep Current
-Filesystem".
-
 ### Edit screen for Btrfs filesystems
 
 Since the standard dialogs for editing block devices mix logic about modifying
@@ -327,6 +304,61 @@ This option was discarded because it would add too much duplication to the left
 tree and to the partitioner in general with no clear gain. The only case in
 which this extra section would be useful to do something that cannot be
 currently done would be with Btrfs filesystems.
+
+### More information about the device while editing it
+
+The initial plan was to not have an explicit button to delete a Btrfs
+filesystem, since such button is not offered for any other kind of filesystem.
+According to that plan, it would be possible to just "edit" any of the block
+devices that are part of multi-device Btrfs or to simply use that block device
+for any other purpose (like adding it to a LVM setup or to a RAID). Any of those
+changes would imply the deletion of the previous Btrfs filesystem.
+
+Imagine for example a Btrfs filesystem on top of sda1 and sdb1. Editing sda1 and
+choosing to format it with a XFS filesystem will destroy the whole Btrfs
+filesystem, which also affects sdb1.
+
+But with the traditional UI, the consequences of selecting each possible option
+while editing an existing block device are not always clear. The existence of
+multi-device filesystems only makes this worse.  Thus, the initial plan was to
+enhance the edit dialog for a block device with some information about the
+current state of the device and adapting the labels of the different options to
+better explain their implications.
+
+For example, imagine the process of editing a partition that already contains a
+Btrfs filesystem. The edit screen could look like the following screenshot.
+Apart from the extra explanation about the status (at the top), note how the
+traditional option "Do not Format" has been re-labeled as "Keep Current
+Filesystem".
+
+![Improved dialog to edit block device](btrfs_in_partitioner/edit_btrfs_part.png)
+
+This is a summary of all the changes that would be needed, depending on the real
+current content of the block device in the disks.
+
+- New block device or device that is neither encrypted or formatted.
+  - No changes.
+- Formatted device (encrypted or not).
+  - Add a sentence like "Currently [Encrypted and] Formatted as XFS".
+  - For multi-device it would be something like "Currently [Encrypted and] Part of a Btrfs".
+  - "Do not Format" changed into something like "Keep Current Filesystem".
+  - No changes to the "Encrypt Device" label, since it's only enabled when
+  "Format Device" is chosen.
+- Encrypted but not formatted device.
+  - Add sentence like "Currently Encrypted".
+  - No changes in labels for formatting (i.e. use "Do not Format").
+  - If "Format Device" is chosen, the label for the encrypt checkbox should
+  still be "Encrypt Device". But if "Do not Format" is chosen, then it must
+  change to something like "Keep Current Encryption" (see below).
+- Any other case
+  - Irrelevant, it's impossible to edit block devices in any other case.
+
+The labels for the encrypt checkbox in the case of encrypted but not formatted
+look strange... because the behavior is actually that inconsistent. When
+choosing to format and encrypt, a new encryption layer is created replacing the
+old encryption, but "Do not Format" keeps the original encryption layer. So, in
+the traditional UI, the encryption checkbox indeed means different things
+depending of the selection in the format radio button.
 
 ### Rethinking the dialogs to create/edit filesystems
 
