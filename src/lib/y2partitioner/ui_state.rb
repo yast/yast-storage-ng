@@ -82,6 +82,15 @@ module Y2Partitioner
       _("Bcache")
     end
 
+    # Title of the Btrfs section
+    #
+    # @note See note on {.md_raids_label} about why this looks misplaced.
+    #
+    # @return [String]
+    def btrfs_filesystems_label
+      _("Btrfs")
+    end
+
     # @return [Integer, nil] if a row must be selected in a table with devices,
     #   this returns the sid of the associated device
     attr_reader :row_sid
@@ -192,6 +201,8 @@ module Y2Partitioner
         [device.sid, lvm_label]
       elsif device.is?(:bcache)
         [device.sid, bcache_label]
+      elsif device.is?(:btrfs)
+        [device.sid, btrfs_filesystems_label]
       else
         [device.sid]
       end
