@@ -100,6 +100,13 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       include_examples "edit_error"
     end
 
+    context "if called on a device that is part of a multi-device Btrfs" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+      let(:dev_name) { "/dev/sdb1" }
+
+      include_examples "edit_error"
+    end
+
     context "if called on an LVM thin pool" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
