@@ -189,22 +189,39 @@ module Y2Partitioner
     end
 
     # List of candidate nodes to go back after opening a device view in the tree
+    #
+    # @return [Array<Integer, String>]
     def device_page_candidates(page)
       device = page.device
+      [device.sid, device_page_parent(device)].compact
+    end
+
+    # @see #device_page_candidates
+    #
+    # @return [Integer, String, nil] nil if there is no parent tree entry
+    def device_page_parent(device)
       if device.is?(:partition)
-        [device.sid, device.partitionable.sid]
-      elsif device.is?(:md)
-        [device.sid, md_raids_label]
+        device.partitionable.sid
       elsif device.is?(:lvm_lv)
-        [device.sid, device.lvm_vg.sid]
-      elsif device.is?(:lvm_vg)
-        [device.sid, lvm_label]
-      elsif device.is?(:bcache)
-        [device.sid, bcache_label]
-      elsif device.is?(:btrfs)
-        [device.sid, btrfs_filesystems_label]
+        device.lvm_vg.sid
       else
-        [device.sid]
+        device_page_section(device)
+      end
+    end
+
+    # @see #device_page_candidates
+    # @see #device_page_section
+    #
+    # @return [Integer, String, nil] nil if there is no parent tree entry
+    def device_page_section(device)
+      if device.is?(:md)
+        md_raids_label
+      elsif device.is?(:lvm_vg)
+        lvm_label
+      elsif device.is?(:bcache)
+        bcache_label
+      elsif device.is?(:btrfs)
+        btrfs_filesystems_label
       end
     end
 
