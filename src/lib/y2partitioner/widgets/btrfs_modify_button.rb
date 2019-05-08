@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,16 +20,14 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/edit_md_devices"
+require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/actions/edit_btrfs"
 require "y2partitioner/actions/edit_btrfs_devices"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for editing the used devices (e.g., by a Software RAID)
-    class UsedDevicesEditButton < DeviceButton
+    # Menu button for modifying a Btrfs filesystem
+    class BtrfsModifyButton < DeviceMenuButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -37,23 +35,30 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: label for button to edit used devices
-        _("Change...")
+        _("&Modify")
       end
 
     private
 
-      # Returns the proper Actions class to edit the used devices
+      # @see DeviceMenuButton#actions
       #
-      # @see DeviceButton#actions
-      # @see Actions::EditMdDevices
+      # @see Actions::EditBtrfs
       # @see Actions::EditBtrfsDevices
-      def actions_class
-        if device.is?(:software_raid)
-          Actions::EditMdDevices
-        elsif device.is?(:btrfs)
-          Actions::EditBtrfsDevices
-        end
+      #
+      # @return [Array<Hash>]
+      def actions
+        [
+          {
+            id:    :edit,
+            label: _("Edit Btrfs..."),
+            class: Actions::EditBtrfs
+          },
+          {
+            id:    :devices,
+            label: _("Change Used Devices..."),
+            class: Actions::EditBtrfsDevices
+          }
+        ]
       end
     end
   end

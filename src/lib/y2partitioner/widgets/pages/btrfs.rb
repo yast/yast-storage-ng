@@ -24,6 +24,7 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/filesystem_description"
 require "y2partitioner/widgets/btrfs_edit_button"
+require "y2partitioner/widgets/used_devices_edit_button"
 require "y2partitioner/widgets/tabs"
 
 module Y2Partitioner
@@ -100,17 +101,10 @@ module Y2Partitioner
         def tabs
           tabs = [
             FilesystemTab.new(filesystem, initial: true),
-            UsedDevicesTab.new(devices, pager)
+            BtrfsDevicesTab.new(filesystem, pager)
           ]
 
           Tabs.new(*tabs)
-        end
-
-        # Devices used by the filesystem
-        #
-        # @return [Array<Y2Storage::BlkDevice>]
-        def devices
-          filesystem.blk_devices
         end
       end
 
@@ -148,6 +142,39 @@ module Y2Partitioner
           [
             BtrfsEditButton.new(device: @filesystem)
           ]
+        end
+      end
+
+      # A Tab for the devices used by a Btrfs
+      class BtrfsDevicesTab < UsedDevicesTab
+        # Constructor
+        #
+        # @param filesystem [Y2Storage::Filesystems::Btrfs]
+        # @param pager [CWM::TreePager]
+        def initialize(filesystem, pager)
+          @filesystem = filesystem
+
+          super(devices, pager)
+        end
+
+        # @macro seeCustomWidget
+        def contents
+          @contents ||= VBox(
+            table,
+            Right(UsedDevicesEditButton.new(device: filesystem))
+          )
+        end
+
+      private
+
+        # @return [Y2Storage::Filesystems::Btrfs]
+        attr_reader :filesystem
+
+        # Devices used by the filesystem
+        #
+        # @return [Array<Y2Storage::BlkDevice>]
+        def devices
+          filesystem.blk_devices
         end
       end
     end

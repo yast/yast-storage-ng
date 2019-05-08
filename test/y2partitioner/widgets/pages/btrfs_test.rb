@@ -51,11 +51,13 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
 
     it "shows a BTRFS overview tab" do
       expect(Y2Partitioner::Widgets::Pages::FilesystemTab).to receive(:new)
+
       subject.contents
     end
 
     it "shows an used devices tab" do
-      expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::Pages::BtrfsDevicesTab).to receive(:new)
+
       subject.contents
     end
   end
@@ -75,6 +77,30 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
 
       it "shows a button for editing the filesystem" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsEditButton) }
+        expect(button).to_not be_nil
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Pages::BtrfsDevicesTab do
+    subject { described_class.new(filesystem, pager) }
+    let(:pager) { double("Y2Partitioner::Widgets::OverviewTreePager") }
+
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows the table with used devices" do
+        used_devices_table = widgets.detect do |i|
+          i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable)
+        end
+
+        expect(used_devices_table).to_not be_nil
+      end
+
+      it "shows a button for editing used devices" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
         expect(button).to_not be_nil
       end
     end
