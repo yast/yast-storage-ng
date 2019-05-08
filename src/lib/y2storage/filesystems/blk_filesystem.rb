@@ -116,14 +116,13 @@ module Y2Storage
 
       # Block device base name
       #
-      # When the filesystem is a non-multidevice, this method simply returns the base
-      # name of the block device (e.g., "sda1"). And for multidevice ones, it only returns
-      # the base name of the first block device plus a "+" symbol to indicate that the
-      # filesystem is multidevice (e.g., "sda1+").
+      # When the filesystem is single-device, this method simply returns the base name of the block
+      # device (e.g., "sda1"). And for multi-device ones, it returns the first base name plus a "+"
+      # symbol to indicate that the filesystem is multi-device (e.g., "sda1+").
       #
       # @return [String]
       def blk_device_basename
-        info = blk_devices.first.basename
+        info = blk_devices.map(&:basename).sort.first
         info << "+" if multidevice?
 
         info

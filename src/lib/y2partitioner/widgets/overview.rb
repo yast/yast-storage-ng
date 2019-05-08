@@ -288,7 +288,7 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def btrfs_section
-        filesystems = device_graph.btrfs_filesystems
+        filesystems = device_graph.btrfs_filesystems.sort_by(&:blk_device_basename)
 
         page = Pages::BtrfsFilesystems.new(filesystems, self)
         children = filesystems.map { |f| btrfs_item(f) }
