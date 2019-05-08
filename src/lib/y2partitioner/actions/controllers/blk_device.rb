@@ -73,9 +73,7 @@ module Y2Partitioner
         def mounted_committed_filesystem?
           return false unless committed_filesystem?
 
-          mount_point = committed_filesystem.mount_point
-
-          !mount_point.nil? && mount_point.active?
+          committed_filesystem.active_mount_point?
         end
 
         # Whether the device exists on the system
