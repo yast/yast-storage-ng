@@ -26,6 +26,7 @@ require "y2partitioner/actions/delete_partition"
 require "y2partitioner/actions/delete_lvm_vg"
 require "y2partitioner/actions/delete_lvm_lv"
 require "y2partitioner/actions/delete_md"
+require "y2partitioner/actions/delete_btrfs"
 
 module Y2Partitioner
   module Widgets
@@ -49,7 +50,8 @@ module Y2Partitioner
         lvm_vg:    Actions::DeleteLvmVg,
         lvm_lv:    Actions::DeleteLvmLv,
         md:        Actions::DeleteMd,
-        bcache:    Actions::DeleteBcache
+        bcache:    Actions::DeleteBcache,
+        btrfs:     Actions::DeleteBtrfs
       }
       private_constant :DEVICE_MAPPING
 
@@ -61,6 +63,7 @@ module Y2Partitioner
       # @see Actions::DeleteLvmVg
       # @see Actions::DeleteLvmLv
       # @see Actions::DeleteMd
+      # @see Actions::DeleteBtrfs
       #
       # @return [Actions::DeleteDevice,nil] returns nil if action is not yet implemented
       def actions_class

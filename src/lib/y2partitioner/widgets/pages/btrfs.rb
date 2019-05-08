@@ -25,6 +25,7 @@ require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/filesystem_description"
 require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/used_devices_edit_button"
+require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/tabs"
 
 module Y2Partitioner
@@ -140,7 +141,8 @@ module Y2Partitioner
         # @return [Array<Widgets::DeviceButton>]
         def buttons
           [
-            BtrfsEditButton.new(device: @filesystem)
+            BtrfsEditButton.new(device: @filesystem),
+            DeviceDeleteButton.new(device: @filesystem)
           ]
         end
       end

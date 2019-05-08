@@ -175,12 +175,13 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       let(:scenario) { "mixed_disks" }
       let(:device) { device_graph.find_by_name("/dev/sdb2").filesystem }
 
-      it "replaces the content with a single button to edit the filesystem" do
+      it "replaces the content with buttons to edit and to delete the filesystem" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BtrfsModifyButton
+            Y2Partitioner::Widgets::BtrfsModifyButton,
+            Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
 
