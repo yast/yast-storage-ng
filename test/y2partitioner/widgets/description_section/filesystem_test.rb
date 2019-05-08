@@ -26,15 +26,21 @@ require_relative "help_fields_examples"
 require "y2partitioner/widgets/description_section/filesystem"
 
 describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
-  before { devicegraph_stub("mixed_disks") }
+  before do
+    devicegraph_stub(scenario)
+  end
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  let(:device) { current_graph.find_by_name("/dev/sda2") }
+  subject { described_class.new(filesystem) }
 
   let(:filesystem) { device.filesystem }
 
-  subject { described_class.new(filesystem) }
+  let(:device) { current_graph.find_by_name(device_name) }
+
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:scenario) { "mixed_disks" }
+
+  let(:device_name) { "/dev/sda2" }
 
   describe "#value" do
     it "includes a section title" do
@@ -65,11 +71,33 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
       expect(subject.value).to match(/UUID:/)
     end
 
+    it "does not include an entry about the metadata raid level" do
+      expect(subject.value).to_not match(/Metadata RAID Level:/)
+    end
+
+    it "does ot include an entry about the data raid level" do
+      expect(subject.value).to_not match(/Data RAID Level:/)
+    end
+
     it "contains (not mounted) if mount point is not active" do
       allow(filesystem).to receive(:mount_point)
         .and_return(double(path: "/", active?: false).as_null_object)
 
       expect(subject.value).to match(/Mount Point: \/ \(not mounted\)/)
+    end
+
+    context "when using a Btrfs filesystem" do
+      let(:scenario) { "btrfs_on_disk" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "includes an entry about the metadata raid level" do
+        expect(subject.value).to match(/Metadata RAID Level:/)
+      end
+
+      it "includes an entry about the data raid level" do
+        expect(subject.value).to match(/Data RAID Level:/)
+      end
     end
   end
 
