@@ -23,6 +23,7 @@ require "yast"
 require "y2storage/bcache"
 require "y2partitioner/device_graphs"
 require "y2partitioner/blk_device_restorer"
+require "y2partitioner/actions/controllers/available_devices"
 
 module Y2Partitioner
   module Actions
@@ -30,6 +31,8 @@ module Y2Partitioner
       # This class is used by different Bcache actions (see, {Actions::AddBcache},
       # {Actions::EditBcache} and {Actions::DeleteBcache}).
       class Bcache
+        include AvailableDevices
+
         # @return [Y2Storage::Bcache]
         attr_reader :bcache
 
@@ -48,14 +51,14 @@ module Y2Partitioner
         def suitable_backing_devices
           return [bcache.backing_device] if bcache
 
-          usable_blk_devices
+          available_devices
         end
 
         # Suitable devices to be used for caching
         #
         # @return [Array<Y2Storage::BcacheCset, Y2Storage::BlkDevice>]
         def suitable_caching_devices
-          bcache_csets + usable_blk_devices
+          bcache_csets + available_devices
         end
 
         # Creates a bcache device
@@ -136,52 +139,24 @@ module Y2Partitioner
         # Block devices that can be used as backing or caching device
         #
         # @return [Array<Y2Storage::BlkDevice>]
-        def usable_blk_devices
-          current_graph.blk_devices.select { |d| usable_blk_device?(d) }
+        def available_devices
+          super(current_graph) { |d| valid_device?(d) }
         end
 
         # Whether the device can be used as backing or caching device
         #
         # @param device [Y2Storage::BlkDevice]
         # @return [Boolean]
-        def usable_blk_device?(device)
-          !device_used?(device) &&
-            !device_formatted_and_mounted?(device) &&
-            !device_has_partitions?(device) &&
-            !device_extended_partition?(device) &&
-            !device_belong_to_bcache?(device)
+        def valid_device?(device)
+          valid_device_type?(device) && !device_belong_to_bcache?(device)
         end
 
-        # Whether the device is already in use (e.g., as LVM PV or raid disk)
+        # Whether the device has a proper type to be used as backing or caching device
         #
         # @param device [Y2Storage::BlkDevice]
         # @return [Boolean]
-        def device_used?(device)
-          device.component_of.any?
-        end
-
-        # Whether the device is formatted and mounted
-        #
-        # @param device [Y2Storage::BlkDevice]
-        # @return [Boolean]
-        def device_formatted_and_mounted?(device)
-          device.filesystem && device.filesystem.mount_point
-        end
-
-        # Whether the device has partitions
-        #
-        # @param device [Y2Storage::BlkDevice]
-        # @return [Boolean]
-        def device_has_partitions?(device)
-          device.respond_to?(:partitions) && device.partitions.any?
-        end
-
-        # Whether the device is an extended partition
-        #
-        # @param device [Y2Storage::BlkDevice]
-        # @return [Boolean]
-        def device_extended_partition?(device)
-          device.is?(:partition) && device.type.is?(:extended)
+        def valid_device_type?(device)
+          device.is?(:disk, :multipath, :dasd, :stray, :partition, :lvm_lv)
         end
 
         # Whether the device is part of a bcache device
@@ -190,7 +165,7 @@ module Y2Partitioner
         # @return [Boolean]
         def device_belong_to_bcache?(device)
           # do not allow nested bcaches, see doc/bcache.md
-          ([device] + device.ancestors).any? { |a| a.is?(:bcache, :bcache_cset) }
+          device.ancestors.any? { |a| a.is?(:bcache, :bcache_cset) }
         end
 
         # Currently existing caching sets

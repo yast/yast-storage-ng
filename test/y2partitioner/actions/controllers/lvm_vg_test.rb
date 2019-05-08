@@ -337,8 +337,11 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
     it "includes unused MD Raids" do
       sdb = dev("/dev/sdb")
+      sdc = dev("/dev/mapper/cr_sdc")
       md = Y2Storage::Md.create(current_graph, "/dev/md0")
+      md.md_level = Y2Storage::MdLevel::RAID0
       md.add_device(sdb)
+      md.add_device(sdc)
 
       expect(controller.available_devices.map(&:name)).to include("/dev/md0")
     end
@@ -378,8 +381,8 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     end
 
     it "excludes zero-size devices" do
-      Y2Storage::Disk.create(current_graph, "/dev/sde", 0)
-      expect(controller.available_devices.map(&:name)).to_not include("/dev/sde")
+      Y2Storage::Disk.create(current_graph, "/dev/sdh", 0)
+      expect(controller.available_devices.map(&:name)).to_not include("/dev/sdh")
     end
 
     it "includes partitions with a linux system ID (linux, LVM, RAID, swap)" do
