@@ -14,110 +14,121 @@ module Y2Partitioner
 
       # helptexts for table column and overview entry
       TEXTS = {
-        bios_id:          N_("<b>BIOS ID</b> shows the BIOS ID of the hard\ndisk. This field can " \
-          "be empty."),
+        bios_id:                   N_("<b>BIOS ID</b> shows the BIOS ID of the hard\n" \
+                                      "disk. This field can be empty."),
 
-        bus:              N_("<b>Bus</b> shows how the device is connected to\nthe system. " \
-          "This field can be empty, e.g. for multipath disks."),
+        bus:                       N_("<b>Bus</b> shows how the device is connected to\n" \
+                                      "the system. This field can be empty, e.g. for multipath disks."),
 
-        chunk_size:       N_("<b>Chunk Size</b> shows the chunk size for RAID\ndevices."),
+        chunk_size:                N_("<b>Chunk Size</b> shows the chunk size for RAID\ndevices."),
 
-        cyl_size:         N_("<b>Cylinder Size</b> shows the size of the\ncylinders " \
+        cyl_size:                  N_("<b>Cylinder Size</b> shows the size of the\ncylinders " \
           "of the hard disk."),
 
-        sectors:          N_("<b>Number of Sectors</b> shows how many sectors the hard disk has."),
+        sectors:                   N_("<b>Number of Sectors</b> shows how many sectors the hard " \
+                                      "disk has."),
 
-        sector_size:      N_("<b>Sector Size</b> shows the size of the\nsectors of the hard disk."),
+        sector_size:               N_("<b>Sector Size</b> shows the size of the\n" \
+                                      "sectors of the hard disk."),
 
-        device:           N_("<b>Device</b> shows the kernel name of the\ndevice."),
+        device:                    N_("<b>Device</b> shows the kernel name of the\ndevice."),
 
-        disk_label:       N_("<b>Partition Table</b> shows the partition table\ntype of the disk, " \
-              "e.g <tt>MS-DOS</tt> or <tt>GPT</tt>."),
+        disk_label:                N_("<b>Partition Table</b> shows the partition table\n" \
+                                      "type of the disk, e.g <tt>MS-DOS</tt> or <tt>GPT</tt>."),
 
-        encrypted:        N_("<b>Encrypted</b> shows whether the device is\nencrypted."),
+        encrypted:                 N_("<b>Encrypted</b> shows whether the device is\nencrypted."),
 
-        end:              N_("<b>End</b> shows the end block of\nthe partition."),
+        end:                       N_("<b>End</b> shows the end block of\nthe partition."),
 
-        fc_fcp_lun:       N_("<b>LUN</b> shows the Logical Unit Number for\nFibre Channel disks."),
+        fc_fcp_lun:                N_("<b>LUN</b> shows the Logical Unit Number for\n" \
+                                      "Fibre Channel disks."),
 
-        fc_port_id:       N_("<b>Port ID</b> shows the port id for Fibre\nChannel disks."),
+        fc_port_id:                N_("<b>Port ID</b> shows the port id for Fibre\nChannel disks."),
 
-        fc_wwpn:          N_("<b>WWPN</b> shows the World Wide Port Name for\nFibre Channel " \
-          "disks."),
+        fc_wwpn:                   N_("<b>WWPN</b> shows the World Wide Port Name for\n" \
+                                      "Fibre Channel disks."),
 
-        file_path:        N_("<b>File Path</b> shows the path of the file for\nan encrypted " \
+        file_path:                 N_("<b>File Path</b> shows the path of the file for\nan encrypted " \
           "loop device."),
 
-        format:           N_("<b>Format</b> shows some flags: <tt>F</tt>\nmeans the device " \
-              "is selected to be formatted."),
+        format:                    N_("<b>Format</b> shows some flags: <tt>F</tt>\n" \
+                                      "means the device is selected to be formatted."),
 
-        partition_id:     N_("<b>Partition ID</b> shows the partition id."),
+        partition_id:              N_("<b>Partition ID</b> shows the partition id."),
 
-        fs_type:          N_("<b>FS Type</b> shows the file system type."),
+        fs_type:                   N_("<b>FS Type</b> shows the file system type."),
 
-        label:            N_("<b>Label</b> shows the label of the file\nsystem."),
+        label:                     N_("<b>Label</b> shows the label of the file\nsystem."),
 
-        lvm_metadata:     N_("<b>Metadata</b> shows the LVM metadata type for\nvolume groups."),
+        lvm_metadata:              N_("<b>Metadata</b> shows the LVM metadata type for\n" \
+                                      "volume groups."),
 
-        model:            N_("<b>Model</b> shows the device model."),
+        model:                     N_("<b>Model</b> shows the device model."),
 
-        mount_by:         N_("<b>Mount by</b> indicates how the file system\nis mounted: " \
-            "(Kernel) by kernel name, (Label) by file system label, (UUID) by\n file system " \
-            "UUID, (ID) by device ID, and (Path) by device path.\n"),
+        mount_by:                  N_("<b>Mount by</b> indicates how the file system\n" \
+                                      "is mounted: (Kernel) by kernel name, (Label) by " \
+                                      "file system label, (UUID) by\n file system " \
+                                      "UUID, (ID) by device ID, and (Path) by device path.\n"),
 
-        mount_point:      N_("<b>Mount Point</b> shows where the file system\nis mounted."),
+        mount_point:               N_("<b>Mount Point</b> shows where the file system\nis mounted."),
 
-        num_cyl:          N_("<b>Number of Cylinders</b> shows how many\ncylinders the hard disk " \
-          "has."),
+        num_cyl:                   N_("<b>Number of Cylinders</b> shows how many\n" \
+                                      "cylinders the hard disk has."),
 
-        parity_algorithm: N_("<b>Parity Algorithm</b> shows the parity\nalgorithm for RAID " \
-          "devices with RAID type 5, 6 or 10."),
+        parity_algorithm:          N_("<b>Parity Algorithm</b> shows the parity\n" \
+                                      "algorithm for RAID devices with RAID type 5, 6 or 10."),
 
-        pe_size:          N_("<b>PE Size</b> shows the physical extent size\nfor LVM volume " \
-        "groups."),
+        pe_size:                   N_("<b>PE Size</b> shows the physical extent size\n" \
+                                      "for LVM volume groups."),
 
-        raid_version:     N_("<b>RAID Version</b> shows the RAID version."),
+        raid_version:              N_("<b>RAID Version</b> shows the RAID version."),
 
-        raid_type:        N_("<b>RAID Type</b> shows the RAID type, also\ncalled RAID level, " \
-        "for RAID devices."),
+        raid_type:                 N_("<b>RAID Type</b> shows the RAID type, also\n" \
+                                      "called RAID level, for RAID devices."),
 
-        size:             N_("<b>Size</b> shows the size of the device."),
+        size:                      N_("<b>Size</b> shows the size of the device."),
 
-        start:            N_("<b>Start</b> shows the start block\nof the partition."),
+        start:                     N_("<b>Start</b> shows the start block\nof the partition."),
 
-        stripes:          N_("<b>Stripes</b> shows the stripe number for LVM\nlogical volumes " \
-          "and, if greater than one, the stripe size in parenthesis.\n"),
+        stripes:                   N_("<b>Stripes</b> shows the stripe number for LVM\n" \
+                                      "logical volumes and, if greater than one, the stripe size " \
+                                      "in parenthesis."),
 
-        type:             N_("<b>Type</b> gives a general overview about the\ndevice type."),
+        type:                      N_("<b>Type</b> gives a general overview about the\ndevice type."),
 
-        udev_id:          N_("<b>Device ID</b> shows the persistent device\nIDs. This field " \
-        "can be empty."),
+        udev_id:                   N_("<b>Device ID</b> shows the persistent device\n" \
+                                      "IDs. This field can be empty."),
 
-        udev_path:        N_("<b>Device Path</b> shows the persistent device\npath. This field " \
-        "can be empty."),
+        udev_path:                 N_("<b>Device Path</b> shows the persistent device\n" \
+                                      "path. This field can be empty."),
 
-        used_by:          N_("<b>Used By</b> shows if a device is used by\ne.g. RAID or LVM. " \
-              "If not, this column is empty."),
+        used_by:                   N_("<b>Used By</b> shows if a device is used by\n" \
+                                      "e.g. RAID or LVM. If not, this column is empty."),
 
-        uuid:             N_("<b>UUID</b> shows the Universally Unique\nIdentifier of the file " \
-          "system."),
+        uuid:                      N_("<b>UUID</b> shows the Universally Unique\n" \
+                                      "Identifier of the file system."),
 
-        vendor:           N_("<b>Vendor</b> shows the device vendor."),
+        vendor:                    N_("<b>Vendor</b> shows the device vendor."),
 
-        backing_device:   N_("<b>Backing Device</b> shows the device used as backing device " \
-                             "for bcache."),
+        backing_device:            N_("<b>Backing Device</b> shows the device used as backing " \
+                                      "device for bcache."),
 
-        caching_uuid:     N_("<b>Caching UUID</b> shows the UUID of the used caching set. This " \
-                             "field is empty if no caching is used."),
+        caching_uuid:              N_("<b>Caching UUID</b> shows the UUID of the used caching set. " \
+                                      "This field is empty if no caching is used."),
 
-        caching_device:   N_("<b>Caching Device</b> shows the device used for caching. This field " \
-                             "is empty if no caching is used."),
+        caching_device:            N_("<b>Caching Device</b> shows the device used for caching. " \
+                                      "This field is empty if no caching is used."),
 
-        cache_mode:       N_("<b>Cache Mode</b> shows the operating mode for bcache. Currently there " \
-                             "are four supported modes: Writethrough, Writeback, Writearound and None."),
+        cache_mode:                N_("<b>Cache Mode</b> shows the operating mode for bcache. " \
+                                      "Currently there are four supported modes: Writethrough, " \
+                                      "Writeback, Writearound and None."),
 
-        btrfs_devices:    N_("<b>Btrfs Devices</b> shows the kernel name of the devices used by a "\
-                             "Btrfs file system.")
+        btrfs_devices:             N_("<b>Devices</b> shows the kernel name of the devices used by a "\
+                                      "Btrfs file system."),
+        btrfs_metadata_raid_level: N_("<b>Metadata RAID Level</b> shows the RAID level for the Btrfs " \
+                                      "metadata."),
+
+        btrfs_data_raid_level:     N_("<b>Data RAID Level</b> shows the RAID level for the Btrfs data.")
       }.freeze
 
       # help texts that are appended to the common help only in Mode.normal
