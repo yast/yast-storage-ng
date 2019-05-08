@@ -432,11 +432,15 @@ module Y2Storage
     # (directly or through an encryption) or any RAID having this device as
     # one of its members.
     #
+    # For directly formatted devices, its filesystem is included if it is a multidevice filesystem.
+    #
     # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups,
     #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg, md, multipath, bcache, in_bcache_cset]).compact
+      fs = formatted? && filesystem.multidevice? ? filesystem : nil
+
+      (dm_raids + [vg, md, multipath, bcache, in_bcache_cset, fs]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a

@@ -714,7 +714,7 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#component_of" do
-    context "for a device not used in an LVM or in a RAID or in multipath" do
+    context "for a device not used in an LVM or in a RAID or in multipath or in a Btrfs multidevice" do
       let(:scenario) { "mixed_disks" }
       let(:device_name) { "/dev/sda1" }
 
@@ -840,6 +840,16 @@ describe Y2Storage::BlkDevice do
       # considered to be a component of their own cset!).
       it "returns an empty array" do
         expect(device.component_of).to eq []
+      end
+    end
+
+    context "for a device directly used in an multidevice Btrfs filesystem" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+      let(:device_name) { "/dev/sdb1" }
+
+      it "returns an array with the Btrfs filesystems" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Filesystems::Btrfs
       end
     end
   end
