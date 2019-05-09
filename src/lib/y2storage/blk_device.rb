@@ -448,16 +448,7 @@ module Y2Storage
     #
     # @return [Array<String>]
     def component_of_names
-      # So far, all the possible elements on the array respond to #name
-      component_of.map do |dev|
-        if dev.respond_to?(:name)
-          dev.name
-        elsif dev.respond_to?(:display_name)
-          dev.display_name
-        else
-          raise "Unexpected type of device #{dev.inspect}"
-        end
-      end
+      component_of.map(&:display_name).compact
     end
 
     # Label of the filesystem, if any

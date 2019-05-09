@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -61,7 +61,9 @@ module Y2Storage
       "<BcacheCset uuid:#{uuid} #{blk_devices.inspect}>"
     end
 
-    # Gets user friendly name for caching set. It is translated and ready to show to user.
+    # Display name to represent the caching set
+    #
+    # @return [String]
     def display_name
       textdomain "storage"
       devices = bcaches.map(&:basename).sort.join(", ")

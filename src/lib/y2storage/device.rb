@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -175,7 +175,7 @@ module Y2Storage
     protected :userdata, :userdata=
 
     # @!method devicegraph
-    # 	Devicegraph to which the device is associated
+    #   Devicegraph to which the device is associated
     #
     #   @return [Devicegraph]
     storage_forward :devicegraph, as: "Devicegraph"
@@ -369,6 +369,15 @@ module Y2Storage
     def remove_descendants
       storage_remove_descendants
       update_etc_status
+    end
+
+    # Name to represent the device
+    #
+    # @return [String, nil] nil if the device has no representation
+    def display_name
+      return nil unless respond_to?(:name)
+
+      name
     end
 
   protected

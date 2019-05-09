@@ -163,9 +163,7 @@ module Y2Partitioner
         end
 
         def item_for_device(device)
-          label = device.is?(:bcache_cset) ? device.display_name : device.name
-
-          [device.sid.to_s, label]
+          [device.sid.to_s, device.display_name]
         end
       end
 

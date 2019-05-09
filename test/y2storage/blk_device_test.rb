@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -855,26 +855,12 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#component_of_names" do
-    context "component has name" do
-      let(:scenario) { "bcache1.xml" }
-      let(:device_name) { "/dev/vdc" }
+    let(:scenario) { "bcache1.xml" }
+    let(:device_name) { "/dev/vdb" }
 
-      it "returns name for that component" do
-        expect(device.component_of_names.size).to eq 1
-        expect(device.component_of_names.first).to eq "/dev/bcache0"
-      end
-    end
-
-    context "component has display name" do
-      let(:scenario) { "bcache1.xml" }
-      let(:device_name) { "/dev/vdb" }
-
-      it "returns display name for that component" do
-        expect(device.component_of_names.size).to eq 1
-        expect(device.component_of_names.first).to(
-          eq("Cache set (bcache0, bcache1, bcache2)")
-        )
-      end
+    it "returns the display name of the component devices" do
+      expect(device.component_of_names.size).to eq(1)
+      expect(device.component_of_names).to contain_exactly("Cache set (bcache0, bcache1, bcache2)")
     end
   end
 

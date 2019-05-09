@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
 
@@ -27,6 +28,8 @@ module Y2Storage
   #
   # This is a wrapper for Storage::LvmPv
   class LvmPv < Device
+    include Yast::I18n
+
     wrap_class Storage::LvmPv
 
     # @!method self.all(devicegraph)
@@ -53,6 +56,27 @@ module Y2Storage
     # @return [BlkDevice]
     def plain_blk_device
       blk_device.plain_device
+    end
+
+    # Whether the PV is orphan (not associated to any VG)
+    #
+    # @return [Boolean]
+    def orphan?
+      lvm_vg.nil?
+    end
+
+    # Display name to represent the PV
+    #
+    # Only orphan PV has its own representation.
+    #
+    # @return [String, nil]
+    def display_name
+      return nil unless orphan?
+
+      textdomain "storage"
+
+      # TRANSLATORS: display name when the PV has no associated VG
+      format(_("Orphan PV on %{device}"), device: plain_blk_device.name)
     end
 
   protected

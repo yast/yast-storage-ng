@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
@@ -31,6 +32,8 @@ module Y2Storage
   module Filesystems
     # This is a wrapper for Storage::Btrfs
     class Btrfs < BlkFilesystem
+      include Yast::I18n
+
       wrap_class Storage::Btrfs
 
       # @!method top_level_btrfs_subvolume
@@ -489,6 +492,24 @@ module Y2Storage
 
         ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
         add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
+      end
+
+      # Display name to represent the filesystem
+      #
+      # Only multidevice Btrfs has its own representation
+      #
+      # @return [String, nil]
+      def display_name
+        return nil unless multidevice?
+
+        textdomain "storage"
+
+        # TRANSLATORS: display name when the Btrfs is multidevice
+        format(
+          _("Btrfs %{name} over %{num_devices} devices"),
+          name:        blk_device_basename,
+          num_devices: blk_devices.size
+        )
       end
 
     protected
