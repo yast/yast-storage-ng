@@ -266,6 +266,38 @@ would be listed in this section, no matter whether they are multi-device or not.
 That would allow to add more block devices to a Btrfs filesystem that was
 initially defined only on top of one block device.
 
+### Do not allow to edit the individual block devices
+
+There is no button in the Partitioner to delete a traditional filesystem.
+Instead, a filesytem will be implicitly deleted if the corresponding block
+device is encrypted, re-formatted or used for any other purpose like adding it
+to a RAID or LVM. Following the same approach for multi-device filesystem would
+lead to problems and inconsistencies in the user experience. Take the following
+situation as example:
+
+* Starting point: a Btrfs over `sda1` and `sdb1`.
+* The user edits `sda1` and marks it to be formatted as Ext4. That implicitly
+  deletes the Btrfs.
+* Then the user uses `sdb1` for something else, like adding it to a LVM setup.
+* Afterwards, the user edits `sda1` again and chooses "Do not Format".
+
+In the regular case, "Do not Format" means keeping the filesystem that is
+currently in `sda1` in the real disk. But that cannot be done because the other
+device in the filesystem (`sdb1`) is not longer available. So the exact meaning
+of "Do not Format" would become unpredictable. The level of confusion can only
+grow with every subsequent user action.
+
+To avoid that kind of pitfalls, the multi-device Btrfs must work in the same way
+than RAID or LVM regarding deletion and regarding usage of its individual
+devices. The UI must contain an explicit button to delete multi-device
+filesystems and editing the individual block devices must be prevented with a
+warning similar to this.
+
+![Prevent editing Btrfs block devices](btrfs_in_partitioner/no_edit_warning.png)
+
+Of course, that warning only applies to Btrfs filesystems that spread over several
+block devices.
+
 ### Edit screen for Btrfs filesystems
 
 Since the standard dialogs for editing block devices mix logic about modifying
@@ -276,6 +308,7 @@ A new simplified version of that main dialog would be needed. It would likely
 look similar to the following mockup.
 
 ![Dialog to edit a Btrfs filesystem](btrfs_in_partitioner/edit_btrfs.png)
+
 
 ### Better management of subvolumes
 
