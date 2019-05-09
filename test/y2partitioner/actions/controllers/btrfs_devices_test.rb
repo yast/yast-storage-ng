@@ -343,6 +343,20 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
   end
 
   describe "#add_device" do
+    shared_examples "partition id" do
+      context "if the device is a partition" do
+        let(:device_name) { "/dev/sda1" }
+
+        it "sets linux partition id" do
+          expect(device.id.is?(:linux)).to eq(false)
+
+          subject.add_device(device)
+
+          expect(device.id.is?(:linux)).to eq(true)
+        end
+      end
+    end
+
     context "if there is no filesystem yet" do
       let(:filesystem) { nil }
 
@@ -358,6 +372,8 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
         expect(subject.filesystem.is?(:btrfs)).to eq(true)
         expect(subject.filesystem).to eq(device.filesystem)
       end
+
+      include_examples "partition id"
     end
 
     context "if there is already a filesystem" do
@@ -389,6 +405,8 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
           expect(device.filesystem.type.is?(:btrfs)).to eq(true)
           expect(device.filesystem).to eq(subject.filesystem)
         end
+
+        include_examples "partition id"
       end
 
       context "and the device was encrypted" do
@@ -404,6 +422,8 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
 
           expect(device.encrypted?).to eq(true)
         end
+
+        include_examples "partition id"
       end
     end
   end

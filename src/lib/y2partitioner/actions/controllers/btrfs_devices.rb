@@ -137,11 +137,17 @@ module Y2Partitioner
         # Adds a device to the Btrfs
         #
         # If the filesystem does not exist, a new one is created when adding the first device.
-        # Any previous children (like filesystems) is removed from the device.
+        #
+        # Any previous children (like filesystems) are removed from the device (only encryption layer
+        # is preserved).
         #
         # @param device [Y2Storage::BlkDevice]
         def add_device(device)
+          # When the selected device is a partition, its partition id is set to linux.
+          device.id = Y2Storage::PartitionId::LINUX if device.is?(:partition)
+
           device = device.encryption if device.encrypted?
+
           device.remove_descendants
 
           if filesystem.nil?
