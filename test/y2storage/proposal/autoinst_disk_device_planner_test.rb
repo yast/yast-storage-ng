@@ -381,6 +381,33 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
       end
 
+      # Regression test for bsc#1134330: when a bios_boot partition (which
+      # contains no filesystem by definition) is specified to be reused, a bogus
+      # MissingReusableFilesystem issue is registered
+      context "when the partition is not formatted and should be reused as-is" do
+        let(:scenario) { "autoyast_drive_examples" }
+
+        let(:disk_spec) do
+          { "device" => "/dev/sdh", "partitions" => [grub_spec] }
+        end
+
+        let(:grub_spec) do
+          { "create" => false, "format" => false, "partition_nr" => 2 }
+        end
+
+        it "reuses the partition" do
+          disk = planner.planned_devices(drive).first
+          grub = disk.partitions.first
+          expect(grub.reuse_name).to eq("/dev/sdh2")
+        end
+
+        it "does not register any issue" do
+          expect(issues_list).to be_empty
+          planner.planned_devices(drive)
+          expect(issues_list).to be_empty
+        end
+      end
+
       context "when no partition number or label is specified" do
         let(:root_spec) do
           { "create" => false, "mount" => "/", "filesystem" => :btrfs }
