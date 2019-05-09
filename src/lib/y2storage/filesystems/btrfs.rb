@@ -79,32 +79,20 @@ module Y2Storage
       storage_forward :configure_snapper
       storage_forward :configure_snapper=
 
-      # @!method metadata_raid_level
+      # @!attribute metadata_raid_level
       #
-      #   Gets the metadata RAID level
+      #   Setting the metadata RAID level is not supported for Btrfs already existing on disk.
       #
       #   @return [BtrfsRaidLevel]
       storage_forward :metadata_raid_level, as: "BtrfsRaidLevel"
-
-      # @!method metadata_raid_level=(level)
-      #
-      #   Sets the metadata RAID level. Not supported for Btrfs already existing on disk.
-      #
-      #   @param level [BtrfsRaidLevel]
       storage_forward :metadata_raid_level=
 
-      # @!method data_raid_level
+      # @!attribute data_raid_level
       #
-      #   Gets the data RAID level
+      #   Setting the data RAID level is not supported for Btrfs already existing on disk.
       #
       #   @return [BtrfsRaidLevel]
       storage_forward :data_raid_level, as: "BtrfsRaidLevel"
-
-      # @!method data_raid_level=(level)
-      #
-      #   Sets the data RAID level. Not supported for Btrfs already existing on disk.
-      #
-      #   @param level [BtrfsRaidLevel]
       storage_forward :data_raid_level=
 
       # @!method allowed_metadata_raid_levels
@@ -504,11 +492,12 @@ module Y2Storage
 
         textdomain "storage"
 
-        # TRANSLATORS: display name when the Btrfs is multidevice
+        # TRANSLATORS: display name when the Btrfs is multidevice, where %{num_devices} is replaced by
+        # a number (e.g., "2") and %{name} is replaced by a device representation (e.g., "(sda1...)").
         format(
-          _("Btrfs %{name} over %{num_devices} devices"),
-          name:        blk_device_basename,
-          num_devices: blk_devices.size
+          _("Btrfs over %{num_devices} devices %{name}"),
+          num_devices: blk_devices.size,
+          name:        blk_device_basename
         )
       end
 

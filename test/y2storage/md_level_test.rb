@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,15 +25,24 @@ require "y2storage/md_level"
 
 describe Y2Storage::MdLevel do
   describe "#to_human_string" do
-    it "returns translatable string for enum value" do
-      expect(described_class.new(1).to_human_string).to be_a(::String)
-      expect(described_class.new(2).to_human_string).to be_a(::String)
+    context "when there is a translation" do
+      it "returns the translated string" do
+        described_class.all.each do |value|
+          expect(value.to_human_string).to be_a(::String)
+        end
+      end
     end
 
-    it "raises RuntimeError when unknown enum value is used" do
-      enum = described_class.new(1)
-      allow(enum).to receive(:to_sym).and_return(:crazy_stuff)
-      expect { enum.to_human_string }.to raise_error(RuntimeError)
+    context "when there is no translation" do
+      subject { described_class.all.first }
+
+      before do
+        allow(subject).to receive(:to_sym).and_return(:crazy_stuff)
+      end
+
+      it "raises a RuntimeError" do
+        expect { subject.to_human_string }.to raise_error(RuntimeError)
+      end
     end
   end
 end

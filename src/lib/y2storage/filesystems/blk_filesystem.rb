@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
 
@@ -28,6 +29,8 @@ module Y2Storage
     #
     # This is a wrapper for Storage::BlkFilesystem
     class BlkFilesystem < Base
+      include Yast::I18n
+
       wrap_class Storage::BlkFilesystem, downcast_to: ["Filesystems::Btrfs"]
 
       # @!method self.all(devicegraph)
@@ -117,15 +120,20 @@ module Y2Storage
       # Block device base name
       #
       # When the filesystem is single-device, this method simply returns the base name of the block
-      # device (e.g., "sda1"). And for multi-device ones, it returns the first base name plus a "+"
-      # symbol to indicate that the filesystem is multi-device (e.g., "sda1+").
+      # device (e.g., "sda1"). And for multi-device ones, it returns the first base name between brackets
+      # and followed by horizontal ellipsis (e.g., "(sda1...)").
       #
       # @return [String]
       def blk_device_basename
-        info = blk_devices.map(&:basename).sort.first
-        info << "+" if multidevice?
+        basename = plain_blk_devices.map(&:basename).sort.first
 
-        info
+        return basename unless multidevice?
+
+        textdomain "storage"
+
+        # TRANSLATORS: block device basename for a multi-device filesystem, where %{basename} is replaced
+        # by the basename of the first block device (e.g., "(sda1...)").
+        format(_("(%{basename}\u2026)"), basename: basename)
       end
 
       # Whether it is a multidevice filesystem

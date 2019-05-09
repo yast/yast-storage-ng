@@ -75,8 +75,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
       expect(subject.value).to_not match(/Metadata RAID Level:/)
     end
 
-    it "does ot include an entry about the data raid level" do
-      expect(subject.value).to_not match(/Data RAID Level:/)
+    it "does not include an entry about the data raid level" do
+      expect(subject.value).to_not match(/RAID Level:/)
     end
 
     it "contains (not mounted) if mount point is not active" do
@@ -96,7 +96,7 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
       end
 
       it "includes an entry about the data raid level" do
-        expect(subject.value).to match(/Data RAID Level:/)
+        expect(subject.value).to match(/RAID Level:/)
       end
     end
   end

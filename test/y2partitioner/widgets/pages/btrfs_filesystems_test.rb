@@ -34,8 +34,6 @@ describe Y2Partitioner::Widgets::Pages::BtrfsFilesystems do
 
   let(:btrfs_filesystems) { current_graph.btrfs_filesystems }
 
-  let(:btrfs_devices) { btrfs_filesystems.map(&:blk_devices).flatten }
-
   subject { described_class.new(btrfs_filesystems, pager) }
 
   let(:pager) { double("OverviewTreePager") }
@@ -49,12 +47,11 @@ describe Y2Partitioner::Widgets::Pages::BtrfsFilesystems do
       table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
 
       expect(table).to_not be_nil
-      expect(table.items.size).to eq(5)
 
-      devices_name = btrfs_devices.map(&:name)
-      items_name = table.items.map { |i| i[1] }
+      id_values = btrfs_filesystems.map(&:blk_device_basename)
+      first_column = table.items.map { |i| i[1] }
 
-      expect(items_name.sort).to eq(devices_name.sort)
+      expect(first_column).to contain_exactly(*id_values)
     end
 
     it "shows a buttons set" do

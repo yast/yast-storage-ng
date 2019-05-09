@@ -75,8 +75,9 @@ module Y2Storage
 
       textdomain "storage"
 
-      # TRANSLATORS: display name when the PV has no associated VG
-      format(_("Orphan PV on %{device}"), device: plain_blk_device.name)
+      # TRANSLATORS: display name when the PV has no associated VG, where %{device} is replaced by a
+      # device name (e.g., "/dev/sda1").
+      format(_("Unused LVM PV on %{device}"), device: plain_blk_device.name)
     end
 
   protected

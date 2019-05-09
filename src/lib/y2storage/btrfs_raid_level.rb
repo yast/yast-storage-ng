@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "storage"
 require "y2storage/storage_enum_wrapper"
 
@@ -27,15 +28,40 @@ module Y2Storage
   #
   # This is a wrapper for the Storage::BtrfsRaidLevel enum
   class BtrfsRaidLevel
+    include Yast::I18n
+    extend Yast::I18n
+
     include StorageEnumWrapper
 
     wrap_enum "BtrfsRaidLevel"
 
-    # Returns human readable representation of enum which is already translated
+    TRANSLATIONS = {
+      unknown: N_("Unknown"),
+      default: N_("Default"),
+      # TRANSLATORS: this is one of the RAID modes used by Btrfs, likely to be left as-is
+      single:  N_("SINGLE"),
+      # TRANSLATORS: this is one of the RAID modes used by Btrfs, likely to be left as-is
+      dup:     N_("DUP"),
+      raid0:   N_("RAID0"),
+      raid1:   N_("RAID1"),
+      raid5:   N_("RAID5"),
+      raid6:   N_("RAID6"),
+      raid10:  N_("RAID10")
+    }
+
+    private_constant :TRANSLATIONS
+
+    # Returns human readable representation of enum which is already translated.
+    #
+    # @raise [RuntimeError] when called on enum value for which translation is not defined yet.
     #
     # @return [String]
     def to_human_string
-      Storage.btrfs_raid_level_name(to_storage_value)
+      textdomain "storage"
+
+      value = TRANSLATIONS[to_sym] or raise "Unhandled Btrfs RAID level value '#{inspect}'"
+
+      _(value)
     end
   end
 end

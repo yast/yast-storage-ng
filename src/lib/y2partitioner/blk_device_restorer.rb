@@ -32,6 +32,8 @@ module Y2Partitioner
   # restores the filesystem or the empty partition table that was associated
   # to the device when it was initially added to the MD or LVM).
   class BlkDeviceRestorer
+    include Yast::Logger
+
     # Target device
     #
     # This device must be associated to the current devicegraph (see

@@ -51,10 +51,10 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
       let(:dev_name) { "/dev/sdb1" }
 
-      it "returns the base name of its first block device followed by '+'" do
+      it "returns the base name of its first block device between brackets" do
         # NOTE that must be the first block device base name after sort them alphabetically,
-        # so "sdb1+" is expected
-        expect(subject.blk_device_basename).to eq("sdb1+")
+        # so "(sdb1...)" is expected
+        expect(subject.blk_device_basename).to match(/\(sdb1.*\)/)
       end
     end
   end

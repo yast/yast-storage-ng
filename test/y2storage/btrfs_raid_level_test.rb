@@ -25,8 +25,24 @@ require "y2storage/btrfs_raid_level"
 
 describe Y2Storage::BtrfsRaidLevel do
   describe "#to_human_string" do
-    it "returns translatable string for enum value" do
-      expect(described_class::RAID1.to_human_string).to be_a(::String)
+    context "when there is a translation" do
+      it "returns the translated string" do
+        described_class.all.each do |value|
+          expect(value.to_human_string).to be_a(::String)
+        end
+      end
+    end
+
+    context "when there is no translation" do
+      subject { described_class.all.first }
+
+      before do
+        allow(subject).to receive(:to_sym).and_return(:crazy_stuff)
+      end
+
+      it "raises a RuntimeError" do
+        expect { subject.to_human_string }.to raise_error(RuntimeError)
+      end
     end
   end
 end

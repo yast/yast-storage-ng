@@ -37,7 +37,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: widget label
-        _("Metadata RAID Level")
+        _("RAID Level for Metadata")
       end
 
       # @macro seeAbstractWidget

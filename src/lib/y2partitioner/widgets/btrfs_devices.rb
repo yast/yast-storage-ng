@@ -48,9 +48,9 @@ module Y2Partitioner
           Left(
             HVSquash(
               HBox(
-                metadata_raid_level_widget,
+                data_raid_level_widget,
                 HSpacing(1),
-                data_raid_level_widget
+                metadata_raid_level_widget
               )
             )
           ),
@@ -72,11 +72,10 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def validate
-        current_errors = errors
-        return true if current_errors.none?
+        error = error_message
+        return true unless error
 
-        message = current_errors.join("\n\n")
-        Yast2::Popup.show(message, headline: :error)
+        Yast2::Popup.show(error, headline: :error)
 
         false
       end
@@ -111,8 +110,9 @@ module Y2Partitioner
       #
       # @return [String]
       def help_for_raid_levels
+        # TRANSLATORS: help text
         _("<h4><b>Btrfs RAID levels</b></h4>" \
-          "<p> Btrfs supports the following RAID levels for both, metadata and data:" \
+          "<p>Btrfs supports the following RAID levels for both, data and metadata:" \
             "<ul>" \
               "<li>" \
                 "<b>DUP:</b> stores two copies of each piece of data on the same device. " \
@@ -147,30 +147,43 @@ module Y2Partitioner
       #
       # @return [String]
       def help_for_default_raid_level
+        # TRANSLATORS: help text
         _("<p>" \
-            "When <b>DEFAULT</b> RAID level is used, Btrfs will select a RAID level depending on " \
+            "When the default RAID level is used, Btrfs will select a RAID level depending on " \
             "whether the filesystem is being created on top of multiple devices or using only one " \
             "device. For a single-device Btrfs, the tool also will distinguish between rotational " \
             "or not-rotational devices to choose the default value." \
           "</p>")
       end
 
-      # Errors for the selected values
+      # Message to show when there are errors
       #
-      # @return [Array<String>]
-      def errors
-        [
-          metadata_devices_error,
-          data_devices_error
-        ].compact
-      end
+      # @return [String, nil] nil if there is no error.
+      def error_message
+        data_error = data_devices_error
+        metadata_error = metadata_devices_error
 
-      # Error when the selected metadata RAID level cannot be used (according to the number of selected
-      # devices)
-      #
-      # @return [String, nil] nil if there is no error
-      def metadata_devices_error
-        raid_level_devices_error(:metadata)
+        return nil unless data_error || metadata_error
+
+        error_by =
+          if data_error && metadata_error
+            # TRANSLATORS: error message
+            _("RAID levels do not match the amount of selected devices.")
+          elsif data_error
+            # TRANSLATORS: error message
+            _("The RAID level does not match the amount of selected devices.")
+          else
+            # TRANSLATORS: error message
+            _("The metadata RAID level does not match the amount of selected devices.")
+          end
+
+        # TRANSLATORS: error message, where %{error_by} is replaced by an initial sentence.
+        intro = format(
+          _("%{error_by}\nModify the list of devices or adjust the RAID levels."),
+          error_by: error_by
+        )
+
+        [intro, data_error, metadata_error].compact.join("\n\n")
       end
 
       # Error when the selected data RAID level cannot be used (according to the number of selected
@@ -179,6 +192,14 @@ module Y2Partitioner
       # @return [String, nil] nil if there is no error
       def data_devices_error
         raid_level_devices_error(:data)
+      end
+
+      # Error when the selected metadata RAID level cannot be used (according to the number of selected
+      # devices)
+      #
+      # @return [String, nil] nil if there is no error
+      def metadata_devices_error
+        raid_level_devices_error(:metadata)
       end
 
       # Helper method to get the metadata/data error according to the number of selected devices.
@@ -193,6 +214,8 @@ module Y2Partitioner
 
         return nil if allowed_raid_levels.include?(selected_raid_level)
 
+        # TRANSLATORS: error message, where %{data} is replaced by "data" or "metadata" and %{levels} is
+        # replaced by a list of raid levels separated by comma (e.g., "RAID1, RAID10").
         format(
           _("According to the selected devices, only the following %{data}\n" \
             "RAID levels can be used: %{levels}."),

@@ -82,7 +82,7 @@ describe Y2Storage::LvmPv do
       let(:device_name) { "/dev/sda2" }
 
       it "returns a name representing the PV" do
-        expect(subject.display_name).to match(/Orphan PV .*/)
+        expect(subject.display_name).to match(/Unused LVM PV .*/)
       end
     end
 

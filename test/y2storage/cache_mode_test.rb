@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,9 +25,23 @@ require "y2storage"
 
 describe Y2Storage::CacheMode do
   describe "#to_human_string" do
-    it "returns string for all known cache mode" do
-      Y2Storage::CacheMode.all.each do |mode|
-        expect { mode.to_human_string }.to_not raise_error
+    context "when there is a translation" do
+      it "returns the translated string" do
+        described_class.all.each do |value|
+          expect(value.to_human_string).to be_a(::String)
+        end
+      end
+    end
+
+    context "when there is no translation" do
+      subject { described_class.all.first }
+
+      before do
+        allow(subject).to receive(:to_sym).and_return(:crazy_stuff)
+      end
+
+      it "raises a RuntimeError" do
+        expect { subject.to_human_string }.to raise_error(RuntimeError)
       end
     end
   end

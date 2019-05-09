@@ -211,6 +211,60 @@ describe Y2Partitioner::Widgets::BtrfsDevices do
       end
     end
 
+    context "when data and metadata RAID levels are wrong" do
+      before do
+        controller.data_raid_level = data_raid_level
+        controller.metadata_raid_level = metadata_raid_level
+        controller.add_device(dev("/dev/sda3"))
+      end
+
+      let(:data_raid_level) { Y2Storage::BtrfsRaidLevel::RAID10 }
+
+      let(:metadata_raid_level) { Y2Storage::BtrfsRaidLevel::RAID10 }
+
+      it "indicates that both RAID levels are wrong" do
+        expect(Yast2::Popup).to receive(:show).with(/RAID levels do not match/, anything)
+
+        subject.validate
+      end
+    end
+
+    context "when only the data RAID level is wrong" do
+      before do
+        controller.data_raid_level = data_raid_level
+        controller.metadata_raid_level = metadata_raid_level
+        controller.add_device(dev("/dev/sda3"))
+      end
+
+      let(:data_raid_level) { Y2Storage::BtrfsRaidLevel::RAID10 }
+
+      let(:metadata_raid_level) { Y2Storage::BtrfsRaidLevel::DEFAULT }
+
+      it "indicates that data RAID level is wrong" do
+        expect(Yast2::Popup).to receive(:show).with(/The RAID level does not match/, anything)
+
+        subject.validate
+      end
+    end
+
+    context "when only the metadata RAID level is wrong" do
+      before do
+        controller.data_raid_level = data_raid_level
+        controller.metadata_raid_level = metadata_raid_level
+        controller.add_device(dev("/dev/sda3"))
+      end
+
+      let(:data_raid_level) { Y2Storage::BtrfsRaidLevel::DEFAULT }
+
+      let(:metadata_raid_level) { Y2Storage::BtrfsRaidLevel::RAID10 }
+
+      it "indicates that metadata RAID level is wrong" do
+        expect(Yast2::Popup).to receive(:show).with(/metadata RAID level does not match/, anything)
+
+        subject.validate
+      end
+    end
+
     context "when changing the metadata raid level" do
       before do
         controller.metadata_raid_level = raid_level

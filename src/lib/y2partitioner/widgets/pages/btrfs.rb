@@ -174,7 +174,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          filesystem.blk_devices
+          filesystem.plain_blk_devices
         end
       end
     end

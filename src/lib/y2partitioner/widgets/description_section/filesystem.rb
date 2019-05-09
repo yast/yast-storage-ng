@@ -56,7 +56,7 @@ module Y2Partitioner
         def btrfs_entries
           return [] unless filesystem && filesystem.is?(:btrfs)
 
-          [:btrfs_metadata_raid_level, :btrfs_data_raid_level]
+          [:btrfs_data_raid_level, :btrfs_metadata_raid_level]
         end
 
         # Information about the filesystem type
@@ -115,6 +115,16 @@ module Y2Partitioner
           format(_("UUID: %s"), uuid)
         end
 
+        # Information about the data RAID level
+        #
+        # @return [String]
+        def btrfs_data_raid_level_value
+          level = filesystem.data_raid_level.to_human_string
+
+          # TRANSLATORS: Btrfs data information, where %s is replaced by a RAID level (e.g., RAID0).
+          format(_("RAID Level: %s"), level)
+        end
+
         # Information about the metadata RAID level
         #
         # @return [String]
@@ -123,16 +133,6 @@ module Y2Partitioner
 
           # TRANSLATORS: Btrfs metadata information, where %s is replaced by a RAID level (e.g., RAID0).
           format(_("Metadata RAID Level: %s"), level)
-        end
-
-        # Information about the data RAID level
-        #
-        # @return [String]
-        def btrfs_data_raid_level_value
-          level = filesystem.data_raid_level.to_human_string
-
-          # TRANSLATORS: Btrfs data information, where %s is replaced by a RAID level (e.g., RAID0).
-          format(_("Data RAID Level: %s"), level)
         end
 
         # Whether the mount point is inactive
