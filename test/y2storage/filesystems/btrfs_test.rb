@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -950,6 +950,28 @@ describe Y2Storage::Filesystems::Btrfs do
       filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
       expect(btrfs_mount_by).to eq :uuid
       expect(subvol_mount_bys).to all(eq :label)
+    end
+  end
+
+  describe "#display_name" do
+    context "when it is a multi-device Btrfs" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:dev_name) { "/dev/sdb1" }
+
+      it "returns a name representing the filesystem" do
+        expect(subject.display_name).to match(/Btrfs over .* devices .*/)
+      end
+    end
+
+    context "when it is a single-device Btrfs" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:dev_name) { "/dev/sdb2" }
+
+      it "returns nil" do
+        expect(subject.display_name).to be_nil
+      end
     end
   end
 end

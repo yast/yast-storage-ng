@@ -339,7 +339,7 @@ module Y2Partitioner
       def lvm_pv_type_label(device)
         vg = device.lvm_vg
 
-        return _("Orphan PV") if vg.nil?
+        return _("Unused LVM PV") if vg.nil?
         return _("PV of LVM") if vg.basename.empty?
 
         # TRANSLATORS: %s is the volume group name. E.g., "vg0"

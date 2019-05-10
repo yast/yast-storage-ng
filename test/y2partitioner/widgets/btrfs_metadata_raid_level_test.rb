@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,29 +20,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "spec_helper"
-require "y2storage/md_level"
+require_relative "../test_helper"
 
-describe Y2Storage::MdLevel do
-  describe "#to_human_string" do
-    context "when there is a translation" do
-      it "returns the translated string" do
-        described_class.all.each do |value|
-          expect(value.to_human_string).to be_a(::String)
-        end
-      end
-    end
+require "yast"
+require "cwm/rspec"
+require "y2partitioner/actions/controllers/btrfs_devices"
+require "y2partitioner/widgets/btrfs_metadata_raid_level"
 
-    context "when there is no translation" do
-      subject { described_class.all.first }
+describe Y2Partitioner::Widgets::BtrfsMetadataRaidLevel do
+  subject(:widget) { described_class.new(controller) }
 
-      before do
-        allow(subject).to receive(:to_sym).and_return(:crazy_stuff)
-      end
+  let(:controller) do
+    Y2Partitioner::Actions::Controllers::BtrfsDevices.new
+  end
 
-      it "raises a RuntimeError" do
-        expect { subject.to_human_string }.to raise_error(RuntimeError)
-      end
+  before do
+    allow(Yast::UI).to receive(:QueryWidget).and_return :raid10
+  end
+
+  include_examples "CWM::ComboBox"
+
+  describe "#handle" do
+    it "sets the data raid level" do
+      expect(controller).to receive(:metadata_raid_level=).with(Y2Storage::BtrfsRaidLevel::RAID10)
+
+      widget.handle
     end
   end
 end

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -119,9 +119,7 @@ module Y2Partitioner
     # @param device [Y2Storage::Device] device to delete
     # @return [Array<String>] name of dependent devices
     def dependent_devices(device)
-      device.descendants.map do |dev|
-        dev.name if dev.respond_to?(:name)
-      end.compact
+      device.descendants.map(&:display_name).compact
     end
   end
 end

@@ -120,13 +120,17 @@ module Y2Partitioner
 
       # Updates the UI to reflect the size of both lists of devices
       def refresh_sizes
-        # TRANSLATORS: %s is a disk size. E.g. "10.5 GiB"
-        widget = Left(Label(_("Resulting size: %s") % selected_size.to_human_string))
-        Yast::UI.ReplaceWidget(Id(:selected_size), widget)
+        if selected_size
+          # TRANSLATORS: %s is a disk size. E.g. "10.5 GiB"
+          widget = Left(Label(_("Resulting size: %s") % selected_size.to_human_string))
+          Yast::UI.ReplaceWidget(Id(:selected_size), widget)
+        end
 
-        # TRANSLATORS: %s is a disk size. E.g. "10.5 GiB"
-        widget = Left(Label(_("Total size: %s") % unselected_size.to_human_string))
-        Yast::UI.ReplaceWidget(Id(:unselected_size), widget)
+        if unselected_size
+          # TRANSLATORS: %s is a disk size. E.g. "10.5 GiB"
+          widget = Left(Label(_("Total size: %s") % unselected_size.to_human_string))
+          Yast::UI.ReplaceWidget(Id(:unselected_size), widget)
+        end
       end
 
     protected

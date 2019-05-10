@@ -44,15 +44,15 @@ module Y2Partitioner
       #
       # @return [Array<Symbol>]
       def fs_columns
-        [:btrfs_devices, :mount_point, :label, :uuid]
+        [:btrfs_id, :mount_point, :label, :btrfs_devices, :uuid]
       end
 
       # Column label
       #
       # @return [String]
-      def btrfs_devices_title
+      def btrfs_id_title
         # TRANSLATORS: label of a table column
-        _("Devices")
+        _("Id")
       end
 
       # Column label
@@ -66,9 +66,33 @@ module Y2Partitioner
       # Column label
       #
       # @return [String]
+      def btrfs_devices_title
+        # TRANSLATORS: label of a table column
+        _("Devices")
+      end
+
+      # Column label
+      #
+      # @return [String]
       def uuid_title
         # TRANSLATORS: label of a table column
         _("UUID")
+      end
+
+      # Column value
+      #
+      # @param filesystem [Y2Storage::Filesystems::Btrfs]
+      # @return [String] e.g., "sda1" or "(sda1...)"
+      def btrfs_id_value(filesystem)
+        filesystem.blk_device_basename
+      end
+
+      # Column value
+      #
+      # @param filesystem [Y2Storage::Filesystems::Btrfs]
+      # @return [String] e.g., "data"
+      def label_value(filesystem)
+        filesystem.label
       end
 
       # Column value
@@ -78,15 +102,7 @@ module Y2Partitioner
       # @param filesystem [Y2Storage::Filesystems::Btrfs]
       # @return [String] e.g., "/dev/sda1, /dev/sda2"
       def btrfs_devices_value(filesystem)
-        filesystem.blk_devices.map(&:name).join(", ")
-      end
-
-      # Column value
-      #
-      # @param filesystem [Y2Storage::Filesystems::Btrfs]
-      # @return [String] e.g., "data"
-      def label_value(filesystem)
-        filesystem.label
+        filesystem.plain_blk_devices.map(&:name).sort.join(", ")
       end
 
       # Column value

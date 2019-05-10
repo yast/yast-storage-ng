@@ -31,7 +31,7 @@ require "y2partitioner/widgets/partitions_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/btrfs_edit_button"
+require "y2partitioner/widgets/btrfs_modify_button"
 
 module Y2Partitioner
   module Widgets
@@ -172,7 +172,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a BTRFS filesystem
       def btrfs_buttons
         [
-          BtrfsEditButton.new(pager: pager, device: device)
+          BtrfsModifyButton.new(device)
         ]
       end
 

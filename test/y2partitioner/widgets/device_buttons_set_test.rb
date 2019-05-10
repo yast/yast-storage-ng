@@ -180,7 +180,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BtrfsEditButton
+            Y2Partitioner::Widgets::BtrfsModifyButton
           )
         end
 

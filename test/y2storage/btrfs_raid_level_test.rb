@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,9 +21,9 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "y2storage/md_level"
+require "y2storage/btrfs_raid_level"
 
-describe Y2Storage::MdLevel do
+describe Y2Storage::BtrfsRaidLevel do
   describe "#to_human_string" do
     context "when there is a translation" do
       it "returns the translated string" do

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,40 +20,31 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/edit_md_devices"
-require "y2partitioner/actions/edit_btrfs_devices"
-
-Yast.import "Popup"
+require "cwm"
+require "y2partitioner/actions/add_btrfs"
+require "y2partitioner/widgets/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
-    # Button for editing the used devices (e.g., by a Software RAID)
-    class UsedDevicesEditButton < DeviceButton
-      def initialize(*args)
-        super
+    # Button for opening a wizard to add a new Bcache device
+    class BtrfsAddButton < CWM::PushButton
+      include ExecuteAndRedraw
+
+      # Constructor
+      def initialize
         textdomain "storage"
       end
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: label for button to edit used devices
-        _("Change...")
+        # TRANSLATORS: button label to add a new Bcache device
+        _("Add Btrfs...")
       end
 
-    private
-
-      # Returns the proper Actions class to edit the used devices
-      #
-      # @see DeviceButton#actions
-      # @see Actions::EditMdDevices
-      # @see Actions::EditBtrfsDevices
-      def actions_class
-        if device.is?(:software_raid)
-          Actions::EditMdDevices
-        elsif device.is?(:btrfs)
-          Actions::EditBtrfsDevices
-        end
+      # @macro seeAbstractWidget
+      # @see Actions::AddBcache
+      def handle
+        execute_and_redraw { Actions::AddBtrfs.new.run }
       end
     end
   end

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,9 +19,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
+require "y2storage/btrfs_raid_level"
 require "y2storage/subvol_specification"
 
 Yast.import "ProductFeatures"
@@ -30,6 +32,8 @@ module Y2Storage
   module Filesystems
     # This is a wrapper for Storage::Btrfs
     class Btrfs < BlkFilesystem
+      include Yast::I18n
+
       wrap_class Storage::Btrfs
 
       # @!method top_level_btrfs_subvolume
@@ -74,6 +78,56 @@ module Y2Storage
       #   @return [Boolean]
       storage_forward :configure_snapper
       storage_forward :configure_snapper=
+
+      # @!attribute metadata_raid_level
+      #
+      #   Setting the metadata RAID level is not supported for Btrfs already existing on disk.
+      #
+      #   @return [BtrfsRaidLevel]
+      storage_forward :metadata_raid_level, as: "BtrfsRaidLevel"
+      storage_forward :metadata_raid_level=
+
+      # @!attribute data_raid_level
+      #
+      #   Setting the data RAID level is not supported for Btrfs already existing on disk.
+      #
+      #   @return [BtrfsRaidLevel]
+      storage_forward :data_raid_level, as: "BtrfsRaidLevel"
+      storage_forward :data_raid_level=
+
+      # @!method allowed_metadata_raid_levels
+      #
+      #   Gets the allowed metadata RAID levels for the Btrfs. So far, this depends on the number of
+      #   devices. Levels for which mkfs.btrfs warns that they are not recommended are not included here.
+      #   Additionally DEFAULT is allowed when creating a btrfs.
+      #
+      #   @return [Array<BtrfsRaidLevel>]
+      storage_forward :allowed_metadata_raid_levels, as: "BtrfsRaidLevel"
+
+      # @!method allowed_data_raid_levels
+      #
+      #   Gets the allowed data RAID levels for the Btrfs. So far, this depends on the number of
+      #   devices. Levels for which mkfs.btrfs warns that they are not recommended are not included here.
+      #   Additionally DEFAULT is allowed when creating a btrfs.
+      #
+      #   @return [Array<BtrfsRaidLevel>]
+      storage_forward :allowed_data_raid_levels, as: "BtrfsRaidLevel"
+
+      # @!method add_device(device)
+      #
+      #   Adds a block device to the Btrfs
+      #
+      #   @param device [BlkDevice]
+      #   @raise [Storage::WrongNumberOfChildren] if the device cannot be added
+      storage_forward :add_device
+
+      # @!method remove_device(device)
+      #
+      #   Removes a block device from the Btrfs. Not supported for Btrfs already existing on disk.
+      #
+      #   @param device [BlkDevice]
+      #   @raise [Storage::Exception] if the device cannot be removed
+      storage_forward :remove_device
 
       # Only Btrfs should support subvolumes
       def supports_btrfs_subvolumes?
@@ -426,6 +480,25 @@ module Y2Storage
 
         ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
         add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
+      end
+
+      # Display name to represent the filesystem
+      #
+      # Only multidevice Btrfs has its own representation
+      #
+      # @return [String, nil]
+      def display_name
+        return nil unless multidevice?
+
+        textdomain "storage"
+
+        # TRANSLATORS: display name when the Btrfs is multidevice, where %{num_devices} is replaced by
+        # a number (e.g., "2") and %{name} is replaced by a device representation (e.g., "(sda1...)").
+        format(
+          _("Btrfs over %{num_devices} devices %{name}"),
+          num_devices: blk_devices.size,
+          name:        blk_device_basename
+        )
       end
 
     protected

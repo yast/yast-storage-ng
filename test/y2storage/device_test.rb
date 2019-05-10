@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -191,6 +191,34 @@ describe Y2Storage::Device do
       it "returns false" do
         expect(device.exists_in_raw_probed?).to eq(true)
         expect(device.exists_in_probed?).to eq(false)
+      end
+    end
+  end
+
+  describe "#display_name" do
+    let(:device) { devicegraph.find_by_name(device_name) }
+
+    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    let(:scenario) { "mixed_disks" }
+
+    context "if the device has name" do
+      subject { device }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns the device name" do
+        expect(subject.display_name).to eq(device_name)
+      end
+    end
+
+    context "if the device has no name" do
+      subject { device.filesystem }
+
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns nil" do
+        expect(subject.display_name).to be_nil
       end
     end
   end

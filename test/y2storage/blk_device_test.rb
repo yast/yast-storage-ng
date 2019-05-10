@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -714,7 +714,7 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#component_of" do
-    context "for a device not used in an LVM or in a RAID or in multipath" do
+    context "for a device not used in an LVM or in a RAID or in multipath or in a Btrfs multidevice" do
       let(:scenario) { "mixed_disks" }
       let(:device_name) { "/dev/sda1" }
 
@@ -842,29 +842,25 @@ describe Y2Storage::BlkDevice do
         expect(device.component_of).to eq []
       end
     end
+
+    context "for a device directly used in an multidevice Btrfs filesystem" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+      let(:device_name) { "/dev/sdb1" }
+
+      it "returns an array with the Btrfs filesystems" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Filesystems::Btrfs
+      end
+    end
   end
 
   describe "#component_of_names" do
-    context "component has name" do
-      let(:scenario) { "bcache1.xml" }
-      let(:device_name) { "/dev/vdc" }
+    let(:scenario) { "bcache1.xml" }
+    let(:device_name) { "/dev/vdb" }
 
-      it "returns name for that component" do
-        expect(device.component_of_names.size).to eq 1
-        expect(device.component_of_names.first).to eq "/dev/bcache0"
-      end
-    end
-
-    context "component has display name" do
-      let(:scenario) { "bcache1.xml" }
-      let(:device_name) { "/dev/vdb" }
-
-      it "returns display name for that component" do
-        expect(device.component_of_names.size).to eq 1
-        expect(device.component_of_names.first).to(
-          eq("Cache set (bcache0, bcache1, bcache2)")
-        )
-      end
+    it "returns the display name of the component devices" do
+      expect(device.component_of_names.size).to eq(1)
+      expect(device.component_of_names).to contain_exactly("Cache set (bcache0, bcache1, bcache2)")
     end
   end
 

@@ -109,13 +109,13 @@ module Y2Partitioner
         return nil if using_devs.empty?
 
         format(
-          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
-          # and %{users} is replaced by a comma-separated list of name devices
-          # (devices using the first one).
-          _("The device %{name} is in use (%{users}).\n" \
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1) and %{users} is replaced
+          # by a list of name devices (devices using the first one).
+          _("The device %{name} is being used by:\n" \
+            "%{users}\n\n" \
             "It cannot be resized.\n" \
             "To resize %{name}, make sure it is not used."),
-          name: device.name, users: using_devs.join(", ")
+          name: device.name, users: using_devs.join("\n")
         )
       end
 

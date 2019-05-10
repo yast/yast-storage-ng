@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,19 +25,21 @@ require "y2storage"
 
 describe Y2Storage::LvmPv do
   before do
-    fake_scenario("complex-lvm-encrypt")
+    fake_scenario(scenario)
   end
 
+  subject { device.lvm_pv }
+
+  let(:device) { fake_devicegraph.find_by_name(device_name) }
+
   describe "#plain_blk_device" do
-    subject(:pv) do
-      Y2Storage::LvmPv.all(fake_devicegraph).detect { |p| p.blk_device.name == device_name }
-    end
+    let(:scenario) { "complex-lvm-encrypt" }
 
     context "for a non encrypted PV" do
       let(:device_name) { "/dev/sde2" }
 
       it "returns the device directly hosting the PV" do
-        expect(pv.plain_blk_device).to eq pv.blk_device
+        expect(subject.plain_blk_device).to eq(subject.blk_device)
       end
     end
 
@@ -45,8 +47,52 @@ describe Y2Storage::LvmPv do
       let(:device_name) { "/dev/mapper/cr_sde1" }
 
       it "returns the plain version of the encrypted device" do
-        expect(pv.plain_blk_device).to_not eq pv.blk_device
-        expect(pv.plain_blk_device).to eq pv.blk_device.plain_device
+        expect(subject.plain_blk_device).to_not eq(subject.blk_device)
+        expect(subject.plain_blk_device).to eq(subject.blk_device.plain_device)
+      end
+    end
+  end
+
+  describe "#orphan?" do
+    context "when the PV is associated to a VG" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns false" do
+        expect(subject.orphan?).to eq(false)
+      end
+    end
+
+    context "when the PV is not associated to a VG" do
+      let(:scenario) { "unused_lvm_pvs.xml" }
+
+      let(:device_name) { "/dev/sda2" }
+
+      it "returns true" do
+        expect(subject.orphan?).to eq(true)
+      end
+    end
+  end
+
+  describe "#display_name" do
+    context "when it is an orphan PV" do
+      let(:scenario) { "unused_lvm_pvs.xml" }
+
+      let(:device_name) { "/dev/sda2" }
+
+      it "returns a name representing the PV" do
+        expect(subject.display_name).to match(/Unused LVM PV .*/)
+      end
+    end
+
+    context "when it is not an orphan PV" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns nil" do
+        expect(subject.display_name).to be_nil
       end
     end
   end

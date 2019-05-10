@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,6 +25,7 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
 require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
+require "y2partitioner/actions/controllers/available_devices"
 
 module Y2Partitioner
   module Actions
@@ -33,7 +34,10 @@ module Y2Partitioner
       # modified and takes care of updating the devicegraph when needed.
       class LvmVg
         include Yast::I18n
+
         include SizeParser
+
+        include AvailableDevices
 
         # @return [String] given volume group name
         attr_accessor :vg_name
@@ -145,14 +149,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def available_devices
-          devices =
-            working_graph.disk_devices +
-            working_graph.md_raids +
-            working_graph.partitions
-
-          devices.reject! { |d| d.is?(:dasd) }
-
-          devices.select { |d| available?(d) }
+          super(working_graph) { |d| valid_device?(d) }
         end
 
         # Devices that are already used as physical volume by the volume group
@@ -364,81 +361,36 @@ module Y2Partitioner
             "in powers of 2 and multiple of 128 KiB, for example, \"512 KiB\" or \"4 MiB\"")
         end
 
-        # Checks whether a device is availabe to be used as physical volume
+        # Checks whether an available device can be used as physical volume
         #
-        # @return [Boolean] true if the device is available; false otherwise
-        def available?(device)
+        # @param device [Y2Storage::BlkDevice]
+        # @return [Boolean]
+        def valid_device?(device)
           if device.is?(:partition)
-            available_partition?(device)
+            valid_partition_for_vg?(device)
           else
-            available_disk?(device)
+            valid_device_for_vg?(device)
           end
         end
 
-        # Checks whether a partition is available to be used as physical volume
+        # Checks whether an available partition can be used as physical volume
         #
-        # @note A partition is available when its id is linux, lvm, swap or raid,
-        #   it is not formatted and it does not belong to another device (raid or
-        #   volume group). A partition is also available when it is formated but
-        #   not mounted.
+        # The partition can be used if its id is linux, lvm, swap or raid.
         #
-        # @return [Boolean] true if the partition is available; false otherwise
-        def available_partition?(partition)
-          return false unless partition.id.is?(:linux_system)
-          can_be_used?(partition)
+        # @param partition [Y2Storage::Partition]
+        # @return [Boolean]
+        def valid_partition_for_vg?(partition)
+          partition.id.is?(:linux_system)
         end
 
-        # Checks whether a device is available to be used as physical volume
+        # Checks whether an available device can be used as physical volume
         #
-        # @note A device is available when it has not partitions and it is not
-        #   formatted and it does not belong to another device (raid or volume
-        #   group). A device is also available when it is formated but not mounted.
+        # The device can be used if its has a proper type.
         #
-        # @return [Boolean] true if the device is available; false otherwise
-        def available_disk?(disk)
-          partition_table = disk.partition_table
-          partition_table ? partition_table.partitions.empty? : can_be_used?(disk)
-        end
-
-        # Checks whether a device can be used
-        #
-        # @note A device can be used when it is not formatted and it is not used by
-        #   another device (raid or volume group) or it is formatted but not mounted.
-        #
-        # @return [Boolean] true if the device can be used; false otherwise
-        def can_be_used?(device)
-          !used?(device) || (formatted?(device) && !mounted?(device))
-        end
-
-        # Checks whether a device is already used.
-        #
-        # @note A device is used when it is formatted or belongs to another
-        #   device (raid or volume group). A device is not considered as used
-        #   when it is only encrypted.
-        #
-        # @return [Boolean] true if the device is used; false otherwise
-        def used?(device)
-          descendants = device.descendants
-          return false if descendants.empty?
-          return false if descendants.size == 1 && device.encrypted?
-
-          true
-        end
-
-        # Checks whether a device has a mount point
-        #
-        # @return [Boolean] true if it is mounted; false otherwise
-        def mounted?(device)
-          return false unless formatted?(device)
-
-          !device.filesystem.mount_point.nil?
-        end
-
-        # Checks whether a device is formatted
-        #
-        # @return [Boolean] true if it is formatted; false otherwise
-        def formatted?(device)
-          !device.filesystem.nil?
+        # @param device [Y2Storage::BlkDevice]
+        # @return [Boolean]
+        def valid_device_for_vg?(device)
+          device.is?(:disk, :multipath, :bios_raid, :md)
         end
       end
     end
