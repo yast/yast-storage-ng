@@ -210,7 +210,7 @@ module Y2Partitioner
     end
 
     # @see #device_page_candidates
-    # @see #device_page_section
+    # @see #device_page_parent
     #
     # @return [Integer, String, nil] nil if there is no parent tree entry
     def device_page_section(device)
