@@ -91,7 +91,7 @@ describe Y2Storage::AutoinstProposal do
           "partitions" =>
             [
               {
-                "create" => false, "format" => create, "mountby" => :device,
+                "create" => create_vdc1, "format" => create, "mountby" => :device,
                 "partition_nr" => 1, "partition_id" => 253, "raid_name" => md_name_in_profile
               }
             ]
@@ -180,7 +180,7 @@ describe Y2Storage::AutoinstProposal do
         vdc1 = proposal.devices.find_by_name("/dev/vdc1")
 
         expect(vdb1.sid).to_not eq vdb1_sid
-        expect(vdc1.sid).to eq vdc1_sid
+        expect(vdc1.sid).to_not eq vdc1_sid
       end
     end
 
@@ -191,6 +191,7 @@ describe Y2Storage::AutoinstProposal do
       context "when reusing an existing Md" do
         let(:create) { false }
         let(:create_vdb1) { false }
+        let(:create_vdc1) { false }
 
         before do
           # Mock the system lookup performed as last resort to find a device
@@ -227,6 +228,7 @@ describe Y2Storage::AutoinstProposal do
 
         context "reusing the block devices of the original MD" do
           let(:create_vdb1) { false }
+          let(:create_vdc1) { false }
 
           context "if raid_name is specified as /dev/mdX" do
             let(:md_name_in_profile) { "/dev/md0" }
@@ -245,6 +247,7 @@ describe Y2Storage::AutoinstProposal do
 
         context "re-creating the block devices of the original MD" do
           let(:create_vdb1) { true }
+          let(:create_vdc1) { true }
 
           context "if raid_name is specified as /dev/mdX" do
             let(:md_name_in_profile) { "/dev/md0" }
