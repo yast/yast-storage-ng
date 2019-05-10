@@ -44,18 +44,14 @@ module Y2Partitioner
 
       # @see DeleteDevice#simple_confirm_text
       #
-      # @note The implementation in the base class relies on the #name method
-      #   of the device, which does not exist for filesystems.
+      # @note The implementation in the base class relies on the #display_name
+      #   method of the device, which returns nil for regular (non multi-device)
+      #   filesystems.
       #
       # @return [String]
       def simple_confirm_text
         _("Really delete the filesystem?")
       end
-
-      # By definition, this should never be called for a Btrfs filesystem (it
-      # cannot be a component of other bigger device), but it's redefined to
-      # stay safe (see note on {#simple_confirm_text}).
-      alias_method :recursive_confirm_text_below, :simple_confirm_text
 
       # @see DeleteDevice#committed_device
       def committed_device

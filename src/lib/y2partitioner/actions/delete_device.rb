@@ -148,7 +148,7 @@ module Y2Partitioner
       # @return [String]
       def recursive_confirm_text_below
         # TRANSLATORS %s is a kernel name like /dev/sda1
-        format(_("Really delete %s and all the affected devices?"), device.name)
+        format(_("Really delete %s and all the affected devices?"), device.display_name)
       end
 
       # Text to display in {#simple_confirm}
@@ -156,7 +156,7 @@ module Y2Partitioner
       # @return [String]
       def simple_confirm_text
         # TRANSLATORS %s is the kernel name of the device (e.g., /dev/sda1)
-        format(_("Really delete %s?"), device.name)
+        format(_("Really delete %s?"), device.display_name)
       end
 
       # Controller for a block device
