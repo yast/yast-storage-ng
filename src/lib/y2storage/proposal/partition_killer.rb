@@ -135,12 +135,12 @@ module Y2Storage
 
       # Deletes the given partition and all other partitions in the
       # candidate disks that form some common multidevice storage object
-      # (like volume group or multidevice file system).
+      # (volume group, raid, or multidevice file system).
       #
       # Rationale: when deleting such a partition it makes no sense to leave
       # the other partitions alive. So let's reclaim all the space.
       #
-      # @param partition [Partition] A partition that is part of a storage object
+      # @param partition [Partition] A partition that is part of a multidevice storage object
       # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_with_related_partitions(partition)
         if lvm_vg?(partition)
