@@ -22,6 +22,8 @@ Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
 Group:          System/YaST
 Source:         %{name}-%{version}.tar.bz2
+Url:            https://github.com/yast/yast-storage-ng
+
 # Multidevice Btrfs
 BuildRequires:	libstorage-ng-ruby >= 4.1.118
 BuildRequires:  update-desktop-files
