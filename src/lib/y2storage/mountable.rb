@@ -127,5 +127,12 @@ module Y2Storage
       storage_remove_mount_point
       update_etc_status
     end
+
+    # Whether the device is mounted, according to the devicegraph
+    #
+    # @return [Boolean]
+    def active_mount_point?
+      !mount_point.nil? && mount_point.active?
+    end
   end
 end

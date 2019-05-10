@@ -355,7 +355,7 @@ module Y2Storage
     # @param filesystem [Filesystems::Base]
     # @return [Boolean]
     def mounted_filesystem?(filesystem)
-      filesystem.mount_point && filesystem.mount_point.active?
+      filesystem.active_mount_point?
     end
 
     # Checks whether a device contains an installation repository

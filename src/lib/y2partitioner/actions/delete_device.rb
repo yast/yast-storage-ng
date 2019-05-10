@@ -148,7 +148,7 @@ module Y2Partitioner
       # @return [String]
       def recursive_confirm_text_below
         # TRANSLATORS %s is a kernel name like /dev/sda1
-        format(_("Really delete %s and all the affected devices?"), device.name)
+        format(_("Really delete %s and all the affected devices?"), device.display_name)
       end
 
       # Text to display in {#simple_confirm}
@@ -156,7 +156,7 @@ module Y2Partitioner
       # @return [String]
       def simple_confirm_text
         # TRANSLATORS %s is the kernel name of the device (e.g., /dev/sda1)
-        format(_("Really delete %s?"), device.name)
+        format(_("Really delete %s?"), device.display_name)
       end
 
       # Controller for a block device
@@ -181,7 +181,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It cannot be deleted while mounted.")
 
-        immediate_unmount(controller.committed_device, note: note)
+        immediate_unmount(committed_device, note: note)
       end
 
       # Whether it is necessary to try unmount (i.e., when deleting a mounted block device that
@@ -189,8 +189,23 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def need_try_unmount?
-        return false unless device.is?(:blk_device)
+        return false unless device.is?(:blk_device, :blk_filesystem)
 
+        committed_device_mounted?
+      end
+
+      # Device taken from the system devicegraph
+      #
+      # @return [Y2Storage::Device, nil] nil if the device does not exist on disk yet.
+      def committed_device
+        controller.committed_device
+      end
+
+      # Whether {#committed_device} exists and is mounted, according to the
+      # system devicegraph
+      #
+      # @return [Boolean]
+      def committed_device_mounted?
         controller.mounted_committed_filesystem?
       end
     end

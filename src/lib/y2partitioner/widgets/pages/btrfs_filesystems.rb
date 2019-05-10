@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2partitioner/icons"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/btrfs_add_button"
@@ -46,7 +47,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _("Btrfs")
+          UIState.instance.btrfs_filesystems_label
         end
 
       private

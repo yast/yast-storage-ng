@@ -113,7 +113,8 @@ module Y2Partitioner
       #
       # @return [Array<Strings>]
       def errors
-        [used_device_error, partitions_error, extended_partition_error, lvm_thin_pool_error].compact
+        [used_device_error, partitions_error, btrfs_error,
+         extended_partition_error, lvm_thin_pool_error].compact
       end
 
       # Error when trying to edit an used device
@@ -133,6 +134,28 @@ module Y2Partitioner
             "It cannot be edited.\n" \
             "To edit %{name}, make sure it is not used."),
           name: device.name, users: using_devs.join(", ")
+        )
+      end
+
+      # Error when trying to edit a device that is part of a multi-device Btrfs
+      #
+      # @return [String, nil] nil if the device is not part of a Btrfs
+      def btrfs_error
+        fs = device.filesystem
+        return nil unless fs && fs.multidevice?
+
+        format(
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
+          # Since device names can be rather long, make sure the lines
+          # containing %{name} are sorter than the others.
+          _("The device %{name} belongs to a Btrfs.\n" \
+            "It cannot be edited.\n\n" \
+            "To modify the settings of the Btrfs, edit the filesystem itself\n" \
+            "instead of its individual block devices.\n\n" \
+            "To use %{name} for other purpose, make sure it does not\n" \
+            "belong to the Btrfs filesystem, either deleting the filesystem or\n" \
+            "removing %{name} from it."),
+          name: device.name
         )
       end
 

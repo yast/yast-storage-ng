@@ -239,16 +239,16 @@
       <type>primary</type>
       <id>253</id>
     </Partition>
-    <Ext4>
+    <Btrfs>
       <sid>59</sid>
       <uuid>c126ff68-5a43-4513-91b1-7ae2409a411d</uuid>
-    </Ext4>
+    </Btrfs>
     <MountPoint>
       <sid>60</sid>
       <path>/</path>
       <mount-by>uuid</mount-by>
       <mount-options>acl,user_xattr</mount-options>
-      <mount-type>ext4</mount-type>
+      <mount-type>btrfs</mount-type>
       <active>true</active>
       <in-etc-fstab>true</in-etc-fstab>
       <freq>0</freq>

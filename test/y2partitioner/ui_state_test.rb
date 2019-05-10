@@ -250,6 +250,33 @@ describe Y2Partitioner::UIState do
         end
       end
     end
+
+    context "when the user has opened a btrfs page" do
+      let(:scenario) { "mixed_disks_btrfs" }
+      let(:device) { fake_devicegraph.find_by_name("/dev/sda2").filesystem }
+      let(:another_btrfs) { fake_devicegraph.find_by_name("/dev/sdb2").filesystem }
+
+      let(:page) { Y2Partitioner::Widgets::Pages::Btrfs.new(device, pager) }
+      let(:another_btrfs_page) { Y2Partitioner::Widgets::Pages::Btrfs.new(another_btrfs, pager) }
+
+      before { ui_state.go_to_tree_node(page) }
+
+      context "if the filesystem is still there after redrawing" do
+        before { pages.concat [page, another_btrfs_page] }
+
+        it "selects the correct btrfs page" do
+          expect(ui_state.find_tree_node(pages)).to eq page
+        end
+      end
+
+      context "if the filesystem is not longer there after redrawing" do
+        before { pages << another_btrfs_page }
+
+        it "selects the general btrfs page" do
+          expect(ui_state.find_tree_node(pages)).to eq btrfs_filesystems_page
+        end
+      end
+    end
   end
 
   describe "#find_tab" do
