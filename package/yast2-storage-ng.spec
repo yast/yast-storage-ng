@@ -50,8 +50,7 @@ Requires:       yast2-packager >= 3.3.7
 Requires:       yast2-ruby-bindings >= 4.0.6
 # communicate with udisks
 Requires:       rubygem(ruby-dbus)
-# FIXME: use proper Requires(pre/post/preun/...)
-PreReq:         %fillup_prereq
+Requires(post): %fillup_prereq
 Obsoletes:      yast2-storage
 # speed up the tests in SLE15-SP1+ or TW
 %if 0%{?sle_version} >= 150100 || 0%{?suse_version} > 1500
