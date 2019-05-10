@@ -1,6 +1,7 @@
 #
 # spec file for package yast2-storage-ng
 #
+# Copyright (c) 2019 SUSE LINUX GmbH, Nuernberg, Germany.
 # Copyright (c) 2019 SUSE LLC.
 #
 # All modifications and additions to the file contributed by third parties
@@ -12,56 +13,50 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
-Name:		yast2-storage-ng
-Version:	4.2.14
-Release:	0
-
-BuildRoot:	%{_tmppath}/%{name}-%{version}-build
-Source:		%{name}-%{version}.tar.bz2
-
-# CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
-Requires:	yast2 >= 4.1.11
-# for AbortException and handle direct abort
-Requires:	yast2-ruby-bindings >= 4.0.6
-# Multidevice Btrfs
-Requires:	libstorage-ng-ruby >= 4.1.118
-# communicate with udisks
-Requires:	rubygem(ruby-dbus)
-# Y2Packager::Repository
-Requires:	yast2-packager >= 3.3.7
-# findutils for xargs
-Requires:	findutils
-
-BuildRequires:	update-desktop-files
+Name:           yast2-storage-ng
+Version:        4.2.14
+Release:        0
+Summary:        YaST2 - Storage Configuration
+License:        GPL-2.0-only OR GPL-3.0-only
+Group:          System/YaST
+Source:         %{name}-%{version}.tar.bz2
 # Multidevice Btrfs
 BuildRequires:	libstorage-ng-ruby >= 4.1.118
-BuildRequires:	yast2-ruby-bindings
-BuildRequires:	yast2-devtools
+BuildRequires:  update-desktop-files
+# CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
+BuildRequires:  yast2 >= 4.1.11
+BuildRequires:  yast2-devtools
+# for AbortException and handle direct abort
+BuildRequires:  yast2-ruby-bindings >= 4.0.6
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
+BuildRequires:  rubygem(rspec)
+# communicate with udisks
+BuildRequires:  rubygem(ruby-dbus)
+BuildRequires:  rubygem(yast-rake)
+# findutils for xargs
+Requires:       findutils
+# Multidevice Btrfs
+Requires:       libstorage-ng-ruby >= 4.1.118
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
-BuildRequires:	yast2 >= 4.1.11
+Requires:       yast2 >= 4.1.11
+# Y2Packager::Repository
+Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
-BuildRequires:	yast2-ruby-bindings >= 4.0.6
-BuildRequires:	rubygem(yast-rake)
-BuildRequires:	rubygem(rspec)
+Requires:       yast2-ruby-bindings >= 4.0.6
+# communicate with udisks
+Requires:       rubygem(ruby-dbus)
+# FIXME: use proper Requires(pre/post/preun/...)
+PreReq:         %fillup_prereq
+Obsoletes:      yast2-storage
 # speed up the tests in SLE15-SP1+ or TW
 %if 0%{?sle_version} >= 150100 || 0%{?suse_version} > 1500
-BuildRequires:	rubygem(parallel_tests)
+BuildRequires:  rubygem(parallel_tests)
 %endif
-# communicate with udisks
-BuildRequires:	rubygem(ruby-dbus)
-PreReq:         %fillup_prereq
-
-Obsoletes:	yast2-storage
-
-Group:		System/YaST
-License:	GPL-2.0-only or GPL-3.0-only
-Summary:	YaST2 - Storage Configuration
 
 %description
 This package contains the files for YaST2 that handle access to disk
@@ -69,18 +64,18 @@ devices during installation and on an installed system.
 This YaST2 module uses libstorage-ng.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %check
 rake test:unit
 
 %install
-rake install DESTDIR="%{buildroot}"
+rake install DESTDIR=%{buildroot}
 
 # Remove the license from the /usr/share/doc/packages directory,
 # it is also included in the /usr/share/licenses directory by using
 # the %license tag.
-rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
+rm -f %{buildroot}/%{yast_docdir}/COPYING
 
 %post
 %ifarch s390 s390x
@@ -90,7 +85,6 @@ rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
 %endif
 
 %files
-%defattr(-,root,root)
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
 %{yast_desktopdir}/*.desktop
@@ -108,3 +102,5 @@ rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
 %doc CONTRIBUTING.md
 
 %build
+
+%changelog
