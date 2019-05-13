@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon May 13 14:08:14 UTC 2019 - Steffen Winterfeldt <snwint@suse.com>
+
+- guided proposal frees space from existing multidevice btrfs properly
+  (bsc#1096760); the same for raid using partitions
+- 4.2.15
+
+-------------------------------------------------------------------
 Fri May 10 12:31:21 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: button to delete Btrfs filesystems.

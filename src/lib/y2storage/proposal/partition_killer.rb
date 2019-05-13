@@ -53,11 +53,7 @@ module Y2Storage
         partition = find_partition(device_sid)
         return [] unless partition
 
-        if lvm_vg?(partition)
-          delete_lvm_partitions(partition)
-        else
-          delete_partition(partition)
-        end
+        delete_with_related_partitions(partition)
       end
 
     protected
@@ -137,23 +133,44 @@ module Y2Storage
         logical_parts.size == 1
       end
 
-      # Deletes the given partition and all other partitions in the candidate
-      # disks that are part of the same LVM volume group
+      # Deletes the given partition and all other partitions in the
+      # candidate disks that form some common multidevice storage object
+      # (volume group, raid, or multidevice file system).
       #
-      # Rationale: when deleting a partition that holds a PV of a given VG, we
-      # are effectively killing the whole VG. It makes no sense to leave the
-      # other PVs alive. So let's reclaim all the space.
+      # Rationale: when deleting such a partition it makes no sense to leave
+      # the other partitions alive. So let's reclaim all the space.
       #
-      # @param partition [Partition] A partition that is acting as
-      #   LVM physical volume
+      # @param partition [Partition] A partition that is part of a multidevice storage object
       # @return [Array<Integer>] device sids of all the deleted partitions
-      def delete_lvm_partitions(partition)
-        log.info "Deleting #{partition.name}, which is part of an LVM volume group"
-        vg = partition.lvm_pv.lvm_vg
-        partitions_to_delete = vg.lvm_pvs.map(&:plain_blk_device).select { |dev| dev.is?(:partition) }
-        partitions_to_delete.select! { |p| disks.include?(p.partitionable.name) } if disks
-        target_partitions = partitions_to_delete.map { |p| find_partition(p.sid) }.compact
-        log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"
+      def delete_with_related_partitions(partition)
+        if lvm_vg?(partition)
+          log.info "Deleting #{partition.name}, which is part of an LVM volume group"
+          vg = partition.lvm_pv.lvm_vg
+          devices_to_delete = vg.lvm_pvs.map(&:plain_blk_device)
+        elsif multidevice_filesystem?(partition)
+          log.info "Deleting #{partition.name}, which is part of a multidevice file system"
+          devices_to_delete = partition.filesystem.plain_blk_devices
+        elsif raid?(partition)
+          log.info "Deleting #{partition.name}, which is part of a raid"
+          devices_to_delete = partition.md.plain_devices
+        else
+          log.info "Deleting #{partition.name}, which is not related to other partitions"
+          devices_to_delete = [partition]
+        end
+
+        delete_partitions(devices_to_delete)
+      end
+
+      # Deletes all partitions in the given device list.
+      #
+      # @param devices [Array<BlkDevice>] A list of devices to delete
+      # @return [Array<Integer>] device sids of all deleted partitions
+      def delete_partitions(devices)
+        partitions = devices.select { |dev| dev.is?(:partition) }
+        partitions.select! { |p| disks.include?(p.partitionable.name) } if disks
+        target_partitions = partitions.map { |p| find_partition(p.sid) }.compact
+
+        log.info "These partitions will be deleted: #{target_partitions.map(&:name)}"
         target_partitions.map { |p| delete_partition(p) }.flatten
       end
 
@@ -163,6 +180,22 @@ module Y2Storage
       # @return [Boolean]
       def lvm_vg?(partition)
         !!(partition.lvm_pv && partition.lvm_pv.lvm_vg)
+      end
+
+      # Checks whether the partition is part of a raid
+      #
+      # @param partition [Partition]
+      # @return [Boolean]
+      def raid?(partition)
+        !!partition.md
+      end
+
+      # Checks whether the partition is part of a multidevice file system
+      #
+      # @param partition [Partition]
+      # @return [Boolean]
+      def multidevice_filesystem?(partition)
+        !!(partition.filesystem && partition.filesystem.multidevice?)
       end
     end
   end

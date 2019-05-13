@@ -156,6 +156,57 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect(result.partitions.map(&:name)).to contain_exactly "/dev/sda2", "/dev/sda3"
       end
     end
+
+    context "when deleting a btrfs partition that is part of a multidevice btrfs" do
+      let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+      let(:delete_linux) { :all }
+
+      it "deletes all partitions constituting this btrfs" do
+        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to be_empty
+      end
+
+      it "but deletes only partitions on candidate devices" do
+        settings.candidate_devices = ["/dev/sda"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
+      end
+    end
+
+    context "when deleting a partition that is part of a raid" do
+      let(:scenario) { "raid0-over-partitions.xml" }
+      let(:delete_linux) { :all }
+
+      it "deletes all partitions constituting this raid" do
+        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to be_empty
+      end
+
+      it "but deletes only partitions on candidate devices" do
+        settings.candidate_devices = ["/dev/sda"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
+      end
+    end
+
+    context "when deleting a partition that is part of a lvm volume group" do
+      let(:scenario) { "lvm-over-partitions.xml" }
+      let(:delete_linux) { :all }
+
+      it "deletes all partitions constituting this volume group" do
+        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to be_empty
+      end
+
+      it "but deletes only partitions on candidate devices" do
+        settings.candidate_devices = ["/dev/sda"]
+        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
+      end
+    end
   end
 
   describe "#provide_space" do
