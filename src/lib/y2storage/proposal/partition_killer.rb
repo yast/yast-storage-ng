@@ -174,14 +174,6 @@ module Y2Storage
         target_partitions.map { |p| delete_partition(p) }.flatten
       end
 
-      # Checks whether the partition is part of a multidevice storage object
-      #
-      # @param partition [Partition]
-      # @return [Boolean]
-      def related_partitions?(partition)
-        lvm_vg?(partition) || raid?(partition) || multidevice_filesystem?(partition)
-      end
-
       # Checks whether the partition is part of a volume group
       #
       # @param partition [Partition]
