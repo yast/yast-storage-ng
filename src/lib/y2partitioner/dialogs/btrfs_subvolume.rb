@@ -102,6 +102,7 @@ module Y2Partitioner
         # @param form [Dialogs::BtrfsSubvolume::Form]
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
         def initialize(form, filesystem: nil)
+          textdomain "storage"
           @form = form
           @filesystem = filesystem
         end
@@ -236,6 +237,7 @@ module Y2Partitioner
         # @param form [Dialogs::BtrfsSubvolume::Form]
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
         def initialize(form, filesystem: nil)
+          textdomain "storage"
           @form = form
           @filesystem = filesystem
         end
