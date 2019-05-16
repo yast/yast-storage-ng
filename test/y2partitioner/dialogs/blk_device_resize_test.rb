@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -91,6 +91,36 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       expect(label).to_not be_nil
     end
 
+    context "when the device is not used by a multi-device Btrfs" do
+      let(:partition) { current_graph.find_by_name("/dev/sdb2") }
+
+      it "does not show multi-device Btrfs information" do
+        label = find_label(subject.contents, "Part of Btrfs")
+        expect(label).to be_nil
+      end
+    end
+
+    context "when the device is used by a multi-device Btrfs" do
+      let(:partition) { current_graph.find_by_name("/dev/sdb2") }
+
+      before do
+        sdb1 = current_graph.find_by_name("/dev/sdb1")
+        sdb1.delete_filesystem
+
+        partition.filesystem.add_device(sdb1)
+      end
+
+      it "shows multi-device Btrfs information" do
+        label = find_label(subject.contents, "Part of Btrfs")
+        expect(label).to_not be_nil
+      end
+
+      it "does not show the used size" do
+        label = find_label(subject.contents, "Currently used")
+        expect(label).to be_nil
+      end
+    end
+
     context "when the partition does not exist on disk" do
       it "does not show the used size" do
         label = find_label(subject.contents, "Currently used")
@@ -126,9 +156,10 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       # Regression test for bug#1124146, we were trying to detect the space
       # information for a filesystem that was actually new (not in the system)
       context "and is going to be reformatted" do
-        before { allow(partition).to receive(:filesystem).and_return(new_filesystem) }
-        let(:new_filesystem) { instance_double("Filesystem", type: ext3, sid: 42) }
-        let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
+        before do
+          partition.delete_filesystem
+          partition.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        end
 
         it "does not show the used size" do
           label = find_label(subject.contents, "Currently used")
