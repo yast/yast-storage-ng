@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -101,12 +101,14 @@ module Y2Partitioner
 
       # Error when trying to resize a used device
       #
-      # @note A device is being used when it forms part of an LVM or MD RAID.
+      # A device is being used when it forms part of another device (e.g., LVM or MD RAID). The device
+      # is not considered as used when it belongs to a multi-device filesystem (i.e., Btrfs).
       #
       # @return [String, nil] nil if the device is not being used.
       def used_device_error
         using_devs = device.component_of_names
-        return nil if using_devs.empty?
+
+        return nil if controller.multidevice_filesystem? || using_devs.none?
 
         format(
           # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1) and %{users} is replaced

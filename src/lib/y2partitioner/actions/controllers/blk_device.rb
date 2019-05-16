@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -74,6 +74,15 @@ module Y2Partitioner
           return false unless committed_filesystem?
 
           committed_filesystem.active_mount_point?
+        end
+
+        # Whether the device is used by a multi-device filesystem (i.e., Btrfs)
+        #
+        # @return [Boolean]
+        def multidevice_filesystem?
+          return false unless device.formatted?
+
+          device.filesystem.multidevice?
         end
 
         # Whether the device exists on the system
