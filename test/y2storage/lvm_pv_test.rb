@@ -53,14 +53,14 @@ describe Y2Storage::LvmPv do
     end
   end
 
-  describe "#orphan?" do
+  describe "#unused?" do
     context "when the PV is associated to a VG" do
       let(:scenario) { "complex-lvm-encrypt" }
 
       let(:device_name) { "/dev/sde2" }
 
       it "returns false" do
-        expect(subject.orphan?).to eq(false)
+        expect(subject.unused?).to eq(false)
       end
     end
 
@@ -70,13 +70,13 @@ describe Y2Storage::LvmPv do
       let(:device_name) { "/dev/sda2" }
 
       it "returns true" do
-        expect(subject.orphan?).to eq(true)
+        expect(subject.unused?).to eq(true)
       end
     end
   end
 
   describe "#display_name" do
-    context "when it is an orphan PV" do
+    context "when it is an unused PV" do
       let(:scenario) { "unused_lvm_pvs.xml" }
 
       let(:device_name) { "/dev/sda2" }
@@ -86,7 +86,7 @@ describe Y2Storage::LvmPv do
       end
     end
 
-    context "when it is not an orphan PV" do
+    context "when it is not an unused PV" do
       let(:scenario) { "complex-lvm-encrypt" }
 
       let(:device_name) { "/dev/sde2" }

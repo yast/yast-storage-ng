@@ -58,20 +58,20 @@ module Y2Storage
       blk_device.plain_device
     end
 
-    # Whether the PV is orphan (not associated to any VG)
+    # Whether the PV is unused (not associated to any VG)
     #
     # @return [Boolean]
-    def orphan?
+    def unused?
       lvm_vg.nil?
     end
 
     # Display name to represent the PV
     #
-    # Only orphan PV has its own representation.
+    # Only unused PV has its own representation.
     #
     # @return [String, nil]
     def display_name
-      return nil unless orphan?
+      return nil unless unused?
 
       textdomain "storage"
 
