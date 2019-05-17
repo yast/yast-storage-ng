@@ -93,7 +93,9 @@ module Y2Partitioner
       attr_reader :space_info
 
       def detect_space_info
-        return unless controller.committed_current_filesystem? && !swap?
+        return if controller.multidevice_filesystem? ||
+            !controller.committed_current_filesystem? || swap?
+
         begin
           @space_info = device.filesystem.detect_space_info
         rescue Storage::Exception => e

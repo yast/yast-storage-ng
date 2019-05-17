@@ -230,7 +230,9 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       end
 
       let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
-      let(:filesystem) { instance_double("Filesystem", detect_space_info: space_info, type: ext3) }
+      let(:filesystem) do
+        instance_double("Filesystem", detect_space_info: space_info, type: ext3, multidevice?: false)
+      end
       let(:space_info) { instance_double(Y2Storage::SpaceInfo, used: 10.GiB) }
 
       context "and it is not formatted in the system" do
