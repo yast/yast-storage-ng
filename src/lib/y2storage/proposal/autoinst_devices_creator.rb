@@ -21,7 +21,8 @@
 
 require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_creator"
-require "y2storage/proposal/md_creator"
+require "y2storage/proposal/autoinst_md_creator"
+require "y2storage/proposal/autoinst_bcache_creator"
 require "y2storage/proposal/nfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
