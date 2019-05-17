@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,9 +36,13 @@ describe Y2Partitioner::Actions::EditBlkDevice do
   let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, dev_name) }
 
   describe "#run" do
+    before do
+      allow(Yast2::Popup).to receive(:show)
+    end
+
     RSpec.shared_examples "edit_error" do
       it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :error))
         sequence.run
       end
 
@@ -104,7 +108,16 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       let(:scenario) { "btrfs2-devicegraph.xml" }
       let(:dev_name) { "/dev/sdb1" }
 
-      include_examples "edit_error"
+      it "shows a Btrfs error popup" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(/belongs to a Btrfs/, hash_including(headline: :error))
+
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        expect(sequence.run).to eq :back
+      end
     end
 
     context "if called on an LVM thin pool" do
