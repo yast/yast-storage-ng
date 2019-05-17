@@ -23,7 +23,7 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::Proposal::BcacheCreator do
+describe Y2Storage::Proposal::AutoinstBcacheCreator do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:creator) { described_class.new(fake_devicegraph) }

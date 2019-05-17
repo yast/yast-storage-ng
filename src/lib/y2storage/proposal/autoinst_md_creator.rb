@@ -26,8 +26,9 @@ require "y2storage/proposal/creator_result"
 
 module Y2Storage
   module Proposal
-    # Class to create an MD array according to a Planned::Md object
-    class MdCreator
+    # Class to create an MD array according to a Planned::Md following AutoYaST
+    # specifications for the sizes
+    class AutoinstMdCreator
       include Yast::Logger
 
       # @return [Devicegraph] initial devicegraph

@@ -25,7 +25,8 @@ require "y2storage/proposal/creator_result"
 module Y2Storage
   module Proposal
     # Class to create a bcache device according to a Planned::Bcache object
-    class BcacheCreator
+    # using AutoYaST specifications for the sizes
+    class AutoinstBcacheCreator
       include Yast::Logger
 
       attr_reader :original_devicegraph

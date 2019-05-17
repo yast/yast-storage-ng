@@ -261,7 +261,7 @@ module Y2Storage
       # @param reused_mds [Array<Planned::Md>] MD RAIDs to reuse
       def reuse_mds(reused_mds)
         reused_mds.each_with_object(creator_result) do |md, result|
-          md_creator = Proposal::MdCreator.new(result.devicegraph)
+          md_creator = Proposal::AutoinstMdCreator.new(result.devicegraph)
           result.merge!(md_creator.reuse_partitions(md))
         end
       end
@@ -271,7 +271,7 @@ module Y2Storage
       # @param reused_bcaches [Array<Planned::Bcache>] bcaches to reuse
       def reuse_bcaches(reused_bcaches)
         reused_bcaches.each_with_object(creator_result) do |bcache, result|
-          bcache_creator = Proposal::BcacheCreator.new(result.devicegraph)
+          bcache_creator = Proposal::AutoinstBcacheCreator.new(result.devicegraph)
           result.merge!(bcache_creator.reuse_partitions(bcache))
         end
       end
@@ -383,10 +383,10 @@ module Y2Storage
       #
       # @raise NoDiskSpaceError
       def create_md(devicegraph, md, devices)
-        md_creator = Proposal::MdCreator.new(devicegraph)
+        md_creator = Proposal::AutoinstMdCreator.new(devicegraph)
         md_creator.create_md(md, devices)
       rescue NoDiskSpaceError
-        md_creator = Proposal::MdCreator.new(devicegraph)
+        md_creator = Proposal::AutoinstMdCreator.new(devicegraph)
         new_md = md.clone
         new_md.partitions = flexible_devices(md.partitions)
         md_creator.create_md(new_md, devices)
@@ -400,10 +400,10 @@ module Y2Storage
       # @param caching_devname [String] Caching device name
       # @return [Proposal::CreatorResult] Result containing the specified bcache
       def create_bcache(devicegraph, bcache, backing_devname, caching_devname)
-        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
+        bcache_creator = Proposal::AutoinstBcacheCreator.new(devicegraph)
         bcache_creator.create_bcache(bcache, backing_devname, caching_devname)
       rescue NoDiskSpaceError
-        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
+        bcache_creator = Proposal::AutoinstBcacheCreator.new(devicegraph)
         new_bcache = bcache.clone
         new_bcache.partitions = flexible_devices(bcache.partitions)
         bcache_creator.create_bcache(new_bcache, backing_devname, caching_devname)
