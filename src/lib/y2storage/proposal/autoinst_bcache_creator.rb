@@ -21,6 +21,7 @@
 
 require "y2storage/planned"
 require "y2storage/proposal/creator_result"
+require "y2storage/proposal/autoinst_partition_size"
 
 module Y2Storage
   module Proposal
@@ -28,6 +29,7 @@ module Y2Storage
     # using AutoYaST specifications for the sizes
     class AutoinstBcacheCreator
       include Yast::Logger
+      include AutoinstPartitionSize
 
       attr_reader :original_devicegraph
 
@@ -71,7 +73,7 @@ module Y2Storage
         new_graph = original_devicegraph.duplicate
         planned_bcache.reuse!(new_graph)
         bcache = Y2Storage::Bcache.find_by_name(new_graph, planned_bcache.reuse_name)
-        reused_parts = sized_partitions(planned_bcache.partitions.select(&:reuse?), bcache)
+        reused_parts = sized_partitions(planned_bcache.partitions.select(&:reuse?), device: bcache)
         shrinking, not_shrinking = reused_parts.partition { |v| v.shrink?(new_graph) }
         (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
         CreatorResult.new(new_graph, {})
@@ -123,7 +125,7 @@ module Y2Storage
       def partition_bcache(devicegraph, bcache, planned_bcache)
         PartitionTableCreator.new.create_or_update(bcache, planned_bcache.ptable_type)
         new_partitions = planned_bcache.partitions.reject(&:reuse?)
-        create_partitions(devicegraph, bcache, sized_partitions(new_partitions, bcache))
+        create_partitions(devicegraph, bcache, sized_partitions(new_partitions, device: bcache))
       end
 
       # Creates bcache partitions
@@ -150,23 +152,6 @@ module Y2Storage
         spaces = bcache.free_spaces
         calculator = Proposal::PartitionsDistributionCalculator.new
         calculator.best_distribution(planned_partitions, spaces)
-      end
-
-      # Returns a list of planned partitions adjusting the size
-      #
-      # All partitions which sizes are specified as percentage will get their minimal and maximal
-      # sizes adjusted.
-      #
-      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
-      # @param bcache             [Y2Storage::Bcache] bcache
-      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
-      def sized_partitions(planned_partitions, bcache)
-        planned_partitions.map do |part|
-          new_part = part.clone
-          next new_part unless new_part.percent_size
-          new_part.max = new_part.min = new_part.size_in(bcache)
-          new_part
-        end
       end
 
       # Finds a block device by name

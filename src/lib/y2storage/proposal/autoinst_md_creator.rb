@@ -23,6 +23,7 @@
 
 require "y2storage/planned"
 require "y2storage/proposal/creator_result"
+require "y2storage/proposal/autoinst_partition_size"
 
 module Y2Storage
   module Proposal
@@ -30,6 +31,7 @@ module Y2Storage
     # specifications for the sizes
     class AutoinstMdCreator
       include Yast::Logger
+      include AutoinstPartitionSize
 
       # @return [Devicegraph] initial devicegraph
       attr_reader :original_devicegraph
@@ -75,7 +77,7 @@ module Y2Storage
         new_graph = original_devicegraph.duplicate
         planned_md.reuse!(new_graph)
         md = Y2Storage::Md.find_by_name(new_graph, planned_md.reuse_name)
-        reused_parts = sized_partitions(planned_md.partitions.select(&:reuse?), md)
+        reused_parts = sized_partitions(planned_md.partitions.select(&:reuse?), device: md)
         shrinking, not_shrinking = reused_parts.partition { |v| v.shrink?(new_graph) }
         (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
         CreatorResult.new(new_graph, {})
@@ -128,7 +130,7 @@ module Y2Storage
       def partition_md(devicegraph, md, planned_md)
         PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
         new_partitions = planned_md.partitions.reject(&:reuse?)
-        create_partitions(devicegraph, md, sized_partitions(new_partitions, md))
+        create_partitions(devicegraph, md, sized_partitions(new_partitions, device: md))
       end
 
       # Creates MD RAID partitions
@@ -155,23 +157,6 @@ module Y2Storage
         spaces = md.free_spaces
         calculator = Proposal::PartitionsDistributionCalculator.new
         calculator.best_distribution(planned_partitions, spaces)
-      end
-
-      # Returns a list of planned partitions adjusting the size
-      #
-      # All partitions which sizes are specified as percentage will get their minimal and maximal
-      # sizes adjusted.
-      #
-      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
-      # @param md                 [Y2Storage::Md] RAID
-      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
-      def sized_partitions(planned_partitions, md)
-        planned_partitions.map do |part|
-          new_part = part.clone
-          next new_part unless new_part.percent_size
-          new_part.max = new_part.min = new_part.size_in(md)
-          new_part
-        end
       end
     end
   end
