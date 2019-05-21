@@ -24,8 +24,8 @@ Group:          System/YaST
 Source:         %{name}-%{version}.tar.bz2
 Url:            https://github.com/yast/yast-storage-ng
 
-# Multidevice Btrfs
-BuildRequires:	libstorage-ng-ruby >= 4.1.118
+# Resize multi-device Btrfs
+BuildRequires:	libstorage-ng-ruby >= 4.1.121
 BuildRequires:  update-desktop-files
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
 BuildRequires:  yast2 >= 4.1.11
@@ -41,8 +41,8 @@ BuildRequires:  rubygem(ruby-dbus)
 BuildRequires:  rubygem(yast-rake)
 # findutils for xargs
 Requires:       findutils
-# Multidevice Btrfs
-Requires:       libstorage-ng-ruby >= 4.1.118
+# Resize multi-device Btrfs
+Requires:       libstorage-ng-ruby >= 4.1.121
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
 Requires:       yast2 >= 4.1.11
 # Y2Packager::Repository
