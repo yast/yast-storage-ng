@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,23 +40,24 @@ module Y2Storage
     # rubocop:disable Metrics/LineLength
     REASON_TEXTS =
       {
-        RB_RESIZE_NOT_SUPPORTED_BY_DEVICE:       N_("Resizing is not supported by this device."),
-        RB_MIN_MAX_ERROR:                        N_("Combined limitations of partition and filesystem prevent resizing."),
-        RB_SHRINK_NOT_SUPPORTED_BY_FILESYSTEM:   N_("This filesystem does not support shrinking."),
-        RB_GROW_NOT_SUPPORTED_BY_FILESYSTEM:     N_("This filesystem does not support growing."),
-        RB_FILESYSTEM_INCONSISTENT:              N_("Filesystem consistency check failed."),
-        RB_MIN_SIZE_FOR_FILESYSTEM:              N_("This filesystem already has the minimum possible size."),
-        RB_MAX_SIZE_FOR_FILESYSTEM:              N_("This filesystem already has the maximum possible size."),
-        RB_FILESYSTEM_FULL:                      N_("The filesystem is full."),
-        RB_NO_SPACE_BEHIND_PARTITION:            N_("There is no space behind this partition."),
-        RB_MIN_SIZE_FOR_PARTITION:               N_("This partition already has the minimum possible size."),
-        RB_EXTENDED_PARTITION:                   N_("Extended partitions cannot be resized."),
-        RB_ON_IMPLICIT_PARTITION_TABLE:          N_("The partition on an implicit partition table cannot be resized."),
-        RB_SHRINK_NOT_SUPPORTED_FOR_LVM_LV_TYPE: N_("Shrinking of this type of LVM logical volumes is not supported."),
-        RB_RESIZE_NOT_SUPPORTED_FOR_LVM_LV_TYPE: N_("Resizing of this type of LVM logical volumes is not supported."),
-        RB_NO_SPACE_IN_LVM_VG:                   N_("No space left in the LVM volume group."),
-        RB_MIN_SIZE_FOR_LVM_LV:                  N_("The LVM logical volume already has the minimum possible size."),
-        RB_MAX_SIZE_FOR_LVM_LV_THIN:             N_("The LVM thin logical volume already has the maximum size.")
+        RB_RESIZE_NOT_SUPPORTED_BY_DEVICE:                 N_("Resizing is not supported by this device."),
+        RB_MIN_MAX_ERROR:                                  N_("Combined limitations of partition and filesystem prevent resizing."),
+        RB_SHRINK_NOT_SUPPORTED_BY_FILESYSTEM:             N_("This filesystem does not support shrinking."),
+        RB_SHRINK_NOT_SUPPORTED_BY_MULTIDEVICE_FILESYSTEM: N_("This multi-device filesystem does not support shrinking."),
+        RB_GROW_NOT_SUPPORTED_BY_FILESYSTEM:               N_("This filesystem does not support growing."),
+        RB_FILESYSTEM_INCONSISTENT:                        N_("Filesystem consistency check failed."),
+        RB_MIN_SIZE_FOR_FILESYSTEM:                        N_("This filesystem already has the minimum possible size."),
+        RB_MAX_SIZE_FOR_FILESYSTEM:                        N_("This filesystem already has the maximum possible size."),
+        RB_FILESYSTEM_FULL:                                N_("The filesystem is full."),
+        RB_NO_SPACE_BEHIND_PARTITION:                      N_("There is no space behind this partition."),
+        RB_MIN_SIZE_FOR_PARTITION:                         N_("This partition already has the minimum possible size."),
+        RB_EXTENDED_PARTITION:                             N_("Extended partitions cannot be resized."),
+        RB_ON_IMPLICIT_PARTITION_TABLE:                    N_("The partition on an implicit partition table cannot be resized."),
+        RB_SHRINK_NOT_SUPPORTED_FOR_LVM_LV_TYPE:           N_("Shrinking of this type of LVM logical volumes is not supported."),
+        RB_RESIZE_NOT_SUPPORTED_FOR_LVM_LV_TYPE:           N_("Resizing of this type of LVM logical volumes is not supported."),
+        RB_NO_SPACE_IN_LVM_VG:                             N_("No space left in the LVM volume group."),
+        RB_MIN_SIZE_FOR_LVM_LV:                            N_("The LVM logical volume already has the minimum possible size."),
+        RB_MAX_SIZE_FOR_LVM_LV_THIN:                       N_("The LVM thin logical volume already has the maximum size.")
       }.freeze
     # rubocop:enable Metrics/LineLength
 

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,11 +20,10 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast2/popup"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/filesystem_steps"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
@@ -104,7 +103,7 @@ module Y2Partitioner
         return true if errors.empty?
 
         # Only first error is shown
-        Yast::Popup.Error(errors.first)
+        Yast2::Popup.show(errors.first, headline: :error)
 
         false
       end
@@ -113,18 +112,23 @@ module Y2Partitioner
       #
       # @return [Array<Strings>]
       def errors
-        [used_device_error, partitions_error, btrfs_error,
-         extended_partition_error, lvm_thin_pool_error].compact
+        [
+          btrfs_error,
+          used_device_error,
+          partitions_error,
+          extended_partition_error,
+          lvm_thin_pool_error
+        ].compact
       end
 
       # Error when trying to edit an used device
       #
-      # @note A device is being used when it forms part of an LVM or MD RAID.
+      # A device is being used when it forms part of another device (e.g., LVM or MD RAID).
       #
       # @return [String, nil] nil if the device is not being used.
       def used_device_error
         using_devs = device.component_of_names
-        return nil if using_devs.empty?
+        return nil if using_devs.none?
 
         format(
           # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1)

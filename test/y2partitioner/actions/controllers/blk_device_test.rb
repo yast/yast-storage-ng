@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -176,6 +176,40 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
           it "returns true" do
             expect(controller.mounted_committed_filesystem?).to eq(true)
           end
+        end
+      end
+    end
+  end
+
+  describe "#multidevice_filesystem?" do
+    let(:scenario) { "btrfs2-devicegraph.xml" }
+
+    context "when the device is not formatted" do
+      let(:device_name) { "/dev/sda2" }
+
+      before do
+        device.delete_filesystem
+      end
+
+      it "returns false" do
+        expect(controller.multidevice_filesystem?).to eq(false)
+      end
+    end
+
+    context "when the device is formatted" do
+      context "and it used by a single-device filesystem" do
+        let(:device_name) { "/dev/sda2" }
+
+        it "returns false" do
+          expect(controller.multidevice_filesystem?).to eq(false)
+        end
+      end
+
+      context "and it used by a multi-device filesystem" do
+        let(:device_name) { "/dev/sdb1" }
+
+        it "returns true" do
+          expect(controller.multidevice_filesystem?).to eq(true)
         end
       end
     end

@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -76,6 +76,28 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       let(:device_name) { "/dev/sda1" }
 
       include_examples "resize_error"
+    end
+  end
+
+  shared_examples "can resize" do
+    context "and the user goes forward in the dialog" do
+      before do
+        allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+      end
+
+      it "returns :finish" do
+        expect(action.run).to eq(:finish)
+      end
+    end
+
+    context "and the user aborts the process" do
+      before do
+        allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+      end
+
+      it "returns :abort" do
+        expect(action.run).to eq(:abort)
+      end
     end
   end
 
@@ -234,29 +256,19 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       context "when the partition can be resized" do
         let(:can_resize) { true }
 
+        context "and the partition is used by a multi-device Btrfs" do
+          let(:scenario) { "btrfs2-devicegraph.xml" }
+
+          let(:device_name) { "/dev/sdb1" }
+
+          include_examples "can resize"
+        end
+
         context "and the partition does not hold an LVM neither a MD RAID" do
           let(:scenario) { "mixed_disks.yml" }
           let(:device_name) { "/dev/sda1" }
 
-          context "and the user goes forward in the dialog" do
-            before do
-              allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
-            end
-
-            it "returns :finish" do
-              expect(action.run).to eq(:finish)
-            end
-          end
-
-          context "and the user aborts the process" do
-            before do
-              allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
-            end
-
-            it "returns :abort" do
-              expect(action.run).to eq(:abort)
-            end
-          end
+          include_examples "can resize"
         end
 
         include_examples "partition_holds_lvm"
@@ -292,24 +304,19 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       context "when the volume can be resized" do
         let(:can_resize) { true }
 
-        context "and the user goes forward in the dialog" do
+        include_examples "can resize"
+
+        context "when the volume is used by a multi-device Btrfs" do
           before do
-            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+            lv.delete_filesystem
+            fs = lv.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+
+            lv2 = current_graph.find_by_name("/dev/vg1/lv2")
+            lv2.delete_filesystem
+            fs.add_device(lv2)
           end
 
-          it "returns :finish" do
-            expect(action.run).to eq(:finish)
-          end
-        end
-
-        context "and the user aborts the process" do
-          before do
-            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
-          end
-
-          it "returns :abort" do
-            expect(action.run).to eq(:abort)
-          end
+          include_examples "can resize"
         end
       end
     end

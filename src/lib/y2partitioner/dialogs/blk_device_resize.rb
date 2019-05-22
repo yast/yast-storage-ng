@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -93,7 +93,9 @@ module Y2Partitioner
       attr_reader :space_info
 
       def detect_space_info
-        return unless controller.committed_current_filesystem? && !swap?
+        return if controller.multidevice_filesystem? ||
+            !controller.committed_current_filesystem? || swap?
+
         begin
           @space_info = device.filesystem.detect_space_info
         rescue Storage::Exception => e
@@ -157,15 +159,21 @@ module Y2Partitioner
 
       # Widgets to show size info of the device (current and used sizes)
       #
-      # @note Used size is only shown if space info can be detected.
+      # Used size is only shown if space info can be detected.
+      #
+      # @return [Array<CWM::WidgetTerm>]
       def size_info
         widgets = []
         widgets << current_size_info
-        widgets << used_size_info unless space_info.nil?
+        widgets << size_details_info
+        widgets.compact!
+
         VBox(*widgets)
       end
 
       # Widget for current size
+      #
+      # @return [CWM::WidgetTerm]
       def current_size_info
         size = device.size.to_human_string
         # TRANSLATORS: label for current size of the partition or LVM logical volume,
@@ -173,8 +181,30 @@ module Y2Partitioner
         Left(Label(format(_("Current size: %{size}"), size: size)))
       end
 
+      # Widget with more details about the size
+      #
+      # @return [CWM::WidgetTerm, nil] nil if there is no details to show
+      def size_details_info
+        multidevice_filesystem_info || used_size_info
+      end
+
+      # Widget with information when the device belongs to a multi-device filesystem
+      #
+      # @return [CWM::WidgetTerm, nil] nil if the device does not belong to a multi-device filesystem
+      def multidevice_filesystem_info
+        return nil unless controller.multidevice_filesystem?
+
+        # TRANSLATORS: label when the device is used by a multi-device Btrfs, where %{btrfs} is replaced
+        # by the display name of the filesystem (e.g., "Btrfs over 5 devices").
+        Left(Label(format(_("Part of %{btrfs}"), btrfs: device.filesystem.display_name)))
+      end
+
       # Widget for used size
+      #
+      # @return [CWM::WidgetTerm, nil] nil when used size cannot be calculated
       def used_size_info
+        return nil unless space_info
+
         size = used_size.to_human_string
         # TRANSLATORS: label for currently used size of the partition or LVM volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
@@ -258,21 +288,21 @@ module Y2Partitioner
         immediate_unmount(controller.committed_device, full_message: message, allow_continue: true)
       end
 
-      # Whether the device is going to be shrinked
+      # Whether the device is going to be shrunk
       #
       # @return [Boolean]
       def shrinking?
         selected_size < device.size
       end
 
-      # Whether the device is going to be growed
+      # Whether the device is going to be grown
       #
       # @return [Boolean]
       def growing?
         selected_size > device.size
       end
 
-      # Whether the device is going to be growed more than 50 GiB
+      # Whether the device is going to be grown more than 50 GiB
       #
       # @note Threshold to consider a big growing is defined in the old code, but there is not
       #   any kind of explanation:
@@ -283,7 +313,7 @@ module Y2Partitioner
         growing? && growing_size > Y2Storage::DiskSize.GiB(50)
       end
 
-      # How much the device is going to be growed
+      # How much the device is going to be grown
       #
       # @return [Y2Storage::DiskSize]
       def growing_size
