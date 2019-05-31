@@ -17,6 +17,7 @@ X-SuSE-YaST-Keywords=storage,disk,system,partition
 Icon=yast-disk
 Exec=xdg-su -c "/sbin/yast2 partitioner"
 
-Name=Partitioner
-GenericName=Partition hard disks (including RAID, LVM, and encrypted file systems)
+Name=YaST Partitioner
+GenericName=Partitioner
+Comment=Partition hard disks (including RAID, LVM, and encrypted file systems)
 StartupNotify=true
