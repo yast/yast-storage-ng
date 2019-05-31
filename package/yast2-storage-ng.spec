@@ -21,8 +21,9 @@ Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
 Group:          System/YaST
-Source:         %{name}-%{version}.tar.bz2
 Url:            https://github.com/yast/yast-storage-ng
+
+Source:         %{name}-%{version}.tar.bz2
 
 # Resize multi-device Btrfs
 BuildRequires:	libstorage-ng-ruby >= 4.1.121
@@ -39,6 +40,11 @@ BuildRequires:  rubygem(rspec)
 # communicate with udisks
 BuildRequires:  rubygem(ruby-dbus)
 BuildRequires:  rubygem(yast-rake)
+# speed up the tests in SLE15-SP1+ or TW
+%if 0%{?sle_version} >= 150100 || 0%{?suse_version} > 1500
+BuildRequires:  rubygem(parallel_tests)
+%endif
+
 # findutils for xargs
 Requires:       findutils
 # Resize multi-device Btrfs
@@ -52,11 +58,8 @@ Requires:       yast2-ruby-bindings >= 4.0.6
 # communicate with udisks
 Requires:       rubygem(ruby-dbus)
 Requires(post): %fillup_prereq
+
 Obsoletes:      yast2-storage
-# speed up the tests in SLE15-SP1+ or TW
-%if 0%{?sle_version} >= 150100 || 0%{?suse_version} > 1500
-BuildRequires:  rubygem(parallel_tests)
-%endif
 
 %description
 This package contains the files for YaST2 that handle access to disk
@@ -69,13 +72,11 @@ This YaST2 module uses libstorage-ng.
 %check
 rake test:unit
 
-%install
-rake install DESTDIR=%{buildroot}
+%build
 
-# Remove the license from the /usr/share/doc/packages directory,
-# it is also included in the /usr/share/licenses directory by using
-# the %license tag.
-rm -f %{buildroot}/%{yast_docdir}/COPYING
+%install
+%yast_install
+%yast_metainfo
 
 %post
 %ifarch s390 s390x
@@ -85,22 +86,17 @@ rm -f %{buildroot}/%{yast_docdir}/COPYING
 %endif
 
 %files
-%{yast_dir}/clients/*.rb
-%{yast_dir}/lib
-%{yast_desktopdir}/*.desktop
-%{yast_fillupdir}/*
-%{yast_ybindir}/*
-
+%{yast_clientdir}
+%{yast_libdir}
+%{yast_desktopdir}
+%{yast_metainfodir}
+%{yast_fillupdir}
+%{yast_ybindir}
 # agents-scr
-%{yast_scrconfdir}/*.scr
-
-# icons
+%{yast_scrconfdir}
 %{yast_icondir}
-
 %license COPYING
 %doc README.md
 %doc CONTRIBUTING.md
-
-%build
 
 %changelog
