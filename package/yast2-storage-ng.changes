@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May 10 14:59:50 UTC 2019 - ancor@suse.com
+
+- AutoYaST: do not ask for a reusable filesystem when it's not
+  really needed (bsc#1134330).
+- 4.1.84
+
+-------------------------------------------------------------------
 Mon Apr 15 15:46:04 UTC 2019 - ancor@suse.com
 
 - Partitioner: fixed translation issues related to bcache
