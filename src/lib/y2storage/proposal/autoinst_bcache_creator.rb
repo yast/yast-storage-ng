@@ -20,8 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/planned"
-require "y2storage/proposal/creator_result"
-require "y2storage/proposal/autoinst_partition_size"
+require "y2storage/proposal/autoinst_partitioner"
 
 module Y2Storage
   module Proposal
@@ -29,7 +28,6 @@ module Y2Storage
     # using AutoYaST specifications for the sizes
     class AutoinstBcacheCreator
       include Yast::Logger
-      include AutoinstPartitionSize
 
       attr_reader :original_devicegraph
 
@@ -55,28 +53,8 @@ module Y2Storage
             create_bcache_device(new_graph, planned_bcache, backing_devname, caching_devname)
           end
 
-        if planned_bcache.partitions.empty?
-          format_bcache(new_graph, bcache, planned_bcache)
-        else
-          partition_bcache(new_graph, bcache, planned_bcache)
-        end
-      end
-
-      # Reuses logical volumes for the devicegraph
-      #
-      # @note This method does not modify the original devicegraph but returns
-      #   a new copy containing the changes.
-      #
-      # @param planned_bcache [Planned::Bcache] bcache device
-      # @return [CreatorResult] result containing the reused partitions
-      def reuse_partitions(planned_bcache)
-        new_graph = original_devicegraph.duplicate
-        planned_bcache.reuse!(new_graph)
-        bcache = Y2Storage::Bcache.find_by_name(new_graph, planned_bcache.reuse_name)
-        reused_parts = sized_partitions(planned_bcache.partitions.select(&:reuse?), device: bcache)
-        shrinking, not_shrinking = reused_parts.partition { |v| v.shrink?(new_graph) }
-        (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
-        CreatorResult.new(new_graph, {})
+        partitioner = AutoinstPartitioner.new(new_graph)
+        partitioner.process_device(bcache, planned_bcache)
       end
 
     private
@@ -103,55 +81,6 @@ module Y2Storage
       # @return [Y2Storage::Bcache,nil] bcache device; nil if it is not found
       def find_bcache(devicegraph, name)
         devicegraph.bcaches.find { |r| r.name == name }
-      end
-
-      # Formats the bcache to be used as a filesystem
-      #
-      # @param devicegraph    [Devicegraph] Devicegraph to search for the bcache device
-      # @param bcache         [Bcache] bcache device to format
-      # @param planned_bcache [Planned::Bcache] Planned bcache
-      # @return [Proposal::CreatorResult] Result containing the formatted bcache
-      def format_bcache(devicegraph, bcache, planned_bcache)
-        planned_bcache.format!(bcache)
-        CreatorResult.new(devicegraph, bcache.name => planned_bcache)
-      end
-
-      # Creates bcache partitions and set up them according to the plan
-      #
-      # @param devicegraph    [Devicegraph] Devicegraph to work on
-      # @param bcache         [Bcache] bcache device to format
-      # @param planned_bcache [Planned::Bcache] Planned bcache
-      # @return [Proposal::CreatorResult] Result containing the partitioned bcache
-      def partition_bcache(devicegraph, bcache, planned_bcache)
-        PartitionTableCreator.new.create_or_update(bcache, planned_bcache.ptable_type)
-        new_partitions = planned_bcache.partitions.reject(&:reuse?)
-        create_partitions(devicegraph, bcache, sized_partitions(new_partitions, device: bcache))
-      end
-
-      # Creates bcache partitions
-      #
-      # @param devicegraph        [Devicegraph] Devicegraph to operate on
-      # @param bcache             [Bcache] bcache
-      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
-      # @return [CreatorResult] Result of creating the partitions
-      #
-      # @raise NoDiskSpaceError
-      def create_partitions(devicegraph, bcache, planned_partitions)
-        dist = best_distribution(bcache, planned_partitions)
-        raise NoDiskSpaceError, "Partitions cannot be allocated into the bcache" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(devicegraph)
-        part_creator.create_partitions(dist)
-      end
-
-      # Finds the best distribution of partitions within a bcache
-      #
-      # @param bcache             [Bcache] bcache
-      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
-      # @return [PartitionsDistribution] Distribution of partitions
-      def best_distribution(bcache, planned_partitions)
-        spaces = bcache.free_spaces
-        calculator = Proposal::PartitionsDistributionCalculator.new
-        calculator.best_distribution(planned_partitions, spaces)
       end
 
       # Finds a block device by name
