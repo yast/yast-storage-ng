@@ -127,7 +127,12 @@ module Y2Storage
 
     private
 
-      # @return [Devicegraph] devicegraph to operate on
+      # Devicegraph to operate on
+      #
+      # @note Unless specified otherwise, all public methods modify this
+      #   devicegraph directly
+      #
+      # @return [Devicegraph]
       attr_reader :devicegraph
 
       # Reuses partitions for the given devicegraph

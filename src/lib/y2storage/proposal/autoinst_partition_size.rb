@@ -39,8 +39,8 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
       # @param device [Partitionable, nil] concrete device to partition, if any
-      # @param devicegraph [Partitionable] devicegraph to look up the devices,
-      #   to partition, if no concrete device is provided
+      # @param devicegraph [Devicegraph, nil] devicegraph to look up the devices, if no
+      #     concrete device is provided
       # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
       def sized_partitions(planned_partitions, device: nil, devicegraph: nil)
         if !(device || devicegraph)
@@ -60,6 +60,7 @@ module Y2Storage
       #
       # The min_size is removed and a proportional weight is set for every device.
       #
+      # @param devices [Array<Planned::Partition>] initial list of planned devices
       # @return [Array<Planned::Partition>]
       def flexible_partitions(devices)
         devices.map do |device|

@@ -59,6 +59,7 @@ module Y2Storage
 
     private
 
+      # @param devicegraph     [Devicegraph] devicegraph in which the device must be created
       # @param planned_bcache  [Planned::Bcache] bcache device
       # @param backing_devname [String] Backing device name
       # @param caching_devname [String] Caching device name
