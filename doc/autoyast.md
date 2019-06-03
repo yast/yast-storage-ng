@@ -158,8 +158,8 @@ devicegraph and the list of planned devices.
 The logic to create each plan device, however, is splitted into several classes:
 
 * {Y2Storage::Proposal::LvmCreator} for {Y2Storage::Planned::LvmVg}.
-* {Y2Storage::Proposal::MdCreator} for {Y2Storage::Planned::Md}.
-* {Y2Storage::Proposal::BcacheCreator} for {Y2Storage::Planned::Bcache}.
+* {Y2Storage::Proposal::AutoinstMdCreator} for {Y2Storage::Planned::Md}.
+* {Y2Storage::Proposal::AutoinstBcacheCreator} for {Y2Storage::Planned::Bcache}.
 * {Y2Storage::Proposal::NfsCreator} for {Y2Storage::Planned::Nfs}.
 
 Note that there are no separate classes for {Y2Storage::Planned::Disk} and

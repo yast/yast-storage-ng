@@ -23,7 +23,7 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::Proposal::BcacheCreator do
+describe Y2Storage::Proposal::AutoinstBcacheCreator do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:creator) { described_class.new(fake_devicegraph) }
@@ -119,19 +119,6 @@ describe Y2Storage::Proposal::BcacheCreator do
       end
     end
 
-    context "when partitions does not fit" do
-      let(:root) do
-        planned_partition(
-          mount_point: "/", type: Y2Storage::Filesystems::Type::BTRFS, min_size: 1.TiB
-        )
-      end
-
-      it "raises a NoDiskSpaceError" do
-        expect { creator.create_bcache(planned_bcache0, backing_devname, caching_devname) }
-          .to raise_error(Y2Storage::NoDiskSpaceError)
-      end
-    end
-
     context "when the bcache cset already exists" do
       let(:scenario) { "bcache1.xml" }
 
@@ -221,23 +208,6 @@ describe Y2Storage::Proposal::BcacheCreator do
           end
         end
       end
-    end
-  end
-
-  describe "#reuse_partitions" do
-    let(:scenario) { "bcache1.xml" }
-    let(:real_bcache) { fake_devicegraph.bcaches.first }
-
-    before do
-      planned_bcache0.reuse_name = real_bcache.name
-      root.reuse_name = "/dev/bcache0p1"
-    end
-
-    it "reuses the partitions" do
-      devicegraph = creator.reuse_partitions(planned_bcache0).devicegraph
-      reused_bcache = devicegraph.bcaches.first
-      mount_point = reused_bcache.partitions.first.mount_point
-      expect(mount_point.path).to eq("/")
     end
   end
 end

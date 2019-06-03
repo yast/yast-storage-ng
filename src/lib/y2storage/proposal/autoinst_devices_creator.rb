@@ -21,7 +21,10 @@
 
 require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_creator"
-require "y2storage/proposal/md_creator"
+require "y2storage/proposal/autoinst_partition_size"
+require "y2storage/proposal/autoinst_partitioner"
+require "y2storage/proposal/autoinst_md_creator"
+require "y2storage/proposal/autoinst_bcache_creator"
 require "y2storage/proposal/nfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
@@ -46,7 +49,7 @@ module Y2Storage
     # attempt reducing all planned devices proportionally. In order to do so,
     # it will remove the min_size limit (setting it to just 1 byte) and,
     # additionally, it will set a proportional weight for every partition (see
-    # {#flexible_devices}).
+    # {AutoinstPartitionSize#flexible_partitions}).
     #
     # Although this approach may not produce the optimal results, it is less
     # intrusive and easier to maintain than other alternatives. Bear in mind
@@ -61,6 +64,7 @@ module Y2Storage
     # running in this flexible mode.
     class AutoinstDevicesCreator
       include Yast::Logger
+      include AutoinstPartitionSize
 
       # Constructor
       #
@@ -111,24 +115,6 @@ module Y2Storage
 
       # @return [Devicegraph] Current devicegraph
       attr_reader :devicegraph
-
-      # Finds the best distribution for the given planned partitions
-      #
-      # @see Proposal::PartitionsDistributionCalculator#best_distribution
-      #
-      # @param planned_partitions [Array<Planned::Partition>] Partitions to add
-      # @return [Planned::PartitionsDistribution]
-      def best_distribution(planned_partitions)
-        disks = devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
-        spaces = disks.map(&:free_spaces).flatten
-
-        calculator = Proposal::PartitionsDistributionCalculator.new
-        dist = calculator.best_distribution(planned_partitions, spaces)
-        return dist if dist
-
-        # Second try with more flexible planned partitions
-        calculator.best_distribution(flexible_devices(planned_partitions), spaces)
-      end
 
     private
 
@@ -184,13 +170,14 @@ module Y2Storage
 
       # Process planned partitions
       def process_partitions
-        planned_partitions = sized_partitions(planned_devices.disk_partitions)
+        planned_partitions = planned_devices.disk_partitions
+        planned_partitions = sized_partitions(planned_partitions, devicegraph: original_graph)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
-        reuse_partitions(parts_to_reuse)
+        AutoinstPartitioner.new(devicegraph).reuse_partitions(parts_to_reuse)
 
         add_devices_to_create(parts_to_create)
         add_devices_to_reuse(parts_to_reuse)
-        self.creator_result = create_partitions(parts_to_create)
+        self.creator_result = create_partitions(parts_to_create, devicegraph)
       end
 
       # Formats and/or mounts the disk like block devices (Xen virtual partitions and full disks)
@@ -211,7 +198,7 @@ module Y2Storage
       def process_mds
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devices_to_reuse)
-        reuse_mds(mds_to_reuse)
+        reuse_partitionables(mds_to_reuse)
 
         add_devices_to_create(mds_to_create)
         add_devices_to_reuse(mds_to_reuse.flat_map(&:partitions))
@@ -221,7 +208,7 @@ module Y2Storage
       # Process planned bcaches
       def process_bcaches
         bcaches_to_reuse, bcaches_to_create = planned_devices.bcaches.partition(&:reuse?)
-        reuse_bcaches(bcaches_to_reuse)
+        reuse_partitionables(bcaches_to_reuse)
 
         add_devices_to_create(bcaches_to_create)
         add_devices_to_reuse(bcaches_to_reuse.flat_map(&:partitions))
@@ -244,34 +231,13 @@ module Y2Storage
         self.creator_result = create_nfs_filesystems(planned_devices.nfs_filesystems)
       end
 
-      # Reuses partitions for the given devicegraph
+      # Reuses a partitionable device
       #
-      # Shrinking partitions/logical volumes should be processed first in order to free
-      # some space for growing ones.
-      #
-      # @param reused_devices  [Array<Planned::Partition>] Partitions to reuse
-      def reuse_partitions(reused_devices)
-        shrinking, not_shrinking = reused_devices.partition { |d| d.shrink?(devicegraph) }
-        (shrinking + not_shrinking).each { |d| d.reuse!(devicegraph) }
-      end
-
-      # Reuses MD RAIDs for the given devicegraph
-      #
-      # @param reused_mds [Array<Planned::Md>] MD RAIDs to reuse
-      def reuse_mds(reused_mds)
-        reused_mds.each_with_object(creator_result) do |md, result|
-          md_creator = Proposal::MdCreator.new(result.devicegraph)
-          result.merge!(md_creator.reuse_partitions(md))
-        end
-      end
-
-      # Reuses bcaches for the given devicegraph
-      #
-      # @param reused_bcaches [Array<Planned::Bcache>] bcaches to reuse
-      def reuse_bcaches(reused_bcaches)
-        reused_bcaches.each_with_object(creator_result) do |bcache, result|
-          bcache_creator = Proposal::BcacheCreator.new(result.devicegraph)
-          result.merge!(bcache_creator.reuse_partitions(bcache))
+      # @param reused_devices [Array<Planned::Device>] MD RAIDs or bcache to reuse
+      def reuse_partitionables(reused_devices)
+        reused_devices.each_with_object(creator_result) do |dev, result|
+          partitioner = AutoinstPartitioner.new(result.devicegraph)
+          result.merge!(partitioner.reuse_device_partitions(dev))
         end
       end
 
@@ -289,15 +255,10 @@ module Y2Storage
       #
       # @param new_partitions [Array<Planned::Partition>] Devices to create
       # @return [PartitionCreatorResult]
-      def create_partitions(new_partitions)
-        log.info "Partitions to create: #{new_partitions}"
-        primary, non_primary = new_partitions.partition(&:primary)
-        parts_to_create = primary + non_primary
-
-        dist = best_distribution(parts_to_create)
-        raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(devicegraph)
-        part_creator.create_partitions(dist)
+      def create_partitions(new_partitions, devicegraph)
+        disks = devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
+        partitioner = AutoinstPartitioner.new(devicegraph)
+        partitioner.create_partitions(new_partitions, disks)
       end
 
       # Creates MD RAID devices in the given devicegraph
@@ -382,13 +343,8 @@ module Y2Storage
       #
       # @raise NoDiskSpaceError
       def create_md(devicegraph, md, devices)
-        md_creator = Proposal::MdCreator.new(devicegraph)
+        md_creator = Proposal::AutoinstMdCreator.new(devicegraph)
         md_creator.create_md(md, devices)
-      rescue NoDiskSpaceError
-        md_creator = Proposal::MdCreator.new(devicegraph)
-        new_md = md.clone
-        new_md.partitions = flexible_devices(md.partitions)
-        md_creator.create_md(new_md, devices)
       end
 
       # Creates a bcache
@@ -399,13 +355,8 @@ module Y2Storage
       # @param caching_devname [String] Caching device name
       # @return [Proposal::CreatorResult] Result containing the specified bcache
       def create_bcache(devicegraph, bcache, backing_devname, caching_devname)
-        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
+        bcache_creator = Proposal::AutoinstBcacheCreator.new(devicegraph)
         bcache_creator.create_bcache(bcache, backing_devname, caching_devname)
-      rescue NoDiskSpaceError
-        bcache_creator = Proposal::BcacheCreator.new(devicegraph)
-        new_bcache = bcache.clone
-        new_bcache.partitions = flexible_devices(bcache.partitions)
-        bcache_creator.create_bcache(new_bcache, backing_devname, caching_devname)
       end
 
       # Creates a volume group in the given devicegraph
@@ -421,7 +372,7 @@ module Y2Storage
         log.error error.message
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         new_vg = vg.clone
-        new_vg.lvs = flexible_devices(vg.lvs)
+        new_vg.lvs = flexible_partitions(vg.lvs)
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
@@ -457,20 +408,6 @@ module Y2Storage
         device.respond_to?(query_method) && device.send(query_method, bcache_name)
       end
 
-      # Return a new planned devices with flexible limits
-      #
-      # The min_size is removed and a proportional weight is set for every device.
-      #
-      # @return [Hash<Planned::Partition => Planned::Partition>]
-      def flexible_devices(devices)
-        devices.map do |device|
-          new_device = device.clone
-          new_device.weight = device.min_size.to_i
-          new_device.min_size = DiskSize.B(1)
-          new_device
-        end
-      end
-
       # Return devices which can be reused by an MD RAID
       #
       # @param planned_devices [Planned::DevicesCollection] collection of planned devices
@@ -485,23 +422,6 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def reusable_by_bcache(planned_devices)
         planned_devices.select { |d| d.respond_to?(:bcache_backing_for) }
-      end
-
-      # Returns a list of planned partitions adjusting the size
-      #
-      # All partitions which sizes are specified as percentage will get their minimal and maximal
-      # sizes adjusted.
-      #
-      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
-      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
-      def sized_partitions(planned_partitions)
-        planned_partitions.map do |part|
-          new_part = part.clone
-          next new_part unless new_part.percent_size
-          disk = original_graph.find_by_name(part.disk)
-          new_part.max = new_part.min = new_part.size_in(disk)
-          new_part
-        end
       end
     end
   end

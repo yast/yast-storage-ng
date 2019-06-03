@@ -274,6 +274,36 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           expect(md.devices.size).to eq(2)
         end
       end
+
+      context "when a partition within the RAID is too big" do
+        let(:scenario) { "empty_hard_disk_50GiB" }
+
+        let(:member1) { planned_partition(raid_name: "/dev/md0", min_size: 20.GiB) }
+        let(:member2) { planned_partition(raid_name: "/dev/md0", min_size: 20.GiB) }
+        let(:partitions) { [member1, member2] }
+
+        let(:md0) do
+          planned_md(name: "/dev/md0", partitions: [root], md_level: Y2Storage::MdLevel::RAID1)
+        end
+
+        let(:root) do
+          planned_partition(filesystem_type: filesystem_type, mount_point: "/", min_size: 250.GiB)
+        end
+
+        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, md0]) }
+
+        it "shrinks the partition to make it fit into the MD RAID" do
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
+          devicegraph = result.devicegraph
+          root_part = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
+          expect(root_part.size).to be < root.min_size
+        end
+
+        it "registers which devices were shrinked" do
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
+          expect(result.shrinked_partitions.map(&:planned)).to eq([root])
+        end
+      end
     end
 
     describe "using Bcache" do
