@@ -30,7 +30,7 @@ BuildRequires:	libstorage-ng-ruby >= 4.1.121
 BuildRequires:  update-desktop-files
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
 BuildRequires:  yast2 >= 4.1.11
-BuildRequires:  yast2-devtools
+BuildRequires:  yast2-devtools >= 4.2.2
 # for AbortException and handle direct abort
 BuildRequires:  yast2-ruby-bindings >= 4.0.6
 # yast2-xml dependency is added by yast2 but ignored in the
