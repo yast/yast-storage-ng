@@ -181,6 +181,10 @@ module Y2Storage
       # @param section        [AutoinstProfile::PartitionSection] AutoYaST specification
       def check_reusable_filesystem(planned_device, device, section)
         return if planned_device.reformat || device.filesystem || planned_device.component?
+        # The device to be reused doesn't have filesystem... but maybe it's not
+        # really needed, e.g. reusing a bios_boot partition (bsc#1134330)
+        return if planned_device.mount_point.nil? && planned_device.filesystem_type.nil?
+
         issues_list.add(:missing_reusable_filesystem, section)
       end
 
@@ -216,9 +220,6 @@ module Y2Storage
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse, section)
-        if !partition.reformat && !partition_to_reuse.filesystem && !partition.component?
-          issues_list.add(:missing_reusable_filesystem, section)
-        end
       end
 
       # @param partition    [Planned::Partition] Planned partition
