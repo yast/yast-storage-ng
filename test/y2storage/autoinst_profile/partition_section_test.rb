@@ -658,6 +658,26 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.device).to be_nil
       end
     end
+
+    context "when btrfs_name is present" do
+      let(:hash) { { "btrfs_name" => btrfs_name } }
+
+      let(:btrfs_name) { "root_fs" }
+
+      it "initializes btrfs_name" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.btrfs_name).to eq(btrfs_name)
+      end
+    end
+
+    context "when btrfs_name is not present" do
+      let(:hash) { {} }
+
+      it "initializes btrfs_name to nil" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.btrfs_name).to be_nil
+      end
+    end
   end
 
   describe "#to_hashes" do

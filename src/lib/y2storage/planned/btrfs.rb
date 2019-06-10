@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,44 +22,58 @@
 require "yast"
 require "y2storage/planned/device"
 require "y2storage/planned/mixins"
+require "y2storage/match_volume_spec"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   module Planned
-    # Specification for a Y2Storage::Disk object to be used suring the storage
-    # or AutoYaST proposals
+    # Specification for a Y2Storage::Filesystems::Btrfs object to be created during the AutoYaST proposal
     #
     # @see Device
-    class Disk < Device
+    class Btrfs < Device
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
-      include Planned::CanBeEncrypted
-      include Planned::CanBePv
-      include Planned::CanBeMdMember
-      include Planned::CanBeBcacheMember
-      include Planned::CanBeBtrfsMember
       include MatchVolumeSpec
 
-      # @return [Array<Planned::Partition>] List of planned partitions
-      attr_accessor :partitions
+      # @return [String] name to indenfity this filesystem in the AutoYaST profile
+      attr_reader :name
+
+      # @return [String] data RAID level of the multi-device Btrfs
+      attr_accessor :data_raid_level
+
+      # @return [String] metadata RAID level of the multi-device Btrfs
+      attr_accessor :metadata_raid_level
 
       # Constructor
-      def initialize
+      #
+      # @param name [String] name to identify this filesystem in the AutoYaST profile
+      def initialize(name)
         super()
+
         initialize_can_be_formatted
         initialize_can_be_mounted
-        initialize_can_be_encrypted
-        initialize_can_be_pv
-        initialize_can_be_md_member
-        initialize_can_be_bcache_member
-        initialize_can_be_btrfs_member
 
-        @partitions = []
+        @name = name
       end
 
+      # Filesystem type is forced to Btrfs
+      #
+      # @return [Filesystems::Type]
+      def filesystem_type
+        Filesystems::Type::BTRFS
+      end
+
+      # @see Planned::Device#reuse!
+      #
+      # @param filesystem [Y2Storage::Filesystems::Btrfs]
+      def reuse_device!(filesystem)
+        assign_mount_point(filesystem)
+        setup_fstab_options(filesystem.mount_point)
+      end
+
+      # @return [Array<Symbol>]
       def self.to_string_attrs
-        [
-          :mount_point, :reuse_name, :reuse_sid, :subvolumes
-        ]
+        [:mount_point, :subvolumes]
       end
 
     protected

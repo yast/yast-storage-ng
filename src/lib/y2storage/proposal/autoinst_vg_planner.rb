@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -63,6 +63,7 @@ module Y2Storage
         planned_lv = Y2Storage::Planned::LvmLv.new(nil, nil)
         planned_lv.logical_volume_name = section.lv_name
         planned_lv.lv_type = lv_type_for(section)
+        planned_lv.btrfs_name = section.btrfs_name
         add_stripes(planned_lv, section)
         device_config(planned_lv, section, drive)
         return if section.used_pool && !add_to_thin_pool(planned_lv, planned_vg, section)

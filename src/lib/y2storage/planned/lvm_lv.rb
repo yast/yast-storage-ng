@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015-2017] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,6 +36,7 @@ module Y2Storage
       include Planned::CanBeResized
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include Planned::CanBeBtrfsMember
       include MatchVolumeSpec
 
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
@@ -81,6 +82,7 @@ module Y2Storage
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
+        initialize_can_be_btrfs_member
 
         @mount_point = mount_point
         @filesystem_type = filesystem_type

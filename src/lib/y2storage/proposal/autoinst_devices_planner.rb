@@ -27,6 +27,7 @@ require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
 require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/proposal/autoinst_nfs_planner"
+require "y2storage/proposal/autoinst_btrfs_planner"
 require "y2storage/planned"
 
 module Y2Storage
@@ -74,6 +75,9 @@ module Y2Storage
       # @return [AutoinstIssues::List] List of AutoYaST issues to register them
       attr_reader :issues_list
 
+      # FIXME: Disabling rubocop. Not sure how to improve this method without making it less readable.
+      # rubocop:disable Metrics/CyclomaticComplexity
+      #
       # Returns a list of planned devices according to an AutoYaST specification
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the device
@@ -92,8 +96,11 @@ module Y2Storage
           planned_for_bcache(drive)
         when :CT_NFS
           planned_for_nfs(drive)
+        when :CT_BTRFS
+          planned_for_btrfs(drive)
         end
       end
+      # rubocop:enable all
 
       # Returns a list of planned partitions (or disks) according to an AutoYaST specification
       #
@@ -140,6 +147,15 @@ module Y2Storage
       # @return [Array<Planned::Nfs>]
       def planned_for_nfs(drive)
         planner = Y2Storage::Proposal::AutoinstNfsPlanner.new(devicegraph, issues_list)
+        planner.planned_devices(drive)
+      end
+
+      # Returns a list of planned Btrfs filesystems according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the Btrfs
+      # @return [Array<Planned::Btrfs>]
+      def planned_for_btrfs(drive)
+        planner = Y2Storage::Proposal::AutoinstBtrfsPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
       end
 

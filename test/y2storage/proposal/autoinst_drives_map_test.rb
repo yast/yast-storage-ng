@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -142,6 +142,24 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         described_class.new(fake_devicegraph, partitioning, issues_list)
 
         expect(drives_map.disk_names).to include("/dev/nfs")
+      end
+    end
+
+    context "when Btrfs is used" do
+      let(:partitioning_array) do
+        [
+          {
+            "device"     => "root_fs",
+            "type"       => :CT_BTRFS,
+            "partitions" => [{ "mount" => "/" }]
+          }
+        ]
+      end
+
+      it "uses the device name" do
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+
+        expect(drives_map.disk_names).to include("root_fs")
       end
     end
   end

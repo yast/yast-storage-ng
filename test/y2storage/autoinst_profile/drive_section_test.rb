@@ -25,12 +25,6 @@ require_relative "#{TEST_PATH}/support/autoinst_profile_sections_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::DriveSection do
-  subject(:section) { described_class.new }
-
-  include_examples "autoinst section"
-
-  before { fake_scenario("autoyast_drive_examples") }
-
   def device(name)
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
   end
@@ -42,6 +36,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   def nfs(server, path)
     Y2Storage::Filesystems::Nfs.find_by_server_and_path(fake_devicegraph, server, path)
   end
+
+  include_examples "autoinst section"
+
+  before do
+    fake_scenario(scenario)
+  end
+
+  subject(:section) { described_class.new }
+
+  let(:scenario) { "autoyast_drive_examples" }
 
   describe ".new_from_hashes" do
     let(:hash) { { "partitions" => [root] } }
@@ -137,6 +141,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           section = described_class.new_from_hashes(hash)
           expect(section.raid_options.raid_name).to be_nil
         end
+      end
+    end
+
+    context "when btrfs options are given" do
+      let(:hash) { { "partitions" => [root], "btrfs_options" => btrfs_options } }
+      let(:btrfs_options) { { "data_raid_level" => "single" } }
+
+      it "initializes btrfs options" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.btrfs_options.data_raid_level).to eq("single")
       end
     end
 

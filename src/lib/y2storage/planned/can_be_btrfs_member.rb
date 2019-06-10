@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,42 +19,30 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-
 module Y2Storage
   module Planned
-    # Mixin for planned devices that can act as LVM physical volume
+    # Mixin for planned devices that can be part of a multi-device Btrfs
     # @see Planned::Device
-    module CanBePv
-      # @return [String] name of the LVM volume group for which this device
-      #   should be used as physical volume
-      attr_accessor :lvm_volume_group_name
+    module CanBeBtrfsMember
+      # @return [String] name of the multi-device Btrfs to which this device should be added
+      attr_accessor :btrfs_name
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_pv
+      def initialize_can_be_btrfs_member
       end
 
-      # Checks whether the device represents an LVM physical volume
+      # Checks whether the device represents a Btrfs member
       #
       # @return [Boolean]
-      def lvm_pv?
-        !lvm_volume_group_name.nil?
-      end
-
-      # Checks whether the device represents an LVM physical volume of the given
-      # volume group.
-      #
-      # @param vg_name [String] name of the volume group
-      # @return [Boolean]
-      def pv_for?(vg_name)
-        lvm_volume_group_name == vg_name
+      def btrfs_member?
+        !btrfs_name.nil?
       end
 
       # @see Planned::Device#component?
       #
       # @return [Boolean]
       def component?
-        super || lvm_pv?
+        super || btrfs_member?
       end
     end
   end

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015-2017] SUSE LLC
+# Copyright (c) [2015-2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,6 +37,7 @@ module Y2Storage
       include Planned::CanBePv
       include Planned::CanBeMdMember
       include Planned::CanBeBcacheMember
+      include Planned::CanBeBtrfsMember
       include MatchVolumeSpec
 
       # Constructor.
@@ -48,6 +49,7 @@ module Y2Storage
         initialize_can_be_pv
         initialize_can_be_md_member
         initialize_can_be_bcache_member
+        initialize_can_be_btrfs_member
       end
 
       # @see Device.to_string_attrs

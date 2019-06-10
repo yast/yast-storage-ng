@@ -130,6 +130,13 @@ module Y2Storage
         drives.select { |d| d.type == :CT_NFS }
       end
 
+      # Drive sections with type :CT_BTRFS
+      #
+      # @return [Array<DriveSection>]
+      def btrfs_drives
+        drives.select { |d| d.type == :CT_BTRFS }
+      end
+
       # Return section name
       #
       # @return [String] "partitioning"

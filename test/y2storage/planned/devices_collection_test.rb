@@ -37,8 +37,9 @@ describe Y2Storage::Planned::DevicesCollection do
   let(:lv1) { planned_lv }
   let(:vg) { planned_vg(lvs: [lv0, lv1]) }
   let(:bcache) { planned_bcache(partitions: [bcache_partition]) }
+  let(:btrfs) { planned_btrfs("root_fs") }
   let(:nfs) { planned_nfs }
-  let(:devices) { [partition, disk, stray_blk_device, md, bcache, vg, nfs] }
+  let(:devices) { [partition, disk, stray_blk_device, md, bcache, vg, btrfs, nfs] }
 
   describe "#devices" do
     context "when there are no planned devices" do
@@ -73,7 +74,7 @@ describe Y2Storage::Planned::DevicesCollection do
     it "returns all planned devices" do
       expect(collection.all).to contain_exactly(
         partition, disk_partition, disk, stray_blk_device, md, md_partition, lv0, lv1, vg, bcache,
-        bcache_partition, nfs
+        bcache_partition, btrfs, nfs
       )
     end
   end
@@ -126,6 +127,12 @@ describe Y2Storage::Planned::DevicesCollection do
     end
   end
 
+  describe "#btrfs_filesystems" do
+    it "returns Btrfs filesystems" do
+      expect(collection.btrfs_filesystems).to eq([btrfs])
+    end
+  end
+
   describe "#nfs_filesystems" do
     it "returns NFS filesystems" do
       expect(collection.nfs_filesystems).to eq([nfs])
@@ -136,7 +143,7 @@ describe Y2Storage::Planned::DevicesCollection do
     it "returns all devices that can be mounted" do
       expect(collection.mountable_devices).to contain_exactly(
         partition, disk, disk_partition, stray_blk_device, lv0, lv1, md, md_partition,
-        bcache, bcache_partition, nfs
+        bcache, bcache_partition, btrfs, nfs
       )
     end
   end

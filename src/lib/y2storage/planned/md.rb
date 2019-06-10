@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,6 +35,7 @@ module Y2Storage
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
       include Planned::CanBePv
+      include Planned::CanBeBtrfsMember
       include MatchVolumeSpec
 
       # @return [String] tentative device name of the MD RAID
@@ -68,6 +69,7 @@ module Y2Storage
         initialize_can_be_mounted
         initialize_can_be_encrypted
         initialize_can_be_pv
+        initialize_can_be_btrfs_member
         @name = name
         @partitions = []
       end

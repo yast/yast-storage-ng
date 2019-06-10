@@ -70,6 +70,13 @@ module Y2Storage
       def bcache_backing_for?(name)
         bcache_backing_for == name
       end
+
+      # @see Planned::Device#component?
+      #
+      # @return [Boolean]
+      def component?
+        super || bcache_member?
+      end
     end
   end
 end

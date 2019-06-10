@@ -90,6 +90,29 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       end
     end
 
+    context "using multi-device Btrfs" do
+      let(:partitioning_array) do
+        [
+          {
+            "device"     => "root_fs",
+            "type"       => :CT_BTRFS,
+            "partitions" => [{ "mount" => "/" }]
+          }
+        ]
+      end
+
+      it "plans a multi-device Btrfs filesystems" do
+        devices = planner.planned_devices(drives_map)
+
+        expect(devices.btrfs_filesystems).to include(
+          an_object_having_attributes(
+            name:        "root_fs",
+            mount_point: "/"
+          )
+        )
+      end
+    end
+
     context "using Btrfs" do
       let(:partitioning_array) do
         [{

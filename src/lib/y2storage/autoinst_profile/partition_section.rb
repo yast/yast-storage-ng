@@ -79,7 +79,8 @@ module Y2Storage
         { name: :stripe_size, xml_name: :stripesize },
         { name: :bcache_backing_for },
         { name: :bcache_caching_for },
-        { name: :device }
+        { name: :device },
+        { name: :btrfs_name }
       ].freeze
       private_constant :ATTRIBUTES
 
@@ -162,8 +163,12 @@ module Y2Storage
       #   @return [String, nil] undocumented attribute, but used to indicate a NFS
       #     share when installing over NFS (with the old profile format)
 
+      # @!attribute btrfs_name
+      #   @return [String] Btrfs in which this partition will be included
+
       def init_from_hashes(hash)
         super
+
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
