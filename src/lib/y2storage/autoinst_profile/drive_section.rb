@@ -424,6 +424,26 @@ module Y2Storage
         true
       end
 
+      # Method used by {.new_from_storage} to populate the attributes when cloning a multi-device Btrfs
+      #
+      # @param filesystem [Y2Storage::Filesystems::Btrfs]
+      # @return [Boolean]
+      def init_from_btrfs(filesystem)
+        @type = :CT_BTRFS
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(filesystem)]
+        @device = @partitions.first.name_for_btrfs(filesystem)
+        @enable_snapshots = enabled_snapshots?([filesystem])
+        @btrfs_options = BtrfsOptionsSection.new_from_storage(filesystem)
+
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when cloning a Nfs
+      #
+      # @param device [Y2Storage::Filesystems::Nfs]
+      # @return [Boolean]
       def init_from_nfs(device)
         @type = :CT_NFS
         @device = device.share

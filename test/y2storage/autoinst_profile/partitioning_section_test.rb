@@ -35,6 +35,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   let(:stray_section) { double("stray_section") }
   let(:bcache_section) { double("bcache_section") }
   let(:nfs_section) { double("nfs_section") }
+  let(:btrfs_section) { double("btrfs_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -69,8 +70,14 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "using doubles for the devicegraph and the subsections" do
       let(:devicegraph) do
         instance_double(
-          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
-          stray_blk_devices: [stray], bcaches: [bcache], nfs_mounts: [nfs]
+          Y2Storage::Devicegraph,
+          disk_devices:                  disks,
+          lvm_vgs:                       [vg],
+          software_raids:                [md],
+          stray_blk_devices:             [stray],
+          bcaches:                       [bcache],
+          nfs_mounts:                    [nfs],
+          multidevice_btrfs_filesystems: [btrfs]
         )
       end
 
@@ -82,6 +89,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
       let(:bcache) { instance_double(Y2Storage::Bcache) }
       let(:nfs) { instance_double(Y2Storage::Filesystems::Nfs) }
+      let(:btrfs) { instance_double(Y2Storage::Filesystems::Btrfs) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -98,6 +106,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(bcache).and_return(bcache_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(nfs).and_return(nfs_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(btrfs).and_return(btrfs_section)
       end
 
       subject(:section) { described_class.new_from_storage(devicegraph) }
@@ -132,6 +142,10 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
       it "creates an entry in #drives for every relevant NFS" do
         expect(section.drives).to include(nfs_section)
+      end
+
+      it "creates an entry in #drives for every relevant Btrfs" do
+        expect(section.drives).to include(btrfs_section)
       end
 
       it "ignores irrelevant drives" do

@@ -86,6 +86,19 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
+      context "when the partition belongs to a multi-device Btrfs" do
+        let(:scenario) { "btrfs2-devicegraph.xml" }
+        let(:partition) { device("sdb1") }
+
+        it "initializes #btrfs_name" do
+          section = described_class.new_from_storage(partition)
+          btrfs_name = section.name_for_btrfs(partition.filesystem)
+
+          expect(section.btrfs_name).to_not be_nil
+          expect(section.btrfs_name).to eq(btrfs_name)
+        end
+      end
+
       context "when the partition table does not have support for extended partitions" do
         let(:dev) { device("sdh") }
 
@@ -116,8 +129,9 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "given a disk" do
-      let(:section) { described_class.new_from_storage(dev) }
       let(:dev) { device("sda") }
+
+      let(:section) { described_class.new_from_storage(dev) }
 
       it "initializes #create to false" do
         expect(section.create).to eq(false)
@@ -127,7 +141,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.size).to be_nil
       end
 
-      context "when the partition belongs to a LVM volume group" do
+      context "when the disk belongs to a LVM volume group" do
         let(:pv) { instance_double(Y2Storage::LvmPv, lvm_vg: vg) }
         let(:vg) { instance_double(Y2Storage::LvmVg, basename: "vg0") }
 
@@ -140,8 +154,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
-      context "when the partition belongs to an MD RAID" do
-        let(:dev) { device("sdb1") }
+      context "when the disk belongs to an MD RAID" do
         let(:md) { instance_double(Y2Storage::Md, name: "/dev/md0") }
 
         before do
@@ -153,13 +166,29 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           expect(section.raid_name).to eq(md.name)
         end
       end
+
+      context "when the disk belongs to a multi-device Btrfs" do
+        before do
+          sdd3 = device("sdd3")
+          dev.remove_descendants
+          sdd3.filesystem.add_device(dev)
+        end
+
+        it "initializes #btrfs_name" do
+          btrfs_name = section.name_for_btrfs(dev.filesystem)
+
+          expect(section.btrfs_name).to_not be_nil
+          expect(section.btrfs_name).to eq(btrfs_name)
+        end
+      end
     end
 
     context "given a logical volume" do
+      let(:scenario) { "lvm-striped-lvs" }
+
       let(:vg) { fake_devicegraph.lvm_vgs.first }
 
       before do
-        fake_scenario("lvm-striped-lvs")
         # FIXME: add support to the fake factory for LVM thin pools
         thin_pool_lv = vg.create_lvm_lv("pool0", Y2Storage::LvType::THIN_POOL, 20.GiB)
         thin_lv = thin_pool_lv.create_lvm_lv("data", Y2Storage::LvType::THIN, 20.GiB)
@@ -190,45 +219,69 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           expect(section_for("vg0/data").used_pool).to eq("pool0")
         end
       end
+
+      context "when the LV belongs to a multi-device Btrfs" do
+        let(:scenario) { "autoyast_drive_examples" }
+
+        let(:dev) { device("vg0/lv1") }
+
+        let(:section) { described_class.new_from_storage(dev) }
+
+        before do
+          sdd3 = device("sdd3")
+          dev.remove_descendants
+          sdd3.filesystem.add_device(dev)
+        end
+
+        it "initializes #btrfs_name" do
+          btrfs_name = section.name_for_btrfs(dev.filesystem)
+
+          expect(section.btrfs_name).to_not be_nil
+          expect(section.btrfs_name).to eq(btrfs_name)
+        end
+      end
     end
 
     context "given an MD RAID" do
-      let(:raid_options) { instance_double(Y2Storage::AutoinstProfile::RaidOptionsSection) }
-
-      let(:md) do
-        instance_double(
-          Y2Storage::Md,
-          numeric?:       numeric?,
-          number:         0,
-          encrypted?:     false,
-          filesystem:     filesystem,
-          lvm_pv:         lvm_pv,
-          bcache:         nil,
-          in_bcache_cset: nil
-        )
-      end
-
-      let(:filesystem) do
-        instance_double(
-          Y2Storage::Filesystems::Btrfs,
-          type:                       Y2Storage::Filesystems::Type::BTRFS,
-          label:                      "",
-          mkfs_options:               "",
-          supports_btrfs_subvolumes?: false,
-          mount_point:                nil
-        )
-      end
-
-      let(:numeric?) { true }
-      let(:lvm_pv) { nil }
-
-      before do
-        allow(md).to receive(:is?) { |*t| t.include?(:software_raid) }
-        allow(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
-          .and_return(raid_options)
-      end
-
       context "when it is used as an LVM physical volume" do
+        let(:raid_options) { instance_double(Y2Storage::AutoinstProfile::RaidOptionsSection) }
+
+        let(:md) do
+          instance_double(
+            Y2Storage::Md,
+            numeric?:       numeric?,
+            number:         0,
+            encrypted?:     false,
+            filesystem:     filesystem,
+            lvm_pv:         lvm_pv,
+            bcache:         nil,
+            in_bcache_cset: nil
+          )
+        end
+
+        let(:filesystem) do
+          instance_double(
+            Y2Storage::Filesystems::Btrfs,
+            type:                       Y2Storage::Filesystems::Type::BTRFS,
+            label:                      "",
+            mkfs_options:               "",
+            supports_btrfs_subvolumes?: false,
+            mount_point:                nil,
+            sid:                        10000,
+            multidevice?:               false
+          )
+        end
+
+        let(:numeric?) { true }
+        let(:lvm_pv) { nil }
+
+        before do
+          allow(md).to receive(:is?) { |*t| t.include?(:software_raid) }
+          allow(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
+            .and_return(raid_options)
+          allow(filesystem).to receive(:is?).with(:btrfs).and_return(true)
+        end
+
         let(:lvm_vg) { instance_double(Y2Storage::LvmVg, basename: "vg0") }
         let(:lvm_pv) do
           instance_double(
@@ -249,6 +302,26 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
             section = described_class.new_from_storage(md)
             expect(section.lvm_group).to be_nil
           end
+        end
+      end
+
+      context "when the MD RAID belongs to a multi-device Btrfs" do
+        let(:scenario) { "autoyast_drive_examples" }
+
+        let(:dev) { Y2Storage::Md.create(fake_devicegraph, "/dev/md0") }
+
+        let(:section) { described_class.new_from_storage(dev) }
+
+        before do
+          sdd3 = device("sdd3")
+          sdd3.filesystem.add_device(dev)
+        end
+
+        it "initializes #btrfs_name" do
+          btrfs_name = section.name_for_btrfs(dev.filesystem)
+
+          expect(section.btrfs_name).to_not be_nil
+          expect(section.btrfs_name).to eq(btrfs_name)
         end
       end
     end
@@ -307,66 +380,172 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
-    context "when filesystem is btrfs" do
-      it "initializes subvolumes" do
-        subvolumes = section_for("sdd3").subvolumes
-        expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+    shared_examples "filesystem attributes" do
+      it "initializes filesystem with the filesystem type" do
+        expect(section.filesystem).to eq(filesystem.type.to_sym)
       end
 
-      it "initializes subvolumes_prefix" do
-        expect(section_for("sdd3").subvolumes_prefix).to eq("@")
+      it "initializes uuid with the filesystem uuid" do
+        expect(section.uuid).to eq(filesystem.uuid)
       end
 
-      it "ignores snapshots" do
-        paths = section_for("sdd3").subvolumes.map(&:path)
-        expect(paths).to_not include("@/.snapshots")
-      end
+      context "when the filesystem has a label" do
+        before do
+          filesystem.label = "myfs"
+        end
 
-      context "and there are not subvolumes" do
-        it "initializes subvolumes as an empty array" do
-          expect(section_for("dasdb2").subvolumes).to eq([])
+        it "initializes label with the filesystem label" do
+          expect(section.label).to eq("myfs")
         end
       end
 
-      context "and subvolumes_prefix is empty" do
-        it "ignores snapshots" do
-          paths = section_for("sdi1").subvolumes.map(&:path)
-          expect(paths).to_not include(".snapshots")
+      context "when the filesystem has no label" do
+        before do
+          filesystem.label = ""
+        end
+
+        it "initializes label to nil" do
+          expect(section.label).to be_nil
+        end
+      end
+
+      context "when the filesystem has mkfs options" do
+        before do
+          filesystem.mkfs_options = "-b 2048"
+        end
+
+        it "initializes mkfs_options with the proper value" do
+          expect(section.mkfs_options).to eq("-b 2048")
+        end
+      end
+
+      context "when the filesystem has no mkfs options" do
+        before do
+          filesystem.mkfs_options = ""
+        end
+
+        it "initializes mkfs_options to nil" do
+          expect(section.mkfs_options).to be_nil
+        end
+      end
+
+      context "when the filesystem contains a mount point" do
+        before do
+          filesystem.mount_path = "/"
+          filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::DEVICE
+        end
+
+        it "initializes mount with the mount path" do
+          expect(section.mount).to eq("/")
+        end
+
+        it "initializes mountby with the proper value" do
+          expect(section.mountby).to eq(:device)
+        end
+
+        context "and the filesystem contains mount options" do
+          before do
+            filesystem.mount_point.mount_options = ["ro", "acl"]
+          end
+
+          it "initializes fstab_options with the proper values" do
+            expect(section.fstab_options).to contain_exactly("ro", "acl")
+          end
+        end
+
+        context "and the filesystem does not contain mount options" do
+          before do
+            filesystem.mount_point.mount_options = []
+          end
+
+          it "initializes fstab_options to nil" do
+            expect(section.fstab_options).to be_nil
+          end
+        end
+      end
+
+      context "when the filesystem does not contain a mount point" do
+        before do
+          filesystem.remove_mount_point if filesystem.mount_point
+        end
+
+        it "initializes mount to nil" do
+          expect(section.mount).to be_nil
+        end
+
+        it "initializes mountby to nil" do
+          expect(section.mountby).to be_nil
+        end
+
+        it "initializes fstab_options to nil" do
+          expect(section.fstab_options).to be_nil
         end
       end
     end
 
-    context "if the partition contains a filesystem" do
-      it "initializes #filesystem with the corresponding symbol" do
-        expect(section_for("dasdb1").filesystem).to eq :swap
-        expect(section_for("dasdb2").filesystem).to eq :btrfs
-        expect(section_for("dasdb3").filesystem).to eq :xfs
+    shared_examples "btrfs attributes" do
+      before do
+        allow(filesystem).to receive(:subvolumes_prefix).and_return("@")
       end
 
-      it "initializes #label to the filesystem label" do
-        expect(section_for("dasdb2").label).to eq "suse_root"
+      it "initializes subvolumes_prefix" do
+        expect(section.subvolumes_prefix).to eq("@")
       end
 
-      it "initializes #label to nil if the filesystem has no label" do
-        expect(section_for("dasdb3").label).to be_nil
-      end
-
-      context "if the filesystem contains mounting information" do
-        it "initializes #mount and #mountby" do
-          section = section_for("sdc3")
-          expect(section.mount).to eq "/"
-          expect(section.mountby).to eq :uuid
+      context "and there are subvolumes" do
+        it "initializes subvolumes with the subvolumes specifications" do
+          expect(section.subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
         end
       end
 
-      context "if the filesystem is not configured to be mounted" do
-        it "initializes #mount and #mountby to nil" do
-          section = section_for("dasdb2")
-          expect(section.mount).to be_nil
-          expect(section.mountby).to be_nil
+      context "and there are no subvolumes" do
+        before do
+          allow(filesystem).to receive(:btrfs_subvolumes).and_return([])
+        end
+
+        it "initializes subvolumes as empty" do
+          expect(section.subvolumes).to be_empty
         end
       end
 
+      context "and there are subvolumes for snapshots" do
+        before do
+          filesystem.create_btrfs_subvolume("@/.snapshots", false)
+        end
+
+        it "ignores subvolumes for snapshots" do
+          expect(section.subvolumes).to_not include(an_object_having_attributes(path: "@/.snapshots"))
+        end
+
+        context "and the subvolumes prefix is empty" do
+          before do
+            allow(filesystem).to receive(:subvolumes_prefix).and_return("")
+
+            filesystem.create_btrfs_subvolume(".snapshots", false)
+          end
+
+          it "ignores subvolumes for snapshots" do
+            expect(section.subvolumes).to_not include(an_object_having_attributes(path: ".snapshots"))
+          end
+        end
+      end
+    end
+
+    context "given a block filesystem" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:filesystem) { device("sdb1").filesystem }
+
+      subject(:section) { described_class.new_from_storage(filesystem) }
+
+      include_examples "filesystem attributes"
+
+      context "when the filesystem is Btrfs" do
+        include_examples "btrfs attributes"
+      end
+    end
+
+    context "if the device is formatted" do
       it "initializes #format to true for most partition ids" do
         expect(section_for("nvme0n1p1").format).to eq true
         expect(section_for("nvme0n1p4").format).to eq true
@@ -377,9 +556,21 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("nvme0n1p2").format).to eq false
         expect(section_for("nvme0n1p3").format).to eq false
       end
+
+      let(:filesystem) { device("sdb1").filesystem }
+
+      subject(:section) { described_class.new_from_storage(filesystem) }
+
+      include_examples "filesystem attributes"
+
+      context "when the filesystem is Btrfs" do
+        let(:filesystem) { device("sdd3").filesystem }
+
+        include_examples "btrfs attributes"
+      end
     end
 
-    context "if the partition contains no filesystem" do
+    context "if the device is not formatted" do
       before { allow_any_instance_of(Y2Storage::Partition).to receive(:filesystem).and_return nil }
 
       it "initializes #filesystem, #label, #mount, #mountby, #fstab_options and #mkfs_options to nil" do
@@ -396,24 +587,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("nvme0n1p2").format).to eq false
         expect(section_for("nvme0n1p3").format).to eq false
         expect(section_for("nvme0n1p4").format).to eq false
-      end
-    end
-
-    context "if the partition has a mountby name schema" do
-      it "initializes #mountby with the proper type" do
-        expect(section_for("sdc3").mountby).to eq(:uuid)
-      end
-    end
-
-    context "if the partition has fstab options" do
-      it "initializes #fstab_options with the proper type" do
-        expect(section_for("sdc3").fstab_options).to eq(["ro", "acl"])
-      end
-    end
-
-    context "if the partition has mkfs options" do
-      it "initializes #mountby with the proper type" do
-        expect(section_for("sdc3").mkfs_options).to eq("-b 2048")
       end
     end
 
@@ -923,6 +1096,28 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         it "returns a name based in <raid_options>" do
           expect(section.name_for_md).to eq "/dev/md7"
         end
+      end
+    end
+  end
+
+  describe "#name_for_btrfs" do
+    subject(:section) { described_class.new }
+
+    context "when the filesystem is not a multi-device Btrfs" do
+      let(:filesystem) { device("sdd3").filesystem }
+
+      it "returns nil" do
+        expect(section.name_for_btrfs(filesystem)).to be_nil
+      end
+    end
+
+    context "when the filesystem is a multi-device Btrfs" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:filesystem) { device("sdb1").filesystem }
+
+      it "returns a name based on the filesystem sid" do
+        expect(section.name_for_btrfs(filesystem)).to match(/#{filesystem.sid}/)
       end
     end
   end

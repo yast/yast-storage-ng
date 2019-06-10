@@ -155,13 +155,37 @@ describe Y2Storage::Devicegraph do
 
     let(:list) { fake_devicegraph.btrfs_filesystems }
 
-    it "returns a array of BTRFS filesystems" do
+    it "returns a array of Btrfs filesystems" do
       expect(list).to be_a(Array)
       expect(list.map { |i| i.is?(:btrfs) }).to all(be(true))
     end
 
-    it "finds all the BTRFS filesystems" do
+    it "finds all the Btrfs filesystems" do
       expect(list.size).to eq(5)
+    end
+  end
+
+  describe "#multidevice_btrfs_filesystems" do
+    before do
+      fake_scenario("btrfs2-devicegraph.xml")
+
+      # Creates a new multi-device Btrfs
+      sda2 = fake_devicegraph.find_by_name("/dev/sda2")
+      sda3 = fake_devicegraph.find_by_name("/dev/sda3")
+      sda3.remove_descendants
+      sda2.filesystem.add_device(sda3)
+    end
+
+    let(:list) { fake_devicegraph.multidevice_btrfs_filesystems }
+
+    it "returns a array of multi-device Btrfs filesystems" do
+      expect(list).to be_a(Array)
+
+      list.each { |f| expect(f.is?(:btrfs) && f.multidevice?).to eq(true) }
+    end
+
+    it "finds all multi-device Btrfs filesystems" do
+      expect(list.size).to eq(2)
     end
   end
 

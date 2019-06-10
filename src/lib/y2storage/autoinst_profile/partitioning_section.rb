@@ -168,6 +168,7 @@ module Y2Storage
           devicegraph.lvm_vgs,
           devicegraph.disk_devices,
           devicegraph.stray_blk_devices,
+          devicegraph.multidevice_btrfs_filesystems,
           devicegraph.nfs_mounts
         )
       end
