@@ -122,7 +122,8 @@ information about the devices that will be created or reused. There are
 especialized classes for each device: {Y2Storage::Planned::Partition},
 {Y2Storage::Planned::LvmLv}, {Y2Storage::Planned::LvmVg},
 {Y2Storage::Planned::Md}, {Y2Storage::Planned::Bcache},
-{Y2Storage::Planned::StrayBlkDevice} and {Y2Storage::Planned::Nfs}.
+{Y2Storage::Planned::StrayBlkDevice}, {Y2Storage::Planned::Nfs} and {Y2Storage::Planned::Btrfs} for
+multi-device Btrfs filesystems.
 
 The class responsible for driving this phase is
 {Y2Storage::Proposal::AutoinstDevicesPlanner}. Basically, it goes through the
@@ -136,6 +137,7 @@ However, each type of drive is processed by a different planner class:
 * {Y2Storage::Proposal::AutoinstMdPlanner} for `:CT_MD`.
 * {Y2Storage::Proposal::AutoinstBcachePlanner} for `:CT_BCACHE`.
 * {Y2Storage::Proposal::AutoinstNfsPlanner} for `:CT_NFS`.
+* {Y2Storage::Proposal::AutoinstBtrfsPlanner} for `:CT_BTRFS`.
 
 ### Phase four: deleting old stuff
 
@@ -161,6 +163,7 @@ The logic to create each plan device, however, is splitted into several classes:
 * {Y2Storage::Proposal::AutoinstMdCreator} for {Y2Storage::Planned::Md}.
 * {Y2Storage::Proposal::AutoinstBcacheCreator} for {Y2Storage::Planned::Bcache}.
 * {Y2Storage::Proposal::NfsCreator} for {Y2Storage::Planned::Nfs}.
+* {Y2Storage::Proposal::BtrfsCreator} for {Y2Storage::Planned::Btrfs}.
 
 Note that there are no separate classes for {Y2Storage::Planned::Disk} and
 {Y2Storage::Planned::StrayBlkDevice}. The logic for that kind of devices lives
