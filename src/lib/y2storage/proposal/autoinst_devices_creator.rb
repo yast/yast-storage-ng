@@ -25,6 +25,8 @@ require "y2storage/proposal/autoinst_partition_size"
 require "y2storage/proposal/autoinst_partitioner"
 require "y2storage/proposal/autoinst_md_creator"
 require "y2storage/proposal/autoinst_bcache_creator"
+require "y2storage/proposal/lvm_creator"
+require "y2storage/proposal/btrfs_creator"
 require "y2storage/proposal/nfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
@@ -163,6 +165,7 @@ module Y2Storage
         process_mds
         process_bcaches
         process_vgs
+        process_btrfs_filesystems
         process_nfs_filesystems
 
         Y2Storage::Proposal::AutoinstCreatorResult.new(creator_result, devices_to_create)
@@ -225,6 +228,20 @@ module Y2Storage
         self.creator_result = set_up_lvm(planned_vgs, devices_to_reuse)
       end
 
+      # Process planned Btrfs filesystems
+      def process_btrfs_filesystems
+        filesystems_to_reuse = planned_devices.btrfs_filesystems.select(&:reuse?)
+        filesystems_to_create = planned_devices.btrfs_filesystems.reject(&:reuse?)
+
+        reuse_btrfs_filesystems(filesystems_to_reuse)
+
+        add_devices_to_create(filesystems_to_create)
+
+        reusable_devices = reusable_by_btrfs(devices_to_reuse)
+
+        self.creator_result = create_btrfs_filesystems(filesystems_to_create, reusable_devices)
+      end
+
       # Process planned NFS filesystems
       def process_nfs_filesystems
         add_devices_to_create(planned_devices.nfs_filesystems)
@@ -248,6 +265,16 @@ module Y2Storage
         reused_vgs.each_with_object(creator_result) do |vg, result|
           lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
           result.merge!(lvm_creator.reuse_volumes(vg))
+        end
+      end
+
+      # Reuses Btrfs filesystems for the given devicegraph
+      #
+      # @param filesystems_to_reuse [Array<Planned::Btrfs>]
+      def reuse_btrfs_filesystems(filesystems_to_reuse)
+        filesystems_to_reuse.each_with_object(creator_result) do |fs, result|
+          btrfs_creator = Proposal::BtrfsCreator.new(result.devicegraph)
+          result.merge!(btrfs_creator.reuse_filesystem(fs))
         end
       end
 
@@ -323,6 +350,45 @@ module Y2Storage
         end
       end
 
+      # Creates Btrfs filesystems in the given devicegraph
+      #
+      # @param filesystems_to_create [Array<Planned::Btrfs>]
+      # @param reusable_devices [Array<Planned::Disk, Planned::StrayBlkDevice>, Planned::Partition]
+      #   devices that can be reused for the new Btrfs filesystems.
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified Btrfs filesystems
+      def create_btrfs_filesystems(filesystems_to_create, reusable_devices)
+        filesystems_to_create.reduce(creator_result) do |result, planned_filesystem|
+          devices = created_devices_for_btrfs(planned_filesystem, result)
+          devices += reused_devices_for_btrfs(planned_filesystem, reusable_devices)
+          result.merge(create_btrfs(result.devicegraph, planned_filesystem, devices))
+        end
+      end
+
+      # Name of devices that have been created for a specific planned Btrfs
+      #
+      # @param planned_filesystem [Planned::Btrfs]
+      # @param creator_result [Proposal::CreatorResult]
+      #
+      # @return [Array<String>] devices names
+      def created_devices_for_btrfs(planned_filesystem, creator_result)
+        creator_result.created_names do |device|
+          device.respond_to?(:btrfs_name) && device.btrfs_name == planned_filesystem.name
+        end
+      end
+
+      # Name of devices that can be reused for a specific planned Btrfs
+      #
+      # @param planned_filesystem [Planned::Btrfs]
+      # @param reusable_devices [Array<Planned::Disk, Planned::StrayBlkDevice>, Planned::Partition]
+      #
+      # @return [Array<String>] devices names
+      def reused_devices_for_btrfs(planned_filesystem, reusable_devices)
+        devices = reusable_devices.select { |d| d.btrfs_name == planned_filesystem.name }
+
+        devices.map(&:reuse_name)
+      end
+
       # Creates NFS filesystems
       #
       # @param nfs_filesystems [Array<Planned::Nfs>] List of planned NFS filesystems
@@ -376,6 +442,18 @@ module Y2Storage
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
+      # Creates a multi-device Btrfs filesystem
+      #
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param planned_filesystem [Planned::Btrfs]
+      # @param devices [Array<Planned::Device>] devices to include in the Btrfs
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified multi-device Btrfs
+      def create_btrfs(devicegraph, planned_filesystem, devices)
+        btrfs_creator = Proposal::BtrfsCreator.new(devicegraph)
+        btrfs_creator.create_filesystem(planned_filesystem, devices)
+      end
+
       # Creates a NFS filesystem
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
@@ -422,6 +500,14 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def reusable_by_bcache(planned_devices)
         planned_devices.select { |d| d.respond_to?(:bcache_backing_for) }
+      end
+
+      # Return devices which can be reused by a Btrfs filesystem
+      #
+      # @param planned_devices [Planned::DevicesCollection] collection of planned devices
+      # @return [Array<Planned::Device>]
+      def reusable_by_btrfs(planned_devices)
+        planned_devices.select { |d| d.respond_to?(:btrfs_name) }
       end
     end
   end

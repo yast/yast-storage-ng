@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -24,8 +22,8 @@
 module Y2Storage
   module Proposal
     # Result of executing one of the devices creators. See
-    # {Proposal::PartitionCreator}, {Proposal::LvmCreator},
-    # {Proposal::AutoinstMdCreator} and {Proposal::AutoinstBcacheCreator}.
+    # {Proposal::PartitionCreator}, {Proposal::LvmCreator}, {Proposal::AutoinstMdCreator},
+    # {Proposal::AutoinstBcacheCreator} and {Proposal::BtrfsCreator}.
     #
     # FIXME: this class wouldn't be needed if each planned device would contain
     # an attribute with the name of the created device. That would also mean a

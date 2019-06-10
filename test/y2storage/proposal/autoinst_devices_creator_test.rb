@@ -398,6 +398,68 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
     end
 
+    describe "using multi-device Btrfs" do
+      let(:partition1) { planned_partition(reuse_name: "/dev/sda2", btrfs_name: "root_fs") }
+
+      let(:partition2) { planned_partition(disk: "/dev/sdb", btrfs_name: "root_fs", min_size: 2.GiB) }
+
+      let(:btrfs) do
+        planned_btrfs(
+          "root_fs",
+          mount_point:         "/",
+          data_raid_level:     Y2Storage::BtrfsRaidLevel::DEFAULT,
+          metadata_raid_level: Y2Storage::BtrfsRaidLevel::DEFAULT
+        )
+      end
+
+      let(:collection) { Y2Storage::Planned::DevicesCollection.new(planned_devices) }
+
+      let(:planned_devices) { [partition1, partition2, btrfs] }
+
+      it "creates the filesystem over the specified devices" do
+        result = creator.populated_devicegraph(collection, ["/dev/sda", "/dev/sdb"])
+        devicegraph = result.devicegraph
+
+        filesystem = devicegraph.find_by_name("/dev/sda2").filesystem
+
+        expect(filesystem.type.is?(:btrfs)).to eq(true)
+        expect(filesystem.blk_devices.map(&:name)).to contain_exactly("/dev/sda2", "/dev/sdb1")
+      end
+
+      context "reusing a multi-device Btrfs" do
+        let(:scenario) { "btrfs2-devicegraph.xml" }
+
+        let(:btrfs) do
+          planned_btrfs(
+            "root_fs",
+            reuse_sid:           filesystem_sid,
+            mount_point:         "/foo",
+            data_raid_level:     Y2Storage::BtrfsRaidLevel::DEFAULT,
+            metadata_raid_level: Y2Storage::BtrfsRaidLevel::DEFAULT
+          )
+        end
+
+        let(:filesystem_sid) { fake_devicegraph.find_by_name("/dev/sdb1").filesystem.sid }
+
+        let(:planned_devices) { [btrfs] }
+
+        it "reuses the existing filesystem" do
+          filesystem = fake_devicegraph.find_by_name("/dev/sdb1").filesystem
+          sid_before = filesystem.sid
+
+          expect(filesystem.mount_path).to_not eq("/foo")
+
+          result = creator.populated_devicegraph(collection, ["/dev/sda", "/dev/sdb"])
+          devicegraph = result.devicegraph
+
+          filesystem = devicegraph.find_by_name("/dev/sdb1").filesystem
+
+          expect(filesystem.sid).to eq(sid_before)
+          expect(filesystem.mount_path).to eq("/foo")
+        end
+      end
+    end
+
     describe "using NFS" do
       let(:nfs0) do
         planned_nfs(
