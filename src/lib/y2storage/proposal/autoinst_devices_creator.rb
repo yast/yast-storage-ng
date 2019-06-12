@@ -258,7 +258,7 @@ module Y2Storage
         end
       end
 
-      # Reuses volume groups for the given devicegraph
+      # Reuses volume groups
       #
       # @param reused_vgs [Array<Planned::LvmVg>] Volume groups to reuse
       def reuse_vgs(reused_vgs)
@@ -268,7 +268,7 @@ module Y2Storage
         end
       end
 
-      # Reuses Btrfs filesystems for the given devicegraph
+      # Reuses Btrfs filesystems
       #
       # @param filesystems_to_reuse [Array<Planned::Btrfs>]
       def reuse_btrfs_filesystems(filesystems_to_reuse)
@@ -288,7 +288,7 @@ module Y2Storage
         partitioner.create_partitions(new_partitions, disks)
       end
 
-      # Creates MD RAID devices in the given devicegraph
+      # Creates MD RAID devices
       #
       # @param mds [Array<Planned::Md>] List of planned MD arrays to create
       # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
@@ -350,7 +350,7 @@ module Y2Storage
         end
       end
 
-      # Creates Btrfs filesystems in the given devicegraph
+      # Creates Btrfs filesystems
       #
       # @param filesystems_to_create [Array<Planned::Btrfs>]
       # @param reusable_devices [Array<Planned::Disk, Planned::StrayBlkDevice>, Planned::Partition]
@@ -400,7 +400,7 @@ module Y2Storage
         end
       end
 
-      # Creates a MD RAID
+      # Creates a MD RAID in the given devicegraph
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
       # @param md          [Planned::Md] Planned MD RAID
@@ -413,7 +413,7 @@ module Y2Storage
         md_creator.create_md(md, devices)
       end
 
-      # Creates a bcache
+      # Creates a bcache in the given devicegraph
       #
       # @param devicegraph     [Devicegraph] Starting devicegraph
       # @param bcache          [Planned::Bcache] Planned bcache
@@ -442,7 +442,7 @@ module Y2Storage
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
-      # Creates a multi-device Btrfs filesystem
+      # Creates a multi-device Btrfs filesystem in the given devicegraph
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
       # @param planned_filesystem [Planned::Btrfs]
@@ -454,7 +454,7 @@ module Y2Storage
         btrfs_creator.create_filesystem(planned_filesystem, devices)
       end
 
-      # Creates a NFS filesystem
+      # Creates a NFS filesystem in the given devicegraph
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
       # @param planned_nfs [Planned::Nfs]
