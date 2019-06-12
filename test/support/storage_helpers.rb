@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2016-2017] SUSE LLC
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -148,6 +148,11 @@ module Yast
       def planned_nfs(attrs = {})
         nfs = Y2Storage::Planned::Nfs.new
         add_planned_attributes(nfs, attrs)
+      end
+
+      def planned_btrfs(name, attrs = {})
+        btrfs = Y2Storage::Planned::Btrfs.new(name)
+        add_planned_attributes(btrfs, attrs)
       end
 
       def add_planned_attributes(device, attrs)

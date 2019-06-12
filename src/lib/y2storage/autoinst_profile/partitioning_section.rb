@@ -130,6 +130,13 @@ module Y2Storage
         drives.select { |d| d.type == :CT_NFS }
       end
 
+      # Drive sections with type :CT_BTRFS
+      #
+      # @return [Array<DriveSection>]
+      def btrfs_drives
+        drives.select { |d| d.type == :CT_BTRFS }
+      end
+
       # Return section name
       #
       # @return [String] "partitioning"
@@ -161,6 +168,7 @@ module Y2Storage
           devicegraph.lvm_vgs,
           devicegraph.disk_devices,
           devicegraph.stray_blk_devices,
+          devicegraph.multidevice_btrfs_filesystems,
           devicegraph.nfs_mounts
         )
       end

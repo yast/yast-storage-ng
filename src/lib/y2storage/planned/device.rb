@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015-2017] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -95,13 +95,15 @@ module Y2Storage
         plain_device.encrypted? ? plain_device.encryption : plain_device
       end
 
-      # Finds the device to reuse and sets its properties to match
-      # the planned device.
+      # Finds the device to reuse and sets its properties to match the planned device.
       #
       # @param devicegraph [Devicegraph] Device graph to adjust
       def reuse!(devicegraph)
-        dev = device_to_reuse(devicegraph)
-        reuse_device!(dev) if dev
+        device = device_to_reuse(devicegraph)
+        return unless device
+
+        log.info "Reusing sid #{reuse_sid} (#{reuse_name}) (#{device.inspect}) for #{self}"
+        reuse_device!(device)
       end
 
       # Whether this planned device is expected to reuse an existing one
@@ -109,34 +111,39 @@ module Y2Storage
         !(reuse_name.nil? || reuse_name.empty?) || !reuse_sid.nil?
       end
 
-      # Determines whether the device is used as part of a VG, a MD or a bcache
+      # Determines whether the device is used as part of another device (VG, MD, Bcache, Btrfs, etc)
       #
-      # @todo This method might be implemented in a way which is extended
-      #   by each mixin.
+      # This method is implemented by each mixin (e.g., CanBePv, CanBeMdMember, etc).
       #
       # @return [Boolean]
       def component?
-        (respond_to?(:lvm_pv?) && lvm_pv?) ||
-          (respond_to?(:md_member?) && md_member?) ||
-          (respond_to?(:bcache_member?) && bcache_member?)
+        false
       end
 
     protected
 
-      def reuse_device!(dev)
-        log.info "Reusing sid #{reuse_sid} (#{reuse_name}) (#{dev.inspect}) for #{self}"
+      # @see reuse!
+      #
+      # Derived classed must define this method.
+      #
+      # @param _device [Device]
+      def reuse_device!(_device)
+        nil
       end
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
-        x = devicegraph.find_device(reuse_sid) if reuse_sid
-        x ||= BlkDevice.find_by_name(devicegraph, reuse_name)
-        if x
-          log.info "reused: sid #{x.sid} (#{x.name})"
+
+        device = devicegraph.find_device(reuse_sid) if reuse_sid
+        device ||= BlkDevice.find_by_name(devicegraph, reuse_name)
+
+        if device
+          log.info "reused: sid #{device.sid} (#{reuse_name})"
         else
           log.info "reused device not found: sid #{reuse_sid} (#{reuse_name})"
         end
-        x
+
+        device
       end
 
       def internal_state

@@ -288,6 +288,13 @@ module Y2Storage
       blk_filesystems.select { |f| f.is?(:btrfs) }
     end
 
+    # All multi-device Btrfs filesystems
+    #
+    # @return [Array<Filesystems::BlkFilesystem::Btrfs>]
+    def multidevice_btrfs_filesystems
+      btrfs_filesystems.select(&:multidevice?)
+    end
+
     # @return [Array<Filesystem::Nfs>]
     def nfs_mounts
       Filesystems::Nfs.all(self)

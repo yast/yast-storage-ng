@@ -25,12 +25,6 @@ require_relative "#{TEST_PATH}/support/autoinst_profile_sections_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::DriveSection do
-  subject(:section) { described_class.new }
-
-  include_examples "autoinst section"
-
-  before { fake_scenario("autoyast_drive_examples") }
-
   def device(name)
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
   end
@@ -42,6 +36,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   def nfs(server, path)
     Y2Storage::Filesystems::Nfs.find_by_server_and_path(fake_devicegraph, server, path)
   end
+
+  include_examples "autoinst section"
+
+  before do
+    fake_scenario(scenario)
+  end
+
+  subject(:section) { described_class.new }
+
+  let(:scenario) { "autoyast_drive_examples" }
 
   describe ".new_from_hashes" do
     let(:hash) { { "partitions" => [root] } }
@@ -140,6 +144,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
+    context "when btrfs options are given" do
+      let(:hash) { { "partitions" => [root], "btrfs_options" => btrfs_options } }
+      let(:btrfs_options) { { "data_raid_level" => "single" } }
+
+      it "initializes btrfs options" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.btrfs_options.data_raid_level).to eq("single")
+      end
+    end
+
     context "when 'use' element is not specified" do
       let(:hash) { {} }
 
@@ -197,6 +211,18 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     it "returns a DriveSection object for a NFS filesystem" do
       nfs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "srv", "/foo")
       expect(described_class.new_from_storage(nfs)).to be_a described_class
+    end
+
+    it "returns a DriveSection object for a multi-device Btrfs filesystem" do
+      sdd1 = device("sdd1")
+      sdd3 = device("sdd3")
+
+      sdd1.remove_descendants
+
+      btrfs = sdd3.filesystem
+      btrfs.add_device(sdd1)
+
+      expect(described_class.new_from_storage(btrfs)).to be_a described_class
     end
 
     it "stores the exportable partitions as PartitionSection objects" do
@@ -567,6 +593,65 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(section.partitions).to contain_exactly(
           an_object_having_attributes(mount: "/test1")
         )
+      end
+    end
+
+    context "given a multi-device Btrfs filesystems" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      let(:section) { described_class.new_from_storage(filesystem) }
+
+      let(:filesystem) { device("sdb1").filesystem }
+
+      it "initializes device name" do
+        expect(section.device).to match(/btrfs_\d+/)
+      end
+
+      it "initializes #type to :CT_BTRFS" do
+        expect(section.type).to eq(:CT_BTRFS)
+      end
+
+      it "initializes #disklabel to 'none'" do
+        expect(section.disklabel).to eq("none")
+      end
+
+      it "initializes #use to 'all'" do
+        expect(section.use).to eq("all")
+      end
+
+      it "initializes #partitions to a partition describing the filesystem options" do
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes(
+            filesystem: :btrfs,
+            mount:      "/test",
+            mountby:    :device,
+            uuid:       "b7b96325-feb5-4e7e-a7f4-014ce2402e71"
+          )
+        )
+      end
+
+      it "initializes btrfs options" do
+        expect(section.btrfs_options).to be_a(Y2Storage::AutoinstProfile::BtrfsOptionsSection)
+      end
+
+      context "when snapshots are enabled" do
+        before do
+          filesystem.configure_snapper = true
+        end
+
+        it "initializes enable_snapshots setting to true" do
+          expect(section.enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled" do
+        before do
+          filesystem.configure_snapper = false
+        end
+
+        it "initializes enable_snapshots setting to false" do
+          expect(section.enable_snapshots).to eq(false)
+        end
       end
     end
 

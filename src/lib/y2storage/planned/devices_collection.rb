@@ -159,12 +159,19 @@ module Y2Storage
         @stray_blk_devices ||= devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
       end
 
+      # Returns the list of planned Btrfs filesystems
+      #
+      # @return [Array<Planned::Btrfs>]
+      def btrfs_filesystems
+        @btrfs_filesystems ||= devices.select { |d| d.is_a?(Planned::Btrfs) }
+      end
+
       # Returns all devices, including nested ones
       #
       # @return [Array<Planned::Device>]
       def all
-        @all ||= [].concat(partitions, disks, stray_blk_devices, vgs, lvs, mds,
-          bcaches, nfs_filesystems)
+        @all ||= [].concat(partitions, disks, stray_blk_devices, vgs, lvs, mds, bcaches,
+          btrfs_filesystems, nfs_filesystems)
       end
 
       # Returns the list of devices that can be mounted

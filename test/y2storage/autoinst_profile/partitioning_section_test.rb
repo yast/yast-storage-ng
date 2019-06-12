@@ -35,6 +35,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   let(:stray_section) { double("stray_section") }
   let(:bcache_section) { double("bcache_section") }
   let(:nfs_section) { double("nfs_section") }
+  let(:btrfs_section) { double("btrfs_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -69,8 +70,14 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "using doubles for the devicegraph and the subsections" do
       let(:devicegraph) do
         instance_double(
-          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
-          stray_blk_devices: [stray], bcaches: [bcache], nfs_mounts: [nfs]
+          Y2Storage::Devicegraph,
+          disk_devices:                  disks,
+          lvm_vgs:                       [vg],
+          software_raids:                [md],
+          stray_blk_devices:             [stray],
+          bcaches:                       [bcache],
+          nfs_mounts:                    [nfs],
+          multidevice_btrfs_filesystems: [btrfs]
         )
       end
 
@@ -82,6 +89,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
       let(:bcache) { instance_double(Y2Storage::Bcache) }
       let(:nfs) { instance_double(Y2Storage::Filesystems::Nfs) }
+      let(:btrfs) { instance_double(Y2Storage::Filesystems::Btrfs) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -98,6 +106,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(bcache).and_return(bcache_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(nfs).and_return(nfs_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(btrfs).and_return(btrfs_section)
       end
 
       subject(:section) { described_class.new_from_storage(devicegraph) }
@@ -132,6 +142,10 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
       it "creates an entry in #drives for every relevant NFS" do
         expect(section.drives).to include(nfs_section)
+      end
+
+      it "creates an entry in #drives for every relevant Btrfs" do
+        expect(section.drives).to include(btrfs_section)
       end
 
       it "ignores irrelevant drives" do
@@ -185,6 +199,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     let(:drive7) { double("DriveSection", type: :CT_DISK) }
     let(:drive8) { double("DriveSection", type: :CT_BCACHE) }
     let(:drive9) { double("DriveSection", type: :CT_NFS) }
+    let(:drive10) { double("DriveSection", type: :CT_BTRFS) }
     let(:wrongdrv1) { double("DriveSection", device: "/dev/md", type: :CT_DISK) }
     let(:wrongdrv2) { double("DriveSection", device: "/dev/sdc", type: :CT_MD) }
     let(:wrongdrv3) { double("DriveSection", device: "/dev/sdd", type: :CT_WRONG) }
@@ -193,7 +208,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
     before do
       section.drives = [
-        drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8, drive9,
+        drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8, drive9, drive10,
         wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
       ]
     end
@@ -223,6 +238,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "#bcache_drives" do
       it "returns drives which type is :CT_BCACHE, even if they look invalid" do
         expect(section.bcache_drives).to contain_exactly(drive8)
+      end
+    end
+
+    describe "#btrfs_drives" do
+      it "returns drives which type is :CT_BTRFS, even if they look invalid" do
+        expect(section.btrfs_drives).to contain_exactly(drive10)
       end
     end
 

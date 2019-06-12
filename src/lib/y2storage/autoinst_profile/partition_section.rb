@@ -79,7 +79,8 @@ module Y2Storage
         { name: :stripe_size, xml_name: :stripesize },
         { name: :bcache_backing_for },
         { name: :bcache_caching_for },
-        { name: :device }
+        { name: :device },
+        { name: :btrfs_name }
       ].freeze
       private_constant :ATTRIBUTES
 
@@ -162,8 +163,12 @@ module Y2Storage
       #   @return [String, nil] undocumented attribute, but used to indicate a NFS
       #     share when installing over NFS (with the old profile format)
 
+      # @!attribute btrfs_name
+      #   @return [String] Btrfs in which this partition will be included
+
       def init_from_hashes(hash)
         super
+
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
@@ -242,6 +247,16 @@ module Y2Storage
         "/dev/md/#{partition_nr}"
       end
 
+      # Name to reference a multi-device Btrfs (used when exporting).
+      #
+      # @param filesystem [Filesystems::BlkFilesystem, nil]
+      # @return [String, nil]
+      def name_for_btrfs(filesystem)
+        return nil unless filesystem && filesystem.multidevice? && filesystem.is?(:btrfs)
+
+        "btrfs_#{filesystem.sid}"
+      end
+
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a partition device.
       #
@@ -256,19 +271,19 @@ module Y2Storage
 
         init_fields_by_type(device)
 
-        # Exporting these values only makes sense when the device is a block device. Note
-        # that some exported devices (e.g., NFS filesystems) are not block devices.
+        # Exporting these values only makes sense when the device is a block device. Note that some
+        # exported devices (e.g., multi-device Btrfs and NFS filesystems) are not block devices.
         if device.is?(:blk_device)
           init_encryption_fields(device)
           init_filesystem_fields(device)
-        end
 
-        # NOTE: The old AutoYaST exporter does not report the real size here.
-        # It intentionally reports one cylinder less. Cylinders is an obsolete
-        # unit (that equals to 8225280 bytes in my experiments).
-        # According to the comments there, that was done due to bnc#415005 and
-        # bnc#262535.
-        @size = device.size.to_i.to_s if create && !fixed_size?(device)
+          # NOTE: The old AutoYaST exporter does not report the real size here.
+          # It intentionally reports one cylinder less. Cylinders is an obsolete
+          # unit (that equals to 8225280 bytes in my experiments).
+          # According to the comments there, that was done due to bnc#415005 and
+          # bnc#262535.
+          @size = device.size.to_i.to_s if create && !fixed_size?(device)
+        end
       end
 
       def to_hashes
@@ -307,6 +322,8 @@ module Y2Storage
           init_disk_device_fields(device)
         elsif device.is?(:nfs)
           init_nfs_fields(device)
+        elsif device.is?(:blk_filesystem)
+          init_blk_filesystem_fields(device)
         else
           init_partition_fields(device)
         end
@@ -319,6 +336,7 @@ module Y2Storage
         @partition_id = partition_id_from(partition)
         @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
+        @btrfs_name = name_for_btrfs(partition.filesystem)
         init_bcache_fields(partition)
       end
 
@@ -326,6 +344,7 @@ module Y2Storage
         @create = false
         @lvm_group = lvm_group_name(disk)
         @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
+        @btrfs_name = name_for_btrfs(disk.filesystem)
         init_bcache_fields(disk)
       end
 
@@ -336,6 +355,7 @@ module Y2Storage
         @pool = lv.lv_type == LvType::THIN_POOL
         parent = lv.parents.first
         @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
+        @btrfs_name = name_for_btrfs(lv.filesystem)
       end
 
       def init_encryption_fields(partition)
@@ -352,14 +372,21 @@ module Y2Storage
         return unless fs
 
         @format = true if partition.respond_to?(:id) && !NO_FORMAT_IDS.include?(partition.id)
-        @filesystem = fs.type.to_sym
-        @label = fs.label unless fs.label.empty?
-        @mkfs_options = fs.mkfs_options unless fs.mkfs_options.empty?
-        init_subvolumes(fs)
-        init_mount_options(fs)
+
+        init_blk_filesystem_fields(fs)
       end
 
-      # @param fs [Filesystem::BlkFilesystem]
+      # @param filesystem [Filesystems::BlkFilesystem]
+      def init_blk_filesystem_fields(filesystem)
+        @filesystem = filesystem.type.to_sym
+        @uuid = filesystem.uuid
+        @label = filesystem.label unless filesystem.label.empty?
+        @mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
+        init_subvolumes(filesystem)
+        init_mount_options(filesystem)
+      end
+
+      # @param fs [Filesystems::BlkFilesystem]
       def init_mount_options(fs)
         if !fs.mount_point.nil?
           @mount = fs.mount_point.path
@@ -369,7 +396,7 @@ module Y2Storage
         end
       end
 
-      # @param fs [Filesystem::BlkFilesystem] Filesystem to add subvolumes if required
+      # @param fs [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
       def init_subvolumes(fs)
         return unless fs.supports_btrfs_subvolumes?
 

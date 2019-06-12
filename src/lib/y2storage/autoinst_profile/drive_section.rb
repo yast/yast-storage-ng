@@ -23,9 +23,15 @@ require "yast"
 require "y2storage/autoinst_profile/section_with_attributes"
 require "y2storage/autoinst_profile/skip_list_section"
 require "y2storage/autoinst_profile/partition_section"
+require "y2storage/autoinst_profile/raid_options_section"
+require "y2storage/autoinst_profile/bcache_options_section"
+require "y2storage/autoinst_profile/btrfs_options_section"
 
 Yast.import "Arch"
 
+# FIXME: class too long, refactoring needed.
+#
+# rubocop:disable ClassLength
 module Y2Storage
   module AutoinstProfile
     # Thin object oriented layer on top of a <drive> section of the
@@ -51,7 +57,8 @@ module Y2Storage
           { name: :use },
           { name: :skip_list },
           { name: :raid_options },
-          { name: :bcache_options }
+          { name: :bcache_options },
+          { name: :btrfs_options }
         ]
       end
 
@@ -103,10 +110,14 @@ module Y2Storage
       # @!attribute raid_options
       #   @return [RaidOptionsSection] RAID options
       #   @see RaidOptionsSection
-      #
+
       # @!attribute bcache_options
       #   @return [BcacheOptionsSection] bcache options
       #   @see BcacheOptionsSection
+
+      # @!attribute btrfs_options
+      #   @return [BtrfsOptionsSection] Btrfs options
+      #   @see BtrfsOptionsSection
 
       # Constructor
       #
@@ -135,6 +146,9 @@ module Y2Storage
         end
         if hash["bcache_options"]
           @bcache_options = BcacheOptionsSection.new_from_hashes(hash["bcache_options"], self)
+        end
+        if hash["btrfs_options"]
+          @btrfs_options = BtrfsOptionsSection.new_from_hashes(hash["btrfs_options"], self)
         end
       end
 
@@ -174,15 +188,18 @@ module Y2Storage
         initialized ? result : nil
       end
 
+      # FIXME: Disabling rubocop. Not sure how to improve this method without making it less readable.
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      #
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a device.
       #
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param device [BlkDevice] a block device that can be cloned into a
-      #   <drive> section, like a disk, a DASD or an LVM volume group.
-      # @return [Boolean] if attributes were successfully read; false otherwise.
+      # @param device [Device] a device that can be cloned into a <drive> section, like a disk, a DASD,
+      #   an LVM volume group, etc.
+      # @return [Boolean] true if attributes were successfully read; false otherwise.
       def init_from_device(device)
         if device.is?(:software_raid)
           init_from_md(device)
@@ -192,12 +209,15 @@ module Y2Storage
           init_from_stray_blk_device(device)
         elsif device.is?(:bcache)
           init_from_bcache(device)
+        elsif device.is?(:btrfs)
+          init_from_btrfs(device)
         elsif device.is?(:nfs)
           init_from_nfs(device)
         else
           init_from_disk(device)
         end
       end
+      # rubocop:enable all
 
       # Device name to be used for the real MD device
       #
@@ -404,6 +424,26 @@ module Y2Storage
         true
       end
 
+      # Method used by {.new_from_storage} to populate the attributes when cloning a multi-device Btrfs
+      #
+      # @param filesystem [Y2Storage::Filesystems::Btrfs]
+      # @return [Boolean]
+      def init_from_btrfs(filesystem)
+        @type = :CT_BTRFS
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(filesystem)]
+        @device = @partitions.first.name_for_btrfs(filesystem)
+        @enable_snapshots = enabled_snapshots?([filesystem])
+        @btrfs_options = BtrfsOptionsSection.new_from_storage(filesystem)
+
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when cloning a Nfs
+      #
+      # @param device [Y2Storage::Filesystems::Nfs]
+      # @return [Boolean]
       def init_from_nfs(device)
         @type = :CT_NFS
         @device = device.share
@@ -577,3 +617,5 @@ module Y2Storage
     end
   end
 end
+
+# rubocop:enable all

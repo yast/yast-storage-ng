@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -94,6 +94,16 @@ describe Y2Storage::Planned::Partition do
     context "when it is planned to be used as RAID member" do
       before do
         partition.raid_name = "system"
+      end
+
+      it "returns true" do
+        expect(partition.component?).to eq(true)
+      end
+    end
+
+    context "when it is planned to be used as Btrfs member" do
+      before do
+        partition.btrfs_name = "root_fs"
       end
 
       it "returns true" do

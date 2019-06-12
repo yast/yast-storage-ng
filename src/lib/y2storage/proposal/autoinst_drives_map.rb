@@ -62,6 +62,7 @@ module Y2Storage
         add_vgs(partitioning.lvm_drives)
         add_mds(partitioning.md_drives)
         add_bcaches(partitioning.bcache_drives)
+        add_btrfs_filesystems(partitioning.btrfs_drives)
         add_nfs_filesystems(partitioning.nfs_drives)
       end
 
@@ -194,6 +195,14 @@ module Y2Storage
       #   AutoYaST
       def add_bcaches(bcaches)
         bcaches.each { |b| @drives[b.device] = b }
+      end
+
+      # Adds Btrfs filesystems to the device map
+      #
+      # @param btrfs_drives [Array<AutoinstProfile::DriveSection>] List of Btrfs specifications from
+      #   AutoYaST
+      def add_btrfs_filesystems(btrfs_drives)
+        btrfs_drives.each { |d| @drives[d.device] = d }
       end
 
       # Adds NFS filesystems to the device map

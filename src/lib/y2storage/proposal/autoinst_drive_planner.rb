@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -62,38 +62,56 @@ module Y2Storage
       #   specification of the concrete device
       # @param drive_section [AutoinstProfile::DriveSection] AutoYaST drive
       #   section containing the partition one
-      def device_config(device, partition_section, drive_section)
-        add_common_device_attrs(device, partition_section)
-        add_snapshots(device, drive_section)
-        add_subvolumes_attrs(device, partition_section)
+      def configure_device(device, partition_section, drive_section)
+        add_device_attrs(device, partition_section)
+
+        configure_filesystem(device, partition_section, drive_section)
       end
 
-      # Set common devices attributes
+      alias_method :device_config, :configure_device
+
+      # Sets all common filesystem attributes (e.g., label, uuid, mount point, etc)
       #
-      # This method modifies the first argument setting crypt_key, crypt_fs,
-      # mount, label, uuid and filesystem.
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_common_device_attrs(device, section)
-        device.encryption_password = section.crypt_key if section.crypt_fs
-        device.mount_point = section.mount
-        device.label = section.label
-        device.uuid = section.uuid
-        device.filesystem_type = filesystem_for(section)
-        device.mount_by = section.type_for_mountby
-        device.mkfs_options = section.mkfs_options
-        device.fstab_options = section.fstab_options
-        device.read_only = read_only?(section.mount)
+      # @param device  [Planned::Device]
+      # @param partition_section [AutoinstProfile::PartitionSection]
+      # @param drive_section [AutoinstProfile::DriveSection]
+      def configure_filesystem(device, partition_section, drive_section)
+        add_filesystem_attrs(device, partition_section)
+
+        configure_snapshots(device, drive_section)
+        configure_subvolumes(device, partition_section)
       end
 
-      # Set device attributes related to snapshots
+      # Sets common devices attributes
+      #
+      # @param device [Planned::Device] Planned device
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_device_attrs(device, partition_section)
+        device.encryption_password = partition_section.crypt_key if partition_section.crypt_fs
+      end
+
+      # Sets common filesystem attributes
+      #
+      # @param device  [Planned::Device]
+      # @param partition_section [AutoinstProfile::PartitionSection]
+      def add_filesystem_attrs(device, partition_section)
+        device.mount_point = partition_section.mount
+        device.label = partition_section.label
+        device.uuid = partition_section.uuid
+        device.filesystem_type = filesystem_for(partition_section)
+        device.mount_by = partition_section.type_for_mountby
+        device.mkfs_options = partition_section.mkfs_options
+        device.fstab_options = partition_section.fstab_options
+        device.read_only = read_only?(partition_section.mount)
+      end
+
+      # Sets device attributes related to snapshots
       #
       # This method modifies the first argument
       #
       # @param device  [Planned::Device] Planned device
       # @param drive_section [AutoinstProfile::DriveSection] AutoYaST specification
-      def add_snapshots(device, drive_section)
+      def configure_snapshots(device, drive_section)
         return unless device.respond_to?(:root?) && device.root?
 
         # Always try to enable snapshots if possible
@@ -103,14 +121,14 @@ module Y2Storage
         device.snapshots = snapshots
       end
 
-      # Set devices attributes related to Btrfs subvolumes
+      # Sets devices attributes related to Btrfs subvolumes
       #
       # This method modifies the first argument setting default_subvolume and
       # subvolumes.
       #
       # @param device  [Planned::Device] Planned device
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_subvolumes_attrs(device, section)
+      def configure_subvolumes(device, section)
         return unless device.btrfs?
 
         defaults = subvolume_attrs_for(device.mount_point)
@@ -138,12 +156,12 @@ module Y2Storage
 
       # Return the filesystem type for a given section
       #
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
       # @return [Filesystems::Type] Filesystem type
-      def filesystem_for(section)
-        return section.type_for_filesystem if section.type_for_filesystem
-        return nil unless section.mount
-        default_filesystem_for(section)
+      def filesystem_for(partition_section)
+        return partition_section.type_for_filesystem if partition_section.type_for_filesystem
+        return nil unless partition_section.mount
+        default_filesystem_for(partition_section)
       end
 
       # Return the default filesystem type for a given section
@@ -257,6 +275,7 @@ module Y2Storage
         partition.partition_id = section.id_for_partition
         partition.lvm_volume_group_name = section.lvm_group
         partition.raid_name = section.raid_name unless container.is_a?(Planned::Md)
+        partition.btrfs_name = section.btrfs_name
         partition.primary = section.partition_type == "primary" if section.partition_type
         add_bcache_attrs(partition, section)
 
