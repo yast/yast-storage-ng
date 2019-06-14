@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -119,6 +119,10 @@ module Y2Storage
     # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
+    # @return [String] name of a separate LVM volume group that will be created to
+    #   host only this volume, if the option separate_vgs is active in the settings
+    attr_accessor :separate_vg_name
+
     alias_method :proposed?, :proposed
     alias_method :proposed_configurable?, :proposed_configurable
     alias_method :adjust_by_ram?, :adjust_by_ram
@@ -206,6 +210,13 @@ module Y2Storage
       mount_point && mount_point == "swap"
     end
 
+    # Whether this volume defines a {#separate_vg_name}
+    #
+    # @return [Boolean]
+    def separate_vg?
+      !!separate_vg_name
+    end
+
     # Min size taking into account snapshots requirements
     #
     # @note If there are no special size requirements for snapshots, the
@@ -268,6 +279,7 @@ module Y2Storage
       snapshots_percentage:       :integer,
       weight:                     :integer,
       disable_order:              :integer,
+      separate_vg_name:           :string,
       subvolumes:                 :subvolumes
     }.freeze
 

@@ -137,6 +137,19 @@ module Y2Storage
         res
       end
 
+      # Planned partition that would be needed to provide all the necessary
+      # LVM space in a single physical volume
+      #
+      # This method is useful to generate a volume group with just one new PV.
+      #
+      # @return [Planned::Partition]
+      def single_pv_partition
+        pv = minimal_pv_partition
+        pv.min_size = real_pv_size(missing_space)
+        pv.max_size = real_pv_size(max_size)
+        pv
+      end
+
       # Part of a physical volume that can be used to allocate planned volumes
       #
       # @param size [DiskSize] total size of the partition
@@ -230,15 +243,6 @@ module Y2Storage
         substract_reused_vg_size(max)
       end
 
-      # Portion of a newly created physical volume that couldn't be used to
-      # allocate logical volumes because it would be reserved for LVM metadata
-      # and other data structures.
-      #
-      # @return [DiskSize]
-      def useless_pv_space
-        pvs_encrypt? ? USELESS_PV_SPACE + Planned::Partition.encryption_overhead : USELESS_PV_SPACE
-      end
-
       def self.to_string_attrs
         [:reuse_name, :volume_group_name]
       end
@@ -264,6 +268,15 @@ module Y2Storage
       # @return [DiskSize]
       def max_size
         DiskSize.sum(lvs.map(&:max_size), rounding: extent_size)
+      end
+
+      # Portion of a newly created physical volume that couldn't be used to
+      # allocate logical volumes because it would be reserved for LVM metadata
+      # and other data structures.
+      #
+      # @return [DiskSize]
+      def useless_pv_space
+        pvs_encrypt? ? USELESS_PV_SPACE + Planned::Partition.encryption_overhead : USELESS_PV_SPACE
       end
 
       def substract_reused_vg_size(size)

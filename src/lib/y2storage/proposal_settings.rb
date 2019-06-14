@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -39,6 +39,15 @@ module Y2Storage
     # @note :legacy format
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
+
+    # Whether the volumes specifying a separate_vg_name should
+    # be indeed created as separate volume groups
+    #
+    # @note :ng format
+    #
+    # @return [Boolean] if false, all volumes will be treated equally (no
+    #   special handling resulting in separate volume groups)
+    attr_accessor :separate_vgs
 
     # @note :legacy format
     # @return [Filesystems::Type] type to use for the root filesystem
@@ -326,6 +335,7 @@ module Y2Storage
     # ng and legacy formats
     def apply_ng_defaults
       self.lvm                 ||= false
+      self.separate_vgs        ||= false
       self.resize_windows      ||= true
       self.windows_delete_mode ||= :ondemand
       self.linux_delete_mode   ||= :ondemand
@@ -338,6 +348,7 @@ module Y2Storage
     # ng and legacy formats
     def load_ng_features
       load_feature(:proposal, :lvm)
+      load_feature(:proposal, :separate_vgs)
       load_feature(:proposal, :resize_windows)
       load_feature(:proposal, :windows_delete_mode)
       load_feature(:proposal, :linux_delete_mode)

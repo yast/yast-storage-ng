@@ -146,25 +146,10 @@ module Y2Storage
         if lvm?
           # Let's assume the best possible case - if we need to create a PV it
           # will be only one
-          pvs_to_create = 1
-          needed += lvm_space_to_make(pvs_to_create)
+          needed += planned_vg.single_pv_partition.min_size
           log.info "#impossible? with LVM - needed: #{needed}"
         end
         needed > available_space(free_spaces)
-      end
-
-      # Space that needs to be dedicated to new physical volumes in order to
-      # have a chance to calculate an acceptable space distribution. The result
-      # depends on the number of PV that would be created, since every PV
-      # introduces an overhead.
-      #
-      # @param new_pvs [Integer] max number of PVs that would be created,
-      #     if needed. This is by definition an estimation (you never know the
-      #     exact number of PVs until you calculate the space distribution)
-      # @return [DiskSize]
-      def lvm_space_to_make(new_pvs)
-        return DiskSize.zero unless lvm?
-        planned_vg.missing_space + planned_vg.useless_pv_space * new_pvs
       end
 
       # Returns the sum of available spaces
@@ -402,19 +387,7 @@ module Y2Storage
 
         # In the LVM case, assume the worst case - that there will be only
         # one big PV and we have to make room for it as well.
-        planned_partitions + [planned_single_pv]
-      end
-
-      # Planned partition that would be needed to accumulate all the necessary
-      # LVM space in a single physical volume
-      #
-      # @see #all_planned_partitions
-      #
-      # @return [Planned::Partition]
-      def planned_single_pv
-        res = Planned::Partition.new(nil)
-        res.min_size = lvm_space_to_make(1)
-        res
+        planned_partitions + [planned_vg.single_pv_partition]
       end
 
       # Size that is missing in the space marked as "growing" in order to
