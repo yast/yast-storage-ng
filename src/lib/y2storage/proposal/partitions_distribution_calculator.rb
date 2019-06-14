@@ -34,16 +34,16 @@ module Y2Storage
     class PartitionsDistributionCalculator
       include Yast::Logger
 
-      def initialize(lvm_helper = nil)
-        @lvm_helper = lvm_helper
+      def initialize(planned_vg = nil)
+        @planned_vg = planned_vg
       end
 
       # Best possible distribution, nil if the planned partitions don't fit
       #
-      # If it's necessary to provide LVM space (according to lvm_helper),
+      # If it's necessary to provide LVM space (according to the planned VG),
       # the result will include one or several extra planned partitions to host
       # the LVM physical volumes that need to be created in order to reach
-      # that size (within the max limits provided by lvm_helper).
+      # that size (within the max limits defined for the planned VG).
       #
       # @param partitions [Array<Planned::Partition>]
       # @param spaces [Array<FreeDiskSpace>]
@@ -63,7 +63,7 @@ module Y2Storage
 
         if lvm?
           log.info "Calculate LVM posibilities for the #{candidates.size} candidate distributions"
-          pv_calculator = PhysVolCalculator.new(spaces, lvm_helper)
+          pv_calculator = PhysVolCalculator.new(spaces, planned_vg)
           candidates.map! { |dist| pv_calculator.add_physical_volumes(dist) }
         end
         candidates.compact!
@@ -122,14 +122,19 @@ module Y2Storage
 
     protected
 
-      # @return [Proposal::LvmHelper, nil] nil if LVM is not involved
-      attr_reader :lvm_helper
+      # When calculating an LVM proposal, this represents the projected "system"
+      # volume group to accommodate root and other volumes.
+      #
+      # Nil if LVM is not involved (partition-based proposal)
+      #
+      # @return [Planned::LvmVg, nil]
+      attr_reader :planned_vg
 
       # Whether LVM should be taken into account
       #
       # @return [Boolean]
       def lvm?
-        !!(lvm_helper && lvm_helper.missing_space > DiskSize.zero)
+        !!(planned_vg && planned_vg.missing_space > DiskSize.zero)
       end
 
       # Checks whether there is any chance of producing a valid
@@ -159,7 +164,7 @@ module Y2Storage
       # @return [DiskSize]
       def lvm_space_to_make(new_pvs)
         return DiskSize.zero unless lvm?
-        lvm_helper.missing_space + lvm_helper.useless_pv_space * new_pvs
+        planned_vg.missing_space + planned_vg.useless_pv_space * new_pvs
       end
 
       # Returns the sum of available spaces

@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,14 +25,17 @@ require_relative "../spec_helper"
 require "y2storage/planned"
 
 describe Y2Storage::Planned::LvmVg do
+  using Y2Storage::Refinements::SizeCasts
+
   subject(:lvm_vg) { described_class.new(volume_group_name: name) }
 
   let(:lv_root) { Y2Storage::Planned::LvmLv.new("/", :ext4) }
   let(:name) { "system" }
+  let(:scenario) { "lvm-two-vgs" }
   let(:vg0) { fake_devicegraph.lvm_vgs.find { |v| v.vg_name == "vg0" } }
 
   before do
-    fake_scenario("lvm-two-vgs")
+    fake_scenario(scenario)
   end
 
   describe ".from_real_vg" do
@@ -91,6 +94,104 @@ describe Y2Storage::Planned::LvmVg do
 
     it "returns all logical volumes even those included in thin pools" do
       expect(lvm_vg.all_lvs).to eq([lvm_lv, thin_lv])
+    end
+  end
+
+  describe "#missing_space" do
+    let(:scenario) { "lvm-big-pe" }
+    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
+
+    before { lvm_vg.lvs = volumes }
+
+    context "if no LVM volumes are planned" do
+      let(:volumes) { [] }
+
+      it "returns zero" do
+        expect(lvm_vg.missing_space).to be_zero
+      end
+    end
+
+    context "if some LVM volumes are planned" do
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: desired)] }
+
+      context "and no volume group is being reused" do
+        let(:desired) { 10.GiB - 2.MiB }
+
+        it "returns the target size rounded up to the default extent size" do
+          expect(lvm_vg.missing_space).to eq 10.GiB
+        end
+      end
+
+      context "and a big-enough volume group is being reused" do
+        subject(:lvm_vg) { Y2Storage::Planned::LvmVg.from_real_vg(vg_big_pe) }
+        let(:desired) { 10.GiB }
+
+        it "returns zero" do
+          expect(lvm_vg.missing_space).to be_zero
+        end
+      end
+
+      context "and a volume group that needs to be extended is being reused" do
+        subject(:lvm_vg) { Y2Storage::Planned::LvmVg.from_real_vg(vg_big_pe) }
+        let(:desired) { 20.GiB + 2.MiB }
+
+        it "returns the missing size rounded up to the VG extent size" do
+          missing = desired - vg_big_pe.size
+          # Extent size of vg_big_pe is 64 MiB
+          rounding = 62.MiB
+          expect(lvm_vg.missing_space).to eq(missing + rounding)
+        end
+      end
+    end
+  end
+
+  describe "#max_extra_space" do
+    let(:scenario) { "lvm-big-pe" }
+    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
+
+    before { lvm_vg.lvs = volumes }
+
+    context "if no LVM volumes are planned" do
+      let(:volumes) { [] }
+
+      it "returns zero" do
+        expect(lvm_vg.max_extra_space).to be_zero
+      end
+    end
+
+    context "if some LVM volumes are planned" do
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 1.GiB, max: max)] }
+
+      context "and the max size is unlimited" do
+        let(:reused_vg) { nil }
+        let(:unlimited) { Y2Storage::DiskSize.unlimited }
+        let(:max) { unlimited }
+
+        it "returns unlimited" do
+          expect(lvm_vg.max_extra_space).to eq unlimited
+        end
+      end
+
+      context "and no volume group is being reused" do
+        let(:reused_vg) { nil }
+        let(:max) { 30.GiB - 1.MiB }
+
+        it "returns the max size rounded up to the default extent size" do
+          expect(lvm_vg.max_extra_space).to eq 30.GiB
+        end
+      end
+
+      context "and a volume group is being reused" do
+        subject(:lvm_vg) { Y2Storage::Planned::LvmVg.from_real_vg(vg_big_pe) }
+        let(:max) { 30.GiB + 2.MiB }
+
+        it "returns the extra size rounded up to the VG extent size" do
+          extra = max - vg_big_pe.size
+          # Extent size of vg_big_pe is 64 MiB
+          rounding = 62.MiB
+          expect(lvm_vg.max_extra_space).to eq(extra + rounding)
+        end
+      end
     end
   end
 end

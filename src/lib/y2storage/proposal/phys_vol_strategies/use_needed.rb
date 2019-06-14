@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015-2018] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,13 +40,13 @@ module Y2Storage
         # reached.
         #
         # Returns nil if it's not possible to create a distribution of physical
-        # volumes that guarantees the requirements set by lvm_helper.
+        # volumes that guarantees the requirements set by the planned VG.
         #
         # @param sorted_spaces [Array<FreeDiskSpace>]
         # @return [Planned::PartitionsDistribution, nil]
         def processed_distribution(sorted_spaces)
           pv_partitions = {}
-          missing_size = lvm_helper.missing_space
+          missing_size = planned_vg.missing_space
           result = nil
 
           sorted_spaces.each do |space|
@@ -69,7 +69,7 @@ module Y2Storage
                 # Adding PVs in this order leads to an invalid distribution
                 return nil
               end
-              if potential_lvm_size(result) >= lvm_helper.missing_space
+              if potential_lvm_size(result) >= planned_vg.missing_space
                 # We did it!
                 remember_combination(sorted_spaces, space)
                 adjust_sizes(result, space)
@@ -95,7 +95,7 @@ module Y2Storage
         #     #processed is not adjusted to fill as much space as possible, but to
         #     match the total LVM requirements (size and max)
         def adjust_sizes(distribution, last_disk_space)
-          missing_size = lvm_helper.missing_space
+          missing_size = planned_vg.missing_space
 
           distribution.spaces.each do |space|
             pv_partition = new_pv_at(space)
@@ -105,16 +105,16 @@ module Y2Storage
             usable_size = potential_partition_size(pv_partition, space)
             pv_partition.min_size = usable_size
             pv_partition.max_size = usable_size
-            missing_size -= lvm_helper.useful_pv_space(usable_size)
+            missing_size -= planned_vg.useful_pv_space(usable_size)
           end
 
           space = distribution.space_at(last_disk_space)
           pv_partition = new_pv_at(space)
-          pv_size = lvm_helper.real_pv_size(missing_size)
+          pv_size = planned_vg.real_pv_size(missing_size)
           pv_partition.min_size = pv_size
 
-          other_pvs_size = lvm_helper.missing_space - missing_size
-          pv_partition.max_size = lvm_helper.real_pv_size(lvm_helper.max_extra_space - other_pvs_size)
+          other_pvs_size = planned_vg.missing_space - missing_size
+          pv_partition.max_size = planned_vg.real_pv_size(planned_vg.max_extra_space - other_pvs_size)
         end
 
         def remember_combination(sorted_spaces, final_space)

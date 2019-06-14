@@ -70,7 +70,7 @@ module Y2Storage
       #
       def provide_space(original_graph, planned_partitions, lvm_helper)
         @original_graph = original_graph
-        @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper)
+        @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper.volume_group)
 
         # update storage ids of reused volumes in planned volumes list
         planned_partitions.select(&:reuse?).each do |part|
