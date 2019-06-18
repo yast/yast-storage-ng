@@ -23,7 +23,9 @@
 
 require "yast"
 require "y2storage/planned/device"
+require "y2storage/secret_attributes"
 require "y2storage/planned/mixins"
+require "y2storage/planned/partition"
 
 module Y2Storage
   module Planned
@@ -33,9 +35,15 @@ module Y2Storage
     # @see Device
     class LvmVg < Device
       include Planned::HasSize
+      include SecretAttributes
 
       DEFAULT_EXTENT_SIZE = DiskSize.MiB(4)
       private_constant :DEFAULT_EXTENT_SIZE
+
+      # This is just an estimation chosen to match libstorage hardcoded value
+      # See LvmVg::Impl::calculate_region() in storage-ng
+      USELESS_PV_SPACE = DiskSize.MiB(1)
+      private_constant :USELESS_PV_SPACE
 
       # @return [String] name to use for Y2Storage::LvmVg#vg_name
       attr_accessor :volume_group_name
@@ -54,6 +62,19 @@ module Y2Storage
       #   all old logical volumes (:remove) or not remove any logical
       #   volume (:keep).
       attr_accessor :make_space_policy
+
+      # @!attribute pvs_encryption_password
+      #   @return [String, nil] password used to encrypt the newly created
+      #     physical volumes. If nil, the PVs will not be encrypted.
+      secret_attr :pvs_encryption_password
+
+      # Strategy used by the guided proposal to calculate the size of the resulting
+      # volume group
+      #
+      # @see ProposalSettings#lvm_vg_strategy
+      #
+      # @return [Symbol]
+      attr_accessor :size_strategy
 
       # Builds a new instance based on a real VG
       #
@@ -81,6 +102,7 @@ module Y2Storage
         @volume_group_name = volume_group_name
         @lvs = lvs
         @pvs = pvs
+        @pvs_encryption_password = nil
         @make_space_policy = :needed
       end
 
@@ -93,6 +115,60 @@ module Y2Storage
         @pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
         @lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
         self.reuse_name = real_vg.vg_name
+      end
+
+      # Min size that a partition (or any other block device) must have to be useful as PV
+      #
+      # @return [DiskSize]
+      def min_pv_size
+        extent_size + useless_pv_space
+      end
+
+      # Planned partition representing an LVM physical volume with the minimum
+      # possible size
+      #
+      # @return [Planned::Partition]
+      def minimal_pv_partition
+        res = Planned::Partition.new(nil)
+        res.partition_id = PartitionId::LVM
+        res.lvm_volume_group_name = volume_group_name
+        res.encryption_password = pvs_encryption_password
+        res.min_size = min_pv_size
+        res
+      end
+
+      # Planned partition that would be needed to provide all the necessary
+      # LVM space in a single physical volume
+      #
+      # This method is useful to generate a volume group with just one new PV.
+      #
+      # @return [Planned::Partition]
+      def single_pv_partition
+        pv = minimal_pv_partition
+        pv.min_size = real_pv_size(missing_space)
+        pv.max_size = real_pv_size(max_size)
+        pv.weight = lvs_weight
+        pv
+      end
+
+      # Part of a physical volume that can be used to allocate planned volumes
+      #
+      # @param size [DiskSize] total size of the partition
+      # @return [DiskSize] usable size after substracting LVM overhead and
+      #     space wasted by rounding
+      def useful_pv_space(size)
+        size -= useless_pv_space
+        size.floor(extent_size)
+      end
+
+      # Total size that a partition (or other block device) must have in order to
+      # provide the given useful size to the volume group. Inverse of #useful_pv_space
+      # @see #useful_pv_space
+      #
+      # @param useful_size [DiskSize] size usable to allocate logical volumes
+      # @return [DiskSize] real size of the partition
+      def real_pv_size(useful_size)
+        useful_size.ceil(extent_size) + useless_pv_space
       end
 
       # Returns the size of each extent
@@ -134,6 +210,40 @@ module Y2Storage
         lvs.select { |v| v.lv_type == LvType::THIN_POOL }
       end
 
+      # Space that must be added to the final volume group in order to make
+      # possible to allocate all the LVM planned volumes.
+      #
+      # This method takes into account the size of the extents and all the
+      # related roundings.
+      #
+      # If this represents a reused volume group, the method assumes all the space
+      # in that volume group can be reclaimed for the guided proposal purposes.
+      #
+      # @return [DiskSize]
+      def missing_space
+        return DiskSize.zero if !lvs || lvs.empty?
+        substract_reused_vg_size(target_size)
+      end
+
+      # Space that must be added to the volume group to fulfill the max size
+      # requirements for all the LVM planned volumes.
+      #
+      # This method takes into account the size of the extents and all the
+      # related roundings.
+      #
+      # If this represents a reused volume group, the method assumes all the space
+      # in that volume group can be reclaimed for the guided proposal purposes.
+      #
+      # @return [DiskSize]
+      def max_extra_space
+        return DiskSize.zero if !lvs || lvs.empty?
+
+        max = max_size
+        return max if max.unlimited? || !reuse?
+
+        substract_reused_vg_size(max)
+      end
+
       def self.to_string_attrs
         [:reuse_name, :volume_group_name]
       end
@@ -143,6 +253,46 @@ module Y2Storage
       def device_to_reuse(devicegraph)
         return nil unless reuse?
         Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse_name)
+      end
+
+      # Whether the created PVs should be encrypted
+      #
+      # @see #pvs_encryption_password
+      #
+      # @return [Boolean]
+      def pvs_encrypt?
+        !pvs_encryption_password.nil?
+      end
+
+      # Max space needed to acommodate all the LVs of this volume group
+      #
+      # @return [DiskSize]
+      def max_size
+        DiskSize.sum(lvs.map(&:max_size), rounding: extent_size)
+      end
+
+      # Total weight of all the planned LVs
+      #
+      # @return [Integer]
+      def lvs_weight
+        lvs.map { |lv| lv.weight || 0 }.reduce(:+)
+      end
+
+      # Portion of a newly created physical volume that couldn't be used to
+      # allocate logical volumes because it would be reserved for LVM metadata
+      # and other data structures.
+      #
+      # @return [DiskSize]
+      def useless_pv_space
+        pvs_encrypt? ? USELESS_PV_SPACE + Planned::Partition.encryption_overhead : USELESS_PV_SPACE
+      end
+
+      def substract_reused_vg_size(size)
+        if total_size < size
+          size - total_size
+        else
+          DiskSize.zero
+        end
       end
     end
   end

@@ -40,110 +40,6 @@ describe Y2Storage::Proposal::LvmHelper do
   let(:enc_password) { nil }
   let(:lvm_vg_strategy) { :use_needed }
 
-  describe "#missing_space" do
-    let(:scenario) { "lvm-big-pe" }
-    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
-
-    context "if no LVM volumes are planned" do
-      let(:volumes) { [] }
-
-      it "returns zero" do
-        expect(helper.missing_space).to be_zero
-      end
-    end
-
-    context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: desired)] }
-
-      before do
-        helper.reused_volume_group = reused_vg
-      end
-
-      context "and no volume group is being reused" do
-        let(:reused_vg) { nil }
-        let(:desired) { 10.GiB - 2.MiB }
-
-        it "returns the target size rounded up to the default extent size" do
-          expect(helper.missing_space).to eq 10.GiB
-        end
-      end
-
-      context "and a big-enough volume group is being reused" do
-        let(:reused_vg) { vg_big_pe }
-        let(:desired) { 10.GiB }
-
-        it "returns zero" do
-          helper.reused_volume_group = vg_big_pe
-          expect(helper.missing_space).to be_zero
-        end
-      end
-
-      context "and a volume group that needs to be extended is being reused" do
-        let(:reused_vg) { vg_big_pe }
-        let(:desired) { 20.GiB + 2.MiB }
-
-        it "returns the missing size rounded up to the VG extent size" do
-          missing = desired - vg_big_pe.size
-          # Extent size of vg_big_pe is 64 MiB
-          rounding = 62.MiB
-          expect(helper.missing_space).to eq(missing + rounding)
-        end
-      end
-    end
-  end
-
-  describe "#max_extra_space" do
-    let(:scenario) { "lvm-big-pe" }
-    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
-
-    context "if no LVM volumes are planned" do
-      let(:volumes) { [] }
-
-      it "returns zero" do
-        expect(helper.max_extra_space).to be_zero
-      end
-    end
-
-    context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 1.GiB, max: max)] }
-
-      before do
-        helper.reused_volume_group = reused_vg
-      end
-
-      context "and the max size is unlimited" do
-        let(:reused_vg) { nil }
-        let(:unlimited) { Y2Storage::DiskSize.unlimited }
-        let(:max) { unlimited }
-
-        it "returns unlimited" do
-          expect(helper.max_extra_space).to eq unlimited
-        end
-      end
-
-      context "and no volume group is being reused" do
-        let(:reused_vg) { nil }
-        let(:max) { 30.GiB - 1.MiB }
-
-        it "returns the max size rounded up to the default extent size" do
-          expect(helper.max_extra_space).to eq 30.GiB
-        end
-      end
-
-      context "and a volume group is being reused" do
-        let(:reused_vg) { vg_big_pe }
-        let(:max) { 30.GiB + 2.MiB }
-
-        it "returns the extra size rounded up to the VG extent size" do
-          extra = max - vg_big_pe.size
-          # Extent size of vg_big_pe is 64 MiB
-          rounding = 62.MiB
-          expect(helper.max_extra_space).to eq(extra + rounding)
-        end
-      end
-    end
-  end
-
   describe "#reusable_volume_groups" do
     context "if there are no volume groups" do
       let(:scenario) { "windows-pc" }
@@ -199,26 +95,6 @@ describe Y2Storage::Proposal::LvmHelper do
         it "returns an empty array" do
           expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
         end
-      end
-    end
-  end
-
-  describe "#encrypt?" do
-    let(:scenario) { "windows-pc" }
-
-    context "if the encryption password was not initialized" do
-      let(:enc_password) { nil }
-
-      it "returns false" do
-        expect(helper.encrypt?).to eq false
-      end
-    end
-
-    context "if the encryption password was set" do
-      let(:enc_password) { "Sec3t!" }
-
-      it "returns true" do
-        expect(helper.encrypt?).to eq true
       end
     end
   end

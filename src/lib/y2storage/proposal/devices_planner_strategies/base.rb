@@ -73,8 +73,11 @@ module Y2Storage
         # @param planned_devices [Array<Planned::Device>] devices that have been planned
         # @return [Array<Planned::Device>]
         def planned_boot_devices(planned_devices)
+          flat = planned_devices.flat_map do |dev|
+            dev.respond_to?(:lvs) ? dev.lvs : dev
+          end
           checker = BootRequirementsChecker.new(
-            devicegraph, planned_devices: planned_devices, boot_disk_name: settings.root_device
+            devicegraph, planned_devices: flat, boot_disk_name: settings.root_device
           )
           checker.needed_partitions(target)
         rescue BootRequirementsChecker::Error => error

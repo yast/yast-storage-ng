@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015-2018] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,12 +36,11 @@ module Y2Storage
         #     distribution
         # @param all_spaces [Array<FreeDiskSpace>] Disk spaces that could
         #     potentially contain physical volumes
-        # @param lvm_helper [Proposal::LvmHelper] contains information about the
-        #     LVM planned volumes and how to make space for them
-        def initialize(distribution, all_spaces, lvm_helper)
+        # @param planned_vg [Planned::LvmVg] volume group to create the PVs for
+        def initialize(distribution, all_spaces, planned_vg)
           @initial_distribution = distribution
           @all_spaces = all_spaces
-          @lvm_helper = lvm_helper
+          @planned_vg = planned_vg
         end
 
         # Extended distribution that includes a planned partition for every
@@ -70,8 +69,8 @@ module Y2Storage
 
       protected
 
-        # @return [Proposal::LvmHelper]
-        attr_reader :lvm_helper
+        # @return [Planned::LvmVg]
+        attr_reader :planned_vg
 
         # @return [Array<FreeDiskSpace>] Disk spaces that could potentially
         #   contain physical volumes
@@ -111,7 +110,7 @@ module Y2Storage
             next unless pv_partition
 
             usable_size = potential_partition_size(pv_partition, space)
-            total += lvm_helper.useful_pv_space(usable_size)
+            total += planned_vg.useful_pv_space(usable_size)
           end
           total
         end
@@ -143,7 +142,7 @@ module Y2Storage
         def useful_spaces
           @useful_spaces ||= all_spaces.select do |space|
             available_size = estimated_available_size(space)
-            available_size >= lvm_helper.min_pv_size
+            available_size >= planned_vg.min_pv_size
           end
         end
 
@@ -153,7 +152,7 @@ module Y2Storage
         # @return [DiskSize]
         def useful_size(space)
           @useful_sizes ||= {}
-          @useful_sizes[space] ||= lvm_helper.useful_pv_space(estimated_available_size(space))
+          @useful_sizes[space] ||= planned_vg.useful_pv_space(estimated_available_size(space))
         end
 
         # Planned partition representing a LVM physical volume with the minimum
@@ -161,12 +160,7 @@ module Y2Storage
         #
         # @return [Planned::Partition]
         def new_planned_partition
-          res = Planned::Partition.new(nil)
-          res.partition_id = PartitionId::LVM
-          res.lvm_volume_group_name = lvm_helper.volume_group.volume_group_name
-          res.encryption_password = lvm_helper.encryption_password
-          res.min_size = lvm_helper.min_pv_size
-          res
+          planned_vg.minimal_pv_partition
         end
 
         # Adjust the weights of all the planned partitions in the distribution that

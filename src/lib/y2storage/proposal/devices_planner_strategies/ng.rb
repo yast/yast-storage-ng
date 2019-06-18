@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -51,11 +51,34 @@ module Y2Storage
         # @param volume [VolumeSpecification]
         # @return [Planned::device]
         def planned_device(volume)
+          if settings.separate_vgs && volume.separate_vg?
+            planned_separate_vg(volume)
+          else
+            planned_blk_device(volume)
+          end
+        end
+
+        # @see #planned_device
+        #
+        # @param volume [VolumeSpecification]
+        # @return [Planned::LvmLv, Planed::Partition]
+        def planned_blk_device(volume)
           planned_type = settings.lvm ? Planned::LvmLv : Planned::Partition
           planned_device = planned_type.new(volume.mount_point, volume.fs_type)
-
           adjust_to_settings(planned_device, volume)
+          planned_device
+        end
 
+        # @see #planned_device
+        #
+        # @param volume [VolumeSpecification]
+        # @return [Planned::LvmVg]
+        def planned_separate_vg(volume)
+          lv = Planned::LvmLv.new(volume.mount_point, volume.fs_type)
+          adjust_to_settings(lv, volume)
+
+          planned_device = Planned::LvmVg.new(volume_group_name: volume.separate_vg_name, lvs: [lv])
+          planned_device.pvs_encryption_password = settings.encryption_password
           planned_device
         end
 

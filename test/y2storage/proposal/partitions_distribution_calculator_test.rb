@@ -32,6 +32,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
   let(:enc_password) { nil }
   let(:lvm_vg_strategy) { :use_needed }
   let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, settings) }
+  let(:planned_vg) { lvm_helper.volume_group }
 
   before do
     settings.encryption_password = enc_password
@@ -39,7 +40,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     fake_scenario(scenario)
   end
 
-  subject(:calculator) { described_class.new(lvm_helper) }
+  subject(:calculator) { described_class.new(planned_vg) }
 
   describe "#best_distribution" do
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
@@ -540,12 +541,12 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         include_examples "configuration of PVs"
 
         it "sets min_size for all PVs to sum lvm_size" do
-          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
+          useful_min_sizes = pv_vols.map { |v| planned_vg.useful_pv_space(v.min_size) }
           expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
         it "sets max_size for all PVs to sum lvm_max" do
-          useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_size) }
+          useful_max_sizes = pv_vols.map { |v| planned_vg.useful_pv_space(v.max_size) }
           expect(useful_max_sizes.reduce(:+)).to eq lvm_max
         end
 
@@ -619,7 +620,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         include_examples "configuration of PVs"
 
         it "sets min_size for all PVs to be as big as needed" do
-          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
+          useful_min_sizes = pv_vols.map { |v| planned_vg.useful_pv_space(v.min_size) }
           expect(useful_min_sizes.reduce(:+)).to be >= lvm_size
         end
 

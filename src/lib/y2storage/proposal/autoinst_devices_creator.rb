@@ -427,9 +427,9 @@ module Y2Storage
 
       # Creates a volume group in the given devicegraph
       #
-      # @param devicegraph [Devicegraph]                    Starting devicegraph
-      # @param vg          [Planned::LvmVg]                 Volume group
-      # @param pvs         [Planned::Partition,Planned::Md] List of physical volumes
+      # @param devicegraph [Devicegraph]             Starting devicegraph
+      # @param vg          [Planned::LvmVg]          Volume group
+      # @param pvs         [Array<String>]           List of device names of the physical volumes
       # @return            [Proposal::CreatorResult] Result containing the specified volume group
       def create_logical_volumes(devicegraph, vg, pvs)
         lvm_creator = Proposal::LvmCreator.new(devicegraph)

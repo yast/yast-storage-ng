@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,13 +37,12 @@ module Y2Storage
       #
       # @param all_spaces [Array<FreeDiskSpace>] Disk spaces that could
       #     potentially contain physical volumes
-      # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     LVM planned volumes and how to make space for them
-      def initialize(all_spaces, lvm_helper)
+      # @param planned_vg [Planned::LvmVg] volume group to create the PVs for
+      def initialize(all_spaces, planned_vg)
         @all_spaces = all_spaces
-        @lvm_helper = lvm_helper
+        @planned_vg = planned_vg
 
-        strategy = lvm_helper.vg_strategy
+        strategy = planned_vg.size_strategy
         if STRATEGIES[strategy]
           @strategy_class = STRATEGIES[strategy]
         else
@@ -65,7 +64,7 @@ module Y2Storage
       # @return [Planned::PartitionsDistribution, nil] nil if it's
       #     impossible to allocate all the needed physical volumes
       def add_physical_volumes(distribution)
-        @strategy_class.new(distribution, @all_spaces, @lvm_helper).add_physical_volumes
+        @strategy_class.new(distribution, @all_spaces, @planned_vg).add_physical_volumes
       end
     end
   end

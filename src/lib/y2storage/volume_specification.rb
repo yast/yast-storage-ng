@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -119,6 +119,23 @@ module Y2Storage
     # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
+    # Name of a separate LVM volume group that will be created to host only this volume,
+    # if the option separate_vgs is active in the settings
+    #
+    # Only one PV will be created to back the volume group, unlike the default
+    # "system" volume group that may be defined on top of several physical
+    # volumes if needed.
+    #
+    # In the future we may consider to break both aspects in different settings.
+    # #vg_name to specify the volume group name (with "system" as default) and
+    # #isolated_vg to enforce just one PV for a particular volume group.
+    #
+    # If that ever happens, separate_vg_name=foo would become some kind of alias
+    # for vg_name=foo + isolated_vg=true.
+    #
+    # @return [String]
+    attr_accessor :separate_vg_name
+
     alias_method :proposed?, :proposed
     alias_method :proposed_configurable?, :proposed_configurable
     alias_method :adjust_by_ram?, :adjust_by_ram
@@ -206,6 +223,13 @@ module Y2Storage
       mount_point && mount_point == "swap"
     end
 
+    # Whether this volume defines a {#separate_vg_name}
+    #
+    # @return [Boolean]
+    def separate_vg?
+      !!separate_vg_name
+    end
+
     # Min size taking into account snapshots requirements
     #
     # @note If there are no special size requirements for snapshots, the
@@ -268,6 +292,7 @@ module Y2Storage
       snapshots_percentage:       :integer,
       weight:                     :integer,
       disable_order:              :integer,
+      separate_vg_name:           :string,
       subvolumes:                 :subvolumes
     }.freeze
 

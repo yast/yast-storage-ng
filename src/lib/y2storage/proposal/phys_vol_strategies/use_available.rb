@@ -45,7 +45,7 @@ module Y2Storage
         # volumes to as many spaces as possible.
         #
         # Returns nil if it's not possible to create a distribution of physical
-        # volumes that guarantees the requirements set by lvm_helper.
+        # volumes that guarantees the requirements set by the planned VG.
         #
         # @param spaces [Array<FreeDiskSpace>]
         # @return [Planned::PartitionsDistribution, nil]
@@ -64,8 +64,8 @@ module Y2Storage
           adjust_sizes(result)
           remember_combination(spaces)
 
-          sizes = pv_partitions.values.map { |part| lvm_helper.useful_pv_space(part.min_size) }
-          return nil if DiskSize.sum(sizes) < lvm_helper.missing_space
+          sizes = pv_partitions.values.map { |part| planned_vg.useful_pv_space(part.min_size) }
+          return nil if DiskSize.sum(sizes) < planned_vg.missing_space
 
           adjust_weights(result)
           result
@@ -87,7 +87,7 @@ module Y2Storage
           # This one is optimistic, the other one is realistic (so still needed
           # in some corner cases).
           useful_sizes = spaces.map { |s| useful_size(s) }
-          return false if DiskSize.sum(useful_sizes) < lvm_helper.missing_space
+          return false if DiskSize.sum(useful_sizes) < planned_vg.missing_space
 
           return true if @checked_combinations.nil?
           @checked_combinations.none? do |checked|
@@ -126,7 +126,7 @@ module Y2Storage
         #
         # @return [DiskSize]
         def needed_in_single_pv
-          @needed_in_single_pv ||= lvm_helper.real_pv_size(lvm_helper.missing_space)
+          @needed_in_single_pv ||= planned_vg.real_pv_size(planned_vg.missing_space)
         end
       end
     end
