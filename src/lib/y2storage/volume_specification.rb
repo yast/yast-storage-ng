@@ -119,8 +119,21 @@ module Y2Storage
     # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
-    # @return [String] name of a separate LVM volume group that will be created to
-    #   host only this volume, if the option separate_vgs is active in the settings
+    # Name of a separate LVM volume group that will be created to host only this volume,
+    # if the option separate_vgs is active in the settings
+    #
+    # Only one PV will be created to back the volume group, unlike the default
+    # "system" volume group that may be defined on top of several physical
+    # volumes if needed.
+    #
+    # In the future we may consider to break both aspects in different settings.
+    # #vg_name to specify the volume group name (with "system" as default) and
+    # #isolated_vg to enforce just one PV for a particular volume group.
+    #
+    # If that ever happens, separate_vg_name=foo would become some kind of alias
+    # for vg_name=foo + isolated_vg=true.
+    #
+    # @return [String]
     attr_accessor :separate_vg_name
 
     alias_method :proposed?, :proposed
