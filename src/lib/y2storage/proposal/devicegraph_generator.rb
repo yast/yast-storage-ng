@@ -84,11 +84,7 @@ module Y2Storage
       #   is required) or a planned VG (so a PV partition for the VG is calculated)
       # @return [Planned::Partition]
       def planned_partition_for(device)
-        return device if device.is_a?(Planned::Partition)
-
-        pv = device.single_pv_partition
-        pv.weight = device.lvs.first.weight
-        pv
+        device.is_a?(Planned::Partition) ? device : device.single_pv_partition
       end
 
       # Creates the corresponding LVM devices for all the planned VGs in the

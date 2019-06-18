@@ -147,6 +147,7 @@ module Y2Storage
         pv = minimal_pv_partition
         pv.min_size = real_pv_size(missing_space)
         pv.max_size = real_pv_size(max_size)
+        pv.weight = lvs_weight
         pv
       end
 
@@ -268,6 +269,13 @@ module Y2Storage
       # @return [DiskSize]
       def max_size
         DiskSize.sum(lvs.map(&:max_size), rounding: extent_size)
+      end
+
+      # Total weight of all the planned LVs
+      #
+      # @return [Integer]
+      def lvs_weight
+        lvs.map { |lv| lv.weight || 0 }.reduce(:+)
       end
 
       # Portion of a newly created physical volume that couldn't be used to
