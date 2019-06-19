@@ -127,12 +127,15 @@ module Y2Storage
           @potential_part_sizes[partition] ||= space.usable_extra_size + partition.min_size
         end
 
-        # Planned partition that will hold an LVM PV
+        # Planned partition that will hold an LVM PV of the planned physical
+        # volume
         #
         # @param space [Planned::AssignedSpace]
         # @return [Planned::Partition]
         def new_pv_at(space)
-          space.partitions.find(&:lvm_pv?)
+          space.partitions.find do |part|
+            part.lvm_pv? && part.lvm_volume_group_name == planned_vg.volume_group_name
+          end
         end
 
         # Subset of #all_spaces that are worth considering to allocate planned
