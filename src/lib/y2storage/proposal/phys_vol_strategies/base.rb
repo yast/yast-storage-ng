@@ -127,8 +127,7 @@ module Y2Storage
           @potential_part_sizes[partition] ||= space.usable_extra_size + partition.min_size
         end
 
-        # Planned partition that will hold an LVM PV of the planned physical
-        # volume
+        # Planned partition that will hold an LVM PV of the planned volume group
         #
         # @param space [Planned::AssignedSpace]
         # @return [Planned::Partition]
