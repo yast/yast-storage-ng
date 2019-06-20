@@ -6,6 +6,7 @@
       <windows_delete_mode config:type="symbol">all</windows_delete_mode>
       <linux_delete_mode config:type="symbol">all</linux_delete_mode>
       <other_delete_mode config:type="symbol">ondemand</other_delete_mode>
+      <lvm_vg_strategy config:type="symbol">use_needed</lvm_vg_strategy>
     </proposal>
 
     <volumes config:type="list">
@@ -64,7 +65,7 @@
 
         <desired_size config:type="disksize">5 GiB</desired_size>
         <min_size config:type="disksize">3 GiB</min_size>
-        <max_size config:type="disksize">10</max_size>
+        <max_size config:type="disksize">10 GiB</max_size>
         <weight config:type="integer">5</weight>
         <fallback_for_max_size>/</fallback_for_max_size>
       </volume>
