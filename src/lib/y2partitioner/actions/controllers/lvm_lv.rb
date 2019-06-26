@@ -44,7 +44,7 @@ module Y2Partitioner
 
         # Selected lv type
         # @return [Y2Storage::LvType]
-        attr_accessor :lv_type
+        attr_writer :lv_type
 
         # Selected thin pool
         # @return [Y2Storage::LvmLv, nil] nil if lv type is not thin

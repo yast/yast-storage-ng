@@ -58,11 +58,6 @@ module Y2Partitioner
     # @return [Y2Storage::Devicegraph]
     attr_accessor :current
 
-    # Disk analyzer for the system graph
-    #
-    # @return [Y2Storage::DiskAnalyzer]
-    attr_reader :disk_analyzer
-
     def initialize(system: nil, initial: nil)
       @system = system || storage_manager.probed
       @initial = initial || storage_manager.staging

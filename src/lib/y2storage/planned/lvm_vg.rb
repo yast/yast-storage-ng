@@ -55,7 +55,7 @@ module Y2Storage
       attr_accessor :pvs
 
       # @return [DiskSize] Size of one extent
-      attr_accessor :extent_size
+      attr_writer :extent_size
 
       # @return [Symbol] Policy to make space for planned volume groups:
       #   remove old logical volumes until new ones fit (:needed), remove

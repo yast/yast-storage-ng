@@ -57,13 +57,6 @@ Lint/AmbiguousBlockAssociation:
     - 'test/y2partitioner/widgets/btrfs_devices_selector_test.rb'
     - 'test/y2storage/planned/can_be_formatted_test.rb'
 
-# Offense count: 3
-Lint/DuplicateMethods:
-  Exclude:
-    - 'src/lib/y2partitioner/actions/controllers/lvm_lv.rb'
-    - 'src/lib/y2partitioner/device_graphs.rb'
-    - 'src/lib/y2storage/planned/lvm_vg.rb'
-
 # Offense count: 1
 # Configuration parameters: MaximumRangeSize.
 Lint/MissingCopEnableDirective:
