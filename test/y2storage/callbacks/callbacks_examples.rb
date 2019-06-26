@@ -64,7 +64,7 @@ RSpec.shared_examples "general #error examples" do
 
   context "with an error produced by a duplicated PV" do
     let(:what) do
-      <<~eos
+      <<~FAILED_CMD
         What: command '/sbin/vgchange --activate y' failed:
 
         stdout:
@@ -78,7 +78,7 @@ RSpec.shared_examples "general #error examples" do
 
         exit code:
         5.
-      eos
+      FAILED_CMD
     end
 
     before { allow(Yast::Mode).to receive(:auto).and_return auto }
