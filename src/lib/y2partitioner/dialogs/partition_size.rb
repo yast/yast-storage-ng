@@ -176,8 +176,8 @@ module Y2Partitioner
         end
 
         # Forward to controller
-        def size=(v)
-          @controller.custom_size = v
+        def size=(value)
+          @controller.custom_size = value
         end
 
         # @return [Y2Storage::Region] the smallest region
@@ -239,9 +239,9 @@ module Y2Partitioner
           parse_user_size(super)
         end
 
-        # @param v [Y2Storage::DiskSize]
-        def value=(v)
-          super(v.human_floor)
+        # @param disk_size [Y2Storage::DiskSize]
+        def value=(disk_size)
+          super(disk_size.human_floor)
         end
       end
 

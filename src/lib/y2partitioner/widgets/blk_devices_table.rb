@@ -293,14 +293,14 @@ module Y2Partitioner
       # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
       #
       # @param device [Y2Storage::BlkDevice]
-      # @param fs [Y2Storage::Filesystems::Base]
+      # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
-      def formatted_device_type_label(device, fs)
+      def formatted_device_type_label(device, filesystem)
         # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
         #              %{device_label} is the device label. I.e., Partition, Disk, etc
         format(
           _("%{fs_type} %{device_label}"),
-          fs_type:      fs_type_for(device, fs),
+          fs_type:      fs_type_for(device, filesystem),
           device_label: device_label_for(device)
         )
       end
@@ -308,13 +308,13 @@ module Y2Partitioner
       # Filesystem representation for given device and filesystem
       #
       # @param device [Y2Storage::BlkDevice]
-      # @param fs [Y2Storage::Filesystems::Base]
+      # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
-      def fs_type_for(device, fs)
+      def fs_type_for(device, filesystem)
         if device.is?(:partition) && device.efi_system?
           device.id.to_human_string
         else
-          fs.type.to_human_string
+          filesystem.type.to_human_string
         end
       end
 
@@ -352,11 +352,11 @@ module Y2Partitioner
 
       # Type label when the device belongs to a multidevice Btrfs filesystem
       #
-      # @param fs [Y2Storage::Filesystems::Base]
+      # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
-      def btrfs_multidevice_type_label(fs)
+      def btrfs_multidevice_type_label(filesystem)
         # TRANSLATORS: %s is a device base name. E.g., sda1+
-        format(_("Part of Btrfs %s"), fs.blk_device_basename)
+        format(_("Part of Btrfs %s"), filesystem.blk_device_basename)
       end
 
       # Type label when the device is used as caching device in Bcache

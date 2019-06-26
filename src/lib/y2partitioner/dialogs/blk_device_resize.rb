@@ -613,9 +613,9 @@ module Y2Partitioner
 
         alias_method :size, :value
 
-        # @param v [Y2Storage::DiskSize]
-        def value=(v)
-          super(v.to_human_string)
+        # @param disk_size [Y2Storage::DiskSize]
+        def value=(disk_size)
+          super(disk_size.to_human_string)
         end
       end
     end

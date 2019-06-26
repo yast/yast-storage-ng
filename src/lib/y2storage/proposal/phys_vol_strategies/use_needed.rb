@@ -148,9 +148,9 @@ module Y2Storage
         end
 
         # @see #redundant?
-        def same_first_spaces?(list1, list2, n)
-          list1 = list1.first(n)
-          list2 = list2.first(n)
+        def same_first_spaces?(list1, list2, amount)
+          list1 = list1.first(amount)
+          list2 = list2.first(amount)
           (list1 - list2).empty? && (list2 - list1).empty?
         end
       end

@@ -38,6 +38,16 @@ Style/FrozenStringLiteralComment:
 Layout/AccessModifierIndentation:
   EnforcedStyle: indent
 
+Naming/UncommunicativeMethodParamName:
+  AllowedNames:
+    - vg
+    - md
+    - lv
+    - id
+    - up
+    - to
+    - as
+
 # WIP
 
 # Offense count: 8

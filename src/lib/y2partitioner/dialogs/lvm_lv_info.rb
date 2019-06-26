@@ -228,10 +228,9 @@ module Y2Partitioner
           @controller.available_thin_pools.find { |p| p.sid == super }
         end
 
-        # @param v [Y2Storage::LvmLv, nil]
-        def value=(v)
-          sid = v.nil? ? nil : v.sid
-          super(sid)
+        # @param lv [Y2Storage::LvmLv, nil]
+        def value=(lv)
+          super(lv&.sid)
         end
       end
     end

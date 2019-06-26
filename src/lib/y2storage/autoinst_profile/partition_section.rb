@@ -387,25 +387,25 @@ module Y2Storage
         init_mount_options(filesystem)
       end
 
-      # @param fs [Filesystems::BlkFilesystem]
-      def init_mount_options(fs)
-        if !fs.mount_point.nil?
-          @mount = fs.mount_point.path
-          @mountby = fs.mount_point.mount_by.to_sym
-          mount_options = fs.mount_point.mount_options
+      # @param filesystem [Filesystems::BlkFilesystem]
+      def init_mount_options(filesystem)
+        if !filesystem.mount_point.nil?
+          @mount = filesystem.mount_point.path
+          @mountby = filesystem.mount_point.mount_by.to_sym
+          mount_options = filesystem.mount_point.mount_options
           @fstab_options = mount_options unless mount_options.empty?
         end
       end
 
-      # @param fs [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
-      def init_subvolumes(fs)
-        return unless fs.supports_btrfs_subvolumes?
+      # @param filesystem [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
+      def init_subvolumes(filesystem)
+        return unless filesystem.supports_btrfs_subvolumes?
 
-        @subvolumes_prefix = fs.subvolumes_prefix
+        @subvolumes_prefix = filesystem.subvolumes_prefix
 
-        valid_subvolumes = fs.btrfs_subvolumes.reject do |subvol|
+        valid_subvolumes = filesystem.btrfs_subvolumes.reject do |subvol|
           subvol.path.empty? || subvol.path == @subvolumes_prefix ||
-            subvol.path.start_with?(fs.snapshots_root)
+            subvol.path.start_with?(filesystem.snapshots_root)
         end
 
         @subvolumes = valid_subvolumes.map do |subvol|
