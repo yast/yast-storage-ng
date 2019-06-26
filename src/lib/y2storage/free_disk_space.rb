@@ -138,7 +138,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def require_end_alignment?
-      @end_alignment ||= disk.as_not_empty { disk.partition_table.require_end_alignment? }
+      @require_end_alignment ||= disk.as_not_empty { disk.partition_table.require_end_alignment? }
     end
 
     def to_s

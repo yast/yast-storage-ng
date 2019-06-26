@@ -216,7 +216,7 @@ module Y2Storage
     #
     # @return [Devicegraph]
     def raw_probed
-      @raw_probed_graph ||= begin
+      @raw_probed ||= begin
         probe unless probed?
         Devicegraph.new(storage.probed)
       end
@@ -230,7 +230,7 @@ module Y2Storage
     #
     # @return [Devicegraph]
     def staging
-      @staging_graph ||= begin
+      @staging ||= begin
         probe unless probed?
         Devicegraph.new(storage.staging)
       end
@@ -253,7 +253,7 @@ module Y2Storage
     #
     # @return [Y2Storage::Devicegraph]
     def system
-      @system_graph ||= Devicegraph.new(storage.system)
+      @system ||= Devicegraph.new(storage.system)
     end
 
     # Stores the proposal, modifying the staging devicegraph and all the related
@@ -405,7 +405,7 @@ module Y2Storage
 
     # Invalidates previous probed devicegraph and its related data
     def reset_probed
-      @raw_probed_graph = nil
+      @raw_probed = nil
       @probed_graph = nil
       @probed_disk_analyzer = nil
       @committed = false
@@ -416,7 +416,7 @@ module Y2Storage
 
     # Invalidates previous staging devicegraph and its related data
     def reset_staging
-      @staging_graph = nil
+      @staging = nil
       @proposal = nil
     end
 

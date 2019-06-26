@@ -300,7 +300,7 @@ module Y2Storage
     #
     # @return [Array<Md>]
     def find_candidate_software_raids
-      @candidate_sofware_raids ||= devicegraph.software_raids.select do |md|
+      @find_candidate_software_raids ||= devicegraph.software_raids.select do |md|
         (md.partition_table? || md.children.empty?) && candidate_disk?(md)
       end
     end

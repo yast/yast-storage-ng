@@ -101,7 +101,7 @@ module Y2Partitioner
       #
       # @return [Widgets::BtrfsDevicesSelector]
       def btrfs_devices_selector_widget
-        @btrfs_devices_widget ||= Widgets::BtrfsDevicesSelector.new(controller)
+        @btrfs_devices_selector_widget ||= Widgets::BtrfsDevicesSelector.new(controller)
       end
 
       # Btrfs RAID levels help

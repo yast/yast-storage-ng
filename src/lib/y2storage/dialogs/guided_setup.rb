@@ -127,9 +127,9 @@ module Y2Storage
         if dialog.skip?
           dialog.before_skip
         else
-          @result = dialog.run
+          result = dialog.run
         end
-        @result ||= :next
+        result || :next
       end
 
       # Subclass of {SelectFilesystem::Base} that must be used
