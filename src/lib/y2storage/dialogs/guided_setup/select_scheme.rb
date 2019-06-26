@@ -94,10 +94,10 @@ module Y2Storage
           widget_update(:lvm, settings.use_lvm)
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
-          if settings.use_encryption
-            widget_update(:password, settings.encryption_password)
-            widget_update(:repeat_password, settings.encryption_password)
-          end
+          return unless settings.use_encryption
+
+          widget_update(:password, settings.encryption_password)
+          widget_update(:repeat_password, settings.encryption_password)
         end
 
         def update_settings!

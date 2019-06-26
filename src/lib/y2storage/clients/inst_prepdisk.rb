@@ -81,6 +81,8 @@ module Y2Storage
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
           raise ".target.mount failed"
         end
+
+        nil
       end
 
       def manager

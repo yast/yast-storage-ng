@@ -50,11 +50,11 @@ module Y2Storage
         # Only continues if selected settings are valid. In other case,
         # an error dialog is expected.
         def next_handler
-          if valid?
-            update_settings!
-            log.info "#{self.class}: return :next with #{settings.inspect}"
-            super
-          end
+          return unless valid?
+
+          update_settings!
+          log.info "#{self.class}: return :next with #{settings.inspect}"
+          super
         end
 
         def back_handler

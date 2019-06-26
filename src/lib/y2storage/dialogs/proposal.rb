@@ -79,10 +79,10 @@ module Y2Storage
       end
 
       def handle_event(input)
-        if @actions_presenter.can_handle?(input)
-          @actions_presenter.update_status(input)
-          Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
-        end
+        return unless @actions_presenter.can_handle?(input)
+
+        @actions_presenter.update_status(input)
+        Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
       end
 
       protected

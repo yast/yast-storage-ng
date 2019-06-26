@@ -109,9 +109,9 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param _volume [VolumeSpecification]
         def adjust_encryption(planned_device, _volume)
-          if planned_device.is_a?(Planned::Partition)
-            planned_device.encryption_password = settings.encryption_password
-          end
+          return unless planned_device.is_a?(Planned::Partition)
+
+          planned_device.encryption_password = settings.encryption_password
         end
 
         # Adjusts planned device sizes according to settings
@@ -134,6 +134,8 @@ module Y2Storage
             planned_device.min_size = [planned_device.min_size, ram_size].max
             planned_device.max_size = [planned_device.max_size, ram_size].max
           end
+
+          nil
         end
 
         # Adjusts btrfs values according to settings

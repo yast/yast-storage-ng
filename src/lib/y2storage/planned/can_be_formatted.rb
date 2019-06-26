@@ -245,10 +245,11 @@ module Y2Storage
 
       # @param filesystem [Filesystems::Base]
       def assign_mount_point(filesystem)
-        if mount_point && !mount_point.empty?
-          filesystem.mount_path = mount_point
-          filesystem.mount_point.mount_by = mount_by if mount_by
-        end
+        return unless mount_point
+        return if mount_point.empty?
+
+        filesystem.mount_path = mount_point
+        filesystem.mount_point.mount_by = mount_by if mount_by
       end
 
       # @param device [Planned::Device]

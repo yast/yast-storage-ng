@@ -620,6 +620,8 @@ module Y2Storage
           Filesystems::MountByType, fs_param["mount_by"], "mount by name schema", mount_point
         )
       end
+
+      nil
     end
 
     # Picks some parameters that are really file system related from args

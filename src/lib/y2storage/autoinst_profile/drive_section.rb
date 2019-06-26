@@ -148,6 +148,8 @@ module Y2Storage
         if hash["btrfs_options"]
           @btrfs_options = BtrfsOptionsSection.new_from_hashes(hash["btrfs_options"], self)
         end
+
+        nil
       end
 
       # Default drive type depending on the device name

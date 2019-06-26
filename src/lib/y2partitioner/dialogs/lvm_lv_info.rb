@@ -190,6 +190,8 @@ module Y2Partitioner
             disable_option(NORMAL_VOLUME_OPTION)
             disable_option(THIN_POOL_OPTION)
           end
+
+          nil
         end
 
         # Disables an specific widget

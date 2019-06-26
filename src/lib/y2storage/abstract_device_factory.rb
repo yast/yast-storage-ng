@@ -307,9 +307,9 @@ module Y2Storage
     # @param child  [String] name of child  factory product
     #
     def check_hierarchy(parent, child)
-      if !valid_hierarchy[parent].include?(child)
-        raise HierarchyError, "Unexpected child #{child} for #{parent}"
-      end
+      return if valid_hierarchy[parent].include?(child)
+
+      raise HierarchyError, "Unexpected child #{child} for #{parent}"
     end
 
     # Call the factory 'create' method for factory product 'name'

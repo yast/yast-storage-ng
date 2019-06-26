@@ -129,6 +129,8 @@ module Y2Partitioner
           widget = Left(Label(_("Total size: %s") % unselected_size.to_human_string))
           Yast::UI.ReplaceWidget(Id(:unselected_size), widget)
         end
+
+        nil
       end
 
       protected

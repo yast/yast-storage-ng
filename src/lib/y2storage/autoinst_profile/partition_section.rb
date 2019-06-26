@@ -274,17 +274,17 @@ module Y2Storage
 
         # Exporting these values only makes sense when the device is a block device. Note that some
         # exported devices (e.g., multi-device Btrfs and NFS filesystems) are not block devices.
-        if device.is?(:blk_device)
-          init_encryption_fields(device)
-          init_filesystem_fields(device)
+        return unless device.is?(:blk_device)
 
-          # NOTE: The old AutoYaST exporter does not report the real size here.
-          # It intentionally reports one cylinder less. Cylinders is an obsolete
-          # unit (that equals to 8225280 bytes in my experiments).
-          # According to the comments there, that was done due to bnc#415005 and
-          # bnc#262535.
-          @size = device.size.to_i.to_s if create && !fixed_size?(device)
-        end
+        init_encryption_fields(device)
+        init_filesystem_fields(device)
+
+        # NOTE: The old AutoYaST exporter does not report the real size here.
+        # It intentionally reports one cylinder less. Cylinders is an obsolete
+        # unit (that equals to 8225280 bytes in my experiments).
+        # According to the comments there, that was done due to bnc#415005 and
+        # bnc#262535.
+        @size = device.size.to_i.to_s if create && !fixed_size?(device)
       end
 
       def to_hashes
@@ -389,12 +389,12 @@ module Y2Storage
 
       # @param filesystem [Filesystems::BlkFilesystem]
       def init_mount_options(filesystem)
-        if !filesystem.mount_point.nil?
-          @mount = filesystem.mount_point.path
-          @mountby = filesystem.mount_point.mount_by.to_sym
-          mount_options = filesystem.mount_point.mount_options
-          @fstab_options = mount_options unless mount_options.empty?
-        end
+        return if filesystem.mount_point.nil?
+
+        @mount = filesystem.mount_point.path
+        @mountby = filesystem.mount_point.mount_by.to_sym
+        mount_options = filesystem.mount_point.mount_options
+        @fstab_options = mount_options unless mount_options.empty?
       end
 
       # @param filesystem [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required

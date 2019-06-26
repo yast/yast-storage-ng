@@ -82,6 +82,8 @@ module Y2Storage
           log.warn "Resizing #{reuse_name} to #{max_size} was not possible. " \
             "Using #{device.size} instead."
         end
+
+        nil
       end
     end
   end

@@ -89,6 +89,8 @@ module Y2Storage
             if volume.adjust_by_ram_configurable?
               volume.adjust_by_ram = Yast::UI.QueryWidget(Id(adjust_by_ram_widget_id), :Value)
             end
+
+            nil
           end
 
           protected

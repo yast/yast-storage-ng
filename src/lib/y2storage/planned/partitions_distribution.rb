@@ -273,10 +273,10 @@ module Y2Storage
       # @raise [NoDiskSpaceError] if the new value causes the partitions to not fit
       def set_num_logical(assigned_space, num)
         assigned_space.num_logical = num
-        if !assigned_space.valid?
-          log.error "Invalid assigned space #{assigned_space} after adjusting num_logical"
-          raise NoDiskSpaceError, "Partitions cannot be allocated into the assigned space"
-        end
+        return if assigned_space.valid?
+
+        log.error "Invalid assigned space #{assigned_space} after adjusting num_logical"
+        raise NoDiskSpaceError, "Partitions cannot be allocated into the assigned space"
       end
 
       def calculate_num_logical_for(spaces, ptable)
