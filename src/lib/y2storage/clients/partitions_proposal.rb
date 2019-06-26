@@ -95,7 +95,7 @@ module Y2Storage
         @failed
       end
 
-    private
+      private
 
       attr_reader :failed
 
@@ -180,6 +180,7 @@ module Y2Storage
       def guided_proposal
         proposal = GuidedProposal.initial
         raise Y2Storage::Error, "Guided proposal failed" if proposal.failed?
+
         @failed = false
         storage_manager.proposal = proposal
       end

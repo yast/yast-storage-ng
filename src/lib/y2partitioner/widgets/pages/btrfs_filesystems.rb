@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -50,7 +48,7 @@ module Y2Partitioner
           UIState.instance.btrfs_filesystems_label
         end
 
-      private
+        private
 
         # @return [Array<Y2Storage::Filesystems::Btrfs>]
         attr_reader :filesystems

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
@@ -87,7 +85,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       # @return [GuidedProposal]
       attr_writer :proposal
@@ -288,7 +286,7 @@ module Y2Storage
       # @return [Actiongraph, nil] nil if it's not possible to calculate the actions
       def actiongraph
         @devicegraph ? @devicegraph.actiongraph : nil
-      rescue ::Storage::Exception => error
+      rescue ::Storage::Exception => e
         # TODO: the code capturing the exception and displaying the error pop-up
         # should not be directly in this dialog. It should be in some common
         # place ensuring we also catch the exception in other places where we
@@ -302,7 +300,7 @@ module Y2Storage
         )
         hint = _("Click below to see more details (English only).")
 
-        Yast2::Popup.show("#{msg}\n\n#{hint}", details: error.what)
+        Yast2::Popup.show("#{msg}\n\n#{hint}", details: e.what)
         nil
       end
     end

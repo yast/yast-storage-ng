@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015,2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -42,7 +40,6 @@ module Y2Storage
   # there are quite some code that could be extracted to a new place, mainly all
   # stuff related to testing (e.g., {#probe_from_yaml}).
   #
-  # rubocop:disable Metrics/ClassLength
   class StorageManager
     include Yast::Logger
     extend Forwardable
@@ -380,7 +377,7 @@ module Y2Storage
       end
     end
 
-  private
+    private
 
     # Value of #staging_revision right after executing the latest libstorage
     # probing.
@@ -470,9 +467,7 @@ module Y2Storage
 
       errors = sanitizer.errors.map(&:message)
 
-      if errors.any? && !callbacks.sanitize?(errors)
-        raise Error, "Probed devicegraph is not sanitized"
-      end
+      raise Error, "Probed devicegraph is not sanitized" if errors.any? && !callbacks.sanitize?(errors)
 
       @probed_graph = sanitizer.sanitized_devicegraph
       @probed_graph.safe_copy(staging)
@@ -566,6 +561,7 @@ module Y2Storage
 
         if @instance
           return @instance if valid_instance?(mode)
+
           raise AccessModeError,
             "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
         else
@@ -600,8 +596,9 @@ module Y2Storage
         create_logger
         log.info "Creating Storage object"
         @instance = new(environment)
-      rescue Storage::LockException => error
-        raise Yast::AbortException unless retry_create_instance?(error, callbacks)
+      rescue Storage::LockException => e
+        raise Yast::AbortException unless retry_create_instance?(e, callbacks)
+
         retry
       end
 
@@ -616,7 +613,7 @@ module Y2Storage
       # Make sure only .instance can be used to create objects
       private :new, :allocate
 
-    private
+      private
 
       def test_environment
         read_only = true

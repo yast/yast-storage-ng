@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -89,7 +87,7 @@ module Y2Storage
         @lv_type = LvType::NORMAL
         @thin_lvs = []
 
-        return unless @mount_point && @mount_point.start_with?("/")
+        return unless @mount_point&.start_with?("/")
 
         @logical_volume_name =
           if @mount_point == "/"
@@ -122,6 +120,7 @@ module Y2Storage
       def size_in(container)
         return size_in_percentage(container) if percent_size
         return size_in_thin_pool(container) if lv_type == LvType::THIN
+
         size
       end
 
@@ -145,6 +144,7 @@ module Y2Storage
       # @param lv [Planned::LvmLv] Planned logical volume
       def add_thin_lv(lv)
         raise ArgumentError unless lv.lv_type == LvType::THIN
+
         lv.thin_pool = self
         thin_lvs << lv
       end
@@ -153,7 +153,7 @@ module Y2Storage
         [:mount_point, :reuse_name, :min_size, :max_size, :logical_volume_name, :subvolumes]
       end
 
-    protected
+      protected
 
       # Values for volume specification matching
       #

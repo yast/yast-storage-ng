@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -68,7 +66,7 @@ module Y2Partitioner
             devices.select { |d| block.call(d) }
           end
 
-        private
+          private
 
           # @return [Controllers::BtrfsDevices]
           attr_reader :devicegraph

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,7 +39,7 @@ module Y2Storage
       @initial_settings = self.settings
     end
 
-  private
+    private
 
     # Initial settings
     #
@@ -98,7 +96,7 @@ module Y2Storage
 
         begin
           return try_with_different_settings
-        rescue Error => error
+        rescue Error => e
           next
         end
       end
@@ -128,7 +126,7 @@ module Y2Storage
 
         begin
           return try_with_different_root_devices
-        rescue Error => error
+        rescue Error => e
           next
         end
       end
@@ -157,7 +155,7 @@ module Y2Storage
 
         begin
           return try_with_each_target_size
-        rescue Error => error
+        rescue Error => e
           next
         end
       end

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -84,7 +82,7 @@ module Y2Storage
           data.join(", ")
         end
 
-      protected
+        protected
 
         # Controller object needed to access to settints and pre-calculated data.
         attr_reader :guided_setup

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
         ]
       end
 
-    protected
+      protected
 
       # Values for volume specification matching
       #

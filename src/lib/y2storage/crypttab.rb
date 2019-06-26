@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Storage
       @entries = read_entries
     end
 
-  private
+    private
 
     # @return [String] crypttab file path
     attr_reader :path

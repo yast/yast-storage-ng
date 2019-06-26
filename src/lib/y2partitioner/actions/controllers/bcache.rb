@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -134,7 +132,7 @@ module Y2Partitioner
           committed_bcache_cset.bcaches.size == 1
         end
 
-      private
+        private
 
         # Block devices that can be used as backing or caching device
         #

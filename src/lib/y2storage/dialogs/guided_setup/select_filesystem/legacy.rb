@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Storage
             widget_update(:home_filesystem, widget_value(:separate_home), attr: :Enabled)
           end
 
-        protected
+          protected
 
           def dialog_content
             HSquash(

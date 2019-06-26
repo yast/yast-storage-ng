@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -68,11 +66,10 @@ module Y2Storage
       def message
         # TRANSLATORS: 'value' is a generic value (number or string) 'attr' is an AutoYaST element
         # name; 'new_value_message' is a short explanation about what should be done with the value.
-        _("Invalid value '%{value}' for attribute '%{attr}' (%{new_value_message}).") %
-          { value: value, attr: attr, new_value_message: new_value_message }
+        format(_("Invalid value '%{value}' for attribute '%{attr}' (%{new_value_message})."), value: value, attr: attr, new_value_message: new_value_message)
       end
 
-    private
+      private
 
       # Return a messsage explaining what should be done with the value.
       def new_value_message
@@ -81,7 +78,7 @@ module Y2Storage
           _("the section will be skipped")
         else
           # TRANSLATORS: 'value' is the value for an AutoYaST element (a number or a string)
-          _("replaced by '%{value}'") % { value: new_value }
+          format(_("replaced by '%{value}'"), value: new_value)
         end
       end
     end

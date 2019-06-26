@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.

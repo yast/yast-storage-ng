@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Partitioner
         :finish
       end
 
-    protected
+      protected
 
       # @return [Controllers::LvmVg]
       attr_reader :controller

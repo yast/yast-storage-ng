@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) 2018 SUSE LLC
 #
 # All Rights Reserved.
@@ -46,7 +44,7 @@ module Y2Storage
       @mdadm_auto_assembly.uninhibit
     end
 
-  private
+    private
 
     def initialize
       @mdadm_auto_assembly = Y2Storage::MdadmAutoAssembly.new

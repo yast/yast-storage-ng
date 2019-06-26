@@ -139,7 +139,7 @@ module Y2Storage
       @file_system_data = {}
     end
 
-  protected
+    protected
 
     # Return a hash for the valid hierarchy of the products of this factory:
     # Each hash key returns an array (that might be empty) for the child
@@ -387,7 +387,7 @@ module Y2Storage
     #
     # FIXME: this method is too complex. It offends three different cops
     # related to complexity.
-    # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
+    # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def new_partitionable(partitionable_class, args)
       @volumes = Set.new
       @free_blob      = nil
@@ -399,6 +399,7 @@ module Y2Storage
       size = args["size"]
       raise ArgumentError, "\"size\" missing for disk #{name}" if size.nil?
       raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
+
       @disks << name
       block_size = args["block_size"] if args["block_size"]
       @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
@@ -461,9 +462,7 @@ module Y2Storage
       ptable_type = str_to_ptable_type(args)
       disk = Partitionable.find_by_name(@devicegraph, disk_name)
       ptable = disk.create_partition_table(ptable_type)
-      if ptable.respond_to?(:minimal_mbr_gap=) && @mbr_gap
-        ptable.minimal_mbr_gap = @mbr_gap
-      end
+      ptable.minimal_mbr_gap = @mbr_gap if ptable.respond_to?(:minimal_mbr_gap=) && @mbr_gap
       disk_name
     end
 
@@ -533,6 +532,7 @@ module Y2Storage
       # note: skip areas we marked as empty
       slot = slots.find { |s| s.possible?(type) && !@free_regions.member?(s.region.start) }
       raise ArgumentError, "No suitable slot for partition #{part_name}" if !slot
+
       region = slot.region
 
       # region = slots.first.region
@@ -555,9 +555,7 @@ module Y2Storage
       end
 
       # if no size has been specified, use whole region
-      if !size.unlimited?
-        region.length = size.to_i / region.block_size.to_i
-      end
+      region.length = size.to_i / region.block_size.to_i if !size.unlimited?
 
       # align partition if specified
       region = disk.topology.align(region, align) if align
@@ -687,6 +685,7 @@ module Y2Storage
 
     def encryption_name(name, parent)
       return nil if name.nil? || name.empty?
+
       if name.include?("/")
         processed_encryption_name(name, parent)
       else
@@ -760,6 +759,7 @@ module Y2Storage
       lv_name = args["lv_name"]
       raise ArgumentError, "\"lv_name\" missing for lvm_lv #{args} on #{vg_name}" unless lv_name
       raise ArgumentError, "Duplicate lvm_lv #{lv_name}" if @volumes.include?(lv_name)
+
       @volumes << lv_name
 
       size = args["size"] || DiskSize.zero
@@ -816,9 +816,8 @@ module Y2Storage
       if default_subvolume && !default_subvolume.empty?
         blk_device = BlkDevice.find_by_name(devicegraph, parent)
         filesystem = blk_device.filesystem
-        if !filesystem || !filesystem.type.is?(:btrfs)
-          raise HierarchyError, "No btrfs on #{parent}"
-        end
+        raise HierarchyError, "No btrfs on #{parent}" if !filesystem || !filesystem.type.is?(:btrfs)
+
         toplevel = filesystem.top_level_btrfs_subvolume
         subvolume = toplevel.create_btrfs_subvolume(default_subvolume)
         subvolume.set_default_btrfs_subvolume
@@ -846,7 +845,7 @@ module Y2Storage
       blk_device.filesystem.create_btrfs_subvolume(path, nocow)
     end
 
-  private
+    private
 
     # Fetch an enum value
     # @raise [ArgumentError] if such value is not defined
@@ -865,5 +864,4 @@ module Y2Storage
       value
     end
   end
-  # rubocop:enable all
 end

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -73,7 +71,7 @@ module Y2Partitioner
           @tabs.switch_page(@tabs.initial_page)
         end
 
-      private
+        private
 
         # @return [CWM::TreePager]
         attr_reader :pager
@@ -153,7 +151,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # @return [String] explanation to display above the graph
         attr_reader :description

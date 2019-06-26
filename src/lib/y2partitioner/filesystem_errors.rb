@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,7 +44,7 @@ module Y2Partitioner
       [small_size_for_snapshots_error(filesystem, new_size: new_size)].compact
     end
 
-  private
+    private
 
     # Error when the size of the filesystem is too small for snapshots
     #
@@ -108,7 +106,7 @@ module Y2Partitioner
     # @param filesystem [Y2Storage::Filesystems::Base, nil]
     # @return [Boolean]
     def filesystem_with_snapshots?(filesystem)
-      return false unless filesystem && filesystem.respond_to?(:configure_snapper)
+      return false unless filesystem&.respond_to?(:configure_snapper)
 
       filesystem.configure_snapper
     end
@@ -125,7 +123,7 @@ module Y2Partitioner
     # @return [Y2Storage::DiskSize, nil] nil if min size for snapshots cannot
     #   be obtained.
     def min_size_for_snapshots(filesystem)
-      return nil unless filesystem && filesystem.mount_point
+      return nil unless filesystem&.mount_point
 
       spec = Y2Storage::VolumeSpecification.for(filesystem.mount_path)
       return nil unless spec

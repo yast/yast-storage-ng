@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -273,6 +271,7 @@ module Y2Storage
       # @return [Boolean] true when the check is passed; false otherwise
       def pass_check?(storage_object, check_method = nil)
         return true if check_method.nil?
+
         storage_object.public_send(check_method)
       end
 
@@ -304,7 +303,7 @@ module Y2Storage
         }
       end
 
-    private
+      private
 
       def processed_storage_args(*args)
         args.map { |arg| arg.respond_to?(:to_storage_value) ? arg.to_storage_value : arg }

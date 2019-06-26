@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -43,13 +41,12 @@ module Y2Storage
       #     concrete device is provided
       # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
       def sized_partitions(planned_partitions, device: nil, devicegraph: nil)
-        if !(device || devicegraph)
-          raise ArgumentError, "Provide a device or a devicegraph"
-        end
+        raise ArgumentError, "Provide a device or a devicegraph" if !(device || devicegraph)
 
         planned_partitions.map do |part|
           new_part = part.clone
           next new_part unless new_part.percent_size
+
           dev = device || devicegraph.find_by_name(part.disk)
           new_part.max = new_part.min = new_part.size_in(dev)
           new_part

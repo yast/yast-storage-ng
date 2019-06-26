@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -361,6 +359,7 @@ module Y2Storage
       def parse(str, legacy_units: false)
         str = sanitize(str)
         return DiskSize.unlimited if str == UNLIMITED
+
         bytes = str_to_bytes(str, legacy_units: legacy_units)
         DiskSize.new(bytes)
       end
@@ -368,7 +367,7 @@ module Y2Storage
       alias_method :from_s, :parse
       alias_method :from_human_string, :parse
 
-    private
+      private
 
       # Ignore everything added in parentheses, so we can also parse the output of #to_s
       def sanitize(str)
@@ -379,12 +378,14 @@ module Y2Storage
         number = number(str).to_f
         unit = unit(str)
         return number if unit.empty?
+
         calculate_bytes(number, unit, legacy_units: legacy_units)
       end
 
       def number(str)
         number = str.scan(/^[+-]?\d+\.?\d*/).first
         raise TypeError, "Not a number: #{str}" if number.nil?
+
         number
       end
 
@@ -397,6 +398,7 @@ module Y2Storage
 
         unit = ALL_UNITS.find { |v| v.casecmp(unit).zero? }
         raise TypeError, "Bad disk size unit: #{str}" if unit.nil?
+
         unit
       end
 
@@ -440,6 +442,7 @@ module Y2Storage
     #
     def +(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
+
       DiskSize.new(@size + DiskSize.new(other).to_i)
     end
 
@@ -463,6 +466,7 @@ module Y2Storage
     #
     def -(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
+
       DiskSize.new(@size - DiskSize.new(other).to_i)
     end
 
@@ -482,6 +486,7 @@ module Y2Storage
     #
     def %(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
+
       DiskSize.new(@size % DiskSize.new(other).to_i)
     end
 
@@ -496,11 +501,10 @@ module Y2Storage
     #   x * 3                    #=> <DiskSize 3.00 MiB (3145728)>
     #
     def *(other)
-      if !other.is_a?(Numeric)
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value"
-      end
+      raise TypeError, "Unexpected #{other.class}; expected Numeric value" if !other.is_a?(Numeric)
 
       return DiskSize.unlimited if unlimited?
+
       DiskSize.new(@size * other)
     end
 
@@ -515,11 +519,10 @@ module Y2Storage
     #   x / 3                    #=> <DiskSize 341.33 KiB (349525)>
     #
     def /(other)
-      if !other.is_a?(Numeric)
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value"
-      end
+      raise TypeError, "Unexpected #{other.class}; expected Numeric value" if !other.is_a?(Numeric)
 
       return DiskSize.unlimited if unlimited?
+
       DiskSize.new(@size.to_f / other)
     end
 
@@ -563,6 +566,7 @@ module Y2Storage
     #   x.power_of?(10)       #=> true
     def power_of?(exp)
       return false if unlimited?
+
       (Math.log(size, exp) % 1).zero?
     end
 
@@ -583,6 +587,7 @@ module Y2Storage
       end
       return 1 if unlimited?
       return @size <=> other.size if other.respond_to?(:size)
+
       raise TypeError, "Unexpected #{other.class}; expected DiskSize"
     end
 
@@ -656,6 +661,7 @@ module Y2Storage
     # @see human_ceil
     def to_human_string(rounding_method: :round)
       return "unlimited" if unlimited?
+
       float, unit_s = human_string_components
       rounded = (float * 100).public_send(rounding_method) / 100.0
       # A plain "#{rounded} #{unit_s}" would not keep trailing zeros
@@ -688,12 +694,13 @@ module Y2Storage
     #   DiskSize.new(x.to_s)   #=> "1000 B (0.98 KiB)"
     def to_s
       return "unlimited" if unlimited?
+
       size1, unit1 = human_string_components
       size2, unit2 = string_components
       v1 = format("%.2f %s", size1, unit1)
-      v2 = "#{size2 % 1 == 0 ? size2.to_i : size2} #{unit2}"
+      v2 = "#{(size2 % 1 == 0) ? size2.to_i : size2} #{unit2}"
       # if both units are the same, just use exact value
-      unit1 == unit2 ? v2 : "#{v2} (#{v1})"
+      (unit1 == unit2) ? v2 : "#{v2} (#{v1})"
     end
 
     # Human readable + exact values in brackets for debugging or logging.
@@ -705,6 +712,7 @@ module Y2Storage
     #   x.inspect            #=> "<DiskSize 0.98 KiB (1000)>"
     def inspect
       return "<DiskSize <unlimited> (-1)>" if unlimited?
+
       "<DiskSize #{to_human_string} (#{to_i})>"
     end
 
@@ -720,19 +728,21 @@ module Y2Storage
       print inspect
     end
 
-  private
+    private
 
     # Return 'true' if either self or other is unlimited.
     #
     def any_operand_unlimited?(other)
       return true if unlimited?
       return true if other.respond_to?(:unlimited?) && other.unlimited?
+
       return other.respond_to?(:to_s) && other.to_s == "unlimited"
     end
 
     # Checks whether makes sense to round the value to the given size
     def can_be_rounded?(unit_size)
       return false if unit_size.unlimited? || unit_size.zero? || unit_size.to_i == 1
+
       !unlimited? && !zero?
     end
 

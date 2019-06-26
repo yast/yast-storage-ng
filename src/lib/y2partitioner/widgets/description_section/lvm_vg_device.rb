@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,7 +36,7 @@ module Y2Partitioner
           super
         end
 
-      private
+        private
 
         # @see DescriptionSection::Base#title
         def title

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -44,7 +42,7 @@ module Y2Storage
           settings.candidate_devices = analyzer.candidate_disks.map(&:name)
         end
 
-      protected
+        protected
 
         # Maximum number of disks the user is allowed to select
         MAX_DISKS = 3
@@ -95,7 +93,7 @@ module Y2Storage
           )
         end
 
-      private
+        private
 
         def valid?
           any_selected_disk? && !many_selected_disks?
@@ -103,12 +101,14 @@ module Y2Storage
 
         def any_selected_disk?
           return true unless selected_disks.empty?
+
           Yast::Report.Warning(_("At least one disk must be selected"))
           false
         end
 
         def many_selected_disks?
           return false if selected_disks.size <= MAX_DISKS
+
           Yast::Report.Warning(_("At most %d disks can be selected") % MAX_DISKS)
           true
         end
@@ -162,7 +162,7 @@ module Y2Storage
             Yast::UI.QueryWidget(Id(id), :Value)
           end
 
-        protected
+          protected
 
           # @see #content
           def disk_widget(item)

@@ -63,6 +63,7 @@ module Y2Storage
       # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         return original_graph.duplicate if planned_lvs.empty?
+
         lvm_creator = LvmCreator.new(original_graph)
         lvm_creator.create_volumes(volume_group, pv_partitions).devicegraph
       end
@@ -109,6 +110,7 @@ module Y2Storage
         @volume_group = nil
 
         return @reused_volume_group = nil if vg.nil?
+
         @reused_volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
         @reused_volume_group.lvs = planned_lvs
         @reused_volume_group.size_strategy = vg_strategy
@@ -122,6 +124,7 @@ module Y2Storage
       # @return [Boolean]
       def vg_to_reuse?(device)
         return false unless @reused_volume_group
+
         device.is?(:lvm_vg) && @reused_volume_group.volume_group_name == device.vg_name
       end
 
@@ -138,7 +141,7 @@ module Y2Storage
         @volume_group
       end
 
-    protected
+      protected
 
       attr_reader :planned_lvs
 

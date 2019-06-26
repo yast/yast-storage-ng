@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -40,12 +38,13 @@ module Y2Storage
       # @param planned_ptable_type [Y2Storage::PartitionTables::Type] User preferred partition table type
       def create_or_update(device, planned_ptable_type)
         return if !device.partitions.empty? || same_ptable_type?(device, planned_ptable_type)
+
         ptable_type = suitable_ptable_type(device, planned_ptable_type)
         device.remove_descendants if device.partition_table
         device.create_partition_table(ptable_type)
       end
 
-    private
+      private
 
       # Determines which partition table type should be used
       #

@@ -130,7 +130,7 @@ module Y2Storage
           new_list
         end
 
-      protected
+        protected
 
         # @return [DiskSize] Surplus space that could not be distributed
         def distribute_extra_space!(candidates, extra_size, rounding)
@@ -138,6 +138,7 @@ module Y2Storage
             candidates = extra_space_candidates(candidates)
             return extra_size if candidates.empty?
             return extra_size if total_weight(candidates).zero?
+
             log.info("Distributing #{extra_size} extra space among #{candidates.size} devices")
 
             assigned_size = DiskSize.zero

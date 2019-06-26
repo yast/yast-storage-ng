@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -51,7 +49,7 @@ module Y2Partitioner
         :finish
       end
 
-    protected
+      protected
 
       # @return [Y2Storage::Partitionable]
       attr_reader :disk
@@ -66,7 +64,7 @@ module Y2Partitioner
       #
       # Does nothing if the user cancels the action when asked for the type
       def perform_action
-        type = possible_types.size > 1 ? selected_type : default_type
+        type = (possible_types.size > 1) ? selected_type : default_type
         return if type.nil?
 
         create_partition_table(type)
@@ -175,6 +173,7 @@ module Y2Partitioner
         dialog = Dialogs::PartitionTableType.new(disk, possible_types, default_type)
 
         return nil unless dialog.run == :next
+
         dialog.selected_type
       end
 

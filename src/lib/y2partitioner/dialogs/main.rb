@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -114,9 +112,7 @@ module Y2Partitioner
         loop do
           result = super
 
-          if result == :next && need_summary?
-            result = run_summary
-          end
+          result = run_summary if result == :next && need_summary?
 
           break unless continue_running?(result)
         end
@@ -127,7 +123,7 @@ module Y2Partitioner
         :abort
       end
 
-    protected
+      protected
 
       # Checks whether the dialog should be rendered again
       #
@@ -145,7 +141,7 @@ module Y2Partitioner
       def dialog_result(result)
         return result unless Yast::Mode.installation
 
-        result == :abort ? :back : result
+        (result == :abort) ? :back : result
       end
 
       # Whether it is needed to show the summary of changes as last step
@@ -165,7 +161,7 @@ module Y2Partitioner
       # @return [Symbol] dialog result
       def run_summary
         summary_result = Dialogs::Summary.run
-        summary_result == :back ? :redraw : summary_result
+        (summary_result == :back) ? :redraw : summary_result
       end
 
       # Whether the system has been edited (devices or settings)

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -61,13 +59,14 @@ module Y2Storage
             end
             candidate = processed_distribution(candidate_spaces)
             next unless candidate
+
             best = candidate if !best || candidate.better_than(best) < 0
           end
 
           best
         end
 
-      protected
+        protected
 
         # @return [Planned::LvmVg]
         attr_reader :planned_vg

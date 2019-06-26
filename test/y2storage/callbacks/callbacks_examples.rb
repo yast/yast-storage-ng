@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,21 +64,21 @@ RSpec.shared_examples "general #error examples" do
 
   context "with an error produced by a duplicated PV" do
     let(:what) do
-      <<-eos
-What: command '/sbin/vgchange --activate y' failed:
+      <<~eos
+        What: command '/sbin/vgchange --activate y' failed:
 
-stdout:
-  0 logical volume(s) in volume group "vg0" now active
+        stdout:
+          0 logical volume(s) in volume group "vg0" now active
 
-stderr:
-  WARNING: Failed to connect to lvmetad. Falling back to device scanning.
-  WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a on /dev/sda4 was already found on /dev/sda2.
-  WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a prefers device /dev/sda2 because device size is correct.
-  Cannot activate LVs in VG vg0 while PVs appear on duplicate devices.
+        stderr:
+          WARNING: Failed to connect to lvmetad. Falling back to device scanning.
+          WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a on /dev/sda4 was already found on /dev/sda2.
+          WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a prefers device /dev/sda2 because device size is correct.
+          Cannot activate LVs in VG vg0 while PVs appear on duplicate devices.
 
-exit code:
-5.
-eos
+        exit code:
+        5.
+      eos
     end
 
     before { allow(Yast::Mode).to receive(:auto).and_return auto }

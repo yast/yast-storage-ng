@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -54,7 +52,7 @@ module Y2Partitioner
         change_items(items)
       end
 
-    protected
+      protected
 
       # Returns true if given sid or device is available in table
       # @param device [Y2Storage::Device, Integer] sid or device object
@@ -66,7 +64,7 @@ module Y2Partitioner
         devices.any? { |d| d.sid == sid }
       end
 
-    private
+      private
 
       # TRANSLATORS: "F" stands for Format flag. Keep it short, ideally a single letter.
       FORMAT_FLAG = N_("F")
@@ -91,6 +89,7 @@ module Y2Partitioner
       def filesystem(device)
         return device if device.is?(:filesystem)
         return nil unless device.respond_to?(:filesystem)
+
         device.filesystem
       end
 
@@ -164,11 +163,13 @@ module Y2Partitioner
         # inspection and caching. For the time being let's print nothing for
         # such devices without a direct and straightforward #size method.
         return "" unless device.respond_to?(:size)
+
         device.size.to_human_string
       end
 
       def format_value(device)
         return "" unless device.respond_to?(:to_be_formatted?)
+
         already_formatted = !device.to_be_formatted?(DeviceGraphs.instance.system)
         already_formatted ? "" : _(FORMAT_FLAG)
       end
@@ -196,6 +197,7 @@ module Y2Partitioner
         return "" if part_of_multidevice?(device)
         # fs may not supporting labels, like NFS
         return "" unless fs.respond_to?(:label)
+
         fs.label
       end
 
@@ -213,12 +215,14 @@ module Y2Partitioner
       def start_value(device)
         return "" unless device.respond_to?(:region)
         return "" if device.region.empty?
+
         device.region.start
       end
 
       def end_value(device)
         return "" unless device.respond_to?(:region)
         return "" if device.region.empty?
+
         device.region.end
       end
 
@@ -277,7 +281,7 @@ module Y2Partitioner
 
         fs = filesystem(device)
 
-        if fs && fs.multidevice?
+        if fs&.multidevice?
           btrfs_multidevice_type_label(fs)
         elsif fs
           formatted_device_type_label(device, fs)

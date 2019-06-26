@@ -76,7 +76,7 @@ module Y2Storage
           )
         end
 
-      protected
+        protected
 
         attr_reader :uuid, :attempt
 

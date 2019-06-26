@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,7 +36,7 @@ module Y2Partitioner
         _("New Partition Table...")
       end
 
-    private
+      private
 
       # Returns the proper Actions class for adding a partition table
       #

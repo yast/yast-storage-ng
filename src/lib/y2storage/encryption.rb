@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -148,7 +146,7 @@ module Y2Storage
       save_userdata(:crypttab_name, value)
     end
 
-  protected
+    protected
 
     def types_for_is
       super << :encryption
@@ -202,6 +200,7 @@ module Y2Storage
         loop do
           candidate = "#{basename}#{suffix}"
           return candidate unless dm_name_in_use?(devicegraph, candidate)
+
           suffix = next_dm_name_suffix(suffix)
         end
       end
@@ -220,7 +219,7 @@ module Y2Storage
         crypttab.entries.each { |e| save_crypttab_name(devicegraph, e) }
       end
 
-    private
+      private
 
       # Saves the crypttab name according to the value indicated in a crypttab entry
       #
@@ -228,7 +227,7 @@ module Y2Storage
       # @param entry [SimpleEtcCrypttabEntry]
       def save_crypttab_name(devicegraph, entry)
         device = entry.find_device(devicegraph)
-        return unless device && device.encrypted?
+        return unless device&.encrypted?
 
         device.encryption.crypttab_name = entry.name
       end

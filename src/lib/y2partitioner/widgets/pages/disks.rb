@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -45,7 +43,7 @@ module Y2Partitioner
           _("Hard Disks")
         end
 
-      private
+        private
 
         # @return [Array<Y2Storage::BlkDevice>]
         attr_reader :disks

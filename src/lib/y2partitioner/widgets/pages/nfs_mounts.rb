@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -92,7 +90,7 @@ module Y2Partitioner
           nil
         end
 
-      private
+        private
 
         # @return [CWM::TreePager]
         attr_reader :pager

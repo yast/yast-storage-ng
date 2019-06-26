@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -121,7 +119,7 @@ module Y2Storage
         [:mount_point, :reuse_name, :name, :lvm_volume_group_name, :subvolumes]
       end
 
-    protected
+      protected
 
       # Values for volume specification matching
       #

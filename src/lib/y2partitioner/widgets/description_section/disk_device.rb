@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -40,7 +38,7 @@ module Y2Partitioner
           super
         end
 
-      private
+        private
 
         # Required by mixin {BlkDeviceAttributes}
         alias_method :blk_device, :device

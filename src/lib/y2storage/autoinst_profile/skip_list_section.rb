@@ -1,4 +1,3 @@
-# encoding: utf-8
 #
 # Copyright (c) [2017] SUSE LLC
 #
@@ -106,7 +105,7 @@ module Y2Storage
         "skip_list"
       end
 
-    private
+      private
 
       # Log a list of rules as ignored
       #

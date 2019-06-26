@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -49,7 +47,7 @@ module Y2Partitioner
         Dialogs::BtrfsDevices.run(controller)
       end
 
-    private
+      private
 
       # @return [Controllers::BtrfsDevices]
       attr_reader :controller

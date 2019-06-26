@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -37,7 +35,7 @@ describe Y2Storage::MatchVolumeSpec do
       @size = size
     end
 
-  private
+    private
 
     def volume_match_values
       {

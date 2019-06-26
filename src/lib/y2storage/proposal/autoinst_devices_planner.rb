@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -68,7 +66,7 @@ module Y2Storage
         collection
       end
 
-    protected
+      protected
 
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph

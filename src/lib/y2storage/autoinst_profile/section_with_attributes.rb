@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -58,7 +56,7 @@ module Y2Storage
           result
         end
 
-      protected
+        protected
 
         # Macro used in the subclasses to define accessors for all the
         # attributes defined by {.attributes}
@@ -125,7 +123,7 @@ module Y2Storage
           .chomp("_section")
       end
 
-    protected
+      protected
 
       def attributes
         self.class.attributes
@@ -158,6 +156,7 @@ module Y2Storage
       def attrib_name(key)
         attrib = attributes.detect { |a| a[:xml_name] == key.to_sym || a[:name] == key.to_sym }
         return nil unless attrib
+
         attrib[:name]
       end
 

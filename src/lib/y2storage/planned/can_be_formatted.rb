@@ -119,6 +119,7 @@ module Y2Storage
       # @return [Boolean]
       def btrfs?
         return false unless filesystem_type
+
         filesystem_type.is?(:btrfs)
       end
 
@@ -135,6 +136,7 @@ module Y2Storage
       # @return [Array<SubvolSpecification>]
       def shadowed_subvolumes(all_devices)
         return [] if subvolumes.nil?
+
         other_devices = all_devices - [self]
         other_mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
         subvolumes.select { |s| s.shadowed?(mount_point, other_mount_points) }
@@ -161,7 +163,7 @@ module Y2Storage
         @snapshots && btrfs? && root?
       end
 
-    protected
+      protected
 
       # Set basic filesystem attributes
       #
@@ -186,6 +188,7 @@ module Y2Storage
       # @param mount_point [MountPoint]
       def setup_fstab_options(mount_point)
         return unless mount_point
+
         options = fstab_options_for(mount_point)
         mount_point.mount_options = options unless options.empty?
       end
@@ -217,6 +220,7 @@ module Y2Storage
         filesystem.configure_snapper = snapshots? if filesystem.respond_to?(:configure_snapper=)
 
         return unless filesystem.supports_btrfs_subvolumes?
+
         # If a default subvolume is configured (in control.xml), create it; if not,
         # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
         filesystem.ensure_default_btrfs_subvolume(path: @default_subvolume)
@@ -251,6 +255,7 @@ module Y2Storage
       def mount_point_for(device)
         return nil unless device.respond_to?(:mount_point)
         return nil if device.mount_point.nil? || device.mount_point.empty?
+
         device.mount_point
       end
     end

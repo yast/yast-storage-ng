@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -65,7 +63,7 @@ module Y2Storage
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
     end
 
-  private
+    private
 
     # Calculates the proposal
     #
@@ -117,6 +115,7 @@ module Y2Storage
     def add_partition_tables(devicegraph, drives)
       drives.each do |disk_name, drive_spec|
         next if drive_spec.unwanted_partitions?
+
         disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
         update_partition_table(disk, suitable_ptable_type(disk, drive_spec)) if disk
       end
@@ -129,9 +128,7 @@ module Y2Storage
     # @return [Y2Storage::PartitionTables::Type] Partition table type
     def suitable_ptable_type(disk, drive_spec)
       ptable_type = nil
-      if drive_spec.disklabel
-        ptable_type = Y2Storage::PartitionTables::Type.find(drive_spec.disklabel)
-      end
+      ptable_type = Y2Storage::PartitionTables::Type.find(drive_spec.disklabel) if drive_spec.disklabel
 
       disk_ptable_type = disk.partition_table ? disk.partition_table.type : nil
       ptable_type || disk_ptable_type || disk.preferred_ptable_type
@@ -146,6 +143,7 @@ module Y2Storage
     # @param ptable_type [Y2Storage::PartitionTables::Type] Partition table type
     def update_partition_table(disk, ptable_type)
       return unless update_partition_table?(disk, ptable_type)
+
       disk.remove_descendants if disk.partition_table
       disk.create_partition_table(ptable_type)
     end
@@ -167,12 +165,13 @@ module Y2Storage
     # @return [Array<Planned::DevicesCollection>] List of required planned devices to boot
     def boot_devices(devicegraph, devices)
       return unless root?(devices.mountable_devices)
+
       checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable_devices)
       begin
         result = checker.needed_partitions
-      rescue BootRequirementsChecker::Error => error
+      rescue BootRequirementsChecker::Error => e
         issues_list.add(:could_not_calculate_boot)
-        log.error error.message
+        log.error e.message
         result = []
       end
       result
@@ -184,6 +183,7 @@ module Y2Storage
     # @return [Boolean] true if there is a root partition; false otherwise.
     def root?(devices)
       return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
+
       issues_list.add(:missing_root)
     end
 
@@ -268,6 +268,7 @@ module Y2Storage
         @planned_devices = planned_with_boot
       rescue Y2Storage::NoDiskSpaceError
         raise if boot_parts.empty?
+
         result = devices_creator.populated_devicegraph(planned_devices, disk_names)
         issues_list.add(:could_not_create_boot, boot_parts)
       end
@@ -281,11 +282,7 @@ module Y2Storage
       if !result.shrinked_partitions.empty?
         issues_list.add(:shrinked_planned_devices, result.shrinked_partitions)
       end
-
-      # rubocop:disable Style/GuardClause
-      if !result.shrinked_lvs.empty?
-        issues_list.add(:shrinked_planned_devices, result.shrinked_lvs)
-      end
+      issues_list.add(:shrinked_planned_devices, result.shrinked_lvs) if !result.shrinked_lvs.empty?
     end
 
     # Returns the product's proposal settings for a given set of disks

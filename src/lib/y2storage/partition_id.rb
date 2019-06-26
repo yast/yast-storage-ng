@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -133,7 +131,7 @@ module Y2Storage
       BIOS_BOOT.to_i          => 263, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
       ESP.to_i                => 259, # ESP.to_i is 239, that used to have no special meaning
       WINDOWS_BASIC_DATA.to_i => 0, # WINDOWS_BASIC_DATA.to_i is 258, that used to mean mac_hfs
-      MICROSOFT_RESERVED.to_i => 261, # MICROSOFT_RESERVED.to_i is 261, that used to mean BIOS_BOOT
+      MICROSOFT_RESERVED.to_i => 261 # MICROSOFT_RESERVED.to_i is 261, that used to mean BIOS_BOOT
     }
     private_constant :LEGACY_KEPT, :LEGACY_TO_CURRENT, :CURRENT_TO_LEGACY
 
@@ -145,6 +143,7 @@ module Y2Storage
     def self.new_from_legacy(number)
       return LEGACY_TO_CURRENT[number] if LEGACY_TO_CURRENT.key?(number)
       return new(number) if LEGACY_KEPT.map(&:to_i).include?(number)
+
       UNKNOWN
     end
 
@@ -153,6 +152,7 @@ module Y2Storage
     # @return [Integer]
     def to_i_legacy
       return CURRENT_TO_LEGACY[to_i] if CURRENT_TO_LEGACY.key?(to_i)
+
       to_i
     end
 
@@ -206,6 +206,7 @@ module Y2Storage
     # @return [Integer] -1, 0, 1
     def <=>(other)
       return -1 unless other.respond_to?(:sort_order)
+
       sort_order <=> other.sort_order
     end
   end

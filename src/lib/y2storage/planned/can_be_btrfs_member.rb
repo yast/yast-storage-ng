@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -28,8 +26,7 @@ module Y2Storage
       attr_accessor :btrfs_name
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_btrfs_member
-      end
+      def initialize_can_be_btrfs_member; end
 
       # Checks whether the device represents a Btrfs member
       #

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -110,7 +108,7 @@ module Y2Storage
         res
       end
 
-    protected
+      protected
 
       # @return [Devicegraph]
       attr_reader :devicegraph
@@ -168,7 +166,7 @@ module Y2Storage
       # @return [VolumeSpecification]
       def create_planned_partition(volume, target)
         planned_partition = Planned::Partition.new(volume.mount_point, volume.fs_type)
-        planned_partition.min_size = target == :min ? volume.min_size : volume.desired_size
+        planned_partition.min_size = (target == :min) ? volume.min_size : volume.desired_size
         planned_partition.max_size = volume.max_size
         planned_partition.partition_id = volume.partition_id
         planned_partition.weight = analyzer.max_planned_weight || 0.0

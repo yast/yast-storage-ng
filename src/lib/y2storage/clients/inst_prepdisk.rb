@@ -54,7 +54,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       # Commits the actions to disk
       #
@@ -76,9 +76,7 @@ module Y2Storage
         target_path = manager.prepend_rootprefix(path)
 
         if !Yast::FileUtils.Exists(target_path)
-          if !SCR.Execute(path(".target.mkdir"), target_path)
-            raise ".target.mkdir failed"
-          end
+          raise ".target.mkdir failed" if !SCR.Execute(path(".target.mkdir"), target_path)
         end
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
           raise ".target.mount failed"

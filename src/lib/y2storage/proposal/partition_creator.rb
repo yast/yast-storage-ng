@@ -58,7 +58,7 @@ module Y2Storage
         CreatorResult.new(devicegraph, devices_map)
       end
 
-    private
+      private
 
       # Working devicegraph
       attr_accessor :devicegraph
@@ -107,16 +107,16 @@ module Y2Storage
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
         devices_map = {}
         planned_partitions.each_with_index do |part, idx|
-          begin
-            space = free_space_within(initial_free_space)
-            primary = planned_partitions.size - idx > num_logical
-            partition = create_partition(part, space, primary)
-            part.format!(partition)
-            devices_map[partition.name] = part
-            devicegraph.check
-          rescue ::Storage::Exception => error
-            raise Error, "Error allocating #{part}. Details: #{error}"
-          end
+
+          space = free_space_within(initial_free_space)
+          primary = planned_partitions.size - idx > num_logical
+          partition = create_partition(part, space, primary)
+          part.format!(partition)
+          devices_map[partition.name] = part
+          devicegraph.check
+        rescue ::Storage::Exception => e
+          raise Error, "Error allocating #{part}. Details: #{e}"
+
         end
         devices_map
       end
@@ -133,6 +133,7 @@ module Y2Storage
             space.region.start < initial_free_space.region.end
         end
         raise NoDiskSpaceError, "Exhausted free space" if spaces.empty?
+
         spaces.first
       end
 
@@ -246,9 +247,7 @@ module Y2Storage
       def new_region_with_size(region, size)
         blocks = (size / region.block_size.to_i).to_i
         # Never exceed the region
-        if region.start + blocks > region.end
-          blocks = region.end - region.start + 1
-        end
+        blocks = region.end - region.start + 1 if region.start + blocks > region.end
         Region.create(region.start, blocks, region.block_size)
       end
 

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -53,7 +51,7 @@ module Y2Partitioner
         )
       end
 
-    private
+      private
 
       # @return [Devicegraph] graph to display
       attr_reader :device_graph
@@ -103,7 +101,7 @@ module Y2Partitioner
         Yast::Popup.Error(_("Saving graph file failed."))
       end
 
-    private
+      private
 
       # @return [Devicegraph] graph to display and export
       attr_reader :device_graph

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -57,10 +55,11 @@ module Y2Partitioner
       # @return [Symbol, nil]
       def run
         return :back unless try_unmount && validate
+
         resize
       end
 
-    private
+      private
 
       # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
       attr_reader :device
@@ -74,7 +73,7 @@ module Y2Partitioner
       def resize
         result = Dialogs::BlkDeviceResize.run(controller)
 
-        result == :next ? :finish : result
+        (result == :next) ? :finish : result
       end
 
       # Checks whether the resize action can be performed

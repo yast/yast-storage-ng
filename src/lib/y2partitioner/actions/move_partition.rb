@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -63,7 +61,7 @@ module Y2Partitioner
         :finish
       end
 
-    private
+      private
 
       # @return [Y2Storage::BlkDevice]
       attr_reader :partition
@@ -178,7 +176,7 @@ module Y2Partitioner
       #
       # @see #move_to_beginning, #move_to_end
       def move_partition
-        movement == :beginning ? move_to_beginning : move_to_end
+        (movement == :beginning) ? move_to_beginning : move_to_end
       end
 
       # Moves the patition by placing it at the beginning of the previous adjacent free space
@@ -211,7 +209,7 @@ module Y2Partitioner
         return nil unless previous_unused_slot
         return previous_unused_slot unless previous_partition
 
-        previous_unused_slot.region.start > previous_partition.region.start ? previous_unused_slot : nil
+        (previous_unused_slot.region.start > previous_partition.region.start) ? previous_unused_slot : nil
       end
 
       # Next adjacent free space where the partition can be moved to
@@ -222,7 +220,7 @@ module Y2Partitioner
         return nil unless next_unused_slot
         return next_unused_slot unless next_partition
 
-        next_unused_slot.region.start < next_partition.region.start ? next_unused_slot : nil
+        (next_unused_slot.region.start < next_partition.region.start) ? next_unused_slot : nil
       end
 
       # Previous free space, not necessary adjacent to the partition

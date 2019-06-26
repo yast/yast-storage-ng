@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -98,7 +96,7 @@ module Y2Storage
         false
       end
 
-    protected
+      protected
 
       def types_for_is
         super << :filesystem

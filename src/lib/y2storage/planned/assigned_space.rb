@@ -82,6 +82,7 @@ module Y2Storage
         return false unless primary_partitions_fit?
         return true if disk_space.growing?
         return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: align_grain)
+
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
         !enforced_last.nil?
@@ -92,7 +93,7 @@ module Y2Storage
       # @return [DiskSize]
       def unused
         max = DiskSize.sum(partitions.map(&:max))
-        max >= usable_size ? DiskSize.zero : usable_size - max
+        (max >= usable_size) ? DiskSize.zero : usable_size - max
       end
 
       # Space available in addition to the target
@@ -211,7 +212,7 @@ module Y2Storage
         @disk_size ||= @disk_space.disk_size
       end
 
-    protected
+      protected
 
       # Checks whether the disk space is inside an extended partition
       #
@@ -254,6 +255,7 @@ module Y2Storage
       # @return [Boolean]
       def require_end_alignment?
         return @require_end_alignment unless @require_end_alignment.nil?
+
         @require_end_alignment = disk_space.require_end_alignment?
       end
 

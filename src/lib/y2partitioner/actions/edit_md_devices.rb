@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,10 +45,10 @@ module Y2Partitioner
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
         result = Dialogs::MdEditDevices.run(controller)
-        result == :next ? :finish : result
+        (result == :next) ? :finish : result
       end
 
-    protected
+      protected
 
       # @return [Controllers::Md]
       attr_reader :controller

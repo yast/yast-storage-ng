@@ -21,10 +21,12 @@ namespace :doc do
   desc "Build boot requirements spec."
   task :bootspecs do
     files = Dir["**/test/y2storage/boot_requirements_checker_*_test.rb"].sort
-    sh "PARALLEL_TESTS=0 rspec" \
-      " --require ./src/tools/md_formatter.rb" \
-      " --format MdFormatter" \
-      " --out doc/boot-requirements.md" \
-      " '#{files.join("' '")}'" unless files.empty?
+    unless files.empty?
+      sh "PARALLEL_TESTS=0 rspec" \
+        " --require ./src/tools/md_formatter.rb" \
+        " --format MdFormatter" \
+        " --out doc/boot-requirements.md" \
+        " '#{files.join("' '")}'"
+    end
   end
 end

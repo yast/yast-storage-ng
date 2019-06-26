@@ -213,11 +213,12 @@ module Y2Storage
       def self.partitions_in_new_extended(partitions, ptable)
         free_primary_slots = ptable.max_primary - ptable.num_primary
         return 0 if free_primary_slots >= partitions
+
         # One slot consumed by the extended partition
         partitions - free_primary_slots + 1
       end
 
-    protected
+      protected
 
       # Transforms a FreeDiskSpace and a list of planned partitions into a
       # AssignedSpace object if the combination is valid.
@@ -258,6 +259,7 @@ module Y2Storage
           if too_many_primary?(spaces, ptable)
             raise NoMorePartitionSlotError, "Too many primary partitions needed"
           end
+
           spaces.each do |space|
             prim = space.partition_type == :primary
             num_logical = prim ? 0 : space.partitions.size
@@ -304,6 +306,7 @@ module Y2Storage
           if !room_for_logical?(space, num_logical)
             raise NoDiskSpaceError, "No space for the logical partitions"
           end
+
           set_num_logical(space, num_logical)
         end
 
@@ -313,10 +316,12 @@ module Y2Storage
         if extended_space.nil?
           raise NoDiskSpaceError, "No suitable space to create the extended partition"
         end
+
         primary_spaces = spaces - [extended_space]
         if too_many_primary_with_extended?(primary_spaces, ptable)
           raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
+
         set_num_logical(extended_space, num_logical)
         primary_spaces.each { |s| set_num_logical(s, 0) }
       end
@@ -354,7 +359,7 @@ module Y2Storage
         spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
         # Let's place the extended in the space with more planned partitions
         # (start as secondary criteria just to ensure stable sorting)
-        spaces.sort_by { |s| [s.partitions.count, s.region.start] }.last
+        spaces.max_by { |s| [s.partitions.count, s.region.start] }
       end
 
       # Total number of partitions planned for a given list of spaces
@@ -385,6 +390,7 @@ module Y2Storage
       # @return [Boolean]
       def room_for_logical?(assigned_space, num)
         return true if assigned_space.disk_space.growing?
+
         overhead = assigned_space.overhead_of_logical
         assigned_space.extra_size >= overhead * num
       end

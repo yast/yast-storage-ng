@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -80,7 +78,7 @@ module Y2Storage
       format(_("Unused LVM PV on %{device}"), device: plain_blk_device.name)
     end
 
-  protected
+    protected
 
     def types_for_is
       super << :lvm_pv

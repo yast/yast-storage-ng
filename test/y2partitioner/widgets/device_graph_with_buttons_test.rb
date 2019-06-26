@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,12 +64,12 @@ describe Y2Partitioner::Widgets::DeviceGraphWithButtons do
 
     around do |example|
       # Extra "begin" forced by rubocop
-      begin
-        @tmp_file = Tempfile.new("graph")
-        example.run
-      ensure
-        @tmp_file.close!
-      end
+
+      @tmp_file = Tempfile.new("graph")
+      example.run
+    ensure
+      @tmp_file.close!
+
     end
 
     context "for the XML format" do

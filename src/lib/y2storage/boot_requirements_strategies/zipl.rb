@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -33,6 +31,7 @@ module Y2Storage
       # @see Base#needed_partitions
       def needed_partitions(target)
         raise Error, "Impossible to boot system from the chosen disk" unless supported_boot_disk?
+
         if zipl_partition_needed? && zipl_partition_missing?
           [zipl_partition(target)]
         else
@@ -55,11 +54,12 @@ module Y2Storage
         res
       end
 
-    protected
+      protected
 
       def supported_boot_disk?
         return false unless boot_disk
         return false if boot_disk.is?(:dasd) && boot_disk.format.is?(:ldl)
+
         # TODO: DIAG disks (whatever they are) are not supported either
 
         true
@@ -76,9 +76,7 @@ module Y2Storage
       def zipl_partition_needed?
         # We cannot ensure the s390 firmware can handle technologies like LVM,
         # MD or LUKS, so propose a separate /boot/zipl partition for those cases
-        if boot_in_lvm? || boot_in_software_raid? || encrypted_boot?
-          return true
-        end
+        return true if boot_in_lvm? || boot_in_software_raid? || encrypted_boot?
 
         # In theory, this is never called if there is no / filesystem (planned or
         # current). But let's stay safe and return false right away.

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -145,7 +143,7 @@ module Y2Partitioner
           false
         end
 
-      private
+        private
 
         def focus
           Yast::UI.SetFocus(Id(widget_id))
@@ -189,9 +187,7 @@ module Y2Partitioner
           error = format(_("Cannot create subvolume %s."), value)
 
           sv = filesystem.subvolume_descendants(value).first
-          if sv
-            error << "\n" << format(_("Delete subvolume %s first."), sv.path)
-          end
+          error << "\n" << format(_("Delete subvolume %s first."), sv.path) if sv
 
           error
         end

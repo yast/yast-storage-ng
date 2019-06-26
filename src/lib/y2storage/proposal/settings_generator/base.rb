@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
           initial_settings || calculate_next_settings
         end
 
-      private
+        private
 
         # Calculates the next settings to use after the initial settings
         #
@@ -95,6 +93,7 @@ module Y2Storage
         # @return [ProposalSettings]
         def initial_settings
           return nil if @used_initial_settings
+
           @used_initial_settings = true
 
           copy_settings

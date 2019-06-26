@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -92,7 +90,7 @@ module Y2Storage
           :delete_partition
         end
 
-      private
+        private
 
         # @return [PartitionId]
         attr_reader :partition_id

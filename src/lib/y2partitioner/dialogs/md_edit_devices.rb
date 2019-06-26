@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Partitioner
         @contents ||= VBox(Widgets::MdDevicesSelector.new(controller))
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::Md]
       attr_reader :controller

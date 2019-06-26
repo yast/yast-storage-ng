@@ -59,6 +59,7 @@ module Y2Storage
         drives_map.each_pair do |disk_name, drive_spec|
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
           next unless disk
+
           delete_stuff(devicegraph, disk, drive_spec, reused_partitions[disk.name])
         end
 
@@ -66,7 +67,7 @@ module Y2Storage
         devicegraph
       end
 
-    protected
+      protected
 
       attr_reader :disk_analyzer
 
@@ -96,6 +97,7 @@ module Y2Storage
       # @param reused_parts [Array<String>] Reused partitions names
       def delete_by_use(devicegraph, disk, drive_spec, reused_parts)
         return if drive_spec.use == "free" || !partition_table?(disk)
+
         case drive_spec.use
         when "all"
           delete_partitions(devicegraph, disk.partitions, reused_parts)
@@ -144,6 +146,7 @@ module Y2Storage
         parts_to_delete.map(&:sid).each do |sid|
           partition = partition_by_sid(devicegraph, sid)
           next unless partition
+
           partition_killer.delete_by_sid(partition.sid)
         end
       end

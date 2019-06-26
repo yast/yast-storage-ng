@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -49,7 +47,7 @@ module Y2Partitioner
         @device = device
       end
 
-    private
+      private
 
       # @return [Y2Storage::Device] device to delete
       attr_reader :device

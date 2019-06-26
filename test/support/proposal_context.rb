@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -67,7 +65,7 @@ RSpec.shared_context "proposal" do
 
   let(:settings_format) { :legacy }
 
-  let(:settings) { settings_format == :legacy ? legacy_settings : ng_settings }
+  let(:settings) { (settings_format == :legacy) ? legacy_settings : ng_settings }
 
   let(:separate_home) { false }
   let(:lvm) { false }
@@ -89,9 +87,7 @@ RSpec.shared_context "proposal" do
     home = settings.volumes.find { |v| v.mount_point == "/home" }
     home.proposed = separate_home if home
     settings.lvm = lvm
-    if lvm && lvm_strategy
-      settings.lvm_vg_strategy = lvm_strategy
-    end
+    settings.lvm_vg_strategy = lvm_strategy if lvm && lvm_strategy
     settings.encryption_password = encrypt ? "12345678" : nil
     settings
   end

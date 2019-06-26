@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -123,7 +121,7 @@ module Y2Storage
         dev = Nfs.create(graph, server, path)
         if mountpoint && !mountpoint.empty?
           dev.mount_path = mountpoint
-          dev.mount_point.mount_options = fstopt == "defaults" ? [] : fstopt.split(/[\s,]+/)
+          dev.mount_point.mount_options = (fstopt == "defaults") ? [] : fstopt.split(/[\s,]+/)
         end
         dev
       end
@@ -164,9 +162,7 @@ module Y2Storage
         graph = check_devicegraph_argument(devicegraph)
 
         old = nil
-        if share_changed?
-          old = Nfs.find_by_server_and_path(graph, old_server, old_path)
-        end
+        old = Nfs.find_by_server_and_path(graph, old_server, old_path) if share_changed?
         old || Nfs.find_by_server_and_path(graph, server, path)
       end
 
@@ -199,6 +195,7 @@ module Y2Storage
 
         old_share = attributes["old_device"]
         return if old_share.nil? || old_share.empty?
+
         @old_server, @old_path = split_share(old_share)
       end
 
@@ -224,7 +221,7 @@ module Y2Storage
         share_string(server, path)
       end
 
-    protected
+      protected
 
       # Breaks a string representing a share, in the format used in fstab, into
       # its two components (server and path)

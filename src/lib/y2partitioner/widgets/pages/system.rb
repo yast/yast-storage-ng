@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -64,7 +62,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # @return [String]
         attr_reader :hostname
@@ -97,6 +95,7 @@ module Y2Partitioner
         # @return [ConfigurableBlkDevicesTable]
         def table
           return @table unless @table.nil?
+
           @table = ConfigurableBlkDevicesTable.new(devices, @pager)
           @table.remove_columns(:start, :end)
           @table

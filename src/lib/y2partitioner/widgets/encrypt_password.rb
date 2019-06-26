@@ -79,7 +79,7 @@ module Y2Partitioner
         )
       end
 
-    private
+      private
 
       # @return Y2Storage::EncryptPasswordChecker
       attr_reader :checker

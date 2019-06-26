@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -81,7 +79,7 @@ module Y2Partitioner
         try_unmount
       end
 
-    private
+      private
 
       # @return [Y2Storage::Partition, Y2Storage::LvmLv]
       attr_reader :device
@@ -94,7 +92,7 @@ module Y2Partitioner
 
       def detect_space_info
         return if controller.multidevice_filesystem? ||
-            !controller.committed_current_filesystem? || swap?
+          !controller.committed_current_filesystem? || swap?
 
         begin
           @space_info = device.filesystem.detect_space_info
@@ -129,6 +127,7 @@ module Y2Partitioner
       # @return [Boolean]
       def swap?
         return true if device.is?(:partition) && device.id.is?(:swap)
+
         device.formatted_as?(:swap)
       end
 
@@ -140,6 +139,7 @@ module Y2Partitioner
       #   space info.
       def used_size
         return nil if space_info.nil?
+
         space_info.used
       end
 
@@ -414,7 +414,7 @@ module Y2Partitioner
           end
         end
 
-      private
+        private
 
         # @return [Y2Storage::Partition, Y2Storage::LvmLv]
         attr_reader :device
@@ -538,6 +538,7 @@ module Y2Partitioner
         # @return [Boolean]
         def overcommitted_thin_pool?
           return false unless device.is?(:lvm_lv)
+
           device.overcommitted?
         end
       end

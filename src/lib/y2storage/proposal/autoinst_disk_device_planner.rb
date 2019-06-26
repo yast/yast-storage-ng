@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -50,7 +48,7 @@ module Y2Storage
         end
       end
 
-    private
+      private
 
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned

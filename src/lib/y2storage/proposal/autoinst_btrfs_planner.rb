@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -36,7 +34,7 @@ module Y2Storage
         [planned_btrfs(drive_section)]
       end
 
-    private
+      private
 
       # Generates a planned Btrfs from a drive section
       #

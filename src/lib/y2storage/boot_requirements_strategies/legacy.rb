@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -57,7 +55,7 @@ module Y2Storage
         res
       end
 
-    protected
+      protected
 
       # Whether a BIOS GRUB partition will be needed.
       #
@@ -89,6 +87,7 @@ module Y2Storage
       # @return [Boolean] true if the partition table matches.
       def future_boot_ptable_type?(type)
         return false if boot_disk.nil?
+
         if boot_ptable_type?(nil)
           boot_disk.preferred_ptable_type.is?(type)
         else

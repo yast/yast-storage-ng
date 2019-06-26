@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,10 +45,10 @@ module Y2Partitioner
       #
       ALL_OPTIONS = [
         {
-          fs:          %i(ext2 ext3 ext4),
+          fs:          [:ext2, :ext3, :ext4],
           widget:      :MkfsComboBox,
           label:       N_("Block &Size in Bytes"),
-          values:      %w(auto 1024 2048 4096),
+          values:      %w[auto 1024 2048 4096],
           default:     "auto",
           mkfs_option: "-b",
           # help text, richtext format
@@ -62,10 +60,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext3 ext4),
+          fs:          [:ext3, :ext4],
           widget:      :MkfsComboBox,
           label:       N_("&Inode Size in Bytes"),
-          values:      %w(auto 128 256 512 1024),
+          values:      %w[auto 128 256 512 1024],
           default:     "auto",
           mkfs_option: "-I",
           # help text, richtext format
@@ -77,10 +75,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext2 ext3 ext4),
+          fs:          [:ext2, :ext3, :ext4],
           widget:      :MkfsComboBox,
           label:       N_("Bytes to &Inode Ratio"),
-          values:      %w(auto 1024 2048 4096 8192 16384 32768),
+          values:      %w[auto 1024 2048 4096 8192 16384 32768],
           default:     "auto",
           mkfs_option: "-i",
           # help text, richtext format
@@ -95,7 +93,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext2 ext3 ext4),
+          fs:          [:ext2, :ext3, :ext4],
           widget:      :MkfsInputField,
           label:       N_("Percentage of Blocks &Reserved for root"),
           default:     "auto",
@@ -114,7 +112,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext2 ext3 ext4),
+          fs:          [:ext2, :ext3, :ext4],
           widget:      :MkfsInputField,
           label:       N_("Stride &Length in Blocks"),
           default:     "none",
@@ -135,7 +133,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext2 ext3 ext4),
+          fs:          [:ext2, :ext3, :ext4],
           widget:      :MkfsCheckBox,
           label:       N_("Enable Regular &Checks"),
           default:     false,
@@ -152,7 +150,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext3 ext4),
+          fs:          [:ext3, :ext4],
           widget:      :MkfsCheckBox,
           label:       N_("&Directory Index Feature"),
           default:     true,
@@ -164,7 +162,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(ext3 ext4),
+          fs:          [:ext3, :ext4],
           widget:      :MkfsCheckBox,
           label:       N_("&Use Journal"),
           default:     true,
@@ -177,10 +175,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(xfs),
+          fs:          [:xfs],
           widget:      :MkfsComboBox,
           label:       N_("Block &Size in Bytes"),
-          values:      %w(auto 512 1024 2048 4096 8192 16384),
+          values:      %w[auto 512 1024 2048 4096 8192 16384],
           default:     "auto",
           mkfs_option: "-bsize=",
           # help text, richtext format
@@ -191,10 +189,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(xfs),
+          fs:          [:xfs],
           widget:      :MkfsComboBox,
           label:       N_("&Inode Size in Bytes"),
-          values:      %w(auto 256 512 1024 2048),
+          values:      %w[auto 256 512 1024 2048],
           default:     "auto",
           mkfs_option: "-isize=",
           # help text, richtext format
@@ -205,7 +203,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(xfs),
+          fs:          [:xfs],
           widget:      :MkfsInputField,
           label:       N_("&Percentage of Inode Space"),
           default:     "auto",
@@ -226,7 +224,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(xfs),
+          fs:          [:xfs],
           widget:      :MkfsCheckBox,
           label:       N_("Inodes &Aligned"),
           default:     true,
@@ -242,10 +240,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(vfat),
+          fs:          [:vfat],
           widget:      :MkfsComboBox,
           label:       N_("FAT &Size"),
-          values:      %w(auto 12 16 32),
+          values:      %w[auto 12 16 32],
           default:     "auto",
           mkfs_option: "-F",
           # help text, richtext format
@@ -258,10 +256,10 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(vfat),
+          fs:          [:vfat],
           widget:      :MkfsComboBox,
           label:       N_("Number of &FATs"),
-          values:      %w(auto 1 2),
+          values:      %w[auto 1 2],
           default:     "auto",
           mkfs_option: "-f",
           # help text, richtext format
@@ -272,7 +270,7 @@ module Y2Partitioner
         },
 
         {
-          fs:          %i(vfat),
+          fs:          [:vfat],
           widget:      :MkfsInputField,
           label:       N_("Root &Dir Entries"),
           default:     "auto",
@@ -361,6 +359,7 @@ module Y2Partitioner
       #
       def validate?(val)
         return true if val.nil? || !validate || !@value[:error]
+
         validate[val]
       end
 
@@ -396,7 +395,7 @@ module Y2Partitioner
         "#{label.delete("&")}\n\n#{error}"
       end
 
-    private
+      private
 
       # Allowed keys in {ALL_OPTIONS}.
       #
@@ -490,7 +489,7 @@ module Y2Partitioner
           all_options.map { |x| MkfsOptiondata.new(x) }
         end
 
-      private
+        private
 
         # Get list of all options.
         #

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -51,7 +49,7 @@ module Y2Storage
       message
     end
 
-  private
+    private
 
     # Error text for the missing volume
     #
@@ -214,6 +212,7 @@ module Y2Storage
     # @return [String, nil]
     def fs_types_info
       return nil if missing_volume.fs_types.empty?
+
       missing_volume.fs_types.map(&:to_s).join(", ")
     end
 

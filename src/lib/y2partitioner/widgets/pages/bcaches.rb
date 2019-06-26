@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -69,7 +67,7 @@ module Y2Partitioner
           tabs.switch_page(tabs.initial_page)
         end
 
-      private
+        private
 
         # Page icon
         #

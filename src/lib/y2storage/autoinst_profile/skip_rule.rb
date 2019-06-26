@@ -1,4 +1,3 @@
-# encoding: utf-8
 #
 # Copyright (c) [2017] SUSE LLC
 #
@@ -106,9 +105,11 @@ module Y2Storage
       # @return [Boolean] true if the disk matches the rule
       def matches?(disk)
         return false unless valid?
+
         values_from_disk = Array(value(disk))
         values_from_disk.any? do |value|
           return false unless valid_class?(value)
+
           send("match_#{predicate}", value, cast_reference(raw_reference, value.class))
         end
       end
@@ -160,7 +161,7 @@ module Y2Storage
         "<SkipRule key='#{key}' predicate='#{predicate}' reference='#{raw_reference}'>"
       end
 
-    private
+      private
 
       # Determines whether the predicate is applicable to the value
       #

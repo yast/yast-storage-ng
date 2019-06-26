@@ -98,6 +98,7 @@ module Y2Storage
     # @return [Boolean]
     def reused_partition?
       return false if growing?
+
       disk.partitions.map(&:region).include?(region)
     end
 

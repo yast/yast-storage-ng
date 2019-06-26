@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) 2018 SUSE LLC
 #
 # All Rights Reserved.
@@ -39,6 +37,7 @@ module Y2Storage
 
     def uninhibit
       return if !@dbus_cookie
+
       log.info "uninhibit udisks"
       begin
         dbus_object.Uninhibit(@dbus_cookie)
@@ -48,7 +47,7 @@ module Y2Storage
       end
     end
 
-  private
+    private
 
     def dbus_object
       system_bus = DBus::SystemBus.instance

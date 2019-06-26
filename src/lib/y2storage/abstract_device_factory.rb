@@ -76,8 +76,8 @@ module Y2Storage
       else
         File.open(yaml_file) { |file| YAML.load_stream(file, yaml_file) { |doc| build_tree(doc) } }
       end
-    rescue SystemCallError => ex
-      log.error(ex.to_s)
+    rescue SystemCallError => e
+      log.error(e.to_s)
       raise
     end
 
@@ -102,7 +102,7 @@ module Y2Storage
       end
     end
 
-  private
+    private
 
     # Build the toplevel for a device tree starting with 'obj'.
     #
@@ -110,9 +110,8 @@ module Y2Storage
     #
     def build_tree_toplevel(obj)
       name, content = break_up_hash(obj)
-      if !valid_toplevel.include?(name)
-        raise HierarchyError, "Unexpected toplevel object #{name}"
-      end
+      raise HierarchyError, "Unexpected toplevel object #{name}" if !valid_toplevel.include?(name)
+
       build_tree_recursive(nil, name, content)
     end
 
@@ -127,9 +126,7 @@ module Y2Storage
     # @param content [Any]   parameters and sub-products of 'name'
     #
     def build_tree_recursive(parent, name, content)
-      if !factory_products.include?(name)
-        raise HierarchyError, "Don't know how to create a #{name}"
-      end
+      raise HierarchyError, "Don't know how to create a #{name}" if !factory_products.include?(name)
 
       case content
       when Hash
@@ -137,8 +134,8 @@ module Y2Storage
         check_param(name, content.keys)
 
         # Split up pure parameters and sub-product descriptions
-        sub_prod = content.select { |k, _v|  factory_products.include?(k) }
-        param    = content.select { |k, _v| !factory_products.include?(k) }
+        sub_prod = content.select { |k, _v| factory_products.include?(k) }
+        param    = content.reject { |k, _v| factory_products.include?(k) }
 
         # Call subclass-defined fixup method if available
         # to convert known value types to a better usable type
@@ -168,85 +165,85 @@ module Y2Storage
       end
     end
 
-  # rubocop:disable Lint/UselessAccessModifier
+    # rubocop:disable Lint/UselessAccessModifier
 
-  protected
+    protected
 
-  # rubocop:enable Lint/UselessAccessModifier
+    # rubocop:enable Lint/UselessAccessModifier
 
-  #
-  # Methods subclasses need to implement:
-  #
+    #
+    # Methods subclasses need to implement:
+    #
 
-  # Return a hash for the valid hierarchy of the products of this factory:
-  # Each hash key returns an array (that might be empty) for the child
-  # types that are valid below that key.
-  #
-  # @return [Hash<String, Array<String>>]
-  #
-  # def valid_hierarchy
-  #   VALID_HIERARCHY
-  # end
+    # Return a hash for the valid hierarchy of the products of this factory:
+    # Each hash key returns an array (that might be empty) for the child
+    # types that are valid below that key.
+    #
+    # @return [Hash<String, Array<String>>]
+    #
+    # def valid_hierarchy
+    #   VALID_HIERARCHY
+    # end
 
-  # Return an array for valid toplevel products of this factory.
-  #
-  # @return [Array<String>] valid toplevel products
-  #
-  # def valid_toplevel
-  #   VALID_TOPLEVEL
-  # end
+    # Return an array for valid toplevel products of this factory.
+    #
+    # @return [Array<String>] valid toplevel products
+    #
+    # def valid_toplevel
+    #   VALID_TOPLEVEL
+    # end
 
-  # Return an hash of valid parameters for each product type of this
-  # factory. This does not include sub-products, only the parameters that
-  # are passed directly to each individual product.
-  #
-  # @return [Hash<String, Array<String> >]
-  #
-  # def valid_param
-  #   VALID_PARAM
-  # end
+    # Return an hash of valid parameters for each product type of this
+    # factory. This does not include sub-products, only the parameters that
+    # are passed directly to each individual product.
+    #
+    # @return [Hash<String, Array<String> >]
+    #
+    # def valid_param
+    #   VALID_PARAM
+    # end
 
-  # Factory method to create a disk.
-  #
-  # @return [::Storage::Disk]
-  #
-  # def create_disk(parent, args)
-  #   # Create a disk here
-  #   nil
-  # end
+    # Factory method to create a disk.
+    #
+    # @return [::Storage::Disk]
+    #
+    # def create_disk(parent, args)
+    #   # Create a disk here
+    #   nil
+    # end
 
-  # Fix up parameters to the create_xy() methods. This can be used to
-  # convert common parameter value types to something that is better to
-  # handle, possibly based on the parameter name (e.g., "size"). The name
-  # of the factory product is also passed to possibly narrow down where to
-  # do that kind of conversion.
-  #
-  # This method is optional. The base class checks with respond_to? if it
-  # is implemented before it is called. It is only called if 'param' is a
-  # hash, not if it's just a plain scalar value.
-  #
-  # @param name [String] factory product name
-  # @param param [Hash] create_xy() parameters
-  #
-  # @return [Hash or Scalar] changed parameters
-  #
-  # def fixup_param(name, param)
-  #   param
-  # end
+    # Fix up parameters to the create_xy() methods. This can be used to
+    # convert common parameter value types to something that is better to
+    # handle, possibly based on the parameter name (e.g., "size"). The name
+    # of the factory product is also passed to possibly narrow down where to
+    # do that kind of conversion.
+    #
+    # This method is optional. The base class checks with respond_to? if it
+    # is implemented before it is called. It is only called if 'param' is a
+    # hash, not if it's just a plain scalar value.
+    #
+    # @param name [String] factory product name
+    # @param param [Hash] create_xy() parameters
+    #
+    # @return [Hash or Scalar] changed parameters
+    #
+    # def fixup_param(name, param)
+    #   param
+    # end
 
-  # Return a hash describing dependencies from one sub-product (on the same
-  # hierarchy level) to another so they can be produced in the correct order.
-  #
-  # For example, if there is an encryption layer and a file system in a
-  # partition, the encryption layer needs to be created first so the file
-  # system can be created inside that encryption layer.
-  #
-  #
-  # def dependencies
-  #   dep
-  # end
+    # Return a hash describing dependencies from one sub-product (on the same
+    # hierarchy level) to another so they can be produced in the correct order.
+    #
+    # For example, if there is an encryption layer and a file system in a
+    # partition, the encryption layer needs to be created first so the file
+    # system can be created inside that encryption layer.
+    #
+    #
+    # def dependencies
+    #   dep
+    # end
 
-  private
+    private
 
     # Return the factory methods of this factory: All methods that start with
     # "create_".
@@ -284,6 +281,7 @@ module Y2Storage
       name = obj.keys.first.to_s
       raise HierarchyError, "Expected hash, not #{obj}" unless obj.is_a?(Hash)
       raise HierarchyError, "Expected exactly one key in #{name}" if obj.size != 1
+
       content = obj[name]
       [name, content]
     end
@@ -298,9 +296,7 @@ module Y2Storage
       expected = valid_param[name]
       expected += valid_hierarchy[name] if valid_hierarchy.include?(name)
       param.each do |key|
-        if !expected.include?(key.to_s)
-          raise ArgumentError, "Unexpected parameter #{key} in #{name}"
-        end
+        raise ArgumentError, "Unexpected parameter #{key} in #{name}" if !expected.include?(key.to_s)
       end
     end
 
@@ -367,6 +363,7 @@ module Y2Storage
     def sort_by_product_order(products)
       return products if products.size < 2
       return products unless respond_to?(:dependencies, true)
+
       dependency_order = DependencyHash.new(dependencies).tsort
       ordered = dependency_order.select { |p| products.include?(p) }
       rest = products.dup

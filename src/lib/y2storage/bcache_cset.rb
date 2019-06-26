@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -74,7 +72,7 @@ module Y2Storage
       format(_("Cache set (%s)"), devices)
     end
 
-  protected
+    protected
 
     def types_for_is
       super << :bcache_cset

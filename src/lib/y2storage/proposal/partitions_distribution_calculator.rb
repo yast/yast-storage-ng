@@ -120,7 +120,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       # When calculating an LVM proposal, this represents the projected "system"
       # volume group to accommodate root and other volumes.
@@ -203,8 +203,10 @@ module Y2Storage
       def suitable_disk_space?(space, partition)
         return false if partition.disk && partition.disk != space.disk_name
         return false unless partition_fits_space?(partition, space)
+
         max_offset = partition.max_start_offset
         return false if max_offset && space.start_offset > max_offset
+
         true
       end
 
@@ -305,7 +307,7 @@ module Y2Storage
       # @return [Planned::PartitionsDistribution]
       def best_candidate(candidates)
         log.info "Comparing #{candidates.size} distributions"
-        result = candidates.sort { |a, b| a.better_than(b) }.first
+        result = candidates.min { |a, b| a.better_than(b) }
         log.info "best_for result: #{result}"
         result
       end

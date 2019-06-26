@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Partitioner
       errors_html || warnings_html || ""
     end
 
-  private
+    private
 
     # @return [SetupChecker] checker for the current setup
     attr_reader :setup_checker

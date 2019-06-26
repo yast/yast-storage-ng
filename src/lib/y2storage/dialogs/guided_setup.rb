@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
           allowed? || disk_analyzer.candidate_disks.size > 1
         end
 
-      private
+        private
 
         # Whether the proposal settings are set as editable in the control file
         #
@@ -121,7 +119,7 @@ module Y2Storage
         GuidedSetup.allowed?
       end
 
-    private
+      private
 
       # Run the dialog or skip when necessary.
       def run_dialog(dialog_class)

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -27,7 +25,7 @@ module Y2Storage
       # Strategy to create LVM physical volumes when the value of
       # lvm_vg_strategy is :use_available
       class UseAvailable < Base
-      protected
+        protected
 
         # Combinations of assigned spaces to be evaluated, in principle, when
         # looking for the right places to locate the new physical volumes
@@ -56,7 +54,7 @@ module Y2Storage
 
           begin
             result = initial_distribution.add_partitions(pv_partitions)
-          rescue
+          rescue StandardError
             # Adding PVs in this way leads to an invalid distribution
             return nil
           end
@@ -90,6 +88,7 @@ module Y2Storage
           return false if DiskSize.sum(useful_sizes) < planned_vg.missing_space
 
           return true if @checked_combinations.nil?
+
           @checked_combinations.none? do |checked|
             redundant?(spaces, checked)
           end

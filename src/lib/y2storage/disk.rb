@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -87,7 +85,7 @@ module Y2Storage
       PartitionTables::Type.find(:gpt)
     end
 
-  protected
+    protected
 
     def types_for_is
       super << :disk
@@ -101,7 +99,7 @@ module Y2Storage
     # @return [Boolean]
     def disk_device?
       # Filter out all MMC RPMB/BOOT partitions
-      basename =~ /^mmcblk\d+boot\d+|^mmcblk\d+rpmb/ ? false : super
+      (basename =~ /^mmcblk\d+boot\d+|^mmcblk\d+rpmb/) ? false : super
     end
   end
 end

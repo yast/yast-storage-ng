@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -44,7 +42,7 @@ module Y2Storage
           settings.root_device = candidate_disks.first.name
         end
 
-      protected
+        protected
 
         def dialog_title
           _("Select Hard Disk(s)")
@@ -183,22 +181,24 @@ module Y2Storage
           )
 
           # TRANSLATORS: Help text for root disk selection, continued
-          msg += _(
-            "<ul>" \
-            "<li>Resize if needed (Windows partitions only)</li>" \
-            "<li>Resize or remove if needed (Windows partitions only)</li>" \
-            "</ul>" \
-            "<p>" \
-            "That last option means to try to resize the Windows partition(s) to " \
-            "make enough disk space available for Linux, but if that is not " \
-            "enough, completely delete the Windows partition." \
-            "</p>"
-          ) if activate_windows_actions?
+          if activate_windows_actions?
+            msg += _(
+              "<ul>" \
+              "<li>Resize if needed (Windows partitions only)</li>" \
+              "<li>Resize or remove if needed (Windows partitions only)</li>" \
+              "</ul>" \
+              "<p>" \
+              "That last option means to try to resize the Windows partition(s) to " \
+              "make enough disk space available for Linux, but if that is not " \
+              "enough, completely delete the Windows partition." \
+              "</p>"
+            )
+          end
 
           msg
         end
 
-      private
+        private
 
         def update_windows_settings
           case widget_value(:windows_action)
@@ -219,6 +219,7 @@ module Y2Storage
 
         def candidate_disks
           return @candidate_disks if @candidate_disks
+
           candidates = settings.candidate_devices || []
           @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
         end

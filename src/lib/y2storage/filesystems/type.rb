@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -297,6 +295,7 @@ module Y2Storage
         default = to_s
         properties = PROPERTIES[to_sym]
         return default unless properties
+
         properties[:name] || default
       end
 
@@ -312,6 +311,7 @@ module Y2Storage
         properties = PROPERTIES[to_sym]
         default = []
         return default unless properties
+
         properties[:fstab_options] || default
       end
 
@@ -334,6 +334,7 @@ module Y2Storage
         properties = PROPERTIES[to_sym]
         fallback = []
         return fallback unless properties
+
         opt = properties[:default_fstab_options] || fallback
         opt = patch_codepage(opt)
         opt = patch_iocharset(opt)
@@ -403,6 +404,7 @@ module Y2Storage
         properties = PROPERTIES[to_sym]
         default = PartitionId::LINUX
         return default unless properties
+
         properties[:default_partition_id] || default
       end
 
@@ -413,6 +415,7 @@ module Y2Storage
         properties = PROPERTIES[to_sym]
         default = LABEL_VALID_CHARS
         return default unless properties
+
         properties[:label_valid_chars] || default
       end
 
@@ -425,6 +428,7 @@ module Y2Storage
       def patch_codepage(fstab_options)
         fstab_options.map do |opt|
           next opt unless opt.start_with?("codepage")
+
           cp = codepage
           if cp == "437" # Default according to "man mount"
             nil
@@ -443,6 +447,7 @@ module Y2Storage
       def patch_iocharset(fstab_options)
         fstab_options.map do |opt|
           next opt unless opt.start_with?("iocharset")
+
           iocharset = lang_typical_encoding
           "iocharset=" + iocharset
         end
@@ -470,6 +475,7 @@ module Y2Storage
       #
       def lang_typical_encoding
         return "utf8" if Yast::Encoding.GetUtf8Lang
+
         lang = Yast::Encoding.GetEncLang # e.g. "de_DE.iso8859-15"
         lang = lang.downcase[0, 2] # need only the language part
         LANG_ENCODINGS[lang] || "iso8859-15"

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -54,7 +52,7 @@ module Y2Storage
         @path = path
       end
 
-    protected
+      protected
 
       # Values for volume specification matching
       #

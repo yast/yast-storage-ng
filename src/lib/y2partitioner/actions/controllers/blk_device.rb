@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -141,7 +139,7 @@ module Y2Partitioner
           !committed_filesystem.supports_mounted_grow?
         end
 
-      private
+        private
 
         # Devicegraph that represents the current version of the devices in the system
         #

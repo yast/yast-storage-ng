@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -30,6 +28,7 @@ RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   describe "#init" do
     it "does not crash" do
       next unless subject.respond_to?(:init)
+
       expect { subject.init }.to_not raise_error
     end
   end
@@ -37,6 +36,7 @@ RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   describe "#store" do
     it "does not crash" do
       next unless subject.respond_to?(:store)
+
       expect { subject.store }.to_not raise_error
     end
   end
@@ -229,7 +229,7 @@ describe Y2Partitioner::Widgets do
   describe Y2Partitioner::Widgets::ArbitraryOptions do
     let(:handled_values)  { ["ro", "rw", "auto", "noauto", "user", "nouser"] }
     let(:handled_regexps) { [/^iocharset=/, /^codepage=/] }
-    let(:options_widget)  { double("FstabOptions", values:  handled_values, regexps: handled_regexps) }
+    let(:options_widget)  { double("FstabOptions", values: handled_values, regexps: handled_regexps) }
 
     subject { described_class.new(controller, options_widget) }
     include_examples "InputField"

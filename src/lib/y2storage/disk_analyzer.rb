@@ -117,6 +117,7 @@ module Y2Storage
     # @return [Array<Fstab>]
     def fstabs
       return @fstabs if @fstabs
+
       save_config_files
       @fstabs
     end
@@ -132,6 +133,7 @@ module Y2Storage
     # @return [Array<Crypttab>]
     def crypttabs
       return @crypttabs if @crypttabs
+
       save_config_files
       @crypttabs
     end
@@ -141,6 +143,7 @@ module Y2Storage
     # @return [Array<Disk>] candidate disks
     def candidate_disks
       return @candidate_disks if @candidate_disks
+
       @candidate_disks = find_candidate_disks
       log.info("Found candidate disks: #{@candidate_disks}")
       @candidate_disks
@@ -154,7 +157,7 @@ module Y2Storage
       BlkDevice.find_by_name(devicegraph, name)
     end
 
-  private
+    private
 
     attr_reader :devicegraph
 

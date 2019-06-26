@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -34,7 +32,7 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-    private
+      private
 
       # Deletes the indicated partition (see {DeleteDevice#device})
       def delete

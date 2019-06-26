@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -94,7 +92,7 @@ module Y2Storage
       nil
     end
 
-  private
+    private
 
     # Devicegraph in which the searchs must be performed
     # @return [Devicegraph]

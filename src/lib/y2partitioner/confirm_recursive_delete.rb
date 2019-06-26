@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -28,7 +26,7 @@ module Y2Partitioner
   module ConfirmRecursiveDelete
     include Yast::UIShortcuts
 
-  private
+    private
 
     # Helpful method to show a descriptive confirm message with all affected devices
     #

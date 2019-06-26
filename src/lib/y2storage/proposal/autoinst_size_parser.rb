@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -63,7 +61,7 @@ module Y2Storage
         end
       end
 
-    private
+      private
 
       # Returns min and max sizes for a size specification
       #
@@ -106,6 +104,7 @@ module Y2Storage
       # @return [[number,unit]] Number and unit
       def size_to_components(size_spec)
         return [size_spec.to_f, "B"] if INTEGER_SIZE_REGEXP.match(size_spec)
+
         number, unit = INTEGER_SIZE_REGEXP_WITH_UNIT.match(size_spec).values_at(1, 2)
         [number.to_f, unit]
       end
@@ -113,6 +112,7 @@ module Y2Storage
       # @return [nil,Array<DiskSize>]
       def auto_sizes_for(mount_point)
         return nil if mount_point.nil?
+
         spec = VolumeSpecification.for(mount_point, proposal_settings: proposal_settings)
         return nil if spec.nil?
 

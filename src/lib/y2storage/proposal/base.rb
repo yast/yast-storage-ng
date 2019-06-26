@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -89,9 +87,11 @@ module Y2Storage
       #   {GuidedProposal#calculate_proposal} or {AutoinstProposal#calculate_proposal}
       def propose
         raise UnexpectedCallError if proposed?
+
         @proposed = true
         result = calculate_proposal
         return result if devices.nil? || devices.empty?
+
         log.info("Proposed devicegraph:\n\n#{devices.inspect}\n")
         DumpManager.dump(devices, "proposed")
         result
@@ -111,7 +111,7 @@ module Y2Storage
         proposed? && devices.nil?
       end
 
-    private
+      private
 
       # Disk analyzer used to analyze the initial devicegraph
       # @return [DiskAnalyzer]

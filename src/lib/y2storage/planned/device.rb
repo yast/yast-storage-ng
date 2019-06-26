@@ -120,7 +120,7 @@ module Y2Storage
         false
       end
 
-    protected
+      protected
 
       # @see reuse!
       #

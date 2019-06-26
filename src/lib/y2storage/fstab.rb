@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,12 +57,12 @@ module Y2Storage
     #
     # @return [BlkDevice, nil] nil if there is no filesystem or the filesystem is NFS.
     def device
-      return nil unless filesystem && filesystem.respond_to?(:blk_devices)
+      return nil unless filesystem&.respond_to?(:blk_devices)
 
       filesystem.blk_devices.first
     end
 
-  private
+    private
 
     # @return [String]
     attr_reader :path

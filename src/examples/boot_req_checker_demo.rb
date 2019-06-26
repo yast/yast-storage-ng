@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
@@ -30,13 +28,13 @@
 
 require "yast"	# changes $LOAD_PATH
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "y2storage"
 require "pp"
 
 if !Process.euid.zero?
-  STDERR.puts "You need to run this script as 'root'."
+  warn "You need to run this script as 'root'."
   exit 1
 end
 
@@ -46,9 +44,9 @@ begin
 
   devicegraph = sm.probed
   Y2Storage::YamlWriter.write(devicegraph, $stdout)
-rescue => x
-  puts "exception: #{x}"
-  pp x.backtrace
+rescue StandardError => e
+  puts "exception: #{e}"
+  pp e.backtrace
 end
 
 root_device = Y2Storage::Planned::LvmLv.new("/", Y2Storage::Filesystems::Type::BTRFS)
@@ -62,6 +60,6 @@ checker = Y2Storage::BootRequirementsChecker.new(
 begin
   needed = checker.needed_partitions
   pp(needed)
-rescue Y2Storage::BootRequirementsChecker::Error => x
-  puts "exception: #{x}"
+rescue Y2Storage::BootRequirementsChecker::Error => e
+  puts "exception: #{e}"
 end

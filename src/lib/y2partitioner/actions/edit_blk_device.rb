@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -39,7 +37,7 @@ module Y2Partitioner
         @device_sid = blk_device.sid
       end
 
-    protected
+      protected
 
       attr_reader :fs_controller
 
@@ -146,7 +144,7 @@ module Y2Partitioner
       # @return [String, nil] nil if the device is not part of a Btrfs
       def btrfs_error
         fs = device.filesystem
-        return nil unless fs && fs.multidevice?
+        return nil unless fs&.multidevice?
 
         format(
           # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).

@@ -48,7 +48,7 @@ module Y2Storage
         max_size <= device_to_reuse(devicegraph).size
       end
 
-    protected
+      protected
 
       # Implements reuse_device! hook
       #

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -83,9 +81,7 @@ module Y2Storage
       def boot_disk
         return @boot_disk if @boot_disk
 
-        if boot_disk_name
-          @boot_disk = devicegraph.disk_devices.find { |d| d.name == boot_disk_name }
-        end
+        @boot_disk = devicegraph.disk_devices.find { |d| d.name == boot_disk_name } if boot_disk_name
 
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph
@@ -180,6 +176,7 @@ module Y2Storage
       def esp_in_software_raid1?
         filesystem = esp_filesystem
         return false if !filesystem
+
         filesystem.ancestors.any? do |dev|
           # see comment in #in_software_raid?
           dev != boot_disk && dev.is?(:software_raid) && dev.md_level.is?(:raid1)
@@ -244,6 +241,7 @@ module Y2Storage
       def boot_ptable_type?(type)
         return type.nil? if boot_ptable_type.nil?
         return false if type.nil?
+
         boot_ptable_type.is?(type)
       end
 
@@ -293,7 +291,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       attr_reader :devicegraph
       attr_reader :boot_disk_name
@@ -338,7 +336,7 @@ module Y2Storage
         # root is over a partition. This could not work properly in autoyast when
         # root is planned over logical volumes or software raids.
         planned_dev = [boot_planned_dev, root_planned_dev].find do |planned|
-          planned && planned.respond_to?(:disk)
+          planned&.respond_to?(:disk)
         end
 
         return nil unless planned_dev
@@ -395,6 +393,7 @@ module Y2Storage
         cleanpath = Pathname.new(path).cleanpath
         planned_devices.find do |dev|
           next false unless dev.respond_to?(:mount_point) && dev.mount_point
+
           Pathname.new(dev.mount_point).cleanpath == cleanpath
         end
       end
@@ -408,7 +407,7 @@ module Y2Storage
       #   mounted there
       def filesystem_for_mountpoint(path)
         devicegraph.filesystems.find do |fs|
-          fs.mount_point && fs.mount_point.path?(path)
+          fs.mount_point&.path?(path)
         end
       end
 
@@ -514,11 +513,13 @@ module Y2Storage
       # @return [Y2Storage::Md, nil] the RAID device, else nil
       def boot_disk_raid1(device)
         return nil if device.nil?
+
         raid1_dev = nil
         device.children.each do |raid|
           next if !raid.is?(:software_raid)
           return nil if !raid.md_level.is?(:raid1)
           return nil if raid1_dev && raid1_dev != raid
+
           raid1_dev = raid
         end
 

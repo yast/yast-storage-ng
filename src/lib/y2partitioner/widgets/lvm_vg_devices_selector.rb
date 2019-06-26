@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -106,7 +104,7 @@ module Y2Partitioner
         selected_devices_validation && size_validation
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::LvmVg]
       attr_reader :controller

@@ -88,7 +88,7 @@ module Y2Storage
         CreatorResult.new(new_graph, {})
       end
 
-    private
+      private
 
       # Find a volume group to be reused
       #
@@ -122,6 +122,7 @@ module Y2Storage
         used_devices = volume_group.lvm_pvs.map(&:plain_blk_device)
         partitions.each do |partition|
           next if used_devices.include?(partition) # already a PV for this VG
+
           device = partition.encryption || partition
           device.remove_descendants
           volume_group.add_lvm_pv(device)
@@ -143,6 +144,7 @@ module Y2Storage
       # @param planned_vg   [Planned::LvmVg] planned logical volume
       def make_space(volume_group, planned_vg)
         return if planned_vg.make_space_policy == :keep
+
         case planned_vg.make_space_policy
         when :needed
           make_space_until_fit(volume_group, planned_vg.lvs)
@@ -304,6 +306,7 @@ module Y2Storage
         lvs.map do |lv|
           new_lv = lv.clone
           next new_lv unless new_lv.percent_size
+
           new_lv.max = new_lv.min = lv.size_in(vg)
           new_lv
         end

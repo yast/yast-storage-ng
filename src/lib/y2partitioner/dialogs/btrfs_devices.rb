@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -45,7 +43,7 @@ module Y2Partitioner
         VBox(btrfs_devices_widget)
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::BtrfsDevices]
       attr_reader :controller

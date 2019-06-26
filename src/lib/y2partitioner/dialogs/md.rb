@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -73,7 +71,7 @@ module Y2Partitioner
         )
       end
 
-    private
+      private
 
       attr_reader :controller
 
@@ -155,7 +153,7 @@ module Y2Partitioner
             "</li></ul></p>"
         end
 
-      private
+        private
 
         attr_reader :controller
 
@@ -246,7 +244,7 @@ module Y2Partitioner
           nil
         end
 
-      private
+        private
 
         attr_reader :controller
       end

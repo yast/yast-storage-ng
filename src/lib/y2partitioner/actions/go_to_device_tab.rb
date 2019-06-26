@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -55,7 +53,7 @@ module Y2Partitioner
         :finish
       end
 
-    protected
+      protected
 
       # @return [Y2Storage::Device] see {#initialize}
       attr_reader :device

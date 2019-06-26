@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -102,7 +100,7 @@ module Y2Partitioner
           @controller.size = current_widget.size
         end
 
-      protected
+        protected
 
         # @return [Y2Storage::DiskSize] minimum possible size
         def min
@@ -189,7 +187,7 @@ module Y2Partitioner
           super(v.human_floor)
         end
 
-      protected
+        protected
 
         # @return [Y2Storage::DiskSize]
         attr_reader :initial
@@ -237,7 +235,7 @@ module Y2Partitioner
           @controller.stripes_size = stripes_size_widget.value
         end
 
-      private
+        private
 
         # Widget to select stripes number
         #

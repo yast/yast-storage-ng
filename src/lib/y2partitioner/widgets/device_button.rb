@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -49,7 +47,7 @@ module Y2Partitioner
         execute_and_redraw { actions }
       end
 
-    protected
+      protected
 
       # @return [CWM::TreePager]
       attr_reader :pager
@@ -69,6 +67,7 @@ module Y2Partitioner
       # @return [Y2Storage::Device]
       def device
         return nil unless device_sid
+
         working_graph.find_device(device_sid)
       end
 

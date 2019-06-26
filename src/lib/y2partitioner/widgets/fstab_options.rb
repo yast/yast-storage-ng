@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -92,7 +90,7 @@ module Y2Partitioner
 
       alias_method :add_fstab_option, :add_fstab_options
 
-    private
+      private
 
       # Current devicegraph
       #
@@ -127,6 +125,7 @@ module Y2Partitioner
       # @return [String]
       def mount_path
         return nil if filesystem.mount_point.nil?
+
         filesystem.mount_point.path
       end
 
@@ -165,7 +164,7 @@ module Y2Partitioner
     class FstabOptions < CWM::CustomWidget
       include FstabCommon
 
-      SUPPORTED_FILESYSTEMS = %i(btrfs ext2 ext3 ext4).freeze
+      SUPPORTED_FILESYSTEMS = [:btrfs, :ext2, :ext3, :ext4].freeze
 
       def initialize(controller)
         @controller = controller
@@ -215,6 +214,7 @@ module Y2Partitioner
       def values
         @values ||= widgets.each_with_object([]) do |widget, values|
           next unless widget.class.const_defined?("VALUES")
+
           values.concat(widget.class::VALUES)
         end.uniq
       end
@@ -224,6 +224,7 @@ module Y2Partitioner
       def regexps
         @regexps ||= widgets.each_with_object([]) do |widget, regexps|
           next unless widget.class.const_defined?("REGEXP")
+
           regexps << widget.class::REGEXP
         end.uniq
       end
@@ -271,7 +272,7 @@ module Y2Partitioner
         presence_validation && uniqueness_validation
       end
 
-    private
+      private
 
       # @return [Widgets::FstabOptions]
       attr_reader :parent_widget
@@ -320,9 +321,11 @@ module Y2Partitioner
       # @return [Boolean] true if the label is duplicated; false otherwise.
       def duplicated_label?
         return false if value.empty?
+
         working_graph.filesystems.any? do |fs|
           next false if fs.sid == filesystem.sid
           next false unless fs.respond_to?(:label) # NFS doesn't support labels
+
           fs.label == value
         end
       end
@@ -407,7 +410,7 @@ module Y2Partitioner
         Yast::UI.QueryWidget(Id(:mt_group), :Value)
       end
 
-    private
+      private
 
       def select_default_mount_by
         Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
@@ -454,7 +457,7 @@ module Y2Partitioner
         add_fstab_option(checked_value) if value
       end
 
-    private
+      private
 
       def options
         self.class::VALUES
@@ -631,6 +634,7 @@ module Y2Partitioner
       def supported_by_filesystem?
         return false if filesystem.nil?
         return false unless supported_by_mount_path?
+
         filesystem.type.supported_fstab_options.any? { |opt| opt =~ self.class::REGEXP }
       end
 
@@ -677,7 +681,7 @@ module Y2Partitioner
 
       # Widget options
       def opt
-        %i(editable hstretch)
+        [:editable, :hstretch]
       end
     end
 
@@ -733,7 +737,7 @@ module Y2Partitioner
       end
 
       def opt
-        %i(hstretch)
+        [:hstretch]
       end
 
       def label
@@ -747,6 +751,7 @@ module Y2Partitioner
       def store
         keep_only_options_handled_in_other_widgets
         return unless value
+
         options = clean_whitespace(value).split(",")
         # Intentionally NOT filtering out only unhandled options: When the user
         # adds anything here that also has a corresponding checkbox or combo
@@ -767,7 +772,7 @@ module Y2Partitioner
           "what you enter here!</p>")
       end
 
-    private
+      private
 
       # Clean whitespace. We need to preserve whitespace that might possibly be
       # intentional within a mount option, but we want graceful error handling
@@ -791,20 +796,23 @@ module Y2Partitioner
 
       def handled_in_other_widget?(opt)
         return true if other_values.include?(opt)
+
         other_regexps.any? { |r| opt =~ r }
       end
 
       # Return all values that are handled by other widgets in this widget tree.
       # @return [Array<String>]
       def other_values
-        return [] unless @parent_widget && @parent_widget.respond_to?(:values)
+        return [] unless @parent_widget&.respond_to?(:values)
+
         @other_values ||= @parent_widget.values
       end
 
       # Return all regexps that are handled by other widgets in this widget tree.
       # @return [Array<Regexp>]
       def other_regexps
-        return [] unless @parent_widget && @parent_widget.respond_to?(:regexps)
+        return [] unless @parent_widget&.respond_to?(:regexps)
+
         @other_regexps ||= @parent_widget.regexps
       end
     end

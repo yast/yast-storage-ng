@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -145,6 +143,7 @@ module Y2Partitioner
         # @return [Boolean]
         def to_be_formatted?
           return false if filesystem.nil?
+
           new?(filesystem)
         end
 
@@ -153,6 +152,7 @@ module Y2Partitioner
         # @return [Boolean]
         def to_be_encrypted?
           return false unless can_change_encrypt?
+
           encrypt && !blk_device.encrypted?
         end
 
@@ -161,6 +161,7 @@ module Y2Partitioner
         # @return [MountPoint, nil] nil if there is no filesystem
         def mount_point
           return nil if filesystem.nil?
+
           filesystem.mount_point
         end
 
@@ -169,6 +170,7 @@ module Y2Partitioner
         # @return [String, nil] nil if the filesystem has no mount point
         def mount_path
           return nil if mount_point.nil?
+
           mount_point.path
         end
 
@@ -178,6 +180,7 @@ module Y2Partitioner
         #   block device is not a partition
         def partition_id
           return nil unless blk_device
+
           blk_device.is?(:partition) ? blk_device.id : nil
         end
 
@@ -190,6 +193,7 @@ module Y2Partitioner
           @encrypt = false
 
           return if role.nil?
+
           self.partition_id = role.partition_id
 
           fs_type = role.filesystem_type
@@ -368,7 +372,7 @@ module Y2Partitioner
           device = blk_device.encryption || blk_device
           lvm_pv = device.lvm_pv
 
-          device.remove_descendants if lvm_pv && lvm_pv.descendants.none?
+          device.remove_descendants if lvm_pv&.descendants&.none?
         end
 
         # Whether is possible to define the generic format options for the current
@@ -388,6 +392,7 @@ module Y2Partitioner
         def snapshots_supported?
           return false unless Yast::Mode.installation
           return false unless to_be_formatted?
+
           filesystem.can_configure_snapper?
         end
 
@@ -405,6 +410,7 @@ module Y2Partitioner
         # @param value [Boolean]
         def configure_snapper=(value)
           return if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+
           filesystem.configure_snapper = value
         end
 
@@ -415,6 +421,7 @@ module Y2Partitioner
         # @return [Boolean]
         def configure_snapper
           return false if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+
           filesystem.configure_snapper
         end
 
@@ -439,8 +446,9 @@ module Y2Partitioner
         #
         # @return [String, nil]
         def suggested_mount_path
-          return "swap" if filesystem_type && filesystem_type.is?(:swap)
-          return "/boot/efi" if partition_id && partition_id.is?(:esp)
+          return "swap" if filesystem_type&.is?(:swap)
+          return "/boot/efi" if partition_id&.is?(:esp)
+
           nil
         end
 
@@ -452,7 +460,7 @@ module Y2Partitioner
           subvolumes = mounted_devices.select do |dev|
             dev.is?(:btrfs_subvolume) && !dev.can_be_auto_deleted?
           end
-          subvolumes.map(&:mount_path).compact.select { |m| !m.empty? }
+          subvolumes.map(&:mount_path).compact.reject(&:empty?)
         end
 
         # Check if the filesystem is a btrfs.
@@ -462,7 +470,7 @@ module Y2Partitioner
           filesystem.supports_btrfs_subvolumes?
         end
 
-      private
+        private
 
         def working_graph
           DeviceGraphs.instance.current
@@ -561,6 +569,7 @@ module Y2Partitioner
           loop do
             subvolume = find_not_probed_subvolume
             return if subvolume.nil?
+
             filesystem.delete_btrfs_subvolume(subvolume.path)
           end
         end
@@ -610,7 +619,7 @@ module Y2Partitioner
         def all_mount_paths
           @all_mount_paths ||=
             if Yast::Stage.initial
-              %w(/ /home /var /opt) + booting_paths + non_system_paths
+              %w[/ /home /var /opt] + booting_paths + non_system_paths
             else
               ["/home"] + non_system_paths
             end
@@ -650,7 +659,7 @@ module Y2Partitioner
         def mounted_devices
           fs_sids = filesystem_devices.map(&:sid)
           devices = Y2Storage::Mountable.all(working_graph)
-          devices = devices.select { |d| !d.mount_point.nil? }
+          devices = devices.reject { |d| d.mount_point.nil? }
           devices.reject { |d| fs_sids.include?(d.sid) }
         end
 
@@ -686,7 +695,7 @@ module Y2Partitioner
         # @return [Boolean]
         def read_only?(path)
           spec = Y2Storage::VolumeSpecification.for(path)
-          spec && spec.btrfs_read_only?
+          spec&.btrfs_read_only?
         end
 
         # Adds special mount options for a given path

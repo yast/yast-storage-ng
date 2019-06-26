@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -60,7 +58,7 @@ module Y2Storage
         #   @return [Array<Planned::Device>]
         abstract_method :planned_devices
 
-      protected
+        protected
 
         # @return [Devicegraph]
         attr_reader :devicegraph
@@ -80,11 +78,11 @@ module Y2Storage
             devicegraph, planned_devices: flat, boot_disk_name: settings.root_device
           )
           checker.needed_partitions(target)
-        rescue BootRequirementsChecker::Error => error
+        rescue BootRequirementsChecker::Error => e
           # As documented, {BootRequirementsChecker#needed_partition} raises this
           # exception if it's impossible to get a bootable system, even adding
           # more partitions.
-          raise NotBootableError, error.message
+          raise NotBootableError, e.message
         end
 
         # Swap partition that can be reused.
@@ -99,7 +97,7 @@ module Y2Storage
           partitions = available_swap_partitions
           partitions.select! { |part| part.size >= required_size }
           # Use #name in case of #size tie to provide stable sorting
-          partitions.sort_by { |part| [part.size, part.name] }.first
+          partitions.min_by { |part| [part.size, part.name] }
         end
 
         # Returns all avaiable swap partitions

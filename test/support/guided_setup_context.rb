@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -34,6 +32,7 @@ RSpec.shared_context "guided setup requirements" do
   def term_with_id(regexp, content)
     content.nested_find do |nested|
       next unless nested.is_a?(Yast::Term)
+
       nested.params.any? { |i| i.is_a?(Yast::Term) && i.value == :id && regexp.match?(i.params.first) }
     end
   end

@@ -8,6 +8,7 @@ RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   describe "#init" do
     it "does not crash" do
       next unless subject.respond_to?(:init)
+
       expect { subject.init }.to_not raise_error
     end
   end
@@ -15,6 +16,7 @@ RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   describe "#store" do
     it "does not crash" do
       next unless subject.respond_to?(:store)
+
       expect { subject.store }.to_not raise_error
     end
   end

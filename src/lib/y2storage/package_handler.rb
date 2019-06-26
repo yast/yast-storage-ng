@@ -93,6 +93,7 @@ module Y2Storage
     #                   false if not optional or if available.
     def unavailable_optional_package?(package)
       return false unless UsedStorageFeatures.optional_package?(package)
+
       !Yast::Package.Available(package)
     end
 
@@ -123,6 +124,7 @@ module Y2Storage
     def install
       compact
       return if @pkg_list.empty?
+
       log.info("Installing #{pkg_list}")
       success = Yast::Package.DoInstall(@pkg_list)
       if !success
@@ -138,6 +140,7 @@ module Y2Storage
     def set_proposal_packages
       compact
       return if @pkg_list.empty?
+
       log.info("Marking #{pkg_list} for installation")
       if !Yast::PackagesProposal.SetResolvables(PROPOSAL_ID, :package, @pkg_list)
         log.error("PackagesProposal::SetResolvables() for #{pkg_list} failed")
@@ -157,7 +160,7 @@ module Y2Storage
       @pkg_list = @pkg_list.delete_if { |pkg| Yast::Package.Installed(pkg) }
     end
 
-  private
+    private
 
     # Post an error popup after installing some packages failed
     #

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -43,7 +41,7 @@ module Y2Partitioner
         _("Delete")
       end
 
-    private
+      private
 
       DEVICE_MAPPING = {
         partition: Actions::DeletePartition,

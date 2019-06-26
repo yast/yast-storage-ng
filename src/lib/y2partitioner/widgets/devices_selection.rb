@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -133,7 +131,7 @@ module Y2Partitioner
         end
       end
 
-    protected
+      protected
 
       def selected_label
         _("Selected Devices:")

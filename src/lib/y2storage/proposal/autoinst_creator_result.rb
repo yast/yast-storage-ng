@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -76,6 +74,7 @@ module Y2Storage
       def real_device_by_planned_id(planned_id)
         name, _planned = devices_map.find { |_n, d| d.planned_id == planned_id }
         return nil unless name
+
         Y2Storage::BlkDevice.find_by_name(devicegraph, name)
       end
 
@@ -84,7 +83,7 @@ module Y2Storage
         devices_collection.to_a
       end
 
-    private
+      private
 
       # @return [DevicesCollection] Planned devices collection
       attr_reader :devices_collection
@@ -99,6 +98,7 @@ module Y2Storage
         collection.each_with_object([]) do |device, all|
           real_device = real_device_by_planned_id(device.planned_id)
           next if real_device.nil? || real_device.size.to_i >= device.min_size.to_i
+
           all << DeviceShrinkage.new(device, real_device)
         end
       end

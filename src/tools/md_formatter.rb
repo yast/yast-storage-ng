@@ -55,7 +55,7 @@ class MdFormatter
     @output.puts failure_output(failure.example, failure.example.execution_result.exception)
   end
 
-private
+  private
 
   def passed_output(example)
     "#{current_indentation}**#{example.description.strip}**"

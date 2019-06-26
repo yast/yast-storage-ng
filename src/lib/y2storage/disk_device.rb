@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,7 +54,7 @@ module Y2Storage
       descendants.any? { |d| d.is?(:bios_raid) }
     end
 
-  protected
+    protected
 
     def types_for_is
       types = super

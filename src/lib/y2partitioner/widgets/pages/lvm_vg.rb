@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -141,7 +139,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # Returns a table with all logical volumes of a volume group, including
         # thin pools and thin volumes
@@ -194,13 +192,14 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # Returns a table with all physical volumes of a volume group
         #
         # @return [ConfigurableBlkDevicesTable]
         def table
           return @table unless @table.nil?
+
           @table = ConfigurableBlkDevicesTable.new(devices, @pager)
           @table.show_columns(:device, :size, :format, :encrypted, :type)
           @table

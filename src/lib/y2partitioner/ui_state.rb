@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -157,6 +155,7 @@ module Y2Partitioner
     # @return [CWM::Page, nil]
     def find_tab(pages)
       return nil unless tab
+
       pages.find { |page| page.label == tab }
     end
 
@@ -167,7 +166,7 @@ module Y2Partitioner
       @open_items = overview_tree_pager.open_items
     end
 
-  protected
+    protected
 
     # Where to place the user within the general tree in next redraw
     # @return [Array<Integer, String>]

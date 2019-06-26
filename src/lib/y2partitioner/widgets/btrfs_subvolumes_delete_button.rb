@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -69,7 +67,7 @@ module Y2Partitioner
         nil
       end
 
-    private
+      private
 
       def delete_subvolume(subvolume)
         filesystem.delete_btrfs_subvolume(subvolume.path)

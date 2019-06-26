@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -77,7 +75,7 @@ module Y2Partitioner
         end
       end
 
-    private
+      private
 
       # Only shows ok and cancel buttons
       #

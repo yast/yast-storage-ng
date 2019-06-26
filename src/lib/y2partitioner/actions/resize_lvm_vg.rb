@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -42,10 +40,10 @@ module Y2Partitioner
       # @return [Symbol] :finish when the dialog successes
       def resize
         result = Dialogs::LvmVgResize.run(controller)
-        result == :next ? :finish : result
+        (result == :next) ? :finish : result
       end
 
-    protected
+      protected
 
       # @return [Controllers::LvmVg]
       attr_reader :controller

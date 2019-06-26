@@ -1,4 +1,3 @@
-# encoding: utf-8
 #
 # Copyright (c) [2017] SUSE LLC
 #
@@ -112,30 +111,35 @@ module Y2Storage
       #   backward compatibility
       def dasd_format
         return nil unless disk.is?(:dasd)
+
         disk.format.to_s
       end
 
       # @return [String,nil] DASD type or nil if not a DASD device
       def dasd_type
         return nil unless disk.is?(:dasd)
+
         disk.type.to_s
       end
 
       # @return [String] Partition table type ("msdos", "gpt", etc.)
       def label
         return nil if disk.partition_table.nil?
+
         disk.partition_table.type.to_s
       end
 
       # @return [Integer] Max number of primery partitions
       def max_primary
         return nil if disk.partition_table.nil?
+
         disk.partition_table.max_primary
       end
 
       # @return [Integer] Max number of logical partitions
       def max_logical
         return nil if disk.partition_table.nil?
+
         disk.partition_table.max_logical
       end
 
@@ -170,7 +174,7 @@ module Y2Storage
         end
       end
 
-    private
+      private
 
       # Redefine method_missing in order to try to to get additional values from hardware info
       def method_missing(meth, *_args, &_block)
@@ -184,6 +188,7 @@ module Y2Storage
       # Redefine respond_to_missing
       def respond_to_missing?(meth, _include_private = false)
         return true if super
+
         disk.hwinfo ? disk.hwinfo.respond_to?(meth) : false
       end
     end

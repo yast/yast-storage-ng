@@ -29,3 +29,11 @@ Style/ZeroLengthPredicate:
 # the ".freeze" attribute for the constants is not nice
 Style/MutableConstant:
   Enabled: false
+
+# this failing in storage wrapper, will need more time to adapt
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# workaround https://github.com/rubocop-hq/rubocop/issues/6861
+Layout/AccessModifierIndentation:
+  EnforcedStyle: indent

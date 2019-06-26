@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -108,6 +106,7 @@ module Y2Storage
       textdomain "storage"
       text = REASON_TEXTS[blocker_reason]
       return _("Unknown reason") if text.nil?
+
       _(text)
     end
 

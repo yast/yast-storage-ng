@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -27,7 +25,7 @@ module Y2Partitioner
   module Widgets
     # Description for a stray block device
     class StrayBlkDeviceDescription < DeviceDescription
-    private
+      private
 
       # @see DiskDeviceDescription#sections
       def sections

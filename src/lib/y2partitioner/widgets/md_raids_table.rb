@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -39,7 +37,7 @@ module Y2Partitioner
         remove_columns(:start, :end)
       end
 
-    private
+      private
 
       def raid_type_title
         # TRANSLATORS: table header, type of md raid.
@@ -68,6 +66,7 @@ module Y2Partitioner
       # @return [String]
       def chunk_size_value(device)
         return "" if !device.respond_to?(:chunk_size) || device.chunk_size.zero?
+
         device.chunk_size.to_human_string
       end
     end

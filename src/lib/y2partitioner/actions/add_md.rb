@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -45,10 +43,10 @@ module Y2Partitioner
       def md_options
         result = Dialogs::MdOptions.run(controller)
 
-        result == :next ? :finish : result
+        (result == :next) ? :finish : result
       end
 
-    protected
+      protected
 
       attr_reader :controller
 

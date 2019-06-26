@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -53,7 +51,7 @@ describe Y2Partitioner::Widgets::Configure do
       allow(Yast::Arch).to receive(:s390).and_return s390
     end
 
-    let(:all_clients) { %w(iscsi-client fcoe-client dasd zfcp xpram) }
+    let(:all_clients) { %w[iscsi-client fcoe-client dasd zfcp xpram] }
 
     context "during installation" do
       let(:install) { true }

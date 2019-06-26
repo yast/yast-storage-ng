@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -203,6 +201,7 @@ module Y2Storage
       #   impossible to infer the type
       def type_for_filesystem
         return nil unless filesystem
+
         Filesystems::Type.find(filesystem)
       rescue NameError
         nil
@@ -215,6 +214,7 @@ module Y2Storage
       #   or it's impossible to infer the type
       def type_for_mountby
         return nil unless mountby
+
         Filesystems::MountByType.find(mountby)
       rescue NameError
         nil
@@ -229,7 +229,8 @@ module Y2Storage
       # @return [PartitionId]
       def id_for_partition
         return PartitionId.new_from_legacy(partition_id) if partition_id
-        return PartitionId::SWAP if type_for_filesystem && type_for_filesystem.is?(:swap)
+        return PartitionId::SWAP if type_for_filesystem&.is?(:swap)
+
         PartitionId::LINUX
       end
 
@@ -241,7 +242,7 @@ module Y2Storage
       #
       # @return [String] MD RAID device name
       def name_for_md
-        name = raid_options && raid_options.raid_name
+        name = raid_options&.raid_name
         return name unless name.nil? || name.empty?
 
         "/dev/md/#{partition_nr}"
@@ -252,7 +253,7 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem, nil]
       # @return [String, nil]
       def name_for_btrfs(filesystem)
-        return nil unless filesystem && filesystem.multidevice? && filesystem.is?(:btrfs)
+        return nil unless filesystem&.multidevice? && filesystem&.is?(:btrfs)
 
         "btrfs_#{filesystem.sid}"
       end
@@ -304,7 +305,7 @@ module Y2Storage
         "partitions"
       end
 
-    protected
+      protected
 
       # Uses legacy ids for backwards compatibility. For example, BIOS Boot
       # partitions in the old libstorage were represented by the internal
@@ -441,6 +442,7 @@ module Y2Storage
       # @return [Boolean]
       def enforce_bios_boot?(partition)
         return false if partition.filesystem_mountpoint.nil?
+
         partition.id.is?(:windows_system) && partition.filesystem_mountpoint.include?("/boot")
       end
 
@@ -478,6 +480,7 @@ module Y2Storage
       #   not belong to any volume group.
       def lvm_group_name(device)
         return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
+
         device.lvm_pv.lvm_vg.basename
       end
 

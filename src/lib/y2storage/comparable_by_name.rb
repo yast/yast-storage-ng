@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,6 +54,7 @@ module Y2Storage
       # In practice, two devices cannot have the same name. But let's take the
       # case in consideration to ensure full compatibility with <=>
       return 0 if name == other.name
+
       Device.compare_by_name(self, other) ? -1 : 1
     end
 

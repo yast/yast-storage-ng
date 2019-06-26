@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -218,6 +216,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def validate
           return true unless enabled?
+
           v = value
           return true unless v.nil? || v < min_size || v > max_size
 

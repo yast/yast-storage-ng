@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -30,7 +28,7 @@ module Y2Storage
       #
       # @see SettingsGenerator::Base
       class Legacy < Base
-      private
+        private
 
         # Next settings to use for a new attempt of the {InitialGuidedProposal}
         #

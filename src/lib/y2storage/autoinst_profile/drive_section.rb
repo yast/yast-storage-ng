@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -226,6 +224,7 @@ module Y2Storage
       # @return [String] MD RAID device name
       def name_for_md
         return partitions.first.name_for_md if device == "/dev/md"
+
         device
       end
 
@@ -281,10 +280,11 @@ module Y2Storage
       # @see #partition_table?
       def master_partition
         return unless unwanted_partitions?
+
         partitions.find { |i| i.partition_nr == 0 } || partitions.first
       end
 
-    protected
+      protected
 
       # Whether the given name is a Md name
       #
@@ -456,6 +456,7 @@ module Y2Storage
 
       def partitions_from_hash(hash)
         return [] unless hash["partitions"]
+
         hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
       end
 
@@ -478,6 +479,7 @@ module Y2Storage
         collection.each_with_object([]) do |storage_partition, result|
           partition = PartitionSection.new_from_storage(storage_partition)
           next unless partition
+
           result << partition
         end
       end
@@ -501,9 +503,7 @@ module Y2Storage
 
         # If the partition is mounted in /boot*, then it doesn't fully
         # belong to Windows, it's also relevant for the current system
-        if partition.filesystem_mountpoint && partition.filesystem_mountpoint.include?("/boot")
-          return false
-        end
+        return false if partition.filesystem_mountpoint&.include?("/boot")
 
         # Surprinsingly enough, partitions with the boot flag are discarded
         # as Windows partitions (btw, we expect better compatibility checking
@@ -564,6 +564,7 @@ module Y2Storage
       # @return [String,Array<Integer>]
       def use_value_from_string(use)
         return use unless use =~ /(\d+,?)+/
+
         use.split(",").select { |n| n =~ /\d+/ }.map(&:to_i)
       end
 
@@ -617,5 +618,3 @@ module Y2Storage
     end
   end
 end
-
-# rubocop:enable all

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -87,7 +85,7 @@ module Y2Storage
         end
       end
 
-    private
+      private
 
       # Name of the mount by type, if defined
       #

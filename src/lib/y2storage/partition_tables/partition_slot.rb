@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -84,7 +82,7 @@ module Y2Storage
         PartitionType.all.any? { |part| possible?(part) }
       end
 
-    private
+      private
 
       # rubocop:disable Metrics/CyclomaticComplexity
       def flags_string

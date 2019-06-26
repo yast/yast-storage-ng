@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
@@ -20,7 +18,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "y2storage"
 

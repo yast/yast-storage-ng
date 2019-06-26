@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -110,7 +108,7 @@ module Y2Partitioner
         res = block.call
 
         self.current = initial_graph if !res
-      rescue
+      rescue StandardError
         self.current = initial_graph
         raise
       end
@@ -149,7 +147,7 @@ module Y2Partitioner
       current != initial
     end
 
-  private
+    private
 
     def storage_manager
       Y2Storage::StorageManager.instance

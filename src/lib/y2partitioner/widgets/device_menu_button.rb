@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,7 +64,7 @@ module Y2Partitioner
         end
       end
 
-    protected
+      protected
 
       # @return [Integer] device sid
       attr_reader :device_sid
@@ -108,6 +106,7 @@ module Y2Partitioner
       # @return [Y2Storage::Device]
       def device
         return nil unless device_sid
+
         working_graph.find_device(device_sid)
       end
 
@@ -126,6 +125,7 @@ module Y2Partitioner
       #   the given id
       def action_for_widget_id(id)
         return nil if id.nil?
+
         actions.find { |action| widget_id_for_action(action) == id.to_sym }
       end
 

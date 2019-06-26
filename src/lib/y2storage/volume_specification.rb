@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -264,7 +262,7 @@ module Y2Storage
       end
     end
 
-  private
+    private
 
     FEATURES = {
       mount_point:                :string,
@@ -329,6 +327,7 @@ module Y2Storage
     def validated_fs_type(type)
       raise(ArgumentError, "Filesystem cannot be nil") unless type
       return type if type.is_a?(Filesystems::Type)
+
       Filesystems::Type.find(type.downcase.to_sym)
     end
 
@@ -341,6 +340,7 @@ module Y2Storage
     # there but empty, no subvolumes are created.
     def apply_subvolumes_fallback
       return unless subvolumes.nil?
+
       @subvolumes = root? ? SubvolSpecification.fallback_list : []
     end
 
@@ -349,12 +349,8 @@ module Y2Storage
     # @note It always includes fs_type in the list.
     def apply_fs_types_fallback
       if fs_types.empty?
-        if mount_point == "/"
-          @fs_types = Filesystems::Type.root_filesystems
-        end
-        if mount_point == "/home"
-          @fs_types = Filesystems::Type.home_filesystems
-        end
+        @fs_types = Filesystems::Type.root_filesystems if mount_point == "/"
+        @fs_types = Filesystems::Type.home_filesystems if mount_point == "/home"
       end
 
       include_fs_type

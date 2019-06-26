@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -205,7 +203,7 @@ module Y2Partitioner
           BlkDeviceRestorer.new(device.plain_device).restore_from_checkpoint
         end
 
-      private
+        private
 
         # Current action to perform
         # @return [Symbol] :add, :resize

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2016-2017,2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -125,27 +123,28 @@ module Y2Storage
     #
     def collect_features
       return [] if @devicegraph.nil?
+
       feature_bits = @devicegraph.used_features
       features_dumped = false
       features = []
 
       FEATURE_PACKAGES.each_key do |feature|
-        begin
-          mask = bitmask(feature)
-          if (feature_bits & mask) == mask
-            features << feature
-            log.info("Detected feature #{feature}")
-          end
-        rescue NameError => err
-          if err.name == feature
-            log.warn("WARNING: Packages configured for unknown feature :#{feature}")
-            log.info("Features known to libstorage: #{libstorage_features.sort}") unless features_dumped
-            features_dumped = true
-          else
-            log.error("Error: #{err}")
-            raise
-          end
+
+        mask = bitmask(feature)
+        if (feature_bits & mask) == mask
+          features << feature
+          log.info("Detected feature #{feature}")
         end
+      rescue NameError => e
+        if e.name == feature
+          log.warn("WARNING: Packages configured for unknown feature :#{feature}")
+          log.info("Features known to libstorage: #{libstorage_features.sort}") unless features_dumped
+          features_dumped = true
+        else
+          log.error("Error: #{e}")
+          raise
+        end
+
       end
 
       log.info("Storage features used: #{features}")

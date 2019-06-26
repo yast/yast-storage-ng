@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -134,7 +132,7 @@ module Y2Partitioner
           @result = selected_device
         end
 
-      private
+        private
 
         # sid of the device that is initially selected
         #
@@ -239,7 +237,7 @@ module Y2Partitioner
           false
         end
 
-      private
+        private
 
         # When the bcache exists, its backing device should be the default device.
         # Otherwise, the first available device is the default one.
@@ -283,7 +281,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         def item_for_non_device
           ["", _("Without caching")]

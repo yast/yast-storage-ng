@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -58,7 +56,7 @@ module Y2Storage
       device = devicegraph.encryptions.find { |e| e.match_crypttab_spec?(self.device) }
       device ||= devicegraph.find_by_any_name(self.device)
 
-      device && device.is?(:encryption) ? device.blk_device : device
+      (device&.is?(:encryption)) ? device.blk_device : device
     end
   end
 end

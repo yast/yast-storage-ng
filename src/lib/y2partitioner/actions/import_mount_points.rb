@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,7 +39,7 @@ module Y2Partitioner
         @controller = Controllers::Fstabs.new
       end
 
-    private
+      private
 
       # @return [Controllers::Fstab]
       attr_reader :controller

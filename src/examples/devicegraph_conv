@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -34,22 +32,22 @@ opts = GetoptLong.new(
   ["--yaml",      GetoptLong::NO_ARGUMENT]
 )
 
-usage = <<XXX
-devicegraph_conv.rb [OPTIONS] FROM TO
+usage = <<~XXX
+  devicegraph_conv.rb [OPTIONS] FROM TO
 
-Read device graph in either XML or YAML format and write as XML or YAML.
+  Read device graph in either XML or YAML format and write as XML or YAML.
 
-If FROM or TO are missing or "-", reads/writes from/to console.
+  If FROM or TO are missing or "-", reads/writes from/to console.
 
-File formats are auto-detected as much as possible. But use the options below
-to force any format.
+  File formats are auto-detected as much as possible. But use the options below
+  to force any format.
 
-Options:
-  --from-xml          Read XML data.
-  --from-yaml         Read YAML data.
-  --xml, --to-xml     Write XML data.
-  --yaml, --to-yaml   Write YAML data.
-  --help              Write this text.
+  Options:
+    --from-xml          Read XML data.
+    --from-yaml         Read YAML data.
+    --xml, --to-xml     Write XML data.
+    --yaml, --to-yaml   Write YAML data.
+    --help              Write this text.
 XXX
 
 # true = yaml, false = xml, nil = don't know (yet)
@@ -72,7 +70,7 @@ begin
       opt_from_yaml = true
     end
   end
-rescue
+rescue StandardError
   abort usage
 end
 
@@ -82,10 +80,10 @@ dst = ARGV[1]
 src = nil if src == "-"
 dst = nil if dst == "-"
 
-opt_from_yaml = false if src && src.match(/\.xml$/i)
-opt_from_yaml = true if src && src.match(/\.ya?ml$/i)
-opt_to_yaml = false if dst && dst.match(/\.xml$/i)
-opt_to_yaml = true if dst && dst.match(/\.ya?ml$/i)
+opt_from_yaml = false if src&.match(/\.xml$/i)
+opt_from_yaml = true if src&.match(/\.ya?ml$/i)
+opt_to_yaml = false if dst&.match(/\.xml$/i)
+opt_to_yaml = true if dst&.match(/\.ya?ml$/i)
 
 storage = Storage::Storage.new(Storage::Environment.new(true))
 dg = Y2Storage::Devicegraph.new(storage.create_devicegraph("xxx"))
@@ -97,7 +95,7 @@ if opt_from_yaml != false
     Y2Storage::FakeDeviceFactory.load_yaml_file(dg, src || STDIN)
     got_it = true
     opt_to_yaml = false if opt_to_yaml.nil?
-  rescue
+  rescue StandardError
   end
 end
 
@@ -107,7 +105,7 @@ if !got_it && (!tried || src)
     dg.load(src || "-")
     got_it = true
     opt_to_yaml = true if opt_to_yaml.nil?
-  rescue
+  rescue StandardError
   end
 end
 # rubocop:enable Lint/HandleExceptions

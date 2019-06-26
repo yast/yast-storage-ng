@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -94,7 +92,7 @@ module Y2Storage
       @windows
     end
 
-  protected
+    protected
 
     # @return [Boolean] if the filesystem was already mounted to read all the relevant info
     attr_reader :processed
@@ -144,8 +142,8 @@ module Y2Storage
       @crypttab = read_crypttab
       @rpi_boot = check_rpi_boot
       umount
-    rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-      log.error("CAUGHT exception: #{ex} for #{device.name}")
+    rescue RuntimeError => e # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+      log.error("CAUGHT exception: #{e} for #{device.name}")
       nil
     end
 

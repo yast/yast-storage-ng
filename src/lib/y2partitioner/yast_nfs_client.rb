@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -120,7 +118,7 @@ module Y2Partitioner
       PACKAGE
     end
 
-  protected
+    protected
 
     # Checks whether the client is available and, if not, tries to install it of
     # possible
@@ -185,6 +183,7 @@ module Y2Partitioner
     # Executes the client and returns the result
     def call_client(function, arguments = nil)
       return nil unless function
+
       Yast::WFM.CallFunction(YAST_CLIENT, [function, arguments].compact)
     end
 

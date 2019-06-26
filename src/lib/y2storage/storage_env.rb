@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
       active?(ENV_BIOS_RAID)
     end
 
-  private
+    private
 
     # Whether the env variable is active
     #

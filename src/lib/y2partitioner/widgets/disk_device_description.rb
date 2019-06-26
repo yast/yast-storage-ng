@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -28,7 +26,7 @@ module Y2Partitioner
   module Widgets
     # Description for a disk device
     class DiskDeviceDescription < DeviceDescription
-    private
+      private
 
       # @see DeviceDescription#sections
       def sections

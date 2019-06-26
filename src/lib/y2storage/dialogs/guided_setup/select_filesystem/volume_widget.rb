@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -93,7 +91,7 @@ module Y2Storage
             end
           end
 
-        protected
+          protected
 
           # Proposal settings being defined by the user
           # @return [ProposalSettings]
@@ -256,6 +254,7 @@ module Y2Storage
           # Enables or disabled a given widget if it exists
           def set_widget_enabled(widget, value)
             return unless volume.public_send(:"#{widget}_configurable?")
+
             Yast::UI.ChangeWidget(Id(send(:"#{widget}_widget_id")), :Enabled, value)
           end
 
@@ -263,6 +262,7 @@ module Y2Storage
           # definition and the current status of the UI
           def proposed?
             return volume.proposed unless volume.proposed_configurable?
+
             Yast::UI.QueryWidget(Id(proposed_widget_id), :Value)
           end
 

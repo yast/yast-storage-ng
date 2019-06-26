@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -114,7 +112,7 @@ module Y2Partitioner
           Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(current_graph)
         end
 
-      private
+        private
 
         # System mount points are taken from old code, see
         # https://github.com/yast/yast-storage/blob/master_old/src/modules/FileSystems.rb#L438

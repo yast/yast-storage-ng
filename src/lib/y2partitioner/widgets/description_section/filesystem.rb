@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -35,7 +33,7 @@ module Y2Partitioner
           super
         end
 
-      private
+        private
 
         alias_method :filesystem, :device
 
@@ -54,7 +52,7 @@ module Y2Partitioner
         #
         # @return [Array<Symbol>]
         def btrfs_entries
-          return [] unless filesystem && filesystem.is?(:btrfs)
+          return [] unless filesystem&.is?(:btrfs)
 
           [:btrfs_data_raid_level, :btrfs_metadata_raid_level]
         end
@@ -139,7 +137,7 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def mount_point_inactive?
-          return false unless filesystem && filesystem.mount_point
+          return false unless filesystem&.mount_point
 
           !filesystem.mount_point.active?
         end
@@ -148,7 +146,7 @@ module Y2Partitioner
         #
         # @return [String]
         def mount_by
-          return "" unless filesystem && filesystem.mount_point
+          return "" unless filesystem&.mount_point
 
           filesystem.mount_point.mount_by.to_human_string
         end

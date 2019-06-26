@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -141,7 +139,7 @@ module Y2Partitioner
         header + columns_help
       end
 
-    private
+      private
 
       # @return [DeviceButtonsSet] optional buttons set that must be
       #   updated when the user changes the selection in the table
