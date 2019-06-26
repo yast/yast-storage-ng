@@ -37,3 +37,56 @@ Style/FrozenStringLiteralComment:
 # workaround https://github.com/rubocop-hq/rubocop/issues/6861
 Layout/AccessModifierIndentation:
   EnforcedStyle: indent
+
+# WIP
+
+# Offense count: 8
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - 'test/y2partitioner/actions/add_btrfs_test.rb'
+    - 'test/y2partitioner/widgets/btrfs_devices_selector_test.rb'
+    - 'test/y2storage/planned/can_be_formatted_test.rb'
+
+# Offense count: 3
+Lint/DuplicateMethods:
+  Exclude:
+    - 'src/lib/y2partitioner/actions/controllers/lvm_lv.rb'
+    - 'src/lib/y2partitioner/device_graphs.rb'
+    - 'src/lib/y2storage/planned/lvm_vg.rb'
+
+# Offense count: 1
+# Configuration parameters: MaximumRangeSize.
+Lint/MissingCopEnableDirective:
+  Exclude:
+    - 'src/lib/y2storage/planned/can_be_formatted.rb'
+
+# Offense count: 1
+Lint/ReturnInVoidContext:
+  Exclude:
+    - 'src/lib/y2storage/proposal/lvm_helper.rb'
+
+# Offense count: 1
+# Cop supports --auto-correct.
+Lint/UnneededCopEnableDirective:
+  Exclude:
+    - 'src/lib/y2storage/storage_manager.rb'
+
+# Offense count: 3
+Lint/UselessAssignment:
+  Exclude:
+    - 'src/lib/y2storage/initial_guided_proposal.rb'
+
+# Offense count: 2
+# Configuration parameters: CheckForMethodsWithNoSideEffects.
+Lint/Void:
+  Exclude:
+    - 'src/lib/y2storage/mount_point.rb'
+    - 'src/lib/y2storage/proposal/lvm_helper.rb'
+
+# Offense count: 2
+# Cop supports --auto-correct.
+# Configuration parameters: AutoCorrect, AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, IgnoredPatterns.
+# URISchemes: http, https
+Metrics/LineLength:
+  Max: 157
+
