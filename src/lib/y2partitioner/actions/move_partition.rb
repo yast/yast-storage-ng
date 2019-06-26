@@ -209,7 +209,7 @@ module Y2Partitioner
         return nil unless previous_unused_slot
         return previous_unused_slot unless previous_partition
 
-        (previous_unused_slot.region.start > previous_partition.region.start) ? previous_unused_slot : nil
+        previous_unused_slot if previous_unused_slot.region.start > previous_partition.region.start
       end
 
       # Next adjacent free space where the partition can be moved to

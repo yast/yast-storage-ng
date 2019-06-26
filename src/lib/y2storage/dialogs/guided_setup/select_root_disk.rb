@@ -26,6 +26,8 @@ module Y2Storage
     class GuidedSetup
       # Dialog for root disk selection.
       class SelectRootDisk < Base
+        extend Yast::I18n
+
         def initialize(*params)
           textdomain "storage"
           super
@@ -159,41 +161,43 @@ module Y2Storage
           update_windows_settings if activate_windows_actions?
         end
 
+        BASIC_HELP = N_(
+          "<p>" \
+          "Select the disk where to create the root filesystem. " \
+          "</p><p>" \
+          "This is also the disk where boot-related partitions " \
+          "will typically be created as necessary: /boot, ESP (EFI System " \
+          "Partition), BIOS-Grub. " \
+          "That means that this disk should be usable by the machine's " \
+          "BIOS / firmware." \
+          "</p><p>" \
+          "In this dialog you can also choose what to do with existing partitions:" \
+          "</p><p>" \
+          "<ul>" \
+          "<li>Do not modify (keep them as they are)</li>" \
+          "<li>Remove if needed</li>" \
+          "<li>Remove even if not needed (always remove)</li>" \
+          "</ul>"
+        )
+
+        ACTIVATE_WINDOWS_HELP = N_(
+          "<ul>" \
+          "<li>Resize if needed (Windows partitions only)</li>" \
+          "<li>Resize or remove if needed (Windows partitions only)</li>" \
+          "</ul>" \
+          "<p>" \
+          "That last option means to try to resize the Windows partition(s) to " \
+          "make enough disk space available for Linux, but if that is not " \
+          "enough, completely delete the Windows partition." \
+          "</p>"
+        )
+
         def help_text
           # TRANSLATORS: Help text for root disk selection
-          msg = _(
-            "<p>" \
-            "Select the disk where to create the root filesystem. " \
-            "</p><p>" \
-            "This is also the disk where boot-related partitions " \
-            "will typically be created as necessary: /boot, ESP (EFI System " \
-            "Partition), BIOS-Grub. " \
-            "That means that this disk should be usable by the machine's " \
-            "BIOS / firmware." \
-            "</p><p>" \
-            "In this dialog you can also choose what to do with existing partitions:" \
-            "</p><p>" \
-            "<ul>" \
-            "<li>Do not modify (keep them as they are)</li>" \
-            "<li>Remove if needed</li>" \
-            "<li>Remove even if not needed (always remove)</li>" \
-            "</ul>"
-          )
+          msg = _(BASIC_HELP)
 
           # TRANSLATORS: Help text for root disk selection, continued
-          if activate_windows_actions?
-            msg += _(
-              "<ul>" \
-              "<li>Resize if needed (Windows partitions only)</li>" \
-              "<li>Resize or remove if needed (Windows partitions only)</li>" \
-              "</ul>" \
-              "<p>" \
-              "That last option means to try to resize the Windows partition(s) to " \
-              "make enough disk space available for Linux, but if that is not " \
-              "enough, completely delete the Windows partition." \
-              "</p>"
-            )
-          end
+          msg += _(ACTIVATE_WINDOWS_HELP) if activate_windows_actions?
 
           msg
         end

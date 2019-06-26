@@ -82,11 +82,3 @@ Lint/Void:
   Exclude:
     - 'src/lib/y2storage/mount_point.rb'
     - 'src/lib/y2storage/proposal/lvm_helper.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AutoCorrect, AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, IgnoredPatterns.
-# URISchemes: http, https
-Metrics/LineLength:
-  Max: 157
-
