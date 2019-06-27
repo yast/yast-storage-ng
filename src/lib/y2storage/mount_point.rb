@@ -73,8 +73,6 @@ module Y2Storage
         else
           0
         end
-
-      path
     end
 
     # @!attribute mount_by

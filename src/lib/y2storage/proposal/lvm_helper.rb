@@ -101,22 +101,18 @@ module Y2Storage
       # Setting vg to nil means that no volume group will be reused.
       #
       # @param vg [LvmVg,nil] Volume group to reuse
-      # @return [Planned::LvmVg,nil] Planned volume group which reuses the real one;
-      #   nil when no volume group will be reused.
       #
       # @see volume_group
-      # FIXME: return value of writer is really strange. It should be same as argument.
       def reused_volume_group=(vg)
         # Invalidate cached value
         @volume_group = nil
 
-        return @reused_volume_group = nil if vg.nil? # rubocop:disable Lint/ReturnInVoidContext
+        return if vg.nil?
 
         @reused_volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
         @reused_volume_group.lvs = planned_lvs
         @reused_volume_group.size_strategy = vg_strategy
         @reused_volume_group.pvs_encryption_password = settings.encryption_password
-        @reused_volume_group
       end
 
       # Checks whether the passed device is the volume group to be reused
