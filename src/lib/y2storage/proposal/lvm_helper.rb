@@ -107,6 +107,7 @@ module Y2Storage
         # Invalidate cached value
         @volume_group = nil
 
+        @reused_volume_group = nil
         return if vg.nil?
 
         @reused_volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
