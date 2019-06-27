@@ -50,13 +50,6 @@ Naming/UncommunicativeMethodParamName:
 
 # WIP
 
-# Offense count: 8
-Lint/AmbiguousBlockAssociation:
-  Exclude:
-    - 'test/y2partitioner/actions/add_btrfs_test.rb'
-    - 'test/y2partitioner/widgets/btrfs_devices_selector_test.rb'
-    - 'test/y2storage/planned/can_be_formatted_test.rb'
-
 # Offense count: 1
 # Configuration parameters: MaximumRangeSize.
 Lint/MissingCopEnableDirective:

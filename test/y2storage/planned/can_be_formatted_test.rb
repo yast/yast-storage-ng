@@ -150,7 +150,7 @@ describe Y2Storage::Planned::CanBeFormatted do
 
           it "does not change the mount_by option" do
             expect { planned.reuse!(fake_devicegraph) }
-              .to_not change { blk_device.filesystem.mount_by }
+              .to_not(change { blk_device.filesystem.mount_by })
           end
         end
       end
@@ -162,12 +162,12 @@ describe Y2Storage::Planned::CanBeFormatted do
 
         it "does not change the mount point" do
           expect { planned.reuse!(fake_devicegraph) }
-            .to_not change { blk_device.filesystem.mount_point.path }
+            .to_not(change { blk_device.filesystem.mount_point.path })
         end
 
         it "does not change the mount_by option" do
           expect { planned.reuse!(fake_devicegraph) }
-            .to_not change { blk_device.filesystem.mount_by }
+            .to_not(change { blk_device.filesystem.mount_by })
         end
       end
     end
