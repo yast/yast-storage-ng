@@ -675,7 +675,6 @@ module Y2Storage
         callbacks.retry?
       end
     end
-    # rubocop:enable Metrics/ClassLength
 
     # Logger class for libstorage. This is needed to make libstorage log to the
     # y2log.

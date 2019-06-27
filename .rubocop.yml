@@ -50,12 +50,6 @@ Naming/UncommunicativeMethodParamName:
 
 # WIP
 
-# Offense count: 1
-# Cop supports --auto-correct.
-Lint/UnneededCopEnableDirective:
-  Exclude:
-    - 'src/lib/y2storage/storage_manager.rb'
-
 # Offense count: 3
 Lint/UselessAssignment:
   Exclude:
