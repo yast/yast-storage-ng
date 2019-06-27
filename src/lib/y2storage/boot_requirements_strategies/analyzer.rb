@@ -523,7 +523,7 @@ module Y2Storage
           raid1_dev = raid
         end
 
-        return raid1_dev
+        raid1_dev
       end
     end
   end

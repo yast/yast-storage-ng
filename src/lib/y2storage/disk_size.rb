@@ -736,7 +736,7 @@ module Y2Storage
       return true if unlimited?
       return true if other.respond_to?(:unlimited?) && other.unlimited?
 
-      return other.respond_to?(:to_s) && other.to_s == "unlimited"
+      other.respond_to?(:to_s) && other.to_s == "unlimited"
     end
 
     # Checks whether makes sense to round the value to the given size

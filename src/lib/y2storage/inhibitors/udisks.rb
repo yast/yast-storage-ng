@@ -54,7 +54,7 @@ module Y2Storage
       service = system_bus.service("org.freedesktop.UDisks")
       dbus_object = service.object("/org/freedesktop/UDisks")
       dbus_object.default_iface = "org.freedesktop.UDisks"
-      return dbus_object
+      dbus_object
     end
   end
 end

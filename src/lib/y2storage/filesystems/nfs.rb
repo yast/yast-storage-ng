@@ -61,7 +61,7 @@ module Y2Storage
 
       # @return [Boolean]
       def in_network?
-        return true
+        true
       end
 
       # Whether the remote share is currently accessible

@@ -231,7 +231,7 @@ module Y2Storage
       #   end
       #
       def root_ok?
-        return Type.root_filesystems.include?(self)
+        Type.root_filesystems.include?(self)
       end
 
       # Check if filesystem was usable as root (mountpoint "/") filesystem.
@@ -257,7 +257,7 @@ module Y2Storage
       #   end
       #
       def home_ok?
-        return Type.home_filesystems.include?(self)
+        Type.home_filesystems.include?(self)
       end
 
       # Checks whether this type is usable for /home/zipl, i.e. whether the
