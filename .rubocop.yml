@@ -51,11 +51,6 @@ Naming/UncommunicativeMethodParamName:
 # WIP
 
 # Offense count: 1
-Lint/ReturnInVoidContext:
-  Exclude:
-    - 'src/lib/y2storage/proposal/lvm_helper.rb'
-
-# Offense count: 1
 # Cop supports --auto-correct.
 Lint/UnneededCopEnableDirective:
   Exclude:

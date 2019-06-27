@@ -105,11 +105,12 @@ module Y2Storage
       #   nil when no volume group will be reused.
       #
       # @see volume_group
+      # FIXME: return value of writer is really strange. It should be same as argument.
       def reused_volume_group=(vg)
         # Invalidate cached value
         @volume_group = nil
 
-        return @reused_volume_group = nil if vg.nil?
+        return @reused_volume_group = nil if vg.nil? # rubocop:disable Lint/ReturnInVoidContext
 
         @reused_volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
         @reused_volume_group.lvs = planned_lvs
