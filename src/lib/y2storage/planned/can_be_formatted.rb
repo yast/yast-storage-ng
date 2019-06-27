@@ -27,8 +27,7 @@ module Y2Storage
   module Planned
     # Mixin for planned devices that can have an associated block filesystem.
     # @see Planned::Device
-    # rubocop:disable Metrics/ModuleLength
-    module CanBeFormatted
+    module CanBeFormatted # rubocop:disable Metrics/ModuleLength
       # @return [Filesystems::Type] the type of filesystem this device should
       #   get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of
       #   nil means the device will not be formatted.

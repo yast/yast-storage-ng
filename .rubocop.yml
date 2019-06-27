@@ -51,12 +51,6 @@ Naming/UncommunicativeMethodParamName:
 # WIP
 
 # Offense count: 1
-# Configuration parameters: MaximumRangeSize.
-Lint/MissingCopEnableDirective:
-  Exclude:
-    - 'src/lib/y2storage/planned/can_be_formatted.rb'
-
-# Offense count: 1
 Lint/ReturnInVoidContext:
   Exclude:
     - 'src/lib/y2storage/proposal/lvm_helper.rb'
