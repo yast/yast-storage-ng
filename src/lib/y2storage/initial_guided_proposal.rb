@@ -96,7 +96,7 @@ module Y2Storage
 
         begin
           return try_with_different_settings
-        rescue Error => e
+        rescue Error
           next
         end
       end
@@ -126,7 +126,7 @@ module Y2Storage
 
         begin
           return try_with_different_root_devices
-        rescue Error => e
+        rescue Error
           next
         end
       end
@@ -155,7 +155,7 @@ module Y2Storage
 
         begin
           return try_with_each_target_size
-        rescue Error => e
+        rescue Error
           next
         end
       end

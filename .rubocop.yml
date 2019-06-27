@@ -50,11 +50,6 @@ Naming/UncommunicativeMethodParamName:
 
 # WIP
 
-# Offense count: 3
-Lint/UselessAssignment:
-  Exclude:
-    - 'src/lib/y2storage/initial_guided_proposal.rb'
-
 # Offense count: 2
 # Configuration parameters: CheckForMethodsWithNoSideEffects.
 Lint/Void:
