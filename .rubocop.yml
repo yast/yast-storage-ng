@@ -13,7 +13,7 @@ Metrics/LineLength:
   Max: 105
 
 Metrics/BlockLength:
-  # rspec is know for big blocks as DSL
+  # rspec is known as DSL with big blocks
   Exclude:
     - test/**/*
 
@@ -26,7 +26,7 @@ Style/ZeroLengthPredicate:
 Style/MutableConstant:
   Enabled: false
 
-# this failing in storage wrapper, will need more time to adapt
+# this is failing in storage wrapper, it will need more time to adapt
 Style/FrozenStringLiteralComment:
   Enabled: false
 

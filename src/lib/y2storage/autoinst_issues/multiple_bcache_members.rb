@@ -65,9 +65,13 @@ module Y2Storage
       def message
         # TRANSLATORS: 'bcache_name is the bcache device name (e.g., '/dev/bcache0');
         # 'role' is the kind of device (e.g., 'caching device').
-        format(_(
-                 "%{bcache_name}: only one %{role} can be specified per bcache."
-               ), bcache_name: bcache_name, role: _(ROLE[role]))
+        format(
+          _(
+            "%{bcache_name}: only one %{role} can be specified per bcache."
+          ),
+          bcache_name: bcache_name,
+          role:        _(ROLE[role])
+        )
       end
     end
   end
