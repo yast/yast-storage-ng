@@ -355,16 +355,53 @@ module Y2Partitioner
           filesystem.mount_point.mount_options = entry.mount_options if entry.mount_options.any?
         end
 
-        # Performs any additional final step needed for the new block
-        # filesystem (Btrfs stuff, so far)
+        # Performs any additional final step needed for the new block filesystem (Btrfs stuff, so far)
         #
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
         def setup_blk_filesystem(filesystem)
+          add_filesystem_devices(filesystem)
+
           if filesystem.can_configure_snapper?
             filesystem.configure_snapper = filesystem.default_configure_snapper?
           end
 
           filesystem.setup_default_btrfs_subvolumes if filesystem.supports_btrfs_subvolumes?
+        end
+
+        # Adds missing devices to the filesystem when the original filesystem was a multi-device Btrfs
+        #
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
+        def add_filesystem_devices(filesystem)
+          original_filesystem = original_filesystem(filesystem)
+
+          return unless original_filesystem&.multidevice?
+
+          devices = original_filesystem.blk_devices.map { |d| current_graph.find_device(d.sid) }.compact
+
+          devices.each { |d| add_filesystem_device(filesystem, d) }
+        end
+
+        # Adds a device to the filesystem
+        #
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
+        # @param device [Y2Storage::BlkDevice]
+        def add_filesystem_device(filesystem, device)
+          return if filesystem.blk_devices.map(&:sid).include?(device.sid)
+
+          filesystem.add_device(device)
+        end
+
+        # Original version of the filesystem in the system graph
+        #
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
+        # @return [Y2Storage::Filesystems::BlkFilesystem, nil] nil if the filesystem cannot be found in
+        #   system graph.
+        def original_filesystem(filesystem)
+          original_device = system_graph.find_device(filesystem.blk_devices.first.sid)
+
+          return nil unless original_device&.formatted?
+
+          original_device.filesystem
         end
 
         # Device indicated in the fstab entry
