@@ -374,7 +374,7 @@ module Y2Partitioner
         def add_filesystem_devices(filesystem)
           original_filesystem = original_filesystem(filesystem)
 
-          return unless original_filesystem && original_filesystem.multidevice?
+          return unless original_filesystem&.multidevice?
 
           devices = original_filesystem.blk_devices.map { |d| current_graph.find_device(d.sid) }.compact
 
@@ -399,7 +399,7 @@ module Y2Partitioner
         def original_filesystem(filesystem)
           original_device = system_graph.find_device(filesystem.blk_devices.first.sid)
 
-          return nil unless original_device && original_device.formatted?
+          return nil unless original_device&.formatted?
 
           original_device.filesystem
         end
