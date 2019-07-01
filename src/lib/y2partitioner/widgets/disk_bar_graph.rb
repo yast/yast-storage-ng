@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,6 +45,7 @@ module Y2Partitioner
       # @macro seeCustomWidget
       def contents
         return Empty() unless Yast::UI.HasSpecialWidget(:BarGraph)
+
         data = regions_and_labels
         # lets use size in MiB, disks are now so big, that otherwise it will overflow
         # even for few TB and we passing values to libyui in too low data. Ignoring anything

@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -114,11 +112,11 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
 
       describe "#handle" do
         it "does not alter the selected devices" do
-          expect { widget.handle(event) }.to_not change { controller.selected_devices }
+          expect { widget.handle(event) }.to_not(change { controller.selected_devices })
         end
 
         it "does not alter the unselected devices" do
-          expect { widget.handle(event) }.to_not change { controller.available_devices }
+          expect { widget.handle(event) }.to_not(change { controller.available_devices })
         end
       end
 
@@ -178,11 +176,11 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
 
       describe "#handle" do
         it "does not change selected devices" do
-          expect { widget.handle(event) }.to_not change { controller.selected_devices }
+          expect { widget.handle(event) }.to_not(change { controller.selected_devices })
         end
 
         it "does not change available devices" do
-          expect { widget.handle(event) }.to_not change { controller.available_devices }
+          expect { widget.handle(event) }.to_not(change { controller.available_devices })
         end
       end
 

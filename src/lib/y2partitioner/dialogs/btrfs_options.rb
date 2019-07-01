@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -45,7 +43,7 @@ module Y2Partitioner
         HVSquash(btrfs_options_widget)
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::Filesystem]
       attr_reader :controller

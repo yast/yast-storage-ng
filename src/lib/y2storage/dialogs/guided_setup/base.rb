@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -52,11 +50,11 @@ module Y2Storage
         # Only continues if selected settings are valid. In other case,
         # an error dialog is expected.
         def next_handler
-          if valid?
-            update_settings!
-            log.info "#{self.class}: return :next with #{settings.inspect}"
-            super
-          end
+          return unless valid?
+
+          update_settings!
+          log.info "#{self.class}: return :next with #{settings.inspect}"
+          super
         end
 
         def back_handler
@@ -84,7 +82,7 @@ module Y2Storage
           data.join(", ")
         end
 
-      protected
+        protected
 
         # Controller object needed to access to settints and pre-calculated data.
         attr_reader :guided_setup

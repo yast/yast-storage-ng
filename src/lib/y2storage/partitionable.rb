@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -110,6 +108,7 @@ module Y2Storage
     #   to add one
     def can_have_partition_table?
       return false unless usable_as_partitionable?
+
       partition_table? || descendants.empty?
     end
 
@@ -134,6 +133,7 @@ module Y2Storage
     # @return [Boolean]
     def gpt?
       return false unless partition_table
+
       partition_table.type.to_sym == :gpt
     end
 
@@ -220,6 +220,7 @@ module Y2Storage
     def mbr_gap
       return nil unless partition_table
       return nil unless partition_table.respond_to?(:mbr_gap)
+
       partition_table.mbr_gap
     end
 
@@ -232,6 +233,7 @@ module Y2Storage
     def mbr_gap_for_grub?
       return false unless partition_table
       return false unless partition_table.respond_to?(:mbr_gap_for_grub?)
+
       partition_table.mbr_gap_for_grub?
     end
 
@@ -324,7 +326,7 @@ module Y2Storage
       partition_table.type.is?(:implicit)
     end
 
-  protected
+    protected
 
     # Find partitions that have a given (set of) partition id(s).
     #

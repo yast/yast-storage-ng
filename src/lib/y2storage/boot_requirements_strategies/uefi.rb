@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,7 +64,7 @@ module Y2Storage
         res + res_new
       end
 
-    protected
+      protected
 
       def esp_encrypted_error
         msg = _("EFI System Partition cannot be encrypted.")
@@ -79,14 +77,13 @@ module Y2Storage
       end
 
       def esp_raid_error
-        if esp_in_software_raid1?
-          msg =
-            _(
-              "EFI System Partition is on a software RAID1. " \
-              "That setup is not guaranteed to boot in all cases."
-            )
+        msg = if esp_in_software_raid1?
+          _(
+            "EFI System Partition is on a software RAID1. " \
+            "That setup is not guaranteed to boot in all cases."
+          )
         else
-          msg = _("EFI System Partition cannot be on software RAID.")
+          _("EFI System Partition cannot be on software RAID.")
         end
         SetupError.new(message: msg)
       end
@@ -153,6 +150,7 @@ module Y2Storage
 
       def biggest_partition(partitions)
         return nil if partitions.nil? || partitions.empty?
+
         partitions.sort_by.with_index { |part, idx| [part.size, idx] }.last
       end
     end

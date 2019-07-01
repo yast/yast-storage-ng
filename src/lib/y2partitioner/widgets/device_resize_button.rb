@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -40,11 +38,12 @@ module Y2Partitioner
         _("Resize...")
       end
 
-    private
+      private
 
       # @see DeviceButton#actions
       def actions
         return nil unless device_validation
+
         super
       end
 

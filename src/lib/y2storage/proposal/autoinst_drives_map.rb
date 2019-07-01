@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -107,7 +105,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       # Find the first usable disk for the given <drive> AutoYaST specification
       #
@@ -226,6 +224,7 @@ module Y2Storage
       def find_disk(devicegraph, device_name)
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device
+
         ([device] + device.ancestors).find { |d| d.is?(:disk_device, :stray_blk_device) }
       end
 

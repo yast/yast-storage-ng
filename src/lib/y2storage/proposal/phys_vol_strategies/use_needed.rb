@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -27,7 +25,7 @@ module Y2Storage
       # Strategy to create LVM physical volumes when the value of
       # lvm_vg_strategy is :use_needed
       class UseNeeded < Base
-      protected
+        protected
 
         # Combinations of assigned spaces to be evaluated, in principle, when
         # looking for the right places to locate the new physical volumes
@@ -65,7 +63,7 @@ module Y2Storage
               # Let's consolidate and check if it was indeed enough
               begin
                 result = initial_distribution.add_partitions(pv_partitions)
-              rescue
+              rescue StandardError
                 # Adding PVs in this order leads to an invalid distribution
                 return nil
               end
@@ -145,13 +143,14 @@ module Y2Storage
           # position and the spaces previous to it are the same (in any order).
           last_pos = checked.size - 1
           return false if checked.last != new_list[last_pos]
+
           same_first_spaces?(checked, new_list, last_pos)
         end
 
         # @see #redundant?
-        def same_first_spaces?(list1, list2, n)
-          list1 = list1.first(n)
-          list2 = list2.first(n)
+        def same_first_spaces?(list1, list2, amount)
+          list1 = list1.first(amount)
+          list2 = list2.first(amount)
           (list1 - list2).empty? && (list2 - list1).empty?
         end
       end

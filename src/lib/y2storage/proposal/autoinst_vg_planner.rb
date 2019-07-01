@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,6 +36,7 @@ module Y2Storage
         (pools + regular).each_with_object(planned_vg.lvs) do |lv_section, planned_lvs|
           planned_lv = planned_for_lv(drive, planned_vg, lv_section)
           next if planned_lv.nil? || planned_lv.lv_type == LvType::THIN
+
           planned_lvs << planned_lv
         end
 
@@ -46,7 +45,7 @@ module Y2Storage
         [planned_vg]
       end
 
-    private
+      private
 
       # Returns a planned logical volume according to an AutoYaST specification
       #
@@ -67,6 +66,7 @@ module Y2Storage
         add_stripes(planned_lv, section)
         device_config(planned_lv, section, drive)
         return if section.used_pool && !add_to_thin_pool(planned_lv, planned_vg, section)
+
         add_lv_reuse(planned_lv, planned_vg, section) if section.create == false
         assign_size_to_lv(planned_vg, planned_lv, section) ? planned_lv : nil
       end
@@ -82,6 +82,7 @@ module Y2Storage
       def add_lv_reuse(planned_lv, planned_vg, section)
         lv_to_reuse, vg = find_lv_to_reuse(planned_vg.volume_group_name, section)
         return unless lv_to_reuse
+
         planned_lv.logical_volume_name ||= lv_to_reuse.lv_name
         planned_lv.filesystem_type ||= lv_to_reuse.filesystem_type
         add_device_reuse(planned_lv, lv_to_reuse, section)
@@ -100,6 +101,7 @@ module Y2Storage
         planned_vg.make_space_policy = drive.keep_unknown_lv ? :keep : :remove
 
         return unless planned_vg.make_space_policy == :keep || planned_vg.all_lvs.any?(&:reuse?)
+
         vg_to_reuse = find_vg_to_reuse(planned_vg, drive)
         planned_vg.reuse_name = vg_to_reuse.vg_name if vg_to_reuse
       end
@@ -113,6 +115,7 @@ module Y2Storage
       # @param planned_lv [Planned::LvmLv] Thin logical volume
       def add_thin_pool_lv_reuse(planned_lv, _drive)
         return unless planned_lv.thin_lvs.any?(&:reuse?)
+
         lv_to_reuse = devicegraph.lvm_lvs.find { |v| planned_lv.logical_volume_name == v.lv_name }
         planned_lv.reuse_name = lv_to_reuse.name
       end
@@ -122,6 +125,7 @@ module Y2Storage
       def find_lv_to_reuse(vg_name, part_section)
         parent = find_lv_parent(vg_name, part_section)
         return if parent.nil?
+
         device = find_lv_in_vg(parent, part_section)
 
         case device
@@ -168,6 +172,7 @@ module Y2Storage
       # @param drive       [AutoinstProfile::DriveSection] drive section describing
       def find_vg_to_reuse(planned_vg, drive)
         return nil unless planned_vg.volume_group_name
+
         device = devicegraph.lvm_vgs.find { |v| v.vg_name == planned_vg.volume_group_name }
         issues_list.add(:missing_reusable_device, drive) unless device
         device
@@ -178,6 +183,7 @@ module Y2Storage
       def find_thin_pool_lv(vg, part_section)
         lv = vg.lvm_lvs.find { |v| v.lv_name == part_section.used_pool }
         return lv if lv
+
         issues_list.add(:thin_pool_not_found, part_section)
         nil
       end

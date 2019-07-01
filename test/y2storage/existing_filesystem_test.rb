@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -255,7 +253,7 @@ describe Y2Storage::ExistingFilesystem do
       include_examples "Mount and umount actions"
 
       context "when there is no file called bootcode.bin or BOOTCODE.bin" do
-        let(:existing_files) { %w(/foo /bar) }
+        let(:existing_files) { %w[/foo /bar] }
 
         it "returns false" do
           expect(subject.rpi_boot?).to eq false
@@ -263,7 +261,7 @@ describe Y2Storage::ExistingFilesystem do
       end
 
       context "when there is a file called bootcode.bin" do
-        let(:existing_files) { %w(/foo /bar /bootcode.bin) }
+        let(:existing_files) { %w[/foo /bar /bootcode.bin] }
 
         it "returns true" do
           expect(subject.rpi_boot?).to eq true
@@ -271,7 +269,7 @@ describe Y2Storage::ExistingFilesystem do
       end
 
       context "when there is a file called BOOTCODE.BIN" do
-        let(:existing_files) { %w(/BOOTCODE.BIN) }
+        let(:existing_files) { %w[/BOOTCODE.BIN] }
 
         it "returns true" do
           expect(subject.rpi_boot?).to eq true

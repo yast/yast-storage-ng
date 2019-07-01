@@ -33,8 +33,7 @@ module Y2Storage
       attr_accessor :lvm_volume_group_name
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_pv
-      end
+      def initialize_can_be_pv; end
 
       # Checks whether the device represents an LVM physical volume
       #

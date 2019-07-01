@@ -55,7 +55,7 @@ module Y2Storage
       attr_accessor :pvs
 
       # @return [DiskSize] Size of one extent
-      attr_accessor :extent_size
+      attr_writer :extent_size
 
       # @return [Symbol] Policy to make space for planned volume groups:
       #   remove old logical volumes until new ones fit (:needed), remove
@@ -222,6 +222,7 @@ module Y2Storage
       # @return [DiskSize]
       def missing_space
         return DiskSize.zero if !lvs || lvs.empty?
+
         substract_reused_vg_size(target_size)
       end
 
@@ -248,10 +249,11 @@ module Y2Storage
         [:reuse_name, :volume_group_name]
       end
 
-    protected
+      protected
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
+
         Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse_name)
       end
 

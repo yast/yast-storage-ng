@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -51,7 +49,7 @@ module Y2Partitioner
         refresh_snapshots_widget
       end
 
-    private
+      private
 
       # Widget to set mount options
       #

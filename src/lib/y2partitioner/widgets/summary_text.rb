@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -65,7 +63,7 @@ module Y2Partitioner
         Yast::Mode.installation ? help_installation : help_installed_system
       end
 
-    private
+      private
 
       # Object to manage the list of actions
       # @return [Y2Storage::ActionsPresenter]

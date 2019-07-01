@@ -76,7 +76,7 @@ module Y2Storage
         graph
       end
 
-    protected
+      protected
 
       # Planned partition that will hold the given planned device
       #
@@ -139,14 +139,14 @@ module Y2Storage
         lvm_helper.reused_volume_group = nil
 
         lvm_helper.reusable_volume_groups(devicegraph).each do |vg|
-          begin
-            lvm_helper.reused_volume_group = vg
-            result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
-            log.info "Found enough space including LVM, reusing #{vg}"
-            return result
-          rescue Error
-            next
-          end
+
+          lvm_helper.reused_volume_group = vg
+          result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
+          log.info "Found enough space including LVM, reusing #{vg}"
+          return result
+        rescue Error
+          next
+
         end
 
         lvm_helper.reused_volume_group = nil

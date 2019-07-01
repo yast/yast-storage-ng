@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -45,7 +43,7 @@ module Y2Storage
           devices
         end
 
-      protected
+        protected
 
         # Minimal set of devices that is needed to decide if a bootable
         # system can be installed

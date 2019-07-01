@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) 2016 SUSE LLC
 #
 # All Rights Reserved.
@@ -507,6 +505,7 @@ describe Y2Storage::YamlWriter do
         lines = yaml.split("\n")
         start_line = lines.index("- unsupported_device:")
         return "" if start_line.nil?
+
         lines.shift(start_line)
         lines.join("\n")
       end

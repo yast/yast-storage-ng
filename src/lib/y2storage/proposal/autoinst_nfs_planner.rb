@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -36,7 +34,7 @@ module Y2Storage
         planned_devices_new_format(drive)
       end
 
-    private
+      private
 
       # This hash defines mandatory profile values for a NFS share using the old AutoYaST style.
       #

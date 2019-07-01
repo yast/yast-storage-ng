@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -52,7 +50,7 @@ module Y2Partitioner
         )
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::LvmVg]
       attr_reader :controller
@@ -118,7 +116,7 @@ module Y2Partitioner
           false
         end
 
-      private
+        private
 
         # @return [Actions::Controllers::LvmVg]
         attr_reader :controller
@@ -146,7 +144,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def opt
-          %i(editable notify)
+          [:editable, :notify]
         end
 
         # @macro seeAbstractWidget

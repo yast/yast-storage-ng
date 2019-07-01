@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,7 +39,7 @@ module Y2Partitioner
         _("&Partitions")
       end
 
-    private
+      private
 
       # @return [CWM::TreePager] general pager used to navigate through the
       #   partitioner

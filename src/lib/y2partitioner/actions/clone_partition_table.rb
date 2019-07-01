@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -63,7 +61,7 @@ module Y2Partitioner
         :finish
       end
 
-    private
+      private
 
       # @return [Controllers::ClonePartitionTable]
       attr_reader :controller

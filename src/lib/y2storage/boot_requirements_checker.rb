@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,8 +64,8 @@ module Y2Storage
     # @return [Array<Planned::Partition>]
     def needed_partitions(target = :desired)
       strategy.needed_partitions(target)
-    rescue BootRequirementsStrategies::Error => error
-      raise Error, error.message
+    rescue BootRequirementsStrategies::Error => e
+      raise Error, e.message
     end
 
     # Whether the current setup contains all necessary devices for booting
@@ -99,7 +97,7 @@ module Y2Storage
       strategy.errors
     end
 
-  protected
+    protected
 
     # @return [Devicegraph] starting situation.
     attr_reader :devicegraph
@@ -168,7 +166,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def exist_nfs_root?
-      devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
+      devicegraph.nfs_mounts.any? { |i| i.mount_point&.root? }
     end
 
     # @see #raspberry_pi?

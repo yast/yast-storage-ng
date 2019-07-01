@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Partitioner
       def run
         return :quit unless system_edited?
 
-        confirmation == :yes ? :quit : nil
+        (confirmation == :yes) ? :quit : nil
       end
 
       # Whether to quit the Expert Partitioner
@@ -59,7 +57,7 @@ module Y2Partitioner
         run == :quit
       end
 
-    private
+      private
 
       # Whether the system has been edited (devices or settings)
       #

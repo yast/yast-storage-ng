@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -36,7 +34,7 @@ module Y2Partitioner
         _("Move...")
       end
 
-    private
+      private
 
       # Returns the proper Actions class for moving a partition
       #

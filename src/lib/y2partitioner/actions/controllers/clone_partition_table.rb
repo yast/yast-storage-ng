@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -73,7 +71,8 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Partitionable>]
         def suitable_devices_for_cloning
-          @suitable_devices ||= working_graph.blk_devices.select { |d| suitable_for_cloning?(d) }
+          @suitable_devices_for_cloning ||= working_graph.blk_devices
+            .select { |d| suitable_for_cloning?(d) }
         end
 
         # Clones the current device into the target device
@@ -86,7 +85,7 @@ module Y2Partitioner
           clone_partition_table(target_device)
         end
 
-      private
+        private
 
         # Current devicegraph
         #

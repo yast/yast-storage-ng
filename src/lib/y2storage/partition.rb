@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -194,6 +192,7 @@ module Y2Storage
       log.info "Partition #{name} size initially set to #{size}"
 
       return if align_type.nil?
+
       self.region = aligned_region(align_type, initial_region)
       log.info "Partition #{name} finally adjusted to #{size}"
     end
@@ -282,7 +281,7 @@ module Y2Storage
       id.is?(:esp) && formatted_as?(:vfat)
     end
 
-  protected
+    protected
 
     # Values for volume specification matching
     #

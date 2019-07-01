@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -70,7 +68,7 @@ module Y2Partitioner
         _("<p>Create and remove subvolumes from a Btrfs filesystem.</p>\n")
       end
 
-    private
+      private
 
       # Show help of all widgets that belong to its content
       # FIXME: this should belongs to the dialog

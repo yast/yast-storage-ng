@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -275,6 +273,7 @@ module Y2Storage
     def filesystem_in_network?(mountpoint)
       filesystem = filesystems.find { |i| i.mount_path == mountpoint }
       return false if filesystem.nil?
+
       filesystem.in_network?
     end
 
@@ -386,11 +385,12 @@ module Y2Storage
     #
     # @raise [ArgumentError] if the bcache does not exist in the devicegraph
     def remove_bcache(bcache)
-      raise(ArgumentError, "Incorrect device #{bcache.inspect}") unless bcache && bcache.is?(:bcache)
+      raise(ArgumentError, "Incorrect device #{bcache.inspect}") unless bcache&.is?(:bcache)
+
       bcache_cset = bcache.bcache_cset
       remove_with_dependants(bcache)
       # FIXME: Actually we want to automatically remove the cset?
-      remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
+      remove_with_dependants(bcache_cset) if bcache_cset&.bcaches&.empty?
     end
 
     # Removes a caching set
@@ -417,7 +417,8 @@ module Y2Storage
     #
     # @raise [ArgumentError] if the md does not exist in the devicegraph
     def remove_md(md)
-      raise(ArgumentError, "Incorrect device #{md.inspect}") unless md && md.is?(:md)
+      raise(ArgumentError, "Incorrect device #{md.inspect}") unless md&.is?(:md)
+
       remove_with_dependants(md)
     end
 
@@ -430,7 +431,8 @@ module Y2Storage
     #
     # @raise [ArgumentError] if the volume group does not exist in the devicegraph
     def remove_lvm_vg(vg)
-      raise(ArgumentError, "Incorrect device #{vg.inspect}") unless vg && vg.is?(:lvm_vg)
+      raise(ArgumentError, "Incorrect device #{vg.inspect}") unless vg&.is?(:lvm_vg)
+
       remove_with_dependants(vg)
     end
 
@@ -443,6 +445,7 @@ module Y2Storage
       if subvol.nil? || !subvol.is?(:btrfs_subvolume)
         raise ArgumentError, "Incorrect device #{subvol.inspect}"
       end
+
       remove_with_dependants(subvol)
     end
 
@@ -452,7 +455,8 @@ module Y2Storage
     #
     # @raise [ArgumentError] if the NFS filesystem does not exist in the devicegraph
     def remove_nfs(nfs)
-      raise(ArgumentError, "Incorrect device #{nfs.inspect}") unless nfs && nfs.is?(:nfs)
+      raise(ArgumentError, "Incorrect device #{nfs.inspect}") unless nfs&.is?(:nfs)
+
       remove_with_dependants(nfs)
     end
 
@@ -504,7 +508,7 @@ module Y2Storage
       DumpManager.dump(self, file_base_name)
     end
 
-  private
+    private
 
     # Copy of a device tree where hashes have been substituted by sorted
     # arrays to ensure consistency

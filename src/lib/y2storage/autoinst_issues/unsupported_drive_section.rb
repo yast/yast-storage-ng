@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,8 +44,7 @@ module Y2Storage
       # @see Issue#message
       def message
         # TRANSLATORS: 'type' is the type of the AutoYaST drive section
-        _("A drive of type '%{type}' is not supported in this architecture") %
-          { type: section.type }
+        format(_("A drive of type '%{type}' is not supported in this architecture"), type: section.type)
       end
     end
   end

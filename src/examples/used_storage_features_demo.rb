@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -20,12 +18,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "y2storage"
 
 if !Process.euid.zero?
-  STDERR.puts "You need to run this script as 'root'."
+  warn "You need to run this script as 'root'."
   exit 1
 end
 

@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -344,7 +342,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
             orig = part_section_class.method(:new_from_storage)
 
             allow(part_section_class).to receive(:new_from_storage) do |part|
-              part.name == "/dev/sdd3" ? nil : orig.call(part)
+              (part.name == "/dev/sdd3") ? nil : orig.call(part)
             end
           end
 
@@ -701,7 +699,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
 
       before do
         # SWIG makes very hard to use proper mocking. See comment above.
-        win = dev.partitions.sort_by(&:number).first
+        win = dev.partitions.min_by(&:number)
         win.boot = true if bootable
         win.filesystem.mount_path = mountpoint if mountpoint
       end

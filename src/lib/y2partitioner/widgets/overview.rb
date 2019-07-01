@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -133,7 +131,7 @@ module Y2Partitioner
         valid_setup? && packages_installed?
       end
 
-    private
+      private
 
       attr_reader :tree
 
@@ -173,6 +171,7 @@ module Y2Partitioner
       # @return [Boolean]
       def packages_installed?
         return true if Yast::Mode.installation
+
         used_features = Y2Storage::UsedStorageFeatures.new(device_graph)
         used_features.collect_features
         Yast::PackageSystem.CheckAndInstallPackages(used_features.feature_packages)
@@ -253,6 +252,7 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def bcache_section
         return nil unless Y2Storage::Bcache.supported?
+
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }

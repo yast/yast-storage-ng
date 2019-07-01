@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -117,6 +115,7 @@ module Y2Partitioner
     # @return [Boolean]
     def snapper?(device)
       return false if id != :system || device.filesystem.nil?
+
       device.filesystem.default_configure_snapper?
     end
   end

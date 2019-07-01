@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -78,6 +76,7 @@ module Y2Storage
     def warning_msg(passwd)
       load_cracklib
       return nil unless cracklib_loaded?
+
       msg = Yast::SCR.Execute(Yast::Path.new(".crack"), passwd)
       # Password is considered strong when cracklib returns an empty message.
       return nil if msg.empty?
@@ -85,7 +84,7 @@ module Y2Storage
       _("The password is too simple:") + "\n" + msg
     end
 
-  private
+    private
 
     # Whether the cracklib installation module is loaded
     attr_reader :cracklib_loaded
@@ -129,6 +128,7 @@ module Y2Storage
     #   successfully loaded
     def load_cracklib
       return true if cracklib_loaded?
+
       message = "Loading to memory package #{CRACKLIB_PACKAGE}"
       loaded = Yast::InstExtensionImage.LoadExtension(CRACKLIB_PACKAGE, message)
       log.warn("WARNING: Failed to load cracklib. Please check logs.") unless loaded
@@ -142,6 +142,7 @@ module Y2Storage
     # @return [Boolean] true if the module was correctly unloaded
     def unload_cracklib
       return false unless cracklib_loaded?
+
       message = "Removing from memory package #{CRACKLIB_PACKAGE}"
       unloaded = Yast::InstExtensionImage.UnLoadExtension(CRACKLIB_PACKAGE, message)
       log.warn("Warning: Failed to remove cracklib. Please check logs.") unless unloaded

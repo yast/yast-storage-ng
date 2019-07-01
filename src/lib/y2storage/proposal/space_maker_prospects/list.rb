@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -112,7 +110,7 @@ module Y2Storage
           delete_prospects_for_disk(disk, for_delete_all: true)
         end
 
-      private
+        private
 
         # @return [DiskAnalyzer] disk analyzer with information about the
         # initial layout of the system
@@ -215,6 +213,7 @@ module Y2Storage
           log.info "Checking if the disk #{disk.name} has a partition table"
 
           return unless disk.has_children? && disk.partition_table.nil?
+
           log.info "Found something that is not a partition table"
 
           if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
@@ -260,7 +259,7 @@ module Y2Storage
 
         def next_useful_resize(prospects)
           prospects.select { |e| e.available? && !e.recoverable_size.zero? }
-                   .sort_by(&:recoverable_size).last
+            .max_by(&:recoverable_size)
         end
 
         # Whether a given DeletePartition prospect should be considered only

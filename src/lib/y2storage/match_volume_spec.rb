@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -42,7 +40,7 @@ module Y2Storage
       match
     end
 
-  protected
+    protected
 
     # This can be redefined with the values to take into account during matching
     #
@@ -77,6 +75,7 @@ module Y2Storage
     # @return [Boolean]
     def match_size?(volume)
       return false if volume_match_values[:size].nil?
+
       volume_match_values[:size].between?(volume.min_size, volume.max_size_limit)
     end
 
@@ -89,6 +88,7 @@ module Y2Storage
     # @return [Boolean]
     def match_fs_type?(volume)
       return true if volume.fs_types.empty?
+
       volume.fs_types.include?(volume_match_values[:fs_type])
     end
 
@@ -101,6 +101,7 @@ module Y2Storage
     # @return [Boolean]
     def match_partition_id?(volume)
       return true if volume.partition_id.nil?
+
       volume_match_values[:partition_id] == volume.partition_id
     end
   end

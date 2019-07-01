@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -64,13 +62,14 @@ module Y2Storage
       storage_compound_actions
     end
 
-  private
+    private
 
     # Checks whether the compound actions have already been generated for this
     # actiongraph and, thus, whether #storage_compound_actions contains
     # meaningul information
     def generated_compound_actions?
       return false if storage_compound_actions.empty? && !empty?
+
       true
     end
   end

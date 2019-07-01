@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -101,7 +99,7 @@ module Y2Partitioner
       DeviceGraphs.instance.update_checkpoint(device)
     end
 
-  private
+    private
 
     # Whether it makes sense to restore a given device into {#device}
     #
@@ -110,6 +108,7 @@ module Y2Partitioner
     def can_restore_device?(dev)
       return false if dev.nil?
       return true if dev.descendants.empty?
+
       can_restore_descendants?(dev)
     end
 
@@ -120,6 +119,7 @@ module Y2Partitioner
     def can_restore_descendants?(dev)
       return true if dev.filesystem
       return true if dev.descendants.size == 1 && dev.encrypted?
+
       dev.respond_to?(:partition_table?) && dev.partition_table?
     end
 
@@ -179,6 +179,7 @@ module Y2Partitioner
     def copy_subvolumes(source)
       source.children.each do |child|
         next unless Storage.btrfs_subvolume?(child)
+
         copy_device(child)
         copy_subvolumes(child)
       end

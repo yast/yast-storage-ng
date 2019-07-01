@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -95,7 +93,7 @@ module Y2Storage
         process_devices
       end
 
-    protected
+      protected
 
       # @return [Devicegraph] Original devicegraph
       attr_reader :original_graph
@@ -118,7 +116,7 @@ module Y2Storage
       # @return [Devicegraph] Current devicegraph
       attr_reader :devicegraph
 
-    private
+      private
 
       # Sets the current creator result
       #
@@ -434,8 +432,8 @@ module Y2Storage
       def create_logical_volumes(devicegraph, vg, pvs)
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         lvm_creator.create_volumes(vg, pvs)
-      rescue RuntimeError => error
-        log.error error.message
+      rescue RuntimeError => e
+        log.error e.message
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         new_vg = vg.clone
         new_vg.lvs = flexible_partitions(vg.lvs)
@@ -471,8 +469,9 @@ module Y2Storage
       def find_bcache_member(bcache_name, role, result, devs_to_reuse)
         names = result.created_names { |d| bcache_member_for?(d, bcache_name, role) }
         return names.first unless names.empty?
+
         device = devs_to_reuse.find { |d| bcache_member_for?(d, bcache_name, role) }
-        device && device.reuse_name
+        device&.reuse_name
       end
 
       # Determines whether a device plays a given role in a bcache

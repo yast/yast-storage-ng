@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -118,7 +116,7 @@ module Y2Partitioner
           "<p>#{text1}</p><p>#{text2}</p>"
         end
 
-      private
+        private
 
         # @return [Actions::Controllers::ClonePartitionTable]
         attr_reader :controller

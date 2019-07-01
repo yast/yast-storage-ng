@@ -54,6 +54,7 @@ module Y2Storage
         save_staging_revision
 
         return if @proposal || storage_manager.staging_changed?
+
         # If the staging devicegraph has never been set, try to make an initial proposal
         create_initial_proposal
       end
@@ -83,7 +84,7 @@ module Y2Storage
         @result
       end
 
-    private
+      private
 
       # @return [Integer]
       attr_reader :initial_staging_revision
@@ -94,7 +95,7 @@ module Y2Storage
         ret = Popup.YesNo(_(
                             "Computing this proposal will overwrite manual changes \n"\
                             "done so far. Continue with computing proposal?"
-        ))
+                          ))
         log.info "overwrite_manual_settings? return #{ret}"
         ret
       end

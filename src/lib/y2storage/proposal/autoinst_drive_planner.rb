@@ -52,7 +52,7 @@ module Y2Storage
         raise NotImplementedError
       end
 
-    private
+      private
 
       # Set all the common attributes that are shared by any device defined by
       # a <partition> section of AutoYaST (i.e. a LV, MD or partition).
@@ -149,8 +149,10 @@ module Y2Storage
       # @return [Hash]
       def subvolume_attrs_for(mount)
         return {} if mount.nil?
+
         spec = VolumeSpecification.for(mount)
         return {} if spec.nil?
+
         { subvolumes_prefix: spec.btrfs_default_subvolume, subvolumes: spec.subvolumes }
       end
 
@@ -161,6 +163,7 @@ module Y2Storage
       def filesystem_for(partition_section)
         return partition_section.type_for_filesystem if partition_section.type_for_filesystem
         return nil unless partition_section.mount
+
         default_filesystem_for(partition_section)
       end
 
@@ -170,8 +173,9 @@ module Y2Storage
       # @return [Filesystems::Type] Filesystem type
       def default_filesystem_for(section)
         spec = VolumeSpecification.for(section.mount)
-        return spec.fs_type if spec && spec.fs_type
-        section.mount == "swap" ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
+        return spec.fs_type if spec&.fs_type
+
+        (section.mount == "swap") ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
       end
 
       # Determine whether the filesystem for the given mount point should be read-only
@@ -180,6 +184,7 @@ module Y2Storage
       # @return [Boolean] true if it should be read-only; false otherwise.
       def read_only?(mount_point)
         return false unless mount_point
+
         spec = VolumeSpecification.for(mount_point)
         !!spec && spec.btrfs_read_only?
       end
@@ -236,6 +241,7 @@ module Y2Storage
       def add_partition_reuse(partition, section)
         partition_to_reuse = find_partition_to_reuse(partition, section)
         return unless partition_to_reuse
+
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse, section)
       end

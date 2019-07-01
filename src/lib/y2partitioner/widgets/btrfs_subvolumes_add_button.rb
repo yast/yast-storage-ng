@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -70,7 +68,7 @@ module Y2Partitioner
         nil
       end
 
-    private
+      private
 
       def add_subvolume(path, nocow)
         filesystem.create_btrfs_subvolume(path, nocow)

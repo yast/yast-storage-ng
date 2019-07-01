@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -53,7 +51,7 @@ module Y2Partitioner
         HVSquash(RoleChoice.new(controller))
       end
 
-    private
+      private
 
       attr_reader :controller
 

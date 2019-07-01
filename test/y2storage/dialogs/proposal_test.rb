@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
@@ -85,6 +83,7 @@ describe Y2Storage::Dialogs::Proposal do
       content.nested_find do |i|
         next unless i.is_a?(Yast::Term)
         next unless i.value == :MenuButton
+
         items = i.params.last
         items.any? { |item| nested_id_term(id, item) }
       end

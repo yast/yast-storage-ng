@@ -1,10 +1,6 @@
 # use the shared YaST defaults
 inherit_from:
-  /usr/share/YaST2/data/devtools/data/rubocop_yast_style.yml
-
-# Redundant returns add legibility for developers used to other languages
-Style/RedundantReturn:
-  Enabled: false
+  /usr/share/YaST2/data/devtools/data/rubocop-0.71.0_yast_style.yml
 
 # Don't enforce any particular name for block params
 SingleLineBlockParams:
@@ -16,9 +12,10 @@ SingleLineBlockParams:
 Metrics/LineLength:
   Max: 105
 
-# Enforce if/unless at the end only for really short lines
-Style/IfUnlessModifier:
-  MaxLineLength: 60
+Metrics/BlockLength:
+  # rspec is known as DSL with big blocks
+  Exclude:
+    - test/**/*
 
 # some storage API have size method, but without empty? method
 # for details see https://github.com/yast/yast-storage-ng/pull/83
@@ -28,3 +25,21 @@ Style/ZeroLengthPredicate:
 # the ".freeze" attribute for the constants is not nice
 Style/MutableConstant:
   Enabled: false
+
+# this is failing in storage wrapper, it will need more time to adapt
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# workaround https://github.com/rubocop-hq/rubocop/issues/6861
+Layout/AccessModifierIndentation:
+  EnforcedStyle: indent
+
+Naming/UncommunicativeMethodParamName:
+  AllowedNames:
+    - vg
+    - md
+    - lv
+    - id
+    - up
+    - to
+    - as

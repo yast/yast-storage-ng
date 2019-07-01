@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -127,7 +125,7 @@ module Y2Partitioner
         nil
       end
 
-    private
+      private
 
       # @return [Y2Partitioner::Actions::Controllers::Md]
       attr_reader :controller

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -60,11 +58,6 @@ module Y2Partitioner
     # @return [Y2Storage::Devicegraph]
     attr_accessor :current
 
-    # Disk analyzer for the system graph
-    #
-    # @return [Y2Storage::DiskAnalyzer]
-    attr_reader :disk_analyzer
-
     def initialize(system: nil, initial: nil)
       @system = system || storage_manager.probed
       @initial = initial || storage_manager.staging
@@ -110,7 +103,7 @@ module Y2Partitioner
         res = block.call
 
         self.current = initial_graph if !res
-      rescue
+      rescue StandardError
         self.current = initial_graph
         raise
       end
@@ -149,7 +142,7 @@ module Y2Partitioner
       current != initial
     end
 
-  private
+    private
 
     def storage_manager
       Y2Storage::StorageManager.instance

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,7 +44,7 @@ module Y2Partitioner
 
         # Selected lv type
         # @return [Y2Storage::LvType]
-        attr_accessor :lv_type
+        attr_writer :lv_type
 
         # Selected thin pool
         # @return [Y2Storage::LvmLv, nil] nil if lv type is not thin
@@ -245,7 +243,7 @@ module Y2Partitioner
           _("Add Logical Volume on %s") % vg_name
         end
 
-      private
+        private
 
         # If only thin volumes can be created, it returns thin type. Otherwise, it
         # returns normal type.
@@ -253,6 +251,7 @@ module Y2Partitioner
         # @return [Y2Storage::LvType]
         def default_lv_type
           return Y2Storage::LvType::THIN if !lv_can_be_added? && thin_lv_can_be_added?
+
           Y2Storage::LvType::NORMAL
         end
 

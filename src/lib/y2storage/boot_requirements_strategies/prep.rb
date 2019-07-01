@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,7 +54,7 @@ module Y2Storage
         res
       end
 
-    protected
+      protected
 
       # Maximum size firmware can handle
       def max_prep_size

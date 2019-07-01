@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -125,7 +123,7 @@ module Y2Storage
       #
       # @return [String]
       def blk_device_basename
-        basename = plain_blk_devices.map(&:basename).sort.first
+        basename = plain_blk_devices.map(&:basename).min
 
         return basename unless multidevice?
 
@@ -196,10 +194,11 @@ module Y2Storage
       #   matches the filesystem
       def volume_specification
         return nil unless mount_point
+
         Y2Storage::VolumeSpecification.for(mount_point.path)
       end
 
-    protected
+      protected
 
       def types_for_is
         super << :blk_filesystem

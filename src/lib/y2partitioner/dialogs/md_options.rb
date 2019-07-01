@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -53,7 +51,7 @@ module Y2Partitioner
         )
       end
 
-    private
+      private
 
       attr_reader :controller
 
@@ -80,7 +78,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def opt
-          %i(hstretch notify)
+          [:hstretch, :notify]
         end
 
         def items
@@ -121,7 +119,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def opt
-          %i(hstretch notify)
+          [:hstretch, :notify]
         end
 
         def items

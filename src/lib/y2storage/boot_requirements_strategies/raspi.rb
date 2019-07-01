@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,7 +54,7 @@ module Y2Storage
         planned_partitions
       end
 
-    protected
+      protected
 
       # System partition containing an usable Raspberry Pi boot code.
       #
@@ -124,7 +122,7 @@ module Y2Storage
       # @param disk [Partitionable]
       # @return [Partition, nil] nil if the disk contains no partitions
       def first_partition(disk)
-        disk.partitions.sort_by { |p| p.region.start }.first
+        disk.partitions.min_by { |p| p.region.start }
       end
 
       # Whether the disk contains an MS-DOS style (a.k.a. MBR) partition table
@@ -133,7 +131,7 @@ module Y2Storage
       # @return [Boolean] false if there is no partition table or if there is
       #   one of the wrong type
       def msdos_ptable?(disk)
-        disk.partition_table && disk.partition_table.type.is?(:msdos)
+        disk.partition_table&.type&.is?(:msdos)
       end
     end
   end

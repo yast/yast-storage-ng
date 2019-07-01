@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -111,6 +109,7 @@ describe Y2Storage::PartitionId do
       Y2Storage::PartitionId.constants.each do |constant|
         partition = Y2Storage::PartitionId.const_get(constant)
         next unless partition.is_a?(Y2Storage::PartitionId)
+
         expect(partition.to_human_string).to be_a(::String)
       end
     end

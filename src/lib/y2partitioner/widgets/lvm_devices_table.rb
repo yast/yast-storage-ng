@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -42,7 +40,7 @@ module Y2Partitioner
         remove_columns(:start, :end)
       end
 
-    private
+      private
 
       def pe_size_title
         # TRANSLATORS: table header, type of metadata
@@ -56,11 +54,13 @@ module Y2Partitioner
 
       def pe_size_value(device)
         return "" unless device.respond_to?(:extent_size)
+
         device.extent_size.to_human_string
       end
 
       def stripes_value(device)
         return "" unless devices.respond_to?(:stripes)
+
         stripes_info(device)
       end
     end

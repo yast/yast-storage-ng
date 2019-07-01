@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,6 +39,7 @@ describe Y2Storage::Filesystems::Type do
       Y2Storage::Filesystems::Type.constants.each do |const|
         type = Y2Storage::Filesystems::Type.const_get(const)
         next unless type.is_a?(Y2Storage::Filesystems::Type)
+
         expect(type.supported_fstab_options).to be_a(::Array)
       end
     end
@@ -51,6 +50,7 @@ describe Y2Storage::Filesystems::Type do
       Y2Storage::Filesystems::Type.constants.each do |const|
         type = Y2Storage::Filesystems::Type.const_get(const)
         next unless type.is_a?(Y2Storage::Filesystems::Type)
+
         expect(type.default_partition_id).to be_a(::Y2Storage::PartitionId)
       end
     end

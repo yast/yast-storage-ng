@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -86,7 +84,7 @@ module Y2Partitioner
         end
       end
 
-    private
+      private
 
       # @return [Y2Storage::BlkDevice]
       attr_reader :device

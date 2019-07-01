@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -70,7 +68,7 @@ module Y2Storage
         CreatorResult.new(devicegraph, {})
       end
 
-    private
+      private
 
       # Devices to add to the multi-device Btrfs
       #

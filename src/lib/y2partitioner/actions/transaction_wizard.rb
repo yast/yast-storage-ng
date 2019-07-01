@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -58,7 +56,7 @@ module Y2Partitioner
         sym
       end
 
-    protected
+      protected
 
       # Sid of the current device
       #

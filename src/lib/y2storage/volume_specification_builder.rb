@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
       proposal_spec(mount_point) || fallback_spec(mount_point)
     end
 
-  private
+    private
 
     # Return a volume spec from proposal settings for the given mount point
     #
@@ -68,6 +66,7 @@ module Y2Storage
     #   it returns nil.
     def proposal_spec(mount_point)
       return nil if proposal_settings.volumes.nil?
+
       proposal_settings.volumes.find { |v| v.mount_point == mount_point }
     end
 

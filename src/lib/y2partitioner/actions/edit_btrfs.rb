@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,7 +39,7 @@ module Y2Partitioner
         UIState.instance.select_row(filesystem)
       end
 
-    private
+      private
 
       # @return [Controllers::Filesystem]
       attr_reader :controller

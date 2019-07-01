@@ -56,7 +56,7 @@ module Y2Storage
         delete_with_related_partitions(partition)
       end
 
-    protected
+      protected
 
       attr_reader :devicegraph, :disks
 

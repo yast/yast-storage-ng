@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2012-2016] Novell, Inc.
 # Copyright (c) [2017] SUSE LLC
 #
@@ -118,6 +116,7 @@ module Y2Storage
     #
     def matches_arch?(target_arch = nil, &block)
       return true unless arch_specific?
+
       use_subvol = false
       archs.each do |a|
         arch = a.dup
@@ -142,6 +141,7 @@ module Y2Storage
     # @return [Boolean]
     def shadowed?(fs_mount_point, other_mount_points)
       return false if fs_mount_point.nil? || other_mount_points.nil?
+
       mount_point = Y2Storage::Filesystems::Btrfs.btrfs_subvolume_mount_point(fs_mount_point, path)
       other_mount_points.compact.any? { |m| Y2Storage::BtrfsSubvolume.shadowing?(m, mount_point) }
     end
@@ -158,6 +158,7 @@ module Y2Storage
       subvolume_path = filesystem.btrfs_subvolume_path(path)
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, !copy_on_write)
       return if subvolume.nil?
+
       subvolume.can_be_auto_deleted = true
       subvolume
     end
@@ -169,18 +170,15 @@ module Y2Storage
     # @return [SubvolSpecification] or nil if error
     def self.create_from_xml(xml)
       return nil if xml.nil?
+
       xml = { "path" => xml } if xml.is_a?(String)
       return nil unless xml.key?("path")
 
       path = xml["path"]
       cow = true
-      if xml.key?("copy_on_write")
-        cow = xml["copy_on_write"]
-      end
+      cow = xml["copy_on_write"] if xml.key?("copy_on_write")
       archs = nil
-      if xml.key?("archs")
-        archs = xml["archs"].gsub(/\s+/, "").split(",")
-      end
+      archs = xml["archs"].gsub(/\s+/, "").split(",") if xml.key?("archs")
       planned_subvol = SubvolSpecification.new(path, copy_on_write: cow, archs: archs)
       log.info("Creating from XML: #{planned_subvol}")
       planned_subvol

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -52,13 +50,14 @@ module Y2Partitioner
           inhibitors.inhibit
 
           return nil if partitioner_dialog.nil? || partitioner_dialog.run != :next
+
           allow_commit ? commit : forbidden_commit_warning
         ensure
           inhibitors.uninhibit
         end
       end
 
-    private
+      private
 
       # Whether to run the Partitioner
       #

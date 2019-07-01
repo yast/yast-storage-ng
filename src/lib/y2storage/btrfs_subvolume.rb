@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -92,6 +90,7 @@ module Y2Storage
     # @return [Filesystems::MountByType, nil]
     def copy_mount_by_from_filesystem
       return nil if mount_point.nil? || filesystem.mount_point.nil?
+
       mount_point.mount_by = filesystem.mount_point.mount_by
     end
 
@@ -137,6 +136,7 @@ module Y2Storage
     def self.shadowing?(mount_path, other_mount_path)
       return false if mount_path.nil? || other_mount_path.nil?
       return false if mount_path.empty? || other_mount_path.empty?
+
       # Just checking with start_with? is not sufficient:
       # "/bootinger/schlonz".start_with?("/boot") -> true
       # So append "/" to make sure only complete subpaths are compared:
@@ -166,7 +166,7 @@ module Y2Storage
       Mountable.all(devicegraph).select { |m| shadowing?(m.mount_path, mount_path) }
     end
 
-  protected
+    protected
 
     def types_for_is
       super << :btrfs_subvolume

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -72,7 +70,7 @@ module Y2Storage
         description + details
       end
 
-    private
+      private
 
       # Build a string containing a device shrinkage details
       #

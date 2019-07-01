@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -49,7 +47,7 @@ RSpec.shared_context "candidate devices" do
   def used_devices
     sids_before = fake_devicegraph.partitions.map(&:sid)
 
-    new_partitions = proposal.devices.partitions.select { |p| !sids_before.include?(p.sid) }
+    new_partitions = proposal.devices.partitions.reject { |p| sids_before.include?(p.sid) }
     devices = new_partitions.map(&:partitionable).uniq
 
     devices.map(&:name)

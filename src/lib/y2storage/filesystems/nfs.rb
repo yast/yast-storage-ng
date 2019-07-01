@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -63,7 +61,7 @@ module Y2Storage
 
       # @return [Boolean]
       def in_network?
-        return true
+        true
       end
 
       # Whether the remote share is currently accessible
@@ -104,7 +102,7 @@ module Y2Storage
         spec.chomp("/") == share.chomp("/")
       end
 
-    protected
+      protected
 
       def types_for_is
         super << :nfs

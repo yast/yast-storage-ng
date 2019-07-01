@@ -61,7 +61,7 @@ module Y2Storage
         partitioner.process_device(md, planned_md)
       end
 
-    private
+      private
 
       # @param devicegraph  [Devicegraph] Devicegraph
       # @param planned_md   [Planned::Md] MD RAID to create

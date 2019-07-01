@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -80,7 +78,7 @@ module Y2Partitioner
         false
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::BtrfsDevices]
       attr_reader :controller
@@ -103,7 +101,7 @@ module Y2Partitioner
       #
       # @return [Widgets::BtrfsDevicesSelector]
       def btrfs_devices_selector_widget
-        @btrfs_devices_widget ||= Widgets::BtrfsDevicesSelector.new(controller)
+        @btrfs_devices_selector_widget ||= Widgets::BtrfsDevicesSelector.new(controller)
       end
 
       # Btrfs RAID levels help

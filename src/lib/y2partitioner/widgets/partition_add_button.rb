@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,7 +36,7 @@ module Y2Partitioner
         _("Add Partition...")
       end
 
-    private
+      private
 
       # When the selected device is a partition, its partitionable (disk, dasd,
       # multipath or BIOS RAID) is considered as the selected device

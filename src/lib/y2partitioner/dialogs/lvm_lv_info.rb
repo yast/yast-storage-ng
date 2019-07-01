@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -167,7 +165,7 @@ module Y2Partitioner
           @controller.thin_pool = current_widget.value if selected_lv_type.is?(:thin)
         end
 
-      private
+        private
 
         NORMAL_VOLUME_OPTION = Y2Storage::LvType::NORMAL.to_sym.freeze
         THIN_POOL_OPTION = Y2Storage::LvType::THIN_POOL.to_sym.freeze
@@ -192,6 +190,8 @@ module Y2Partitioner
             disable_option(NORMAL_VOLUME_OPTION)
             disable_option(THIN_POOL_OPTION)
           end
+
+          nil
         end
 
         # Disables an specific widget
@@ -217,6 +217,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def init
           return if @controller.thin_pool.nil?
+
           self.value = @controller.thin_pool
         end
 
@@ -229,10 +230,9 @@ module Y2Partitioner
           @controller.available_thin_pools.find { |p| p.sid == super }
         end
 
-        # @param v [Y2Storage::LvmLv, nil]
-        def value=(v)
-          sid = v.nil? ? nil : v.sid
-          super(sid)
+        # @param lv [Y2Storage::LvmLv, nil]
+        def value=(lv)
+          super(lv&.sid)
         end
       end
     end

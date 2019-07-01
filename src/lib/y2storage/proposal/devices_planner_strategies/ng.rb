@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -44,7 +42,7 @@ module Y2Storage
           remove_shadowed_subvolumes(planned_devices)
         end
 
-      protected
+        protected
 
         # Plans a device based on a <volume> section from control file
         #
@@ -111,9 +109,9 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param _volume [VolumeSpecification]
         def adjust_encryption(planned_device, _volume)
-          if planned_device.is_a?(Planned::Partition)
-            planned_device.encryption_password = settings.encryption_password
-          end
+          return unless planned_device.is_a?(Planned::Partition)
+
+          planned_device.encryption_password = settings.encryption_password
         end
 
         # Adjusts planned device sizes according to settings
@@ -129,13 +127,15 @@ module Y2Storage
           max_size = max_size_lvm if settings.lvm && max_size_lvm > DiskSize.zero
           planned_device.max_size = max_size
 
-          min_size = target == :min ? min_size : desired_size
+          min_size = (target == :min) ? min_size : desired_size
           planned_device.min_size = min_size
 
           if volume.adjust_by_ram?
             planned_device.min_size = [planned_device.min_size, ram_size].max
             planned_device.max_size = [planned_device.max_size, ram_size].max
           end
+
+          nil
         end
 
         # Adjusts btrfs values according to settings
@@ -220,7 +220,7 @@ module Y2Storage
         # Searches for not proposed volume specifications
         # @return [Array<VolumeSpecification>]
         def not_proposed_volumes
-          settings.volumes.select { |v| !v.proposed? }
+          settings.volumes.reject(&:proposed?)
         end
       end
     end

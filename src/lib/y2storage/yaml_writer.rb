@@ -95,13 +95,14 @@ module Y2Storage
       yaml
     end
 
-  private
+    private
 
     # Write a human-readable timestamp to a file.
     #
     # @param file [File]
     def write_timestamp(file)
       return unless file.respond_to?(:puts)
+
       file.puts("# #{Time.now}")
     end
 
@@ -226,9 +227,7 @@ module Y2Storage
 
       ptable = device.partition_table
       content["partition_table"] = ptable.type.to_s
-      if ptable.type.is?(:msdos)
-        content["mbr_gap"] = ptable.minimal_mbr_gap.to_s
-      end
+      content["mbr_gap"] = ptable.minimal_mbr_gap.to_s if ptable.type.is?(:msdos)
       partitions = yaml_disk_device_partitions(device)
       content["partitions"] = partitions unless partitions.empty?
 
@@ -510,8 +509,10 @@ module Y2Storage
     #
     def yaml_btrfs_subvolumes(filesystem)
       return {} unless filesystem.type.is?(:btrfs)
+
       subvolumes = filesystem.btrfs_subvolumes
       return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
+
       default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? && !s.path.empty? }
       content = {}
       content["default_subvolume"] = default_subvolume.path if default_subvolume
@@ -530,6 +531,7 @@ module Y2Storage
     #
     def yaml_btrfs_subvolume(subvol)
       return nil if subvol.path.empty?
+
       content = { "path" => subvol.path }
       content["nocow"] = "true" if subvol.nocow?
       { "subvolume" => content }
@@ -586,5 +588,4 @@ module Y2Storage
       blk_device.is?(:disk, :dasd, :software_raid, :encryption, :lvm_lv, :partition)
     end
   end
-  # rubocop:enable all
 end

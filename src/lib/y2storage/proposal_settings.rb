@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -289,12 +287,14 @@ module Y2Storage
     def legacy_btrfs_default_subvolume
       return btrfs_default_subvolume unless ng_format?
       return nil if volumes.empty?
+
       root_volume = volumes.find { |v| v.mount_point == "/" }
       return root_volume.btrfs_default_subvolume if root_volume
+
       volumes.first.btrfs_default_subvolume
     end
 
-  private
+    private
 
     DELETE_MODES = [:none, :all, :ondemand]
     private_constant :DELETE_MODES
@@ -417,10 +417,10 @@ module Y2Storage
 
     def validated_feature_value(value, valid_values)
       raise ArgumentError, "Invalid feature value: #{value}" unless value
+
       result = value.to_sym
-      if !valid_values.include?(result)
-        raise ArgumentError, "Invalid feature value: #{value}"
-      end
+      raise ArgumentError, "Invalid feature value: #{value}" if !valid_values.include?(result)
+
       result
     end
 

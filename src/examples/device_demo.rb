@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 # Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
@@ -22,7 +20,7 @@
 
 require "getoptlong"
 require "yast"	# Changes $LOAD_PATH!
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "y2storage"
 
 opts = GetoptLong.new(
@@ -37,25 +35,25 @@ opts = GetoptLong.new(
   ["--del-partitions", GetoptLong::REQUIRED_ARGUMENT]
 )
 
-usage = <<XXX
-device_demo.rb [OPTIONS]
+usage = <<~XXX
+  device_demo.rb [OPTIONS]
 
-Probe device tree or read device tree from YAML file, optionally propose a
-new device tree, and then either show the new tree as graphics or write the
-new tree as YAML file to stdout.
+  Probe device tree or read device tree from YAML file, optionally propose a
+  new device tree, and then either show the new tree as graphics or write the
+  new tree as YAML file to stdout.
 
-If no option is given, probe device tree.
+  If no option is given, probe device tree.
 
-Options:
-  --xml XML_FILE                  Read device tree from XML_FILE
-  --yaml YAML_FILE                Read device tree from YAML_FILE
-  --probe                         Probe device tree (default if neither --xml nor --yaml is used).
-  --lvm                           Create LVM-based proposal.
-  --encryption                    Encrypt file systems.
-  --propose                       Propose new device tree.
-  --del-partitions SID1,SID2,...  Delete partitions with given storage ids from device tree.
-  --gfx                           Show device tree as graphics.
-  --help                          Write this text.
+  Options:
+    --xml XML_FILE                  Read device tree from XML_FILE
+    --yaml YAML_FILE                Read device tree from YAML_FILE
+    --probe                         Probe device tree (default if neither --xml nor --yaml is used).
+    --lvm                           Create LVM-based proposal.
+    --encryption                    Encrypt file systems.
+    --propose                       Propose new device tree.
+    --del-partitions SID1,SID2,...  Delete partitions with given storage ids from device tree.
+    --gfx                           Show device tree as graphics.
+    --help                          Write this text.
 XXX
 
 yaml_input = nil
@@ -90,14 +88,14 @@ begin
       opt_del_parts = arg.split(",").map(&:to_i)
     end
   end
-rescue
+rescue StandardError
   abort usage
 end
 
 abort usage if !ARGV.empty?
 
 if !Process.euid.zero?
-  STDERR.puts "You need to run this script as 'root'."
+  warn "You need to run this script as 'root'."
   exit 1
 end
 

@@ -48,7 +48,7 @@ module Y2Storage
         max_size <= device_to_reuse(devicegraph).size
       end
 
-    protected
+      protected
 
       # Implements reuse_device! hook
       #
@@ -82,6 +82,8 @@ module Y2Storage
           log.warn "Resizing #{reuse_name} to #{max_size} was not possible. " \
             "Using #{device.size} instead."
         end
+
+        nil
       end
     end
   end

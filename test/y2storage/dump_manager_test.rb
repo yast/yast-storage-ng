@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) 2018 SUSE LLC
 #
 # All Rights Reserved.
@@ -77,11 +75,12 @@ describe Y2Storage::DumpManager do
   end
 
   def base_dir
-    Process.euid == 0 ? "/var/log/YaST2" : Dir.home + "/.y2storage"
+    (Process.euid == 0) ? "/var/log/YaST2" : Dir.home + "/.y2storage"
   end
 
   def dump_dir_list
     return [] unless File.exist?(base_dir)
+
     Dir.glob(base_dir + "/storage*").sort
   end
 

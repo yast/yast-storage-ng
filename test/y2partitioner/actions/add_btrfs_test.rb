@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -96,7 +94,7 @@ describe Y2Partitioner::Actions::AddBtrfs do
         end
 
         it "does not create a new Btrfs filesystem in the devicegraph" do
-          expect { sequence.run }.to_not change { current_graph.btrfs_filesystems }
+          expect { sequence.run }.to_not(change { current_graph.btrfs_filesystems })
         end
       end
     end

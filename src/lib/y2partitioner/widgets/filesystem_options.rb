@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -62,7 +60,7 @@ module Y2Partitioner
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end
 
-    private
+      private
 
       # @return [Y2Partitioner::Actions::Controllers::Filesystem]
       attr_reader :controller

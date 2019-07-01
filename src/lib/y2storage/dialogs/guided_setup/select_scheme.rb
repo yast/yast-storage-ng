@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -42,6 +40,7 @@ module Y2Storage
           widget_update(:password, using_encryption?, attr: :Enabled)
           widget_update(:repeat_password, using_encryption?, attr: :Enabled)
           return unless focus && using_encryption?
+
           Yast::UI.SetFocus(Id(:password))
         end
 
@@ -54,7 +53,7 @@ module Y2Storage
           !guided_setup.allowed?
         end
 
-      protected
+        protected
 
         # @return [EncryptPasswordChecker]
         attr_reader :passwd_checker
@@ -95,10 +94,10 @@ module Y2Storage
           widget_update(:lvm, settings.use_lvm)
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
-          if settings.use_encryption
-            widget_update(:password, settings.encryption_password)
-            widget_update(:repeat_password, settings.encryption_password)
-          end
+          return unless settings.use_encryption
+
+          widget_update(:password, settings.encryption_password)
+          widget_update(:repeat_password, settings.encryption_password)
         end
 
         def update_settings!
@@ -145,7 +144,7 @@ module Y2Storage
           # rubocop:enable Metrics/MethodLength
         end
 
-      private
+        private
 
         def valid?
           return true unless using_encryption?

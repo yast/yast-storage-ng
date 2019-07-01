@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -333,6 +331,7 @@ module Y2Storage
     # Removes the filesystem when the device is formatted
     def delete_filesystem
       return if filesystem.nil?
+
       remove_descendants
     end
 
@@ -438,7 +437,7 @@ module Y2Storage
     #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      fs = formatted? && filesystem.multidevice? ? filesystem : nil
+      fs = (formatted? && filesystem.multidevice?) ? filesystem : nil
 
       (dm_raids + [vg, md, multipath, bcache, in_bcache_cset, fs]).compact
     end
@@ -455,6 +454,7 @@ module Y2Storage
     # @return [String, nil]
     def filesystem_label
       return nil unless blk_filesystem
+
       blk_filesystem.label
     end
 
@@ -466,6 +466,7 @@ module Y2Storage
       label = filesystem_label
 
       return nil if label.nil? || label.empty?
+
       File.join("/dev", "disk", "by-label", label)
     end
 
@@ -473,6 +474,7 @@ module Y2Storage
     # @return [String, nil]
     def filesystem_uuid
       return nil unless blk_filesystem
+
       blk_filesystem.uuid
     end
 
@@ -484,6 +486,7 @@ module Y2Storage
       uuid = filesystem_uuid
 
       return nil if uuid.nil? || uuid.empty?
+
       File.join("/dev", "disk", "by-uuid", uuid)
     end
 
@@ -491,6 +494,7 @@ module Y2Storage
     # @return [Filesystems::Type, nil]
     def filesystem_type
       return nil unless blk_filesystem
+
       blk_filesystem.type
     end
 
@@ -498,6 +502,7 @@ module Y2Storage
     # @return [String, nil]
     def filesystem_mountpoint
       return nil unless blk_filesystem
+
       blk_filesystem.mount_path
     end
 
@@ -519,6 +524,7 @@ module Y2Storage
     # @return [Boolean]
     def to_be_formatted?(initial_devicegraph)
       return false unless blk_filesystem
+
       !blk_filesystem.exists_in_devicegraph?(initial_devicegraph)
     end
 
@@ -549,6 +555,7 @@ module Y2Storage
     # @return [String, nil] nil if vendor is unknown
     def vendor
       return nil if hwinfo.nil?
+
       hwinfo.vendor
     end
 
@@ -559,6 +566,7 @@ module Y2Storage
     # @return [String, nil] nil if model is unknown
     def model
       return nil if hwinfo.nil?
+
       hwinfo.model
     end
 
@@ -569,6 +577,7 @@ module Y2Storage
     # @return [String, nil] nil if bus is unknown
     def bus
       return nil if hwinfo.nil?
+
       hwinfo.bus
     end
 
@@ -581,10 +590,11 @@ module Y2Storage
     # @return [DiskSize]
     def recoverable_size
       return DiskSize.zero unless resize_info.resize_ok?
+
       size - resize_info.min_size
     end
 
-  protected
+    protected
 
     # Values for volume specification matching
     #

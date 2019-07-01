@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -57,7 +55,7 @@ module Y2Storage
       @data = nil
     end
 
-  private
+    private
 
     # Return devices information from hwinfo
     #
@@ -106,6 +104,7 @@ module Y2Storage
       body.lines.map(&:strip).each_with_object(OpenStruct.new) do |line, data|
         key, value = line.split(":", 2)
         next if value.nil?
+
         key = key.downcase.tr(" ", "_").tr("()/", "")
         parsed_value = parse(key, value)
         data.public_send("#{key}=", parsed_value)

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -43,7 +41,7 @@ module Y2Storage
         Array(mds)
       end
 
-    private
+      private
 
       # Returns a list of non partitioned MD RAID devices from old-style AutoYaST profile
       #
@@ -131,6 +129,7 @@ module Y2Storage
       def add_raid_options(md, raid_options)
         md.md_level = raid_level_from(raid_options)
         return if raid_options.nil?
+
         md.name = raid_options.raid_name if raid_options.raid_name
         md.chunk_size = chunk_size_from_string(raid_options.chunk_size) if raid_options.chunk_size
         md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
@@ -155,7 +154,7 @@ module Y2Storage
       # @param string [String] User specified chunk size
       # @return [DiskSize]
       def chunk_size_from_string(string)
-        string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
+        (string =~ /\D/) ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
 
       # Given a user specified RAID type, it returns the RAID level
@@ -166,6 +165,7 @@ module Y2Storage
       # @return [Y2Storage::MdLevel] RAID level
       def raid_level_from(raid_options)
         return Y2Storage::MdLevel::RAID1 if raid_options.nil? || raid_options.raid_type.nil?
+
         MdLevel.find(raid_options.raid_type)
       rescue NameError
         issues_list.add(:invalid_value, raid_options.raid_type, :raid_type, "raid1")
@@ -178,7 +178,8 @@ module Y2Storage
       def find_md_to_reuse(md)
         dev_by_name = devicegraph.find_by_any_name(md.name, alternative_names: true)
 
-        return dev_by_name if dev_by_name && dev_by_name.is?(:md)
+        return dev_by_name if dev_by_name&.is?(:md)
+
         nil
       end
     end

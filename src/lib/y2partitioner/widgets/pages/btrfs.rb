@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -72,7 +70,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # @return [CWM::TreePager]
         attr_reader :pager
@@ -136,7 +134,7 @@ module Y2Partitioner
             )
         end
 
-      private
+        private
 
         # @return [Array<Widgets::DeviceButton>]
         def buttons
@@ -167,7 +165,7 @@ module Y2Partitioner
           )
         end
 
-      private
+        private
 
         # @return [Y2Storage::Filesystems::Btrfs]
         attr_reader :filesystem

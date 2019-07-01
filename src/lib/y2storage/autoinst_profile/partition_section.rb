@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -203,6 +201,7 @@ module Y2Storage
       #   impossible to infer the type
       def type_for_filesystem
         return nil unless filesystem
+
         Filesystems::Type.find(filesystem)
       rescue NameError
         nil
@@ -215,6 +214,7 @@ module Y2Storage
       #   or it's impossible to infer the type
       def type_for_mountby
         return nil unless mountby
+
         Filesystems::MountByType.find(mountby)
       rescue NameError
         nil
@@ -229,7 +229,8 @@ module Y2Storage
       # @return [PartitionId]
       def id_for_partition
         return PartitionId.new_from_legacy(partition_id) if partition_id
-        return PartitionId::SWAP if type_for_filesystem && type_for_filesystem.is?(:swap)
+        return PartitionId::SWAP if type_for_filesystem&.is?(:swap)
+
         PartitionId::LINUX
       end
 
@@ -241,7 +242,7 @@ module Y2Storage
       #
       # @return [String] MD RAID device name
       def name_for_md
-        name = raid_options && raid_options.raid_name
+        name = raid_options&.raid_name
         return name unless name.nil? || name.empty?
 
         "/dev/md/#{partition_nr}"
@@ -252,7 +253,7 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem, nil]
       # @return [String, nil]
       def name_for_btrfs(filesystem)
-        return nil unless filesystem && filesystem.multidevice? && filesystem.is?(:btrfs)
+        return nil unless filesystem&.multidevice? && filesystem&.is?(:btrfs)
 
         "btrfs_#{filesystem.sid}"
       end
@@ -273,17 +274,17 @@ module Y2Storage
 
         # Exporting these values only makes sense when the device is a block device. Note that some
         # exported devices (e.g., multi-device Btrfs and NFS filesystems) are not block devices.
-        if device.is?(:blk_device)
-          init_encryption_fields(device)
-          init_filesystem_fields(device)
+        return unless device.is?(:blk_device)
 
-          # NOTE: The old AutoYaST exporter does not report the real size here.
-          # It intentionally reports one cylinder less. Cylinders is an obsolete
-          # unit (that equals to 8225280 bytes in my experiments).
-          # According to the comments there, that was done due to bnc#415005 and
-          # bnc#262535.
-          @size = device.size.to_i.to_s if create && !fixed_size?(device)
-        end
+        init_encryption_fields(device)
+        init_filesystem_fields(device)
+
+        # NOTE: The old AutoYaST exporter does not report the real size here.
+        # It intentionally reports one cylinder less. Cylinders is an obsolete
+        # unit (that equals to 8225280 bytes in my experiments).
+        # According to the comments there, that was done due to bnc#415005 and
+        # bnc#262535.
+        @size = device.size.to_i.to_s if create && !fixed_size?(device)
       end
 
       def to_hashes
@@ -304,7 +305,7 @@ module Y2Storage
         "partitions"
       end
 
-    protected
+      protected
 
       # Uses legacy ids for backwards compatibility. For example, BIOS Boot
       # partitions in the old libstorage were represented by the internal
@@ -386,25 +387,25 @@ module Y2Storage
         init_mount_options(filesystem)
       end
 
-      # @param fs [Filesystems::BlkFilesystem]
-      def init_mount_options(fs)
-        if !fs.mount_point.nil?
-          @mount = fs.mount_point.path
-          @mountby = fs.mount_point.mount_by.to_sym
-          mount_options = fs.mount_point.mount_options
-          @fstab_options = mount_options unless mount_options.empty?
-        end
+      # @param filesystem [Filesystems::BlkFilesystem]
+      def init_mount_options(filesystem)
+        return if filesystem.mount_point.nil?
+
+        @mount = filesystem.mount_point.path
+        @mountby = filesystem.mount_point.mount_by.to_sym
+        mount_options = filesystem.mount_point.mount_options
+        @fstab_options = mount_options unless mount_options.empty?
       end
 
-      # @param fs [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
-      def init_subvolumes(fs)
-        return unless fs.supports_btrfs_subvolumes?
+      # @param filesystem [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
+      def init_subvolumes(filesystem)
+        return unless filesystem.supports_btrfs_subvolumes?
 
-        @subvolumes_prefix = fs.subvolumes_prefix
+        @subvolumes_prefix = filesystem.subvolumes_prefix
 
-        valid_subvolumes = fs.btrfs_subvolumes.reject do |subvol|
+        valid_subvolumes = filesystem.btrfs_subvolumes.reject do |subvol|
           subvol.path.empty? || subvol.path == @subvolumes_prefix ||
-            subvol.path.start_with?(fs.snapshots_root)
+            subvol.path.start_with?(filesystem.snapshots_root)
         end
 
         @subvolumes = valid_subvolumes.map do |subvol|
@@ -441,6 +442,7 @@ module Y2Storage
       # @return [Boolean]
       def enforce_bios_boot?(partition)
         return false if partition.filesystem_mountpoint.nil?
+
         partition.id.is?(:windows_system) && partition.filesystem_mountpoint.include?("/boot")
       end
 
@@ -478,6 +480,7 @@ module Y2Storage
       #   not belong to any volume group.
       def lvm_group_name(device)
         return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
+
         device.lvm_pv.lvm_vg.basename
       end
 

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,7 +54,7 @@ module Y2Storage
       # @see Issue#message
       def message
         # TRANSLATORS: AutoYaST element
-        _("Missing element '%{attr}'") % { attr: attr }
+        format(_("Missing element '%{attr}'"), attr: attr)
       end
     end
   end

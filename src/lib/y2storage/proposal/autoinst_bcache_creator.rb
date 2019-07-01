@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -57,7 +55,7 @@ module Y2Storage
         partitioner.process_device(bcache, planned_bcache)
       end
 
-    private
+      private
 
       # @param devicegraph     [Devicegraph] devicegraph in which the device must be created
       # @param planned_bcache  [Planned::Bcache] bcache device
@@ -99,6 +97,7 @@ module Y2Storage
       # @return [Y2Storage::BcacheCset]
       def find_or_create_bcache_cset(caching_device)
         return caching_device.in_bcache_cset if caching_device.in_bcache_cset
+
         caching_device.remove_descendants
         caching_device.create_bcache_cset
       end

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -160,6 +158,7 @@ module Y2Storage
       #
       def subvolume_can_be_created?(path)
         return true unless exists_in_raw_probed?
+
         !subvolume_descendants_exist?(path)
       end
 
@@ -324,8 +323,10 @@ module Y2Storage
       # @return [String, nil] nil whether any path is not valid
       def self.btrfs_subvolume_path(subvolumes_prefix, subvolume_path)
         return nil if subvolumes_prefix.nil? || subvolume_path.nil?
+
         path = Pathname(File.join(subvolumes_prefix, subvolume_path))
         return path.to_s unless path.absolute?
+
         path.relative_path_from(MountPoint::ROOT_PATH).to_s
       end
 
@@ -343,6 +344,7 @@ module Y2Storage
       def self.btrfs_subvolume_mount_point(fs_mount_path, subvolume_path)
         return nil if fs_mount_path.nil?
         return nil if subvolume_path.nil?
+
         File.join(fs_mount_path, subvolume_path)
       end
 
@@ -390,6 +392,7 @@ module Y2Storage
         subvolumes = btrfs_subvolumes.select(&:can_be_auto_deleted?)
         subvolumes.each do |subvolume|
           next unless subvolume.shadowed?
+
           shadow_btrfs_subvolume(subvolume.path)
         end
       end
@@ -399,6 +402,7 @@ module Y2Storage
         auto_deleted_subvolumes.each do |spec|
           mount_path = btrfs_subvolume_mount_point(spec.path)
           next if BtrfsSubvolume.shadowed?(devicegraph, mount_path)
+
           unshadow_btrfs_subvolume(spec.path)
         end
       end
@@ -415,8 +419,9 @@ module Y2Storage
       # @return [String] Default subvolume name
       def subvolumes_prefix
         return default_btrfs_subvolume.path unless exists_in_probed?
+
         children = top_level_btrfs_subvolume.children.reject { |s| snapper_path?(s.path) }
-        children.size == 1 ? children.first.path : ""
+        (children.size == 1) ? children.first.path : ""
       end
 
       # Determines whether the snapshots (snapper) are activated
@@ -449,6 +454,7 @@ module Y2Storage
         log.info "copying mount_by #{mount_by} to all subvolumes"
         btrfs_subvolumes.each do |subvol|
           next if subvol.mount_point.nil?
+
           subvol.mount_point.mount_by = mount_by
         end
         mount_by
@@ -501,7 +507,7 @@ module Y2Storage
         )
       end
 
-    protected
+      protected
 
       # Removes a subvolume
       # The subvolume is cached into {auto_deleted_subvolumes} list
@@ -557,7 +563,7 @@ module Y2Storage
         super << :btrfs
       end
 
-    private
+      private
 
       # Check for existing descendants of a subvolume path.
       #
@@ -620,7 +626,7 @@ module Y2Storage
         subvolumes.each { |x| create_btrfs_subvolume_nochecks(*x) }
 
         subvolume = find_btrfs_subvolume_by_path(default_subvolume)
-        subvolume.set_default_btrfs_subvolume if subvolume
+        subvolume&.set_default_btrfs_subvolume
 
         find_btrfs_subvolume_by_path(path)
       end

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,13 +45,14 @@ module Y2Partitioner
         @contents ||= VBox(table)
       end
 
-    private
+      private
 
       # Returns a table with all devices used by the container device
       #
       # @return [ConfigurableBlkDevicesTable]
       def table
         return @table unless @table.nil?
+
         @table = ConfigurableBlkDevicesTable.new(@devices, @pager)
         @table.show_columns(:device, :size, :format, :encrypted, :type)
         @table

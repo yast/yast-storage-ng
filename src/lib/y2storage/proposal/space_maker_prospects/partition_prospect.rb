@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -60,7 +58,7 @@ module Y2Storage
           @windows_in_disk = analyzer.windows_partitions(disk_name).any?
         end
 
-      private
+        private
 
         # @return [DiskAnalyzer] disk analyzer with information about the
         # initial layout of the system

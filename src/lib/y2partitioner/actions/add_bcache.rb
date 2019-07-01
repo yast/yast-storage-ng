@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -37,7 +35,7 @@ module Y2Partitioner
         @controller = Controllers::Bcache.new
       end
 
-    private
+      private
 
       # @return [Controllers::Bcache]
       attr_reader :controller

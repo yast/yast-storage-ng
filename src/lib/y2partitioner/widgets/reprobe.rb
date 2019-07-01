@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -31,7 +29,7 @@ module Y2Partitioner
   module Widgets
     # Mixin for widgets that need to trigger a hardware reprobe
     module Reprobe
-    private
+      private
 
       # Reprobes and updates devicegraphs for the partitioner. During
       # installation, a reactivation is performed before reprobing.

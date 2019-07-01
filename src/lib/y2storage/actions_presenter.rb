@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -87,6 +85,7 @@ module Y2Storage
       end
 
       return "Nothing to do" if lines.empty?
+
       lines.join("\n")
     end
 
@@ -109,7 +108,7 @@ module Y2Storage
       DumpManager.dump(self, file_base_name)
     end
 
-  protected
+    protected
 
     attr_reader :actiongraph
     attr_reader :collapsed_subvolumes
@@ -150,12 +149,14 @@ module Y2Storage
 
     def general_actions
       return [] if actiongraph.nil?
-      actions = actiongraph.compound_actions.select { |a| !a.device_is?(:btrfs_subvolume) }
+
+      actions = actiongraph.compound_actions.reject { |a| a.device_is?(:btrfs_subvolume) }
       sort_actions(actions)
     end
 
     def subvolume_actions
       return [] if actiongraph.nil?
+
       actions = actiongraph.compound_actions.select { |a| a.device_is?(:btrfs_subvolume) }
       sort_actions(actions)
     end

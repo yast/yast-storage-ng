@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -26,7 +24,7 @@ module Y2Partitioner
   module Widgets
     # Description for a Bcache device
     class BcacheDescription < DiskDeviceDescription
-    private
+      private
 
       # @see DiskDeviceDescription#sections
       def sections

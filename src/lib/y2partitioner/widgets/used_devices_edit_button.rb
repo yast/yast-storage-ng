@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -41,7 +39,7 @@ module Y2Partitioner
         _("Change...")
       end
 
-    private
+      private
 
       # Returns the proper Actions class to edit the used devices
       #

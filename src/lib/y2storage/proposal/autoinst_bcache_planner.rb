@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,7 +44,7 @@ module Y2Storage
         Array(bcaches)
       end
 
-    private
+      private
 
       # Returns a non partitioned bcache device
       #
@@ -67,9 +65,7 @@ module Y2Storage
       # @return [Planned::Bcache] Planned bcache device
       def partition_bcache(drive)
         bcache = Y2Storage::Planned::Bcache.new(name: drive.device)
-        if drive.disklabel
-          bcache.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel)
-        end
+        bcache.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel) if drive.disklabel
         bcache.partitions = drive.partitions.map do |part_section|
           plan_partition(bcache, drive, part_section)
         end
@@ -107,7 +103,8 @@ module Y2Storage
       def find_bcache_to_reuse(bcache)
         dev_by_name = devicegraph.find_by_any_name(bcache.name, alternative_names: true)
 
-        return dev_by_name if dev_by_name && dev_by_name.is?(:bcache)
+        return dev_by_name if dev_by_name&.is?(:bcache)
+
         nil
       end
 
@@ -118,6 +115,7 @@ module Y2Storage
       # @return [Y2Storage::CacheMode,nil] bcache cache mode; nil if no cache mode was specified
       def cache_mode_from(bcache_options)
         return nil if bcache_options.nil? || bcache_options.cache_mode.nil?
+
         Y2Storage::CacheMode.find(bcache_options.cache_mode)
       rescue NameError
         issues_list.add(:invalid_value, bcache_options, :cache_mode, :skip)

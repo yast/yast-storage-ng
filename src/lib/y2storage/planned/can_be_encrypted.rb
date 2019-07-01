@@ -43,8 +43,7 @@ module Y2Storage
       secret_attr :encryption_password
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_encrypted
-      end
+      def initialize_can_be_encrypted; end
 
       # Checks whether the resulting device must be encrypted
       #
@@ -79,12 +78,13 @@ module Y2Storage
         base.extend(ClassMethods)
       end
 
-    protected
+      protected
 
       def create_encryption?
         return false unless encrypt?
         return true unless reuse?
         return reformat? if respond_to?(:reformat?)
+
         false
       end
 

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -104,6 +102,7 @@ module Y2Storage
     # @return [Boolean]
     def root?
       return false if mount_point.nil?
+
       mount_point.root?
     end
 

@@ -59,7 +59,7 @@ module Y2Partitioner
         text.join("\n")
       end
 
-    private
+      private
 
       def columns
         [:path, :nocow]

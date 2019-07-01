@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -147,12 +145,12 @@ module Y2Storage
           "was not enabled.\n\n"
         )
 
-        if Yast::Mode.auto
-          result += _(
+        result += if Yast::Mode.auto
+          _(
             "Use 'start_multipath' in the AutoYaST profile to enable multipath."
           )
         else
-          result += _(
+          _(
             "If YaST didn't offer the opportunity to enable multipath in a previous step,\n" \
             "try the 'LIBSTORAGE_MULTIPATH_AUTOSTART=ON' boot parameter.\n" \
             "More information at https://en.opensuse.org/SDB:Linuxrc"

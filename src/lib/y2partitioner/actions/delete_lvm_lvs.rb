@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -35,7 +33,7 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-    private
+      private
 
       # Deletes all LVs (see {DeleteDevice#device})
       def delete

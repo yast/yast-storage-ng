@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,7 +64,7 @@ module Y2Storage
       @sanitized_devicegraph ||= sanitize(devicegraph.dup)
     end
 
-  private
+    private
 
     # Sanitizes a given devicegraph
     #
@@ -172,8 +170,10 @@ module Y2Storage
     # @return [Array<DevicegraphSanitizer::Error>]
     def errors_for_bcache(devicegraph)
       return [] if Bcache.supported?
+
       bcache_dev = first_bcache_device(devicegraph)
       return [] if bcache_dev.nil?
+
       [Error.new(bcache_dev, msg_no_bcache_support)]
     end
 

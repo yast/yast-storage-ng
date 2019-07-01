@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -99,7 +97,7 @@ module Y2Storage
       Filesystems::MountByType.from_fstab_spec(fstab_device)
     end
 
-  private
+    private
 
     UUID_REGEX = /^UUID=(.*)/
 

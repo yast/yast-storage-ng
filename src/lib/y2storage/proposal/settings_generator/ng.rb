@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -31,7 +29,7 @@ module Y2Storage
       #
       # @see SettingsGenerator::Base
       class Ng < Base
-      private
+        private
 
         # Next settings to use for a new attempt of the {InitialGuidedProposal}
         #
@@ -57,7 +55,7 @@ module Y2Storage
         #
         # @return [VolumeSpecification, nil]
         def first_configurable_volume
-          settings.volumes.select { |v| configurable_volume?(v) }.sort_by(&:disable_order).first
+          settings.volumes.select { |v| configurable_volume?(v) }.min_by(&:disable_order)
         end
 
         # Copy of the current settings after disabling adjust by ram property from the
@@ -144,6 +142,7 @@ module Y2Storage
         # @return [Boolean]
         def snapshots_active_and_configurable?(volume)
           return false unless volume.fs_type.is?(:btrfs)
+
           active_and_configurable?(volume, :snapshots)
         end
 

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -95,7 +93,7 @@ module Y2Storage
       @product_warnings ||= missing_product_volumes.map { |v| SetupError.new(missing_volume: v) }
     end
 
-  private
+    private
 
     # Mandatory product volumes that are not present in the current setup
     #
@@ -149,8 +147,9 @@ module Y2Storage
     # @return [Boolean]
     def nfs?(volume)
       return false unless volume.mount_point
+
       devicegraph.nfs_mounts.any? do |nfs|
-        nfs.mount_point && nfs.mount_point.path?(volume.mount_point)
+        nfs.mount_point&.path?(volume.mount_point)
       end
     end
 

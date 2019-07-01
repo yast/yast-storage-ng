@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,7 +36,7 @@ module Y2Partitioner
         _("Delete All")
       end
 
-    private
+      private
 
       # Returns the proper Actions class to perform the delete action
       #

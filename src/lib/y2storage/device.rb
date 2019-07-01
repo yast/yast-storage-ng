@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -59,7 +57,7 @@ module Y2Storage
     #  @param other [Device]
     #  @return [Boolean] true if compared to different class
     def !=(other)
-      !(self == other)
+      !(self == other) # rubocop:disable Style/InverseMethods:
     end
 
     alias_method :eql?, :==
@@ -380,7 +378,7 @@ module Y2Storage
       name
     end
 
-  protected
+    protected
 
     # Stores any object in the userdata of the device.
     #
@@ -421,7 +419,8 @@ module Y2Storage
     def userdata_value(key)
       serialized = userdata[key.to_s]
       return nil if serialized.nil?
-      YAML.load(serialized)
+
+      YAML.load(serialized) # rubocop:disable Security/YAMLLoad # here it is our data, so safe
     end
 
     # Generic mechanism to update the concrete attribute checked by {#in_etc?}

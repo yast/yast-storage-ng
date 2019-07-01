@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -34,7 +32,7 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-    private
+      private
 
       # Deletes the indicated filesystem (see {DeleteDevice#device})
       def delete
@@ -61,6 +59,7 @@ module Y2Partitioner
       # @see DeleteDevice#committed_device_mounted?
       def committed_device_mounted?
         return false if committed_device.nil?
+
         committed_device.active_mount_point?
       end
 

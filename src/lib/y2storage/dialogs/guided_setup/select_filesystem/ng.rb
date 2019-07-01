@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +45,7 @@ module Y2Storage
             !guided_setup.allowed? || settings.volumes.none?(&:configurable?)
           end
 
-        protected
+          protected
 
           # Set of widgets to display, one for every volume in the settings that
           # is configurable by the user
@@ -55,6 +53,7 @@ module Y2Storage
             @volume_widgets ||=
               settings.volumes.to_enum.with_index.map do |vol, idx|
                 next unless vol.configurable?
+
                 VolumeWidget.new(settings, idx)
               end.compact
           end

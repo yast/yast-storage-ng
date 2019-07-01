@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -283,6 +281,7 @@ module Y2Storage
     # @return [String, nil] nil if this is not a named array
     def md_name
       return nil if numeric?
+
       basename
     end
 
@@ -299,6 +298,7 @@ module Y2Storage
       if new_name.nil? || new_name.empty?
         raise ArgumentError, "Resetting the name back to numeric is not supported"
       end
+
       self.name = "/dev/md/#{new_name}"
     end
 
@@ -308,7 +308,7 @@ module Y2Storage
       in_etc_mdadm?
     end
 
-  protected
+    protected
 
     # Holders connecting the MD Raid to its component block devices in the
     # devicegraph.

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -156,6 +154,7 @@ module Y2Storage
       return nil if devicegraph.nil?
       return "probed"  if devicegraph.equal?(StorageManager.instance.probed)
       return "staging" if devicegraph.equal?(StorageManager.instance.staging)
+
       "devicegraph"
     end
 
@@ -205,6 +204,7 @@ module Y2Storage
       # Intentionally not calling ensure_initialized here:
       # that would rotate the dump dirs twice.
       return unless File.exist?(base_dir)
+
       if installation?
         kill_old_dump_dirs([File.basename(dump_dir)])
       else
@@ -215,7 +215,7 @@ module Y2Storage
       end
     end
 
-  private
+    private
 
     # Lazy initialisation and create initial dump dir
     def ensure_initialized
@@ -226,6 +226,7 @@ module Y2Storage
     # Lazy initialisation.
     def lazy_init
       return if @initialized
+
       @initialized = true
       log.info("Devicegraph dump directory: #{dump_dir}")
       reset
@@ -312,6 +313,7 @@ module Y2Storage
     def kill_old_dump_dirs(dump_dirs)
       dump_dirs.each do |dir|
         next unless File.exist?(base_dir + "/" + dir)
+
         log.info("Removing old devicegraph dump dir #{dir}")
         FileUtils.remove_dir(base_dir + "/" + dir)
       end
@@ -332,6 +334,7 @@ module Y2Storage
       return false unless defined?(RSpec::Mocks::Double)
       return true if obj.is_a?(RSpec::Mocks::Double)
       return false unless defined?(RSpec::Mocks::InstanceVerifyingDouble)
+
       obj.is_a?(RSpec::Mocks::InstanceVerifyingDouble)
     end
   end

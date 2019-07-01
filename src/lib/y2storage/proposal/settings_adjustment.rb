@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -51,9 +49,7 @@ module Y2Storage
       #
       # @return [SettingsAdjustment]
       def add_volume_attr(volume, attribute, value)
-        if value != false
-          raise ArgumentError, "So far, only disabling some attributes is supported"
-        end
+        raise ArgumentError, "So far, only disabling some attributes is supported" if value != false
 
         log.debug "Adjustments: add volume #{volume.mount_point} with #{attribute} == #{value}"
         result = dup
@@ -78,7 +74,7 @@ module Y2Storage
         volumes.empty?
       end
 
-    protected
+      protected
 
       # @return [Hash{String => Array<Symbol>}] list of attributes that have
       # been disabled for each volume (indexed by the mount path of the
@@ -92,7 +88,7 @@ module Y2Storage
       # @param attrs [Array<Symbol>] list of attributes that have been disabled
       #   for the volume
       def volume_description(mount_point, attrs)
-        mount_point == "swap" ? swap_description(attrs) : regular_vol_description(mount_point, attrs)
+        (mount_point == "swap") ? swap_description(attrs) : regular_vol_description(mount_point, attrs)
       end
 
       # @see #volume_description

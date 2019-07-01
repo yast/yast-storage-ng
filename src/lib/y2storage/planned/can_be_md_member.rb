@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -29,8 +27,7 @@ module Y2Storage
       attr_accessor :raid_name
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_md_member
-      end
+      def initialize_can_be_md_member; end
 
       # Checks whether the device represents an MD RAID member
       def md_member?

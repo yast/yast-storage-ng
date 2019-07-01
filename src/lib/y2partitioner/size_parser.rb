@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -38,6 +36,7 @@ module Y2Partitioner
     # @return [Y2Storage::DiskSize, nil]
     def parse_user_size(string)
       return nil if string.nil?
+
       Y2Storage::DiskSize.from_human_string(string, legacy_units: true)
     rescue TypeError
       nil

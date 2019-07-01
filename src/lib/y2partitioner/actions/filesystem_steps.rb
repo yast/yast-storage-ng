@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -71,6 +69,7 @@ module Y2Partitioner
 
       def encrypt_password
         return :next unless fs_controller.to_be_encrypted?
+
         Dialogs::EncryptPassword.run(fs_controller)
       end
 
@@ -80,7 +79,7 @@ module Y2Partitioner
         :finish
       end
 
-    protected
+      protected
 
       # Filesystem controller that must be instantiated at some point before
       # the provided steps are executed.

@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -83,7 +81,7 @@ module Y2Storage
       write(DEVICE_NAMES, value)
     end
 
-  private
+    private
 
     SYSCONFIG_PATH = ".sysconfig.storage".freeze
 

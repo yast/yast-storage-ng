@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -96,7 +94,7 @@ module Y2Partitioner
         widgets[idx]
       end
 
-    private
+      private
 
       # @return [Array<id>]
       def ids

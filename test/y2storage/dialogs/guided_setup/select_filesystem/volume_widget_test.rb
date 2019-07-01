@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-# encoding: utf-8
-
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -28,6 +26,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
   def term_with_id(regexp, content)
     content.nested_find do |param|
       next unless param.is_a?(Yast::Term)
+
       param.params.any? { |i| i.is_a?(Yast::Term) && i.value == :id && regexp.match?(i.params.first) }
     end
   end

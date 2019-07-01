@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -129,7 +127,7 @@ module Y2Storage
         result
       end
 
-    protected
+      protected
 
       attr_reader :disk_analyzer, :dist_calculator
 

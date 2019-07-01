@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -56,7 +54,7 @@ module Y2Partitioner
         _("Import")
       end
 
-    private
+      private
 
       # @return [Actions::Controllers::Fstabs]
       attr_reader :controller

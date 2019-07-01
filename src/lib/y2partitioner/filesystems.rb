@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -28,7 +26,7 @@ module Y2Partitioner
   # historic reasons). `libstorage-ng` supports quite some filesystems that are not
   # offered by the Partitioner.
   module Filesystems
-    SUPPORTED_FILESYSTEM_TYPES = %i(swap btrfs ext2 ext3 ext4 vfat xfs udf).freeze
+    SUPPORTED_FILESYSTEM_TYPES = [:swap, :btrfs, :ext2, :ext3, :ext4, :vfat, :xfs, :udf].freeze
 
     # All filesystem types that the Partitioner supports
     #

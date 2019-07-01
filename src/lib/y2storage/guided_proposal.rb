@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 # Copyright (c) [2016-2018] SUSE LLC
 #
 # All Rights Reserved.
@@ -93,7 +91,7 @@ module Y2Storage
       @settings = settings || ProposalSettings.new_for_current_product
     end
 
-  private
+    private
 
     # @return [ProposalSettings]
     attr_writer :settings
@@ -140,17 +138,17 @@ module Y2Storage
       error = default_proposal_error
 
       target_sizes.each do |target_size|
-        begin
-          log.info "Trying to make a proposal with target size: #{target_size}"
 
-          @planned_devices = planned_devices_list(target_size)
-          @devices = devicegraph(@planned_devices)
-          return true
-        rescue Error => error
-          log.info "Failed to make a proposal with target size: #{target_size}"
-          log.info "Error: #{error.message}"
-          next
-        end
+        log.info "Trying to make a proposal with target size: #{target_size}"
+
+        @planned_devices = planned_devices_list(target_size)
+        @devices = devicegraph(@planned_devices)
+        return true
+      rescue Error => e
+        log.info "Failed to make a proposal with target size: #{target_size}"
+        log.info "Error: #{e.message}"
+        next
+
       end
 
       raise error
