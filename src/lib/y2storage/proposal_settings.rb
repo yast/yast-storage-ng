@@ -412,6 +412,18 @@ module Y2Storage
       allocate_volume_mode == mode
     end
 
+    # Whether the value of {#separate_vgs} is relevant
+    #
+    # The mentioned setting only makes sense when there is at least one volume
+    # specification at {#volumes} which contains a separate VG name.
+    #
+    # @return [Boolean]
+    def separate_vgs_relevant?
+      return false unless ng_format?
+
+      volumes.any?(&:separate_vg_name)
+    end
+
     private
 
     # Volume specification for the root filesystem
