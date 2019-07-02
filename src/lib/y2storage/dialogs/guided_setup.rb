@@ -85,23 +85,6 @@ module Y2Storage
       #
       # @return [Symbol] Last step result
       def run
-        aliases = {
-          "select_disks"      => -> { run_dialog(SelectDisks) },
-          "select_root_disk"  => -> { run_dialog(SelectRootDisk) },
-          "select_scheme"     => -> { run_dialog(SelectScheme) },
-          "select_filesystem" => -> { run_dialog(select_filesystem_class) }
-        }
-
-        common_actions = { back: :back, cancel: :cancel, abort: :abort }
-
-        sequence = {
-          "ws_start"          => "select_disks",
-          "select_disks"      => common_actions.merge(next: "select_root_disk"),
-          "select_root_disk"  => common_actions.merge(next: "select_scheme"),
-          "select_scheme"     => common_actions.merge(next: "select_filesystem"),
-          "select_filesystem" => common_actions.merge(next: :next)
-        }
-
         Yast::Wizard.OpenNextBackDialog
         Yast::Wizard.SetAbortButton(:cancel, Yast::Label.CancelButton)
 
@@ -120,6 +103,52 @@ module Y2Storage
       end
 
       private
+
+      def aliases
+        {
+          "select_disks"      => -> { run_dialog(SelectDisks) },
+          "select_root_disk"  => -> { run_dialog(SelectRootDisk) },
+          "select_scheme"     => -> { run_dialog(SelectScheme) },
+          "select_filesystem" => -> { run_dialog(select_filesystem_class) }
+        }
+      end
+
+      def sequence
+        steps =
+          case settings.allocate_volume_mode
+          when :auto
+            ["select_disks", "select_root_disk", "select_scheme", "select_filesystem"]
+          when :single_device
+            ["select_scheme", "select_filesystem"]
+          end
+
+        sequence_for(steps)
+      end
+
+      # Generates the sequence based on given steps
+      #
+      # @example
+      #   sequence_for(["first_step", "second_step", "third_step"]) #=> {
+      #     "ws_start"    => "first_step",
+      #     "first_step"  => { back: back, cancel: :cancel, abort: :abort, next: "second_step" }
+      #     "second_step" => { back: back, cancel: :cancel, abort: :abort, next: "third_step" }
+      #     "third_step"  => { back: back, cancel: :cancel, abort: :abort, next: :next }
+      #   }
+      #
+      # @param steps [Array<String>]
+      # @return [Hash] generated sequence
+      def sequence_for(steps)
+        common_actions = { back: :back, cancel: :cancel, abort: :abort }
+
+        sequence = { "ws_start" => steps.first }
+
+        steps.each_with_index do |step, idx|
+          next_step = steps[idx + 1] || :next
+          sequence[step] = common_actions.merge(next: next_step)
+        end
+
+        sequence
+      end
 
       # Run the dialog or skip when necessary.
       def run_dialog(dialog_class)

@@ -47,6 +47,13 @@ module Y2Storage
     #   special handling resulting in separate volume groups)
     attr_accessor :separate_vgs
 
+    # Mode to use when allocating the volumes in the available devices
+    #
+    # @note :ng format
+    #
+    # @return [:auto, :single_device] :auto by default
+    attr_accessor :allocate_volume_mode
+
     # @note :legacy format
     # @return [Filesystems::Type] type to use for the root filesystem
     attr_accessor :root_filesystem_type
@@ -351,6 +358,7 @@ module Y2Storage
       self.other_delete_mode          ||= :ondemand
       self.delete_resize_configurable ||= true
       self.lvm_vg_strategy            ||= :use_available
+      self.allocate_volume_mode       ||= :auto
       self.volumes                    ||= []
     end
 
@@ -365,6 +373,7 @@ module Y2Storage
       load_feature(:proposal, :other_delete_mode)
       load_feature(:proposal, :delete_resize_configurable)
       load_feature(:proposal, :lvm_vg_strategy)
+      load_feature(:proposal, :allocate_volume_mode)
       load_size_feature(:proposal, :lvm_vg_size)
       load_volumes_feature(:volumes)
     end
@@ -386,6 +395,7 @@ module Y2Storage
       self.linux_delete_mode         ||= :ondemand
       self.other_delete_mode         ||= :ondemand
       self.root_space_percent        ||= 40
+      self.allocate_volume_mode      ||= :auto
       self.btrfs_increase_percentage ||= 300.0
       self.btrfs_default_subvolume   ||= "@"
       self.subvolumes                ||= SubvolSpecification.fallback_list
