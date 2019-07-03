@@ -82,6 +82,170 @@ describe Y2Storage::ProposalSettings do
     end
   end
 
+  describe "#volumes_sets" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    let(:home_vg_name) { nil }
+    let(:lib_vg_name) { nil }
+    let(:usr_vg_name) { nil }
+    let(:var_vg_name) { nil }
+
+    let(:volumes) do
+      [
+        { "mount_point" => "/home", "separate_vg_name" => home_vg_name },
+        { "mount_point" => "/lib", "separate_vg_name" => lib_vg_name },
+        { "mount_point" => "/usr", "separate_vg_name" => usr_vg_name },
+        { "mount_point" => "/var", "separate_vg_name" => var_vg_name }
+      ]
+    end
+
+    let(:partitioning) do
+      { "proposal" => {}, "volumes" => volumes }
+    end
+
+    before do
+      stub_partitioning_features(partitioning)
+
+      allow(settings).to receive(:separate_vgs).and_return(separate_vgs)
+      allow(settings).to receive(:lvm).and_return(lvm)
+    end
+
+    context "when 'separate_vgs' is set to false" do
+      let(:separate_vgs) { false }
+
+      context "and 'lvm' is set" do
+        let(:lvm) { true }
+
+        it "contains only a single :lvm volumes set" do
+          volumes_sets = settings.volumes_sets
+
+          expect(volumes_sets.count).to eq(1)
+          expect(volumes_sets.first.type).to eq(:lvm)
+        end
+      end
+
+      context "but 'lvm' is not set" do
+        let(:lvm) { false }
+
+        it "contains a :partition volumes set per available volume" do
+          volumes_sets = settings.volumes_sets
+
+          expect(volumes_sets.count).to eq(settings.volumes.count)
+          expect(volumes_sets.map(&:type).uniq).to eq([:partition])
+        end
+      end
+    end
+
+    context "when 'separate_vgs' is set to true" do
+      let(:separate_vgs) { true }
+
+      shared_examples "has only :separate_lvm volumes sets" do
+        let(:home_vg_name) { "vg-home" }
+        let(:lib_vg_name) { "vg-lib" }
+        let(:usr_vg_name) { "vg-usr" }
+        let(:var_vg_name) { "vg-var" }
+
+        it "does not contain :lvm volumes sets" do
+          expect(settings.volumes_sets.map(&:type).uniq).to_not include(:lvm)
+        end
+
+        it "does not contain :partition volumes sets" do
+          expect(settings.volumes_sets.map(&:type).uniq).to_not include(:partition)
+        end
+
+        it "contains a :separate_lvm volumes set per vg name" do
+          expect(settings.volumes_sets.map(&:type).uniq).to eq([:separate_lvm])
+        end
+
+        context "being all of them different" do
+          it "contains a volume set per vg name" do
+            expect(settings.volumes_sets.count).to eq(4)
+          end
+        end
+
+        context "being some of them shared" do
+          let(:home_vg_name) { "vg-home" }
+          let(:lib_vg_name) { "vg-shared" }
+          let(:usr_vg_name) { "vg-shared" }
+          let(:var_vg_name) { "vg-shared" }
+
+          it "contains a volume set per vg name" do
+            expect(settings.volumes_sets.count).to eq(2)
+          end
+        end
+      end
+
+      context "and 'lvm' is set" do
+        let(:lvm) { true }
+
+        context "and no volumes have a separate vg name" do
+          it "contains only a single :lvm volumes set" do
+            volumes_sets = settings.volumes_sets
+
+            expect(volumes_sets.count).to eq(1)
+            expect(volumes_sets.first.type).to eq(:lvm)
+          end
+        end
+
+        context "but some volumes have a separate vg name" do
+          let(:home_vg_name) { "vg-home" }
+          let(:var_vg_name) { "vg-var" }
+
+          it "contains one :lvm volumes set" do
+            lvm_volumes_sets = settings.volumes_sets.select { |vs| vs.type == :lvm }
+
+            expect(lvm_volumes_sets.count).to eq(1)
+          end
+
+          it "contains a :separate_lvm volumes set per vg name" do
+            separate_volumes_sets = settings.volumes_sets.select { |vs| vs.type == :separate_lvm }
+
+            expect(separate_volumes_sets.count).to eq(2)
+          end
+        end
+
+        context "but all volumes have a separate vg name" do
+          include_examples "has only :separate_lvm volumes sets"
+        end
+      end
+
+      context "but 'lvm' is not set" do
+        let(:lvm) { false }
+
+        context "and no volumes have a separate vg name" do
+          it "contains only :partition volumes sets" do
+            expect(settings.volumes_sets.map(&:type).uniq).to eq([:partition])
+          end
+        end
+
+        context "but some volumes have a separate vg name" do
+          let(:home_vg_name) { "vg-home" }
+          let(:var_vg_name) { "vg-var" }
+
+          it "does not contains a :lvm volumes set" do
+            expect(settings.volumes_sets.map(&:type).uniq).to_not include(:lvm)
+          end
+
+          it "contains a :partition volumes set per not separated volume" do
+            partition_volumes_sets = settings.volumes_sets.select { |vs| vs.type == :partition }
+
+            expect(partition_volumes_sets.count).to eq(2)
+          end
+
+          it "contains a volumes set per vg name" do
+            separate_volumes_sets = settings.volumes_sets.select { |vs| vs.type == :separate_lvm }
+
+            expect(separate_volumes_sets.count).to eq(2)
+          end
+        end
+
+        context "but all volumes have separate vg name" do
+          include_examples "has only :separate_lvm volumes sets"
+        end
+      end
+    end
+  end
+
   describe "#for_current_product" do
     subject(:settings) { described_class.new }
 

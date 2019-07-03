@@ -24,6 +24,7 @@ require "y2storage/volume_specification"
 require "y2storage/subvol_specification"
 require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
+require "y2storage/volume_specifications_set"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -210,6 +211,19 @@ module Y2Storage
 
     LEGACY_FORMAT = :legacy
     NG_FORMAT = :ng
+
+    # Volumes grouped by their location in the disks.
+    #
+    # This method is only useful when #allocate_volume_mode is set to
+    # :single_device. All the volumes that must be allocated in the same disk
+    # are grouped in a single {VolumeSpecificationsSet} object.
+    #
+    # The sorting of {#volumes} is honored as long as possible
+    #
+    # @return [Array<VolumeSpecificationsSet>]
+    def volumes_sets
+      separate_vgs ? vol_sets_with_separate : vol_sets_plain
+    end
 
     # New object initialized according to the YaST product features (i.e. /control.xml)
     # @return [ProposalSettings]
@@ -456,6 +470,51 @@ module Y2Storage
     # ng and legacy format
     def legacy_check_root_snapshots
       root_filesystem_type.is?(:btrfs) && use_snapshots
+    end
+
+    # Implementation for {#volumes_sets} when {#separate_vgs} is set to false
+    #
+    # @see #volumes_sets
+    #
+    # @return [Array<VolumeSpecificationsSet]
+    def vol_sets_plain
+      if lvm
+        [VolumeSpecificationsSet.new(volumes.dup, :lvm)]
+      else
+        volumes.map { |vol| VolumeSpecificationsSet.new([vol], :partition) }
+      end
+    end
+
+    # Implementation for {#volumes_sets} when {#separate_vgs} is set to true
+    #
+    # @see #volumes_sets
+    #
+    # @return [Array<VolumeSpecificationsSet]
+    def vol_sets_with_separate
+      sets = []
+
+      volumes.each do |vol|
+        if vol.separate_vg_name
+          # There should not be two volumes with the same separate_vg_name. But
+          # just in case, let's group them if that happens.
+          group = sets.find { |s| s.vg_name == vol.separate_vg_name }
+          type = :separate_lvm
+        elsif lvm
+          group = sets.find { |s| s.type == :lvm }
+          type = :lvm
+        else
+          group = nil
+          type = :partition
+        end
+
+        if group
+          group.push(vol)
+        else
+          sets << VolumeSpecificationsSet.new([vol], type)
+        end
+      end
+
+      sets
     end
 
     # FIXME: Improve implementation. Use composition to encapsulate logic for
