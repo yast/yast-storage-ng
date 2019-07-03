@@ -318,13 +318,19 @@ module Y2Storage
       return btrfs_default_subvolume unless ng_format?
       return nil if volumes.empty?
 
-      root_volume = volumes.find { |v| v.mount_point == "/" }
       return root_volume.btrfs_default_subvolume if root_volume
 
       volumes.first.btrfs_default_subvolume
     end
 
     private
+
+    # Volume specification for the root filesystem
+    #
+    # @return [VolumeSpecification]
+    def root_volume
+      volumes.find(&:root?)
+    end
 
     DELETE_MODES = [:none, :all, :ondemand]
     private_constant :DELETE_MODES
@@ -462,7 +468,6 @@ module Y2Storage
     # FIXME: Improve implementation. Use composition to encapsulate logic for
     # ng and legacy format
     def ng_check_root_snapshots
-      root_volume = volumes.detect { |v| v.mount_point == "/" }
       root_volume.nil? ? false : root_volume.snapshots?
     end
 
