@@ -120,10 +120,92 @@ module Y2Storage
     #   the root filesystem
     attr_accessor :subvolumes
 
+    # Device name of the disk in which '/' must be placed.
+    #
+    # If it's set to nil and {#allocate_volume_mode} is :auto, the proposal will try
+    # to find a good candidate
+    #
     # @note :legacy and :ng formats
-    # @return [Array<String>] device names of the disks that can be used for the
-    #   installation. If nil, the proposal will try find suitable devices
-    attr_accessor :candidate_devices
+    #
+    # @return [String, nil]
+    def root_device
+      if allocate_mode?(:single_device)
+        root_volume ? root_volume.device : nil
+      else
+        @root_device
+      end
+    end
+
+    # Sets {#root_device}
+    #
+    # If {#allocate_volume_mode} is :auto, this simply sets the value of the
+    # attribute.
+    #
+    # If {#allocate_volume_mode} is :single_device this changes the value of
+    # {VolumeSpecification#device} for the root volume and all its associated
+    # volumes. In addition, it tries to adapt the value of the attribute for the
+    # rest of the volumes in the most convenient way.
+    def root_device=(name)
+      if allocate_mode?(:auto)
+        @root_device = name
+      else
+        # Nothing to do
+        return unless root_volume
+
+        previous_root_device = root_volume.device
+
+        # If we are changing a previous valid device by another one
+        if previous_root_device && name && previous_root_device != name
+          volumes.select { |vol| vol.device == name }.each do |vol|
+            vol.device = previous_root_device
+          end
+        end
+
+        volumes_sets.find(&:root?).device = name
+      end
+    end
+
+    # @note :legacy and :ng formats
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
+
+    # Device names of the disks that can be used for the installation. If nil,
+    # the proposal will try find suitable devices
+    #
+    # @note :legacy and :ng formats
+    #
+    # @return [Array<String>]
+    def candidate_devices
+      if allocate_mode?(:single_device)
+        # If any of the proposed volumes has no device assigned, the whole list
+        # is invalid
+        return nil if volumes.select(&:proposed).any? { |vol| vol.device.nil? }
+
+        volumes.flat_map(&:device).compact.uniq
+      else
+        @candidate_devices
+      end
+    end
+
+    # Sets {#candidate_devices}
+    #
+    # If {#allocate_volume_mode} is :auto, this simply sets the value of the
+    # attribute.
+    #
+    # If {#allocate_volume_mode} is :single_device this changes the value of
+    # {VolumeSpecification#device} for all volumes using elements from the given
+    # list.
+    def candidate_devices=(devices)
+      if allocate_mode?(:auto)
+        @candidate_devices = devices
+      elsif devices.nil?
+        volumes.each { |vol| vol.device = nil }
+      else
+        volumes_sets.select(&:proposed?).each_with_index do |set, idx|
+          set.device = devices[idx] || devices.last
+        end
+      end
+    end
 
     # @note :legacy and :ng formats
     # @return [String] device name of the disk in which / must be placed. If set
@@ -321,6 +403,13 @@ module Y2Storage
       return root_volume.btrfs_default_subvolume if root_volume
 
       volumes.first.btrfs_default_subvolume
+    end
+
+    # Checks the value of {#allocate_volume_mode}
+    #
+    # @return [Boolean]
+    def allocate_mode?(mode)
+      allocate_volume_mode == mode
     end
 
     private

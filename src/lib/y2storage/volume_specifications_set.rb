@@ -83,5 +83,12 @@ module Y2Storage
     def push(volume)
       volumes << volume
     end
+
+    # Whether the set contains the volume specification for root
+    #
+    # @return [Boolean]
+    def root?
+      volumes.any?(&:root?)
+    end
   end
 end

@@ -35,6 +35,7 @@ describe Y2Storage::VolumeSpecificationsSet do
   let(:home_volume) do
     instance_double("Y2Storage::VolumeSpecification",
       proposed?:        proposed,
+      root?:            false,
       device:           home_device,
       separate_vg_name: home_vg_name)
   end
@@ -42,6 +43,7 @@ describe Y2Storage::VolumeSpecificationsSet do
   let(:var_volume) do
     instance_double("Y2Storage::VolumeSpecification",
       proposed?:        false,
+      root?:            false,
       device:           var_device,
       separate_vg_name: var_vg_name)
   end
@@ -122,6 +124,22 @@ describe Y2Storage::VolumeSpecificationsSet do
 
     it "adds the given volume to the set" do
       expect { volumes_set.push(other_volume) }.to change { volumes_set.volumes.count }.by(1)
+    end
+  end
+
+  describe "#root?" do
+    context "when the root volume is not present in the set" do
+      it "returns false" do
+        expect(volumes_set.root?).to eq(false)
+      end
+    end
+
+    context "when the root volume is present in the set" do
+      it "returns true" do
+        volumes_set.push(double("Y2Storage::VolumeSpecification", root?: true))
+
+        expect(volumes_set.root?).to eq(true)
+      end
     end
   end
 end

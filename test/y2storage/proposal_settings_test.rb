@@ -979,6 +979,68 @@ describe Y2Storage::ProposalSettings do
     end
   end
 
+  describe "#allocate_mode?" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    before do
+      settings.allocate_volume_mode = :device
+    end
+
+    context "when given mode is the current allocate volume mode" do
+      it "returns true" do
+        expect(settings.allocate_mode?(:device)).to eq(true)
+      end
+    end
+
+    context "when given mode is not the current allocate volume mode" do
+      it "returns false" do
+        expect(settings.allocate_mode?(:auto)).to eq(false)
+      end
+    end
+  end
+
+  describe "#separate_vgs_relevant?" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    before do
+      stub_partitioning_features
+    end
+
+    context "when the format is :legacy" do
+      let(:initial_partitioning_features) { {} }
+
+      it "returns false" do
+        expect(settings.separate_vgs_relevant?).to eq(false)
+      end
+    end
+
+    context "when the format is :ng" do
+      let(:initial_partitioning_features) { { "proposal" => [], "volumes" => volumes } }
+      let(:vg_name) { nil }
+      let(:volumes) do
+        [
+          { "mount_point" => "/" },
+          { "mount_point" => "swap" },
+          { "mount_point" => "/home", "separate_vg_name" => vg_name }
+        ]
+      end
+
+      context "and there are no volumes with a separate vg name" do
+        it "returns false" do
+          expect(settings.separate_vgs_relevant?).to eq(false)
+        end
+      end
+
+      context "and there is some volume with a separate vg name" do
+        let(:vg_name) { "vg-name" }
+
+        it "returns true" do
+          expect(settings.separate_vgs_relevant?).to eq(true)
+        end
+      end
+    end
+  end
+
   describe "#to_s" do
     subject(:settings) { described_class.new_for_current_product }
 
