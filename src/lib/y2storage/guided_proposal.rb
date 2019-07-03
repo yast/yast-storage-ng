@@ -239,7 +239,7 @@ module Y2Storage
 
     # Candidate devices to make a proposal
     #
-    # The candidate devices are calculated when current settings have not contain any
+    # The candidate devices are calculated when current settings do not contain any
     # candidate device. In that case, the possible candidate devices are sorted, placing
     # USB devices at the end.
     #
@@ -247,7 +247,7 @@ module Y2Storage
     def candidate_devices
       return settings.candidate_devices unless settings.candidate_devices.nil?
 
-      # NOTE: sorb_by it is not being used here because "the result is not guaranteed to be stable"
+      # NOTE: sort_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
       # in two groups and moving one of them to the end.
