@@ -116,12 +116,28 @@ module Y2Storage
             Left(HBox(HSpacing(2), term))
           end
 
+          # Returns the device type depending on the settings
+          #
+          # @return [String] "vg", "lvm", or "partition"
+          def device_type
+            if settings.separate_vgs && volume.separate_vg?
+              "vg"
+            elsif settings.lvm
+              "lvm"
+            else
+              "partition"
+            end
+          end
+
           # Widget term for the title of the volume in case it's always
           # proposed
           #
+          # @see #device_type
+          #
           # @return [WidgetTerm]
           def header_term
-            text = settings.lvm ? header_for_lvm : header_for_partition
+            text = send("header_for_#{device_type}")
+
             Label(text)
           end
 
@@ -129,21 +145,45 @@ module Y2Storage
           def header_for_lvm
             case volume.mount_point
             when "/"
-              # TRANSLATORS: "Volume" refers to an LVM logical volume.
-              _("Settings for the Root Volume")
+              _("Settings for the Root LVM Logical Volume")
             when "/home"
-              # TRANSLATORS: "Volume" refers to an LVM logical volume.
-              _("Settings for the Home Volume")
+              _("Settings for the Home LVM Logical Volume")
             when "swap"
-              # TRANSLATORS: "Volume" refers to an LVM logical volume.
-              _("Settings for Swap Volume")
+              _("Settings for Swap LVM Logical Volume")
             when nil
-              # TRANSLATORS: "Volume" refers to an LVM logical volume and
-              # "Additional" implies it will be created but not mounted
-              _("Settings for Additional Volume")
+              # TRANSLATORS: "Additional" implies it will be created but not mounted
+              _("Settings for Additional LVM Logical Volume")
             else
-              # TRANSLATORS: "Volume" refers to a LVM logical volume. %s is a mount point.
-              _("Settings for the %s Volume") % volume.mount_point
+              # TRANSLATORS: %{mount_point} refers to the mount point (e.g. /var/lib).
+              format(
+                _("Settings for the %{mount_point} LVM Logical Volume"),
+                mount_point: volume.mount_point
+              )
+            end
+          end
+
+          # @see #header_term
+          def header_for_vg
+            case volume.mount_point
+            when "/"
+              # TRANSLATORS: the text refers to an LVM Volume Group.
+              _("Settings for the Root LVM Volume Group")
+            when "/home"
+              # TRANSLATORS: the text refers to an LVM Volume Group.
+              _("Settings for the Home LVM Volume Group")
+            when "swap"
+              # TRANSLATORS: the text refers to an LVM Volume Group.
+              _("Settings for Swap LVM Volume Group")
+            when nil
+              # TRANSLATORS: the text refers to an LVM Volume Group. "Additional" implies it will be
+              # created but not mounted
+              _("Settings for Additional LVM Volume Group")
+            else
+              # TRANSLATORS: %{mount_point} refers to the mount point (e.g. /var/lib).
+              format(
+                _("Settings for the %{mount_point} LVM Volume Group"),
+                mount_point: volume.mount_point
+              )
             end
           end
 
@@ -160,17 +200,23 @@ module Y2Storage
               # TRANSLATORS: "Additional" because it will be created but not mounted
               _("Settings for Additional Partition")
             else
-              # TRANSLATORS: %s is a mount point (e.g. /var/lib)
-              _("Settings for the %s Partition") % volume.mount_point
+              # TRANSLATORS: %{mount_point} is the mount point (e.g. /var/lib)
+              format(
+                _("Settings for the %{mount_point} Partition"),
+                mount_point: volume.mount_point
+              )
             end
           end
 
           # Return a widget term for the checkbox to select if the volume
           # should be proposed.
           #
+          # @see #device_type
+          #
           # @return [WidgetTerm]
           def proposed_term
-            text = settings.lvm ? proposed_label_for_lvm : proposed_label_for_partition
+            text = send("proposed_label_for_#{device_type}")
+
             CheckBox(Id(proposed_widget_id), Opt(:notify), text, volume.proposed?)
           end
 
@@ -178,18 +224,37 @@ module Y2Storage
           def proposed_label_for_lvm
             case volume.mount_point
             when "/home"
-              # TRANSLATORS: "Volume" refers to a LVM logical volume.
-              _("Propose Separate Home Volume")
+              _("Propose Separate Home LVM Logical Volume")
             when "swap"
-              # TRANSLATORS: "Volume" refers to a LVM logical volume.
-              _("Propose Separate Swap Volume")
+              _("Propose Separate Swap LVM Logical Volume")
             when nil
-              # TRANSLATORS: "Volume" refers to an LVM logical volume and
-              # "Additional" implies it will be created but not mounted
-              _("Propose Additional Volume")
+              # TRANSLATORS: "Additional" implies it will be created but not mounted
+              _("Propose Additional LVM Logical Volume")
             else
-              # TRANSLATORS: "Volume" refers to a LVM logical volume. %s is a mount point.
-              _("Propose Separate %s Volume") % volume.mount_point
+              # TRANSLATORS: %{mount_point} refers to the mount point (e.g. /var/lib).
+              format(
+                _("Propose Separate %{mount_point} LVM Logical Volume"),
+                mount_point: volume.mount_point
+              )
+            end
+          end
+
+          # @see #proposed_term
+          def proposed_label_for_vg
+            case volume.mount_point
+            when "/home"
+              _("Propose Separate Home LVM Volume Group")
+            when "swap"
+              _("Propose Separate Swap LVM Volume Group")
+            when nil
+              # TRANSLATORS: "Additional" implies it will be created but not mounted
+              _("Propose Additional LVM Volume Group")
+            else
+              # TRANSLATORS: %{mount_point} refers to the mount point (e.g. /var/lib).
+              format(
+                _("Propose Separate %{mount_point} LVM Volume Group"),
+                mount_point: volume.mount_point
+              )
             end
           end
 
@@ -204,8 +269,11 @@ module Y2Storage
               # TRANSLATORS: "Additional" because it will be created but not mounted
               _("Propose Additional Partition")
             else
-              # TRANSLATORS: %s is a mount point (e.g. /var/lib)
-              _("Propose Separate %s Partition") % volume.mount_point
+              # TRANSLATORS: %{mount_point} is the mount point (e.g. /var/lib)
+              format(
+                _("Propose Separate %{mount_point} Partition"),
+                mount_point: volume.mount_point
+              )
             end
           end
 
