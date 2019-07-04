@@ -87,6 +87,8 @@ module Y2Storage
         # undecided if we want to reuse encrypted LVMs at all.
         return [] if encrypt?
 
+        # TODO: if the planned_lvs are restricted to some particular disk, 'vgs'
+        # should only include VGs with at least one PV in that disk
         vgs = devicegraph.lvm_vgs
         big_vgs, small_vgs = vgs.partition { |vg| vg.total_size >= volume_group.target_size }
         # Use #vg_name to ensure stable sorting

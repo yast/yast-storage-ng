@@ -134,6 +134,7 @@ module Y2Storage
         res.lvm_volume_group_name = volume_group_name
         res.encryption_password = pvs_encryption_password
         res.min_size = min_pv_size
+        res.disk = forced_disk_name
         res
       end
 
@@ -247,6 +248,16 @@ module Y2Storage
 
       def self.to_string_attrs
         [:reuse_name, :volume_group_name]
+      end
+
+      # Device name of the disk-like device in which the volume group has to be
+      # physically located. If nil, the volume group can spread freely over any
+      # set of disks.
+      #
+      # @return [String, nil]
+      def forced_disk_name
+        forced_lv = lvs.find(&:disk)
+        forced_lv ? forced_lv.disk : nil
       end
 
       protected

@@ -91,8 +91,8 @@ module Y2Storage
           adjust_encryption(planned_device, volume)
           adjust_sizes(planned_device, volume)
           adjust_btrfs(planned_device, volume)
+          adjust_device(planned_device, volume)
 
-          adjust_root(planned_device, volume) if planned_device.root?
           adjust_swap(planned_device, volume) if planned_device.swap?
         end
 
@@ -168,12 +168,19 @@ module Y2Storage
           end
         end
 
-        # Adjusts values when planned device is root
+        # Adjusts the disk restrictions according to settings
         #
         # @param planned_device [Planned::Device]
-        # @param _volume [VolumeSpecification]
-        def adjust_root(planned_device, _volume)
-          planned_device.disk = settings.root_device if planned_device.is_a?(Planned::Partition)
+        # @param volume [VolumeSpecification]
+        def adjust_device(planned_device, volume)
+          if settings.allocate_mode?(:single_device)
+            planned_device.disk = volume.device if planned_device.respond_to?(:disk=)
+          elsif planned_device.root?
+            # Forcing this when planned_device is a LV would imply the new VG
+            # can only be located in that disk (preventing it to spread over
+            # several disks). We likely don't want that.
+            planned_device.disk = settings.root_device if planned_device.is_a?(Planned::Partition)
+          end
         end
 
         # Adjusts values when planned device is swap

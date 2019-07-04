@@ -55,6 +55,10 @@ module Y2Storage
       # @return [Integer] Number of stripes
       attr_accessor :stripes
 
+      # @return [String, nil] device name of the disk (or DiskDevice, to be precise) in which
+      #   the LV has to be located. If nil, the volume can be allocated in any set of disks.
+      attr_accessor :disk
+
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the
@@ -150,7 +154,8 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:mount_point, :reuse_name, :min_size, :max_size, :logical_volume_name, :subvolumes]
+        [:mount_point, :reuse_name, :min_size, :max_size, :disk,
+         :logical_volume_name, :subvolumes]
       end
 
       protected
