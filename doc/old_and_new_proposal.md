@@ -199,6 +199,7 @@ Besides these, there is another element:
 #### Global settings in `proposal` section
 
   * `lvm` *(boolean, default: `false`)*
+  * `delete_resize_configurable` *(boolean, default: `true`)*
   * `resize_windows` *(boolean, default: `true`)*
   * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * `linux_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
@@ -648,6 +649,10 @@ following options.
     Whether LVM should be used by default.
   * ~~`encrypt`
     Whether encryption should be used by default.~~
+  * `delete_resize_configurable`
+    Whether the user can modify the options related to delete or resize partitions.
+    When this option is set to `false`, the user cannot change the value of
+    `windows_delete_mode`, `linux_delete_mode`, `other_delete_mode` and `resize_windows`.
   * `windows_delete_mode`
     Default value for the automatic delete mode for
     Windows partitions. It can be `none`, `all` or `ondemand`. For more
