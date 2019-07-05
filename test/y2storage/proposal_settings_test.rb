@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -532,6 +532,13 @@ describe Y2Storage::ProposalSettings do
         expect(settings.lvm).to eq true
         read_feature("lvm", false)
         expect(settings.lvm).to eq false
+      end
+
+      it "sets 'delete_resize_configurable' based on the feature in the 'proposal' section" do
+        read_feature("delete_resize_configurable", true)
+        expect(settings.delete_resize_configurable).to eq true
+        read_feature("delete_resize_configurable", false)
+        expect(settings.delete_resize_configurable).to eq false
       end
 
       it "sets 'resize_windows' based on the feature in the 'proposal' section" do

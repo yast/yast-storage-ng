@@ -113,23 +113,23 @@ module Y2Storage
     attr_accessor :subvolumes
 
     # @note :legacy and :ng formats
-    # @return [String] device name of the disk in which / must be placed. If set
-    #   to nil, the proposal will try to find a good candidate
-    attr_accessor :root_device
-
-    # @note :legacy and :ng formats
-    # @return [Boolean] whether to resize Windows systems if needed
-    attr_accessor :resize_windows
-
-    # @note :legacy and :ng formats
     # @return [Array<String>] device names of the disks that can be used for the
     #   installation. If nil, the proposal will try find suitable devices
     attr_accessor :candidate_devices
+
+    # @note :legacy and :ng formats
+    # @return [String] device name of the disk in which / must be placed. If set
+    #   to nil, the proposal will try to find a good candidate
+    attr_accessor :root_device
 
     # @!attribute encryption_password
     #   @note :legacy and :ng formats
     #   @return [String] password to use when creating new encryption devices
     secret_attr :encryption_password
+
+    # @note :legacy and :ng formats
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
 
     # What to do regarding removal of existing partitions hosting a Windows system.
     #
@@ -157,6 +157,15 @@ module Y2Storage
     #   don't fit in #windows_delete_mode or #linux_delete_mode.
     #   @see #windows_delete_mode for the possible values and exceptions
     attr_reader :other_delete_mode
+
+    # Whether the delete mode of the partitions and the resize option for windows can be
+    # configured. When this option is set to `false`, the {#windows_delete_mode}, {#linux_delete_mode},
+    # {#other_delete_mode} and {#resize_windows} options cannot be modified by the user.
+    #
+    # @note :ng format
+    #
+    # @return [Boolean]
+    attr_accessor :delete_resize_configurable
 
     # When the user decides to use LVM, strategy to decide the size of the volume
     # group (and, thus, the number and size of created physical volumes).
@@ -334,14 +343,15 @@ module Y2Storage
     # FIXME: Improve implementation. Use composition to encapsulate logic for
     # ng and legacy formats
     def apply_ng_defaults
-      self.lvm                 ||= false
-      self.separate_vgs        ||= false
-      self.resize_windows      ||= true
-      self.windows_delete_mode ||= :ondemand
-      self.linux_delete_mode   ||= :ondemand
-      self.other_delete_mode   ||= :ondemand
-      self.lvm_vg_strategy     ||= :use_available
-      self.volumes             ||= []
+      self.lvm                        ||= false
+      self.separate_vgs               ||= false
+      self.resize_windows             ||= true
+      self.windows_delete_mode        ||= :ondemand
+      self.linux_delete_mode          ||= :ondemand
+      self.other_delete_mode          ||= :ondemand
+      self.delete_resize_configurable ||= true
+      self.lvm_vg_strategy            ||= :use_available
+      self.volumes                    ||= []
     end
 
     # FIXME: Improve implementation. Use composition to encapsulate logic for
@@ -353,6 +363,7 @@ module Y2Storage
       load_feature(:proposal, :windows_delete_mode)
       load_feature(:proposal, :linux_delete_mode)
       load_feature(:proposal, :other_delete_mode)
+      load_feature(:proposal, :delete_resize_configurable)
       load_feature(:proposal, :lvm_vg_strategy)
       load_size_feature(:proposal, :lvm_vg_size)
       load_volumes_feature(:volumes)
@@ -447,6 +458,7 @@ module Y2Storage
       "    linux_delete_mode: #{linux_delete_mode}\n" \
       "    other_delete_mode: #{other_delete_mode}\n" \
       "    resize_windows: #{resize_windows}\n" \
+      "    delete_resize_configurable: #{delete_resize_configurable}\n" \
       "    lvm_vg_strategy: #{lvm_vg_strategy}\n" \
       "    lvm_vg_size: #{lvm_vg_size}\n" \
       "  volumes:\n" \
