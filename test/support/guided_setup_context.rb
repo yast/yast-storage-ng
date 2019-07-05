@@ -19,51 +19,17 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "#{TEST_PATH}/support/widgets_context"
 require "y2storage/dialogs/guided_setup"
 
 Yast.import "Wizard"
-Yast.import "UI"
 Yast.import "Popup"
 Yast.import "Report"
 
 RSpec.shared_context "guided setup requirements" do
-  include Yast::UIShortcuts
+  include_context "widgets"
 
-  def term_with_id(regexp, content)
-    content.nested_find do |nested|
-      next unless nested.is_a?(Yast::Term)
-
-      nested.params.any? { |i| i.is_a?(Yast::Term) && i.value == :id && regexp.match?(i.params.first) }
-    end
-  end
-
-  def expect_select(id, value = true)
-    expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Value, value)
-  end
-
-  def expect_not_select(id, value = true)
-    expect(Yast::UI).not_to receive(:ChangeWidget).with(Id(id), :Value, value)
-  end
-
-  def expect_enable(id)
-    expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, true)
-  end
-
-  def expect_not_enable(id)
-    expect(Yast::UI).not_to receive(:ChangeWidget).with(Id(id), :Enabled, true)
-  end
-
-  def expect_disable(id)
-    expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, false)
-  end
-
-  def select_widget(id, value = true)
-    allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(value)
-  end
-
-  def not_select_widget(id)
-    allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(false)
-  end
+  alias_method :term_with_id, :find_widget
 
   def select_disks(disks)
     disks.each { |d| select_widget(d) }
@@ -96,9 +62,6 @@ RSpec.shared_context "guided setup requirements" do
     allow(Yast::Report).to receive(:Warning).and_return(true)
 
     allow(Yast::UI).to receive(:UserInput).and_return(:next, :abort)
-
-    allow(Yast::UI).to receive(:ChangeWidget).and_call_original
-    allow(Yast::UI).to receive(:QueryWidget).and_call_original
 
     allow(guided_setup).to receive(:settings).and_return(settings)
 
