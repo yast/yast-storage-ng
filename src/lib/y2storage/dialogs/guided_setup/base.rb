@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -12,14 +12,15 @@
 # more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with this program; if not, contact Novell, Inc.
+# with this program; if not, contact SUSE LLC.
 #
-# To contact Novell about this file by physical or electronic mail, you may
-# find current contact information at www.novell.com.
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
 require "ui/installation_dialog"
+require "y2storage"
+require "y2storage/dialogs/guided_setup/helpers/disk"
 
 Yast.import "Report"
 
@@ -70,16 +71,13 @@ module Y2Storage
           guided_setup.analyzer
         end
 
-        # Disk label used by dialogs.
-        # name, size, [USB] and installed systems, for example:
-        #   "/dev/sda, 10.00 GiB, Windows, OpenSUSE"
-        #   "/dev/sdb, 8.00 GiB, USB"
+        # Disk label used by dialogs
+        #
+        # @see Helpers::Disk#label
+        #
         # @return [String]
         def disk_label(disk)
-          data = [disk.name, disk.size.to_human_string]
-          data += disk_type_labels(disk)
-          data += analyzer.installed_systems(disk)
-          data.join(", ")
+          disk_helper.label(disk)
         end
 
         protected
@@ -124,33 +122,11 @@ module Y2Storage
           Yast::UI.ChangeWidget(Id(id), attr, value)
         end
 
-        # Labels to help indentifying some kind of disks, like USB ones
+        # Helper to generate a disk label
         #
-        # @see #disk_label
-        #
-        # @param disk [BlkDevice]
-        # @return [Array<String>]
-        def disk_type_labels(disk)
-          return [] unless disk.respond_to?(:transport)
-
-          trans = transport_label(disk.transport)
-          trans.empty? ? [] : [trans]
-        end
-
-        # Label for the given transport to be displayed in the dialogs
-        #
-        # @see #disk_type_labels
-        #
-        # @param transport [DataTransport]
-        # @return [String] empty string if the transport is not worth mentioning
-        def transport_label(transport)
-          if transport.is?(:usb)
-            _("USB")
-          elsif transport.is?(:sbp)
-            _("IEEE 1394")
-          else
-            ""
-          end
+        # @return [Helpers::Disk]
+        def disk_helper
+          @disk_helper ||= Helpers::Disk.new(analyzer)
         end
       end
     end

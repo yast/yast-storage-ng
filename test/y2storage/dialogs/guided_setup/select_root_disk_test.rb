@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,13 +28,16 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
   before do
     settings.candidate_devices = candidate_disks
+    settings.delete_resize_configurable = partition_actions
   end
 
+  let(:partition_actions) { true }
+
   describe "#skip?" do
-    context "when there is only one disk" do
+    context "when there is only one candidate disk" do
       let(:candidate_disks) { ["/dev/sda"] }
 
-      context "and there are no partitions" do
+      context "and the candidate disk has no partitions" do
         let(:partitions) { { "/dev/sda" => [] } }
 
         it "returns true" do
@@ -42,16 +45,28 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
         end
       end
 
-      context "and it contains partitions" do
+      context "and the candidate disk has partitions" do
         let(:partitions) { { "/dev/sda" => ["sda1"] } }
 
-        it "returns false" do
-          expect(subject.skip?).to be(false)
+        context "and the partition actions are configurable" do
+          let(:partition_actions) { true }
+
+          it "returns false" do
+            expect(subject.skip?).to be(false)
+          end
+        end
+
+        context "and the partition actions are not configurable" do
+          let(:partition_actions) { false }
+
+          it "returns true" do
+            expect(subject.skip?).to be(true)
+          end
         end
       end
     end
 
-    context "where there are several disks" do
+    context "where there are several candidate disks" do
       let(:candidate_disks) { ["/dev/sda", "/dev/sdb"] }
 
       it "returns false" do
@@ -60,268 +75,152 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     end
   end
 
-  describe "#run" do
+  describe "#before_skip" do
     let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
     let(:candidate_disks) { all_disks }
 
+    it "sets the first candidate disk as root disk" do
+      subject.before_skip
+
+      expect(settings.root_device).to eq("/dev/sda")
+    end
+  end
+
+  describe "#next_handler" do
+    let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
+    let(:candidate_disks) { all_disks }
+
+    let(:windows_partitions) { [partition_double("sda1")] }
+    let(:linux_partitions) { [partition_double("sda2")] }
+
+    let(:partitions) do
+      { "/dev/sda" => [partition_double("sda1"), partition_double("sda2"), partition_double("sda3")] }
+    end
+
     before do
-      select_widget(:windows_action, :not_modify) unless windows_partitions.empty?
-      select_widget(:linux_delete_mode, :all)
-      select_widget(:other_delete_mode, :all)
+      allow(Y2Storage::Dialogs::GuidedSetup::Widgets::RootDiskSelector)
+        .to receive(:new).and_return(root_disk_widget)
+
+      allow(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+        .to receive(:new).and_return(actions_widget)
     end
 
-    context "when settings does not have a root disk" do
-      before { settings.root_device = nil }
-
-      it "selects 'any' option by default" do
-        expect_select(:any_disk)
-        expect_not_select("/dev/sda")
-        expect_not_select("/dev/sdb")
-        subject.run
-      end
+    let(:root_disk_widget) do
+      instance_double(Y2Storage::Dialogs::GuidedSetup::Widgets::RootDiskSelector, store: true)
     end
 
-    context "when settings has a root disk" do
-      before { settings.root_device = "/dev/sda" }
-
-      it "selects that disk by default" do
-        expect_select("/dev/sda")
-        expect_not_select("/dev/sdb")
-        subject.run
-      end
+    let(:actions_widget) do
+      instance_double(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions, store: true)
     end
 
-    context "when there is only one disk" do
-      let(:all_disks) { ["/dev/sda"] }
+    it "stores all widgets" do
+      expect(root_disk_widget).to receive(:store)
+      expect(actions_widget).to receive(:store)
 
-      it "updates settings with that disk" do
-        subject.run
-        expect(subject.settings.root_device).to eq("/dev/sda")
-      end
+      subject.next_handler
+    end
+  end
+
+  describe "#run" do
+    before do
+      allow(subject).to receive(:next_handler)
     end
 
-    context "when there are several disks" do
-      context "and a disk is selected" do
-        before { select_disks(["/dev/sdb"]) }
+    let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
+    let(:candidate_disks) { all_disks }
 
-        it "updates settings with the selected disk" do
-          subject.run
-          expect(subject.settings.root_device).to eq("/dev/sdb")
-        end
-      end
+    it "contains a widget to select the root disk" do
+      expect(Y2Storage::Dialogs::GuidedSetup::Widgets::RootDiskSelector)
+        .to receive(:new).and_call_original
 
-      context "and 'any' option is selected" do
-        before { select_disks([:any_disk]) }
-
-        it "updates settings with root disk as nil" do
-          subject.run
-          expect(subject.settings.root_device).to be_nil
-        end
-      end
+      subject.run
     end
 
-    context "when no disk has a Windows system" do
-      let(:windows_partitions) { [] }
+    context "when the partiton actions (delete and resize) are not configurable" do
+      let(:partition_actions) { false }
 
-      it "does not show the windows actions" do
-        widget = term_with_id(/windows_action/, subject.send(:dialog_content))
-        expect(widget).to be_nil
-      end
-    end
-
-    context "when some disk has a Windows system" do
       let(:windows_partitions) { [partition_double("sda1")] }
+      let(:linux_partitions) { [partition_double("sda2")] }
 
-      it "shows the windows actions" do
-        widget = term_with_id(/windows_action/, subject.send(:dialog_content))
-        expect(widget).to_not be_nil
-      end
-
-      context "when settings.windows_delete_mode is set to :all" do
-        let(:windows_partitions) { [partition_double("sda1")] }
-        before { settings.windows_delete_mode = :all }
-
-        it "sets the Windows action to :always_remove" do
-          expect_select(:windows_action, :always_remove)
-          subject.run
-        end
-      end
-
-      context "when settings.windows_delete_mode is set to :ondemand" do
-        let(:windows_partitions) { [partition_double("sda1")] }
-        before { settings.windows_delete_mode = :ondemand }
-
-        it "sets the Windows action to :remove" do
-          expect_select(:windows_action, :remove)
-          subject.run
-        end
-      end
-
-      context "when settings.windows_delete_mode is set to :none" do
-        let(:windows_partitions) { [partition_double("sda1")] }
-        before { settings.windows_delete_mode = :none }
-
-        context "and resizing is allowed" do
-          before { settings.resize_windows = true }
-
-          it "sets the Windows action to :resize" do
-            expect_select(:windows_action, :resize)
-            subject.run
-          end
-        end
-
-        context "and resizing is not allowed" do
-          before { settings.resize_windows = false }
-
-          it "sets the Windows action to :not_modify" do
-            expect_select(:windows_action, :not_modify)
-            subject.run
-          end
-        end
-      end
-
-      context "updating settings regarding Windows" do
-        context "if :not_modify is selected for Windows action" do
-          before { select_widget(:windows_action, :not_modify) }
-
-          it "updates the settings according" do
-            subject.run
-            expect(settings.windows_delete_mode).to eq :none
-            expect(settings.resize_windows).to eq false
-          end
-        end
-
-        context "if :resize is selected for Windows action" do
-          before { select_widget(:windows_action, :resize) }
-
-          it "updates the settings according" do
-            subject.run
-            expect(settings.windows_delete_mode).to eq :none
-            expect(settings.resize_windows).to eq true
-          end
-        end
-
-        context "if :remove is selected for Windows action" do
-          before { select_widget(:windows_action, :remove) }
-
-          it "updates the settings according" do
-            subject.run
-            expect(settings.windows_delete_mode).to eq :ondemand
-            expect(settings.resize_windows).to eq true
-          end
-        end
-
-        context "if :always_remove is selected for Windows action" do
-          before { select_widget(:windows_action, :always_remove) }
-
-          it "updates the settings according" do
-            subject.run
-            expect(settings.windows_delete_mode).to eq :all
-          end
-        end
-      end
-    end
-
-    context "when no disk has a Linux partition" do
-      let(:linux_partitions) { [] }
-
-      it "disables linux actions" do
-        expect_disable(:linux_delete_mode)
-        subject.run
-      end
-    end
-
-    context "when some disk has Linux partitions" do
-      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
-
-      it "enables linux actions" do
-        expect_enable(:linux_delete_mode)
-        subject.run
-      end
-    end
-
-    context "when all the partitions are Windows systems or Linux" do
-      let(:windows_partitions) { [partition_double("sda1")] }
-      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
       let(:partitions) do
         { "/dev/sda" => [partition_double("sda1"), partition_double("sda2"), partition_double("sda3")] }
       end
 
-      it "disables other actions" do
-        expect_disable(:other_delete_mode)
+      it "does not contain a widget to configure the partition actions" do
+        expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions).to_not receive(:new)
+
         subject.run
       end
     end
 
-    context "when there are other kind of partitions (not Linux or Windows system)" do
-      let(:windows_partitions) { [] }
-      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
-      let(:partitions) do
-        { "/dev/sda" => [partition_double("sda1"), partition_double("sda2"), partition_double("sda3")] }
-      end
+    context "when the partiton actions (delete and resize) are configurable" do
+      let(:partition_actions) { true }
 
-      it "enables other actions" do
-        expect_enable(:other_delete_mode)
-        subject.run
-      end
-    end
+      context "and there are Windows partitions" do
+        let(:windows_partitions) { [partition_double("sda1")] }
 
-    it "selects the right linux action by default" do
-      settings.linux_delete_mode = :ondemand
-      expect_select(:linux_delete_mode, :ondemand)
-      subject.run
+        it "contains a widget for the Windows partition actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(windows: true)).and_call_original
 
-      settings.linux_delete_mode = :all
-      expect_select(:linux_delete_mode, :all)
-      subject.run
-    end
-
-    it "selects the right other action by default" do
-      settings.other_delete_mode = :ondemand
-      expect_select(:other_delete_mode, :ondemand)
-      subject.run
-
-      settings.other_delete_mode = :all
-      expect_select(:other_delete_mode, :all)
-      subject.run
-    end
-
-    describe "updating settings regarding linux partitions" do
-      context "if :ondemand is selected for linux_delete_mode" do
-        before { select_widget(:linux_delete_mode, :ondemand) }
-
-        it "updates the settings according" do
           subject.run
-          expect(settings.linux_delete_mode).to eq :ondemand
         end
       end
 
-      context "if :all is selected for linux_delete_mode" do
-        before { select_widget(:linux_delete_mode, :all) }
+      context "and there are no Windows partitions" do
+        let(:windows_partitions) { [] }
 
-        it "updates the settings according" do
+        it "does not contain a widget for the Windows partition actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(windows: false)).and_call_original
+
           subject.run
-          expect(settings.linux_delete_mode).to eq :all
-        end
-      end
-    end
-
-    describe "updating settings regarding other partitions" do
-      context "if :all is selected for other_delete_mode" do
-        before { select_widget(:other_delete_mode, :all) }
-
-        it "updates the settings according" do
-          subject.run
-          expect(settings.other_delete_mode).to eq :all
         end
       end
 
-      context "if :none is selected for other_delete_mode" do
-        before { select_widget(:other_delete_mode, :none) }
+      context "and there are Linux partitions" do
+        let(:linux_partitions) { [partition_double("sda1")] }
 
-        it "updates the settings according" do
+        it "contains a widget for the Linux partition actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(linux: true)).and_call_original
+
           subject.run
-          expect(settings.other_delete_mode).to eq :none
+        end
+      end
+
+      context "and there are no Linux partitions" do
+        let(:linux_partitions) { [] }
+
+        it "does not enable a widget for the Linux partition actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(linux: false)).and_call_original
+
+          subject.run
+        end
+      end
+
+      context "and there are other partitions" do
+        let(:partitions) { { "/dev/sda" => [partition_double("sda1")] } }
+
+        it "contains a widget for other partitions actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(other: true)).and_call_original
+
+          subject.run
+        end
+      end
+
+      context "and there are no other partitions" do
+        let(:linux_partitions) { [partition_double("sda1")] }
+
+        let(:partitions) { { "/dev/sda" => [partition_double("sda1")] } }
+
+        it "does not enable a widget for other partitions actions" do
+          expect(Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions)
+            .to receive(:new).with(anything, anything, hash_including(other: false)).and_call_original
+
+          subject.run
         end
       end
     end
