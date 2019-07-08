@@ -157,6 +157,55 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         )
       end
 
+      context "and a specified partition is a LVM PV" do
+        let(:scenario) { "lvm-two-vgs" }
+        let(:planned_devices) { [planned_partition] }
+        let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "2,3,4,5,6,7,8" }] }
+
+        it "keeps the rest of LVM PVs if they are not specified" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          expect(devicegraph.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/sda1"),
+            an_object_having_attributes("name" => "/dev/sda3"),
+            an_object_having_attributes("name" => planned_partition.reuse_name),
+            an_object_having_attributes("name" => "/dev/sda6")
+          )
+        end
+      end
+
+      context "and a specified partition is a MD RAID device" do
+        let(:scenario) { "md_raid" }
+        let(:planned_devices) { [] }
+        let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "1" }] }
+
+        it "keeps the rest of MD RAID devices if they are not specified" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          expect(devicegraph.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/sda2"),
+            an_object_having_attributes("name" => "/dev/sda3")
+          )
+        end
+      end
+
+      context "and a specified partition belongs to a multi-device Btrfs" do
+        let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+        let(:planned_devices) { [] }
+        let(:partitioning_array) do
+          [
+            { "device" => "/dev/sda", "use" => "1" },
+            { "device" => "/dev/sdb", "use" => "all" }
+          ]
+        end
+
+        it "keeps the rest of multi-device Btrfs partitions if they are not specified" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          expect(devicegraph.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/sda2"),
+            an_object_having_attributes("name" => "/dev/sda3")
+          )
+        end
+      end
+
       context "and a partition will be reused" do
         let(:scenario) { "lvm-two-vgs" }
         let(:planned_devices) { [planned_partition] }

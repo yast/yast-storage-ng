@@ -49,11 +49,15 @@ module Y2Storage
       #
       # @param device_sid [Integer] device sid of the partition
       # @return [Array<Integer>] device sids of all the deleted partitions
-      def delete_by_sid(device_sid)
+      def delete_by_sid(device_sid, delete_related_partitions: true)
         partition = find_partition(device_sid)
         return [] unless partition
 
-        delete_with_related_partitions(partition)
+        if delete_related_partitions
+          delete_with_related_partitions(partition)
+        else
+          delete_partitions([partition])
+        end
       end
 
       protected

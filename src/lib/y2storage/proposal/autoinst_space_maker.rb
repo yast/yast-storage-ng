@@ -137,6 +137,12 @@ module Y2Storage
         delete_partitions(devicegraph, parts, reused_partitions)
       end
 
+      # Deletes the indicated partitions
+      #
+      # The {Proposal::PartitionKiller} tries to remove as many partitions as possible by default. For
+      # example, when a LVM PV is deleted, the rest of PVs are deleted too. But this is not the desired
+      # behaviour for AutoYaST. With AutoYaST, only the indicated partitions should be removed.
+      #
       # @param devicegraph     [Devicegraph]               devicegraph
       # @param parts           [Array<Planned::Partition>] parts to delete
       # @param reused_parts    [Array<String>]             reused partitions names
@@ -147,7 +153,8 @@ module Y2Storage
           partition = partition_by_sid(devicegraph, sid)
           next unless partition
 
-          partition_killer.delete_by_sid(partition.sid)
+          # Removes only this partition and nothing else.
+          partition_killer.delete_by_sid(partition.sid, delete_related_partitions: false)
         end
       end
 
