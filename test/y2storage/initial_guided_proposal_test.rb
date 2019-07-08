@@ -176,17 +176,16 @@ describe Y2Storage::InitialGuidedProposal do
           expect(disk_for("/").name).to eq "/dev/sdb"
         end
 
-        # FIXME: this is currently not working, see bsc#1130392
         context "and swap is optional" do
           let(:swap_optional) { true }
 
-          xit "uses all the devices to make the proposal" do
+          it "uses all the devices to make the proposal" do
             proposal.propose
 
             expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
           end
 
-          xit "allocates the swap partition in a separate device" do
+          it "allocates the swap partition in a separate device" do
             proposal.propose
 
             expect(disk_for("swap").name).to eq "/dev/sdc"
