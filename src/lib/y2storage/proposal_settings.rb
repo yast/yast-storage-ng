@@ -165,10 +165,6 @@ module Y2Storage
       end
     end
 
-    # @note :legacy and :ng formats
-    # @return [Boolean] whether to resize Windows systems if needed
-    attr_accessor :resize_windows
-
     # Device names of the disks that can be used for the installation. If nil,
     # the proposal will try find suitable devices
     #
@@ -206,11 +202,6 @@ module Y2Storage
         end
       end
     end
-
-    # @note :legacy and :ng formats
-    # @return [String] device name of the disk in which / must be placed. If set
-    #   to nil, the proposal will try to find a good candidate
-    attr_accessor :root_device
 
     # @!attribute encryption_password
     #   @note :legacy and :ng formats
