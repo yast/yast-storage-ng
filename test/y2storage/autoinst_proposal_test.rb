@@ -305,16 +305,40 @@ describe Y2Storage::AutoinstProposal do
           { "filesystem" => :xfs, "mount" => "/home", "create" => true }
         end
 
-        it "reuses the partition with the given partition number" do
+        it "does not remove the reused partition" do
           sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
           proposal.propose
           reused_part = proposal.devices.find_by_name("/dev/sda1")
+
           expect(reused_part.sid).to eq sid
         end
+      end
 
-        it "does not register any issue" do
+      context "when the reused partition is part of a MD RAID to be deleted" do
+        let(:scenario) { "md_raid" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root, home] }
+          ]
+        end
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false, "format" => true }
+        end
+
+        let(:home) do
+          { "filesystem" => :xfs, "mount" => "/home", "create" => true }
+        end
+
+        it "does not remove the reused partition" do
+          sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
           proposal.propose
-          expect(issues_list).to be_empty
+          reused_part = proposal.devices.find_by_name("/dev/sda1")
+
+          expect(reused_part.sid).to eq(sid)
         end
       end
     end
