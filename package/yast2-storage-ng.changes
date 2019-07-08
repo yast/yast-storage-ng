@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jul  8 11:52:43 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- AutoYaST: do not delete related partitions if they are not
+  specifically requested (related to bsc#1096760).
+- 4.2.24
+
+-------------------------------------------------------------------
 Fri Jul  5 14:04:00 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Proposal: add control file option to make configurable to resize
