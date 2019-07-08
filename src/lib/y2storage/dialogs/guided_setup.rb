@@ -120,7 +120,7 @@ module Y2Storage
           case settings.allocate_volume_mode
           when :auto
             ["select_disks", "select_root_disk", "select_scheme", "select_filesystem"]
-          when :single_device
+          when :device
             ["select_scheme", "select_filesystem", "select_volumes_disks"]
           end
 

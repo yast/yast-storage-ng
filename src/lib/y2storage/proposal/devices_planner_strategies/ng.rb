@@ -173,7 +173,7 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_device(planned_device, volume)
-          if settings.allocate_mode?(:single_device)
+          if settings.allocate_mode?(:device)
             planned_device.disk = volume.device if planned_device.respond_to?(:disk=)
           elsif planned_device.root?
             # Forcing this when planned_device is a LV would imply the new VG

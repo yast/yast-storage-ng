@@ -7,7 +7,7 @@
       <linux_delete_mode config:type="symbol">all</linux_delete_mode>
       <other_delete_mode config:type="symbol">ondemand</other_delete_mode>
       <lvm_vg_strategy config:type="symbol">use_needed</lvm_vg_strategy>
-      <allocate_volume_mode config:type="symbol">single_device</allocate_volume_mode>
+      <allocate_volume_mode config:type="symbol">device</allocate_volume_mode>
     </proposal>
 
     <volumes config:type="list">

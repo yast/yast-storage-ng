@@ -25,7 +25,7 @@ require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
-  describe "#propose with #allocate_volume_mode set to :single_device" do
+  describe "#propose with #allocate_volume_mode set to :device" do
     include_context "proposal"
 
     subject(:proposal) { described_class.new(settings: settings) }

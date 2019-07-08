@@ -138,7 +138,7 @@ module Y2Storage
     # must be located. If nil, there are no restrictions allocating the volume.
     #
     # Note this is only relevant when {ProposalSettings#allocate_volume_mode} is
-    # set to :single_device.
+    # set to :device.
     #
     # @return [String, nil]
     attr_accessor :device
