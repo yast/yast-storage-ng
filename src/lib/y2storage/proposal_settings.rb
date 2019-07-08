@@ -31,7 +31,10 @@ module Y2Storage
   #
   # When a new object is created, all settings are nil or [] in case of a list is
   # expected. See {#for_current_product} to initialize settings with some values.
-  class ProposalSettings
+  #
+  # FIXME: this class contains a lot of unnecessary logic to support the legacy
+  # settings.
+  class ProposalSettings # rubocop:disable ClassLength
     include SecretAttributes
     include PartitioningFeatures
 
