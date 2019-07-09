@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -47,7 +48,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
     [
       root_vol,
       home_vol,
-      Y2Storage::VolumeSpecification.new(vol_features.merge("mount_point" => "swap")),
+      swap_vol,
       Y2Storage::VolumeSpecification.new(vol_features.merge("mount_point" => "/var/lib")),
       Y2Storage::VolumeSpecification.new(vol_features.merge("adjust_by_ram_configurable" => true))
     ]
@@ -63,6 +64,14 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
     Y2Storage::VolumeSpecification.new(
       vol_features.merge("mount_point" => "/home", "fs_type" => "ext4", "fs_types" => "ext3,ext4")
     )
+  end
+
+  let(:swap_vol) do
+    Y2Storage::VolumeSpecification.new(vol_features.merge("mount_point" => "swap"))
+  end
+
+  before do
+    Y2Storage::StorageManager.create_test_instance
   end
 
   describe "#content" do
@@ -98,8 +107,34 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
     context "if the user can decide whether to enlarge by ram" do
       let(:index) { 4 }
 
+      let(:vol_features) { { "adjust_by_ram_configurable" => true } }
+
       it "includes the corresponding check box" do
         expect(adjust_by_ram_checkbox.value).to eq :CheckBox
+      end
+
+      context "and the volume supports enlarge for resume" do
+        let(:index) { 2 } # swap vol
+
+        before do
+          allow(swap_vol).to receive(:enlarge_for_resume_supported?).and_return(true)
+        end
+
+        it "uses the appropiate label" do
+          expect(adjust_by_ram_checkbox.params[-2]).to include("for Suspend")
+        end
+      end
+
+      context "and the volume does not support enlarge for resume" do
+        let(:index) { 2 } # swap vol
+
+        before do
+          allow(swap_vol).to receive(:enlarge_for_resume_supported?).and_return(false)
+        end
+
+        it "uses the appropiate label" do
+          expect(adjust_by_ram_checkbox.params[-2]).to_not include("for Suspend")
+        end
       end
     end
 
