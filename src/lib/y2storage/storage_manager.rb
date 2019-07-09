@@ -1,4 +1,4 @@
-# Copyright (c) [2015,2017] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 
 require "yast"
 require "storage"
+require "y2storage/arch"
 require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/devicegraph_sanitizer"
@@ -40,14 +41,13 @@ module Y2Storage
   # there are quite some code that could be extracted to a new place, mainly all
   # stuff related to testing (e.g., {#probe_from_yaml}).
   #
-  class StorageManager
+  class StorageManager # rubocop:disable ClassLength
     include Yast::Logger
     extend Forwardable
 
     # Libstorage object
     #
-    # Calls to several methods (e.g. #environment, #arch and #rootprefix) are
-    # forwarded to this object.
+    # Calls to several methods (e.g., #environment and #rootprefix) are forwarded to this object.
     #
     # @return [Storage::Storage]
     attr_reader :storage
@@ -69,7 +69,7 @@ module Y2Storage
     # @return [GuidedProposal, nil]
     attr_reader :proposal
 
-    def_delegators :@storage, :environment, :arch, :rootprefix, :prepend_rootprefix, :rootprefix=
+    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -92,6 +92,13 @@ module Y2Storage
       reset_probed
       reset_staging
       reset_staging_revision
+    end
+
+    # Current architecture
+    #
+    # @return [Y2Storage::Arch]
+    def arch
+      @arch ||= Arch.new(@storage.arch)
     end
 
     # Default value for mount_by option
