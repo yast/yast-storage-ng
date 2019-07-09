@@ -63,7 +63,7 @@ module Y2Storage
         {
           mount_point:  mount_point,
           size:         nil,
-          fs_type:      Filesystems::Type::Nfs,
+          fs_type:      Filesystems::Type::NFS,
           partition_id: nil
         }
       end
