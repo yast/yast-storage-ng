@@ -727,7 +727,11 @@ space" may be important to fully understand some of them.
     initial and max sizes of each attempt should be adjusted based in the RAM
     size. So far the adaptation consists in ensuring all the sizes are, at
     least, as big as the RAM. In the future, an extra `adjust_by_ram_mode`
-    option could be added to allow other approaches.
+    option could be added to allow other approaches. Note that this setting has
+    an special behavior for Z Systems. The option to resume from RAM is not available
+    for this kind of systems. And for this reason, in s390 the default value of `adjust_by_ram`
+    is forced to `false` for the swap volume (mount point is "swap"), even when it was
+    set to `true` in the control file.
   * `adjust_by_ram_configurable`
     Whether the user can change the previous setting in the UI.
   * `fallback_for_min_size`
