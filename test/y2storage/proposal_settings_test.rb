@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -24,7 +25,6 @@ require "y2storage"
 Yast.import "ProductFeatures"
 
 describe Y2Storage::ProposalSettings do
-
   using Y2Storage::Refinements::SizeCasts
 
   def stub_features(all_features)
@@ -33,6 +33,10 @@ describe Y2Storage::ProposalSettings do
 
   def stub_partitioning_features(features = {})
     stub_features("partitioning" => initial_partitioning_features.merge(features))
+  end
+
+  before do
+    Y2Storage::StorageManager.create_test_instance
   end
 
   let(:initial_partitioning_features) { {} }

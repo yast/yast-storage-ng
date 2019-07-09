@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,12 +37,9 @@ RSpec.shared_context "proposal" do
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
     allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
+
     allow(storage_arch).to receive(:ppc_power_nv?).and_return(ppc_power_nv)
-    allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
     allow(storage_arch).to receive(:efiboot?).and_return(false)
-    allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
-    allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
-    allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
     Yast::ProductFeatures.Import(control_file_content)
 
@@ -51,13 +49,13 @@ RSpec.shared_context "proposal" do
       .and_return("memtotal" => memtotal)
   end
 
+  let(:storage_arch) { instance_double(Storage::Arch) }
   let(:architecture) { :x86 }
   let(:ppc_power_nv) { false }
 
   let(:memtotal) { 8.GiB.to_i / 1.KiB.to_i }
 
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
-  let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
     instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB, max_size: 800.GiB,
       reasons: 0, reason_texts: [])

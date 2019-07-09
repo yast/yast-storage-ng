@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,15 +29,10 @@ describe Y2Storage::BootRequirementsChecker do
     Y2Storage::StorageManager.create_test_instance
     Y2Storage::StorageManager.instance.probe_from_yaml(input_file_for("empty_hard_disk_gpt_50GiB"))
 
-    allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
-
-    allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
-    allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
-    allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
     allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
   end
 
-  let(:storage_arch) { instance_double("::Storage::Arch") }
+  let(:storage_arch) { instance_double(Storage::Arch) }
 
   let(:architecture) { :x86 }
 

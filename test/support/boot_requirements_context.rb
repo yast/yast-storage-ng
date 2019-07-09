@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2016] SUSE LLC
+
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -84,12 +85,7 @@ RSpec.shared_context "boot requirements" do
 
   before do
     Y2Storage::StorageManager.create_test_instance
-    allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
     allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:new).and_return(analyzer)
-
-    allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
-    allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
-    allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
     allow(devicegraph).to receive(:disk_devices).and_return [dev_sda, dev_sdb]
     allow(devicegraph).to receive(:nfs_mounts).and_return []

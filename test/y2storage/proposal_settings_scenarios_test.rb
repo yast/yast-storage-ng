@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,6 +34,7 @@ describe Y2Storage::ProposalSettings do
 
   before do
     Yast::ProductFeatures.Import(control_file_content)
+    Y2Storage::StorageManager.create_test_instance
   end
 
   subject(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
