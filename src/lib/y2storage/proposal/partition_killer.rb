@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -44,16 +40,25 @@ module Y2Storage
         @disks = disks
       end
 
-      # Deletes a given partition and other partitions that, as a consequence,
-      # are not longer useful.
+      # Deletes a given partition
+      #
+      # Optionally, other related partitions that, as a consequence, are not longer useful can be also
+      # deleted. For example, when a LVM PV is deleted, the sibling PVs can be deleted too. And the same
+      # happens for other devices like the devices used by an MD RAID or a multi-device Btrfs.
       #
       # @param device_sid [Integer] device sid of the partition
+      # @param delete_related_partitions [Boolean] whether related partitions should be deleted
+      #
       # @return [Array<Integer>] device sids of all the deleted partitions
-      def delete_by_sid(device_sid)
+      def delete_by_sid(device_sid, delete_related_partitions: true)
         partition = find_partition(device_sid)
         return [] unless partition
 
-        delete_with_related_partitions(partition)
+        if delete_related_partitions
+          delete_with_related_partitions(partition)
+        else
+          delete_partitions([partition])
+        end
       end
 
       protected

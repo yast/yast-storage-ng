@@ -1,7 +1,6 @@
 #!/usr/bin/env rspec
 
-#
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -284,6 +283,88 @@ describe Y2Storage::AutoinstProposal do
             filesystem_type:       Y2Storage::Filesystems::Type::EXT2,
             filesystem_mountpoint: "/"
           )
+        end
+      end
+
+      context "when the reused partition is part of an LVM to be deleted" do
+        let(:scenario) { "lvm-two-disks" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root] },
+            { "device" => "/dev/sdb", "use" => "all", "partitions" => [home] }
+          ]
+        end
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false, "format" => true }
+        end
+
+        let(:home) do
+          { "filesystem" => :xfs, "mount" => "/home", "create" => true }
+        end
+
+        it "does not remove the reused partition" do
+          sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
+          proposal.propose
+          reused_part = proposal.devices.find_by_name("/dev/sda1")
+
+          expect(reused_part.sid).to eq sid
+        end
+      end
+
+      context "when the reused partition is part of a MD RAID to be deleted" do
+        let(:scenario) { "md_raid" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root, home] }
+          ]
+        end
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false, "format" => true }
+        end
+
+        let(:home) do
+          { "filesystem" => :xfs, "mount" => "/home", "create" => true }
+        end
+
+        it "does not remove the reused partition" do
+          sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
+          proposal.propose
+          reused_part = proposal.devices.find_by_name("/dev/sda1")
+
+          expect(reused_part.sid).to eq(sid)
+        end
+      end
+
+      context "when the reused partition is part of a multi-device Btrfs to be deleted" do
+        let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root, home] }
+          ]
+        end
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false, "format" => true }
+        end
+
+        let(:home) do
+          { "filesystem" => :xfs, "mount" => "/home", "create" => true }
+        end
+
+        it "does not remove the reused partition" do
+          sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
+          proposal.propose
+          reused_part = proposal.devices.find_by_name("/dev/sda1")
+
+          expect(reused_part.sid).to eq(sid)
         end
       end
     end
