@@ -88,20 +88,11 @@ module Y2Storage
     #
     # @return [true]
     def try_with_each_candidate_group
-      error = default_proposal_error
-
-      groups_of_candidate_devices.each do |candidate_group|
+      try_with_each(groups_of_candidate_devices) do |candidate_group|
         reset_settings
         settings.candidate_devices = candidate_group
-
-        begin
-          return try_with_different_settings
-        rescue Error
-          next
-        end
+        try_with_different_settings
       end
-
-      raise error
     end
 
     # Tries to calculate a proposal by using different settings for each attempt
@@ -146,19 +137,10 @@ module Y2Storage
     #
     # @return [true]
     def try_with_different_root_devices
-      error = default_proposal_error
-
-      candidate_roots.each do |root_device|
+      try_with_each(candidate_roots) do |root_device|
         settings.root_device = root_device
-
-        begin
-          return try_with_each_permutation
-        rescue Error
-          next
-        end
+        try_with_each_permutation
       end
-
-      raise error
     end
 
     # Tries to calculate a proposal by using different allocations for every
@@ -183,21 +165,13 @@ module Y2Storage
     def try_with_each_permutation
       return try_with_each_target_size if settings.allocate_mode?(:auto)
 
-      error = default_proposal_error
-
-      devices_permutations.each do |permutation|
+      try_with_each(devices_permutations) do |permutation|
         non_root_volumes_sets.each_with_index do |set, idx|
           set.device = permutation[idx]
         end
 
-        begin
-          return try_with_each_target_size
-        rescue Error
-          next
-        end
+        try_with_each_target_size
       end
-
-      raise error
     end
 
     # Resets the settings by assigning the initial settings

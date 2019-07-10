@@ -127,6 +127,33 @@ module Y2Storage
       try_with_each_target_size
     end
 
+    # Generic method that tries to execute a block on each element of a
+    # collection, returning the first successful result
+    #
+    # If a {Y2Storage::Error} exception is raised, it tries with the
+    # next element of the collection. It returns the result of the first
+    # execution of the passed block that succeeds (i.e. that does not raise an
+    # Error exception).
+    #
+    # @raise [Exception] when the block fails for all elements in the collection
+    #
+    # @param iterator [#each] collection to iterate
+    # @param error_proc [Proc, nil] optional code to execute before trying the next
+    #   item when an exception is raised
+    def try_with_each(iterator, error_proc: nil)
+      error = default_proposal_error
+
+      iterator.each do |item|
+        return yield(item)
+      rescue Error => e
+        error_proc&.call(e, item)
+        next
+
+      end
+
+      raise error
+    end
+
     # Helper method to do a proposal attempt for each possible target size
     #
     # @see #target_sizes
@@ -135,24 +162,19 @@ module Y2Storage
     #
     # @return [true]
     def try_with_each_target_size
-      error = default_proposal_error
+      log_error = proc do |e, target_size|
+        log.info "Failed to make a proposal with target size: #{target_size}"
+        log.info "Error: #{e.message}"
+      end
 
-      target_sizes.each do |target_size|
-
+      try_with_each(target_sizes, error_proc: log_error) do |target_size|
         log.info "Trying to make a proposal with target size: #{target_size}\n" \
           "using the following settings:\n#{settings}"
 
         @planned_devices = planned_devices_list(target_size)
         @devices = devicegraph(@planned_devices)
-        return true
-      rescue Error => e
-        log.info "Failed to make a proposal with target size: #{target_size}"
-        log.info "Error: #{e.message}"
-        next
-
+        true
       end
-
-      raise error
     end
 
     # All possible target sizes to make the proposal
