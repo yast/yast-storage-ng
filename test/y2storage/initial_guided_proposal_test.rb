@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -51,9 +51,13 @@ describe Y2Storage::InitialGuidedProposal do
   describe "#propose" do
     let(:ng_partitioning_section) do
       {
-        "partitioning" => { "proposal" => {}, "volumes" => volumes_spec }
+        "partitioning" => {
+          "proposal" => { "allocate_volume_mode" => allocate_mode },
+          "volumes"  => volumes_spec
+        }
       }
     end
+    let(:allocate_mode) { :auto }
 
     let(:volumes_spec) do
       [
@@ -112,23 +116,37 @@ describe Y2Storage::InitialGuidedProposal do
 
       let(:sda_usb) { true }
 
-      it "uses the first non USB device to make the proposal" do
-        proposal.propose
-
-        expect(used_devices).to contain_exactly("/dev/sdb")
-      end
-
-      context "and a proposal is not possible with the current device" do
-        before do
-          # root requires at least 8 GiB and home 10 GiB
-          sdb.size = 5.GiB
-        end
-
-        it "uses the next non USB device to make the proposal" do
+      shared_examples "no candidate devices" do
+        it "uses the first non USB device to make the proposal" do
           proposal.propose
 
-          expect(used_devices).to contain_exactly("/dev/sdc")
+          expect(used_devices).to contain_exactly("/dev/sdb")
         end
+
+        context "and a proposal is not possible with the current device" do
+          before do
+            # root requires at least 8 GiB and home 10 GiB
+            sdb.size = 5.GiB
+          end
+
+          it "uses the next non USB device to make the proposal" do
+            proposal.propose
+
+            expect(used_devices).to contain_exactly("/dev/sdc")
+          end
+        end
+      end
+
+      context "with allocate_volume_mode set to :auto" do
+        let(:allocate_mode) { :auto }
+
+        include_examples "no candidate devices"
+      end
+
+      context "with allocate_volume_mode set to :device" do
+        let(:allocate_mode) { :device }
+
+        include_examples "no candidate devices"
       end
 
       context "and a proposal is not possible without USB devices" do
@@ -141,70 +159,122 @@ describe Y2Storage::InitialGuidedProposal do
           sda.size = 10.GiB
         end
 
-        it "uses the first USB device to make a proposal" do
-          proposal.propose
-
-          expect(used_devices).to contain_exactly("/dev/sdb")
-        end
-
-        context "and a proposal is not possible with the current USB device" do
-          before do
-            # root requires at least 8 GiB and home 10 GiB
-            sdb.size = 5.GiB
-          end
-
-          it "uses the next USB device to make the proposal" do
+        shared_examples "no proposal without USB" do
+          it "uses the first USB device to make a proposal" do
             proposal.propose
 
-            expect(used_devices).to contain_exactly("/dev/sdc")
+            expect(used_devices).to contain_exactly("/dev/sdb")
           end
+
+          context "and a proposal is not possible with the current USB device" do
+            before do
+              # root requires at least 8 GiB and home 10 GiB
+              sdb.size = 5.GiB
+            end
+
+            it "uses the next USB device to make the proposal" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdc")
+            end
+          end
+        end
+
+        context "with allocate_volume_mode set to :auto" do
+          let(:allocate_mode) { :auto }
+
+          include_examples "no proposal without USB"
+        end
+
+        context "with allocate_volume_mode set to :device" do
+          let(:allocate_mode) { :device }
+
+          include_examples "no proposal without USB"
         end
       end
 
       context "and a proposal is not possible with any individual device" do
+        before do
+          sdb.size = 15.GiB
+          medium.size = 12.GiB
+          small.size = 3.GiB
+        end
+
         let(:swap_optional) { false }
 
-        before do
-          sda.size = 12.GiB
-          sdb.size = 15.GiB
-          sdc.size = 3.GiB
-        end
-
-        it "allocates the root device in the biggest device" do
-          proposal.propose
-
-          expect(disk_for("/").name).to eq "/dev/sdb"
-        end
-
-        context "and swap is optional" do
-          let(:swap_optional) { true }
-
-          it "uses all the devices to make the proposal" do
+        shared_examples "proposal in three devices" do
+          it "allocates the root device in the biggest device" do
             proposal.propose
 
-            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+            expect(disk_for("/").name).to eq "/dev/sdb"
           end
 
-          it "allocates the swap partition in a separate device" do
-            proposal.propose
+          context "and swap is optional" do
+            let(:swap_optional) { true }
 
-            expect(disk_for("swap").name).to eq "/dev/sdc"
+            it "uses all the devices to make the proposal" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+            end
+
+            it "allocates the swap partition in a separate device" do
+              proposal.propose
+
+              expect(disk_for("swap").name).to eq small.name
+            end
+          end
+
+          context "and swap is mandatory" do
+            let(:swap_optional) { false }
+
+            it "uses all the devices to make the proposal" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+            end
+
+            it "allocates the swap partition in a separate device" do
+              proposal.propose
+
+              expect(disk_for("swap").name).to eq small.name
+            end
           end
         end
 
-        context "and swap is mandatory" do
-          let(:swap_optional) { false }
+        context "with allocate_volume_mode set to :auto" do
+          let(:allocate_mode) { :auto }
 
-          it "uses all the devices to make the proposal" do
-            proposal.propose
+          context "and the sizes of the disks in the same order than the volumes sizes" do
+            let(:medium) { sda }
+            let(:small) { sdc }
 
-            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+            include_examples "proposal in three devices"
           end
 
-          it "allocates the swap partition in a separate device" do
-            proposal.propose
+          context "and the sizes of the disks in different order than the volumes sizes" do
+            let(:medium) { sdc }
+            let(:small) { sda }
 
-            expect(disk_for("swap").name).to eq "/dev/sdc"
+            include_examples "proposal in three devices"
+          end
+        end
+
+        context "with allocate_volume_mode set to :device" do
+          let(:allocate_mode) { :device }
+
+          context "and the sizes of the disks in the same order than the volumes sizes" do
+            let(:medium) { sda }
+            let(:small) { sdc }
+
+            include_examples "proposal in three devices"
+          end
+
+          context "and the sizes of the disks in different order than the volumes sizes" do
+            let(:medium) { sdc }
+            let(:small) { sda }
+
+            include_examples "proposal in three devices"
           end
         end
       end
@@ -219,24 +289,38 @@ describe Y2Storage::InitialGuidedProposal do
 
       let(:sda_usb) { true }
 
-      it "uses the biggest candidate device to make the proposal" do
-        proposal.propose
-
-        expect(disk_for("/").name).to eq "/dev/sda"
-      end
-
-      context "and a proposal is not possible with any individual candidate device" do
-        before do
-          sda.size = 12.GiB
-          sdb.size = 15.GiB
-          sdc.size = 3.GiB
-        end
-
-        it "uses all the candidate devices to make a proposal" do
+      shared_examples "proposal in two devices" do
+        it "uses the biggest candidate device to make the proposal" do
           proposal.propose
 
-          expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
+          expect(disk_for("/").name).to eq "/dev/sda"
         end
+
+        context "and a proposal is not possible with any individual candidate device" do
+          before do
+            sda.size = 12.GiB
+            sdb.size = 15.GiB
+            sdc.size = 3.GiB
+          end
+
+          it "uses all the candidate devices to make a proposal" do
+            proposal.propose
+
+            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
+          end
+        end
+      end
+
+      context "with allocate_volume_mode set to :auto" do
+        let(:allocate_mode) { :auto }
+
+        include_examples "proposal in two devices"
+      end
+
+      context "with allocate_volume_mode set to :device" do
+        let(:allocate_mode) { :device }
+
+        include_examples "proposal in two devices"
       end
     end
 

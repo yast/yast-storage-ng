@@ -135,7 +135,7 @@ module Y2Storage
       if allocate_mode?(:device)
         root_volume ? root_volume.device : nil
       else
-        @root_device
+        @explicit_root_device
       end
     end
 
@@ -146,43 +146,43 @@ module Y2Storage
     #
     # If {#allocate_volume_mode} is :device this changes the value of
     # {VolumeSpecification#device} for the root volume and all its associated
-    # volumes. In addition, it tries to adapt the value of the attribute for the
-    # rest of the volumes in the most convenient way.
+    # volumes.
     def root_device=(name)
-      if allocate_mode?(:auto)
-        @root_device = name
-      else
-        # Nothing to do
-        return unless root_volume
+      @explicit_root_device = name
 
-        previous_root_device = root_volume.device
+      return unless allocate_mode?(:device) && name
 
-        # If we are changing a previous valid device by another one
-        if previous_root_device && name && previous_root_device != name
-          volumes.select { |vol| vol.device == name }.each do |vol|
-            vol.device = previous_root_device
-          end
-        end
-
-        volumes_sets.find(&:root?).device = name
-      end
+      root_set = volumes_sets.find(&:root?)
+      root_set.device = name if root_set
     end
+
+    # Most recent value of {#root_device} that was set via a call to the
+    # {#root_device=} setter
+    #
+    # For settings with {#allocate_volume_mode} :auto, this is basically
+    # equivalent to {#root_device}, but for settings with allocate mode :device,
+    # the value of {#root_device} is usually a consequence of the status of the
+    # {#volumes}. This method helps to identify the exception in which the root
+    # device has been forced via the setter.
+    #
+    # @return [String, nil]
+    attr_reader :explicit_root_device
 
     # Device names of the disks that can be used for the installation. If nil,
     # the proposal will try find suitable devices
     #
     # @note :legacy and :ng formats
     #
-    # @return [Array<String>]
+    # @return [Array<String>, nil]
     def candidate_devices
       if allocate_mode?(:device)
         # If any of the proposed volumes has no device assigned, the whole list
         # is invalid
         return nil if volumes.select(&:proposed).any? { |vol| vol.device.nil? }
 
-        volumes.flat_map(&:device).compact.uniq
+        volumes.map(&:device).compact.uniq
       else
-        @candidate_devices
+        @explicit_candidate_devices
       end
     end
 
@@ -195,9 +195,11 @@ module Y2Storage
     # {VolumeSpecification#device} for all volumes using elements from the given
     # list.
     def candidate_devices=(devices)
-      if allocate_mode?(:auto)
-        @candidate_devices = devices
-      elsif devices.nil?
+      @explicit_candidate_devices = devices
+
+      return unless allocate_mode?(:device)
+
+      if devices.nil?
         volumes.each { |vol| vol.device = nil }
       else
         volumes_sets.select(&:proposed?).each_with_index do |set, idx|
@@ -205,6 +207,18 @@ module Y2Storage
         end
       end
     end
+
+    # Most recent value of {#candidate_devices} that was set via a call to the
+    # {#candidate_devices=} setter
+    #
+    # For settings with {#allocate_volume_mode} :auto, this is basically
+    # equivalent to {#candidate_devices}, but for settings with allocate mode
+    # :device, the value of {#candidate_devices} is usually a consequence of the
+    # status of the {#volumes}. This method helps to identify the exception in
+    # which the list of devices has been forced via the setter.
+    #
+    # @return [Array<String>, nil]
+    attr_reader :explicit_candidate_devices
 
     # @!attribute encryption_password
     #   @note :legacy and :ng formats

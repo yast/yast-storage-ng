@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -151,7 +151,44 @@ module Y2Storage
       candidate_roots.each do |root_device|
         settings.root_device = root_device
 
-        log.info "Trying to make a proposal with the following settings: #{settings}"
+        begin
+          return try_with_each_permutation
+        rescue Error
+          next
+        end
+      end
+
+      raise error
+    end
+
+    # Tries to calculate a proposal by using different allocations for every
+    # volume within the candidates devices, given an already enforced root device
+    #
+    # When {#allocate_volume_mode} is set to :auto, this simply calls
+    # {#try_with_each_target_size}, since the basic proposal in auto mode
+    # already tries all the possible distribution of volumes within the
+    # candidate devices.
+    #
+    # With :device mode, this makes an attempt for every combination of
+    # devices and volumes. When a proposal is not possible, it tries again with
+    # a different combination.
+    #
+    # It stops once a valid proposal is calculated.
+    #
+    # @see #devices_permutations
+    #
+    # @raise [Error, NoDiskSpaceError] when the proposal cannot be calculated
+    #
+    # @return [true]
+    def try_with_each_permutation
+      return try_with_each_target_size if settings.allocate_mode?(:auto)
+
+      error = default_proposal_error
+
+      devices_permutations.each do |permutation|
+        non_root_volumes_sets.each_with_index do |set, idx|
+          set.device = permutation[idx]
+        end
 
         begin
           return try_with_each_target_size
@@ -229,13 +266,58 @@ module Y2Storage
     #
     # @return [Array<String>]
     def candidate_roots
-      return [settings.root_device] if settings.root_device
+      return [settings.root_device] if settings.explicit_root_device
 
       disk_names = settings.candidate_devices
 
       candidates = disk_names.map { |n| initial_devicegraph.find_by_name(n) }.compact
       candidates = candidates.sort_by(&:size).reverse
       candidates.map(&:name)
+    end
+
+    # All possible combinations of candidate devices to assign to the non-root
+    # volume sets
+    #
+    # Every entry of the array contains an array of device names in the order in
+    # which they must be assigned to the non-root volume sets of the settings
+    #
+    # @return [Array<Array<String>>]
+    def devices_permutations
+      disk_names = settings.explicit_candidate_devices
+      size = non_root_volumes_sets.size
+
+      # #repeated_permutation does not guarantee stable sorting, so let's enforce it
+      disk_names.repeated_permutation(size).sort do |p1, p2|
+        dev1 = devices_used_by_permutation(p1)
+        dev2 = devices_used_by_permutation(p2)
+
+        # Try first the combinations that expands over more devices, so the behavior
+        # is more similar to mode :auto.
+        if dev1.size != dev2.size
+          dev2.size <=> dev1.size
+        else
+          # For equally big combinations, let's simply use any arbitrary stable sorting
+          dev1.join <=> dev2.join
+        end
+      end
+    end
+
+    # Names of the devices that will tentatively be used by the proposal if a
+    # given permutation is used in {#try_with_each_permutation}
+    #
+    # @param non_root_list [Array<String>] devices to use for the non-root
+    #   volumes sets
+    # @return [Array<String>]
+    def devices_used_by_permutation(non_root_list)
+      ([settings.root_device] + non_root_list).uniq
+    end
+
+    # All proposed volumes sets from the settings except the one containing the
+    # root volume
+    #
+    # @return [Array<VolumeSpecificationsSet>]
+    def non_root_volumes_sets
+      settings.volumes_sets.select(&:proposed?).reject(&:root?)
     end
   end
 end

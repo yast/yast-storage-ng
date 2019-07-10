@@ -139,7 +139,8 @@ module Y2Storage
 
       target_sizes.each do |target_size|
 
-        log.info "Trying to make a proposal with target size: #{target_size}"
+        log.info "Trying to make a proposal with target size: #{target_size}\n" \
+          "using the following settings:\n#{settings}"
 
         @planned_devices = planned_devices_list(target_size)
         @devices = devicegraph(@planned_devices)
