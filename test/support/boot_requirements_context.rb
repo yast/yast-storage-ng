@@ -48,6 +48,7 @@ RSpec.shared_context "boot requirements" do
       root_in_software_raid?:  use_raid,
       encrypted_root?:         use_encryption,
       boot_in_lvm?:            use_lvm,
+      boot_in_thin_lvm?:       use_thin_lvm,
       boot_in_software_raid?:  use_raid,
       encrypted_boot?:         use_encryption,
       btrfs_root?:             use_btrfs,
@@ -67,6 +68,7 @@ RSpec.shared_context "boot requirements" do
 
   let(:embed_grub) { false }
   let(:use_lvm) { false }
+  let(:use_thin_lvm) { false }
   let(:use_raid) { false }
   let(:use_encryption) { false }
   let(:use_btrfs) { true }

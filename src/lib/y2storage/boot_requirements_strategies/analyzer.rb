@@ -128,6 +128,17 @@ module Y2Storage
         in_lvm?(device_for_boot)
       end
 
+      # Whether the filesystem containing /boot is going to be in a thinly
+      # provisioned LVM logical volume
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be in a thinly provisioned LVM logical volume. False if such filesystem
+      #   is unknown (not in the planned devices or in the devicegraph) or is
+      #   not placed in a thinly provisioned LVM.
+      def boot_in_thin_lvm?
+        in_thin_lvm?(device_for_boot)
+      end
+
       # Whether the filesystem containing /boot is over a Software RAID
       #
       # @return [Boolean] true if the filesystem where /boot resides is going to
@@ -465,6 +476,24 @@ module Y2Storage
           device.is_a?(Planned::LvmLv)
         else
           device.plain_blk_devices.any? { |dev| dev.is?(:lvm_lv) }
+        end
+      end
+
+      # Whether the device is in a thinly provisioned LVM logical volume
+      #
+      # The device can be a planned one or a filesystem from the devicegraph.
+      #
+      # @param device [Filesystems::Base, Planned::Device, nil]
+      # @return [Boolean] false if device is nil
+      def in_thin_lvm?(device)
+        return false if device.nil?
+
+        if device.is_a?(Planned::Device)
+          device.is_a?(Planned::LvmLv) && device.lv_type == LvType::THIN
+        else
+          device.plain_blk_devices.any? do |dev|
+            dev.is?(:lvm_lv) && dev.lv_type == LvType::THIN
+          end
         end
       end
 

@@ -696,4 +696,50 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       expect(analyzer.planned_grub_partitions).to eq [planned_grub]
     end
   end
+
+  describe "#boot_in_thin_lvm?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let(:planned_devs) { [] }
+
+    def create_filesystem(device_name, mount_point)
+      device = fake_devicegraph.find_by_name(device_name)
+      fs = device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.create_mount_point(mount_point)
+      fs
+    end
+
+    context "If the filesystem is in a thinly provisioned LVM" do
+      let(:scenario) { "thin1-probed.xml" }
+
+      context "without a separate /boot and / on a thin LVM" do
+        before do
+          create_filesystem("/dev/test/thin1", "/")
+        end
+
+        it "returns true" do
+          expect(analyzer.boot_in_thin_lvm?).to eq true
+        end
+      end
+
+      context "with a separate /boot also on a thin LVM" do
+        before do
+          create_filesystem("/dev/test/thin1", "/")
+          create_filesystem("/dev/test/thin2", "/boot")
+        end
+
+        it "returns true" do
+          expect(analyzer.boot_in_thin_lvm?).to eq true
+        end
+      end
+    end
+
+    context "If the filesystem is in a normal (non-thin) LVM" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:device_name) { "/dev/vg0/lv2" }
+
+      it "returns false" do
+        expect(analyzer.boot_in_thin_lvm?).to eq false
+      end
+    end
+  end
 end
