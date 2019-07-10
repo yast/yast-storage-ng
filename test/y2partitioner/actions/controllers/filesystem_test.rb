@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -1588,14 +1589,12 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   end
 
   describe "#mount_paths" do
-    let(:storage_arch) { instance_double("::Storage::Arch") }
-
     before do
-      allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
-      allow(storage_arch).to receive(:s390?).and_return s390
       allow(storage_arch).to receive(:efiboot?).and_return efi
       allow(Yast::Stage).to receive(:initial).and_return installation
     end
+
+    let(:storage_arch) { instance_double(Storage::Arch) }
 
     let(:system_mountpoints) { ["/", "/var", "/opt"] }
     let(:additional_mountpoints) { ["/home", "/srv", "/tmp", "/usr/local"] }
@@ -1634,7 +1633,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         let(:installation) { true }
 
         context "in a s390 system" do
-          let(:s390) { true }
+          let(:architecture) { :s390 }
           let(:efi) { false }
 
           it "includes the system mount points" do
@@ -1653,7 +1652,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         end
 
         context "in a non-s390 system" do
-          let(:s390) { false }
+          let(:architecture) { :x86 }
 
           context "with EFI boot" do
             let(:efi) { true }
@@ -1698,7 +1697,8 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         let(:installation) { false }
 
         context "if it's a s390 system" do
-          let(:s390) { true }
+          let(:architecture) { :s390 }
+
           let(:efi) { false }
 
           it "does not include the system mount points" do
@@ -1717,7 +1717,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         end
 
         context "if it's not a s390 system" do
-          let(:s390) { false }
+          let(:architecture) { :x86 }
 
           context "with EFI boot" do
             let(:efi) { true }
@@ -1766,7 +1766,8 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       let(:dev_name) { "/dev/sdb1" }
       # These two are not much relevant; swap, /home and / should be there in
       # any combination
-      let(:s390) { false }
+      let(:architecture) { :x86 }
+
       let(:efi) { false }
 
       it "does not include the already mounted regular paths" do

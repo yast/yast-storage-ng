@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Jul  9 14:15:16 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- For Z Systems, the option to enlarge swap for suspend is always
+  disabled by default, independently of its value in the control
+  file (part of jsc#SLE-6926).
+- 4.2.26
+
+-------------------------------------------------------------------
 Tue Jul  9 13:20:26 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - AutoYaST: Fixed typo in filesystem type that caused a crash

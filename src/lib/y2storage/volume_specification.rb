@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/storage_manager"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
 require "y2storage/volume_specification"
@@ -165,10 +166,12 @@ module Y2Storage
     end
 
     # Constructor
+    #
     # @param volume_features [Hash] features for a volume
     def initialize(volume_features)
       apply_defaults
       load_features(volume_features)
+      adjust_features
     end
 
     # @see #fs_type
@@ -262,6 +265,16 @@ module Y2Storage
       end
     end
 
+    # Whether it makes sense to enlarge the volume to suspend
+    #
+    # This only makes sense when the volume is for swap and the architecture supports to resume from
+    # swap.
+    #
+    # @return [Boolean]
+    def enlarge_for_resume_supported?
+      swap? && resume_supported?
+    end
+
     private
 
     FEATURES = {
@@ -294,6 +307,8 @@ module Y2Storage
       subvolumes:                 :subvolumes
     }.freeze
 
+    private_constant :FEATURES
+
     def apply_defaults
       @proposed                   = true
       @proposed_configurable      = false
@@ -322,6 +337,14 @@ module Y2Storage
       end
 
       apply_fallbacks
+    end
+
+    # Adjusts some features that need to be forced to certain value
+    #
+    # For example, {#adjust_by_ram} should be set to `false` by default for the swap partition when
+    # the architecture does not support to resume from swap (i.e., for s390).
+    def adjust_features
+      self.adjust_by_ram = false if swap? && !resume_supported?
     end
 
     def validated_fs_type(type)
@@ -359,6 +382,13 @@ module Y2Storage
     # Adds fs_type to the list of possible filesystems
     def include_fs_type
       @fs_types.unshift(fs_type) if fs_type && !fs_types.include?(fs_type)
+    end
+
+    # Whether the current architecture supports to resume from swap
+    #
+    # @return [Boolean]
+    def resume_supported?
+      StorageManager.instance.arch.support_resume?
     end
   end
 end

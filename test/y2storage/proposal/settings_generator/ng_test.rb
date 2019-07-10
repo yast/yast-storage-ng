@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,6 +27,10 @@ describe Y2Storage::Proposal::SettingsGenerator::Ng do
 
   def volume_from_settings(settings, mount_point)
     settings.volumes.find { |v| v.mount_point == mount_point }
+  end
+
+  before do
+    Y2Storage::StorageManager.create_test_instance
   end
 
   describe "#next_settings" do

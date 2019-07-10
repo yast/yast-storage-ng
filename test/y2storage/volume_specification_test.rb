@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,6 +26,10 @@ describe Y2Storage::VolumeSpecification do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:volume) { described_class.new(volume_features) }
+
+  before do
+    Y2Storage::StorageManager.create_test_instance
+  end
 
   describe ".for" do
     let(:spec_builder) { instance_double(Y2Storage::VolumeSpecificationBuilder, for: volume_spec) }
@@ -200,6 +205,40 @@ describe Y2Storage::VolumeSpecification do
 
       it "sets 'adjust_by_ram' to false by default" do
         expect(subject.adjust_by_ram).to eq(false)
+      end
+    end
+
+    context "when 'adjust_by_ram' is true" do
+      let(:adjust_by_ram) { true }
+
+      let(:storage_arch) { instance_double(Storage::Arch) }
+
+      context "and the current architecture supports to resume from swap" do
+        let(:architecture) { :x86 }
+
+        it "keeps 'adjust_by_ram' to true" do
+          expect(subject.adjust_by_ram).to eq(true)
+        end
+      end
+
+      context "and the current architecture does not support to resume from swap" do
+        let(:architecture) { :s390 }
+
+        context "and the volume is not for swap" do
+          let(:mount_point) { "/" }
+
+          it "keeps 'adjust_by_ram' to true" do
+            expect(subject.adjust_by_ram).to eq(true)
+          end
+        end
+
+        context "and the volume is for swap" do
+          let(:mount_point) { "swap" }
+
+          it "sets 'adjust_by_ram' to false by default" do
+            expect(subject.adjust_by_ram).to eq(false)
+          end
+        end
       end
     end
 
@@ -585,6 +624,44 @@ describe Y2Storage::VolumeSpecification do
 
       it "returns the min size" do
         expect(volume.min_size_with_snapshots).to eq(10.GiB)
+      end
+    end
+  end
+
+  describe "#enlarge_for_resume_supported?" do
+    let(:volume_features) do
+      {
+        "mount_point" => mount_point
+      }
+    end
+
+    context "when the volume is not for swap" do
+      let(:mount_point) { "/" }
+
+      it "returns false" do
+        expect(subject.enlarge_for_resume_supported?).to eq(false)
+      end
+    end
+
+    context "when the volume is for swap" do
+      let(:mount_point) { "swap" }
+
+      let(:storage_arch) { instance_double(Storage::Arch) }
+
+      context "and the current architecture does not support to resume from swap" do
+        let(:architecture) { :s390 }
+
+        it "return false" do
+          expect(subject.enlarge_for_resume_supported?).to eq(false)
+        end
+      end
+
+      context "and the current architecture supports to resume from swap" do
+        let(:architecture) { :x86 }
+
+        it "return true" do
+          expect(subject.enlarge_for_resume_supported?).to eq(true)
+        end
       end
     end
   end

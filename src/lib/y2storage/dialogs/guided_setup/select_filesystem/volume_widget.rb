@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -231,7 +231,12 @@ module Y2Storage
           #
           # @return [WidgetTerm]
           def adjust_by_ram_term
-            text = volume.swap? ? _("Enlarge to RAM Size for Suspend") : _("Enlarge to RAM size")
+            text = if volume.enlarge_for_resume_supported?
+              _("Enlarge to RAM Size for Suspend")
+            else
+              _("Enlarge to RAM size")
+            end
+
             CheckBox(Id(adjust_by_ram_widget_id), text, volume.adjust_by_ram?)
           end
 

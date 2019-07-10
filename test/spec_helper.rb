@@ -1,4 +1,4 @@
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -87,6 +87,17 @@ RSpec.configure do |c|
       allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
       allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
       allow(Yast::Arch).to receive(:aarch64).and_return(architecture == :aarch64)
+
+      # If :storage_arch is defined, the Storage::Arch object is used instead of Yast::Arch.
+      if respond_to?(:storage_arch)
+        arch = Y2Storage::Arch.new(storage_arch)
+
+        allow(Y2Storage::Arch).to receive(:new).and_return(arch)
+
+        allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
+        allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
+        allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
+      end
     end
 
     # Bcache is only supported for x86_64 architecture. The sanitizer complains when
