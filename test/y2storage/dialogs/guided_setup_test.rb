@@ -39,7 +39,15 @@ describe Y2Storage::Dialogs::GuidedSetup do
   end
 
   def allow_run_select_filesystem(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Legacy, :run, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng, :run, &block)
+  end
+
+  def allow_run_select_volumes_disks(&block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectVolumesDisks, :run, &block)
+  end
+
+  def allow_run_select_partition_actions(&block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectPartitionActions, :run, &block)
   end
 
   def allow_run_all_dialogs
@@ -47,6 +55,8 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow_run_select_root_disk { :next }
     allow_run_select_scheme { :next }
     allow_run_select_filesystem { :next }
+    allow_run_select_volumes_disks { :next }
+    allow_run_select_partition_actions { :next }
   end
 
   def allow_skip_dialog(dialog)
@@ -62,7 +72,8 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme)
-    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Legacy)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectVolumesDisks)
   end
 
   def expect_run_dialog(dialog)
@@ -89,11 +100,17 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
   let(:partitioning_section) do
     {
-      "proposal" => { "proposal_settings_editable" => settings_editable }
+      "proposal" => {
+        "proposal_settings_editable" => settings_editable,
+        "allocate_volume_mode"       => allocate_mode
+      },
+      # To ensure the settings are recognized as ng ones, instead of legacy format
+      "volumes"  => []
     }
   end
 
   let(:settings_editable) { true }
+  let(:allocate_mode) { :auto }
 
   describe ".allowed?" do
     context "when the proposal settings are editable" do
@@ -174,22 +191,36 @@ describe Y2Storage::Dialogs::GuidedSetup do
     end
 
     context "when all dialogs return :next" do
-      it "returns :next" do
-        expect(subject.run).to eq(:next)
-      end
+      shared_examples "run until the end" do
+        it "returns :next" do
+          expect(subject.run).to eq(:next)
+        end
 
-      context "and some options are selected" do
-        before do
-          allow_run_select_scheme do
-            subject.settings.use_lvm = true
-            :next
+        context "and some options are selected" do
+          before do
+            allow_run_select_scheme do
+              subject.settings.use_lvm = true
+              :next
+            end
+          end
+
+          it "updates settings" do
+            subject.run
+            expect(subject.settings.use_lvm).to eq(true)
           end
         end
+      end
 
-        it "updates settings" do
-          subject.run
-          expect(subject.settings.use_lvm).to eq(true)
-        end
+      context "with allocate_volume_mode :auto" do
+        let(:allocate_mode) { :auto }
+
+        include_examples "run until the end"
+      end
+
+      context "with allocate_volume_mode :device" do
+        let(:allocate_mode) { :device }
+
+        include_examples "run until the end"
       end
     end
 
