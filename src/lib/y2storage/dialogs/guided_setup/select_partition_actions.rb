@@ -20,12 +20,13 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
+require "y2storage/dialogs/guided_setup/helpers/candidate_disks"
 require "y2storage/dialogs/guided_setup/widgets/partition_actions"
 
 module Y2Storage
   module Dialogs
     class GuidedSetup
-      # Dialog for root disk selection and the actions to perform over Windows, Linux and other kind of
+      # Dialog thath allows to choose the actions to perform over Windows, Linux and other kind of
       # partitions.
       class SelectPartitionActions < Base
         extend Yast::I18n
@@ -43,7 +44,7 @@ module Y2Storage
         #
         # @return [Boolean]
         def skip?
-          !partitions_configurable?
+          candidate_disks_helper.partitions.none? || !settings.delete_resize_configurable
         end
 
         protected
@@ -67,9 +68,9 @@ module Y2Storage
         # @return [Widgets::PartitionActions]
         def partition_actions_widget
           @partition_actions_widget ||= Widgets::PartitionActions.new("partition_actions", settings,
-            windows: windows_actions?,
-            linux:   linux_actions?,
-            other:   other_actions?)
+            windows: candidate_disks_helper.windows_partitions?,
+            linux:   candidate_disks_helper.linux_partitions?,
+            other:   candidate_disks_helper.other_partitions?)
         end
 
         # @see GuidedSetup::Base
@@ -89,73 +90,11 @@ module Y2Storage
 
         private
 
-        # Candidate disks to perform the installation
+        # Helper to work with candidate disks
         #
-        # @return
-        def candidate_disks
-          return @candidate_disks if @candidate_disks
-
-          candidates = settings.candidate_devices || []
-          @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
-        end
-
-        # Whether the actions (delete or resize) over the partitions are configurable
-        #
-        # @return [Boolean]
-        def partition_actions?
-          settings.delete_resize_configurable
-        end
-
-        # Whether the actions (delete or resize) over Windows partitions are configurable
-        #
-        # @return [Boolean]
-        def windows_actions?
-          !windows_partitions.empty?
-        end
-
-        # Whether the actions (delete) over Linux partitions are configurable
-        #
-        # @return [Boolean]
-        def linux_actions?
-          !linux_partitions.empty?
-        end
-
-        # Whether the actions (delete) over other kind of partitions are configurable
-        #
-        # @return [Boolean]
-        def other_actions?
-          all_partitions.size > linux_partitions.size + windows_partitions.size
-        end
-
-        # Windows partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def windows_partitions
-          analyzer.windows_partitions(*candidate_disks)
-        end
-
-        # Linux partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def linux_partitions
-          analyzer.linux_partitions(*candidate_disks)
-        end
-
-        # All partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def all_partitions
-          @all_partitions ||= candidate_disks.map(&:partitions).flatten
-        end
-
-        # Whether the partition actions can be configured by the user
-        #
-        # The partitions are configurable if there are partitions and the option to configure the
-        # partitions is not disabled in the control file.
-        #
-        # @return [Boolean]
-        def partitions_configurable?
-          all_partitions.any? && partition_actions?
+        # @return [Helpers::CandidateDisks]
+        def candidate_disks_helper
+          @candidate_disks_helper ||= Helpers::CandidateDisks.new(settings, analyzer)
         end
       end
     end

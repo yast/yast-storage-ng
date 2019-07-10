@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
+require "y2storage/dialogs/guided_setup/helpers/candidate_disks"
 require "y2storage/dialogs/guided_setup/widgets/root_disk_selector"
 require "y2storage/dialogs/guided_setup/widgets/partition_actions"
 
@@ -44,14 +45,14 @@ module Y2Storage
         #
         # @return [Boolean]
         def skip?
-          single_candidate_disk? && !partitions_configurable?
+          candidate_disks_helper.single_candidate_disk? && !partitions_configurable?
         end
 
         # Before skipping, settings should be assigned.
         #
         # @see GuidedSetup::Base
         def before_skip
-          settings.root_device = candidate_disks.first.name
+          settings.root_device = candidate_disks_helper.candidate_disks_names.first
         end
 
         protected
@@ -87,7 +88,7 @@ module Y2Storage
         # @return [Widgets::RootDiskSelector]
         def root_selection_widget
           @root_selection_widget ||= Widgets::RootDiskSelector.new("root_selector", settings,
-            candidate_disks: candidate_disks,
+            candidate_disks: candidate_disks_helper.candidate_disks,
             disk_helper:     disk_helper)
         end
 
@@ -96,9 +97,9 @@ module Y2Storage
         # @return [Widgets::PartitionActions]
         def partition_actions_widget
           @partition_actions_widget ||= Widgets::PartitionActions.new("partition_actions", settings,
-            windows: windows_actions?,
-            linux:   linux_actions?,
-            other:   other_actions?)
+            windows: candidate_disks_helper.windows_partitions?,
+            linux:   candidate_disks_helper.linux_partitions?,
+            other:   candidate_disks_helper.other_partitions?)
         end
 
         # @see GuidedSetup::Base
@@ -118,14 +119,14 @@ module Y2Storage
 
         private
 
-        # Candidate disks to perform the installation
+        # Whether the partition actions can be configured by the user
         #
-        # @return
-        def candidate_disks
-          return @candidate_disks if @candidate_disks
-
-          candidates = settings.candidate_devices || []
-          @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
+        # The partitions are configurable if there are partitions and the option to configure the
+        # partitions is not disabled in the control file.
+        #
+        # @return [Boolean]
+        def partitions_configurable?
+          candidate_disks_helper.partitions.any? && partition_actions?
         end
 
         # Whether the actions (delete or resize) over the partitions are configurable
@@ -135,63 +136,11 @@ module Y2Storage
           settings.delete_resize_configurable
         end
 
-        # Whether the actions (delete or resize) over Windows partitions are configurable
+        # Helper to work with candidate disks
         #
-        # @return [Boolean]
-        def windows_actions?
-          !windows_partitions.empty?
-        end
-
-        # Whether the actions (delete) over Linux partitions are configurable
-        #
-        # @return [Boolean]
-        def linux_actions?
-          !linux_partitions.empty?
-        end
-
-        # Whether the actions (delete) over other kind of partitions are configurable
-        #
-        # @return [Boolean]
-        def other_actions?
-          all_partitions.size > linux_partitions.size + windows_partitions.size
-        end
-
-        # Windows partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def windows_partitions
-          analyzer.windows_partitions(*candidate_disks)
-        end
-
-        # Linux partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def linux_partitions
-          analyzer.linux_partitions(*candidate_disks)
-        end
-
-        # All partitions from the candidate disks
-        #
-        # @return [Array<Y2Storage::Partition>]
-        def all_partitions
-          @all_partitions ||= candidate_disks.map(&:partitions).flatten
-        end
-
-        # Whether there is only one candidate disk
-        #
-        # @return [Boolean]
-        def single_candidate_disk?
-          candidate_disks.size == 1
-        end
-
-        # Whether the partition actions can be configured by the user
-        #
-        # The partitions are configurable if there are partitions and the option to configure the
-        # partitions is not disabled in the control file.
-        #
-        # @return [Boolean]
-        def partitions_configurable?
-          all_partitions.any? && partition_actions?
+        # @return [Helpers::CandidateDisks]
+        def candidate_disks_helper
+          @candidate_disks_helper ||= Helpers::CandidateDisks.new(settings, analyzer)
         end
       end
     end
