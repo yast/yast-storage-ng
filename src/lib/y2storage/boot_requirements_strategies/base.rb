@@ -43,8 +43,8 @@ module Y2Storage
       def_delegators :@analyzer,
         :root_filesystem, :boot_disk, :boot_ptable_type?, :free_mountpoint?,
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
-        :root_fs_can_embed_grub?,
-        :boot_in_lvm?, :boot_in_thin_lvm?, :boot_in_software_raid?, :encrypted_boot?,
+        :root_fs_can_embed_grub?, :boot_in_lvm?,
+        :boot_in_thin_lvm?, :boot_in_bcache?, :boot_in_software_raid?, :encrypted_boot?,
         :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_can_embed_grub?,
         :esp_in_lvm?, :esp_in_software_raid?, :esp_in_software_raid1?, :encrypted_esp?
 
@@ -108,6 +108,12 @@ module Y2Storage
         if boot_in_thin_lvm?
           error_message =
             _("The device mounted at '/boot' cannot be in a thinly provisioned LVM VG.")
+          res << SetupError.new(message: error_message)
+        end
+
+        if boot_in_bcache?
+          error_message =
+            _("The device mounted at '/boot' cannot be in a BCache.")
           res << SetupError.new(message: error_message)
         end
 
