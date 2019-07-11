@@ -491,6 +491,9 @@ module Y2Storage
         if device.is_a?(Planned::Device)
           device.is_a?(Planned::LvmLv) && device.lv_type == LvType::THIN
         else
+          # If this is not a BlkFilesystem (e.g. NFS), it can't be on thin LVM
+          return false unless device.respond_to?(:plain_blk_devices)
+
           device.plain_blk_devices.any? do |dev|
             dev.is?(:lvm_lv) && dev.lv_type == LvType::THIN
           end
