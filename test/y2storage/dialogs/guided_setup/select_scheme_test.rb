@@ -86,6 +86,86 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       end
     end
 
+    describe "checkbox for #separate_vgs" do
+      before do
+        allow(settings).to receive(:ng_format?).and_return ng_format
+        allow(subject).to receive(:CheckBox)
+      end
+
+      context "when legacy settings are used" do
+        let(:ng_format) { false }
+
+        it "does not include an option for separate LVM groups" do
+          expect(subject).to_not receive(:CheckBox).with(Id(:separate_vgs), any_args)
+
+          subject.run
+        end
+      end
+
+      context "when ng settings are used" do
+        let(:ng_format) { true }
+
+        before { allow(settings).to receive(:volumes).and_return volumes }
+
+        let(:volumes) do
+          [
+            double("VolumeSpecification", mount_point: "/", separate_vg_name: separate_vg_name),
+            double("VolumeSpecification", mount_point: "swap", separate_vg_name: separate_vg_name)
+          ]
+        end
+
+        context "and no volume specifies a separate_vg_name" do
+          let(:separate_vg_name) { nil }
+
+          it "does not include an option for separate LVM groups" do
+            expect(subject).to_not receive(:CheckBox).with(Id(:separate_vgs), any_args)
+
+            subject.run
+          end
+
+          it "does not includes a clarification in the label used for the :lvm option" do
+            expect(subject).to_not receive(:CheckBox).with(Id(:lvm), /for the Base System/)
+
+            subject.run
+          end
+        end
+
+        context "and some volume specifies a separate_vg_name" do
+          let(:separate_vg_name) { "fake_separate_vg_name" }
+
+          it "includes an option to use separate LVM volumes" do
+            expect(subject).to receive(:CheckBox).with(Id(:separate_vgs), any_args)
+
+            subject.run
+          end
+
+          it "includes a clarification in the label used for the :lvm option" do
+            expect(subject).to receive(:CheckBox).with(Id(:lvm), /for the Base System/)
+
+            subject.run
+          end
+
+          context "and settings does not set separate volume groups" do
+            before { settings.separate_vgs = false }
+
+            it "does not select separate_vgs by default" do
+              expect_not_select(:separate_vgs)
+              subject.run
+            end
+          end
+
+          context "and settings sets separate volume groups" do
+            before { settings.separate_vgs = true }
+
+            it "selects separate_vgs by default" do
+              expect_select(:separate_vgs)
+              subject.run
+            end
+          end
+        end
+      end
+    end
+
     context "when settings has not encryption password" do
       before do
         settings.encryption_password = nil

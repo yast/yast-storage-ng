@@ -82,10 +82,7 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       # @return [Array<LvmVg>]
       def reusable_volume_groups(devicegraph)
-        # FIXME: we currently have no mechanism to activate existing LUKS, so
-        # there is no way we can re-use an encrypted LVM. Moreover, is still
-        # undecided if we want to reuse encrypted LVMs at all.
-        return [] if encrypt?
+        return [] unless try_to_reuse?
 
         vgs = devicegraph.lvm_vgs
         big_vgs, small_vgs = vgs.partition { |vg| vg.total_size >= volume_group.target_size }
@@ -158,6 +155,27 @@ module Y2Storage
         vg.pvs_encryption_password = settings.encryption_password
         vg.size_strategy = vg_strategy
         vg
+      end
+
+      # Whether it makes sense to try to find a volume group to be reused
+      #
+      # FIXME: Is still undecided (at least is under discussion) whether it
+      # makes sense to reuse existing LVMs at all. This method tries to
+      # summarize the cases in which we have decided to not do it so far.
+      #
+      # @return [Boolean]
+      def try_to_reuse?
+        # We introduced this when we still didn't have a mechanism to activate
+        # existing LUKS. Now such mechanism exists but this check has never been
+        # removed. Nobody complained so far.
+        return false if encrypt?
+
+        # If the planned_lvs are restricted to some particular disk, we likely
+        # should only reuse LVMs with all PVs in that disk. Or maybe with at
+        # least one PV in that disk. As usual, is not clear.
+        return false if planned_lvs.any?(&:disk)
+
+        true
       end
     end
   end

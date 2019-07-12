@@ -28,6 +28,16 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
+        extend Yast::I18n
+
+        WIDGET_LABELS = {
+          # TRANSLATORS: label for the widget that allows to enable the disk encryption
+          enable_disk_encryption: N_("Enable Disk Encryption"),
+          # TRANSLATORS: label for the widget that allows to use separated volume groups
+          use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze
+        }
+        private_constant :WIDGET_LABELS
+
         def initialize(*params)
           textdomain "storage"
           @passwd_checker = EncryptPasswordChecker.new
@@ -70,21 +80,63 @@ module Y2Storage
         def dialog_content
           HSquash(
             VBox(
-              Left(CheckBox(Id(:lvm), _("Enable Logical Volume Management (LVM)"))),
-              VSpacing(1),
-              Left(CheckBox(Id(:encryption), Opt(:notify), _("Enable Disk Encryption"))),
-              VSpacing(0.2),
-              Left(
-                HBox(
-                  HSpacing(2),
-                  Password(Id(:password), _("Password"))
+              enable_lvm,
+              separate_vgs,
+              enable_disk_encryption
+            )
+          )
+        end
+
+        def enable_lvm
+          label =
+            if settings.separate_vgs_relevant?
+              _("Enable Logical Volume Management (LVM) for the Base System")
+            else
+              _("Enable Logical Volume Management (LVM)")
+            end
+
+          VBox(
+            Left(CheckBox(Id(:lvm), label)),
+            VSpacing(1)
+          )
+        end
+
+        def separate_vgs
+          return Empty() unless settings.separate_vgs_relevant?
+
+          separated_volume_groups = settings.volumes.select(&:separate_vg_name)
+
+          VBox(
+            Left(
+              CheckBox(
+                Id(:separate_vgs),
+                format(
+                  # TRANSLATORS: %{widget_label} refers to the label of the widget. %{paths} is a
+                  # comma separated list of paths
+                  _("%{widget_label}\n(%{paths})"),
+                  widget_label: WIDGET_LABELS[:use_separate_vgs],
+                  paths:        separated_volume_groups.map(&:mount_point).join(", ")
                 )
-              ),
-              Left(
-                HBox(
-                  HSpacing(2),
-                  Password(Id(:repeat_password), _("Verify Password"))
-                )
+              )
+            ),
+            VSpacing(1)
+          )
+        end
+
+        def enable_disk_encryption
+          VBox(
+            Left(CheckBox(Id(:encryption), Opt(:notify), WIDGET_LABELS[:enable_disk_encryption])),
+            VSpacing(0.2),
+            Left(
+              HBox(
+                HSpacing(2),
+                Password(Id(:password), _("Password"))
+              )
+            ),
+            Left(
+              HBox(
+                HSpacing(2),
+                Password(Id(:repeat_password), _("Verify Password"))
               )
             )
           )
@@ -92,6 +144,7 @@ module Y2Storage
 
         def initialize_widgets
           widget_update(:lvm, settings.use_lvm)
+          widget_update(:separate_vgs, settings.separate_vgs)
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
           return unless settings.use_encryption
@@ -102,46 +155,66 @@ module Y2Storage
 
         def update_settings!
           settings.use_lvm = widget_value(:lvm)
+          settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
         end
 
-        # rubocop:disable Metrics/MethodLength
         def help_text
+          help = [base_help_text]
+          help << separate_vgs_help_text if settings.separate_vgs_relevant?
+
+          help.join("\n\n")
+        end
+
+        # rubocop:disable Metrics/MethodLength
+        def base_help_text
           # TRANSLATORS: Help text for the partitioning scheme (LVM / encryption)
-          _(
-            "<p>" \
-            "Select the partitioning scheme:" \
-            "</p><p>" \
-            "<ul>" \
-            "<li>Plain partitions (no LVM), the simple traditional way</li>" \
-            "<li>LVM (Logical Volume Management): " \
-            "<p>" \
-            "This is a more flexible way of managing disk space. " \
-            "</p><p>" \
-            "You can spread single filesystems over multiple disks and add " \
-            "(or, to some extent, remove) disks later as necessary. " \
-            "</p><p>" \
-            "You define PVs (Physical Volumes) from partitions or whole disks " \
-            "and combine them into VGs (Volume Groups) that serve as storage " \
-            "pools. You can create LVs (logical volumes) to create filesystems " \
-            "(Btrfs, Ext2/3/4, XFS) on." \
-            "</p><p>" \
-            "In this <i>Guided Setup</i>, all this is done for you for the " \
-            "standard filesystem layout if you check <b>Enable LVM</b>." \
-            "</li>" \
-            "</ul>" \
-            "</p><p>" \
-            "<b>Enable Disk Encryption</b> (with or without LVM) adds a LUKS " \
-            " disk encryption layer to the partitioning setup. " \
-            "Notice that you will have to enter the correct password each time " \
-            "you boot the system. " \
-            "</p><p>" \
-            "<i>If you lose the password, there is no way to recover it, " \
-            "so make sure not to lose it!</i>" \
-            "</p>"
+          format(
+            _(
+              "<p>" \
+              "Select the partitioning scheme:" \
+              "</p><p>" \
+              "<ul>" \
+              "<li>Plain partitions (no LVM), the simple traditional way</li>" \
+              "<li>LVM (Logical Volume Management): " \
+              "<p>" \
+              "This is a more flexible way of managing disk space. " \
+              "</p><p>" \
+              "You can spread single filesystems over multiple disks and add " \
+              "(or, to some extent, remove) disks later as necessary. " \
+              "</p><p>" \
+              "You define PVs (Physical Volumes) from partitions or whole disks " \
+              "and combine them into VGs (Volume Groups) that serve as storage " \
+              "pools. You can create LVs (logical volumes) to create filesystems " \
+              "(Btrfs, Ext2/3/4, XFS) on." \
+              "</p><p>" \
+              "In this <i>Guided Setup</i>, all this is done for you for the " \
+              "standard filesystem layout if you check <b>Enable LVM</b>." \
+              "</li>" \
+              "</ul>" \
+              "</p><p>" \
+              "<b>%{disk_encryption_label}</b> (with or without LVM) adds a LUKS " \
+              " disk encryption layer to the partitioning setup. " \
+              "Notice that you will have to enter the correct password each time " \
+              "you boot the system. " \
+              "</p><p>" \
+              "<i>If you lose the password, there is no way to recover it, " \
+              "so make sure not to lose it!</i>" \
+              "</p>"
+            ),
+            disk_encryption_label: WIDGET_LABELS[:use_disk_encryption]
           )
           # rubocop:enable Metrics/MethodLength
+        end
+
+        def separate_vgs_help_text
+          # TRANSLATORS: %{widget_label} refers to the label of the described widget
+          format(
+            _("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
+              "to put some of those special paths in an isolated Volume Group.</p>"),
+            widget_label: WIDGET_LABELS[:use_separate_vgs]
+          )
         end
 
         private

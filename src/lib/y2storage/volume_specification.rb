@@ -21,7 +21,6 @@ require "yast"
 require "y2storage/storage_manager"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
-require "y2storage/volume_specification"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -134,6 +133,15 @@ module Y2Storage
     #
     # @return [String]
     attr_accessor :separate_vg_name
+
+    # Device name of the disk (DiskDevice to be precise) in which the volume
+    # must be located. If nil, there are no restrictions allocating the volume.
+    #
+    # Note this is only relevant when {ProposalSettings#allocate_volume_mode} is
+    # set to :device.
+    #
+    # @return [String, nil]
+    attr_accessor :device
 
     alias_method :proposed?, :proposed
     alias_method :proposed_configurable?, :proposed_configurable

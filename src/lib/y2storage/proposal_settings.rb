@@ -24,13 +24,17 @@ require "y2storage/volume_specification"
 require "y2storage/subvol_specification"
 require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
+require "y2storage/volume_specifications_set"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
   #
   # When a new object is created, all settings are nil or [] in case of a list is
   # expected. See {#for_current_product} to initialize settings with some values.
-  class ProposalSettings
+  #
+  # FIXME: this class contains a lot of unnecessary logic to support the legacy
+  # settings.
+  class ProposalSettings # rubocop:disable ClassLength
     include SecretAttributes
     include PartitioningFeatures
 
@@ -46,6 +50,13 @@ module Y2Storage
     # @return [Boolean] if false, all volumes will be treated equally (no
     #   special handling resulting in separate volume groups)
     attr_accessor :separate_vgs
+
+    # Mode to use when allocating the volumes in the available devices
+    #
+    # @note :ng format
+    #
+    # @return [:auto, :device] :auto by default
+    attr_accessor :allocate_volume_mode
 
     # @note :legacy format
     # @return [Filesystems::Type] type to use for the root filesystem
@@ -112,15 +123,102 @@ module Y2Storage
     #   the root filesystem
     attr_accessor :subvolumes
 
+    # Device name of the disk in which '/' must be placed.
+    #
+    # If it's set to nil and {#allocate_volume_mode} is :auto, the proposal will try
+    # to find a good candidate
+    #
     # @note :legacy and :ng formats
-    # @return [Array<String>] device names of the disks that can be used for the
-    #   installation. If nil, the proposal will try find suitable devices
-    attr_accessor :candidate_devices
+    #
+    # @return [String, nil]
+    def root_device
+      if allocate_mode?(:device)
+        root_volume ? root_volume.device : nil
+      else
+        @explicit_root_device
+      end
+    end
 
+    # Sets {#root_device}
+    #
+    # If {#allocate_volume_mode} is :auto, this simply sets the value of the
+    # attribute.
+    #
+    # If {#allocate_volume_mode} is :device this changes the value of
+    # {VolumeSpecification#device} for the root volume and all its associated
+    # volumes.
+    def root_device=(name)
+      @explicit_root_device = name
+
+      return unless allocate_mode?(:device) && name
+
+      root_set = volumes_sets.find(&:root?)
+      root_set.device = name if root_set
+    end
+
+    # Most recent value of {#root_device} that was set via a call to the
+    # {#root_device=} setter
+    #
+    # For settings with {#allocate_volume_mode} :auto, this is basically
+    # equivalent to {#root_device}, but for settings with allocate mode :device,
+    # the value of {#root_device} is usually a consequence of the status of the
+    # {#volumes}. This method helps to identify the exception in which the root
+    # device has been forced via the setter.
+    #
+    # @return [String, nil]
+    attr_reader :explicit_root_device
+
+    # Device names of the disks that can be used for the installation. If nil,
+    # the proposal will try find suitable devices
+    #
     # @note :legacy and :ng formats
-    # @return [String] device name of the disk in which / must be placed. If set
-    #   to nil, the proposal will try to find a good candidate
-    attr_accessor :root_device
+    #
+    # @return [Array<String>, nil]
+    def candidate_devices
+      if allocate_mode?(:device)
+        # If any of the proposed volumes has no device assigned, the whole list
+        # is invalid
+        return nil if volumes.select(&:proposed).any? { |vol| vol.device.nil? }
+
+        volumes.map(&:device).compact.uniq
+      else
+        @explicit_candidate_devices
+      end
+    end
+
+    # Sets {#candidate_devices}
+    #
+    # If {#allocate_volume_mode} is :auto, this simply sets the value of the
+    # attribute.
+    #
+    # If {#allocate_volume_mode} is :device this changes the value of
+    # {VolumeSpecification#device} for all volumes using elements from the given
+    # list.
+    def candidate_devices=(devices)
+      @explicit_candidate_devices = devices
+
+      return unless allocate_mode?(:device)
+
+      if devices.nil?
+        volumes.each { |vol| vol.device = nil }
+      else
+        volumes_sets.select(&:proposed?).each_with_index do |set, idx|
+          set.device = devices[idx] || devices.last
+        end
+      end
+    end
+
+    # Most recent value of {#candidate_devices} that was set via a call to the
+    # {#candidate_devices=} setter
+    #
+    # For settings with {#allocate_volume_mode} :auto, this is basically
+    # equivalent to {#candidate_devices}, but for settings with allocate mode
+    # :device, the value of {#candidate_devices} is usually a consequence of the
+    # status of the {#volumes}. This method helps to identify the exception in
+    # which the list of devices has been forced via the setter.
+    #
+    # @return [Array<String>, nil]
+    attr_reader :explicit_candidate_devices
 
     # @!attribute encryption_password
     #   @note :legacy and :ng formats
@@ -203,6 +301,19 @@ module Y2Storage
 
     LEGACY_FORMAT = :legacy
     NG_FORMAT = :ng
+
+    # Volumes grouped by their location in the disks.
+    #
+    # This method is only useful when #allocate_volume_mode is set to
+    # :device. All the volumes that must be allocated in the same disk
+    # are grouped in a single {VolumeSpecificationsSet} object.
+    #
+    # The sorting of {#volumes} is honored as long as possible
+    #
+    # @return [Array<VolumeSpecificationsSet>]
+    def volumes_sets
+      separate_vgs ? vol_sets_with_separate : vol_sets_plain
+    end
 
     # New object initialized according to the YaST product features (i.e. /control.xml)
     # @return [ProposalSettings]
@@ -297,13 +408,38 @@ module Y2Storage
       return btrfs_default_subvolume unless ng_format?
       return nil if volumes.empty?
 
-      root_volume = volumes.find { |v| v.mount_point == "/" }
       return root_volume.btrfs_default_subvolume if root_volume
 
       volumes.first.btrfs_default_subvolume
     end
 
+    # Checks the value of {#allocate_volume_mode}
+    #
+    # @return [Boolean]
+    def allocate_mode?(mode)
+      allocate_volume_mode == mode
+    end
+
+    # Whether the value of {#separate_vgs} is relevant
+    #
+    # The mentioned setting only makes sense when there is at least one volume
+    # specification at {#volumes} which contains a separate VG name.
+    #
+    # @return [Boolean]
+    def separate_vgs_relevant?
+      return false unless ng_format?
+
+      volumes.any?(&:separate_vg_name)
+    end
+
     private
+
+    # Volume specification for the root filesystem
+    #
+    # @return [VolumeSpecification]
+    def root_volume
+      volumes.find(&:root?)
+    end
 
     DELETE_MODES = [:none, :all, :ondemand]
     private_constant :DELETE_MODES
@@ -351,6 +487,7 @@ module Y2Storage
       self.other_delete_mode          ||= :ondemand
       self.delete_resize_configurable ||= true
       self.lvm_vg_strategy            ||= :use_available
+      self.allocate_volume_mode       ||= :auto
       self.volumes                    ||= []
     end
 
@@ -365,6 +502,7 @@ module Y2Storage
       load_feature(:proposal, :other_delete_mode)
       load_feature(:proposal, :delete_resize_configurable)
       load_feature(:proposal, :lvm_vg_strategy)
+      load_feature(:proposal, :allocate_volume_mode)
       load_size_feature(:proposal, :lvm_vg_size)
       load_volumes_feature(:volumes)
     end
@@ -386,6 +524,7 @@ module Y2Storage
       self.linux_delete_mode         ||= :ondemand
       self.other_delete_mode         ||= :ondemand
       self.root_space_percent        ||= 40
+      self.allocate_volume_mode      ||= :auto
       self.btrfs_increase_percentage ||= 300.0
       self.btrfs_default_subvolume   ||= "@"
       self.subvolumes                ||= SubvolSpecification.fallback_list
@@ -438,7 +577,6 @@ module Y2Storage
     # FIXME: Improve implementation. Use composition to encapsulate logic for
     # ng and legacy format
     def ng_check_root_snapshots
-      root_volume = volumes.detect { |v| v.mount_point == "/" }
       root_volume.nil? ? false : root_volume.snapshots?
     end
 
@@ -446,6 +584,51 @@ module Y2Storage
     # ng and legacy format
     def legacy_check_root_snapshots
       root_filesystem_type.is?(:btrfs) && use_snapshots
+    end
+
+    # Implementation for {#volumes_sets} when {#separate_vgs} is set to false
+    #
+    # @see #volumes_sets
+    #
+    # @return [Array<VolumeSpecificationsSet]
+    def vol_sets_plain
+      if lvm
+        [VolumeSpecificationsSet.new(volumes.dup, :lvm)]
+      else
+        volumes.map { |vol| VolumeSpecificationsSet.new([vol], :partition) }
+      end
+    end
+
+    # Implementation for {#volumes_sets} when {#separate_vgs} is set to true
+    #
+    # @see #volumes_sets
+    #
+    # @return [Array<VolumeSpecificationsSet]
+    def vol_sets_with_separate
+      sets = []
+
+      volumes.each do |vol|
+        if vol.separate_vg_name
+          # There should not be two volumes with the same separate_vg_name. But
+          # just in case, let's group them if that happens.
+          group = sets.find { |s| s.vg_name == vol.separate_vg_name }
+          type = :separate_lvm
+        elsif lvm
+          group = sets.find { |s| s.type == :lvm }
+          type = :lvm
+        else
+          group = nil
+          type = :partition
+        end
+
+        if group
+          group.push(vol)
+        else
+          sets << VolumeSpecificationsSet.new([vol], type)
+        end
+      end
+
+      sets
     end
 
     # FIXME: Improve implementation. Use composition to encapsulate logic for

@@ -38,15 +38,8 @@ module Y2Storage
           end
 
           def help_text
-            settings.lvm ? help_text_for_volumes : help_text_for_partitions
-          end
-
-          def help_text_for_volumes
-            _("Select the filesystem type for each of the volumes.")
-          end
-
-          def help_text_for_partitions
-            _("Select the filesystem type for each of the partitions.")
+            _("Select the filesystem type for each LVM Volume Group, " \
+              "LVM Logical Volume, and/or partition.")
           end
         end
       end

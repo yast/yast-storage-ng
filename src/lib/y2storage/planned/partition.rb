@@ -44,8 +44,8 @@ module Y2Storage
       #   expected to be inferred from the filesystem type.
       attr_accessor :partition_id
 
-      # @return [String] device name of the disk in which the partition has to
-      #   be located. If nil, the volume can be allocated in any disk.
+      # @return [String, nil] device name of the disk in which the partition has
+      #   to be located. If nil, the volume can be allocated in any disk.
       attr_accessor :disk
 
       # @return [DiskSize] maximum distance from the start of the disk in which

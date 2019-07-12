@@ -94,6 +94,14 @@ describe Y2Storage::Proposal::LvmHelper do
           expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
         end
       end
+
+      context "and the logical volumes are assigned to a concrete disk" do
+        before { volumes.first.disk = "/dev/sda" }
+
+        it "returns an empty array" do
+          expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
+        end
+      end
     end
   end
 
