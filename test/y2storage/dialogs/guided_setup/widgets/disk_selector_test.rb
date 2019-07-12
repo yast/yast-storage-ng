@@ -69,6 +69,10 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::DiskSelector do
 
   let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
+  before do
+    Y2Storage::StorageManager.create_test_instance
+  end
+
   describe "#content" do
     let(:index) { 0 }
 
