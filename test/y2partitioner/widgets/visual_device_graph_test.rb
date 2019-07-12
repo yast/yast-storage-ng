@@ -43,7 +43,11 @@ describe Y2Partitioner::Widgets::VisualDeviceGraph do
     end
 
     context "when there is no device with the clicked sid" do
-      let(:item) { "999" }
+      # The first sid used by libstorage-ng is 42. And when a devicegraph is loaded from a yaml file,
+      # sids are continuously increasing after each new load. So using a big sid number to represent a
+      # missing device is not safe enough. Such big number could be reached if several yaml files are
+      # loaded before this test. The safer solution is to use a sid less than 42 (for example, 1).
+      let(:item) { "1" }
 
       it "doesn't change the current section" do
         expect(pager).to_not receive(:switch_page)
