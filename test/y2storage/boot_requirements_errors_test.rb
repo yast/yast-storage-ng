@@ -32,12 +32,18 @@ describe Y2Storage::BootRequirementsChecker do
 
     allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
     allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
+    allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:boot_in_thin_lvm?)
+      .and_return(use_thin_lvm)
+    allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:boot_in_bcache?)
+      .and_return(use_bcache)
   end
 
   let(:storage_arch) { instance_double(Storage::Arch) }
   let(:architecture) { :x86_64 }
   let(:power_nv) { false }
   let(:efiboot) { false }
+  let(:use_thin_lvm) { false }
+  let(:use_bcache) { false }
 
   let(:scenario) { "trivial" }
 
@@ -145,6 +151,30 @@ describe Y2Storage::BootRequirementsChecker do
 
         message = checker.errors.first.message
         expect(message).to match(/does not have enough space/)
+      end
+    end
+
+    context "/boot is in a thin LVM volume" do
+      let(:use_thin_lvm) { true }
+
+      it "contains an error that /boot cannot be in a thin LVM volume" do
+        expect(checker.errors.size).to eq(1)
+        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.errors.first.message
+        expect(message).to match(/boot.*thin.*LVM/)
+      end
+    end
+
+    context "/boot is in a BCache" do
+      let(:use_bcache) { true }
+
+      it "contains an error that /boot cannot be in a BCache" do
+        expect(checker.errors.size).to eq(1)
+        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.errors.first.message
+        expect(message).to match(/boot.*BCache/)
       end
     end
 

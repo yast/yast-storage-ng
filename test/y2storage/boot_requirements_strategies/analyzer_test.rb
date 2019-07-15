@@ -696,4 +696,75 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       expect(analyzer.planned_grub_partitions).to eq [planned_grub]
     end
   end
+
+  describe "#boot_in_thin_lvm?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let(:planned_devs) { [] }
+
+    def create_filesystem(device_name, mount_point)
+      device = fake_devicegraph.find_by_name(device_name)
+      fs = device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.create_mount_point(mount_point)
+      fs
+    end
+
+    context "If the filesystem is in a thinly provisioned LVM" do
+      let(:scenario) { "thin1-probed.xml" }
+
+      context "without a separate /boot and / on a thin LVM" do
+        before do
+          create_filesystem("/dev/test/thin1", "/")
+        end
+
+        it "returns true" do
+          expect(analyzer.boot_in_thin_lvm?).to eq true
+        end
+      end
+
+      context "with a separate /boot also on a thin LVM" do
+        before do
+          create_filesystem("/dev/test/thin1", "/")
+          create_filesystem("/dev/test/thin2", "/boot")
+        end
+
+        it "returns true" do
+          expect(analyzer.boot_in_thin_lvm?).to eq true
+        end
+      end
+    end
+
+    context "If the filesystem is in a normal (non-thin) LVM" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:device_name) { "/dev/vg0/lv2" }
+
+      it "returns false" do
+        expect(analyzer.boot_in_thin_lvm?).to eq false
+      end
+    end
+  end
+
+  describe "#boot_in_bcache?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let(:planned_devs) { [] }
+    let(:scenario) { "bcache-root-ext4.xml" }
+    let(:device_name) { "/dev/bcache0" }
+    let(:boot_part_name) { "/dev/sda2" }
+    let(:boot_part) { fake_devicegraph.find_by_name("/dev/sda2") }
+
+    context "with a separate /boot on a normal ext4 partition and root on /dev/bcache0" do
+      it "correctly recognizes that /boot is not on a BCache" do
+        expect(analyzer.boot_in_bcache?).to eq false
+      end
+    end
+
+    context "without a separate /boot, so /boot is on the root filesystem on /dev/bcache0" do
+      it "correctly recognizes that /boot is now on a BCache" do
+        # Remove the /boot mount point on the boot partition
+        boot_part.filesystem.mount_path = ""
+
+        # Now /boot is on the root filesystem, i.e. /dev/bcache0
+        expect(analyzer.boot_in_bcache?).to eq true
+      end
+    end
+  end
 end
