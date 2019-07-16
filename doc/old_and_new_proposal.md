@@ -199,6 +199,7 @@ Besides these, there is another element:
 #### Global settings in `proposal` section
 
   * `lvm` *(boolean, default: `false`)*
+  * `allocate_volume_mode` *(`auto`, `device`, default: `auto`)*
   * `delete_resize_configurable` *(boolean, default: `true`)*
   * `resize_windows` *(boolean, default: `true`)*
   * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
@@ -207,6 +208,7 @@ Besides these, there is another element:
   * (**FIXME - `use_vg_size` is not done yet**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_available`)*
   * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
   * `proposal_settings_editable` *(boolean, default: `true`)*
+  * `separate_vgs` *(boolean, default: `false`)*
 
 #### Volume-specific settings in `volume` sections
 
@@ -233,6 +235,7 @@ Besides these, there is another element:
   * `subvolumes` *(subsection, default: either empty list or internal fallback list for '/' volume)*
   * `btrfs_default_subvolume` *(string, default: no special default subvolume)*
   * `disable_order` *(integer, default: never disabled)*
+  * `separate_vg_name` *(string, default: no vg_name)*
 
 The `subvolumes` section holds a list of elements describing Btrfs
 subsections. The section uses the same format as in the legacy code.
@@ -647,6 +650,14 @@ following options.
 
   * `lvm`
     Whether LVM should be used by default.
+  * `separate_vgs`
+    Whether every volume specifying a separate_vg_name should be created as
+    isolated LVM Volume Group instead include them in the "system" group.
+  * `allocate_volume_mode`
+    How the volumes will be allocated in the available disks.
+    Whether set to `auto`, the proposal expects a set of candidate disks, in
+    which it will allocate the volumes automatically. When set to `device`,
+    however, the proposal needs to know in which disk must place each volume.
   * ~~`encrypt`
     Whether encryption should be used by default.~~
   * `delete_resize_configurable`
@@ -746,6 +757,9 @@ space" may be important to fully understand some of them.
     Same than before, but for `max_size_lvm`.
   * `fallback_for_weight`
     Same than before, but for the volume weight.
+  * `separate_vg_name`
+    Name of the separate LVM volume group that will be created to host only this
+    volume when the option separate_vgs is active in the settings.
 
 Some options only apply if the chosen filesystem type for the volume is
 Btrfs, in some cases with the same name and meaning as in the old
