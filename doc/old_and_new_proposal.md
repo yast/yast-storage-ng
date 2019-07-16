@@ -654,10 +654,12 @@ following options.
     Whether every volume specifying a separate_vg_name should be created as
     isolated LVM Volume Group instead include them in the "system" group.
   * `allocate_volume_mode`
-    How the volumes will be allocated in the available disks.
-    Whether set to `auto`, the proposal expects a set of candidate disks, in
-    which it will allocate the volumes automatically. When set to `device`,
-    however, the proposal needs to know in which disk must place each volume.
+    When set to `auto`, the proposal expects a set of candidate disks in which it
+    will distribute the volumes automatically as needed. If set to `device`, the
+    proposal needs to know in which disk must place each volume. As a
+    consequence, the interface presented to the user by default will be
+    different (containing different questions) depending of the value of this
+    property.
   * ~~`encrypt`
     Whether encryption should be used by default.~~
   * `delete_resize_configurable`
