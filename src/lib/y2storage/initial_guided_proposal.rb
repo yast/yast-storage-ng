@@ -174,12 +174,16 @@ module Y2Storage
       end
     end
 
-    # Resets the settings by assigning the initial settings
-    #
-    # @note The SpaceMaker object needs to be created again when the candidate
-    #   devices have changed.
-    def reset_settings
+    # Redefines this method from the base class to ensure the SpaceMaker object
+    # and the clean devicegraph are recreated before trying
+    def try_with_each_target_size
       self.space_maker = nil
+      @clean_graph = nil
+      super
+    end
+
+    # Resets the settings by assigning the initial settings
+    def reset_settings
       self.settings = initial_settings
     end
 

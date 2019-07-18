@@ -180,6 +180,15 @@ module Yast
         pool2.create_lvm_lv("thin3", Y2Storage::LvType::THIN, Y2Storage::DiskSize.GiB(2))
       end
 
+      # Creates a primary partition in the first free slot of the given disk
+      #
+      # @param disk [Y2Storage::Partitionable]
+      def create_next_partition(disk)
+        disk.ensure_partition_table
+        slot = disk.partition_table.unused_partition_slots.first
+        disk.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
+      end
+
       def space_dist(vols_by_space)
         Y2Storage::Planned::PartitionsDistribution.new(vols_by_space)
       end

@@ -183,11 +183,6 @@ describe Y2Storage::DiskAnalyzer do
       device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
     end
 
-    def create_partition(device)
-      slot = device.partition_table.unused_partition_slots.first
-      device.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
-    end
-
     let(:scenario) { "empty_disks" }
 
     let(:devicegraph) { Y2Storage::StorageManager.instance.probed }
@@ -325,7 +320,7 @@ describe Y2Storage::DiskAnalyzer do
           before do
             md.ensure_partition_table
 
-            partition = create_partition(md)
+            partition = create_next_partition(md)
             format_device(partition)
 
             partition.filesystem.mount_path = "/foo"

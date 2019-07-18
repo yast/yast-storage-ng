@@ -393,5 +393,103 @@ describe Y2Storage::InitialGuidedProposal do
         expect { proposal.propose }.to raise_error(Y2Storage::Error)
       end
     end
+
+    # This context is here to add a couple of regression tests, see below
+    context "with :device as allocate mode and :all for the delete modes" do
+      include_context "candidate devices"
+
+      let(:control_file_content) do
+        {
+          "partitioning" => {
+            "proposal" => {
+              "allocate_volume_mode" => :device,
+              "windows_delete_mode"  => :all,
+              "linux_delete_mode"    => :all,
+              "other_delete_mode"    => :all
+            },
+            "volumes"  => volumes_spec
+          }
+        }
+      end
+
+      let(:volumes_spec) do
+        [
+          {
+            "mount_point"           => "/",
+            "fs_type"               => "ext4",
+            "desired_size"          => "900GiB",
+            "min_size"              => "900GiB",
+            "proposed_configurable" => false
+          },
+          {
+            "mount_point"           => "/var/one",
+            "fs_type"               => "ext4",
+            "desired_size"          => second_volume_size,
+            "min_size"              => second_volume_size,
+            "proposed_configurable" => false
+          },
+          {
+            "mount_point"           => "/var/two",
+            "fs_type"               => "ext4",
+            "desired_size"          => "900GiB",
+            "min_size"              => "900GiB",
+            "proposed_configurable" => true,
+            "disable_order"         => "1"
+          }
+        ]
+      end
+
+      before do
+        # Ensure all the disks contain partitions, so we can check whether they
+        # are deleted
+        create_next_partition(sda)
+        create_next_partition(sdb)
+        create_next_partition(sdc)
+      end
+
+      context "when there are mandatory volumes that don't fit in the disks" do
+        let(:second_volume_size) { "500GiB" }
+
+        # Regression test: this used to produce an infinite loop because the SpaceMaker
+        # object was reset in #reset_settings instead of in #try_with_each_target_size.
+        # As a consequence, it contained an outdated list of candidate disks and was
+        # unsuccessfully trying to delete the same partition over and over.
+        it "raises an error" do
+          expect { proposal.propose }.to raise_error(Y2Storage::Error)
+        end
+      end
+
+      # Regression test: this used to apply the xxx_delete_mode :all to the wrong
+      # disk(s) because @clean_graph was not reset on every attempt
+      context "when a proposal is possible after switching to another disk" do
+        let(:sda_usb) { true }
+        let(:second_volume_size) { "20GiB" }
+
+        it "wipes all partitions from the used disks" do
+          sda_partitions = sda.partitions.map(&:sid)
+
+          proposal.propose
+          # Let's ensure sda was used, otherwise the subsequent check makes no sense
+          expect(used_devices).to contain_exactly("/dev/sda")
+
+          partitions_after = proposal.devices.partitions.map(&:sid)
+          expect(partitions_after).to_not include(*sda_partitions)
+        end
+
+        it "does not wipe disks that are not used" do
+          sdb_partitions = sdb.partitions.map(&:sid)
+          sdc_partitions = sdc.partitions.map(&:sid)
+
+          proposal.propose
+          # Let's ensure only sda was used, otherwise the subsequent checks
+          # would not make sense
+          expect(used_devices).to contain_exactly("/dev/sda")
+
+          partitions_after = proposal.devices.partitions.map(&:sid)
+          expect(partitions_after).to include(*sdb_partitions)
+          expect(partitions_after).to include(*sdc_partitions)
+        end
+      end
+    end
   end
 end
