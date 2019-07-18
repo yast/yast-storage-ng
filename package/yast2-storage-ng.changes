@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jul 18 15:11:15 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Fixed some errors calculating the initial proposal, before the
+  user has executed the Guided Setup (related to jsc#SLE-7238).
+- 4.2.29
+
+-------------------------------------------------------------------
 Mon Jul 15 13:32:36 UTC 2019 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Complain if user attempts to put /boot on a thin LVM or a BCache
