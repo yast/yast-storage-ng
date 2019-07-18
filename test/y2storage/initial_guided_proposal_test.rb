@@ -396,11 +396,6 @@ describe Y2Storage::InitialGuidedProposal do
 
     # This context is here to add a couple of regression tests, see below
     context "with :device as allocate mode and :all for the delete modes" do
-      def create_partition(disk)
-        slot = disk.partition_table.unused_partition_slots.first
-        disk.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
-      end
-
       include_context "candidate devices"
 
       let(:control_file_content) do
@@ -447,9 +442,9 @@ describe Y2Storage::InitialGuidedProposal do
       before do
         # Ensure all the disks contain partitions, so we can check whether they
         # are deleted
-        create_partition(sda)
-        create_partition(sdb)
-        create_partition(sdc)
+        create_next_partition(sda)
+        create_next_partition(sdb)
+        create_next_partition(sdc)
       end
 
       context "when there are mandatory volumes that don't fit in the disks" do

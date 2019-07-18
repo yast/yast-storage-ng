@@ -46,11 +46,6 @@ describe Y2Storage::BootRequirementsChecker do
 
   subject(:checker) { described_class.new(devicegraph) }
 
-  def create_partition(disk)
-    slot = disk.partition_table.unused_partition_slots.first
-    disk.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
-  end
-
   RSpec.shared_examples "not_reuse_efi" do
     it "does not reuse the partition" do
       expect(checker.needed_partitions).to contain_exactly(
@@ -103,7 +98,7 @@ describe Y2Storage::BootRequirementsChecker do
 
   context "if there is a partition without filesystem" do
     before do
-      create_partition(disk)
+      create_next_partition(disk)
       partition.id = partition_id
       partition.size = size
     end
@@ -113,7 +108,7 @@ describe Y2Storage::BootRequirementsChecker do
 
   context "if there is a partition with a non VFAT filesystem" do
     before do
-      create_partition(disk)
+      create_next_partition(disk)
       partition.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
       partition.id = partition_id
       partition.size = size
@@ -124,7 +119,7 @@ describe Y2Storage::BootRequirementsChecker do
 
   context "if there is a partition formatted as VFAT" do
     before do
-      create_partition(disk)
+      create_next_partition(disk)
       partition.create_filesystem(Y2Storage::Filesystems::Type::VFAT)
       partition.id = partition_id
       partition.size = size

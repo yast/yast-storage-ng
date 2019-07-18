@@ -932,12 +932,6 @@ describe Y2Storage::Devicegraph do
 
     subject(:devicegraph) { fake_devicegraph }
 
-    def create_partition(disk)
-      disk.ensure_partition_table
-      slot = disk.partition_table.unused_partition_slots.first
-      disk.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
-    end
-
     it "returns a string" do
       expect(devicegraph.to_xml).to be_a(String)
     end
@@ -947,7 +941,7 @@ describe Y2Storage::Devicegraph do
       expect(devicegraph.to_xml.scan(/\<Disk\>/).size).to eq(1)
       expect(devicegraph.to_xml.scan(/\<Partition\>/).size).to eq(0)
 
-      create_partition(devicegraph.disks.first)
+      create_next_partition(devicegraph.disks.first)
 
       expect(devicegraph.to_xml.scan(/\<Partition\>/).size).to eq(1)
     end
