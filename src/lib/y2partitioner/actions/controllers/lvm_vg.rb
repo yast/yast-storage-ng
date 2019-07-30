@@ -154,7 +154,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices_in_vg
-          vg.lvm_pvs.map(&:plain_blk_device)
+          vg.lvm_pvs.map(&:plain_blk_device).sort { |a, b| a.compare_by_name(b) }
         end
 
         # Devices used by committed physical volumes of the current volume group

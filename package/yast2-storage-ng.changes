@@ -2,6 +2,7 @@
 Mon Jul 29 21:52:18 CEST 2019 - aschnell@suse.com
 
 - Fixed exception when removing devices from btrfs (bsc#1142669)
+- Sort selected devices in LVM VG and btrfs dialog by name
 - 4.2.30
 
 -------------------------------------------------------------------

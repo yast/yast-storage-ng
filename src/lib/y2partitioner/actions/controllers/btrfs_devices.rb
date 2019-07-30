@@ -129,7 +129,7 @@ module Y2Partitioner
         def selected_devices
           return [] unless filesystem
 
-          filesystem.plain_blk_devices
+          filesystem.plain_blk_devices.sort { |a, b| a.compare_by_name(b) }
         end
 
         # Adds a device to the Btrfs
