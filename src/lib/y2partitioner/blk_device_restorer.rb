@@ -197,6 +197,8 @@ module Y2Partitioner
         log.error "The device has more than one parent, that's unexpected: #{source.sid}"
         raise "Unexpected error restoring the status of device #{source.sid}"
       end
+      return if source.exists_in_devicegraph?(raw_current_graph)
+
       source.copy_to_devicegraph(raw_current_graph)
       source.in_holders[0].copy_to_devicegraph(raw_current_graph)
     end

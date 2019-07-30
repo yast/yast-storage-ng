@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jul 29 21:52:18 CEST 2019 - aschnell@suse.com
+
+- Fixed exception when removing devices from btrfs (bsc#1142669)
+- Sort selected devices in LVM VG and btrfs dialog by name
+- 4.2.30
+
+-------------------------------------------------------------------
 Thu Jul 18 15:11:15 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Fixed some errors calculating the initial proposal, before the
