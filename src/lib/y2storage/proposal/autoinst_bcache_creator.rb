@@ -36,11 +36,12 @@ module Y2Storage
         @original_devicegraph = original_devicegraph
       end
 
-      # Creates the bcache device
+      # Creates the Bcache device
       #
       # @param planned_bcache  [Planned::Bcache] bcache device
       # @param backing_devname [String] Backing device name
-      # @param caching_devname [String] Caching device name
+      # @param caching_devname [String, nil] Caching device name
+      #
       # @return [CreatorResult] Result containing the new bcache device
       def create_bcache(planned_bcache, backing_devname, caching_devname)
         new_graph = original_devicegraph.duplicate
@@ -58,20 +59,25 @@ module Y2Storage
       private
 
       # @param devicegraph     [Devicegraph] devicegraph in which the device must be created
-      # @param planned_bcache  [Planned::Bcache] bcache device
+      # @param planned_bcache  [Planned::Bcache] Bcache device
       # @param backing_devname [String] Backing device name
-      # @param caching_devname [String] Caching device name
+      # @param caching_devname [String, nil] Caching device name, or nil if the Bcache device is not
+      #   cached
+      #
       # @return [Planned::Bcache]
       def create_bcache_device(devicegraph, planned_bcache, backing_devname, caching_devname)
         backing_device = find_blk_device(devicegraph, backing_devname)
-        caching_device = find_blk_device(devicegraph, caching_devname)
-
         backing_device.remove_descendants
 
         bcache = backing_device.create_bcache(planned_bcache.name)
         bcache.cache_mode = planned_bcache.cache_mode if planned_bcache.cache_mode
-        bcache_cset = find_or_create_bcache_cset(caching_device)
-        bcache.add_bcache_cset(bcache_cset)
+
+        if caching_devname
+          caching_device = find_blk_device(devicegraph, caching_devname)
+          bcache_cset = find_or_create_bcache_cset(caching_device)
+          bcache.add_bcache_cset(bcache_cset)
+        end
+
         bcache
       end
 
@@ -86,6 +92,8 @@ module Y2Storage
       #
       # @param devicegraph [Devicegraph] Devicegraph
       # @param dev_name    [String] Device name
+      #
+      # @return [Device]
       def find_blk_device(devicegraph, dev_name)
         device = Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name)
         device.encryption || device

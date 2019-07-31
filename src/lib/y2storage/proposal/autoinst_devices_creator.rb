@@ -314,11 +314,11 @@ module Y2Storage
 
       # Creates bcaches
       #
-      # @param bcaches [Array<Planned::Bcache>] List of planned MD arrays to create
-      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse
+      # @param bcaches [Array<Planned::Bcache>] List of planned Bcache devices to create
+      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices to
+      #   reuse
       #
-      # @return [Proposal::CreatorResult] Result containing the specified MD RAIDs
+      # @return [Proposal::CreatorResult] Result containing the specified Bcache devices
       def create_bcaches(bcaches, devs_to_reuse)
         bcaches.reduce(creator_result) do |result, bcache|
           backing_devname = find_bcache_member(bcache.name, :backing, creator_result, devs_to_reuse)
@@ -415,10 +415,14 @@ module Y2Storage
       #
       # @param devicegraph     [Devicegraph] Starting devicegraph
       # @param bcache          [Planned::Bcache] Planned bcache
-      # @param backing_devname [String] Backing device name
-      # @param caching_devname [String] Caching device name
+      # @param backing_devname [String, nil] Backing device name
+      # @param caching_devname [String, nil] Caching device name
       # @return [Proposal::CreatorResult] Result containing the specified bcache
       def create_bcache(devicegraph, bcache, backing_devname, caching_devname)
+        if backing_devname.nil?
+          raise Y2Storage::DeviceNotFoundError, "No backing device for Bcache #{bcache.name}"
+        end
+
         bcache_creator = Proposal::AutoinstBcacheCreator.new(devicegraph)
         bcache_creator.create_bcache(bcache, backing_devname, caching_devname)
       end
@@ -463,9 +467,9 @@ module Y2Storage
         nfs_creator.create_nfs(planned_nfs)
       end
 
-      # Finds the bcache member in the previous result and the list of devices to use
+      # Finds the Bcache member in the previous result and in the list of devices to use
       #
-      # @return [String] Device name
+      # @return [String, nil] nil if no device is found
       def find_bcache_member(bcache_name, role, result, devs_to_reuse)
         names = result.created_names { |d| bcache_member_for?(d, bcache_name, role) }
         return names.first unless names.empty?

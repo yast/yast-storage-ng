@@ -1,6 +1,4 @@
 #!/usr/bin/env rspec
-#
-# encoding: utf-8
 
 # Copyright (c) [2017-2019] SUSE LLC
 #
@@ -331,6 +329,15 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         caching_device = bcache.bcache_cset.blk_devices.first
         expect(caching_device.disk.name).to eq("/dev/sdb")
         expect(bcache).to be_a(Y2Storage::Bcache)
+      end
+
+      context "when no backing device is found" do
+        let(:partitions) { [caching_part] }
+
+        it "raises an exception" do
+          expect { creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"]) }
+            .to raise_error(Y2Storage::DeviceNotFoundError)
+        end
       end
 
       context "reusing a Bcache" do
