@@ -161,8 +161,8 @@ module Y2Storage
         # Process planned disk like devices (Xen virtual partitions and full disks)
         process_disk_like_devs
         process_mds
-        process_bcaches
         process_vgs
+        process_bcaches
         process_btrfs_filesystems
         process_nfs_filesystems
 
@@ -223,6 +223,7 @@ module Y2Storage
         reuse_vgs(vgs_to_reuse)
 
         add_devices_to_create(planned_vgs)
+        add_devices_to_reuse(vgs_to_reuse.flat_map(&:lvs))
         self.creator_result = set_up_lvm(planned_vgs, devices_to_reuse)
       end
 
@@ -289,8 +290,7 @@ module Y2Storage
       # Creates MD RAID devices
       #
       # @param mds [Array<Planned::Md>] List of planned MD arrays to create
-      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse
+      # @param devs_to_reuse [Array<Planned::Device>] List of devices to reuse as MD device
       #
       # @return [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, devs_to_reuse)
@@ -315,8 +315,8 @@ module Y2Storage
       # Creates bcaches
       #
       # @param bcaches [Array<Planned::Bcache>] List of planned Bcache devices to create
-      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices to
-      #   reuse
+      # @param devs_to_reuse [Array<Planned::Device>] List of devices to reuse as backing or caching
+      #   device
       #
       # @return [Proposal::CreatorResult] Result containing the specified Bcache devices
       def create_bcaches(bcaches, devs_to_reuse)
@@ -331,8 +331,7 @@ module Y2Storage
       # Creates volume groups
       #
       # @param vgs [Array<Planned::LvmVg>] List of planned volume groups to add
-      # @param devs_to_reuse [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse as Physical Volumes
+      # @param devs_to_reuse [Array<Planned::Device>] List of devices to reuse as Physical Volumes
       #
       # @return [Proposal::CreatorResult] Result containing the specified volume groups
       def set_up_lvm(vgs, devs_to_reuse)
@@ -343,7 +342,9 @@ module Y2Storage
 
         vgs.reduce(creator_result) do |result, vg|
           pvs = creator_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
-          pvs += devs_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
+          devs = devs_to_reuse.select { |d| d.respond_to?(:pv_for?) && d.pv_for?(vg.volume_group_name) }
+          pvs += devs.map(&:reuse_name)
+
           result.merge(create_logical_volumes(result.devicegraph, vg, pvs))
         end
       end
@@ -351,8 +352,7 @@ module Y2Storage
       # Creates Btrfs filesystems
       #
       # @param filesystems_to_create [Array<Planned::Btrfs>]
-      # @param reusable_devices [Array<Planned::Disk, Planned::StrayBlkDevice>, Planned::Partition]
-      #   devices that can be reused for the new Btrfs filesystems.
+      # @param reusable_devices [Array<Planned::Device>] devices that can be reused for the new Btrfs
       #
       # @return [Proposal::CreatorResult] Result containing the specified Btrfs filesystems
       def create_btrfs_filesystems(filesystems_to_create, reusable_devices)
@@ -378,7 +378,7 @@ module Y2Storage
       # Name of devices that can be reused for a specific planned Btrfs
       #
       # @param planned_filesystem [Planned::Btrfs]
-      # @param reusable_devices [Array<Planned::Disk, Planned::StrayBlkDevice>, Planned::Partition]
+      # @param reusable_devices [Array<Planned::Device>]
       #
       # @return [Array<String>] devices names
       def reused_devices_for_btrfs(planned_filesystem, reusable_devices)

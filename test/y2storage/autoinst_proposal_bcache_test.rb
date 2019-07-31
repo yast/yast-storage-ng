@@ -134,7 +134,7 @@ describe Y2Storage::AutoinstProposal do
       end
       let(:partitioning) { [bcache0, vda, vdb, vdc] }
 
-      it "regiters an issue" do
+      it "registers an issue" do
         proposal.propose
         issue = issues_list.to_a.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers) }
         expect(issue.bcache_name).to eq(drive_device)
@@ -168,6 +168,133 @@ describe Y2Storage::AutoinstProposal do
         proposal.propose
         bcache = proposal.devices.find_by_name("/dev/bcache0")
         expect(bcache.sid).to eq(old_sid)
+      end
+    end
+
+    # Regression test for bsc#1139783
+    context "with a LVM LV as backing device" do
+      let(:scenario) { "empty_disks" }
+
+      let(:partitioning) { [bcache0, vg0, sda] }
+
+      let(:vg0) do
+        {
+          "device" => "/dev/vg0", "type" => :CT_LVM, "partitions" => [
+            { "lv_name" => "lv1", "bcache_backing_for" => "/dev/bcache0" }
+          ]
+        }
+      end
+
+      let(:sda) do
+        {
+          "device" => "/dev/sda",
+          "type" => :CT_DISK, "use" => "all", "disklabel" => "none",
+          "partitions" => [{ "lvm_group" => "vg0" }]
+        }
+      end
+
+      it "creates a bcache with a LVM LV as backing device" do
+        proposal.propose
+        bcache = proposal.devices.find_by_name("/dev/bcache0")
+
+        expect(bcache.backing_device.name).to eq("/dev/vg0/lv1")
+      end
+    end
+
+    # Regression test for bsc#1139783
+    context "with a LVM LV as caching device" do
+      let(:scenario) { "empty_disks" }
+
+      let(:partitioning) { [bcache0, vg0, sda] }
+
+      let(:vg0) do
+        {
+          "device" => "/dev/vg0", "type" => :CT_LVM, "partitions" => [
+            { "lv_name" => "lv1", "bcache_caching_for" => ["/dev/bcache0"] }
+          ]
+        }
+      end
+
+      let(:sda) do
+        {
+          "device" => "/dev/sda",
+          "type" => :CT_DISK, "use" => "all", "disklabel" => "gpt",
+          "partitions" => [
+            { "lvm_group" => "vg0" },
+            { "bcache_backing_for" => "/dev/bcache0" }
+          ]
+        }
+      end
+
+      it "creates a bcache with a LVM LV as caching device" do
+        proposal.propose
+        bcache = proposal.devices.find_by_name("/dev/bcache0")
+
+        expect(bcache.bcache_cset.blk_devices.first.name).to eq("/dev/vg0/lv1")
+      end
+    end
+
+    # Regression test for bsc#1139783
+    context "with an existing LVM LV as backing device" do
+      let(:scenario) { "trivial_lvm" }
+
+      let(:partitioning) { [bcache0, vg0] }
+
+      let(:vg0) do
+        {
+          "device" => "/dev/vg0", "type" => :CT_LVM, "partitions" => [
+            { "create" => false, "lv_name" => "lv1", "bcache_backing_for" => "/dev/bcache0" }
+          ]
+        }
+      end
+
+      it "creates a bcache with an existing LVM LV as backing device" do
+        sid = fake_devicegraph.find_by_name("/dev/vg0/lv1").sid
+
+        proposal.propose
+
+        bcache = proposal.devices.find_by_name("/dev/bcache0")
+        backing_device = bcache.backing_device
+
+        expect(backing_device.name).to eq("/dev/vg0/lv1")
+        expect(backing_device.sid).to eq(sid)
+      end
+    end
+
+    # Regression test for bsc#1139783
+    context "with an existing LVM LV as caching device" do
+      let(:scenario) { "trivial_lvm_and_other_partitions" }
+
+      let(:partitioning) { [bcache0, vg0, sda] }
+
+      let(:vg0) do
+        {
+          "device" => "/dev/vg0", "type" => :CT_LVM, "partitions" => [
+            { "create" => false, "lv_name" => "lv1", "bcache_caching_for" => ["/dev/bcache0"] }
+          ]
+        }
+      end
+
+      let(:sda) do
+        {
+          "device" => "/dev/sda",
+          "type" => :CT_DISK, "use" => "all", "disklabel" => "gpt",
+          "partitions" => [
+            { "bcache_backing_for" => "/dev/bcache0" }
+          ]
+        }
+      end
+
+      it "creates a bcache with an existing LVM LV as caching device" do
+        sid = fake_devicegraph.find_by_name("/dev/vg0/lv1").sid
+
+        proposal.propose
+
+        bcache = proposal.devices.find_by_name("/dev/bcache0")
+        caching_device = bcache.bcache_cset.blk_devices.first
+
+        expect(caching_device.name).to eq("/dev/vg0/lv1")
+        expect(caching_device.sid).to eq(sid)
       end
     end
 

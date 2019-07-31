@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,7 +41,7 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(vg) }
 
     let(:vg) do
-      { "device" => "/dev/#{lvm_group}", "partitions" => [root_spec], "type" => :CT_LVM }
+      { "device" => "/dev/#{lvm_group}", "partitions" => partitions, "type" => :CT_LVM }
     end
 
     let(:root_spec) do
@@ -51,6 +52,8 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
     end
 
     let(:lvm_group) { "vg0" }
+
+    let(:partitions) { [root_spec] }
 
     include_examples "handles Btrfs snapshots"
 
@@ -426,6 +429,32 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::ThinPoolNotFound) }
           expect(issue).to_not be_nil
         end
+      end
+    end
+
+    context "when a Logical Volume is set as Bcache backing device" do
+      let(:partitions) { [lv1] }
+
+      let(:lv1) { { "size" => "20G", "bcache_backing_for" => "/dev/bcache0" } }
+
+      it "plans the Logical Volume as backing device" do
+        vg = planner.planned_devices(drive).first
+        lv = vg.lvs.first
+
+        expect(lv.bcache_backing_for).to eq("/dev/bcache0")
+      end
+    end
+
+    context "when a Logical Volume is set as Bcache caching device" do
+      let(:partitions) { [lv1] }
+
+      let(:lv1) { { "size" => "20G", "bcache_caching_for" => ["/dev/bcache0"] } }
+
+      it "plans the Logical Volume as caching device" do
+        vg = planner.planned_devices(drive).first
+        lv = vg.lvs.first
+
+        expect(lv.bcache_caching_for).to eq(["/dev/bcache0"])
       end
     end
   end

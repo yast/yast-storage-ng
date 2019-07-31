@@ -65,6 +65,8 @@ module Y2Storage
         planned_lv.btrfs_name = section.btrfs_name
         add_stripes(planned_lv, section)
         device_config(planned_lv, section, drive)
+        add_bcache_attrs(planned_lv, section)
+
         return if section.used_pool && !add_to_thin_pool(planned_lv, planned_vg, section)
 
         add_lv_reuse(planned_lv, planned_vg, section) if section.create == false
