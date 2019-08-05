@@ -34,6 +34,10 @@ module Y2Storage
     #   @return [DiskSize]
     attr_reader :disk
 
+    # there is Partition#disk vs. Partition#partitionable
+    # mirror this here
+    alias_method :partitionable, :disk
+
     # @!attribute region
     #   @return [Region]
     attr_reader :region
