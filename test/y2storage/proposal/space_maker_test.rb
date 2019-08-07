@@ -646,6 +646,43 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
+    # A partition on a RAID and a partition on a plain disk are treated
+    # differently (bsc#1139808) - see comment in Partition#disk.
+    #
+    context "with one RAID1 containing a single resizable Windows partition" do
+      let(:scenario) { "windows-pc-raid1.xml" }
+      let(:resize_info) do
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 1.GiB, max_size: 60.GiB,
+          reasons: 0, reason_texts: [])
+      end
+      let(:windows_partitions) { [partition_double("/dev/md0p1")] }
+      let(:resize_windows) { true }
+
+      before do
+        settings.candidate_devices = ["/dev/md0"]
+        settings.root_device = "/dev/md0"
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      context "with enough free space in the Windows partition" do
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB) }
+
+        it "shrinks the Windows partition by the required size" do
+          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+          win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/md0p1")
+          expect(win_partition.size).to eq 20.GiB - 35.MiB
+        end
+
+        it "suggests a distribution using the freed space" do
+          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+          distribution = result[:partitions_distribution]
+          expect(distribution.spaces.size).to eq 1
+          expect(distribution.spaces.first.partitions).to eq volumes
+        end
+      end
+    end
+
     context "if there are two Windows partitions" do
       let(:scenario) { "double-windows-pc" }
       let(:resize_info) do

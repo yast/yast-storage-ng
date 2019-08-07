@@ -350,7 +350,7 @@ module Y2Storage
         if result.none?(&:growing?)
           # Use partition.region as starting point. After all, the exact start
           # and end positions are not that relevant for our purposes.
-          new_space = FreeDiskSpace.new(partition.disk, partition.region)
+          new_space = FreeDiskSpace.new(partition.partitionable, partition.region)
           new_space.growing = true
           new_space.exists = false
           result << new_space
@@ -370,7 +370,8 @@ module Y2Storage
       # @param partition [Partition] partition to be resized
       # @return [Boolean]
       def space_right_after_partition?(free_space, partition)
-        free_space.disk == partition.disk && free_space.region.start == partition.region.end + 1
+        free_space.partitionable == partition.partitionable &&
+          free_space.region.start == partition.region.end + 1
       end
 
       # All planned partitions to consider when resizing an existing partition
