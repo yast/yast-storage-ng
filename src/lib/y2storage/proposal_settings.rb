@@ -58,6 +58,14 @@ module Y2Storage
     # @return [:auto, :device] :auto by default
     attr_accessor :allocate_volume_mode
 
+    # Whether the initial proposal should use a multidisk approach first
+    #
+    # @note :ng format
+    #
+    # @return [Boolean] if true, the initial proposal will be tried using all
+    #   available candidate disk before jumping to a single disk approach.
+    attr_accessor :multidisk_first
+
     # @note :legacy format
     # @return [Filesystems::Type] type to use for the root filesystem
     attr_accessor :root_filesystem_type
@@ -488,6 +496,7 @@ module Y2Storage
       self.delete_resize_configurable ||= true
       self.lvm_vg_strategy            ||= :use_available
       self.allocate_volume_mode       ||= :auto
+      self.multidisk_first            ||= false
       self.volumes                    ||= []
     end
 
@@ -503,6 +512,7 @@ module Y2Storage
       load_feature(:proposal, :delete_resize_configurable)
       load_feature(:proposal, :lvm_vg_strategy)
       load_feature(:proposal, :allocate_volume_mode)
+      load_feature(:proposal, :multidisk_first)
       load_size_feature(:proposal, :lvm_vg_size)
       load_volumes_feature(:volumes)
     end
@@ -525,6 +535,7 @@ module Y2Storage
       self.other_delete_mode         ||= :ondemand
       self.root_space_percent        ||= 40
       self.allocate_volume_mode      ||= :auto
+      self.multidisk_first           ||= false
       self.btrfs_increase_percentage ||= 300.0
       self.btrfs_default_subvolume   ||= "@"
       self.subvolumes                ||= SubvolSpecification.fallback_list
@@ -644,6 +655,7 @@ module Y2Storage
       "    delete_resize_configurable: #{delete_resize_configurable}\n" \
       "    lvm_vg_strategy: #{lvm_vg_strategy}\n" \
       "    lvm_vg_size: #{lvm_vg_size}\n" \
+      "    multidisk_first: #{multidisk_first}\n" \
       "  volumes:\n" \
       "    #{volumes}"
     end
