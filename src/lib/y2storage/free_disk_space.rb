@@ -31,8 +31,12 @@ module Y2Storage
   # and extended partition) or the space of a partition to be reused.
   class FreeDiskSpace
     # @!attribute disk
-    #   @return [DiskSize]
+    #   @return [Partitionable]
     attr_reader :disk
+
+    # there is Partition#disk vs. Partition#partitionable
+    # mirror this here
+    alias_method :partitionable, :disk
 
     # @!attribute region
     #   @return [Region]
@@ -52,7 +56,7 @@ module Y2Storage
 
     # Constructor
     #
-    # @param disk [Disk]
+    # @param disk [Partitionable]
     # @param region [Region]
     def initialize(disk, region)
       @disk = disk
