@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -74,6 +75,19 @@ describe Y2Storage::Proposal::AutoinstBcacheCreator do
       bcache = devicegraph.find_by_name("/dev/bcache0")
       caching_device = devicegraph.find_by_name(caching_devname)
       expect(caching_device.descendants).to include(bcache)
+    end
+
+    # Regression test for bsc#1139783
+    context "when no caching device is specified" do
+      let(:caching_devname) { nil }
+
+      it "does not add a caching device" do
+        result = creator.create_bcache(planned_bcache0, backing_devname, caching_devname)
+
+        bcache = result.devicegraph.find_by_name("/dev/bcache0")
+
+        expect(bcache.bcache_cset).to be_nil
+      end
     end
 
     context "when no partitions are specified" do

@@ -34,6 +34,7 @@ module Y2Storage
       include Planned::CanBeResized
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include Planned::CanBeBcacheMember
       include Planned::CanBeBtrfsMember
       include MatchVolumeSpec
 
@@ -84,6 +85,7 @@ module Y2Storage
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
+        initialize_can_be_bcache_member
         initialize_can_be_btrfs_member
 
         @mount_point = mount_point
