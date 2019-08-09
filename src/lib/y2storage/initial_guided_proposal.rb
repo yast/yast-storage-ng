@@ -263,7 +263,7 @@ module Y2Storage
     def candidate_roots
       return [settings.root_device] if settings.explicit_root_device
 
-      disk_names = settings.candidate_devices
+      disk_names = settings.explicit_candidate_devices
 
       candidates = disk_names.map { |n| initial_devicegraph.find_by_name(n) }.compact
       candidates = candidates.sort_by(&:size).reverse
