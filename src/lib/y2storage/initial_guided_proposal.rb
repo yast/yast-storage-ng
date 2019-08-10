@@ -220,18 +220,35 @@ module Y2Storage
 
     # Candidate devices grouped for different proposal attempts
     #
-    # Different proposal attempts are performed by using different sets of candidate devices.
-    # First, each candidate device is used individually, and if no proposal was possible with
-    # any individual disk, a last attempt is done by using all available candidate devices.
+    # Different proposal attempts are performed by using different sets of candidate devices, which
+    # will depend on the given settings:
+    #
+    # * single disk first (by default, no option needed): each candidate device is used individually
+    # first and, if no proposal was possible with any individual disk, a last attempt is done by
+    # using all available candidate devices.
+    #
+    # * multidisk first (multidisk_first => true): the proposal is tried using all available
+    # candidate devices.
+    #
+    # NOTE: when multidisk first, it makes no sense to include also each candidate device as an
+    # individual group at the end because if the proposal fails using all devices it also will fail
+    # using them individually.
     #
     # @example
     #
-    #   settings.candidate_devices #=> ["/dev/sda", "/dev/sdb"]
-    #   settings.groups_of_candidate_devices #=> [["/dev/sda"], ["/dev/sdb"], ["/dev/sda", "/dev/sdb"]]
+    #  settings.multidisk_first #=> false
+    #  settings.candidate_devices #=> ["/dev/sda", "/dev/sdb"]
+    #  settings.groups_of_candidate_devices #=> [["/dev/sda"], ["/dev/sdb"], ["/dev/sda", "/dev/sdb"]]
+    #
+    #  settings.multidisk_first #=> true
+    #  settings.candidate_devices #=> ["/dev/sda", "/dev/sdb"]
+    #  settings.groups_of_candidate_devices #=> [["/dev/sda", "/dev/sdb"]]
     #
     # @return [Array<Array<String>>]
     def groups_of_candidate_devices
       candidates = candidate_devices
+
+      return [candidates] if settings.multidisk_first
 
       candidates.zip.append(candidates).uniq
     end
