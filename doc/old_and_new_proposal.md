@@ -200,6 +200,7 @@ Besides these, there is another element:
 
   * `lvm` *(boolean, default: `false`)*
   * `allocate_volume_mode` *(`auto`, `device`, default: `auto`)*
+  * `multidisk_first` *(boolean, default: `false`)*
   * `delete_resize_configurable` *(boolean, default: `true`)*
   * `resize_windows` *(boolean, default: `true`)*
   * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
@@ -660,6 +661,10 @@ following options.
     consequence, the interface presented to the user by default will be
     different (containing different questions) depending of the value of this
     property.
+  * `multidisk_first`
+    When set to `true`, the initial proposal will be performed over all
+    available candidate disks, which means that the proposal will try to use
+    several disks before jumping to adjust the settings.
   * ~~`encrypt`
     Whether encryption should be used by default.~~
   * `delete_resize_configurable`
