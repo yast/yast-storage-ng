@@ -662,9 +662,10 @@ following options.
     different (containing different questions) depending of the value of this
     property.
   * `multidisk_first`
-    When set to `true`, the initial proposal will be performed over all
-    available candidate disks, which means that the proposal will try to use
-    several disks before jumping to adjust the settings.
+    When set to `true`, the initial proposal considers all disks as possible
+    destination for the volumes to allocate. If set to `false`, the proposal
+    tries to use individual disks to allocate the volumes, and it only uses all
+    disks together when the volumes cannot be allocated in any individual disk.
   * ~~`encrypt`
     Whether encryption should be used by default.~~
   * `delete_resize_configurable`

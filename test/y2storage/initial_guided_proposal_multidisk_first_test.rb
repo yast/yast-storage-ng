@@ -25,6 +25,30 @@ require "y2storage"
 describe Y2Storage::InitialGuidedProposal do
   using Y2Storage::Refinements::SizeCasts
 
+  def created_mount_paths
+    created_partitions.map(&:filesystem).compact.map(&:mount_path)
+  end
+
+  def created_partitions
+    proposal.devices.partitions
+  end
+
+  def created_vgs
+    proposal.devices.lvm_vgs
+  end
+
+  def created_vgs_names
+    proposal.devices.lvm_vgs.map(&:vg_name)
+  end
+
+  def device_used_by(element)
+    if element.is_a?(Y2Storage::Partition)
+      element.partitionable
+    elsif element.is_a?(Y2Storage::LvmVg)
+      element.lvm_pvs.map(&:blk_device).map(&:partitionable)
+    end
+  end
+
   def used_devices
     sids_before = fake_devicegraph.partitions.map(&:sid)
 
@@ -34,26 +58,17 @@ describe Y2Storage::InitialGuidedProposal do
     devices.map(&:name)
   end
 
-  def proposed_vg_names
-    proposal.planned_devices.map do |planned_device|
-      next unless planned_device.is_a?(Y2Storage::Planned::LvmVg)
-
-      planned_device.volume_group_name
-    end
-  end
-
   subject(:proposal) { described_class.new(settings: settings) }
 
-  describe "#propose" do
+  describe "#propose (with multidisk_first set to true)" do
     let(:sda) { fake_devicegraph.find_by_name("/dev/sda") }
     let(:sdb) { fake_devicegraph.find_by_name("/dev/sdb") }
     let(:sdc) { fake_devicegraph.find_by_name("/dev/sdc") }
     let(:sdd) { fake_devicegraph.find_by_name("/dev/sdd") }
-
     let(:control_file_content) { ng_partitioning_section }
+
     let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
     let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
-    let(:architecture) { :x86 }
 
     let(:volumes_spec) do
       [
@@ -63,7 +78,6 @@ describe Y2Storage::InitialGuidedProposal do
           "desired_size"          => "30GiB",
           "min_size"              => "10GiB",
           "max_size"              => "100GiB",
-          "separate_vg_name"      => "vg-root",
           "proposed_configurable" => false
         },
         {
@@ -94,8 +108,7 @@ describe Y2Storage::InitialGuidedProposal do
           "proposal" => {
             "multidisk_first"      => true,
             "lvm_vg_strategy"      => :use_needed,
-            "allocate_volume_mode" => allocate_mode,
-            "separate_vgs"         => separate_vgs
+            "allocate_volume_mode" => allocate_mode
           },
           "volumes"  => volumes_spec
         }
@@ -104,18 +117,11 @@ describe Y2Storage::InitialGuidedProposal do
 
     let(:separate_vgs) { false }
 
-    let(:sda_size) { 45.GiB }
-    let(:sdb_size) { 40.GiB }
-    let(:sdc_size) { 9.GiB }
-    let(:sdd_size) { 35.GiB }
-
     before do
       Y2Storage::StorageManager.create_test_instance
       Yast::ProductFeatures.Import(control_file_content)
 
-      allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
-      allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
-      allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
+      allow(Yast::Arch).to receive(:x86_64).and_return(true)
       allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
 
       create_empty_disk("/dev/sda", sda_size)
@@ -124,212 +130,416 @@ describe Y2Storage::InitialGuidedProposal do
       create_empty_disk("/dev/sdd", sdd_size)
 
       settings.lvm = lvm
+      settings.separate_vgs = separate_vgs
     end
 
-    context "when the proposal is set to use a multidisk_first approach" do
-      shared_examples "make a proposal using as much devices as possible" do
-        context "having enough space for the full proposal" do
-          it "spreads the proposal as much as possible" do
-            proposal.propose
+    context "when allocate_volume_mode set to :device" do
+      let(:allocate_mode) { :device }
 
-            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdd")
+      context "using LVM" do
+        let(:lvm) { true }
+
+        context "with separated volume groups" do
+          let(:separate_vgs) { true }
+
+          context "having enough room for a full proposal" do
+            let(:sda_size) { 100.GiB }
+            let(:sdb_size) { 100.GiB }
+            let(:sdc_size) { 100.GiB }
+            let(:sdd_size) { 100.GiB }
+
+            it "assings each volume to a different device" do
+              proposal.propose
+
+              root = created_vgs.find { |vg| vg.vg_name == "system" }
+              home = created_vgs.find { |vg| vg.vg_name == "vg-home" }
+              foobar = created_vgs.find { |vg| vg.vg_name == "vg-foobar" }
+
+              devices = [root, home, foobar].map { |i| device_used_by(i) }.compact.uniq
+
+              expect(devices.size).to eq(3)
+            end
+
+            it "creates all volumes, including optional ones" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("system", "vg-home", "vg-foobar")
+            end
           end
 
-          it "proposes also configurable volumes" do
-            proposal.propose
+          context "having space only for a minimal proposal" do
+            let(:sda_size) { 15.GiB }
+            let(:sdb_size) { 15.GiB }
+            let(:sdc_size) { 5.GiB }
+            let(:sdd_size) { 5.GiB }
 
-            expect(proposed_vg_names).to include("vg-foobar")
+            it "assings each volume to a different device" do
+              proposal.propose
+
+              root = created_vgs.find { |vg| vg.vg_name == "system" }
+              home = created_vgs.find { |vg| vg.vg_name == "vg-home" }
+              foobar = created_vgs.find { |vg| vg.vg_name == "vg-foobar" }
+
+              devices = [root, home, foobar].map { |i| device_used_by(i) }.compact.uniq
+
+              expect(devices.size).to eq(2)
+            end
+
+            it "creates only mandatory volumes" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("system", "vg-home")
+            end
           end
         end
 
-        context "having space only for the minimal proposal" do
-          let(:sda_size) { 11.GiB }
-          let(:sdb_size) { 1.GiB }
-          let(:sdd_size) { 11.GiB }
+        context "without separated volume groups" do
+          let(:separate_vgs) { false }
 
-          it "spreads the proposal as much as possible" do
-            proposal.propose
+          # NOTE: when separated volumes are note required, the proposal will create only
+          # the "system" LVM VG in a single device.
+          context "and having some devices with enough space to hold the proposal" do
+            let(:sda_size) { 20.GiB }
+            let(:sdb_size) { 20.GiB }
+            let(:sdc_size) { 40.GiB }
+            let(:sdd_size) { 80.GiB }
 
-            expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdd")
+            it "makes the proposal using only a single device" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdd")
+            end
+
+            it "creates only the 'system' LVM VG" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("system")
+            end
           end
 
-          it "proposes only required volumes" do
-            proposal.propose
+          context "and none device has enough space to hold the proposal" do
+            let(:sda_size) { 20.GiB }
+            let(:sdb_size) { 20.GiB }
+            let(:sdc_size) { 20.GiB }
+            let(:sdd_size) { 20.GiB }
 
-            expect(proposed_vg_names).to_not include("vg-pgsql")
+            it "raises a NoDiskSpaceError (although all devices together could hold it)" do
+              expect { proposal.propose }.to raise_exception(Y2Storage::NoDiskSpaceError)
+            end
           end
         end
       end
 
-      context "and allocate_volume_mode set to :device" do
-        let(:allocate_mode) { :device }
+      context "not using LVM" do
+        let(:lvm) { false }
 
-        context "using LVM" do
-          let(:lvm) { true }
+        context "with separated volume groups" do
+          let(:separate_vgs) { true }
 
-          context "with separated volume groups" do
-            let(:separate_vgs) { true }
+          context "having enough room for a full proposal" do
+            let(:sda_size) { 40.GiB }
+            let(:sdb_size) { 40.GiB }
+            let(:sdc_size) { 25.GiB }
+            let(:sdd_size) { 20.GiB }
 
-            include_examples "make a proposal using as much devices as possible"
-          end
+            it "creates partitions for all volumes without separate_vg_name" do
+              proposal.propose
 
-          context "without separated volume groups" do
-            let(:separate_vgs) { false }
-
-            # NOTE: even setting the allocate_device_mode to :device, the
-            # proposal will use only one device when separated volumes are not
-            # required.
-            context "and some devices has enough space to hold the proposal" do
-              let(:sdc_size) { 500.GiB }
-
-              it "makes the proposal using the biggest one" do
-                proposal.propose
-
-                expect(used_devices).to contain_exactly("/dev/sdc")
-              end
+              expect(created_mount_paths).to include("/")
             end
 
-            context "and none device has enough space to hold the proposal" do
-              let(:sda_size) { 5.GiB }
-              let(:sdb_size) { 5.GiB }
-              let(:sdc_size) { 5.GiB }
-              let(:sdd_size) { 5.GiB }
+            it "creates LVM VGs for all volumes with separate_vg_name" do
+              proposal.propose
 
-              it "raises a NoDiskSpaceError (although all devices together could hold it)" do
-                expect { proposal.propose }.to raise_exception(Y2Storage::NoDiskSpaceError)
-              end
+              expect(created_vgs_names).to contain_exactly("vg-home", "vg-foobar")
+            end
+
+            it "assings each volume to a different device" do
+              proposal.propose
+
+              root = created_partitions.find { |p| p&.filesystem&.mount_path == "/" }
+              home = created_vgs.find { |vg| vg.vg_name == "vg-home" }
+              foobar = created_vgs.find { |vg| vg.vg_name == "vg-foobar" }
+
+              devices = [root, home, foobar].map { |i| device_used_by(i) }.compact.uniq
+
+              expect(devices.size).to eq(3)
+            end
+          end
+
+          context "having space only for a minimal proposal" do
+            let(:sda_size) { 15.GiB }
+            let(:sdb_size) { 15.GiB }
+            let(:sdc_size) { 15.GiB }
+            let(:sdd_size) { 5.GiB }
+
+            it "creates as partition all volumes without separate_vg_name" do
+              proposal.propose
+
+              expect(created_mount_paths).to include("/")
+            end
+
+            it "creates as LVM VG all volumes with separate_vg_name" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("vg-home", "vg-foobar")
+            end
+
+            it "uses as much devices as posible" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
             end
           end
         end
 
-        context "not using LVM" do
-          let(:lvm) { false }
+        context "without separated volume groups" do
+          let(:separate_vgs) { false }
 
-          context "with separated volume groups" do
-            let(:separate_vgs) { true }
+          let(:sda_size) { 100.GiB }
+          let(:sdb_size) { 100.GiB }
+          let(:sdc_size) { 100.GiB }
+          let(:sdd_size) { 100.GiB }
 
-            include_examples "make a proposal using as much devices as possible"
+          it "creates partitions for all volumes" do
+            proposal.propose
+
+            expect(created_mount_paths).to contain_exactly("/", "/home", "/foo/bar")
           end
 
-          context "without separated volume groups" do
-            let(:separate_vgs) { false }
+          it "assings each volume to a different device" do
+            proposal.propose
 
-            it "spreads the proposal as much as possible" do
+            root = created_partitions.find { |p| p&.filesystem&.mount_path == "/" }
+            home = created_partitions.find { |p| p&.filesystem&.mount_path == "/home" }
+            foobar = created_partitions.find { |p| p&.filesystem&.mount_path == "/foo/bar" }
+
+            devices = [root, home, foobar].map(&:partitionable).uniq
+
+            expect(devices.size).to eq(3)
+          end
+        end
+      end
+    end
+
+    # NOTE: this scenario, multidisk_first + allocate_volume_mode :auto, is
+    # a kind of "fallback" to the behavior of the initial proposal before
+    # changes introduced in https://github.com/yast/yast-storage-ng/pull/783
+    context "with allocate_volume_mode set to :auto" do
+      let(:allocate_mode) { :auto }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        context "with separated volume groups" do
+          let(:separate_vgs) { true }
+
+          context "and it fits in only one device" do
+            let(:sda_size) { 40.GiB }
+            let(:sdb_size) { 80.GiB }
+            let(:sdc_size) { 20.GiB }
+            let(:sdd_size) { 20.GiB }
+
+            it "creates all LVM VGs" do
               proposal.propose
 
-              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdd")
+              expect(created_vgs_names).to contain_exactly("system", "vg-home", "vg-foobar")
+            end
+
+            it "creates the proposal using only one device" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdb")
+            end
+          end
+
+          context "and it does not fit in a single device" do
+            # The minimal proposal including all volumes needs 30GiB
+            let(:sda_size) { 10.GiB }
+            let(:sdb_size) { 10.GiB }
+            let(:sdc_size) { 10.GiB }
+            let(:sdd_size) { 10.GiB }
+
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "creates all LVM VGs" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("system", "vg-home", "vg-foobar")
+            end
+
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "creates the proposal using needed devices" do
+              proposal.propose
+
+              expect(used_devices)
+                .to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd")
+            end
+          end
+        end
+
+        context "without separated volume groups" do
+          let(:separate_vgs) { false }
+
+          context "and it fits in only one device" do
+            let(:sda_size) { 40.GiB }
+            let(:sdb_size) { 80.GiB }
+            let(:sdc_size) { 20.GiB }
+            let(:sdd_size) { 20.GiB }
+
+            it "creates only the system LVM VG" do
+              proposal.propose
+
+              system = proposal.devices.lvm_vgs.find { |v| v.vg_name == "system" }
+              mount_points = system.lvm_lvs.map { |l| l.filesystem.mount_path }
+
+              expect(mount_points).to contain_exactly("/", "/home", "/foo/bar")
+            end
+
+            it "creates the proposal using only one device" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdb")
+            end
+          end
+
+          context "and it does not fit in a single device" do
+            # The minimal proposal including all volumes needs 30GiB
+            let(:sda_size) { 10.GiB }
+            let(:sdb_size) { 6.GiB }
+            let(:sdc_size) { 6.GiB }
+            let(:sdd_size) { 10.GiB }
+
+            it "creates only the system LVM VG" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("system")
+            end
+
+            it "creates the proposal using needed devices" do
+              proposal.propose
+
+              expect(used_devices)
+                .to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd")
             end
           end
         end
       end
 
-      # NOTE: this scenario, multidisk_first + allocate_volume_mode :auto, is
-      # a kind of "fallback" to the behavior of the initial proposal before
-      # changes introduced in https://github.com/yast/yast-storage-ng/pull/783
-      context "with allocate_volume_mode set to :auto" do
-        let(:allocate_mode) { :auto }
+      context "not using LVM" do
+        let(:lvm) { false }
 
-        context "using LVM" do
-          let(:lvm) { true }
+        context "with separated volume groups" do
+          let(:separate_vgs) { true }
 
-          context "with separated volume groups" do
-            let(:separate_vgs) { true }
+          context "and it fits in only one device" do
+            let(:sda_size) { 40.GiB }
+            let(:sdb_size) { 80.GiB }
+            let(:sdc_size) { 20.GiB }
+            let(:sdd_size) { 20.GiB }
 
-            it "spreads the proposal as much as possible" do
+            it "creates partitions for all volumes without separate_vg_name" do
               proposal.propose
 
-              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdd")
+              expect(created_mount_paths).to include("/")
+            end
+
+            it "creates LVM VGs for volumes with separate_vg_name" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("vg-home", "vg-foobar")
+            end
+
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "uses only needed devices" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdb")
             end
           end
 
-          context "without separated volume groups" do
-            let(:separate_vgs) { false }
+          context "and it does not fit in a single device" do
+            # The minimal proposal including all volumes needs 30GiB
+            let(:sda_size) { 8.GiB }
+            let(:sdb_size) { 8.GiB }
+            let(:sdc_size) { 10.GiB }
+            let(:sdd_size) { 11.GiB }
 
-            it "only use necessary devices" do
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "creates partitions all volumes without separate_vg_name" do
+              proposal.propose
+
+              expect(created_mount_paths).to include("/")
+            end
+
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "creates LVM VGs for volumes with separate_vg_name" do
+              proposal.propose
+
+              expect(created_vgs_names).to contain_exactly("vg-home", "vg-foobar")
+            end
+
+            # FIXME: it seems that SpaceMaker is having troubles to assign
+            # space at the time to create multiple LVM VGs when
+            # allocate_volume_mode => :auto and separate_vgs => true
+            xit "creates the proposal using needed devices" do
+              proposal.propose
+
+              expect(used_devices)
+                .to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd")
+            end
+          end
+        end
+
+        context "without separated volume groups" do
+          let(:separate_vgs) { false }
+
+          context "and the proposal fits in a single device" do
+            let(:sda_size) { 10.GiB }
+            let(:sdb_size) { 100.GiB }
+            let(:sdc_size) { 10.GiB }
+            let(:sdd_size) { 10.GiB }
+
+            it "creates all volumes as partitions" do
+              proposal.propose
+
+              expect(created_mount_paths).to contain_exactly("/", "/home", "/foo/bar")
+            end
+
+            it "makes the proposal in a single device" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdb")
+            end
+          end
+
+          context "and the proposal does not fit in a single device" do
+            # NOTE: it is needed to create three partitions of at least 10GiB plus the boot
+            # partition
+            let(:sda_size) { 30.GiB }
+            let(:sdb_size) { 30.GiB }
+            let(:sdc_size) { 5.GiB }
+            let(:sdd_size) { 5.GiB }
+
+            it "creates all volumes as partitions" do
+              proposal.propose
+
+              expect(created_mount_paths).to contain_exactly("/", "/home", "/foo/bar")
+            end
+
+            it "makes the proposal using needed devices" do
               proposal.propose
 
               expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
-            end
-          end
-        end
-
-        context "not using LVM" do
-          let(:lvm) { false }
-
-          context "with separated volume groups" do
-            let(:separate_vgs) { true }
-
-            context "and there is room for the full proposal in a single device" do
-              let(:sdb_size) { 500.GiB }
-
-              it "makes the full proposal using a single device" do
-                proposal.propose
-
-                expect(used_devices).to contain_exactly("/dev/sdb")
-              end
-            end
-
-            # NOTE: with current settings, a minimal proposal fits in sda, sdb or sdd
-            context "and there is room for a minimal proposal in a single device" do
-              it "makes the full proposal" do
-                proposal.propose
-
-                expect(proposed_vg_names).to include("vg-foobar")
-              end
-
-              it "uses multiple disks" do
-                proposal.propose
-
-                expect(used_devices.count).to be > 1
-              end
-            end
-
-            context "but there is only room for the minimal proposal" do
-              let(:sda_size) { 11.GiB }
-              let(:sdb_size) { 11.GiB }
-              let(:sdd_size) { 5.GiB }
-
-              it "makes the minimal proposal" do
-                proposal.propose
-
-                expect(proposed_vg_names).to_not include("vg-foobar")
-              end
-
-              it "uses multiple disks" do
-                proposal.propose
-
-                expect(used_devices.count).to be > 1
-              end
-            end
-          end
-
-          context "without separated volume groups" do
-            let(:separate_vgs) { false }
-
-            context "and there is room for the full proposal" do
-              let(:sda_size) { 20.GiB }
-              let(:sdb_size) { 65.GiB }
-              let(:sdd_size) { 11.GiB }
-
-              it "makes the full proposal using necessary devices" do
-                proposal.propose
-
-                expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
-                expect(proposal.planned_devices.map(&:mount_point)).to include("/foo/bar")
-              end
-            end
-
-            context "but there is only room for the minimal proposal" do
-              let(:sda_size) { 11.GiB }
-              let(:sdb_size) { 11.GiB }
-              let(:sdd_size) { 5.GiB }
-
-              it "makes the minimal proposal using necessary devices" do
-                proposal.propose
-
-                expect(proposal.planned_devices.map(&:mount_point)).to_not include("/foo/bar")
-                expect(used_devices.count).to be > 1
-              end
             end
           end
         end

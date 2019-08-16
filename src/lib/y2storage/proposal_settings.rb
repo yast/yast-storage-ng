@@ -58,12 +58,12 @@ module Y2Storage
     # @return [:auto, :device] :auto by default
     attr_accessor :allocate_volume_mode
 
-    # Whether the initial proposal should use a multidisk approach first
+    # Whether the initial proposal should use a multidisk approach
     #
     # @note :ng format
     #
     # @return [Boolean] if true, the initial proposal will be tried using all
-    #   available candidate disk before jumping to a single disk approach.
+    #   available candidate devices.
     attr_accessor :multidisk_first
 
     # @note :legacy format
@@ -535,7 +535,6 @@ module Y2Storage
       self.other_delete_mode         ||= :ondemand
       self.root_space_percent        ||= 40
       self.allocate_volume_mode      ||= :auto
-      self.multidisk_first           ||= false
       self.btrfs_increase_percentage ||= 300.0
       self.btrfs_default_subvolume   ||= "@"
       self.subvolumes                ||= SubvolSpecification.fallback_list
