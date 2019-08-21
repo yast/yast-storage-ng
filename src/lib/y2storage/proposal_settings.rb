@@ -641,45 +641,39 @@ module Y2Storage
       sets
     end
 
+    NG_SETTINGS = [
+      :multidisk_first, :root_device, :explicit_root_device,
+      :candidate_devices, :explicit_candidate_devices,
+      :windows_delete_mode, :linux_delete_mode, :other_delete_mode, :resize_windows,
+      :delete_resize_configurable,
+      :lvm, :separate_vgs, :allocate_volume_mode, :lvm_vg_strategy, :lvm_vg_size
+    ]
+
+    LEGACY_SETTINGS = [
+      :use_lvm, :root_filesystem_type, :use_snapshots, :use_separate_home,
+      :home_filesystem_type, :enlarge_swap_for_suspend, :root_device,
+      :candidate_devices, :root_base_size, :root_max_size,
+      :root_space_percent, :btrfs_increase_percentage,
+      :min_size_to_use_separate_home, :btrfs_default_subvolume,
+      :home_min_size, :home_max_size
+    ]
+
     # FIXME: Improve implementation. Use composition to encapsulate logic for
     # ng and legacy formats
     def ng_string_representation
       "Storage ProposalSettings (#{format})\n" \
-      "  proposal:\n" \
-      "    lvm: #{lvm}\n" \
-      "    windows_delete_mode: #{windows_delete_mode}\n" \
-      "    linux_delete_mode: #{linux_delete_mode}\n" \
-      "    other_delete_mode: #{other_delete_mode}\n" \
-      "    resize_windows: #{resize_windows}\n" \
-      "    delete_resize_configurable: #{delete_resize_configurable}\n" \
-      "    lvm_vg_strategy: #{lvm_vg_strategy}\n" \
-      "    lvm_vg_size: #{lvm_vg_size}\n" \
-      "    multidisk_first: #{multidisk_first}\n" \
-      "  volumes:\n" \
-      "    #{volumes}"
+      "  proposal:\n" +
+        NG_SETTINGS.map { |s| "    #{s}: #{send(s)}\n" }.join +
+        "  volumes:\n" \
+        "    #{volumes}"
     end
 
     # FIXME: Improve implementation. Use composition to encapsulate logic for
     # ng and legacy formats
     def legacy_string_representation
-      "Storage ProposalSettings (#{format})\n" \
-      "  use_lvm: #{use_lvm}\n" \
-      "  root_filesystem_type: #{root_filesystem_type}\n" \
-      "  use_snapshots: #{use_snapshots}\n" \
-      "  use_separate_home: #{use_separate_home}\n" \
-      "  home_filesystem_type: #{home_filesystem_type}\n" \
-      "  enlarge_swap_for_suspend: #{enlarge_swap_for_suspend}\n" \
-      "  root_device: #{root_device}\n" \
-      "  candidate_devices: #{candidate_devices}\n" \
-      "  root_base_size: #{root_base_size}\n" \
-      "  root_max_size: #{root_max_size}\n" \
-      "  root_space_percent: #{root_space_percent}\n" \
-      "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n" \
-      "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n" \
-      "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
-      "  home_min_size: #{home_min_size}\n" \
-      "  home_max_size: #{home_max_size}\n" \
-      "  subvolumes: \n#{subvolumes}\n"
+      "Storage ProposalSettings (#{format})\n" +
+        LEGACY_SETTINGS.map { |s| "    #{s}: #{send(s)}\n" }.join +
+        "  subvolumes: \n#{subvolumes}\n"
     end
   end
 end
