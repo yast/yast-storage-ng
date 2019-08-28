@@ -92,9 +92,14 @@ module Y2Partitioner
       #
       # @return [String]
       def device_encrypted
-        # TRANSLATORS: Device encryption information, where %s is replaced by
-        # 'Yes' when the device is encrypted or by 'No' otherwise
-        format(_("Encrypted: %s"), blk_device.encrypted? ? _("Yes") : _("No"))
+        if blk_device.encrypted?
+          # TRANSLATORS: Attribute of the device information in the Partitioner
+          # where %s is replaced by the encryption type (LUKS1, LUKS2, etc.)
+          format(_("Encrypted: Yes (%s)"), blk_device.encryption.type.to_human_string)
+        else
+          # TRANSLATORS: Attribute of the device information in the Partitioner
+          _("Encrypted: No")
+        end
       end
 
       # Information about the device vendor

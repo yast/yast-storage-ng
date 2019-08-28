@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
 require "y2storage/crypttab"
+require "y2storage/encryption_type"
 
 module Y2Storage
   # An encryption layer on a block device
@@ -27,6 +28,14 @@ module Y2Storage
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
     wrap_class Storage::Encryption, downcast_to: ["Luks"]
+
+    # @!attribute type
+    #   Encryption type. Eg. luks1, luks2, etc.
+    #
+    #   @return [EncryptionType]
+    #
+    storage_forward :type, as: "EncryptionType"
+    storage_forward :type=
 
     # @!method blk_device
     #   Block device directly hosting the encryption layer.

@@ -24,9 +24,11 @@ require_relative "help_fields_examples"
 require "y2partitioner/widgets/description_section/blk_device"
 
 describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
-  before { devicegraph_stub("mixed_disks") }
+  before { devicegraph_stub(scenario) }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:scenario) { "mixed_disks" }
 
   let(:device) { current_graph.find_by_name("/dev/sda2") }
 
@@ -49,8 +51,19 @@ describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
       expect(subject.value).to match(/Size:/)
     end
 
-    it "includes an entry about the encryption" do
-      expect(subject.value).to match(/Encrypted:/)
+    context "for a non encrypted device" do
+      it "includes an entry about the encryption" do
+        expect(subject.value).to match(/Encrypted: No/)
+      end
+    end
+
+    context "for an encrypted device" do
+      let(:scenario) { "encrypted_with_bios_boot" }
+
+      it "includes an entry about the encryption including the encryption type" do
+        expect(subject.value).to match(/Encrypted: Yes/)
+        expect(subject.value).to match(/LUKS1/)
+      end
     end
 
     it "includes an entry about the udev by_path values" do
