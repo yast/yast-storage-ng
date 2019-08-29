@@ -68,6 +68,7 @@ module Y2Storage
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exist?(EFIVARS_PATH)
+        mount_in_target("/run", "/run", "--bind")
 
         true
       end
@@ -78,6 +79,9 @@ module Y2Storage
         if !Yast::FileUtils.Exists(target_path)
           raise ".target.mkdir failed" if !SCR.Execute(path(".target.mkdir"), target_path)
         end
+
+        log.info "Cmd: mount #{options} #{device} #{target_path}"
+
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
           raise ".target.mount failed"
         end
