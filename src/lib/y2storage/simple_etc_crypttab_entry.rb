@@ -58,5 +58,12 @@ module Y2Storage
 
       (device&.is?(:encryption)) ? device.blk_device : device
     end
+
+    # Whether random password was used (typically for swap plain encryption)
+    #
+    # @return [Boolean]
+    def random_password?
+      password.match?(/random/)
+    end
   end
 end

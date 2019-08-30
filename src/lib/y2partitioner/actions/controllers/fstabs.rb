@@ -407,10 +407,11 @@ module Y2Partitioner
         # Device indicated in the fstab entry
         #
         # When the device name in the fstab entry corresponds to a encryption device, the device
-        # could not be found by that fstab name. In general, the encryptions might be probed with
-        # a different name, so before searching for the device, the encryption names from the crypttab
-        # file are saved into the proper encryption device. That changes are made in a temporary
-        # devicegraph, so the original one is never altered.
+        # could be not found by that fstab name. In general, encryptions might be probed with a different
+        # name, so before searching for the device, the encryption names from the crypttab file are saved
+        # into the proper encryption device. Also note that a plain encryption layer can be created when
+        # the crypttab entry points to a device encrypted with a random password (typically for swap).
+        # All these changes are made in a temporary devicegraph, so the original one is never altered.
         #
         # @see #devicegraph_with_crypttab_names
         #
@@ -421,7 +422,14 @@ module Y2Partitioner
         #   not found in the devicegraph.
         def entry_device(entry, devicegraph)
           device = entry.device(devicegraph_with_crypttab_names(devicegraph))
-          device ? devicegraph.find_device(device.sid) : nil
+
+          return nil unless device
+
+          if missing_plain_encryption?(device, devicegraph)
+            create_plain_encryption(device, devicegraph)
+          else
+            devicegraph.find_device(device.sid)
+          end
         end
 
         # Duplicates the given devicegraph and saves the encryption names from the crypttab file
@@ -441,10 +449,56 @@ module Y2Partitioner
 
         # Selects the crypttab contained in the same filesystem than the selected fstab
         #
-        # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain
-        #   a crypttab file.
+        # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain a crypttab file.
         def crypttab
           disk_analyzer.crypttabs.find { |c| c.filesystem == selected_fstab.filesystem }
+        end
+
+        # Whether the device represents a not probed plain encryption
+        #
+        # Note that no headers are written into the device when using plain encryption. For this reason,
+        # plain encryption devices are only probed for the root filesystem by parsing its crypttab file.
+        #
+        # A plain encryption device coud be created when searching for a device from a fstab entry, see
+        # {Y2Storage::Encryption.save_crypttab_names}.
+        #
+        # @param device [Y2Storage::Device]
+        # @param devicegraph [Y2Storage::Devicegraph]
+        #
+        # @return [Boolean]
+        def missing_plain_encryption?(device, devicegraph)
+          missing_device?(device, devicegraph) && plain_encryption?(device)
+        end
+
+        # Whether the device is missing in the given devicegraph
+        #
+        # @param device [Y2Storage::Device]
+        # @param devicegraph [Y2Storage::Devicegraph]
+        #
+        # @return [Boolean]
+        def missing_device?(device, devicegraph)
+          !device.exists_in_devicegraph?(devicegraph)
+        end
+
+        # Whether the device is a plain encryption device
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def plain_encryption?(device)
+          device.is?(:plain_encryption)
+        end
+
+        # Creates the plain encryption into the given devicegraph
+        #
+        # @param device [Y2Storage::Encryption]
+        # @param devicegraph [Y2Storage::Devicegraph]
+        #
+        # @return [Y2Storage::Encryption]
+        def create_plain_encryption(device, devicegraph)
+          blk_device = devicegraph.find_device(device.blk_device.sid)
+          blk_device.remove_descendants
+
+          blk_device.encrypt(device.crypttab_name, device.password, Y2Storage::EncryptionType::PLAIN)
         end
       end
     end

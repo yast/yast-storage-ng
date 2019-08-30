@@ -22,6 +22,7 @@ require "y2storage/device"
 require "y2storage/hwinfo_reader"
 require "y2storage/comparable_by_name"
 require "y2storage/match_volume_spec"
+require "y2storage/encryption_type"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -293,9 +294,11 @@ module Y2Storage
     #
     # @param dm_name [String, nil] DeviceMapper table name of the new device
     # @param password [String, nil] password of the new device
+    # @param type [EncryptionType]
+    #
     # @return [Encryption]
-    def encrypt(dm_name: nil, password: nil)
-      enc = create_encryption(dm_name || "")
+    def encrypt(dm_name: nil, password: nil, type: EncryptionType::LUKS1)
+      enc = create_encryption(dm_name || "", type)
       enc.auto_dm_name = !dm_name
       enc.password = password if password
       Encryption.update_dm_names(devicegraph)
