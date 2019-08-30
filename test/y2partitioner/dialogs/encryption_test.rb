@@ -22,7 +22,7 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/dialogs/encrypt_password"
+require "y2partitioner/dialogs/encryption"
 
 describe Y2Partitioner::Dialogs::EncryptPassword do
   let(:controller) { double("FilesystemController", blk_device_name: "/dev/sda1") }

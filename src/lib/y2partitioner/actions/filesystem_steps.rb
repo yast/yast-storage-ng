@@ -21,7 +21,7 @@ require "yast"
 require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
-require "y2partitioner/dialogs/encrypt_password"
+require "y2partitioner/dialogs/encryption"
 require "y2partitioner/actions/controllers/encryption"
 
 Yast.import "Wizard"
