@@ -63,6 +63,12 @@ module Y2Partitioner
         # @return [Boolean] Whether the user wants to encrypt the device
         attr_accessor :encrypt
 
+        # @return [String] Password for the encryption device
+        attr_accessor :encrypt_password
+
+        # @return [Symbol] Encryption type
+        attr_accessor :encrypt_type
+
         # Name of the plain device
         #
         # @see #blk_device

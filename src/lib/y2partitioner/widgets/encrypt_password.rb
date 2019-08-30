@@ -31,6 +31,8 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def validate
+        return true unless enabled?
+
         msg = checker.error_msg(pw1, pw2)
         return true unless msg
 
@@ -41,7 +43,13 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def store
+        return unless enabled?
+
         @controller.encrypt_password = pw1
+      end
+
+      def refresh
+        @controller.encrypt_type != :plain ? enable : disable
       end
 
       # @macro seeAbstractWidget
@@ -52,6 +60,7 @@ module Y2Partitioner
       # @macro seeCustomWidget
       def contents
         Frame(
+          Id(widget_id),
           _("Encryption Password"),
           MarginBox(
             1.45,
