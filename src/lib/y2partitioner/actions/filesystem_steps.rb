@@ -73,7 +73,7 @@ module Y2Partitioner
 
         return :next unless encrypt_controller.to_be_encrypted?
 
-        Dialogs::EncryptPassword.run(encrypt_controller)
+        Dialogs::Encryption.run(encrypt_controller)
       end
 
       def filesystem_commit
