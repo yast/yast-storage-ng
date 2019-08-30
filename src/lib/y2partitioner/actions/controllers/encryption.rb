@@ -27,51 +27,102 @@ module Y2Partitioner
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
         include Yast::Logger
+        include Yast::I18n
+
+        # Action to perform when {#finish} is called
+        #
+        # * :keep preserves the encryption layer from the system devicegraph
+        # * :encrypt adds an encryption device or modifies the previously added one
+        # * :remove ensures the block device will not be encrypted
+        #
+        # @return [Symbol] :keep, :encrypt, :remove
+        attr_accessor :action
 
         # @return [String] Password for the encryption device
-        attr_accessor :encrypt_password
+        attr_accessor :password
 
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
         def initialize(fs_controller)
           super()
+          textdomain "storage"
+
           @fs_controller = fs_controller
+          @password = blk_device.encrypted? ? encryption.password : ""
+          @action = actions.first
         end
 
-        # Whether a new encryption device will be created for the block device
+        # Whether the dialog to select and configure the action makes sense
         #
         # @return [Boolean]
-        def to_be_encrypted?
-          return false unless can_change_encrypt?
+        def show_dialog?
+          can_change_encrypt? && fs_controller.encrypt
+        end
 
-          fs_controller.encrypt && !blk_device.encrypted?
+        # Actions that make sense for the block device
+        #
+        # @see #action
+        #
+        # If there is more than one possible action, the user should be able to
+        # use the UI to select which one to perform
+        #
+        # @return [Array<Symbol>]
+        def actions
+          return @actions if @actions
+
+          @actions =
+            if fs_controller.encrypt
+              if can_keep?
+                [:keep, :encrypt]
+              else
+                [:encrypt]
+              end
+            else
+              [:remove]
+            end
         end
 
         # Applies last changes to the block device at the end of the wizard, which
         # mainly means
         #
         #   * removing unused LvmPv descendant (bsc#1129663)
-        #   * encrypting the device or removing the encryption layer.
+        #   * encrypting the device, modifying the encryption layer or removing it
         def finish
           return unless can_change_encrypt?
 
           remove_unused_lvm_pv
 
-          if to_be_encrypted?
-            blk_device.encrypt(password: encrypt_password)
-          elsif blk_device.encrypted? && !fs_controller.encrypt
-            blk_device.remove_encryption
+          return if action == :keep
+
+          if action == :encrypt
+            finish_encrypt
+          else
+            finish_remove
           end
         ensure
           fs_controller.update_checkpoint
         end
 
-        # Name of the plain device
+        # Encryption device currently associated to the block device, if any
         #
+        # @return [Y2Storage::Encryption, nil]
+        def encryption
+          blk_device.encryption
+        end
+
+        # Title to display in the dialog during the process
         # @return [String]
-        def blk_device_name
-          blk_device.name
+        def wizard_title
+          title =
+            if actions.include?(:keep)
+              _("Encryption for %s")
+            elsif new_encryption?
+              _("Modify encryption of %s")
+            else
+              _("Encrypt %s")
+            end
+          format(title, blk_device.name)
         end
 
         private
@@ -90,6 +141,11 @@ module Y2Partitioner
           fs_controller.blk_device
         end
 
+        # Whether it's possible to remove or replace the encryption device
+        # currently associated to the block device
+        #
+        # @return [Boolean] false if the device is formatted in the system and
+        #   the user wants to preserve that filesystem
         def can_change_encrypt?
           blk_device.filesystem.nil? || new?(blk_device.filesystem)
         end
@@ -97,10 +153,47 @@ module Y2Partitioner
         # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg
         # (bsc#1129663)
         def remove_unused_lvm_pv
-          device = blk_device.encryption || blk_device
+          device = encryption || blk_device
           lvm_pv = device.lvm_pv
 
           device.remove_descendants if lvm_pv&.descendants&.none?
+        end
+
+        # @see #finish
+        def finish_remove
+          return unless blk_device.encrypted?
+
+          blk_device.remove_encryption
+        end
+
+        # @see #finish
+        def finish_encrypt
+          if new_encryption?
+            encryption.password = password
+          else
+            blk_device.remove_encryption if blk_device.encrypted?
+            blk_device.encrypt(password: password)
+          end
+        end
+
+        # Whether the block device is associated to an encryption device that
+        # does not exists in the system yet
+        #
+        # In other words, if the device is going to be (re)encrypted
+        #
+        # @return [Boolean]
+        def new_encryption?
+          blk_device.encrypted? && new?(encryption)
+        end
+
+        # Whether it makes sense to offer the :keep action
+        #
+        # @return [Boolean]
+        def can_keep?
+          return false unless blk_device.encrypted?
+          return false if new?(encryption)
+
+          encryption.active?
         end
       end
     end

@@ -71,7 +71,7 @@ module Y2Partitioner
       def encrypt_password
         @encrypt_controller = Controllers::Encryption.new(fs_controller)
 
-        return :next unless encrypt_controller.to_be_encrypted?
+        return :next unless encrypt_controller.show_dialog?
 
         Dialogs::Encryption.run(encrypt_controller)
       end
