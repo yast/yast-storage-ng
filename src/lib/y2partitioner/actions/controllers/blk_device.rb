@@ -143,8 +143,9 @@ module Y2Partitioner
 
         # Devicegraph that represents the current version of the devices in the system
         #
-        # @note To check whether a filesystem is currently mounted, it must be checked
-        #   in the system devicegraph. When a mount point is "immediate deactivated", the
+        # @note This is not the same than {Base#system_graph}. To check whether a
+        #   filesystem is currently mounted, it must be checked in the real system
+        #   devicegraph. When a mount point is "immediate deactivated", the
         #   mount point is set as inactive only in the system devicegraph.
         #
         # @return [Y2Storage::Devicegraph]

@@ -19,9 +19,9 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/available_devices"
 
 module Y2Partitioner
@@ -29,7 +29,7 @@ module Y2Partitioner
     module Controllers
       # Controller class to deal with all stuff related to adding or removing devices to
       # a Btrfs filesystem
-      class BtrfsDevices
+      class BtrfsDevices < Base
         include Yast::I18n
 
         include AvailableDevices
@@ -47,6 +47,7 @@ module Y2Partitioner
         # @param filesystem [Y2Storage::Filesystems::Btrfs]
         # @param wizard_title [String]
         def initialize(filesystem: nil, wizard_title: "")
+          super()
           textdomain "storage"
 
           @filesystem = filesystem
@@ -227,13 +228,6 @@ module Y2Partitioner
           UIState.instance.select_row(filesystem)
 
           @filesystem = filesystem
-        end
-
-        # Current devicegraph
-        #
-        # @return [Y2Storage::Devicegraph]
-        def current_graph
-          DeviceGraphs.instance.current
         end
       end
     end

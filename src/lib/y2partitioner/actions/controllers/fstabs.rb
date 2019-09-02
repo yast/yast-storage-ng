@@ -21,6 +21,7 @@ require "yast"
 require "yast/i18n"
 require "y2partitioner/device_graphs"
 require "y2partitioner/filesystems"
+require "y2partitioner/actions/controllers/base"
 require "y2storage"
 
 Yast.import "Arch"
@@ -31,7 +32,7 @@ module Y2Partitioner
       # This class stores information about the fstab files read from all
       # the filesystem in the system. It also saves information about the
       # selected fstab to be used to import mount points.
-      class Fstabs
+      class Fstabs < Base
         include Yast::I18n
 
         # @return [Y2Storage::Fstab] fstab file selected to import mount points
@@ -46,6 +47,7 @@ module Y2Partitioner
 
         # Constructor
         def initialize
+          super()
           textdomain "storage"
         end
 
@@ -118,27 +120,6 @@ module Y2Partitioner
         # https://github.com/yast/yast-storage/blob/master_old/src/modules/FileSystems.rb#L438
         SYSTEM_MOUNT_POINTS = ["/", "/usr", "/var", "/opt", "/boot"].freeze
         private_constant :SYSTEM_MOUNT_POINTS
-
-        # System devicegraph
-        #
-        # @return [Y2Storage::Devicegraph]
-        def system_graph
-          DeviceGraphs.instance.system
-        end
-
-        # Current devicegraph
-        #
-        # @return [Y2Storage::Devicegraph]
-        def current_graph
-          DeviceGraphs.instance.current
-        end
-
-        # Disk analyzer for the system devicegraph
-        #
-        # @return [Y2Storage::DiskAnalyzer]
-        def disk_analyzer
-          DeviceGraphs.instance.disk_analyzer
-        end
 
         # Error when some entries in the selected fstab cannot be imported
         #
@@ -397,7 +378,7 @@ module Y2Partitioner
         # @return [Y2Storage::Filesystems::BlkFilesystem, nil] nil if the filesystem cannot be found in
         #   system graph.
         def original_filesystem(filesystem)
-          original_device = system_graph.find_device(filesystem.blk_devices.first.sid)
+          original_device = system_device(filesystem.blk_devices.first)
 
           return nil unless original_device&.formatted?
 

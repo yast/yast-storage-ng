@@ -30,6 +30,7 @@ module Y2Partitioner
   end
 end
 
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/controllers/md"
 require "y2partitioner/actions/controllers/add_partition"

@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/widgets/mkfs_optiondata"
 require "y2partitioner/filesystem_role"
@@ -54,7 +54,7 @@ module Y2Partitioner
       # and takes care of updating the devicegraph when needed, so the different
       # dialogs can always work directly on a BlkFilesystem object correctly
       # placed in the devicegraph.
-      class Filesystem
+      class Filesystem < Base
         include Yast::Logger
 
         # @return [FilesystemRole] Role chosen by the user for the device
@@ -76,6 +76,8 @@ module Y2Partitioner
         # @param device [Y2Storage::BlkDevice, Y2Storage::Filesystems::BlkFilesystem]
         # @param wizard_title [String]
         def initialize(device, wizard_title)
+          super()
+
           # Note that the controller could be used only for filesystem actions, see FIXME.
           if device.is?(:filesystem)
             @filesystem = device
@@ -438,18 +440,6 @@ module Y2Partitioner
 
         private
 
-        def working_graph
-          DeviceGraphs.instance.current
-        end
-
-        def system_graph
-          DeviceGraphs.instance.system
-        end
-
-        def new?(device)
-          !device.exists_in_devicegraph?(system_graph)
-        end
-
         def delete_filesystem
           blk_device.remove_descendants
           # Shadowing control of btrfs subvolumes might be needed if the deleted
@@ -543,7 +533,7 @@ module Y2Partitioner
         # @return [Y2Storage::BtrfsSubvolume, nil]
         def find_not_probed_subvolume
           filesystem.btrfs_subvolumes.detect do |subvolume|
-            !subvolume.top_level? && !subvolume.exists_in_devicegraph?(system_graph)
+            !subvolume.top_level? && new?(subvolume)
           end
         end
 

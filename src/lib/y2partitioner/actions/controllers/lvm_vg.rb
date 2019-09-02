@@ -19,10 +19,10 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
 require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/available_devices"
 
 module Y2Partitioner
@@ -30,7 +30,7 @@ module Y2Partitioner
     module Controllers
       # This class stores information about an LVM volume group being created or
       # modified and takes care of updating the devicegraph when needed.
-      class LvmVg
+      class LvmVg < Base
         include Yast::I18n
 
         include SizeParser
@@ -64,6 +64,7 @@ module Y2Partitioner
         #
         # @param vg [Y2Storage::LvmVg] a volume group to be modified
         def initialize(vg: nil)
+          super()
           textdomain "storage"
 
           initialize_action(vg)
@@ -247,13 +248,6 @@ module Y2Partitioner
           @vg = vg
         end
 
-        # Current devicegraph
-        #
-        # @return [Y2Storage::Devicegraph]
-        def working_graph
-          DeviceGraphs.instance.current
-        end
-
         # Creates a new volume group
         #
         # @return [Y2Storage::LvmVg]
@@ -267,8 +261,7 @@ module Y2Partitioner
         #
         # @return [Y2Storage::LvmVg, nil]
         def probed_vg
-          system = Y2Partitioner::DeviceGraphs.instance.system
-          system.find_device(vg.sid)
+          system_device(vg)
         end
 
         # Whether the current volume group exists in the probed devicegraph

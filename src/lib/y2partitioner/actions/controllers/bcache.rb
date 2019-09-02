@@ -19,8 +19,8 @@
 
 require "yast"
 require "y2storage/bcache"
-require "y2partitioner/device_graphs"
 require "y2partitioner/blk_device_restorer"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/available_devices"
 
 module Y2Partitioner
@@ -28,7 +28,7 @@ module Y2Partitioner
     module Controllers
       # This class is used by different Bcache actions (see, {Actions::AddBcache},
       # {Actions::EditBcache} and {Actions::DeleteBcache}).
-      class Bcache
+      class Bcache < Base
         include AvailableDevices
 
         # @return [Y2Storage::Bcache]
@@ -38,6 +38,7 @@ module Y2Partitioner
         #
         # @param bcache [Y2Storage::Bcache, nil] nil if a new bcache is being created.
         def initialize(bcache = nil)
+          super()
           @bcache = bcache
         end
 
@@ -255,7 +256,7 @@ module Y2Partitioner
         def committed_bcache
           return nil unless bcache
 
-          committed_device(bcache)
+          system_device(bcache)
         end
 
         # Caching set of the bcache existing on disk
@@ -273,29 +274,7 @@ module Y2Partitioner
         # @param device [Y2Storage::Device]
         # @return [Boolean]
         def committed_device?(device)
-          !committed_device(device).nil?
-        end
-
-        # System version of the given device
-        #
-        # @param device [Y2Storage::Device]
-        # @return [Y2Storage::Device, nil] nil if the device does not exist on disk.
-        def committed_device(device)
-          system_graph.find_device(device.sid)
-        end
-
-        # Current devicegraph in which the action operates on
-        #
-        # @return [Y2Storage::Devicegraph]
-        def current_graph
-          DeviceGraphs.instance.current
-        end
-
-        # Devicegraph representing the system status
-        #
-        # @return [Y2Storage::Devicegraph]
-        def system_graph
-          DeviceGraphs.instance.system
+          !system_device(device).nil?
         end
       end
     end

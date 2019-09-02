@@ -19,15 +19,15 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
+require "y2partitioner/actions/controllers/base"
 
 module Y2Partitioner
   module Actions
     module Controllers
       # This class stores information about a future LVM logical volume and
       # takes care of creating it on the devicegraph when needed.
-      class LvmLv
+      class LvmLv < Base
         include Yast::I18n
 
         # Characters accepted as part of a LV name
@@ -81,6 +81,7 @@ module Y2Partitioner
         #
         # @param vg [Y2Storage::LvmVg] see {#vg}
         def initialize(vg)
+          super()
           textdomain "storage"
           @vg_name = vg.vg_name
         end
@@ -88,8 +89,7 @@ module Y2Partitioner
         # LVM volume group to create the LV in
         # @return [Y2Storage::LvmVg]
         def vg
-          dg = DeviceGraphs.instance.current
-          Y2Storage::LvmVg.find_by_vg_name(dg, vg_name)
+          Y2Storage::LvmVg.find_by_vg_name(current_graph, vg_name)
         end
 
         # Creates the LV in the VG according to the controller attributes

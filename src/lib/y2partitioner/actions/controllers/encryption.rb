@@ -18,14 +18,14 @@
 # find current contact information at www.suse.com.
 
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 
 module Y2Partitioner
   module Actions
     module Controllers
       # This class adds or removes an encryption layer on top of the block
       # device that has been edited by the given Filesystem controller.
-      class Encryption
+      class Encryption < Base
         include Yast::Logger
 
         # @return [String] Password for the encryption device
@@ -35,6 +35,7 @@ module Y2Partitioner
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
         def initialize(fs_controller)
+          super()
           @fs_controller = fs_controller
         end
 
@@ -87,14 +88,6 @@ module Y2Partitioner
         # @return [Y2Storage::BlkDevice]
         def blk_device
           fs_controller.blk_device
-        end
-
-        def system_graph
-          DeviceGraphs.instance.system
-        end
-
-        def new?(device)
-          !device.exists_in_devicegraph?(system_graph)
         end
 
         def can_change_encrypt?
