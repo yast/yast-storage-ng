@@ -19,6 +19,7 @@
 
 require "y2storage"
 require "y2partitioner/actions/controllers/base"
+require "y2storage/encryption_type"
 
 module Y2Partitioner
   module Actions
@@ -27,6 +28,12 @@ module Y2Partitioner
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
         include Yast::Logger
+
+        # @return [Boolean] Whether the user wants to encrypt the device
+        attr_accessor :encrypt
+
+        # @return [Y2Storage::EncryptionType] Encryption type
+        attr_writer :encrypt_type
 
         # @return [String] Password for the encryption device
         attr_accessor :encrypt_password
@@ -47,6 +54,20 @@ module Y2Partitioner
 
           fs_controller.encrypt && !blk_device.encrypted?
         end
+
+        def encrypt_types
+          types = [Y2Storage::EncryptionType::LUKS1]
+
+          # FIXME: PLAIN instead of TWOFISH (TWOFISH only for testing purposes)
+          types << Y2Storage::EncryptionType::TWOFISH if swap?
+
+          types
+        end
+
+        def encrypt_type
+          @encrypt_type || Y2Storage::EncryptionType::LUKS1
+        end
+
 
         # Applies last changes to the block device at the end of the wizard, which
         # mainly means
@@ -80,6 +101,10 @@ module Y2Partitioner
         #   device that will be modified by this controller
         attr_reader :fs_controller
 
+        def swap?
+          filesystem&.type&.is?(:swap) && filesystem.mount_path == "swap"
+        end
+
         # Plain block device being modified
         #
         # Note this is always the plain device, no matter if it is encrypted or
@@ -91,7 +116,11 @@ module Y2Partitioner
         end
 
         def can_change_encrypt?
-          blk_device.filesystem.nil? || new?(blk_device.filesystem)
+          filesystem.nil? || new?(filesystem)
+        end
+
+        def filesystem
+          blk_device.filesystem
         end
 
         # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg

@@ -19,13 +19,15 @@
 
 require "yast"
 require "cwm"
-require "y2storage"
 require "y2partitioner/widgets/encrypt_type"
-require "y2partitioner/widgets/encrypt_password"
+require "y2partitioner/widgets/encrypt_type_options"
+require "y2partitioner/widgets/helpers"
 
 module Y2Partitioner
   module Widgets
-    class EncryptionOptions < CWM::CustomWidget
+    class Encrypt < CWM::CustomWidget
+      include Helpers
+
       def initialize(controller)
         textdomain "storage"
 
@@ -35,19 +37,21 @@ module Y2Partitioner
 
       def contents
         HVSquash(
-          VBox(
-            Left(type_widget),
-            password_widget
+          HBox(
+            HWeight(33,
+              VBox(*add_spacing(left_align(widgets), VSpacing(1)))
+            )
           )
         )
       end
 
-      def handle(event)
-        return nil unless display_type?
+      def init
+        encrypt_type_options_widget.refresh(controller.encrypt_type)
+      end
 
-        if event["ID"] === type_widget.event_id
-          controller.encrypt_type = type_widget.value
-          password_widget.refresh
+      def handle(event)
+        if event["ID"] == encrypt_type_widget.widget_id
+          encrypt_type_options_widget.refresh(encrypt_type_widget.value)
         end
 
         nil
@@ -57,21 +61,24 @@ module Y2Partitioner
 
       attr_reader :controller
 
-      def display_type?
-        controller.blk_device.swap?
+      def widgets
+        widgets = []
+        widgets << encrypt_type_widget if display_encrypt_type?
+        widgets << encrypt_type_options_widget
+
+        widgets
       end
 
-      def type_widget
-        @type_widget ||=
-          if display_type?
-            Widgets::EncryptType.new(controller)
-          else
-            Empty()
-          end
+      def encrypt_type_widget
+        @encrypt_type_widget ||= EncryptType.new(controller)
       end
 
-      def password_widget
-        @password_widget ||= Widgets::EncryptPassword.new(controller)
+      def encrypt_type_options_widget
+        @encrypt_type_options_widget ||= EncryptTypeOptions.new(controller)
+      end
+
+      def display_encrypt_type?
+        controller.encrypt_types.size > 1
       end
     end
   end

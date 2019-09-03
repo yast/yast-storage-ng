@@ -66,9 +66,6 @@ module Y2Partitioner
         # @return [String] Password for the encryption device
         attr_accessor :encrypt_password
 
-        # @return [Symbol] Encryption type
-        attr_accessor :encrypt_type
-
         # Name of the plain device
         #
         # @see #blk_device
@@ -342,6 +339,35 @@ module Y2Partitioner
           after_change_mount_point
         end
 
+        # Applies last changes to the block device at the end of the wizard, which
+        # mainly means
+        #
+        #   * removing unused LvmPv descendant (bsc#1129663)
+        #   * encrypting the device or removing the encryption layer for non preexisting devices.
+        def finish
+          return unless can_change_encrypt?
+
+          remove_unused_lvm_pv
+
+          if to_be_encrypted?
+            blk_device.encrypt(
+              type: encrypt_type, password: encrypt_password, key_file: encrypt_key_file)
+          elsif blk_device.encrypted? && !encrypt
+            blk_device.remove_encryption
+          end
+        ensure
+          @restorer.update_checkpoint
+        end
+
+        # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg
+        # (bsc#1129663)
+        def remove_unused_lvm_pv
+          device = blk_device.encryption || blk_device
+          lvm_pv = device.lvm_pv
+
+          device.remove_descendants if lvm_pv&.descendants&.none?
+        end
+
         # Whether is possible to define the generic format options for the current
         # filesystem
         #
@@ -445,6 +471,14 @@ module Y2Partitioner
         end
 
         private
+
+        URANDOM = "/dev/urandom".freeze
+
+        private_constant :URANDOM
+
+        def encrypt_key_file
+          URANDOM
+        end
 
         def delete_filesystem
           blk_device.remove_descendants

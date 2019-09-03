@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,34 +17,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/dialogs/base"
-require "y2partitioner/widgets/encrypt"
-
 module Y2Partitioner
-  module Dialogs
-    # Ask for a password to assign to an encrypted device.
-    # Part of {Actions::AddPartition} and {Actions::EditBlkDevice}.
-    # Formerly MiniWorkflowStepPassword
-    class Encryption < Base
-      # @param controller [Actions::Controllers::Filesystem]
-      def initialize(controller)
-        textdomain "storage"
-
-        @controller = controller
+  module Widgets
+    module Helpers
+      # Adds spacing between the widgets
+      #
+      # @param widgets [Array<Yast::Term>]
+      # @return [Array<Yast::Term>]
+      def add_spacing(widgets, spacing)
+        widgets.flat_map { |w| [w, spacing] }.tap(&:pop)
       end
 
-      def title
-        format(_("Encrypt device %{device}"), device: controller.blk_device_name)
+      def left_align(widgets)
+        widgets.map { |w| Left(w) }
       end
-
-      def contents
-        Widgets::Encrypt.new(controller)
-      end
-
-      private
-
-        attr_reader :controller
     end
   end
 end
