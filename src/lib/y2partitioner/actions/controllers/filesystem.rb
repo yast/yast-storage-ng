@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/widgets/mkfs_optiondata"
 require "y2partitioner/filesystem_role"
@@ -36,7 +36,6 @@ Yast.import "Stage"
 #   * Remove a filesystem
 #   * Edit format options
 #   * Edit partition id
-#   * Change encryption
 #
 # but it also includes logic related to a filesystem:
 #   * Set mount point
@@ -55,7 +54,7 @@ module Y2Partitioner
       # and takes care of updating the devicegraph when needed, so the different
       # dialogs can always work directly on a BlkFilesystem object correctly
       # placed in the devicegraph.
-      class Filesystem
+      class Filesystem < Base
         include Yast::Logger
 
         # @return [FilesystemRole] Role chosen by the user for the device
@@ -63,9 +62,6 @@ module Y2Partitioner
 
         # @return [Boolean] Whether the user wants to encrypt the device
         attr_accessor :encrypt
-
-        # @return [String] Password for the encryption device
-        attr_accessor :encrypt_password
 
         # Name of the plain device
         #
@@ -80,6 +76,8 @@ module Y2Partitioner
         # @param device [Y2Storage::BlkDevice, Y2Storage::Filesystems::BlkFilesystem]
         # @param wizard_title [String]
         def initialize(device, wizard_title)
+          super()
+
           # Note that the controller could be used only for filesystem actions, see FIXME.
           if device.is?(:filesystem)
             @filesystem = device
@@ -145,15 +143,6 @@ module Y2Partitioner
           return false if filesystem.nil?
 
           new?(filesystem)
-        end
-
-        # Whether a new encryption device will be created for the block device
-        #
-        # @return [Boolean]
-        def to_be_encrypted?
-          return false unless can_change_encrypt?
-
-          encrypt && !blk_device.encrypted?
         end
 
         # Mount point of the current filesystem
@@ -347,34 +336,6 @@ module Y2Partitioner
           after_change_mount_point
         end
 
-        # Applies last changes to the block device at the end of the wizard, which
-        # mainly means
-        #
-        #   * removing unused LvmPv descendant (bsc#1129663)
-        #   * encrypting the device or removing the encryption layer for non preexisting devices.
-        def finish
-          return unless can_change_encrypt?
-
-          remove_unused_lvm_pv
-
-          if to_be_encrypted?
-            blk_device.encrypt(password: encrypt_password)
-          elsif blk_device.encrypted? && !encrypt
-            blk_device.remove_encryption
-          end
-        ensure
-          @restorer.update_checkpoint
-        end
-
-        # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg
-        # (bsc#1129663)
-        def remove_unused_lvm_pv
-          device = blk_device.encryption || blk_device
-          lvm_pv = device.lvm_pv
-
-          device.remove_descendants if lvm_pv&.descendants&.none?
-        end
-
         # Whether is possible to define the generic format options for the current
         # filesystem
         #
@@ -470,23 +431,14 @@ module Y2Partitioner
           filesystem.supports_btrfs_subvolumes?
         end
 
+        # Saves the current status of the block device
+        #
+        # @see BlkDeviceRestorer#update_checkpoint
+        def update_checkpoint
+          @restorer.update_checkpoint
+        end
+
         private
-
-        def working_graph
-          DeviceGraphs.instance.current
-        end
-
-        def system_graph
-          DeviceGraphs.instance.system
-        end
-
-        def can_change_encrypt?
-          filesystem.nil? || new?(filesystem)
-        end
-
-        def new?(device)
-          !device.exists_in_devicegraph?(system_graph)
-        end
 
         def delete_filesystem
           blk_device.remove_descendants
@@ -581,7 +533,7 @@ module Y2Partitioner
         # @return [Y2Storage::BtrfsSubvolume, nil]
         def find_not_probed_subvolume
           filesystem.btrfs_subvolumes.detect do |subvolume|
-            !subvolume.top_level? && !subvolume.exists_in_devicegraph?(system_graph)
+            !subvolume.top_level? && new?(subvolume)
           end
         end
 

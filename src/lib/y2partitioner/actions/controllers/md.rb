@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/actions/controllers/available_devices"
@@ -30,7 +30,7 @@ module Y2Partitioner
       # This class stores information about an MD RAID being created or modified
       # and takes care of updating the devicegraph when needed, so the different
       # dialogs can always work directly on a real Md object in the devicegraph.
-      class Md
+      class Md < Base
         include Yast::I18n
 
         include AvailableDevices
@@ -47,6 +47,7 @@ module Y2Partitioner
         #
         # @param md [Y2Storage::Md] a MD RAID to work on
         def initialize(md: nil)
+          super()
           textdomain "storage"
 
           # A MD RAID is given to modify its used devices
@@ -245,10 +246,6 @@ module Y2Partitioner
         end
 
         private
-
-        def working_graph
-          DeviceGraphs.instance.current
-        end
 
         # Creates a new MD RAID
         #

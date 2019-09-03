@@ -24,7 +24,7 @@ module Y2Partitioner
 end
 
 require "y2partitioner/dialogs/popup"
-require "y2partitioner/dialogs/encrypt_password"
+require "y2partitioner/dialogs/encryption"
 require "y2partitioner/dialogs/main"
 require "y2partitioner/dialogs/btrfs_subvolume"
 require "y2partitioner/dialogs/md"

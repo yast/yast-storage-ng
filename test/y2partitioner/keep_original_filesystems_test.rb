@@ -22,6 +22,7 @@ require_relative "test_helper"
 require "y2storage"
 require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/controllers/lvm_vg"
+require "y2partitioner/actions/controllers/encryption"
 
 describe "Creating and deleting filesystems in a block device" do
   before { devicegraph_stub("trivial_lvm_and_other_partitions") }
@@ -79,7 +80,7 @@ describe "Creating and deleting filesystems in a block device" do
         # Use the edit dialog to format the partition
         fs_controller.new_filesystem(new_fs_type)
         fs_controller.encrypt = false
-        fs_controller.finish
+        Y2Partitioner::Actions::Controllers::Encryption.new(fs_controller).finish
       end
 
       it "keeps the new filesystem" do

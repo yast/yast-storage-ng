@@ -26,7 +26,7 @@ module Y2Partitioner
     # Ask for a password to assign to an encrypted device.
     # Part of {Actions::AddPartition} and {Actions::EditBlkDevice}.
     # Formerly MiniWorkflowStepPassword
-    class EncryptPassword < Base
+    class Encryption < Base
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         textdomain "storage"
