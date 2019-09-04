@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,31 +18,58 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/dialogs/base"
-require "y2partitioner/widgets/encrypt_password"
+require "cwm"
+require "y2storage/encryption_type"
 
 module Y2Partitioner
-  module Dialogs
-    # Ask for a password to assign to an encrypted device.
-    # Part of {Actions::AddPartition} and {Actions::EditBlkDevice}.
-    # Formerly MiniWorkflowStepPassword
-    class EncryptPassword < Base
-      # @param controller [Actions::Controllers::Filesystem]
+  module Widgets
+    class EncryptType < CWM::ComboBox
       def initialize(controller)
         textdomain "storage"
 
         @controller = controller
       end
 
-      def title
-        _("Encryption password for %s") % @controller.blk_device_name
+      def init
+        self.value = controller.encrypt_type
       end
 
-      def contents
-        HVSquash(
-          Widgets::EncryptPassword.new(@controller)
-        )
+      # @macro seeAbstractWidget
+      def opt
+        [:hstretch, :notify]
       end
+
+      def label
+        _("Encryption type")
+      end
+
+      def items
+        controller.encrypt_types.map do |type|
+          # FIXME
+          if type.is?(:twofish)
+            [type.to_i, _("Random password")]
+          else
+            [type.to_i, type.to_human_string]
+          end
+        end
+      end
+
+      def value
+        Y2Storage::EncryptionType.find(super)
+      end
+
+      def value=(v)
+        super(v.to_i)
+      end
+
+      # @macro seeAbstractWidget
+      def store
+        controller.encrypt_type = value
+      end
+
+      private
+
+      attr_reader :controller
     end
   end
 end

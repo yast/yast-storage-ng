@@ -297,11 +297,16 @@ module Y2Storage
     # @param type [EncryptionType]
     #
     # @return [Encryption]
-    def encrypt(dm_name: nil, password: nil, type: EncryptionType::LUKS1)
-      enc = create_encryption(dm_name || "", type)
+
+    def encrypt(dm_name: nil, password: nil, type: EncryptionType::LUKS1, key_file: nil)
+      # TODO: create type encryption
+      enc = create_encryption(dm_name || "")
       enc.auto_dm_name = !dm_name
       enc.password = password if password
+      # enc.key_file = key_file if key_file
+
       Encryption.update_dm_names(devicegraph)
+
       enc
     end
 

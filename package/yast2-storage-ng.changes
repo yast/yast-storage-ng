@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug 30 09:25:52 UTC 2019 - Steffen Winterfeldt <snwint@suse.com>
+
+- bind-mount /run from inst-sys to target system during install (bsc#1136463)
+- 4.2.37
+
+-------------------------------------------------------------------
 Wed Aug 28 15:13:44 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: display encryption type (related to jsc#SLE-7376).

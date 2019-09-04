@@ -21,7 +21,8 @@ require "yast"
 require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
-require "y2partitioner/dialogs/encrypt_password"
+require "y2partitioner/dialogs/encryption"
+require "y2partitioner/actions/controllers/encryption"
 
 Yast.import "Wizard"
 
@@ -68,13 +69,15 @@ module Y2Partitioner
       end
 
       def encrypt_password
-        return :next unless fs_controller.to_be_encrypted?
+        @encrypt_controller = Controllers::Encryption.new(fs_controller)
 
-        Dialogs::EncryptPassword.run(fs_controller)
+        return :next unless encrypt_controller.to_be_encrypted?
+
+        Dialogs::Encryption.run(encrypt_controller)
       end
 
       def filesystem_commit
-        fs_controller.finish
+        encrypt_controller.finish
         UIState.instance.select_row(fs_controller.blk_device)
         :finish
       end
@@ -85,6 +88,10 @@ module Y2Partitioner
       # the provided steps are executed.
       # @return [Controllers::Filesystem]
       attr_accessor :fs_controller
+
+      # Encryption controller used to perform the final steps
+      # @return [Controllers::Encryption]
+      attr_accessor :encrypt_controller
 
       # Sequence steps provided by the mixin
       #

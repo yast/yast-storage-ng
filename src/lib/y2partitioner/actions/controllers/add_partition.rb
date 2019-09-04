@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
@@ -28,7 +28,7 @@ module Y2Partitioner
       # This class stores information about a future partition so that information
       # can be shared across the different dialogs of the process. It also takes
       # care of updating the devicegraph when needed.
-      class AddPartition
+      class AddPartition < Base
         include Yast::I18n
 
         # @return [Y2Storage::PartitionType]
@@ -58,6 +58,7 @@ module Y2Partitioner
         attr_reader :device_name
 
         def initialize(device_name)
+          super()
           textdomain "storage"
 
           @device_name = device_name
@@ -66,8 +67,7 @@ module Y2Partitioner
         # Device being partitioned
         # @return [Y2Storage::BlkDevice]
         def device
-          dg = DeviceGraphs.instance.current
-          Y2Storage::BlkDevice.find_by_name(dg, device_name)
+          Y2Storage::BlkDevice.find_by_name(current_graph, device_name)
         end
 
         # Available slots to create the partition in which the start is aligned

@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/device_graphs"
+require "y2partitioner/actions/controllers/base"
 
 Yast.import "Mode"
 
@@ -28,7 +28,7 @@ module Y2Partitioner
     module Controllers
       # This class stores needed information to clone the partition table of a device
       # over another device. It also takes care of updating the devicegraph when needed.
-      class ClonePartitionTable
+      class ClonePartitionTable < Base
         # Current disk device
         #
         # @return [Y2Storage::BlkDevice] a disk device
@@ -43,6 +43,8 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::BlkDevice] a disk device or a Software RAID.
         def initialize(device)
+          super()
+
           if !can_be_partitioned?(device)
             raise(TypeError, "param device has to be a partitionable device")
           end
@@ -86,13 +88,6 @@ module Y2Partitioner
         end
 
         private
-
-        # Current devicegraph
-        #
-        # @return [Y2Storage::Devicegraph]
-        def working_graph
-          DeviceGraphs.instance.current
-        end
 
         # Whether the device can have partitions
         #
