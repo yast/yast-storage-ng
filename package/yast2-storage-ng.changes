@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Sep  5 15:03:50 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: better handling of existing encryptions, including
+  the possibility of reusing them (related to jsc#SLE-7376).
+
+-------------------------------------------------------------------
 Wed Sep 04 14:46:12 CEST 2019 - aschnell@suse.com
 
 - added translation for new EncryptionType::PLAIN (bsc#1088641)
