@@ -441,15 +441,25 @@ module Y2Partitioner
         private
 
         def delete_filesystem
-          blk_device.remove_descendants
+          filesystem_parent.remove_descendants
           # Shadowing control of btrfs subvolumes might be needed if the deleted
           # filesystem had mount point
           Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
         end
 
         def create_filesystem(type, label: nil)
-          blk_device.create_blk_filesystem(type)
+          filesystem_parent.create_blk_filesystem(type)
           filesystem.label = label unless label.nil?
+        end
+
+        # Device containing the filesystem
+        #
+        # Unlike {#blk_device}, that always returns the plain device, this
+        # method will return the encryption device for encrypted filesystems
+        #
+        # @return [Y2Storage::BlkDevice]
+        def filesystem_parent
+          blk_device.encrypted? ? blk_device.encryption : blk_device
         end
 
         def restore_filesystem

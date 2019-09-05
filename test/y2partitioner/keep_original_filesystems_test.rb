@@ -109,6 +109,8 @@ describe "Creating and deleting filesystems in a block device" do
   def format_partition
     fs_controller.new_filesystem(new_fs_type)
     fs_controller.encrypt = false
+    Y2Partitioner::Actions::Controllers::Encryption.new(fs_controller).finish
+
     expect(partition.filesystem.type).to eq new_fs_type
     expect(partition.encrypted?).to eq false
   end

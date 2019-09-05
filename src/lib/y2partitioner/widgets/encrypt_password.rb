@@ -31,7 +31,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def validate
-        msg = checker.error_msg(pw1, pw2)
+        msg = checker.error_msg(pw1, pw2) if enabled?
         return true unless msg
 
         Yast::Report.Error(msg)
@@ -41,7 +41,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def store
-        @controller.encrypt_password = pw1
+        @controller.password = pw1
       end
 
       # @macro seeAbstractWidget
@@ -51,30 +51,19 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        Frame(
-          _("Encryption Password"),
-          MarginBox(
-            1.45,
-            0.5,
-            VBox(
-              Password(
-                Id(:pw1),
-                Opt(:hstretch),
-                # Label: get password for user root
-                # Please use newline if label is longer than 40 characters
-                _("&Enter a Password for your File System:"),
-                ""
-              ),
-              Password(
-                Id(:pw2),
-                Opt(:hstretch),
-                # Label: get same password again for verification
-                # Please use newline if label is longer than 40 characters
-                _("Reenter the Password for &Verification:"),
-                ""
-              ),
-              VSpacing(0.5)
-            )
+        VBox(
+          Id(widget_id),
+          Password(
+            Id(:pw1),
+            Opt(:hstretch),
+            _("&Enter an Encryption Password:"),
+            @controller.password
+          ),
+          Password(
+            Id(:pw2),
+            Opt(:hstretch),
+            _("Reenter the Password for &Verification:"),
+            @controller.password
           )
         )
       end

@@ -29,15 +29,19 @@ describe Y2Partitioner::Widgets::EncryptPassword do
 
   include_examples "CWM::AbstractWidget"
 
-  let(:controller) { double("FilesystemController", blk_device_name: "/dev/sda1") }
+  let(:controller) { double("FilesystemController", password: "secret123") }
   let(:pw1) { "password1" }
   let(:pw2) { "password2" }
   let(:password_checker) { Y2Storage::EncryptPasswordChecker.new }
+  let(:enabled) { true }
 
   before do
     allow(Y2Storage::EncryptPasswordChecker).to receive(:new).and_return(password_checker)
     allow(Yast::UI).to receive(:QueryWidget).with(Id(:pw1), :Value).and_return(pw1)
     allow(Yast::UI).to receive(:QueryWidget).with(Id(:pw2), :Value).and_return(pw2)
+
+    # Validation always checks whether the widget is really active
+    allow(Yast::UI).to receive(:QueryWidget).with(Id(widget.widget_id), :Enabled).and_return enabled
   end
 
   describe "#contents" do
@@ -47,6 +51,12 @@ describe Y2Partitioner::Widgets::EncryptPassword do
       expect(pw1).to_not be_nil
       pw2 = contents.nested_find { |i| i.is_a?(Yast::Term) && i.params == [:pw2] }
       expect(pw2).to_not be_nil
+    end
+
+    it "prefills the password fields with the initial password" do
+      contents = widget.contents
+      field = contents.nested_find { |i| i.value == :Password }
+      expect(field.params).to include "secret123"
     end
   end
 
@@ -73,13 +83,25 @@ describe Y2Partitioner::Widgets::EncryptPassword do
           .and_return("some error")
       end
 
-      it "returns false" do
-        expect(widget.validate).to eq(false)
+      context "when the widget is active" do
+        let(:enabled) { true }
+
+        it "returns false" do
+          expect(widget.validate).to eq(false)
+        end
+
+        it "displays an error message" do
+          expect(Yast::Report).to receive(:Error).with("some error")
+          widget.validate
+        end
       end
 
-      it "displays an error message" do
-        expect(Yast::Report).to receive(:Error).with("some error")
-        widget.validate
+      context "when the widget is disabled" do
+        let(:enabled) { false }
+
+        it "returns true" do
+          expect(widget.validate).to eq(true)
+        end
       end
     end
   end
@@ -92,7 +114,7 @@ describe Y2Partitioner::Widgets::EncryptPassword do
 
   describe "#store" do
     it "assigns password to the controller" do
-      expect(controller).to receive(:encrypt_password=).with(pw1)
+      expect(controller).to receive(:password=).with(pw1)
       widget.store
     end
   end

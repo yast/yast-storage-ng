@@ -24,13 +24,16 @@ require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/controllers/encryption"
 
 describe Y2Partitioner::Actions::Controllers::Encryption do
-  before { devicegraph_stub(scenario) }
+  before do
+    devicegraph_stub(scenario)
+    fs_controller.encrypt = encrypt
+  end
+
+  let(:fs_controller) { Y2Partitioner::Actions::Controllers::Filesystem.new(device, "The title") }
 
   let(:scenario) { "mixed_disks_btrfs" }
 
   subject(:controller) { described_class.new(fs_controller) }
-
-  let(:fs_controller) { Y2Partitioner::Actions::Controllers::Filesystem.new(device, "The title") }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
 
@@ -42,30 +45,32 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
   let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
 
-  describe "#to_be_encrypted?" do
+  let(:encrypt) { false }
+
+  describe "#show_dialog?" do
     context "when the currently editing device has a filesystem that existed previously" do
       it "returns false" do
-        expect(subject.to_be_encrypted?).to eq(false)
+        expect(subject.show_dialog?).to eq(false)
       end
     end
 
     context "when the currently editing device does not have a filesystem that existed previously" do
       before do
-        allow(fs_controller).to receive(:encrypt).and_return(encrypt)
         allow(device).to receive(:encrypted?).and_return(encrypted)
+        allow(device).to receive(:encryption).and_return(encryption)
         allow(device).to receive(:filesystem).and_return(filesystem)
         allow(fs_controller).to receive(:blk_device).and_return(device)
       end
 
-      let(:encrypt) { false }
       let(:encrypted) { false }
+      let(:encryption) { nil }
       let(:filesystem) { nil }
 
       context "and the device has not been marked to encrypt" do
         let(:encrypt) { false }
 
         it "returns false" do
-          expect(subject.to_be_encrypted?).to eq(false)
+          expect(subject.show_dialog?).to eq(false)
         end
       end
 
@@ -74,9 +79,26 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
         context "and the device is currently encrypted" do
           let(:encrypted) { true }
+          let(:encryption) { double("Encryption", password: "123456", active?: true) }
 
-          it "returns false" do
-            expect(subject.to_be_encrypted?).to eq(false)
+          before do
+            allow(encryption).to receive(:exists_in_devicegraph?).and_return in_system
+          end
+
+          context "with a preexisting encryption" do
+            let(:in_system) { true }
+
+            it "returns true" do
+              expect(subject.show_dialog?).to eq(true)
+            end
+          end
+
+          context "with a new encryption" do
+            let(:in_system) { false }
+
+            it "returns true" do
+              expect(subject.show_dialog?).to eq(true)
+            end
           end
         end
 
@@ -84,7 +106,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
           let(:encrypted) { false }
 
           it "returns true" do
-            expect(subject.to_be_encrypted?).to eq(true)
+            expect(subject.show_dialog?).to eq(true)
           end
         end
       end
@@ -109,18 +131,69 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
     context "when it is possible to change the encrypt" do
       let(:can_change_encrypt) { true }
+      let(:scenario) { "logical_encrypted" }
 
-      before do
-        allow(fs_controller).to receive(:encrypt).and_return(encrypt)
-        allow(subject).to receive(:encrypt_password).and_return(password)
-      end
+      before { controller.password = password }
 
       let(:encrypt) { false }
       let(:password) { "12345678" }
 
-      context "and the device was already encrypted" do
+      context "and the device was already encrypted at startup" do
+        let(:dev_name) { "/dev/sda6" }
+
+        context "and it is marked to be encrypted" do
+          let(:encrypt) { true }
+
+          before { controller.action = action }
+
+          context "and the existing encryption must be kept" do
+            let(:action) { :keep }
+
+            it "preserves the existing encryption" do
+              sid = fs_controller.blk_device.encryption.sid
+              subject.finish
+              expect(fs_controller.blk_device.encryption.sid).to eq sid
+            end
+
+            it "does not change the encryption password" do
+              orig_password = fs_controller.blk_device.encryption.password
+
+              subject.finish
+
+              expect(fs_controller.blk_device.encryption.password).to eq orig_password
+              expect(fs_controller.blk_device.encryption.password).to_not eq password
+            end
+          end
+
+          context "and the device must be re-encrypted" do
+            let(:action) { :encrypt }
+
+            it "encrypts the device, replacing the previous encryption" do
+              sid = fs_controller.blk_device.encryption.sid
+              expect(fs_controller.blk_device.encryption.password).to_not eq password
+
+              subject.finish
+              expect(fs_controller.blk_device.encryption.sid).to_not eq sid
+              expect(fs_controller.blk_device.encryption.password).to eq password
+            end
+          end
+        end
+
+        context "and it is not marked to be encrypted" do
+          let(:encrypt) { false }
+
+          it "removes the encryption" do
+            expect(fs_controller.blk_device.encryption).to_not be_nil
+            subject.finish
+            expect(fs_controller.blk_device.encryption).to be_nil
+          end
+        end
+      end
+
+      context "and the device was encrypted with the Partitioner" do
+        let(:dev_name) { "/dev/sda8" }
+
         before do
-          device.remove_descendants
           encryption = device.create_encryption("foo")
           encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
         end
@@ -128,11 +201,14 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
         context "and it is marked to be encrypted" do
           let(:encrypt) { true }
 
-          it "does nothing" do
-            devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
+          it "modifies the encryption password" do
+            sid = fs_controller.blk_device.encryption.sid
+            expect(fs_controller.blk_device.encryption.password).to_not eq password
+
             subject.finish
 
-            expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
+            expect(fs_controller.blk_device.encryption.sid).to eq sid
+            expect(fs_controller.blk_device.encryption.password).to eq password
           end
         end
 
@@ -148,6 +224,8 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       end
 
       context "and the device is not encrypted" do
+        let(:dev_name) { "/dev/sda5" }
+
         context "and it is marked to be encrypted" do
           let(:encrypt) { true }
 
@@ -175,12 +253,10 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       let(:scenario) { "unused_lvm_pvs.xml" }
 
       let(:can_change_encrypt) { true }
-      let(:encrypt) { false }
       let(:password) { "12345678" }
 
       before do
-        allow(fs_controller).to receive(:encrypt).and_return(encrypt)
-        allow(subject).to receive(:encrypt_password).and_return(password)
+        allow(subject).to receive(:password).and_return(password)
       end
 
       context "which was not encrypted" do
@@ -242,6 +318,40 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
             expect(fs_controller.blk_device.lvm_pv).to be_nil
           end
         end
+      end
+    end
+  end
+
+  describe "#wizard_title" do
+    let(:scenario) { "logical_encrypted" }
+    let(:encrypt) { true }
+
+    context "when the current encryption layer was already there at startup" do
+      let(:dev_name) { "/dev/sda6" }
+
+      it "returns the expected text" do
+        expect(controller.wizard_title).to include "Encryption for "
+      end
+    end
+
+    context "when the current encryption layer was created by the Partitioner" do
+      let(:dev_name) { "/dev/sda8" }
+
+      before do
+        encryption = device.create_encryption("foo")
+        encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      end
+
+      it "returns the expected text" do
+        expect(controller.wizard_title).to include "Modify encryption "
+      end
+    end
+
+    context "when the device is currently not encrypted" do
+      let(:dev_name) { "/dev/sda5" }
+
+      it "returns the expected text" do
+        expect(controller.wizard_title).to include "Encrypt "
       end
     end
   end
