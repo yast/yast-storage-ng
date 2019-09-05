@@ -54,8 +54,8 @@ describe Y2Storage::Dialogs::Proposal do
       end
 
       it "displays an informative pop-up about the libstorage-ng exception" do
-        expect(Yast2::Popup).to receive(:show).with(/installation may fail/, details: /Encryption \
-bigger/)
+        expect(Yast2::Popup).to receive(:show).with(/installation may fail/,
+          details: /Encryption bigger/)
         dialog.run
       end
 
