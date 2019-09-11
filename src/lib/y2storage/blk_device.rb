@@ -22,6 +22,7 @@ require "y2storage/device"
 require "y2storage/hwinfo_reader"
 require "y2storage/comparable_by_name"
 require "y2storage/match_volume_spec"
+require "y2storage/encryption_method"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -244,6 +245,7 @@ module Y2Storage
     #   in the real system. It will fail during commit.
     #
     #   @param dm_name [String] see #dm_table_name
+    #   @param type [EncryptionType] optional encryption type of the new device
     #   @return [Encryption]
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
 
@@ -291,14 +293,18 @@ module Y2Storage
     # default name that will be updated by subsequent calls to
     # {Encryption#update_dm_names}.
     #
+    # @param method [EncryptionMethod, Symbol] encryption method to create the new device
     # @param dm_name [String, nil] DeviceMapper table name of the new device
     # @param password [String, nil] password of the new device
     # @return [Encryption]
-    def encrypt(dm_name: nil, password: nil)
-      enc = create_encryption(dm_name || "")
-      enc.auto_dm_name = !dm_name
+    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil)
+      method = EncryptionMethod.find(method) if method.is_a?(Symbol)
+      enc = method.create_device(self, dm_name)
+      enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
+
       Encryption.update_dm_names(devicegraph)
+
       enc
     end
 

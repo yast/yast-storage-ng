@@ -315,6 +315,9 @@ module Y2Storage
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
       callbacks = Callbacks::Commit.new
+
+      staging.pre_commit
+
       storage.calculate_actiongraph
       commit_options = ::Storage::CommitOptions.new(force_rw)
 
@@ -323,6 +326,8 @@ module Y2Storage
       DumpManager.dump(staging, "committed")
 
       storage.commit(commit_options, callbacks)
+
+      staging.post_commit
       @committed = true
     rescue Storage::Exception
       false
