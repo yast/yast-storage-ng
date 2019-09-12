@@ -20,6 +20,7 @@
 require "yast"
 require "pathname"
 require "y2storage/planned"
+require "y2storage/encryption_type"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -165,6 +166,17 @@ module Y2Storage
       #   the planned devices or in the devicegraph) or is not encrypted.
       def encrypted_boot?
         encrypted?(device_for_boot)
+      end
+
+      # Whether the filesystem containing /boot is going to be readable by grub
+      #
+      # We might need to check if the filesystem is actually supported by grub
+      # but currently all storage-ng supported filesystems are.
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be readable by grub
+      def grub_can_read_boot?
+        encrypted_for_grub?(device_for_boot)
       end
 
       # Whether the EFI system partition (/boot/efi) is in a LVM logical volume
@@ -533,15 +545,38 @@ module Y2Storage
       # The device can be a planned one or filesystem from the devicegraph.
       #
       # @param device [Filesystems::Base, Planned::Device, nil]
-      # @return [Boolean] false if device is nil
+      # @return [Boolean] device encryption state; return false if device is nil
       def encrypted?(device)
-        return false if device.nil?
+        !encryption_type(device).is?(:none)
+      end
+
+      # Whether the device is encrypted and grub can decrypt it
+      #
+      # The device can be a planned one or filesystem from the devicegraph.
+      #
+      # @param device [Filesystems::Base, Planned::Device, nil]
+      # @return [Boolean] device encryption state; return false if device is nil
+      def encrypted_for_grub?(device)
+        t = encryption_type(device)
+        t.is?(:none) || t.is?(:luks1)
+      end
+
+      # Encryption type of device
+      #
+      # The device can be a planned one or filesystem from the devicegraph.
+      #
+      # Note: returns EncryptionType::LUKS1 for Planned::Device as there's no encryption type.
+      #
+      # @param device [Filesystems::Base, Planned::Device, nil]
+      # @return [Y2Storage::EncryptionType] Encryption type
+      def encryption_type(device)
+        return Y2Storage::EncryptionType::NONE if device.nil?
 
         if device.is_a?(Planned::Device)
-          device.respond_to?(:encrypt?) && device.encrypt?
+          (device.respond_to?(:encrypt?) && device.encrypt?) ? Y2Storage::EncryptionType::LUKS1 : nil
         else
-          device.plain_blk_devices.any? { |d| d.respond_to?(:encrypted?) && d.encrypted? }
-        end
+          device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
+        end || Y2Storage::EncryptionType::NONE
       end
 
       # Whether the device is in a software RAID

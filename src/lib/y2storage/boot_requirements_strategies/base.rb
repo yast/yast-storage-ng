@@ -45,7 +45,7 @@ module Y2Storage
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
         :root_fs_can_embed_grub?, :boot_in_lvm?,
         :boot_in_thin_lvm?, :boot_in_bcache?, :boot_in_software_raid?, :encrypted_boot?,
-        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_can_embed_grub?,
+        :boot_fs_can_embed_grub?, :boot_filesystem_type, :grub_can_read_boot?,
         :esp_in_lvm?, :esp_in_software_raid?, :esp_in_software_raid1?, :encrypted_esp?
 
       # Constructor
@@ -81,7 +81,18 @@ module Y2Storage
       #
       # @return [Array<SetupError>]
       def warnings
-        []
+        res = []
+
+        if !grub_can_read_boot?
+          error_message =
+            _(
+              "The boot loader cannot access the file system mounted at /boot. " \
+              "LUKS2 encryption is currently not supported by grub."
+            )
+          res << SetupError.new(message: error_message)
+        end
+
+        res
       end
 
       # All fatal boot errors detected in the setup, for example, when a / partition
@@ -136,7 +147,7 @@ module Y2Storage
       end
 
       def boot_partition_needed?
-        false
+        !grub_can_read_boot?
       end
 
       def too_small_boot?
