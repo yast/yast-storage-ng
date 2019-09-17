@@ -83,7 +83,7 @@ module Y2Storage
       def warnings
         res = []
 
-        if !grub_can_read_boot?
+        if !encrypted_for_grub?
           error_message =
             _(
               "The boot loader cannot access the file system mounted at /boot. " \
@@ -147,7 +147,7 @@ module Y2Storage
       end
 
       def boot_partition_needed?
-        !grub_can_read_boot?
+        !encrypted_for_grub?
       end
 
       def too_small_boot?
@@ -211,17 +211,6 @@ module Y2Storage
         # TRANSLATORS: error message
         error_message = _("Boot requirements cannot be determined because there is no '/' mount point")
         SetupError.new(message: error_message)
-      end
-
-      # Whether the filesystem containing /boot is readable by grub
-      #
-      # We might need to check if the filesystem is actually supported by grub
-      # but currently all storage-ng supported filesystems are.
-      #
-      # @return [Boolean] true if the filesystem where /boot resides is going to
-      #   be readable by grub
-      def grub_can_read_boot?
-        encrypted_for_grub?
       end
 
       # Whether the boot device is encrypted and grub can decrypt it
