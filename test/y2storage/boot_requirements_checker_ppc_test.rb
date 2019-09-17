@@ -83,6 +83,44 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
+    RSpec.shared_examples "PReP + /boot partition" do
+      context "if there are no suitable PReP partitions in the target disk" do
+        let(:prep_partitions) { [] }
+
+        it "requires a new PReP and a new /boot partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_having_attributes(mount_point: nil, partition_id: prep_id),
+            an_object_having_attributes(mount_point: "/boot")
+          )
+        end
+      end
+
+      context "if there is already a suitable PReP partition in the disk" do
+        let(:prep_partitions) { [prep_partition] }
+
+        context "and it is on the boot disk" do
+          let(:boot_disk) { dev_sda }
+
+          it "requires a /boot partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: "/boot")
+            )
+          end
+        end
+
+        context "and it is not on the boot disk" do
+          let(:boot_disk) { dev_sdb }
+
+          it "requires a new PReP and a new /boot partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id),
+              an_object_having_attributes(mount_point: "/boot")
+            )
+          end
+        end
+      end
+    end
+
     context "in a non-PowerNV system (KVM/LPAR)" do
       let(:power_nv) { false }
 
@@ -100,6 +138,14 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
         include_examples "PReP partition"
+      end
+
+      context "with an encrypted proposal using LUKS2" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
+        let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
+
+        include_examples "PReP + /boot partition"
       end
     end
 

@@ -98,7 +98,7 @@ module Y2Storage
 
         # We cannot ensure the mentioned firmware can handle technologies like
         # LVM, MD or LUKS, so propose a separate /boot partition for those cases
-        root_in_lvm? || root_in_software_raid? || encrypted_root?
+        super || (root_in_lvm? || root_in_software_raid? || encrypted_root?)
       end
 
       def prep_partition_needed?

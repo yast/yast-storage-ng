@@ -159,6 +159,14 @@ describe Y2Storage::BootRequirementsChecker do
 
             include_examples("needs no volume")
           end
+
+          context "in an encrypted proposal using LUKS2" do
+            let(:use_lvm) { false }
+            let(:use_encryption) { true }
+            let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
+
+            include_examples("needs /boot partition")
+          end
         end
 
         context "with a MBR gap too small to accommodate Grub" do
