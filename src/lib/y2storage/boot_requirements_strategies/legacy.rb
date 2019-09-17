@@ -154,7 +154,7 @@ module Y2Storage
       #
       # @return [Boolean] true if a separate boot partition is needed, else false
       def boot_partition_needed?
-        boot_ptable_type?(:msdos) && !mbr_gap_for_grub? && !root_can_embed_grub?
+        super || (boot_ptable_type?(:msdos) && !mbr_gap_for_grub? && !root_can_embed_grub?)
       end
 
       # @return [VolumeSpecification]

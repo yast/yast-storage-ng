@@ -66,6 +66,14 @@
 				- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
 			- and it is not on the boot disk
 				- **requires only a new PReP partition (to allocate Grub2)**
+	- with an encrypted proposal using LUKS2
+		- if there are no suitable PReP partitions in the target disk
+			- **requires a new PReP and a new /boot partition**
+		- if there is already a suitable PReP partition in the disk
+			- and it is on the boot disk
+				- **requires a /boot partition**
+			- and it is not on the boot disk
+				- **requires a new PReP and a new /boot partition**
 - in bare metal (PowerNV)
 	- with a partitions-based proposal
 		- **does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)**
@@ -274,6 +282,8 @@
 				- **does not require any particular volume**
 			- in an encrypted proposal
 				- **does not require any particular volume**
+			- in an encrypted proposal using LUKS2
+				- **requires a new /boot partition to install Grub into it**
 		- with a MBR gap too small to accommodate Grub
 			- in a partitions-based proposal
 				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)

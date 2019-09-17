@@ -767,4 +767,62 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       end
     end
   end
+
+  describe "#boot_encryption_type" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+
+    context "if '/boot' is a planned plain partition" do
+      let(:planned_boot) { planned_partition(mount_point: "/boot") }
+
+      it "returns type none" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::NONE
+      end
+    end
+
+    context "if '/boot' is a planned encrypted partition" do
+      let(:planned_boot) { planned_partition(mount_point: "/boot", encryption_password: "12345678") }
+
+      it "returns type luks1" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS1
+      end
+    end
+
+    context "if '/boot' is a planned encrypted logical volume" do
+      let(:planned_boot) { planned_lv(mount_point: "/boot", encryption_password: "12345678") }
+
+      it "returns type luks1" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS1
+      end
+    end
+
+    context "if '/boot' is a plain partition from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "mixed_disks" }
+
+      it "returns type none" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::NONE
+      end
+    end
+
+    context "if '/boot' is an encrypted partition from the devicegraph with default encryption" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "output/empty_hard_disk_gpt_50GiB-enc" }
+
+      it "returns type luks1" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS1
+      end
+    end
+
+    context "if '/boot' is an encrypted partition with encryption type luks2" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "output/empty_hard_disk_gpt_50GiB-enc" }
+      before do
+        fake_devicegraph.find_by_name("/dev/sda2").encryption.type = Y2Storage::EncryptionType::LUKS2
+      end
+
+      it "returns type luks2" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS2
+      end
+    end
+  end
 end

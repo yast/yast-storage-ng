@@ -20,6 +20,7 @@
 require "yast"
 require "pathname"
 require "y2storage/planned"
+require "y2storage/encryption_type"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -248,6 +249,15 @@ module Y2Storage
       #   in the planned devices or in the devicegraph
       def boot_filesystem_type
         filesystem_type(device_for_boot)
+      end
+
+      # Encryption type of boot device
+      #
+      # The device can be a planned one or filesystem from the devicegraph.
+      #
+      # @return [Y2Storage::EncryptionType] Encryption type
+      def boot_encryption_type
+        encryption_type(device_for_boot)
       end
 
       # Whether the partition table of the disk used for booting matches the
@@ -533,15 +543,25 @@ module Y2Storage
       # The device can be a planned one or filesystem from the devicegraph.
       #
       # @param device [Filesystems::Base, Planned::Device, nil]
-      # @return [Boolean] false if device is nil
+      # @return [Boolean] device encryption state; return false if device is nil
       def encrypted?(device)
-        return false if device.nil?
+        !encryption_type(device).is?(:none)
+      end
 
+      # Encryption type of device
+      #
+      # The device can be a planned one or filesystem from the devicegraph.
+      #
+      # Note: returns EncryptionType::LUKS1 for Planned::Device as there's no encryption type.
+      #
+      # @param device [Filesystems::Base, Planned::Device, nil]
+      # @return [Y2Storage::EncryptionType] Encryption type
+      def encryption_type(device)
         if device.is_a?(Planned::Device)
-          device.respond_to?(:encrypt?) && device.encrypt?
-        else
-          device.plain_blk_devices.any? { |d| d.respond_to?(:encrypted?) && d.encrypted? }
-        end
+          (device.respond_to?(:encrypt?) && device.encrypt?) ? Y2Storage::EncryptionType::LUKS1 : nil
+        elsif device.respond_to?(:plain_blk_devices)
+          device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
+        end || Y2Storage::EncryptionType::NONE
       end
 
       # Whether the device is in a software RAID

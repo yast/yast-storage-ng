@@ -63,7 +63,8 @@ RSpec.shared_context "boot requirements" do
       esp_in_lvm?:             false,
       esp_in_software_raid?:   false,
       esp_in_software_raid1?:  false,
-      encrypted_esp?:          false
+      encrypted_esp?:          false,
+      boot_encryption_type:    boot_enc_type
     )
   end
 
@@ -78,6 +79,7 @@ RSpec.shared_context "boot requirements" do
     use_btrfs ? Y2Storage::Filesystems::Type::BTRFS : Y2Storage::Filesystems::Type::EXT4
   end
   let(:boot_ptable_type) { :msdos }
+  let(:boot_enc_type) { Y2Storage::EncryptionType::NONE }
 
   # Mocks for Raspberry Pi detection
   let(:raspi_system) { false }
