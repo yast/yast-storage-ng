@@ -63,7 +63,8 @@ RSpec.shared_context "boot requirements" do
       esp_in_lvm?:             false,
       esp_in_software_raid?:   false,
       esp_in_software_raid1?:  false,
-      encrypted_esp?:          false
+      encrypted_esp?:          false,
+      boot_encryption_type:    Y2Storage::EncryptionType::NONE
     )
   end
 

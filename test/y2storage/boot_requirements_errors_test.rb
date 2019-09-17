@@ -36,6 +36,9 @@ describe Y2Storage::BootRequirementsChecker do
       .and_return(use_thin_lvm)
     allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:boot_in_bcache?)
       .and_return(use_bcache)
+    allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer)
+      .to receive(:boot_encryption_type)
+      .and_return(enc_type)
   end
 
   let(:storage_arch) { instance_double(Storage::Arch) }
@@ -44,6 +47,7 @@ describe Y2Storage::BootRequirementsChecker do
   let(:efiboot) { false }
   let(:use_thin_lvm) { false }
   let(:use_bcache) { false }
+  let(:enc_type) { Y2Storage::EncryptionType::NONE }
 
   let(:scenario) { "trivial" }
 
@@ -299,6 +303,23 @@ describe Y2Storage::BootRequirementsChecker do
         let(:scenario) { "efi" }
 
         include_examples("no warnings")
+      end
+    end
+
+    context "when /boot is encrypted" do
+      context "and grub can decrypt it" do
+        let(:enc_type) { Y2Storage::EncryptionType::LUKS1 }
+        it "does not contain any warning" do
+          expect(checker.warnings).to be_empty
+        end
+      end
+
+      context "and grub cannot decrypt it" do
+        let(:enc_type) { Y2Storage::EncryptionType::LUKS2 }
+        it "shows a warning that grub cannot access /boot" do
+          expect(checker.warnings.size).to eq(1)
+          expect(checker.warnings.first.message).to match(/cannot access/)
+        end
       end
     end
 

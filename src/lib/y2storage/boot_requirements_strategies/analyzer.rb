@@ -168,17 +168,6 @@ module Y2Storage
         encrypted?(device_for_boot)
       end
 
-      # Whether the filesystem containing /boot is going to be readable by grub
-      #
-      # We might need to check if the filesystem is actually supported by grub
-      # but currently all storage-ng supported filesystems are.
-      #
-      # @return [Boolean] true if the filesystem where /boot resides is going to
-      #   be readable by grub
-      def grub_can_read_boot?
-        encrypted_for_grub?(device_for_boot)
-      end
-
       # Whether the EFI system partition (/boot/efi) is in a LVM logical volume
       #
       # @return [Boolean] true if the filesystem where /boot/efi resides is going to
@@ -260,6 +249,15 @@ module Y2Storage
       #   in the planned devices or in the devicegraph
       def boot_filesystem_type
         filesystem_type(device_for_boot)
+      end
+
+      # Encryption type of boot device
+      #
+      # The device can be a planned one or filesystem from the devicegraph.
+      #
+      # @return [Y2Storage::EncryptionType] Encryption type
+      def boot_encryption_type
+        encryption_type(device_for_boot)
       end
 
       # Whether the partition table of the disk used for booting matches the
@@ -550,17 +548,6 @@ module Y2Storage
         !encryption_type(device).is?(:none)
       end
 
-      # Whether the device is encrypted and grub can decrypt it
-      #
-      # The device can be a planned one or filesystem from the devicegraph.
-      #
-      # @param device [Filesystems::Base, Planned::Device, nil]
-      # @return [Boolean] device encryption state; return false if device is nil
-      def encrypted_for_grub?(device)
-        t = encryption_type(device)
-        t.is?(:none) || t.is?(:luks1)
-      end
-
       # Encryption type of device
       #
       # The device can be a planned one or filesystem from the devicegraph.
@@ -570,11 +557,9 @@ module Y2Storage
       # @param device [Filesystems::Base, Planned::Device, nil]
       # @return [Y2Storage::EncryptionType] Encryption type
       def encryption_type(device)
-        return Y2Storage::EncryptionType::NONE if device.nil?
-
         if device.is_a?(Planned::Device)
           (device.respond_to?(:encrypt?) && device.encrypt?) ? Y2Storage::EncryptionType::LUKS1 : nil
-        else
+        elsif device.respond_to?(:plain_blk_devices)
           device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
         end || Y2Storage::EncryptionType::NONE
       end

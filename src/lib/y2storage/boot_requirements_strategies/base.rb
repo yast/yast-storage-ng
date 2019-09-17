@@ -45,7 +45,7 @@ module Y2Storage
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
         :root_fs_can_embed_grub?, :boot_in_lvm?,
         :boot_in_thin_lvm?, :boot_in_bcache?, :boot_in_software_raid?, :encrypted_boot?,
-        :boot_fs_can_embed_grub?, :boot_filesystem_type, :grub_can_read_boot?,
+        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_encryption_type,
         :esp_in_lvm?, :esp_in_software_raid?, :esp_in_software_raid1?, :encrypted_esp?
 
       # Constructor
@@ -87,7 +87,7 @@ module Y2Storage
           error_message =
             _(
               "The boot loader cannot access the file system mounted at /boot. " \
-              "LUKS2 encryption is currently not supported by grub."
+              "Only LUKS1 encryption is supported."
             )
           res << SetupError.new(message: error_message)
         end
@@ -211,6 +211,25 @@ module Y2Storage
         # TRANSLATORS: error message
         error_message = _("Boot requirements cannot be determined because there is no '/' mount point")
         SetupError.new(message: error_message)
+      end
+
+      # Whether the filesystem containing /boot is readable by grub
+      #
+      # We might need to check if the filesystem is actually supported by grub
+      # but currently all storage-ng supported filesystems are.
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be readable by grub
+      def grub_can_read_boot?
+        encrypted_for_grub?
+      end
+
+      # Whether the boot device is encrypted and grub can decrypt it
+      #
+      # @return [Boolean] true if grub can decrypt boot device (or it is unencrypted)
+      def encrypted_for_grub?
+        t = boot_encryption_type
+        t.is?(:none) || t.is?(:luks1)
       end
     end
   end
