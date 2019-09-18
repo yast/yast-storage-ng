@@ -36,7 +36,7 @@ module Y2Partitioner
         include Yast::I18n
 
         # @return [Y2Storage::Fstab] fstab file selected to import mount points
-        attr_accessor :selected_fstab
+        attr_reader :selected_fstab
 
         # @return [Boolean] whether the system volumes must be formatted
         #
@@ -58,6 +58,17 @@ module Y2Partitioner
           disk_analyzer.fstabs
         end
 
+        # Sets the selected fstab
+        #
+        # Note that the system graph with crypttab names need to be reset after selecting a new fstab.
+        #
+        # @param [Y2Storage::Fstab] new_fstab
+        def selected_fstab=(new_fstab)
+          reset_system_graph_with_crypttab_names
+
+          @selected_fstab = new_fstab
+        end
+
         # Selects the previous fstab
         #
         # The current selected fstab does not change if it already is the first one.
@@ -67,7 +78,7 @@ module Y2Partitioner
           current_index = fstabs.index(selected_fstab)
           prev_index = [0, current_index - 1].max
 
-          @selected_fstab = fstabs.at(prev_index)
+          self.selected_fstab = fstabs.at(prev_index)
         end
 
         # Selects the next fstab
@@ -79,7 +90,7 @@ module Y2Partitioner
           current_index = fstabs.index(selected_fstab)
           next_index = [fstabs.size - 1, current_index + 1].min
 
-          @selected_fstab = fstabs.at(next_index)
+          self.selected_fstab = fstabs.at(next_index)
         end
 
         # Checks whether the selected fstab is the first one
@@ -167,7 +178,8 @@ module Y2Partitioner
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         # @return [Boolean]
         def can_be_imported?(entry)
-          device = entry_device(entry, system_graph)
+          device = entry.device(system_graph_with_crypttab_names)
+
           return false unless device
 
           return true unless must_be_formatted?(device, entry.mount_point)
@@ -274,6 +286,11 @@ module Y2Partitioner
           DeviceGraphs.instance.current = system_graph.dup
         end
 
+        # Resets the system graph containing crypttab names
+        def reset_system_graph_with_crypttab_names
+          @system_graph_with_crypttab_names = nil
+        end
+
         # Imports the mount point of a fstab entry
         #
         # When the device needs to be formatted (see {#must_be_formatted?}), the filesystem type
@@ -283,8 +300,10 @@ module Y2Partitioner
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         def import_mount_point(entry)
-          device = entry_device(entry, current_graph)
+          device = entry.device(system_graph_with_crypttab_names)
           return unless device
+
+          device = device_from_current_graph(device)
 
           if must_be_formatted?(device, entry.mount_point)
             filesystem = format_device(device, entry)
@@ -294,6 +313,29 @@ module Y2Partitioner
             filesystem = device.is?(:filesystem) ? device : device.filesystem
             create_mount_point(filesystem, entry)
           end
+        end
+
+        # Device version from the current devicegraph
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Y2Storage::Device]
+        def device_from_current_graph(device)
+          if missing_swap_encryption?(device)
+            copy_swap_encryption(device)
+          else
+            current_graph.find_device(device.sid)
+          end
+        end
+
+        # Copies a plain encryption for swap into the current devicegraph
+        #
+        # @param device [Y2Storage::Encryption]
+        # @return [Y2Storage::Encryption]
+        def copy_swap_encryption(device)
+          blk_device = device_from_current_graph(device.blk_device)
+          blk_device.remove_descendants
+
+          device.copy_to(current_graph)
         end
 
         # Formats the device indicated in the fstab entry
@@ -385,24 +427,20 @@ module Y2Partitioner
           original_device.filesystem
         end
 
-        # Device indicated in the fstab entry
+        # System graph with information about crypttab names indicated in the selected crypttab file
         #
-        # When the device name in the fstab entry corresponds to a encryption device, the device
-        # could not be found by that fstab name. In general, the encryptions might be probed with
-        # a different name, so before searching for the device, the encryption names from the crypttab
-        # file are saved into the proper encryption device. That changes are made in a temporary
-        # devicegraph, so the original one is never altered.
+        # When the device name in a fstab entry corresponds to a encryption device, the device could be
+        # not found by its fstab name. In general, encryptions might be probed with a different name, so
+        # before searching for the device, the encryption names from the crypttab file are saved into the
+        # proper encryption device. Also note that a random encryption layer can be created when a
+        # crypttab entry points to a swap device encrypted with random password. All these changes are
+        # made in a temporary devicegraph, so the original system graph is never altered.
         #
-        # @see #devicegraph_with_crypttab_names
+        # @see #add_crypttab_names_to
         #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        # @param devicegraph [Y2Storage::Devicegraph]
-        #
-        # @return [Y2Storage::BlkDevice, Y2Storage::Filesystems::Nfs, nil] nil if the device is
-        #   not found in the devicegraph.
-        def entry_device(entry, devicegraph)
-          device = entry.device(devicegraph_with_crypttab_names(devicegraph))
-          device ? devicegraph.find_device(device.sid) : nil
+        # @return [Y2Storage::Devicegraph]
+        def system_graph_with_crypttab_names
+          @system_graph_with_crypttab_names ||= add_crypttab_names_to(system_graph)
         end
 
         # Duplicates the given devicegraph and saves the encryption names from the crypttab file
@@ -411,7 +449,7 @@ module Y2Partitioner
         #
         # @param devicegraph [Y2Storage::Devicegraph]
         # @return [Y2Storage::Devicegraph]
-        def devicegraph_with_crypttab_names(devicegraph)
+        def add_crypttab_names_to(devicegraph)
           fixed_devicegraph = devicegraph.dup
 
           return fixed_devicegraph unless crypttab
@@ -422,10 +460,39 @@ module Y2Partitioner
 
         # Selects the crypttab contained in the same filesystem than the selected fstab
         #
-        # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain
-        #   a crypttab file.
+        # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain a crypttab file.
         def crypttab
           disk_analyzer.crypttabs.find { |c| c.filesystem == selected_fstab.filesystem }
+        end
+
+        # Whether the device represents a not probed plain encryption with random password for swap
+        #
+        # Note that no headers are written into the device when using plain encryption (which is the
+        # underlying technology used for randomly encrypted swaps). For this reason, plain encryption
+        # devices are only probed for the root filesystem by parsing its crypttab file.
+        #
+        # A plain encryption device could be created when searching for a device from a fstab entry, see
+        # {Y2Storage::Encryption.save_crypttab_names}.
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def missing_swap_encryption?(device)
+          missing_device?(device) && random_password_swap?(device)
+        end
+
+        # Whether the device is missing in the probed devicegraph
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def missing_device?(device)
+          !device.exists_in_devicegraph?(system_graph)
+        end
+
+        # Whether the device represents a plain encrypted swap with random password
+        #
+        # @return [Boolean]
+        def random_password_swap?(device)
+          device.is?(:encryption) && device.method.is?(:random_swap)
         end
       end
     end

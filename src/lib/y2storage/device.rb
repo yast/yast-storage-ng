@@ -263,6 +263,29 @@ module Y2Storage
       []
     end
 
+    # Copies the device to a given devicegraph, connecting it to its corresponding parent
+    #
+    # @raise [RuntimeError] if the device has more than one parent
+    #
+    # @return [Y2Storage::Device] device copied to the given devicegraph
+    def copy_to(devicegraph)
+      storage_device = to_storage_value
+      storage_devicegraph = devicegraph.to_storage_value
+
+      if storage_device.in_holders.size != 1
+        log.error "Fails to copy: the device has more than one parent, that's unexpected: #{sid}"
+
+        raise "Unexpected error copying the device #{sid}"
+      end
+
+      return if storage_device.exists_in_devicegraph?(storage_devicegraph)
+
+      storage_device.copy_to_devicegraph(storage_devicegraph)
+      storage_device.in_holders[0].copy_to_devicegraph(storage_devicegraph)
+
+      devicegraph.find_device(storage_device.sid)
+    end
+
     # Information about the possibility of resizing a given device.
     #
     # This method relies on {#detect_resize_info}, caching the result for the

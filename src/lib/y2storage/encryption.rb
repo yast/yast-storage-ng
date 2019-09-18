@@ -274,13 +274,29 @@ module Y2Storage
 
       # Saves the crypttab name according to the value indicated in a crypttab entry
       #
+      # Generally, when a crypttab entry points to a luks device, the encryption layer is probed. But in
+      # case of plain encrypted devices, the encryption layer could not exist in the probed devicegraph.
+      # Note that no headers are written into the device when using plain encryption. And, for this
+      # reason, plain encryption devices are only probed for the root filesystem by parsing its crypttab.
+      #
+      # Due to plain encryption devices could be not probed, this method creates the plain encryption
+      # layer to be able to save the encryption name indicated in the crypttab entry.
+      #
       # @param devicegraph [Devicegraph]
       # @param entry [SimpleEtcCrypttabEntry]
       def save_crypttab_name(devicegraph, entry)
         device = entry.find_device(devicegraph)
-        return unless device&.encrypted?
 
-        device.encryption.crypttab_name = entry.name
+        return unless device
+
+        if device.encrypted?
+          device.encryption.crypttab_name = entry.name
+        elsif entry.swap?
+          # Right now, a plain encryption device is created for swap only. Moreover, random password
+          # (urandom) is always considered, even when the crypttab file indicates another key file.
+          device.remove_descendants
+          device.encrypt(dm_name: entry.name, method: :random_swap)
+        end
       end
 
       # Checks whether a given DeviceMapper table name is already in use by some
