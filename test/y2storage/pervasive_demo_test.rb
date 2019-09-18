@@ -50,7 +50,7 @@ describe "the pervasive prototype" do
       .with("zkey", "cryptsetup", "--volumes", anything, stdout: :capture)
       .and_return "cryptsetup luksFormat --one two --three\nsecond command"
 
-    allow(Yast::Execute).to receive(:locally!).with("lszcrypt", "--verbose", stdout: :capture)
+    allow(Yast::Execute).to receive(:locally!).with("/sbin/lszcrypt", "--verbose", stdout: :capture)
       .and_return lszcrypt
   end
 
