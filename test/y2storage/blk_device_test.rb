@@ -1129,11 +1129,18 @@ describe Y2Storage::BlkDevice do
       end
     end
 
-    context "when a name and a password are provided" do
-      let(:enc) { device.encrypt(dm_name: "cr_manual", password: "123123") }
+    RSpec.shared_examples "default method" do
+      it "creates an encryption device using LUKS1 as default encryption method" do
+        expect(enc).to be_a Y2Storage::Encryption
+        expect(enc.method).to eq(Y2Storage::EncryptionMethod::LUKS1)
+      end
+    end
 
-      include_examples "given encryption name"
-      include_examples "given password"
+    RSpec.shared_examples "given method" do
+      it "creates an encryption device using the given encryption method" do
+        expect(enc).to be_a Y2Storage::Encryption
+        expect(enc.method).to eq(method)
+      end
     end
 
     context "when called with no arguments" do
@@ -1141,6 +1148,14 @@ describe Y2Storage::BlkDevice do
 
       include_examples "auto-generated encryption name"
       include_examples "no password"
+      include_examples "default method"
+    end
+
+    context "when a method is provided" do
+      let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
+      let(:enc) { device.encrypt(dm_name: "cr_manual", method: method) }
+
+      include_examples "given method"
     end
 
     context "when a name is provided with no password" do
@@ -1155,6 +1170,13 @@ describe Y2Storage::BlkDevice do
 
       include_examples "auto-generated encryption name"
       include_examples "given password"
+    end
+
+    context "when a method is provided (via its symbol)" do
+      let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
+      let(:enc) { device.encrypt(method: method.to_sym) }
+
+      include_examples "given method"
     end
 
     context "auto-generated names" do

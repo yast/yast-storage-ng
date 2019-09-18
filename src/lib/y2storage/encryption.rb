@@ -20,7 +20,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
 require "y2storage/crypttab"
-require "y2storage/encryption_type"
+require "y2storage/encryption_method"
 
 module Y2Storage
   # An encryption layer on a block device
@@ -172,6 +172,24 @@ module Y2Storage
       save_userdata(:crypttab_name, value)
     end
 
+    # Returns the encryption method used
+    #
+    # Note that it could be inferred if there is no encryption process available yet
+    #
+    # @see #encryption_process
+    #
+    # @return [EncryptionMethod, nil]
+    def method
+      encryption_process ? encryption_process.method : EncryptionMethod.for_device(self)
+    end
+
+    # Saves the given encryption process
+    #
+    # @param value [Encryption::Processes]
+    def encryption_process=(value)
+      save_userdata(:encryption_process, value)
+    end
+
     protected
 
     def types_for_is
@@ -181,6 +199,13 @@ module Y2Storage
     # @see Device#update_etc_attributes
     def assign_etc_attribute(value)
       self.storage_in_etc_crypttab = value
+    end
+
+    # Returns the process used to perform the encryption
+    #
+    # @return [EncryptionProcess::Base, nil]
+    def encryption_process
+      userdata_value(:encryption_process)
     end
 
     class << self
