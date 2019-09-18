@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2partitioner/dialogs/base"
-require "y2partitioner/widgets/encrypt_password"
+require "y2partitioner/widgets/encrypt"
 require "y2partitioner/widgets/controller_radio_buttons"
 
 module Y2Partitioner
@@ -47,7 +47,7 @@ module Y2Partitioner
           if @controller.actions.include?(:keep)
             ActionWidget.new(@controller)
           else
-            Widgets::EncryptPassword.new(@controller)
+            Widgets::Encrypt.new(@controller)
           end
 
         HVSquash(main_widget)
@@ -70,7 +70,7 @@ module Y2Partitioner
         # @macro seeItemsSelection
         def items
           keep_label =
-            format(_("Preserve existing encryption (%s)"), encryption_type.to_human_string)
+            format(_("Preserve existing encryption (%s)"), encryption_method.to_human_string)
 
           [
             [:keep, keep_label],
@@ -82,7 +82,7 @@ module Y2Partitioner
         def widgets
           @widgets ||= [
             CWM::Empty.new("empty"),
-            Widgets::EncryptPassword.new(@controller)
+            Widgets::Encrypt.new(@controller)
           ]
         end
 
@@ -104,18 +104,19 @@ module Y2Partitioner
           # helptext
           _(
             "<p>Choose the encryption layer.</p>\n" \
-            "<p>The device is already encrypted in the system, it's possible to re-encrypt it" \
-            "with new settings or to use the existing encryption layer.</p>"
+            "<p>The device is already encrypted in the system, it's possible " \
+            "to preserve the existing encryption layer or " \
+            "to re-encrypt it with new settings.</p>"
           )
         end
 
         private
 
-        # Type of the encryption currently used by the device
+        # Encryption method currently used by the device
         #
-        # @return [Y2Storage::EncryptionType]
-        def encryption_type
-          @controller.encryption.type
+        # @return [Y2Storage::EncryptionMethod]
+        def encryption_method
+          @controller.encryption.method
         end
       end
     end

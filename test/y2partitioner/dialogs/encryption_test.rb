@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,10 +35,10 @@ describe Y2Partitioner::Dialogs::Encryption do
     include_examples "CWM::Dialog"
 
     describe "#contents" do
-      it "delegates everything to an EncryptPassword widget " do
+      it "delegates everything to an Encrypt widget " do
         content = dialog.contents.params
         expect(content.size).to eq 1
-        expect(content.first).to be_a Y2Partitioner::Widgets::EncryptPassword
+        expect(content.first).to be_a Y2Partitioner::Widgets::Encrypt
       end
     end
   end
@@ -60,10 +60,10 @@ end
 
 describe Y2Partitioner::Dialogs::Encryption::ActionWidget do
   let(:controller) do
-    double("FilesystemController", actions: [:keep, :encrypt], encryption: encryption)
+    double("EncryptionController", actions: [:keep, :encrypt], encryption: encryption)
   end
 
-  let(:encryption) { double("Encryption", type: Y2Storage::EncryptionType::LUKS) }
+  let(:encryption) { double("Encryption", method: Y2Storage::EncryptionMethod::LUKS1) }
 
   subject(:widget) { described_class.new(controller) }
 

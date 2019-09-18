@@ -106,12 +106,6 @@ describe Y2Partitioner::Widgets::EncryptPassword do
     end
   end
 
-  describe "#help" do
-    it "returns a string" do
-      expect(widget.help).to be_a(String)
-    end
-  end
-
   describe "#store" do
     it "assigns password to the controller" do
       expect(controller).to receive(:password=).with(pw1)
