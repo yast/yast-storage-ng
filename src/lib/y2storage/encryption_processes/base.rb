@@ -50,8 +50,8 @@ module Y2Storage
         log.info "No pre-commit action to perform by #{self.class.name} for #{device}"
       end
 
-      def post_commit
-        log.info "No post-commit action to perform by #{self.class.name}"
+      def post_commit(device)
+        log.info "No post-commit action to perform by #{self.class.name} for #{device}"
       end
     end
   end
