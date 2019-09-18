@@ -48,7 +48,11 @@ describe "the pervasive prototype" do
 
     allow(Yast::Execute).to receive(:locally)
       .with("zkey", "cryptsetup", "--volumes", anything, stdout: :capture)
-      .and_return "cryptsetup luksFormat --one two --three\nsecond command"
+      .and_return(
+        "cryptsetup luksFormat --one two --three /dev/whatever\n" \
+        "zkey-cryptsetup setvp --volumes /dev/whatever\n" \
+        "third command"
+      )
 
     allow(Yast::Execute).to receive(:locally!).with("/sbin/lszcrypt", "--verbose", stdout: :capture)
       .and_return lszcrypt
@@ -68,9 +72,11 @@ describe "the pervasive prototype" do
     end
 
     it "executes the post-commit commands" do
-      expect(Yast::Execute).to receive(:locally).with "second command"
+      expect(Yast::Execute).to receive(:locally)
+        .with("zkey-cryptsetup", "setvp", any_args, stdin: "12345678", recorder: anything)
+      expect(Yast::Execute).to receive(:locally).with("third", "command")
 
-      blk_device.encrypt(method: pervasive)
+      blk_device.encrypt(method: pervasive, password: "12345678")
       manager.commit
     end
   end

@@ -21,6 +21,7 @@
 
 require "y2storage/encryption_type"
 require "y2storage/encryption_processes/base"
+require "y2storage/encryption_processes/secure_key"
 require "yast2/execute"
 
 module Y2Storage
@@ -56,13 +57,29 @@ module Y2Storage
         device.format_options = luksformat_options_string + " --pbkdf pbkdf2"
       end
 
-      def post_commit
-        # TODO: some of these commands may need special handling like
-        # interactively asking for
-        # the passphrase
+      def post_commit(device)
         zkey_cryptsetup_output[1..-1].each do |command|
-          Yast::Execute.locally(command)
+          args = command.split(" ")
+
+          if args.any? { |arg| "setvp".casecmp(arg) == 0 }
+            args += ["--key-file", "-"]
+            Yast::Execute.locally(*args, stdin: device.password, recorder: cheetah_recorder)
+          else
+            Yast::Execute.locally(*args)
+          end
         end
+      end
+
+      # Custom Cheetah recorder to prevent leaking the password to the logs
+      def cheetah_recorder
+        @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
+      end
+
+      # Class to prevent Yast::Execute from leaking to the logs the password
+      # provided via stdin
+      class Recorder < Cheetah::DefaultRecorder
+        # To prevent leaking stdin, just do nothing
+        def record_stdin(_stdin); end
       end
 
       private
@@ -90,7 +107,7 @@ module Y2Storage
       end
 
       def luksformat_options_string
-        luksformat_command.split("luksFormat ").last
+        luksformat_command.split("luksFormat ").last.gsub(/ \/dev[^\s]*/, "")
       end
 
       def luksformat_command

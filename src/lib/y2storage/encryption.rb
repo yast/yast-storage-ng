@@ -168,7 +168,7 @@ module Y2Storage
     end
 
     def post_commit
-      encryption_process.post_commit if encryption_process
+      encryption_process.post_commit(self) if encryption_process
     end
 
     def encryption_process=(value)
