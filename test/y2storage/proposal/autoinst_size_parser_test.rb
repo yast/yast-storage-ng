@@ -24,6 +24,10 @@ require "y2storage/proposal/autoinst_size_parser"
 describe Y2Storage::Proposal::AutoinstSizeParser do
   using Y2Storage::Refinements::SizeCasts
 
+  before do
+    Y2Storage::StorageManager.create_test_instance
+  end
+
   subject(:parser) { described_class.new(settings) }
 
   let(:settings) do
