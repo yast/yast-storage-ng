@@ -57,6 +57,23 @@ module Y2Storage
     #   @return [Boolean] whether the device is included in /etc/crypttab
     storage_forward :in_etc_crypttab?
 
+    # @!attribute key_file
+    #   @return [String] the encryption key file
+    storage_forward :key_file
+    storage_forward :key_file=
+
+    # @!attribute crypt_options
+    #   @return [Array<String>] options for the encryption
+    storage_forward :crypt_options
+
+    # Sets crypt options
+    #
+    # @param options [Array<String>]
+    def crypt_options=(options)
+      to_storage_value.crypt_options.clear
+      options&.each { |o| to_storage_value.crypt_options << o }
+    end
+
     # The setter is intentionally hidden. See similar comment for Md#in_etc_mdadm
     storage_forward :storage_in_etc_crypttab=, to: :in_etc_crypttab=
     private :storage_in_etc_crypttab=
