@@ -142,5 +142,19 @@ describe "the pervasive prototype" do
         expect(enc.method.available?).to be false
       end
     end
+
+    context "if lszcrypt tool is not available" do
+      let(:lszcrypt) { nil }
+
+      before do
+        allow(Yast::Execute).to receive(:locally!).with("/sbin/lszcrypt", "--verbose", stdout: :capture)
+        .and_raise Cheetah::ExecutionFailed
+      end
+
+      it "returns false" do
+        enc = blk_device.encrypt(method: pervasive)
+        expect(enc.method.available?).to be false
+      end
+    end
   end
 end
