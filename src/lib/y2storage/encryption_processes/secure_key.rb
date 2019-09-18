@@ -107,8 +107,10 @@ module Y2Storage
         #
         # @return [Boolean]
         def available?
-          device_list = Yast::Execute.locally("lszcrypt", "--verbose", stdout: :capture)
+          device_list = Yast::Execute.locally!("lszcrypt", "--verbose", stdout: :capture)
           device_list&.match?(/\sonline\s/) || false
+        rescue Error
+          false
         end
 
         # @return [SecureKey]
