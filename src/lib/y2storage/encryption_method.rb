@@ -34,6 +34,7 @@ module Y2Storage
   # @example
   #
   #   method = EncryptionMethod.all.first
+  #   method = EncryptionMethod.available.first
   #   method = EncryptionMethod.find(:luks1)
   #   method = EncryptionMethod.find(:random_swap)
   #   method = EncryptionMethod.new #=> error, private method
@@ -75,6 +76,13 @@ module Y2Storage
       # @return [Array<Y2Storage::EncryptionMethod>]
       def all
         ALL.dup
+      end
+
+      # Sorted list of all encryption methods that can be used in this system
+      #
+      # @return [Array<Y2Storage::EncryptionMethod>]
+      def available
+        all.select(&:available?)
       end
 
       # Looks for the encryption method used for the given encryption device
@@ -130,6 +138,13 @@ module Y2Storage
     # @return [Boolean]
     def used_for?(encryption)
       process_class.used_for?(encryption)
+    end
+
+    # Whether the encryption method can be used in this system
+    #
+    # @return [Boolean]
+    def available?
+      process_class.available?
     end
 
     # Creates an encryption device for the given block device

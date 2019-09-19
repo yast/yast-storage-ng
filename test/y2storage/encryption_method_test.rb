@@ -33,6 +33,12 @@ describe Y2Storage::EncryptionMethod do
     end
   end
 
+  describe ".available" do
+    it "returns a method for Luks1 and another for random swap" do
+      expect(described_class.available.map(&:to_sym)).to contain_exactly(:luks1, :random_swap)
+    end
+  end
+
   describe ".find" do
     context "when looking for a known method" do
       it "returns the encryption method" do

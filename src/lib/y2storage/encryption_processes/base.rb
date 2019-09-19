@@ -39,6 +39,15 @@ module Y2Storage
         false
       end
 
+      # Whether the process can be executed in the current system
+      #
+      # @see EncryptionMethod#available?
+      #
+      # @return [Boolean]
+      def self.available?
+        true
+      end
+
       # Constructor
       #
       # @param method [Y2Storage::EncryptionMethod]
