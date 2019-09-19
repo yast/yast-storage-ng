@@ -149,10 +149,12 @@ module Y2Partitioner
             "boot, and its previous content is destroyed. You should disable Hibernation through your " \
             "respective DE Power Management Utility and set it to Shutdown on Critical to avoid Data " \
             "Loss!</p>" \
-            "<p>Also note the device UUID changes every time the swap is encrypted, and the file " \
-            "system label cannot be preserved when re-encrypting the device. Please, make sure your " \
-            "swap device is mounted by a stable device name (e.g., udev device id), otherwise a wrong " \
-            "device could be encrypted instead of your swap!</p>"),
+            "<p>Please, make sure your swap device is mounted by a stable name that is not subject to " \
+            "change on every reboot. For example, for a swap partition use the udev device id instead " \
+            "of the partition device name. Otherwise a wrong device could be encrypted instead of " \
+            "your swap! In that regard, note both the file system label and the UUID change every " \
+            "time the swap is re-encrypted, so they are not valid options to mount a " \
+            "randomly encrypted swap device.</p>"),
           label: encrypt_method.to_human_string
         )
       end
