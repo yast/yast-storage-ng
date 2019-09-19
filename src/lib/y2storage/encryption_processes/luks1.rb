@@ -22,7 +22,7 @@ require "y2storage/encryption_processes/base"
 
 module Y2Storage
   module EncryptionProcesses
-    # The enryption process that allows to create and identify an encryped
+    # The encryption process that allows to create and identify an encrypted
     # device using LUKS1
     class Luks1 < Base
       # Whether the process was used for the given encryption device
