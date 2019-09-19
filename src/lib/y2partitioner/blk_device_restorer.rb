@@ -196,7 +196,7 @@ module Y2Partitioner
     # @param source [Y2Storage::Device]
     # @return [Y2Storage::Device] device copied to the current graph
     def copy_device(source)
-      if source.to_storage_value.in_holders.size != 1
+      if source.parents.size != 1
         log.error "Fails to copy: the device has more than one parent, that's unexpected: #{source.sid}"
 
         raise "Unexpected error copying the device #{source.sid}"

@@ -265,6 +265,9 @@ module Y2Storage
 
     # Copies the device to a given devicegraph, connecting it to its corresponding parents
     #
+    # @note This method is intended to be used only for special cases. Use it with care, and make sure
+    #   there is no another way to accomplish the same result.
+    #
     # @raise [Storage::Exception] when there is an error copying the device (e.g., a parent is missing).
     #
     # @return [Y2Storage::Device] device copied to the given devicegraph
