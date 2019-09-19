@@ -197,6 +197,11 @@ module Y2Storage
     #       sorted list (less than)
     storage_class_forward :compare_by_name
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Device>] all the devices in the given devicegraph
+    storage_class_forward :all, as: "Device"
+
     # Check whether the device exists in the probed devicegraph
     #
     # @note This is slightly different from Storage::Device#exists_in_probed?, which

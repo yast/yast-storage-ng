@@ -74,6 +74,18 @@ module Y2Storage
       #
       # @return [Y2Storage::EncryptionType]
       abstract_method :encryption_type
+
+      # Executes the actions that must be performed right before the devicegraph is
+      # committed to the system
+      #
+      # @param device [Encryption]
+      def pre_commit(_device); end
+
+      # Executes the actions that must be performed after the devicegraph has
+      # been committed to the system
+      #
+      # @param device [Encryption]
+      def post_commit(_device); end
     end
   end
 end

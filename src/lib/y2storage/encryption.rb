@@ -188,6 +188,22 @@ module Y2Storage
     # @param value [Encryption::Processes]
     def encryption_process=(value)
       save_userdata(:encryption_process, value)
+      @encryption_process = value
+    end
+
+    # Executes the actions that must be performed right before the devicegraph is
+    # committed to the system
+    def pre_commit
+      return unless encryption_process
+
+      encryption_process.pre_commit(self)
+      save_encryption_process
+    end
+
+    # Executes the actions that must be performed after the devicegraph has been
+    # committed to the system
+    def post_commit
+      encryption_process&.post_commit(self)
     end
 
     protected
@@ -205,7 +221,12 @@ module Y2Storage
     #
     # @return [EncryptionProcess::Base, nil]
     def encryption_process
-      userdata_value(:encryption_process)
+      @encryption_process ||= userdata_value(:encryption_process)
+    end
+
+    # Updates the userdata with an up-to-date version of the encryption process
+    def save_encryption_process
+      self.encryption_process = encryption_process
     end
 
     class << self

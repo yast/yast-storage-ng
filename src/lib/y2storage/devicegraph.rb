@@ -155,6 +155,13 @@ module Y2Storage
       Actiongraph.new(graph)
     end
 
+    # All the devices in the devicegraph, in no particular order
+    #
+    # @return [Array<Device>]
+    def devices
+      Device.all(self)
+    end
+
     # All the DASDs in the devicegraph, sorted by name
     #
     # @note Based on the libstorage classes hierarchy, DASDs are not considered to be disks.
@@ -508,6 +515,16 @@ module Y2Storage
       DumpManager.dump(self, file_base_name)
     end
 
+    # Executes the pre_commit method in all the devices
+    def pre_commit
+      devices_action(:pre_commit)
+    end
+
+    # Executes the post_commit method in all the devices
+    def post_commit
+      devices_action(:post_commit)
+    end
+
     private
 
     # Copy of a device tree where hashes have been substituted by sorted
@@ -558,6 +575,13 @@ module Y2Storage
 
         dev.remove_descendants
         remove_device(dev)
+      end
+    end
+
+    # See {#pre_commit} and {#post_commit}
+    def devices_action(method)
+      devices.each do |device|
+        device.send(method) if device.respond_to?(method)
       end
     end
   end

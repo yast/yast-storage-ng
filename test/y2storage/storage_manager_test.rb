@@ -614,6 +614,8 @@ describe Y2Storage::StorageManager do
 
       before do
         allow(manager).to receive(:staging).and_return staging
+        allow(staging).to receive(:pre_commit)
+        allow(staging).to receive(:post_commit)
       end
 
       context "if the root filesystem does not respond to #configure_snapper" do
