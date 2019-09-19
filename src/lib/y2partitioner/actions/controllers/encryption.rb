@@ -39,9 +39,6 @@ module Y2Partitioner
         # @return [Symbol] :keep, :encrypt, :remove
         attr_accessor :action
 
-        # @return [Boolean] Whether the user wants to encrypt the device
-        attr_accessor :encrypt
-
         # @return [Y2Storage::EncryptionMethod] Encryption method
         attr_accessor :method
 
