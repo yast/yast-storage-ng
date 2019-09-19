@@ -19,6 +19,7 @@
 
 require "y2storage/encryption_processes/luks1"
 require "y2storage/encryption_processes/swap"
+require "y2storage/encryption_processes/pervasive"
 
 module Y2Storage
   # YaST provides different Encryption Methods to encrypt a block device. Not to be confused with the
@@ -59,11 +60,14 @@ module Y2Storage
     LUKS1 = new(
       :luks1, N_("Regular LUKS1"), EncryptionProcesses::Luks1
     )
+    PERVASIVE_LUKS2 = new(
+      :pervasive_luks2, N_("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive
+    )
     RANDOM_SWAP = new(
       :random_swap, N_("Random Swap"), EncryptionProcesses::Swap
     )
 
-    ALL = [LUKS1, RANDOM_SWAP].freeze
+    ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP].freeze
     private_constant :ALL
 
     class << self

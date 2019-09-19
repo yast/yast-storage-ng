@@ -36,6 +36,18 @@ module Y2Storage
     #   @return [String] UUID of the LUKS device
     storage_forward :uuid
 
+    # @!attribute format_options
+    #
+    # Extra options for luks format call. The options are injected as-is to the
+    # command so must be properly quoted.
+    #
+    # Options that modify the size of the resulting blk device (e.g. --integrity)
+    # are not allowed.
+    #
+    # @return [String]
+    storage_forward :format_options
+    storage_forward :format_options=
+
     # Whether the LUKS encryption device matches with a given crypttab spec
     #
     # @see Encryption#match_crypttab_spec?

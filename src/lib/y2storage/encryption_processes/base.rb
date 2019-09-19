@@ -78,13 +78,13 @@ module Y2Storage
       # Executes the actions that must be performed right before the devicegraph is
       # committed to the system
       #
-      # @param device [Encryption]
+      # @param _device [Encryption]
       def pre_commit(_device); end
 
       # Executes the actions that must be performed after the devicegraph has
       # been committed to the system
       #
-      # @param device [Encryption]
+      # @param _device [Encryption]
       def post_commit(_device); end
     end
   end

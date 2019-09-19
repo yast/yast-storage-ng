@@ -34,8 +34,54 @@ describe Y2Storage::EncryptionMethod do
   end
 
   describe ".available" do
-    it "returns a method for Luks1 and another for random swap" do
-      expect(described_class.available.map(&:to_sym)).to contain_exactly(:luks1, :random_swap)
+    def lszcrypt_output(file)
+      File.read(File.join(DATA_PATH, "lszcrypt", "#{file}.txt"))
+    end
+
+    before do
+      allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, "--verbose", stdout: :capture)
+        .and_return lszcrypt
+    end
+
+    context "if there are online Crypto Express CCA coprocessors" do
+      let(:lszcrypt) { lszcrypt_output("ok") }
+
+      it "returns methods for LUKS1, pervasive LUKS2 and random swap" do
+        expect(described_class.available.map(&:to_sym))
+          .to contain_exactly(:luks1, :pervasive_luks2, :random_swap)
+      end
+    end
+
+    context "if no Crypto Express CCA coprocessor is available (online)" do
+      let(:lszcrypt) { lszcrypt_output("no_devs") }
+
+      it "returns methods for LUKS1 and random swap" do
+        expect(described_class.available.map(&:to_sym))
+          .to contain_exactly(:luks1, :random_swap)
+      end
+    end
+
+    context "if secure AES keys are not supported" do
+      let(:lszcrypt) { nil }
+
+      it "returns methods for LUKS1 and random swap" do
+        expect(described_class.available.map(&:to_sym))
+          .to contain_exactly(:luks1, :random_swap)
+      end
+    end
+
+    context "if the lszcrypt tool is not available" do
+      let(:lszcrypt) { nil }
+
+      before do
+        allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, "--verbose", stdout: :capture)
+          .and_raise Cheetah::ExecutionFailed
+      end
+
+      it "returns methods for LUKS1 and random swap" do
+        expect(described_class.available.map(&:to_sym))
+          .to contain_exactly(:luks1, :random_swap)
+      end
     end
   end
 

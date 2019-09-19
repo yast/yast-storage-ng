@@ -300,7 +300,7 @@ module Y2Storage
     def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil)
       method = EncryptionMethod.find(method) if method.is_a?(Symbol)
       enc = method.create_device(self, dm_name)
-      enc.auto_dm_name = !dm_name
+      enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
 
       Encryption.update_dm_names(devicegraph)
