@@ -79,7 +79,8 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
         context "and the device is currently encrypted" do
           let(:encrypted) { true }
-          let(:encryption) { double("Encryption", password: "123456", active?: true) }
+          let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
+          let(:encryption) { double("Encryption", method: method, password: "123456", active?: true) }
 
           before do
             allow(encryption).to receive(:exists_in_devicegraph?).and_return in_system
@@ -113,6 +114,55 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
   end
 
+  describe "#methods" do
+    before do
+      allow(subject).to receive(:swap?).and_return(swap)
+    end
+
+    let(:swap) { true }
+
+    it "returns a collection of encryption methods" do
+      expect(subject.methods).to be_a Array
+      expect(subject.methods.first).to be_a Y2Storage::EncryptionMethod
+    end
+
+    context "when working with a swap filesystem" do
+      it "includes the RANDOM_SWAP method" do
+        expect(subject.methods).to include(Y2Storage::EncryptionMethod::RANDOM_SWAP)
+      end
+    end
+
+    context "when not working with a swap filesystem" do
+      let(:swap) { false }
+
+      it "does not include the RANDOM_SWAP method" do
+        expect(subject.methods).to_not include(Y2Storage::EncryptionMethod::RANDOM_SWAP)
+      end
+    end
+  end
+
+  describe "#several_encrypt_methods?" do
+    before do
+      allow(subject).to receive(:methods).and_return(methods)
+    end
+
+    context "when more than one encryption methods are available" do
+      let(:methods) { [double, double] }
+
+      it "returns true" do
+        expect(subject.several_encrypt_methods?).to eq(true)
+      end
+    end
+
+    context "when there is only one encryption method available" do
+      let(:methods) { [double] }
+
+      it "returns false" do
+        expect(subject.several_encrypt_methods?).to eq(false)
+      end
+    end
+  end
+
   describe "#finish" do
     before do
       allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
@@ -130,57 +180,53 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     context "when it is possible to change the encrypt" do
-      let(:can_change_encrypt) { true }
       let(:scenario) { "logical_encrypted" }
-
-      before { controller.password = password }
-
-      let(:encrypt) { false }
+      let(:can_change_encrypt) { true }
       let(:password) { "12345678" }
+      let(:method) { Y2Storage::EncryptionMethod::LUKS1 }
+
+      before do
+        controller.method = method
+        controller.action = action
+        controller.password = password
+      end
 
       context "and the device was already encrypted at startup" do
+        let(:encrypt) { true }
         let(:dev_name) { "/dev/sda6" }
 
-        context "and it is marked to be encrypted" do
-          let(:encrypt) { true }
+        context "but the existing encryption must be kept" do
+          let(:action) { :keep }
 
-          before { controller.action = action }
-
-          context "and the existing encryption must be kept" do
-            let(:action) { :keep }
-
-            it "preserves the existing encryption" do
-              sid = fs_controller.blk_device.encryption.sid
-              subject.finish
-              expect(fs_controller.blk_device.encryption.sid).to eq sid
-            end
-
-            it "does not change the encryption password" do
-              orig_password = fs_controller.blk_device.encryption.password
-
-              subject.finish
-
-              expect(fs_controller.blk_device.encryption.password).to eq orig_password
-              expect(fs_controller.blk_device.encryption.password).to_not eq password
-            end
+          it "preserves the existing encryption" do
+            sid = fs_controller.blk_device.encryption.sid
+            subject.finish
+            expect(fs_controller.blk_device.encryption.sid).to eq sid
           end
 
-          context "and the device must be re-encrypted" do
-            let(:action) { :encrypt }
+          it "does not change the encryption password" do
+            orig_password = fs_controller.blk_device.encryption.password
 
-            it "encrypts the device, replacing the previous encryption" do
-              sid = fs_controller.blk_device.encryption.sid
-              expect(fs_controller.blk_device.encryption.password).to_not eq password
+            subject.finish
 
-              subject.finish
-              expect(fs_controller.blk_device.encryption.sid).to_not eq sid
-              expect(fs_controller.blk_device.encryption.password).to eq password
-            end
+            expect(fs_controller.blk_device.encryption.password).to eq orig_password
+            expect(fs_controller.blk_device.encryption.password).to_not eq password
           end
         end
 
-        context "and it is not marked to be encrypted" do
+        context "but the device must be re-encrypted" do
+          let(:action) { :encrypt }
+
+          it "encrypts the device, replacing the previous encryption" do
+            sid = fs_controller.blk_device.encryption.sid
+            subject.finish
+            expect(fs_controller.blk_device.encryption.sid).to_not eq sid
+          end
+        end
+
+        context "but the encryption was marked to be removed" do
           let(:encrypt) { false }
+          let(:action) { :remove }
 
           it "removes the encryption" do
             expect(fs_controller.blk_device.encryption).to_not be_nil
@@ -200,20 +246,18 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
         context "and it is marked to be encrypted" do
           let(:encrypt) { true }
+          let(:action) { :encrypt }
 
           it "modifies the encryption password" do
-            sid = fs_controller.blk_device.encryption.sid
             expect(fs_controller.blk_device.encryption.password).to_not eq password
-
             subject.finish
-
-            expect(fs_controller.blk_device.encryption.sid).to eq sid
             expect(fs_controller.blk_device.encryption.password).to eq password
           end
         end
 
         context "and it is not marked to be encrypted" do
           let(:encrypt) { false }
+          let(:action) { :remove }
 
           it "removes the encryption" do
             expect(fs_controller.blk_device.encryption).to_not be_nil
@@ -228,6 +272,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
         context "and it is marked to be encrypted" do
           let(:encrypt) { true }
+          let(:action) { :encrypt }
 
           it "encrypts the device" do
             subject.finish
@@ -238,6 +283,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
         context "and it is not marked to be encrypted" do
           let(:encrypt) { false }
+          let(:action) { :remove }
 
           it "does nothing" do
             devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup

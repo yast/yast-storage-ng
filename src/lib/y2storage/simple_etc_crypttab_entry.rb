@@ -58,5 +58,12 @@ module Y2Storage
 
       (device&.is?(:encryption)) ? device.blk_device : device
     end
+
+    # Whether swap plain encryption was used
+    #
+    # @return [Boolean]
+    def swap?
+      crypt_options.any? { |o| o.downcase == "swap" }
+    end
   end
 end

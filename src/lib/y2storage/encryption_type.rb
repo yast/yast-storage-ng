@@ -22,7 +22,29 @@ require "y2storage/storage_enum_wrapper"
 module Y2Storage
   # Class to represent all the possible encryption types implemented by libstorage
   #
+  # This is the technology used to perform the encryption at low level, as
+  # managed by libstorage-ng. Not to be confused with the YaST-specific
+  # {EncryptionMethod}, which represents a higher level abstraction.
+  #
   # This is a wrapper for the Storage::EncryptionType enum
+  #
+  # @note Take into account that EncryptionType::LUKS exists only as a legacy
+  # alias provided by libstorage-ng for EncryptionType::LUKS1. In general, LUKS
+  # should not be used as a constant (use LUKS1 instead) and :luks should not be
+  # used as it's symbol counterpart.
+  #
+  # @example Surprising but correct behaviour of EncryptionType::LUKS
+  #   # This is what you would expect
+  #   type = EncryptionType::LUKS1
+  #   type.to_sym  # => :luks1
+  #   type.is?(:luks1)  # => true
+  #   type.is?(:luks)   # => false
+  #   # But this may be kind of unexpected
+  #   type = EncryptionType::LUKS
+  #   type.to_sym  # => :luks1
+  #   type.is?(:luks1)  # => true
+  #   type.is?(:luks)   # => false
+  #
   class EncryptionType
     include StorageEnumWrapper
     include Yast::I18n
@@ -52,6 +74,21 @@ module Y2Storage
       string = TRANSLATIONS[to_sym] or raise "Unhandled encryption type '#{inspect}'"
 
       _(string)
+    end
+
+    # @return [Symbol]
+    def to_sym
+      res = super
+
+      # The EncryptionType is defined like this in libstorage-ng
+      # enum class EncryptionType {...LUKS, LUKS1 = LUKS, LUKS2...}
+      #
+      # That means #to_sym always returns :luks1 for EncryptionType::LUKS.
+      # Always... except in one exceptional testing virtual machine in which it
+      # sometimes returns :luks for completely unknown reasons.
+      return :luks1 if res == :luks
+
+      res
     end
   end
 end

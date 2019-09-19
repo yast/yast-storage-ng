@@ -263,6 +263,26 @@ module Y2Storage
       []
     end
 
+    # Copies the device to a given devicegraph, connecting it to its corresponding parents
+    #
+    # @note This method is intended to be used only for special cases. Use it with care, and make sure
+    #   there is no another way to accomplish the same result.
+    #
+    # @raise [Storage::Exception] when there is an error copying the device (e.g., a parent is missing).
+    #
+    # @return [Y2Storage::Device] device copied to the given devicegraph
+    def copy_to(devicegraph)
+      if !exists_in_devicegraph?(devicegraph)
+        storage_device = to_storage_value
+        storage_devicegraph = devicegraph.to_storage_value
+
+        storage_device.copy_to_devicegraph(storage_devicegraph)
+        storage_device.in_holders.each { |h| h.copy_to_devicegraph(storage_devicegraph) }
+      end
+
+      devicegraph.find_device(sid)
+    end
+
     # Information about the possibility of resizing a given device.
     #
     # This method relies on {#detect_resize_info}, caching the result for the

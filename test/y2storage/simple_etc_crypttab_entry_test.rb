@@ -96,4 +96,24 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
       end
     end
   end
+
+  describe "#swap?" do
+    let(:device) { "/dev/sda1" }
+
+    context "when options contain 'swap'" do
+      let(:crypt_options) { ["swap"] }
+
+      it "returns true" do
+        expect(subject.swap?).to eq(true)
+      end
+    end
+
+    context "when options do not contain 'swap'" do
+      let(:crypt_options) { ["other"] }
+
+      it "returns false" do
+        expect(subject.swap?).to eq(false)
+      end
+    end
+  end
 end

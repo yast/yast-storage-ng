@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -89,6 +90,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
   let(:ext4) { Y2Storage::Filesystems::Type::EXT4 }
 
   let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
+
+  let(:swap) { Y2Storage::Filesystems::Type::SWAP }
 
   subject { described_class.new }
 
@@ -602,6 +605,50 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         expect(nfs.mount_path).to eq("/home")
         expect(nfs.mount_options).to eq(["rw"])
+      end
+    end
+
+    context "when the fstab contains a swap encrypted with random password" do
+      let(:scenario) { "empty_disks" }
+
+      before do
+        allow(fstab).to receive(:filesystem_entries).and_return(entries)
+        allow(fstab).to receive(:filesystem).and_return(filesystem)
+
+        allow(crypttab).to receive(:entries).and_return(crypttab_entries)
+        allow(crypttab).to receive(:filesystem).and_return(filesystem)
+      end
+
+      let(:fstabs) { [fstab] }
+
+      let(:crypttabs) { [crypttab] }
+
+      let(:fstab) { instance_double(Y2Storage::Fstab) }
+
+      let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+
+      let(:filesystem) { current_graph.filesystems.first }
+
+      let(:entries) do
+        [
+          fstab_entry("/dev/mapper/cswap", "swap", swap, ["sw"], 0, 0)
+        ]
+      end
+
+      let(:crypttab_entries) do
+        [
+          crypttab_entry("cswap", "/dev/sda1", "/dev/urandom", ["swap"])
+        ]
+      end
+
+      it "creates an encrypted swap with random password" do
+        subject.import_mount_points
+
+        sda1 = current_graph.find_by_name("/dev/sda1")
+
+        expect(sda1.encrypted?).to eq(true)
+        expect(sda1.encryption.method.is?(:random_swap)).to eq(true)
+        expect(sda1.encryption.basename).to eq("cswap")
       end
     end
 

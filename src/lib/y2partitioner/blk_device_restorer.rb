@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -151,56 +151,58 @@ module Y2Partitioner
 
     # @param source [Y2Storage::BlkDevice]
     def restore_encryption_and_descendants(source)
-      encryption = source.encryption.to_storage_value
+      encryption = source.encryption
+
       copy_device(encryption)
       restore_filesystem_and_descendants(source) if source.filesystem
     end
 
     # @param source [Y2Storage::BlkDevice]
     def restore_filesystem_and_descendants(source)
-      filesystem = source.filesystem.to_storage_value
+      filesystem = source.filesystem
+
       copy_device(filesystem)
       copy_subvolumes(filesystem)
     end
 
     # @param source [Y2Storage::Partitionable]
     def restore_partition_table(source)
-      ptable = source.partition_table.to_storage_value
+      ptable = source.partition_table
+
       copy_device(ptable)
     end
 
-    # Recursively copy all the subvolumes of the source device to the current
-    # devicegraph, connecting each of them to its corresponding parent.
+    # Recursively copy all the subvolumes of the source device to the current devicegraph, connecting
+    # each of them to its corresponding parent
     #
-    # @raise [RuntimeError] if any subvolume has more than one parent
+    # @see Device#copy_to
     #
-    # @param source [Storage::Device] source device, beware: is a low-level
-    #   Storage device, not a Y2Storage one
+    # @param source [Y2Storage::Device]
     def copy_subvolumes(source)
       source.children.each do |child|
-        next unless Storage.btrfs_subvolume?(child)
+        next unless child.is?(:btrfs_subvolume)
 
         copy_device(child)
         copy_subvolumes(child)
       end
     end
 
-    # Copy the source device to the current devicegraph, connecting it to its
-    # corresponding parent
+    # Copy the source device to the current devicegraph
+    #
+    # @see Device#copy_to
     #
     # @raise [RuntimeError] if the device has more than one parent
     #
-    # @param source [Storage::Device] source device, beware: is a low-level
-    #   Storage device, not a Y2Storage one
+    # @param source [Y2Storage::Device]
+    # @return [Y2Storage::Device] device copied to the current graph
     def copy_device(source)
-      if source.in_holders.size != 1
-        log.error "The device has more than one parent, that's unexpected: #{source.sid}"
-        raise "Unexpected error restoring the status of device #{source.sid}"
-      end
-      return if source.exists_in_devicegraph?(raw_current_graph)
+      if source.parents.size != 1
+        log.error "Fails to copy: the device has more than one parent, that's unexpected: #{source.sid}"
 
-      source.copy_to_devicegraph(raw_current_graph)
-      source.in_holders[0].copy_to_devicegraph(raw_current_graph)
+        raise "Unexpected error copying the device #{source.sid}"
+      end
+
+      source.copy_to(current_graph)
     end
 
     # Equivalent to {#device} in the system devicegraph, if any
@@ -222,13 +224,6 @@ module Y2Partitioner
     # @return [Y2Storage::Devicegraph]
     def current_graph
       DeviceGraphs.instance.current
-    end
-
-    # Low-level Storage version of {#current_graph}
-    #
-    # @return [Storage::Devicegraph]
-    def raw_current_graph
-      current_graph.to_storage_value
     end
   end
 end

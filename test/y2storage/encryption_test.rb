@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -107,6 +108,48 @@ describe Y2Storage::Encryption do
         described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
 
         expect(device.encryption.crypttab_name).to be_nil
+      end
+    end
+
+    context "when the crypttab entry contains a swap with plain encryption" do
+      let(:device_name) { "/dev/sda1" }
+
+      let(:crypttab_entries) do
+        [
+          crypttab_entry("cswap", device_name, key_file, ["swap"])
+        ]
+      end
+
+      let(:key_file) { "/dev/urandom" }
+
+      it "creates a plain encryption device with the crypttab name" do
+        expect(device.encrypted?).to eq(false)
+
+        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+        expect(device.encrypted?).to eq(true)
+        expect(device.encryption.method.is?(:random_swap)).to eq(true)
+        expect(device.encryption.basename).to eq("cswap")
+      end
+
+      context "and key file is '/dev/urandom'" do
+        let(:key_file) { "/dev/urandom" }
+
+        it "creates a plain encryption with random password" do
+          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+          expect(device.encryption.key_file).to eq("/dev/urandom")
+        end
+      end
+
+      context "and key file is not '/dev/urandom'" do
+        let(:key_file) { "path/to/my/key_file" }
+
+        it "creates a plain encryption with random password" do
+          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+          expect(device.encryption.key_file).to eq("/dev/urandom")
+        end
       end
     end
   end
