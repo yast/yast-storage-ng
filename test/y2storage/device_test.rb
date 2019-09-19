@@ -22,6 +22,8 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::Device do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     allow_any_instance_of(Y2Storage::Callbacks::Sanitize).to receive(:sanitize?).and_return(true)
     fake_scenario(scenario)
@@ -85,6 +87,69 @@ describe Y2Storage::Device do
 
     it "returns objects of the right classes" do
       expect(device.siblings).to all(be_a(Y2Storage::Partition))
+    end
+  end
+
+  describe "#copy_to" do
+    let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+
+    let(:initial_devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    let(:target_devicegraph) { initial_devicegraph.dup }
+
+    before do
+      # Creating a new disk to be able to distinguish initial and target devicegraphs easily
+      Y2Storage::Disk.create(target_devicegraph, "/dev/sdc", 10.GiB)
+    end
+
+    context "when the device already exists in the target devicegraph" do
+      subject(:device) { initial_devicegraph.find_by_name("/dev/sda1") }
+
+      it "returns the device from the target devicegraph" do
+        existing_device = target_devicegraph.find_device(device.sid)
+
+        copied_device = device.copy_to(target_devicegraph)
+
+        expect(copied_device).to eq(existing_device)
+        expect(copied_device.devicegraph).to eq(target_devicegraph)
+      end
+    end
+
+    context "when the device does not exist in the target devicegraph" do
+      subject(:device) { initial_devicegraph.find_by_name("/dev/sda1").filesystem }
+
+      before do
+        sda1 = target_devicegraph.find_by_name("/dev/sda1")
+        sda1.delete_filesystem
+      end
+
+      context "and all parents exist in the target devicegraph" do
+        it "returns the device copied to the target devicegraph" do
+          expect(target_devicegraph.find_device(device.sid)).to be_nil
+
+          copied_device = device.copy_to(target_devicegraph)
+
+          expect(copied_device).to eq(device)
+          expect(copied_device.devicegraph).to eq(target_devicegraph)
+        end
+
+        it "copies all parents correctly" do
+          copied_device = device.copy_to(target_devicegraph)
+
+          expect(copied_device.parents.map(&:sid).sort).to eq(device.parents.map(&:sid).sort)
+        end
+      end
+
+      context "and any parent is missing in the target devicegraph" do
+        before do
+          sda1 = target_devicegraph.find_by_name("/dev/sda1")
+          sda1.partition_table.delete_partition(sda1)
+        end
+
+        it "raises an exception" do
+          expect { device.copy_to(target_devicegraph) }.to raise_error(Storage::Exception)
+        end
+      end
     end
   end
 
