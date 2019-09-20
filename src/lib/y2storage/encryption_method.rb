@@ -153,7 +153,7 @@ module Y2Storage
 
     # Whether the encryption method is useful only for swap
     #
-    # Some encryption methods are mainly useful for encrypting swap disks since they produdce a new key
+    # Some encryption methods are mainly useful for encrypting swap disks since they produce a new key
     # on every boot cycle.
     #
     # @return [Boolean]
