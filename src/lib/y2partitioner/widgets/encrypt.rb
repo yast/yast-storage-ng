@@ -169,6 +169,16 @@ module Y2Partitioner
           label: encrypt_method.to_human_string
         )
       end
+
+      # Help text for the  encryption method
+      #
+      # @return [String]
+      def help_for_pervasive_luks2(encrypt_method)
+        format(
+          _("<p><b>%{label}</b>: TODO</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
     end
   end
 end
