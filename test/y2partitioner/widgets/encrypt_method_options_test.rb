@@ -49,14 +49,14 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
     before do
       allow(Y2Partitioner::Widgets::RandomOptions).to receive(:new).and_return(fake_random_swap_options)
-      allow(Y2Partitioner::Widgets::Luks1Options).to receive(:new).and_return(fake_luks1_options)
+      allow(Y2Partitioner::Widgets::LuksOptions).to receive(:new).and_return(fake_luks1_options)
     end
 
     it "generates the new content based on the selected method" do
       expect(Y2Partitioner::Widgets::RandomOptions).to receive(:new)
       subject.refresh(random_swap)
 
-      expect(Y2Partitioner::Widgets::Luks1Options).to receive(:new)
+      expect(Y2Partitioner::Widgets::LuksOptions).to receive(:new)
       subject.refresh(luks1)
     end
 
@@ -83,7 +83,7 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
     end
   end
 
-  describe Y2Partitioner::Widgets::Luks1Options do
+  describe Y2Partitioner::Widgets::LuksOptions do
     subject { described_class.new(controller) }
 
     include_examples "CWM::CustomWidget"
