@@ -175,7 +175,14 @@ module Y2Partitioner
       # @return [String]
       def help_for_pervasive_luks2(encrypt_method)
         format(
-          _("<p><b>%{label}</b>: TODO</p>"),
+          # TRANSLATORS: Pervasive encryption terminology. For the English version see
+          # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_crypt.html
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 with a master secure key " \
+            "processed by a Crypto Express cryptographic coprocessor configured in CCA mode.</p>" \
+           "<p>If the cryptographic system already contains a secure key associated to this " \
+           "volume, that key will be used. Otherwise, a new secure key will be generated and " \
+           "registered in the system. You need to provide an encryption password that will be " \
+           "used to protect the access to that master key.</p>"),
           label: encrypt_method.to_human_string
         )
       end
