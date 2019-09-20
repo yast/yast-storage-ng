@@ -151,6 +151,16 @@ module Y2Storage
       process_class.available?
     end
 
+    # Whether the encryption method is useful only for swap
+    #
+    # Some encryption methods are mainly useful for encrypting swap disks since they produdce a new key
+    # on every boot cycle.
+    #
+    # @return [Boolean]
+    def only_for_swap?
+      process_class.only_for_swap?
+    end
+
     # Creates an encryption device for the given block device
     #
     # @param blk_device [Y2Storage::BlkDevice]

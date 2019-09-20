@@ -48,6 +48,15 @@ module Y2Storage
         true
       end
 
+      # Whether the process is mainly useful for swap disks
+      #
+      # @see EncryptionMethod#only_for_swap?
+      #
+      # @return [Boolean]
+      def self.only_for_swap?
+        false
+      end
+
       # Constructor
       #
       # @param method [Y2Storage::EncryptionMethod]

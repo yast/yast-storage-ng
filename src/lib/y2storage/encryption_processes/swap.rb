@@ -39,6 +39,11 @@ module Y2Storage
         encryption.crypt_options.any? { |opt| opt.downcase == SWAP }
       end
 
+      # @see EncryptionProcesses::Base#only_for_swap?
+      def self.only_for_swap?
+        true
+      end
+
       # @see EncryptionProcesses::Base#create_device
       def create_device(blk_device, dm_name)
         enc = super

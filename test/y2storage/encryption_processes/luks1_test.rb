@@ -45,6 +45,12 @@ describe Y2Storage::EncryptionProcesses::Luks1 do
     end
   end
 
+  describe ".only_for_swap?" do
+    it "returns false" do
+      expect(described_class.only_for_swap?).to eq(false)
+    end
+  end
+
   describe "#create_device" do
     let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
     let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
