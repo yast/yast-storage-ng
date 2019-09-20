@@ -100,9 +100,12 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::EncryptionMethod>]
         def methods
-          encrypt_methods = [Y2Storage::EncryptionMethod::LUKS1]
-          encrypt_methods << Y2Storage::EncryptionMethod::RANDOM_SWAP if swap?
-          encrypt_methods
+          @methods ||=
+            if swap?
+              Y2Storage::EncryptionMethod.available
+            else
+              Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?)
+            end
         end
 
         # Applies last changes to the block device at the end of the wizard, which

@@ -120,6 +120,9 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     let(:swap) { true }
+    let(:method_only_for_swap) { double(Y2Storage::EncryptionMethod, only_for_swap?: true) }
+    let(:another_method) { double(Y2Storage::EncryptionMethod, only_for_swap?: false) }
+    let(:encryption_methods) { [method_only_for_swap, another_method] }
 
     it "returns a collection of encryption methods" do
       expect(subject.methods).to be_a Array
@@ -127,16 +130,24 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     context "when working with a swap filesystem" do
-      it "includes the RANDOM_SWAP method" do
-        expect(subject.methods).to include(Y2Storage::EncryptionMethod::RANDOM_SWAP)
+      before do
+        allow(Y2Storage::EncryptionMethod).to receive(:available).and_return(encryption_methods)
+      end
+
+      it "includes the encryption methods intented to be used only with swap" do
+        expect(subject.methods).to include(method_only_for_swap)
       end
     end
 
     context "when not working with a swap filesystem" do
       let(:swap) { false }
 
-      it "does not include the RANDOM_SWAP method" do
-        expect(subject.methods).to_not include(Y2Storage::EncryptionMethod::RANDOM_SWAP)
+      before do
+        allow(Y2Storage::EncryptionMethod).to receive(:available).and_return(encryption_methods)
+      end
+
+      it "does not includes the encryption methods intented to be used only with swap" do
+        expect(subject.methods).to_not include(method_only_for_swap)
       end
     end
   end
