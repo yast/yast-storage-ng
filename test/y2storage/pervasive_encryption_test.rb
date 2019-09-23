@@ -44,8 +44,8 @@ describe "pervasive encryption" do
   describe "Y2Storage::BlkDevice#encrypt" do
     it "creates an encryption device with type LUKS2 and method PERVASIVE_LUKS2" do
       enc = blk_device.encrypt(method: pervasive)
-      expect(enc.type).to eq Y2Storage::EncryptionType::LUKS2
-      expect(enc.method).to eq Y2Storage::EncryptionMethod::PERVASIVE_LUKS2
+      expect(enc.type.is?(:luks2)).to eq(true)
+      expect(enc.method).to eq pervasive
     end
 
     context "if there is a preexisting secure key for the device" do

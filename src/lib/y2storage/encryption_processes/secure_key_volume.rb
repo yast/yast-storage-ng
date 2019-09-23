@@ -42,6 +42,9 @@ module Y2Storage
       # Creates a new object based on the portion of the output of
       # "zkey list" that represents a concrete volume entry
       #
+      # The input string can be something like "/dev/sda1" or
+      # "/dev/sda1:cr_sda1".
+      #
       # @param string [String] name of the plain device and, optionally, also
       #   DeviceMapper of the encrypted device
       # @return [SecureKeyVolume]

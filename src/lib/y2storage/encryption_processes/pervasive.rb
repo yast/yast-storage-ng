@@ -61,6 +61,12 @@ module Y2Storage
 
       # @see Base#pre_commit
       #
+      # If there is no secure key to be used for this device, a new key is
+      # generated. In addition to that, the "zkey cryptsetup" command is
+      # executed to know the sequence of commands that must be used to set the
+      # pervasive encryption and the LUKS format options are adjusted
+      # accordingly.
+      #
       # @param device [Encryption] encryption that will be created in the system
       def pre_commit(device)
         # For the time being, we will always generate a new key for each device
@@ -75,6 +81,9 @@ module Y2Storage
       end
 
       # @see Base#post_commit
+      #
+      # Executes the extra commands reported by the former call to
+      # "zkey cryptsetup".
       #
       # @param device [Encryption] encryption that has just been created in the system
       def post_commit(device)
@@ -94,6 +103,8 @@ module Y2Storage
       end
 
       # Custom Cheetah recorder to prevent leaking the password to the logs
+      #
+      # @return [Recorder]
       def cheetah_recorder
         @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
       end
