@@ -54,10 +54,11 @@ module Y2Partitioner
       # @return [CWM::CustomWidget] a widget containing the options for the
       # given encryption method
       def options_for(encrypt_method)
-        if encrypt_method.is?(:random_swap)
+        case encrypt_method.to_sym
+        when :random_swap
           RandomOptions.new(controller)
-        elsif encrypt_method.is?(:luks1)
-          Luks1Options.new(controller)
+        when :luks1, :pervasive_luks2
+          LuksOptions.new(controller)
         end
       end
     end
@@ -88,8 +89,8 @@ module Y2Partitioner
       end
     end
 
-    # Internal widget to display the Luks1 encryption options
-    class Luks1Options < CWM::CustomWidget
+    # Internal widget to display the Luks encryption options
+    class LuksOptions < CWM::CustomWidget
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]

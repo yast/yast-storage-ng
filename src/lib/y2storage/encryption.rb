@@ -185,9 +185,29 @@ module Y2Storage
 
     # Saves the given encryption process
     #
+    # @note Keeping the state of this object is important, so see {#encryption_process}
+    #   and {#save_encryption_process} for some considerations about how it is
+    #   persisted into the devicegraph and how the current state is held.
+    #
     # @param value [Encryption::Processes]
     def encryption_process=(value)
       save_userdata(:encryption_process, value)
+      @encryption_process = value
+    end
+
+    # Executes the actions that must be performed right before the devicegraph is
+    # committed to the system
+    def pre_commit
+      return unless encryption_process
+
+      encryption_process.pre_commit(self)
+      save_encryption_process
+    end
+
+    # Executes the actions that must be performed after the devicegraph has been
+    # committed to the system
+    def post_commit
+      encryption_process&.post_commit(self)
     end
 
     protected
@@ -203,9 +223,22 @@ module Y2Storage
 
     # Returns the process used to perform the encryption
     #
+    # @note The EncryptionProcess object is persisted using the userdata mechanism,
+    #   but it's also cached in an instance variable because, otherwise, every call
+    #   to #encryption_process would be accessing the object that was stored in the
+    #   devicegraph, with its former state. Thus, all the modifications would be lost.
+    #   See {#encryption_process=} and {#save_encryption_process}.
+    #
     # @return [EncryptionProcess::Base, nil]
     def encryption_process
-      userdata_value(:encryption_process)
+      @encryption_process ||= userdata_value(:encryption_process)
+    end
+
+    # Updates the userdata with an up-to-date version of the encryption process
+    #
+    # @see #encryption_process
+    def save_encryption_process
+      self.encryption_process = encryption_process
     end
 
     class << self

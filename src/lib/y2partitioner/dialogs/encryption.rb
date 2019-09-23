@@ -70,7 +70,7 @@ module Y2Partitioner
         # @macro seeItemsSelection
         def items
           keep_label =
-            format(_("Preserve existing encryption (%s)"), encryption_method.to_human_string)
+            format(_("Preserve existing encryption (%s)"), encryption_system.to_human_string)
 
           [
             [:keep, keep_label],
@@ -114,9 +114,12 @@ module Y2Partitioner
 
         # Encryption method currently used by the device
         #
-        # @return [Y2Storage::EncryptionMethod]
-        def encryption_method
-          @controller.encryption.method
+        # If the method couldn't be determined, it returns the encryption type
+        # instead
+        #
+        # @return [Y2Storage::EncryptionMethod, Y2Storage::EncryptionType]
+        def encryption_system
+          @controller.encryption.method || @controller.encryption.type
         end
       end
     end

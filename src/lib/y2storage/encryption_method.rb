@@ -19,6 +19,7 @@
 
 require "y2storage/encryption_processes/luks1"
 require "y2storage/encryption_processes/swap"
+require "y2storage/encryption_processes/pervasive"
 
 module Y2Storage
   # YaST provides different Encryption Methods to encrypt a block device. Not to be confused with the
@@ -34,6 +35,7 @@ module Y2Storage
   # @example
   #
   #   method = EncryptionMethod.all.first
+  #   method = EncryptionMethod.available.first
   #   method = EncryptionMethod.find(:luks1)
   #   method = EncryptionMethod.find(:random_swap)
   #   method = EncryptionMethod.new #=> error, private method
@@ -58,11 +60,14 @@ module Y2Storage
     LUKS1 = new(
       :luks1, N_("Regular LUKS1"), EncryptionProcesses::Luks1
     )
+    PERVASIVE_LUKS2 = new(
+      :pervasive_luks2, N_("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive
+    )
     RANDOM_SWAP = new(
       :random_swap, N_("Random Swap"), EncryptionProcesses::Swap
     )
 
-    ALL = [LUKS1, RANDOM_SWAP].freeze
+    ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP].freeze
     private_constant :ALL
 
     class << self
@@ -75,6 +80,13 @@ module Y2Storage
       # @return [Array<Y2Storage::EncryptionMethod>]
       def all
         ALL.dup
+      end
+
+      # Sorted list of all encryption methods that can be used in this system
+      #
+      # @return [Array<Y2Storage::EncryptionMethod>]
+      def available
+        all.select(&:available?)
       end
 
       # Looks for the encryption method used for the given encryption device
@@ -130,6 +142,23 @@ module Y2Storage
     # @return [Boolean]
     def used_for?(encryption)
       process_class.used_for?(encryption)
+    end
+
+    # Whether the encryption method can be used in this system
+    #
+    # @return [Boolean]
+    def available?
+      process_class.available?
+    end
+
+    # Whether the encryption method is useful only for swap
+    #
+    # Some encryption methods are mainly useful for encrypting swap disks since they produce a new key
+    # on every boot cycle.
+    #
+    # @return [Boolean]
+    def only_for_swap?
+      process_class.only_for_swap?
     end
 
     # Creates an encryption device for the given block device

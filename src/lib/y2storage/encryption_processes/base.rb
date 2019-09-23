@@ -39,6 +39,24 @@ module Y2Storage
         false
       end
 
+      # Whether the process can be executed in the current system
+      #
+      # @see EncryptionMethod#available?
+      #
+      # @return [Boolean]
+      def self.available?
+        true
+      end
+
+      # Whether the process is mainly useful for swap disks
+      #
+      # @see EncryptionMethod#only_for_swap?
+      #
+      # @return [Boolean]
+      def self.only_for_swap?
+        false
+      end
+
       # Constructor
       #
       # @param method [Y2Storage::EncryptionMethod]
@@ -65,6 +83,18 @@ module Y2Storage
       #
       # @return [Y2Storage::EncryptionType]
       abstract_method :encryption_type
+
+      # Executes the actions that must be performed right before the devicegraph is
+      # committed to the system
+      #
+      # @param _device [Encryption]
+      def pre_commit(_device); end
+
+      # Executes the actions that must be performed after the devicegraph has
+      # been committed to the system
+      #
+      # @param _device [Encryption]
+      def post_commit(_device); end
     end
   end
 end
