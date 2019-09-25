@@ -84,11 +84,7 @@ module Y2Storage
         #
         # @return [Array<String>]
         def crypt_options
-          options = [swap_option]
-          options << cipher_option if cipher?
-          options << key_size_option if key_size?
-
-          options
+          [swap_option, cipher_option, key_size_option].compact
         end
 
         # Wheter a specific cipher is used
@@ -145,7 +141,7 @@ module Y2Storage
         # @param crypt_options [Array<String>]
         # @return [Boolean]
         def contain_swap_option?(crypt_options)
-          crypt_options.any? { |o| o.downcase == swap_option }
+          crypt_options.any? { |o| o.casecmp?(swap_option) }
         end
 
         # Whether the given encryption device is using the key file for this process
