@@ -391,17 +391,29 @@ module Y2Partitioner
           filesystem.setup_default_btrfs_subvolumes if filesystem.supports_btrfs_subvolumes?
         end
 
-        # Adds missing devices to the filesystem when the original filesystem was a multi-device Btrfs
+        # Adds missing devices to the filesystem when the original filesystem was multidevice
         #
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
         def add_filesystem_devices(filesystem)
           original_filesystem = original_filesystem(filesystem)
 
-          return unless original_filesystem&.multidevice?
+          return unless add_devices?(filesystem)
 
           devices = original_filesystem.blk_devices.map { |d| current_graph.find_device(d.sid) }.compact
 
           devices.each { |d| add_filesystem_device(filesystem, d) }
+        end
+
+        # Whether more devices should be added to a multi-device filesystem
+        #
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
+        def add_devices?(filesystem)
+          original_filesystem = original_filesystem(filesystem)
+
+          return unless original_filesystem&.multidevice?
+
+          # FIXME: check the UUID instead
+          filesystem.type == original_filesystem&.type
         end
 
         # Adds a device to the filesystem
@@ -409,6 +421,7 @@ module Y2Partitioner
         # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
         # @param device [Y2Storage::BlkDevice]
         def add_filesystem_device(filesystem, device)
+          return unless filesystem.respond_to?(:add_device)
           return if filesystem.blk_devices.map(&:sid).include?(device.sid)
 
           filesystem.add_device(device)
