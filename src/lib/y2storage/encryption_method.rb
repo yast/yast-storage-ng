@@ -18,8 +18,10 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/encryption_processes/luks1"
-require "y2storage/encryption_processes/swap"
 require "y2storage/encryption_processes/pervasive"
+require "y2storage/encryption_processes/random_swap"
+require "y2storage/encryption_processes/protected_swap"
+require "y2storage/encryption_processes/secure_swap"
 
 module Y2Storage
   # YaST provides different Encryption Methods to encrypt a block device. Not to be confused with the
@@ -60,14 +62,24 @@ module Y2Storage
     LUKS1 = new(
       :luks1, N_("Regular LUKS1"), EncryptionProcesses::Luks1
     )
+
     PERVASIVE_LUKS2 = new(
       :pervasive_luks2, N_("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive
     )
+
     RANDOM_SWAP = new(
-      :random_swap, N_("Random Swap"), EncryptionProcesses::Swap
+      :random_swap, N_("Random Swap"), EncryptionProcesses::RandomSwap
     )
 
-    ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP].freeze
+    PROTECTED_SWAP = new(
+      :protected_swap, N_("Protected Swap"), EncryptionProcesses::ProtectedSwap
+    )
+
+    SECURE_SWAP = new(
+      :secure_swap, N_("Secure Swap"), EncryptionProcesses::SecureSwap
+    )
+
+    ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP].freeze
     private_constant :ALL
 
     class << self
@@ -95,6 +107,14 @@ module Y2Storage
       # @return [Y2Storage::EncryptionMethod, nil]
       def for_device(encryption)
         all.find { |m| m.used_for?(encryption) }
+      end
+
+      # Looks for the encryption method used for the given crypttab entry
+      #
+      # @param entry [Y2Storage::SimpleEtcCrypttabEntry]
+      # @return [Y2Storage::EncryptionMethod, nil]
+      def for_crypttab(entry)
+        all.find { |m| m.used_for_crypttab?(entry) }
       end
 
       # Looks for the encryption method by its symbol representation
@@ -142,6 +162,14 @@ module Y2Storage
     # @return [Boolean]
     def used_for?(encryption)
       process_class.used_for?(encryption)
+    end
+
+    # Whether the encryption method was used for the given crypttab entry
+    #
+    # @param entry [Y2Storage::SimpleEtcCrypttabEntry]
+    # @return [Boolean]
+    def used_for_crypttab?(entry)
+      process_class.used_for_crypttab?(entry)
     end
 
     # Whether the encryption method can be used in this system

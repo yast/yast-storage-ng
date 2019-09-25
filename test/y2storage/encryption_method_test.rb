@@ -24,12 +24,24 @@ require "y2storage/encryption_method"
 
 describe Y2Storage::EncryptionMethod do
   describe ".all" do
-    it "returns a method for Luks1" do
+    it "contains a method for Luks1" do
       expect(described_class.all.map(&:to_sym)).to include(:luks1)
     end
 
-    it "returns a method for a random swap" do
+    it "contains a method for pervasive Luks2" do
+      expect(described_class.all.map(&:to_sym)).to include(:pervasive_luks2)
+    end
+
+    it "contains a method for random swap" do
       expect(described_class.all.map(&:to_sym)).to include(:random_swap)
+    end
+
+    it "contains a method for protected swap" do
+      expect(described_class.all.map(&:to_sym)).to include(:protected_swap)
+    end
+
+    it "contains a method for secure swap" do
+      expect(described_class.all.map(&:to_sym)).to include(:secure_swap)
     end
   end
 
@@ -42,6 +54,8 @@ describe Y2Storage::EncryptionMethod do
       allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, "--verbose", stdout: :capture)
         .and_return lszcrypt
     end
+
+    let(:lszcrypt) { nil }
 
     context "if there are online Crypto Express CCA coprocessors" do
       let(:lszcrypt) { lszcrypt_output("ok") }
@@ -83,6 +97,46 @@ describe Y2Storage::EncryptionMethod do
           .to contain_exactly(:luks1, :random_swap)
       end
     end
+
+    context "if protected swap is available" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::ProtectedSwap).to receive(:available?).and_return(true)
+      end
+
+      it "includes protected swap method" do
+        expect(described_class.available.map(&:to_sym)).to include(:protected_swap)
+      end
+    end
+
+    context "if protected swap is not available" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::ProtectedSwap).to receive(:available?).and_return(false)
+      end
+
+      it "does not include protected swap method" do
+        expect(described_class.available.map(&:to_sym)).to_not include(:protected_swap)
+      end
+    end
+
+    context "if secure swap is available" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::SecureSwap).to receive(:available?).and_return(true)
+      end
+
+      it "includes secure swap method" do
+        expect(described_class.available.map(&:to_sym)).to include(:secure_swap)
+      end
+    end
+
+    context "if secure swap is not available" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::SecureSwap).to receive(:available?).and_return(false)
+      end
+
+      it "does not include secure swap method" do
+        expect(described_class.available.map(&:to_sym)).to_not include(:secure_swap)
+      end
+    end
   end
 
   describe ".find" do
@@ -112,37 +166,67 @@ describe Y2Storage::EncryptionMethod do
     end
 
     let(:scenario) { "mixed_disks.yml" }
+
     let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
     let(:device_name) { "/dev/sda1" }
+
     let(:device) { devicegraph.find_by_name(device_name) }
 
-    let(:encryption_method) { described_class.find(method) }
-    let(:encryption) { encryption_method.create_device(device, "cr_dev") }
+    subject { described_class.find(method) }
 
     context "when using :luks1 method" do
       let(:method) { :luks1 }
 
-      it "creates an encryption device for the given block device" do
-        expect(encryption).to be_a Y2Storage::Encryption
-        expect(encryption.blk_device).to eq(device)
+      it "returns an encryption device" do
+        result = subject.create_device(device, "cr_dev")
+
+        expect(result.is?(:encryption)).to eq(true)
       end
 
-      it "uses a LUKS1 encryption type" do
-        expect(encryption.type).to be Y2Storage::EncryptionType::LUKS1
+      it "encrypts the given device with LUKS1 encryption" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev")
+
+        expect(device.encrypted?).to eq(true)
+        expect(device.encryption.type.is?(:luks1)).to eq(true)
+      end
+    end
+
+    shared_examples "swap methods" do
+      it "returns an encryption device" do
+        result = subject.create_device(device, "cr_dev")
+
+        expect(result.is?(:encryption)).to eq(true)
+      end
+
+      it "encrypts the given device with plain encryption" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev")
+
+        expect(device.encrypted?).to eq(true)
+        expect(device.encryption.type.is?(:plain)).to eq(true)
       end
     end
 
     context "when using :random_swap method" do
       let(:method) { :random_swap }
 
-      it "creates an encryption device for the given block device" do
-        expect(encryption).to be_a Y2Storage::Encryption
-        expect(encryption.blk_device).to eq(device)
-      end
+      include_examples "swap methods"
+    end
 
-      it "uses a plain encryption type" do
-        expect(encryption.type).to be Y2Storage::EncryptionType::PLAIN
-      end
+    context "when using :protected_swap method" do
+      let(:method) { :protected_swap }
+
+      include_examples "swap methods"
+    end
+
+    context "when using :secure_swap method" do
+      let(:method) { :secure_swap }
+
+      include_examples "swap methods"
     end
   end
 
@@ -202,7 +286,7 @@ describe Y2Storage::EncryptionMethod do
       let(:scenario) { "encrypted_partition.xml" }
       let(:device_name) { "/dev/mapper/cr_sda1" }
 
-      it "returns the LUKS1 encryption method" do
+      it "returns :luks1 encryption method" do
         encryption_method = described_class.for_device(device)
 
         expect(encryption_method).to be_a Y2Storage::EncryptionMethod
@@ -210,15 +294,129 @@ describe Y2Storage::EncryptionMethod do
       end
     end
 
-    context "when the given encryption device is a random swap" do
+    context "when the given encryption device is a plain encrypted swap with random key" do
       let(:scenario) { "encrypted_random_swap.xml" }
+
       let(:device_name) { "/dev/mapper/cr_vda3" }
 
-      it "returns the RANDOM_SWAP encryption method" do
+      it "returns :random_swap encryption method" do
         encryption_method = described_class.for_device(device)
 
         expect(encryption_method).to be_a Y2Storage::EncryptionMethod
         expect(encryption_method.to_sym).to eq(:random_swap)
+      end
+    end
+
+    context "when the given encryption device is a plain encrypted swap with protected key" do
+      let(:scenario) { "encrypted_random_swap.xml" }
+
+      let(:device_name) { "/dev/mapper/cr_vda3" }
+
+      before do
+        device.key_file = "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts"
+      end
+
+      it "returns :protected_swap encryption method" do
+        encryption_method = described_class.for_device(device)
+
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method.to_sym).to eq(:protected_swap)
+      end
+    end
+
+    context "when the given encryption device is a plain encrypted swap with secure key" do
+      let(:scenario) { "encrypted_random_swap.xml" }
+
+      let(:device_name) { "/dev/mapper/cr_vda3" }
+
+      before do
+        device.key_file = "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts"
+      end
+
+      it "returns :secure_swap encryption method" do
+        encryption_method = described_class.for_device(device)
+
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method.to_sym).to eq(:secure_swap)
+      end
+    end
+
+    context "when the encryption method cannot be identified" do
+      let(:scenario) { "encrypted_random_swap.xml" }
+
+      let(:device_name) { "/dev/mapper/cr_vda3" }
+
+      before do
+        device.key_file = "unknown/key/file"
+      end
+
+      it "returns nil" do
+        expect(described_class.for_device(device)).to be_nil
+      end
+    end
+  end
+
+  describe ".for_crypttab" do
+    let(:entry) do
+      instance_double(
+        Y2Storage::SimpleEtcCrypttabEntry, password: password, crypt_options: crypt_options
+      )
+    end
+
+    let(:password) { "" }
+
+    let(:crypt_options) { [] }
+
+    context "when the given crypttab entry does not contain 'swap' option" do
+      let(:crypt_options) { ["other", "options"] }
+
+      it "returns nil" do
+        expect(described_class.for_crypttab(entry)).to be_nil
+      end
+    end
+
+    context "when the given crypttab entry contains 'swap' option" do
+      let(:crypt_options) { ["with", "SWAP"] }
+
+      context "and it indicates the proper key file for random keys" do
+        let(:password) { "/dev/urandom" }
+
+        it "returns :random_swap encryption method" do
+          encryption_method = described_class.for_crypttab(entry)
+
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method.to_sym).to eq(:random_swap)
+        end
+      end
+
+      context "and it indicates the proper key file for protected keys" do
+        let(:password) { "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts" }
+
+        it "returns :protected_swap encryption method" do
+          encryption_method = described_class.for_crypttab(entry)
+
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method.to_sym).to eq(:protected_swap)
+        end
+      end
+
+      context "and it indicates the proper key file for secure keys" do
+        let(:password) { "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts" }
+
+        it "returns :secure_swap encryption method" do
+          encryption_method = described_class.for_crypttab(entry)
+
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method.to_sym).to eq(:secure_swap)
+        end
+      end
+
+      context "and it indicates another key file" do
+        let(:password) { "/other/key_file" }
+
+        it "returns nil" do
+          expect(described_class.for_crypttab(entry)).to be_nil
+        end
       end
     end
   end
