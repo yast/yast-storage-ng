@@ -322,14 +322,61 @@ module Y2Storage
 
         return unless device
 
-        if device.encrypted?
-          device.encryption.crypttab_name = entry.name
-        elsif entry.swap?
-          # Right now, a plain encryption device is created for swap only. Moreover, random password
-          # (urandom) is always considered, even when the crypttab file indicates another key file.
+        if create_swap_encryption_for_entry?(device, entry)
           device.remove_descendants
-          device.encrypt(dm_name: entry.name, method: :random_swap)
+          device.encrypt(dm_name: entry.name, method: encryption_method_for_entry(entry))
+        elsif device.encrypted?
+          device.encryption.crypttab_name = entry.name
         end
+      end
+
+      # Whether the encrytion layer should be created for a swap device according to the given crypttab
+      # entry
+      #
+      # @param device [BlkDevice]
+      # @param entry [SimpleEtcCrypttabEntry]
+      #
+      # @return [Boolean]
+      def create_swap_encryption_for_entry?(device, entry)
+        encryption_method = encryption_method_for_entry(entry)
+
+        return false unless encryption_method_for_swap?(encryption_method)
+
+        encrypt_with_encryption_method?(device, encryption_method)
+      end
+
+      # Whether the given encryption method corresponds to a swap related encryption method
+      #
+      # @param encryption_method [EncryptionMethod]
+      #
+      # @return [Boolean]
+      def encryption_method_for_swap?(encryption_method)
+        return false unless encryption_method
+
+        encryption_method.only_for_swap?
+      end
+
+      # Whether the given encryption method can be used to encrypt the given device
+      #
+      # The encryption method can be used when the device is not encrypted yet with the given encryption
+      # method.
+      #
+      # @param device [BlkDevice]
+      # @param encryption_method [EncryptionMethod]
+      #
+      # @return [Boolean]
+      def encrypt_with_encryption_method?(device, encryption_method)
+        return true unless device.encrypted?
+
+        !device.encryption.method.is?(encryption_method)
+      end
+
+      # Encryption method used for the given crypttab entry
+      #
+      # @param entry [SimpleEtcCrypttabEntry]
+      # @return [EncryptionMethod, nil] nil if encryption method cannot be inferred
+      def encryption_method_for_entry(entry)
+        EncryptionMethod.for_crypttab(entry)
       end
 
       # Checks whether a given DeviceMapper table name is already in use by some

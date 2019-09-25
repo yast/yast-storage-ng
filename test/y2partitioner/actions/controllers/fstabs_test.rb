@@ -608,7 +608,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       end
     end
 
-    context "when the fstab contains a swap encrypted with random password" do
+    context "when the fstab contains a not found encrypted swap" do
       let(:scenario) { "empty_disks" }
 
       before do
@@ -637,18 +637,46 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:crypttab_entries) do
         [
-          crypttab_entry("cswap", "/dev/sda1", "/dev/urandom", ["swap"])
+          crypttab_entry("cswap", "/dev/sda1", key_file, ["swap"])
         ]
       end
 
-      it "creates an encrypted swap with random password" do
-        subject.import_mount_points
+      shared_examples "an encrypted swap" do |method|
+        it "creates an encrypted swap with #{method} method" do
+          subject.import_mount_points
 
-        sda1 = current_graph.find_by_name("/dev/sda1")
+          sda1 = current_graph.find_by_name("/dev/sda1")
 
-        expect(sda1.encrypted?).to eq(true)
-        expect(sda1.encryption.method.is?(:random_swap)).to eq(true)
-        expect(sda1.encryption.basename).to eq("cswap")
+          expect(sda1.encrypted?).to eq(true)
+          expect(sda1.encryption.method.is?(method)).to eq(true)
+        end
+
+        it "imports mount point and mount options for the encrypted swap" do
+          subject.import_mount_points
+
+          filesystem = current_graph.find_by_name("/dev/sda1").encryption.filesystem
+
+          expect(filesystem.mount_path).to eq("swap")
+          expect(filesystem.mount_options).to eq(["sw"])
+        end
+      end
+
+      context "and that swap was encrypted with random swap method" do
+        let(:key_file) { "/dev/urandom" }
+
+        include_examples "an encrypted swap", :random_swap
+      end
+
+      context "and that swap was encrypted with protected swap method" do
+        let(:key_file) { "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts" }
+
+        include_examples "an encrypted swap", :protected_swap
+      end
+
+      context "and that swap was encrypted with secure swap method" do
+        let(:key_file) { "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts" }
+
+        include_examples "an encrypted swap", :secure_swap
       end
     end
 

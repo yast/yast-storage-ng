@@ -66,25 +66,90 @@ describe Y2Storage::Encryption do
       end
     end
 
+    shared_examples "swap encryption" do |encryption_method|
+      it "encrypts the device with #{encryption_method} method" do
+        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+        expect(device.encryption.method.to_sym).to eq(encryption_method)
+      end
+
+      it "uses the crypttab name for the new encrytion device" do
+        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+        expect(device.encryption.basename).to eq("luks1")
+      end
+    end
+
+    shared_examples "swap encryption methods" do
+      context "and the crypttab entry matches the random swap encryption method" do
+        let(:encryption_method) { Y2Storage::EncryptionMethod.find(:random_swap) }
+
+        include_examples "swap encryption", :random_swap
+      end
+
+      context "and the crypttab entry matches the protected swap encryption method" do
+        let(:encryption_method) { Y2Storage::EncryptionMethod.find(:protected_swap) }
+
+        include_examples "swap encryption", :protected_swap
+      end
+
+      context "and the crypttab entry matches the secure swap encryption method" do
+        let(:encryption_method) { Y2Storage::EncryptionMethod.find(:secure_swap) }
+
+        include_examples "swap encryption", :secure_swap
+      end
+    end
+
     context "when the device indicated in a crypttab entry is currently encrypted" do
       let(:device_name) { "/dev/sda4" }
 
-      it "saves the crypttab name on the encryption device" do
-        expect(device.encryption.crypttab_name).to be_nil
-
-        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
-
-        expect(device.encryption.crypttab_name).to eq("luks1")
+      before do
+        allow(Y2Storage::EncryptionMethod).to receive(:for_crypttab).and_return(encryption_method)
       end
+
+      context "and the crypttab entry does not match an encryption method for swap" do
+        let(:encryption_method) { nil }
+
+        it "saves the crypttab name on the encryption device" do
+          encryption_before = device.encryption
+
+          expect(device.encryption.crypttab_name).to be_nil
+
+          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+          expect(device.encryption.sid).to eq(encryption_before.sid)
+          expect(device.encryption.crypttab_name).to eq("luks1")
+        end
+      end
+
+      include_examples "swap encryption methods"
     end
 
     context "when the device indicated in a crypttab entry is not currently encrypted" do
       let(:device_name) { "/dev/sda1" }
 
-      it "does not fail" do
-        expect { described_class.save_crypttab_names(devicegraph, "path_to_crypttab") }
-          .to_not raise_error
+      before do
+        allow(Y2Storage::EncryptionMethod).to receive(:for_crypttab).and_return(encryption_method)
       end
+
+      context "and the crypttab entry matches none encryption method for swap" do
+        let(:encryption_method) { nil }
+
+        it "does not encrypt the device" do
+          expect(device.encrypted?).to eq(false)
+
+          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
+
+          expect(device.encrypted?).to eq(false)
+        end
+
+        it "does not fail" do
+          expect { described_class.save_crypttab_names(devicegraph, "path_to_crypttab") }
+            .to_not raise_error
+        end
+      end
+
+      include_examples "swap encryption methods"
     end
 
     context "when the device indicated in a crypttab entry is not found" do
@@ -108,48 +173,6 @@ describe Y2Storage::Encryption do
         described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
 
         expect(device.encryption.crypttab_name).to be_nil
-      end
-    end
-
-    context "when the crypttab entry contains a swap with plain encryption" do
-      let(:device_name) { "/dev/sda1" }
-
-      let(:crypttab_entries) do
-        [
-          crypttab_entry("cswap", device_name, key_file, ["swap"])
-        ]
-      end
-
-      let(:key_file) { "/dev/urandom" }
-
-      it "creates a plain encryption device with the crypttab name" do
-        expect(device.encrypted?).to eq(false)
-
-        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
-
-        expect(device.encrypted?).to eq(true)
-        expect(device.encryption.method.is?(:random_swap)).to eq(true)
-        expect(device.encryption.basename).to eq("cswap")
-      end
-
-      context "and key file is '/dev/urandom'" do
-        let(:key_file) { "/dev/urandom" }
-
-        it "creates a plain encryption with random password" do
-          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
-
-          expect(device.encryption.key_file).to eq("/dev/urandom")
-        end
-      end
-
-      context "and key file is not '/dev/urandom'" do
-        let(:key_file) { "path/to/my/key_file" }
-
-        it "creates a plain encryption with random password" do
-          described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
-
-          expect(device.encryption.key_file).to eq("/dev/urandom")
-        end
       end
     end
   end
