@@ -68,15 +68,15 @@ module Y2Storage
     )
 
     RANDOM_SWAP = new(
-      :random_swap, N_("Random Swap"), EncryptionProcesses::RandomSwap
+      :random_swap, N_("Volatile Encryption with Random Key"), EncryptionProcesses::RandomSwap
     )
 
     PROTECTED_SWAP = new(
-      :protected_swap, N_("Protected Swap"), EncryptionProcesses::ProtectedSwap
+      :protected_swap, N_("Volatile Encryption with Protected Key"), EncryptionProcesses::ProtectedSwap
     )
 
     SECURE_SWAP = new(
-      :secure_swap, N_("Secure Swap"), EncryptionProcesses::SecureSwap
+      :secure_swap, N_("Volatile Encryption with Secure Key"), EncryptionProcesses::SecureSwap
     )
 
     ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP].freeze
