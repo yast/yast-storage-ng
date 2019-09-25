@@ -139,11 +139,44 @@ module Y2Partitioner
         texts.join
       end
 
+      # Help text for the Regular Luks1 encryption method
+      #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
+      # @return [String]
+      def help_for_luks1(encrypt_method)
+        format(
+          # TRANSLATORS: help text for Regular Luks1 encryption method
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS1 " \
+            "(Linux Unified Key Setup). You have to provide the encryption password.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
+      # Help text for the Pervasive encryption method
+      #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
+      # @return [String]
+      def help_for_pervasive_luks2(encrypt_method)
+        format(
+          # TRANSLATORS: Pervasive encryption terminology. For the English version see
+          # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_crypt.html
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 with a master secure key " \
+            "processed by a Crypto Express cryptographic coprocessor configured in CCA mode.</p>" \
+           "<p>If the cryptographic system already contains a secure key associated to this " \
+           "volume, that key will be used. Otherwise, a new secure key will be generated and " \
+           "registered in the system. You need to provide an encryption password that will be " \
+           "used to protect the access to that master key.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
       # Help text for the Random Swap encryption method
       #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
       # @return [String]
       def help_for_random_swap(encrypt_method)
         format(
+          # TRANSLATORS: help text for Random Swap encryption method.
           _("<p><b>%{label}</b>: this encryption method uses randomly generated keys at boot and it " \
             "will not support Hibernation to hard disk. The swap device is re-encrypted during every " \
             "boot, and its previous content is destroyed. You should disable Hibernation through your " \
@@ -159,30 +192,36 @@ module Y2Partitioner
         )
       end
 
-      # Help text for the Regular Luks1 encryption method
+      # Help text for the Protected Swap encryption method
       #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
       # @return [String]
-      def help_for_luks1(encrypt_method)
-        format(
-          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS1 " \
-            "(Linux Unified Key Setup). You have to provide the encryption password.</p>"),
-          label: encrypt_method.to_human_string
-        )
+      def help_for_protected_swap(encrypt_method)
+        help_for_s390_swap_method(encrypt_method)
       end
 
-      # Help text for the  encryption method
+      # Help text for the Secure Swap encryption method
       #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
       # @return [String]
-      def help_for_pervasive_luks2(encrypt_method)
+      def help_for_secure_swap(encrypt_method)
+        help_for_s390_swap_method(encrypt_method)
+      end
+
+      # Help text for s390 specific swap encryption methods (i.e., protected and secure swap)
+      #
+      # @param encrypt_method [Y2Storage::EncryptionMethod]
+      # @return [String]
+      def help_for_s390_swap_method(encrypt_method)
         format(
-          # TRANSLATORS: Pervasive encryption terminology. For the English version see
-          # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_crypt.html
-          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 with a master secure key " \
-            "processed by a Crypto Express cryptographic coprocessor configured in CCA mode.</p>" \
-           "<p>If the cryptographic system already contains a secure key associated to this " \
-           "volume, that key will be used. Otherwise, a new secure key will be generated and " \
-           "registered in the system. You need to provide an encryption password that will be " \
-           "used to protect the access to that master key.</p>"),
+          # TRANSLATORS: Protected/Secure encryption terminology. For the English version see
+          # https://www.ibm.com/support/knowledgecenter/en/linuxonibm/com.ibm.linux.z.lxdc/
+          # lxdc_swapdisks_scenario.html
+          _("<p><b>%{label}</b>: the key for %{label} is volatile and cannot be recreated if lost, " \
+            "for example during a reboot. Do not use keys that are generated from random data to " \
+            "encrypt persistent data. Use %{label} only to protect transient data. Especially, KVM " \
+            "guest migration, z/VM live guest relocation in a single system image (SSI), or suspend " \
+            "or resume actions are not supported with such randomly generated keys.</p>"),
           label: encrypt_method.to_human_string
         )
       end

@@ -55,19 +55,19 @@ module Y2Partitioner
       # given encryption method
       def options_for(encrypt_method)
         case encrypt_method.to_sym
-        when :random_swap
-          RandomOptions.new(controller)
+        when :random_swap, :protected_swap, :secure_swap
+          SwapOptions.new(controller)
         when :luks1, :pervasive_luks2
           LuksOptions.new(controller)
         end
       end
     end
 
-    # Internal widget to display the options for random swap encryption
+    # Internal widget to display the options for a swap encryption method
     #
     # Since there is no available options yet, it is being used just to display
     # a warning message to the user.
-    class RandomOptions < CWM::CustomWidget
+    class SwapOptions < CWM::CustomWidget
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]
@@ -81,8 +81,8 @@ module Y2Partitioner
           Left(
             Label(
               _("Be careful: the system cannot hibernate when\n" \
-                "encrypting swap with random password. Please, \n" \
-                "read Help for more information.")
+                "encrypting swap with randomly generated keys. \n" \
+                "Please, read Help for more information.")
             )
           )
         )
