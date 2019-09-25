@@ -27,7 +27,7 @@ describe Y2Storage::EncryptionProcesses::ProtectedSwap do
 
   let(:method) { instance_double(Y2Storage::EncryptionMethod) }
 
-  let(:protected_key_file) { "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts" }
+  let(:protected_key_file) { described_class.key_file }
 
   describe ".available?" do
     before do

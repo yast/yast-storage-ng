@@ -29,46 +29,29 @@ module Y2Storage
     # {RandomSwap}), but IBM offers other mechanisms for z Systems (see {ProtectedSwap} and {SecureSwap}
     # processes).
     class Swap < Base
-      # @see Base.available?
-      def self.available?
-        File.exist?(key_file)
-      end
-
-      # @see Base.only_for_swap?
-      def self.only_for_swap?
-        true
-      end
-
-      # @see Base.used_for?
-      def self.used_for?(encryption)
-        used?(encryption.key_file, encryption.crypt_options)
-      end
-
-      # @see Base.used_for_crypttab?
-      def self.used_for_crypttab?(entry)
-        used?(entry.password, entry.crypt_options)
-      end
-
-      # @see Base#create_device
-      def create_device(blk_device, dm_name)
-        enc = super
-        enc.key_file = key_file
-        enc.crypt_options = crypt_options + enc.crypt_options
-        enc
-      end
-
-      # @see Base#encryption_type
-      def encryption_type
-        EncryptionType::PLAIN
-      end
-
-      private
-
       SWAP_OPTION = "swap".freeze
       private_constant :SWAP_OPTION
 
       class << self
-        private
+        # @see Base.available?
+        def available?
+          File.exist?(key_file)
+        end
+
+        # @see Base.only_for_swap?
+        def only_for_swap?
+          true
+        end
+
+        # @see Base.used_for?
+        def used_for?(encryption)
+          used?(encryption.key_file, encryption.crypt_options)
+        end
+
+        # @see Base.used_for_crypttab?
+        def used_for_crypttab?(entry)
+          used?(entry.password, entry.crypt_options)
+        end
 
         # Encryption key file
         #
@@ -122,6 +105,8 @@ module Y2Storage
           !key_size.nil?
         end
 
+        private
+
         # Swap option for the crypttab file
         #
         # @return [String]
@@ -168,18 +153,31 @@ module Y2Storage
         # @param key_file [String]
         # @return [Boolean]
         def use_key_file?(key_file)
-          key_file == send(:key_file)
+          key_file == self.key_file
         end
+      end
+
+      # @see Base#create_device
+      def create_device(blk_device, dm_name)
+        enc = super
+        enc.key_file = key_file
+        enc.crypt_options = crypt_options + enc.crypt_options
+        enc
+      end
+
+      # @see Base#encryption_type
+      def encryption_type
+        EncryptionType::PLAIN
       end
 
       # @see Swap.key_file
       def key_file
-        self.class.send(:key_file)
+        self.class.key_file
       end
 
       # @see Swap.crypt_options
       def crypt_options
-        self.class.send(:crypt_options)
+        self.class.crypt_options
       end
     end
   end

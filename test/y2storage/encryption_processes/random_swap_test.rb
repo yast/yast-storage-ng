@@ -27,7 +27,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
 
   let(:method) { instance_double(Y2Storage::EncryptionMethod) }
 
-  let(:random_key_file) { "/dev/urandom" }
+  let(:random_key_file) { described_class.key_file }
 
   describe ".available?" do
     before do

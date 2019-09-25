@@ -27,7 +27,7 @@ describe Y2Storage::EncryptionProcesses::SecureSwap do
 
   let(:method) { instance_double(Y2Storage::EncryptionMethod) }
 
-  let(:secure_key_file) { "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts" }
+  let(:secure_key_file) { described_class.key_file }
 
   describe ".available?" do
     before do

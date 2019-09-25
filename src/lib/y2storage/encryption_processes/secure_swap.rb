@@ -33,8 +33,6 @@ module Y2Storage
       private_constant :KEY_SIZE
 
       class << self
-        private
-
         # @see Swap.key_file
         def key_file
           KEY_FILE
