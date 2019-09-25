@@ -201,7 +201,7 @@ module Y2Storage
     #
     # But that encryption device could be probed with a name like /dev/mapper/cr-auto-1. In that
     # case, the device could not be found in the devicegraph when searching for the device name in the
-    # fstab entry. But, if the crypttab file was previously parsed (see Encryption#save_crypttab_names),
+    # fstab entry. But, if the crypttab file was previously parsed (see Crypttab#save_encryption_names),
     # the Encryption devices are populated in the devicegraph with their corresponding name indicated
     # in the crypttab. This information can be used to try possible alternative names for the encryption
     # device. For example, when the devicegraph contains a Encryption layer /dev/mapper/cr-auto-1 over

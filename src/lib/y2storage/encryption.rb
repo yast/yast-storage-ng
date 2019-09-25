@@ -19,7 +19,6 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
-require "y2storage/crypttab"
 require "y2storage/encryption_method"
 
 module Y2Storage
@@ -289,95 +288,7 @@ module Y2Storage
         end
       end
 
-      # Saves encryption names indicated in a crypttab file
-      #
-      # For each entry in the crypttab file, it finds the corresponding device and updates
-      # its crypttab name with the value indicated in its crypttab entry. The device is
-      # not modified at all if it is not encrypted.
-      #
-      # @param devicegraph [Devicegraph]
-      # @param crypttab [Crypttab, String] Crypttab object or path to a crypttab file
-      def save_crypttab_names(devicegraph, crypttab)
-        crypttab = Crypttab.new(crypttab) if crypttab.is_a?(String)
-
-        crypttab.entries.each { |e| save_crypttab_name(devicegraph, e) }
-      end
-
       private
-
-      # Saves the crypttab name according to the value indicated in a crypttab entry
-      #
-      # Generally, when a crypttab entry points to a luks device, the encryption layer is probed. But in
-      # case of plain encrypted devices, the encryption layer could not exist in the probed devicegraph.
-      # Note that no headers are written into the device when using plain encryption. And, for this
-      # reason, plain encryption devices are only probed for the root filesystem by parsing its crypttab.
-      #
-      # Due to plain encryption devices could be not probed, this method creates the plain encryption
-      # layer to be able to save the encryption name indicated in the crypttab entry.
-      #
-      # @param devicegraph [Devicegraph]
-      # @param entry [SimpleEtcCrypttabEntry]
-      def save_crypttab_name(devicegraph, entry)
-        device = entry.find_device(devicegraph)
-
-        return unless device
-
-        if create_swap_encryption_for_entry?(device, entry)
-          device.remove_descendants
-          device.encrypt(dm_name: entry.name, method: encryption_method_for_entry(entry))
-        elsif device.encrypted?
-          device.encryption.crypttab_name = entry.name
-        end
-      end
-
-      # Whether the encrytion layer should be created for a swap device according to the given crypttab
-      # entry
-      #
-      # @param device [BlkDevice]
-      # @param entry [SimpleEtcCrypttabEntry]
-      #
-      # @return [Boolean]
-      def create_swap_encryption_for_entry?(device, entry)
-        encryption_method = encryption_method_for_entry(entry)
-
-        return false unless encryption_method_for_swap?(encryption_method)
-
-        encrypt_with_encryption_method?(device, encryption_method)
-      end
-
-      # Whether the given encryption method corresponds to a swap related encryption method
-      #
-      # @param encryption_method [EncryptionMethod]
-      #
-      # @return [Boolean]
-      def encryption_method_for_swap?(encryption_method)
-        return false unless encryption_method
-
-        encryption_method.only_for_swap?
-      end
-
-      # Whether the given encryption method can be used to encrypt the given device
-      #
-      # The encryption method can be used when the device is not encrypted yet with the given encryption
-      # method.
-      #
-      # @param device [BlkDevice]
-      # @param encryption_method [EncryptionMethod]
-      #
-      # @return [Boolean]
-      def encrypt_with_encryption_method?(device, encryption_method)
-        return true unless device.encrypted?
-
-        !device.encryption.method.is?(encryption_method)
-      end
-
-      # Encryption method used for the given crypttab entry
-      #
-      # @param entry [SimpleEtcCrypttabEntry]
-      # @return [EncryptionMethod, nil] nil if encryption method cannot be inferred
-      def encryption_method_for_entry(entry)
-        EncryptionMethod.for_crypttab(entry)
-      end
 
       # Checks whether a given DeviceMapper table name is already in use by some
       # of the devices in the given devicegraph

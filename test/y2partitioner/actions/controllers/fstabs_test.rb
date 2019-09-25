@@ -97,6 +97,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
   let(:scenario) { "mixed_disks.yml" }
 
+  let(:crypttab_path) { File.join(DATA_PATH, "crypttab") }
+
   describe "#fstabs" do
     it "returns the list of fstabs in the system" do
       expect(subject.fstabs).to eq(fstabs)
@@ -203,7 +205,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     let(:crypttabs) { [crypttab] }
 
-    let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+    let(:crypttab) { Y2Storage::Crypttab.new(crypttab_path) }
 
     let(:crypttab_entries) do
       [
@@ -534,8 +536,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:fstab1) { instance_double(Y2Storage::Fstab) }
       let(:fstab2) { instance_double(Y2Storage::Fstab) }
-      let(:crypttab1) { instance_double(Y2Storage::Crypttab) }
-      let(:crypttab2) { instance_double(Y2Storage::Crypttab) }
+      let(:crypttab1) { Y2Storage::Crypttab.new(crypttab_path) }
+      let(:crypttab2) { Y2Storage::Crypttab.new(crypttab_path) }
 
       let(:fstab1_filesystem) { system_graph.find_by_name("/dev/sdb2").filesystem }
       let(:fstab2_filesystem) { system_graph.find_by_name("/dev/sdb3").filesystem }
@@ -617,6 +619,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         allow(crypttab).to receive(:entries).and_return(crypttab_entries)
         allow(crypttab).to receive(:filesystem).and_return(filesystem)
+
+        allow_any_instance_of(Y2Storage::EncryptionMethod).to receive(:available?).and_return(true)
       end
 
       let(:fstabs) { [fstab] }
@@ -625,7 +629,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:fstab) { instance_double(Y2Storage::Fstab) }
 
-      let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+      let(:crypttab) { Y2Storage::Crypttab.new(crypttab_path) }
 
       let(:filesystem) { current_graph.filesystems.first }
 

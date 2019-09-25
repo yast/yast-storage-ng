@@ -454,7 +454,7 @@ module Y2Partitioner
 
           return fixed_devicegraph unless crypttab
 
-          Y2Storage::Encryption.save_crypttab_names(fixed_devicegraph, crypttab)
+          crypttab.save_encryption_names(fixed_devicegraph)
           fixed_devicegraph
         end
 
@@ -473,7 +473,7 @@ module Y2Partitioner
         # devices are only probed for the root filesystem by parsing its crypttab file.
         #
         # A plain encryption device might be created when searching for a device from a fstab entry, see
-        # {Y2Storage::Encryption.save_crypttab_names}.
+        # {Y2Storage::Crypttab.save_encryption_names}.
         #
         # @param device [Y2Storage::Device]
         # @return [Boolean]
