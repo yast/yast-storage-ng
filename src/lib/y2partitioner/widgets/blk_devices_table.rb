@@ -281,8 +281,10 @@ module Y2Partitioner
 
         fs = filesystem(device)
 
-        if fs&.multidevice?
-          btrfs_multidevice_type_label(fs)
+        if device.journal?
+          journal_type_label(fs)
+        elsif fs&.multidevice?
+          multidevice_type_label(fs)
         elsif fs
           formatted_device_type_label(device, fs)
         else
@@ -350,13 +352,30 @@ module Y2Partitioner
         format(_("PV of %s"), vg.basename)
       end
 
-      # Type label when the device belongs to a multidevice Btrfs filesystem
+      # Type label when the device holds a journal
       #
       # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
-      def btrfs_multidevice_type_label(filesystem)
-        # TRANSLATORS: %s is a device base name. E.g., sda1+
-        format(_("Part of Btrfs %s"), filesystem.blk_device_basename)
+      def journal_type_label(filesystem)
+        # TRANSLATORS: %{fs_basename} is the filesystem basename
+        format(
+          _("Journal of %{fs_basename}"),
+          fs_basename: filesystem.basename
+        )
+      end
+
+      # Type label when the device belongs to a multidevice filesystem
+      #
+      # @param filesystem [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def multidevice_type_label(filesystem)
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{blk_device_name} is a device base name. E.g., sda1+
+        format(
+          _("Part of %{fs_name} %{blk_device_name}"),
+          fs_name:         filesystem.type,
+          blk_device_name: filesystem.blk_device_basename
+        )
       end
 
       # Type label when the device is used as caching device in Bcache
