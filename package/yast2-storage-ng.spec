@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# PlainEncyption
-BuildRequires:	libstorage-ng-ruby >= 4.2.4
+# Encryption#open_options
+BuildRequires:	libstorage-ng-ruby >= 4.2.13
 BuildRequires:  update-desktop-files
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
 BuildRequires:  yast2 >= 4.1.11
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# PlainEncyption
-Requires:       libstorage-ng-ruby >= 4.2.4
+# Encryption#open_options
+Requires:       libstorage-ng-ruby >= 4.2.13
 # CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
 Requires:       yast2 >= 4.1.11
 # Y2Packager::Repository
