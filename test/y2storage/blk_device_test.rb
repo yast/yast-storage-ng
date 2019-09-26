@@ -86,6 +86,37 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#journal?" do
+    context "when the device has not a filesystem" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:device_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(device.journal?).to eq(false)
+      end
+    end
+
+    context "when the device has a filesystem" do
+      let(:scenario) { "multidevice-ext4.xml" }
+
+      context "and it holds a journal" do
+        let(:device_name) { "/dev/sdd1" }
+
+        it "returns true" do
+          expect(device.journal?).to eq(true)
+        end
+      end
+
+      context "but it does not hold a journal" do
+        let(:device_name) { "/dev/sda" }
+
+        it "returns false" do
+          expect(device.journal?).to eq(false)
+        end
+      end
+    end
+  end
+
   describe "#delete_filesystem" do
     let(:scenario) { "md-imsm1-devicegraph.xml" }
 
