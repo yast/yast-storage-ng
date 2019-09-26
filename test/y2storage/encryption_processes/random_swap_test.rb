@@ -170,5 +170,11 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
 
       expect(encryption.crypt_options).to contain_exactly("swap")
     end
+
+    it "does not set any specific open option" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to be_empty
+    end
   end
 end

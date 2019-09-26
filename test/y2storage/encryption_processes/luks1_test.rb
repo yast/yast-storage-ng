@@ -60,6 +60,12 @@ describe Y2Storage::EncryptionProcesses::Luks1 do
       devicegraph_stub("empty_hard_disk_50GiB.yml")
     end
 
+    it "returns an encryption device" do
+      encryption = process.create_device(blk_device, dm_name)
+
+      expect(encryption.is?(:encryption)).to eq(true)
+    end
+
     it "creates an luks1 encryption device for given block device" do
       expect(blk_device).to receive(:create_encryption)
         .with(anything, Y2Storage::EncryptionType::LUKS1)
@@ -68,10 +74,16 @@ describe Y2Storage::EncryptionProcesses::Luks1 do
       process.create_device(blk_device, dm_name)
     end
 
-    it "returns an encryption device" do
-      encryption = process.create_device(blk_device, dm_name)
+    it "does not set any specific encryption option" do
+      encryption = subject.create_device(blk_device, dm_name)
 
-      expect(encryption).to be_kind_of(Y2Storage::Encryption)
+      expect(encryption.crypt_options).to be_empty
+    end
+
+    it "does not set any specific open option" do
+      encryption = subject.create_device(blk_device, dm_name)
+
+      expect(encryption.open_options).to be_empty
     end
   end
 end

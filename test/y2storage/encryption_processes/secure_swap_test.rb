@@ -169,16 +169,40 @@ describe Y2Storage::EncryptionProcesses::SecureSwap do
       expect(encryption.crypt_options).to include("swap")
     end
 
-    it "sets the cipher for secure key" do
+    it "sets the cipher encryption option for secure key" do
       encryption = subject.create_device(device, dm_name)
 
       expect(encryption.crypt_options).to include("cipher=paes-xts-plain64")
     end
 
-    it "sets the key size for secure key" do
+    it "sets the size encryption option for secure key" do
       encryption = subject.create_device(device, dm_name)
 
       expect(encryption.crypt_options).to include("size=1024")
+    end
+
+    it "sets the sector-size encyption option for secure key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.crypt_options).to include("sector-size=4096")
+    end
+
+    it "sets the cipher open option for secure key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--cipher 'paes-xts-plain64'")
+    end
+
+    it "sets the key-size open option for secure key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--key-size '1024'")
+    end
+
+    it "sets the sector-size open option for secure key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--sector-size '4096'")
     end
   end
 end

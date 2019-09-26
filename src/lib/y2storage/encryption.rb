@@ -65,6 +65,15 @@ module Y2Storage
     #   @return [Array<String>] options for the encryption
     storage_forward :crypt_options
 
+    # @!attribute open_options
+    #
+    # Extra options for open call. The options are injected as-is to the
+    # command so must be properly quoted.
+    #
+    # @return [String]
+    storage_forward :open_options
+    storage_forward :open_options=
+
     # Sets crypt options
     #
     # @param options [Array<String>]

@@ -32,6 +32,9 @@ module Y2Storage
       KEY_SIZE = "1024".freeze
       private_constant :KEY_SIZE
 
+      SECTOR_SIZE = "4096".freeze
+      private_constant :SECTOR_SIZE
+
       class << self
         # @see Swap.key_file
         def key_file
@@ -46,6 +49,11 @@ module Y2Storage
         # @see Swap.key_size
         def key_size
           KEY_SIZE
+        end
+
+        # @see Swap.sector_size
+        def sector_size
+          SECTOR_SIZE
         end
       end
     end

@@ -85,6 +85,7 @@ module Y2Storage
       # @param dm_name [String]
       def create_device(blk_device, dm_name)
         enc = blk_device.create_encryption(dm_name || "", encryption_type)
+        enc.open_options = open_command_options
         enc.encryption_process = self
         enc
       end
@@ -107,6 +108,22 @@ module Y2Storage
       #
       # @param _device [Encryption]
       def post_commit(_device); end
+
+      # Open options for the encryption device
+      #
+      # @return [Array<String>]
+      def open_options
+        []
+      end
+
+      private
+
+      # Open options with the format expected by the underlying tools (cryptsetup)
+      #
+      # @return [String]
+      def open_command_options
+        open_options.join(" ")
+      end
     end
   end
 end

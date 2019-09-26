@@ -80,11 +80,25 @@ module Y2Storage
           nil
         end
 
-        # Encryption options to add to the encryption device
+        # Sector size for the encryption
+        #
+        # @return [String, nil] nil if no specific sector size
+        def sector_size
+          nil
+        end
+
+        # Encryption options to add to the encryption device (crypttab options)
         #
         # @return [Array<String>]
         def crypt_options
-          [swap_option, cipher_option, key_size_option].compact
+          [swap_option, cipher_option, key_size_option, sector_size_option].compact
+        end
+
+        # Encryption options to open the encryption device
+        #
+        # @return [Array<String>]
+        def open_options
+          [cipher_open_option, key_size_open_option, sector_size_open_option].compact
         end
 
         # Wheter a specific cipher is used
@@ -94,11 +108,16 @@ module Y2Storage
           !cipher.nil?
         end
 
-        # Wheter a specific key size is used
+        # Whether a specific key size is used
         #
         # @return [Boolean]
         def key_size?
           !key_size.nil?
+        end
+
+        # Whether a specific sector size is used
+        def sector_size?
+          !sector_size.nil?
         end
 
         private
@@ -121,11 +140,47 @@ module Y2Storage
 
         # Key size option for the crypttab file
         #
-        # @return [Boolean] nil if no specific size
+        # @return [String, nil] nil if no specific size
         def key_size_option
           return nil unless key_size?
 
           "size=#{key_size}"
+        end
+
+        # Sector size option for the encryption
+        #
+        # @return [String, nil] nil if no specific sector size
+        def sector_size_option
+          return nil unless sector_size?
+
+          "sector-size=#{sector_size}"
+        end
+
+        # Cipher option to open the encryption device
+        #
+        # @return [String, nil] nil if no specific cipher
+        def cipher_open_option
+          return nil unless cipher?
+
+          "--cipher '#{cipher}'"
+        end
+
+        # Key size option to open the encryption device
+        #
+        # @return [String, nil] nil if no specific size
+        def key_size_open_option
+          return nil unless key_size?
+
+          "--key-size '#{key_size}'"
+        end
+
+        # Sector size option to open the encryption device
+        #
+        # @return [String, nil] nil if no specific sector size
+        def sector_size_open_option
+          return nil unless sector_size?
+
+          "--sector-size '#{sector_size}'"
         end
 
         # Checks whether the process was used according to the given key file and encrytion options
@@ -174,6 +229,11 @@ module Y2Storage
       # @see Swap.crypt_options
       def crypt_options
         self.class.crypt_options
+      end
+
+      # @see Swap.open_options
+      def open_options
+        self.class.open_options
       end
     end
   end

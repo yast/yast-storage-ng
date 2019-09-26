@@ -169,16 +169,40 @@ describe Y2Storage::EncryptionProcesses::ProtectedSwap do
       expect(encryption.crypt_options).to include("swap")
     end
 
-    it "sets the cipher for protected key" do
+    it "sets the cipher encryption option for protected key" do
       encryption = subject.create_device(device, dm_name)
 
       expect(encryption.crypt_options).to include("cipher=paes-xts-plain64")
     end
 
-    it "sets the key size for protected key" do
+    it "sets the size encyption option for protected key" do
       encryption = subject.create_device(device, dm_name)
 
       expect(encryption.crypt_options).to include("size=1280")
+    end
+
+    it "sets the sector-size encyption option for protected key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.crypt_options).to include("sector-size=4096")
+    end
+
+    it "sets the cipher open option for protected key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--cipher 'paes-xts-plain64'")
+    end
+
+    it "sets the key-size open option for protected key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--key-size '1280'")
+    end
+
+    it "sets the sector-size open option for protected key" do
+      encryption = subject.create_device(device, dm_name)
+
+      expect(encryption.open_options).to include("--sector-size '4096'")
     end
   end
 end
