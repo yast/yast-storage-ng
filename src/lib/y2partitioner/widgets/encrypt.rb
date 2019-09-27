@@ -78,6 +78,13 @@ module Y2Partitioner
         )
       end
 
+      # @macro seeAbstractWidget
+      #
+      # When this widget is used, the action to perform is always :encrypt
+      def store
+        controller.action = :encrypt if enabled?
+      end
+
       private
 
       # @return [Actions::Controllers::Encryption] controller for the encryption device

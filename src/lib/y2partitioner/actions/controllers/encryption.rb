@@ -32,11 +32,14 @@ module Y2Partitioner
 
         # Action to perform when {#finish} is called
         #
+        # Possible values:
         # * :keep preserves the encryption layer from the system devicegraph
-        # * :encrypt adds an encryption device or modifies the previously added one
+        # * :encrypt adds an encryption device or replaces the previously added one
         # * :remove ensures the block device will not be encrypted
+        # * sanitize removes current encryption layer when it cannot be preserved, see
+        #   {#sanitize_encryption}
         #
-        # @return [Symbol] :keep, :encrypt, :remove
+        # @return [Symbol] :keep, :encrypt, :remove or :sanitize
         attr_accessor :action
 
         # @return [Y2Storage::EncryptionMethod] Encryption method
@@ -55,7 +58,7 @@ module Y2Partitioner
           @fs_controller = fs_controller
           @action = actions.first
           @password = encryption&.password || ""
-          @method = encryption&.method || Y2Storage::EncryptionMethod::LUKS1
+          @method = initial_method
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -69,8 +72,9 @@ module Y2Partitioner
         #
         # @see #action
         #
-        # If there is more than one possible action, the user should be able to
-        # use the UI to select which one to perform
+        # If there is more than one possible action, the user should be able to use the UI to select
+        # which one to perform. Note that :sanitize and :remove are not directly offered to the user in
+        # the UI.
         #
         # @return [Array<Symbol>]
         def actions
@@ -78,7 +82,9 @@ module Y2Partitioner
 
           @actions =
             if fs_controller.encrypt
-              if can_keep?
+              if sanitize_encryption?
+                [:sanitize, :encrypt]
+              elsif can_keep?
                 [:keep, :encrypt]
               else
                 [:encrypt]
@@ -108,22 +114,16 @@ module Y2Partitioner
             end
         end
 
-        # Applies last changes to the block device at the end of the wizard, which
-        # mainly means
+        # Applies last changes to the block device at the end of the wizard, which mainly means: sanitize
+        # current encryption layer or perform the proper finish action to create or remove the encryption
         #
-        #   * removing unused LvmPv descendant (bsc#1129663)
-        #   * encrypting the device, modifying the encryption layer or removing it
+        # @see #sanitize_encryption
+        # @see #perform_finish_action
         def finish
-          return unless can_change_encrypt?
-
-          remove_unused_lvm_pv
-
-          return if action == :keep
-
-          if action == :encrypt
-            finish_encrypt
-          else
-            finish_remove
+          if action == :sanitize
+            sanitize_encryption
+          elsif can_change_encrypt?
+            perform_finish_action
           end
         ensure
           fs_controller.update_checkpoint
@@ -137,6 +137,7 @@ module Y2Partitioner
         end
 
         # Title to display in the dialog during the process
+        #
         # @return [String]
         def wizard_title
           title =
@@ -147,6 +148,7 @@ module Y2Partitioner
             else
               _("Encrypt %s")
             end
+
           format(title, blk_device.name)
         end
 
@@ -155,6 +157,19 @@ module Y2Partitioner
         # @return [Filesystem] controller used to create or edit the block
         #   device that will be modified by this controller
         attr_reader :fs_controller
+
+        # Initial encryption method
+        #
+        # Note that the encryption method used by the current encryption device might not be available.
+        #
+        # @return [Y2Storage::EncryptionMethod]
+        def initial_method
+          if methods.include?(encryption&.method)
+            encryption.method
+          else
+            Y2Storage::EncryptionMethod::LUKS1
+          end
+        end
 
         # Whether the device will be used as swap
         #
@@ -187,6 +202,51 @@ module Y2Partitioner
         # @return [Y2Storage::Filesystem, nil] nil if the plain block device is not formatted
         def filesystem
           blk_device.filesystem
+        end
+
+        # Performs the proper action (create or delete the encryption)
+        #
+        # @note Unused LvmPv descendant are removed (bsc#1129663)
+        #
+        # @see #finish_encrypt
+        # @see #finish_remove
+        def perform_finish_action
+          remove_unused_lvm_pv
+
+          return if action == :keep
+
+          if action == :encrypt
+            finish_encrypt
+          else
+            finish_remove
+          end
+        end
+
+        # Sanitizes (removes) the encryption layer when needed
+        #
+        # Note that the filesystem is also deleted when it exists on disk (see {#can_change_encrypt?}).
+        #
+        # @see #sanitize_encryption?
+        def sanitize_encryption
+          return unless sanitize_encryption?
+
+          if can_change_encrypt?
+            blk_device.remove_encryption
+          else
+            blk_device.remove_descendants
+          end
+        end
+
+        # Whether the current encryption layer should be removed
+        #
+        # Basically, when an original swap device was encrypted with an encryption method that is only
+        # available for swap but the device is not used as swap anymore.
+        #
+        # @return [Boolean]
+        def sanitize_encryption?
+          return false unless blk_device.encrypted?
+
+          !swap? && encryption.method&.only_for_swap?
         end
 
         # Removes from the block device or its encryption layer a LvmPv not associated to an LvmVg
@@ -227,6 +287,7 @@ module Y2Partitioner
         def can_keep?
           return false unless blk_device.encrypted?
           return false if new?(encryption)
+          return false if sanitize_encryption?
 
           encryption.active?
         end

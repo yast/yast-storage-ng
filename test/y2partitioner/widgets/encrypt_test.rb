@@ -186,4 +186,36 @@ describe Y2Partitioner::Widgets::Encrypt do
       end
     end
   end
+
+  describe "#store" do
+    before do
+      allow(subject).to receive(:enabled?).and_return(enabled)
+
+      controller.action = :keep
+    end
+
+    context "when the widget is enabled" do
+      let(:enabled) { true }
+
+      it "saves :encrypt action in the controller" do
+        expect(controller.action).to_not eq(:encrypt)
+
+        subject.store
+
+        expect(controller.action).to eq(:encrypt)
+      end
+    end
+
+    context "when the widget is disabled" do
+      let(:enabled) { false }
+
+      it "dose not modify the :encrypt action in the controller" do
+        expect(controller.action).to eq(:keep)
+
+        subject.store
+
+        expect(controller.action).to eq(:keep)
+      end
+    end
+  end
 end
