@@ -139,7 +139,12 @@ module Y2Storage
         @basename ||= plain_blk_devices.map(&:basename).min
       end
 
-      # Whether it is a multidevice filesystem
+      # Whether it is a multi-device filesystem
+      #
+      # So far, filesystems detected as multi-device are
+      #
+      #   - Btrfs, when built over several devices
+      #   - Ext3/4, if the journal is placed in an external device
       #
       # @return [Boolean]
       def multidevice?
