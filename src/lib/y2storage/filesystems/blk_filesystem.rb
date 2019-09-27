@@ -123,6 +123,8 @@ module Y2Storage
       #
       # @return [String]
       def blk_device_basename
+        basename = plain_blk_devices.map(&:basename).min
+
         return basename unless multidevice?
 
         textdomain "storage"
@@ -130,13 +132,6 @@ module Y2Storage
         # TRANSLATORS: block device basename for a multi-device filesystem, where %{basename} is replaced
         # by the basename of the first block device (e.g., "(sda1...)").
         format(_("(%{basename}\u2026)"), basename: basename)
-      end
-
-      # Returns the first block device name
-      #
-      # @return [String]
-      def basename
-        @basename ||= plain_blk_devices.map(&:basename).min
       end
 
       # Whether it is a multi-device filesystem
