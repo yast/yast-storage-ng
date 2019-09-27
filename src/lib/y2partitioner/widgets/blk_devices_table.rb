@@ -283,13 +283,30 @@ module Y2Partitioner
 
         if device.journal?
           journal_type_label(fs)
-        elsif fs&.multidevice?
+        elsif show_multidevice_type_label?(fs)
           multidevice_type_label(fs)
         elsif fs
           formatted_device_type_label(device, fs)
         else
           unformatted_device_type_label(device)
         end
+      end
+
+      # Whether the "Part of *fs.type*" label should be displayed
+      #
+      # @note the Ext3/4 filesystem could be detected as a
+      # {BlkFilesystem#multidevice? multidevice} filesystem when its journal is
+      # placed in an external device. However, we do not want to display "Part
+      # of ..." for them because we know that data partition is over a single
+      # device.
+      #
+      # @param filesystem [Y2Storage::Filesystems::Base]
+      # @return [Boolean] true if the filesystem is multi-device BUT not an Ext3/4 one
+      def show_multidevice_type_label?(filesystem)
+        return false unless filesystem
+        return false if [:ext3, :ext4].include?(filesystem.type.to_sym)
+
+        filesystem.multidevice?
       end
 
       # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
@@ -357,10 +374,12 @@ module Y2Partitioner
       # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
       def journal_type_label(filesystem)
-        # TRANSLATORS: %{fs_basename} is the filesystem basename
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{blk_device_name} is a device base name. E.g., sda1+
         format(
-          _("Journal of %{fs_basename}"),
-          fs_basename: filesystem.basename
+          _("Journal of %{fs_name} %{blk_device_name}"),
+          fs_name:         filesystem.type,
+          blk_device_name: filesystem.blk_device_basename
         )
       end
 
