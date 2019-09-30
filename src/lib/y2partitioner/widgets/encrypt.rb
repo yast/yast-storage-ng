@@ -44,6 +44,24 @@ module Y2Partitioner
         encrypt_method_options_widget.refresh(controller.method)
       end
 
+      # @macro seeAbstractWidget
+      #
+      # Note that "children" widgets need to be enabled.
+      def enable
+        super
+
+        widgets.map(&:enable)
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note that "children" widgets need to be disabled.
+      def disable
+        super
+
+        widgets.map(&:disable)
+      end
+
       # @macro seeCustomWidget
       def contents
         HVSquash(

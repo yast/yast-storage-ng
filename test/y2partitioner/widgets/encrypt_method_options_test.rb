@@ -90,7 +90,7 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
     describe "#contents" do
       it "displays the encryption password widget" do
-        expect(Y2Partitioner::Widgets::EncryptPassword).to receive(:new).with(controller)
+        expect(Y2Partitioner::Widgets::EncryptPassword).to receive(:new).with(controller, anything)
 
         subject.contents
       end
