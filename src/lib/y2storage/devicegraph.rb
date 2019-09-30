@@ -525,6 +525,11 @@ module Y2Storage
       devices_action(:post_commit)
     end
 
+    # Executes the finish_installation method in all the devices
+    def finish_installation
+      devices_action(:finish_installation)
+    end
+
     private
 
     # Copy of a device tree where hashes have been substituted by sorted

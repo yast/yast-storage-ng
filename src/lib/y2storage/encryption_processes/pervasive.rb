@@ -21,6 +21,7 @@ require "y2storage/encryption_type"
 require "y2storage/encryption_processes/base"
 require "y2storage/encryption_processes/secure_key"
 require "yast2/execute"
+require "yast"
 
 module Y2Storage
   module EncryptionProcesses
@@ -102,6 +103,14 @@ module Y2Storage
             Yast::Execute.locally(*args)
           end
         end
+      end
+
+      # @see Base#finish_installation
+      #
+      # Copies the keys from the zkey repository of the inst-sys to the
+      # repository of the target system.
+      def finish_installation
+        secure_key.copy_to_repository(Yast::Installation.destdir)
       end
 
       # Class to prevent Yast::Execute from leaking to the logs the password

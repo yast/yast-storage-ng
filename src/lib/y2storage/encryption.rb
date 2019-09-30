@@ -220,7 +220,17 @@ module Y2Storage
     # Executes the actions that must be performed after the devicegraph has been
     # committed to the system
     def post_commit
-      encryption_process&.post_commit(self)
+      return unless encryption_process
+
+      encryption_process.post_commit(self)
+      save_encryption_process
+    end
+
+    # Executes the actions that must be performed at the end of the installation,
+    # before unmounting the target system, when all the so-called finish clients
+    # are executed
+    def finish_installation
+      encryption_process&.finish_installation
     end
 
     protected

@@ -17,8 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "fileutils"
 require "yast2/execute"
 require "y2storage/encryption_processes/secure_key_volume"
+require "yast"
 
 module Y2Storage
   module EncryptionProcesses
@@ -28,11 +30,17 @@ module Y2Storage
     # For more information, see
     # https://www.ibm.com/support/knowledgecenter/linuxonibm/com.ibm.linux.z.lxdc/lxdc_zkey_reference.html
     class SecureKey
+      include Yast::Logger
+
       # Location of the zkey command
       ZKEY = "/usr/bin/zkey".freeze
       # Location of the lszcrypt command
       LSZCRYPT = "/sbin/lszcrypt".freeze
       private_constant :ZKEY, :LSZCRYPT
+
+      # Default location of the zkey repository
+      DEFAULT_REPO_DIR = File.join("/", "etc", "zkey", "repository")
+      private_constant :DEFAULT_REPO_DIR
 
       # @return [String] name of the secure key
       attr_reader :name
@@ -131,6 +139,23 @@ module Y2Storage
         @volume_entries += volumes.map { |str| SecureKeyVolume.new_from_str(str) }
       end
 
+      # Copies the files of this key from the current keys repository to the
+      # repository of a target system
+      #
+      # @param base_dir [String] base directory where the target system is
+      #   mounted, typically Yast::Installation.destdir
+      def copy_to_repository(base_dir)
+        target = repository_path(base_dir)
+        return unless File.exist?(target)
+
+        log.info "Copying files of key #{name} to #{target}"
+        FileUtils.cp_r(Dir.glob("#{repository_path}/#{name}.*"), target, preserve: true)
+        target_stat = File.stat(target)
+        FileUtils.chown_R(target_stat.uid, target_stat.gid, Dir.glob("#{target}/#{name}.*"))
+      rescue StandardError => e
+        log.error "Error copying the key - #{e.message}"
+      end
+
       private
 
       # @return [Array<SecureKeyVolume>] entries in the "volumes" section of
@@ -145,6 +170,23 @@ module Y2Storage
       #   device
       def volume_entry(device)
         volume_entries.find { |vol| vol.match_device?(device) }
+      end
+
+      # Full path of the zkey repository for the system mounted at the given
+      # location
+      #
+      # @param base_dir [String] mount point of the system, "/" means the
+      #   currently running system
+      # @return [String]
+      def repository_path(base_dir = "/")
+        (base_dir == "/") ? repo_dir : File.join(base_dir, DEFAULT_REPO_DIR)
+      end
+
+      # Full path of the current zkey repository
+      #
+      # @return [String]
+      def repo_dir
+        ENV["ZKEY_REPOSITORY"] || DEFAULT_REPO_DIR
       end
 
       class << self

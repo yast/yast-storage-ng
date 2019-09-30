@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -43,6 +43,7 @@ module Y2Storage
       def write
         enable_multipath
         update_sysconfig
+        finish_devices
         true
       end
 
@@ -65,9 +66,20 @@ module Y2Storage
       # Checks whether multipath will be used in the target system
       # @return [Boolean]
       def multipath?
-        staging = StorageManager.instance.staging
         features = UsedStorageFeatures.new(staging).collect_features
         features.include?(:UF_MULTIPATH)
+      end
+
+      # Executes the finish installation actions for all devices
+      def finish_devices
+        staging.finish_installation
+      end
+
+      # Staging devicegraph
+      #
+      # @return [Devicegraph]
+      def staging
+        StorageManager.instance.staging
       end
     end
   end
