@@ -104,13 +104,6 @@ module Y2Storage
         end
       end
 
-      # Custom Cheetah recorder to prevent leaking the password to the logs
-      #
-      # @return [Recorder]
-      def cheetah_recorder
-        @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
-      end
-
       # Class to prevent Yast::Execute from leaking to the logs the password
       # provided via stdin
       class Recorder < Cheetah::DefaultRecorder
@@ -130,6 +123,13 @@ module Y2Storage
       # @see Base#encryption_type
       def encryption_type
         EncryptionType::LUKS2
+      end
+
+      # Custom Cheetah recorder to prevent leaking the password to the logs
+      #
+      # @return [Recorder]
+      def cheetah_recorder
+        @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
       end
 
       # Generates a new secure key for the given encryption device and registers
