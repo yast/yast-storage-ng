@@ -47,6 +47,43 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
   let(:encrypt) { false }
 
+  describe ".initialize" do
+    let(:scenario) { "encrypted_random_swap.xml" }
+
+    context "when the device is not encrypted" do
+      let(:dev_name) { "/dev/vda2" }
+
+      it "assigns the default encryption method" do
+        expect(subject.method.is?(:luks1)).to eq(true)
+      end
+    end
+
+    context "when the device is encrypted" do
+      # Swap with random key
+      let(:dev_name) { "/dev/vda3" }
+
+      context "and the current encryption method is a valid option" do
+        it "assigns the current encryption method" do
+          expect(subject.method.is?(:random_swap)).to eq(true)
+        end
+      end
+
+      context "and the current encryption method is not a valid option" do
+        # Swap with random key
+        let(:dev_name) { "/dev/vda3" }
+
+        before do
+          # It is no consider a swap device anymore
+          device.filesystem.mount_path = "/foo"
+        end
+
+        it "assigns the default encryption method" do
+          expect(subject.method.is?(:luks1)).to eq(true)
+        end
+      end
+    end
+  end
+
   describe "#show_dialog?" do
     context "when the currently editing device has a filesystem that existed previously" do
       it "returns false" do
@@ -114,25 +151,121 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
   end
 
-  describe "#methods" do
-    before do
-      allow(subject).to receive(:swap?).and_return(swap)
-    end
+  describe "#actions" do
+    let(:scenario) { "encrypted_random_swap.xml" }
 
-    let(:swap) { true }
-    let(:method_only_for_swap) { double(Y2Storage::EncryptionMethod, only_for_swap?: true) }
-    let(:another_method) { double(Y2Storage::EncryptionMethod, only_for_swap?: false) }
-    let(:encryption_methods) { [method_only_for_swap, another_method] }
+    context "when the option to encrypt the device was selected" do
+      let(:encrypt) { true }
+
+      context "and the device is not encrypted" do
+        let(:dev_name) { "/dev/vda2" }
+
+        it "returns :encrypt action" do
+          expect(subject.actions).to contain_exactly(:encrypt)
+        end
+      end
+
+      context "and the device is encrypted" do
+        context "and the current encryption exists on disk" do
+          # Encrypted swap with random key
+          let(:dev_name) { "/dev/vda3" }
+
+          context "and the existing encryption can be used for the current device" do
+            before do
+              allow_any_instance_of(Y2Storage::Encryption).to receive(:active?).and_return(active)
+            end
+
+            context "and the existing encryption is active" do
+              let(:active) { true }
+
+              it "returns :keep and :encrypt actions" do
+                expect(subject.actions).to contain_exactly(:keep, :encrypt)
+              end
+            end
+
+            context "and the existing encryption is not active" do
+              let(:active) { false }
+
+              it "returns :encrypt action" do
+                expect(subject.actions).to contain_exactly(:encrypt)
+              end
+            end
+          end
+
+          context "and the existing encryption cannot be used for the current device" do
+            context "and the current filesystem already exists on disk" do
+              before do
+                # The device is not a swap anymore
+                device.encryption.filesystem.mount_path = "/foo"
+              end
+
+              it "returns :sanitize action" do
+                expect(subject.actions).to contain_exactly(:sanitize)
+              end
+            end
+
+            context "and the current filesystem does not exist on disk yet" do
+              before do
+                device.encryption.delete_filesystem
+                device.encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+              end
+
+              it "returns :encrypt action" do
+                expect(subject.actions).to contain_exactly(:encrypt)
+              end
+            end
+
+            context "and the encryption is not currently formatted" do
+              before do
+                device.encryption.delete_filesystem
+              end
+
+              it "returns :encrypt action" do
+                expect(subject.actions).to contain_exactly(:encrypt)
+              end
+            end
+          end
+        end
+      end
+
+      context "when the option to encrypt the device was not selected" do
+        let(:encrypt) { false }
+
+        let(:dev_name) { "/dev/vda2" }
+
+        it "returns :remove action" do
+          expect(subject.actions).to contain_exactly(:remove)
+        end
+      end
+    end
+  end
+
+  describe "#methods" do
+    let(:scenario) { "mixed_disks" }
+
+    let(:dev_name) { "/dev/sda1" }
 
     it "returns a collection of encryption methods" do
       expect(subject.methods).to be_a Array
       expect(subject.methods.first).to be_a Y2Storage::EncryptionMethod
     end
 
-    context "when working with a swap filesystem" do
+    shared_context "double methods" do
+      let(:method_only_for_swap) { instance_double(Y2Storage::EncryptionMethod, only_for_swap?: true) }
+
+      let(:another_method) { instance_double(Y2Storage::EncryptionMethod, only_for_swap?: false) }
+
+      let(:encryption_methods) { [method_only_for_swap, another_method] }
+
       before do
         allow(Y2Storage::EncryptionMethod).to receive(:available).and_return(encryption_methods)
       end
+    end
+
+    context "when working with a swap filesystem" do
+      include_context "double methods"
+
+      let(:dev_name) { "/dev/sdb1" }
 
       it "includes the encryption methods intented to be used only with swap" do
         expect(subject.methods).to include(method_only_for_swap)
@@ -140,10 +273,12 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     context "when not working with a swap filesystem" do
-      let(:swap) { false }
+      include_context "double methods"
+
+      let(:dev_name) { "/dev/sdb1" }
 
       before do
-        allow(Y2Storage::EncryptionMethod).to receive(:available).and_return(encryption_methods)
+        device.filesystem.mount_path = "/foo"
       end
 
       it "does not includes the encryption methods intented to be used only with swap" do
@@ -175,11 +310,67 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
   end
 
   describe "#finish" do
-    before do
-      allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
+    context "when the encryption should be sanitized" do
+      let(:scenario) { "encrypted_random_swap.xml" }
+
+      # Encrypted swap with random key
+      let(:dev_name) { "/dev/vda3" }
+
+      before do
+        subject.action = :sanitize
+
+        # The device is not a swap anymore
+        device.encryption.filesystem.mount_path = "/foo"
+      end
+
+      context "and the current filesystem exists on disk" do
+        it "removes the encryption device and the filesystem" do
+          subject.finish
+
+          expect(fs_controller.blk_device.encrypted?).to eq(false)
+        end
+      end
+
+      context "and the current filesystem does no exist on disk" do
+        before do
+          encryption = device.encryption
+
+          encryption.remove_descendants
+          encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "removes the encryption layer" do
+          subject.finish
+
+          expect(fs_controller.blk_device.encrypted?).to eq(false)
+        end
+
+        it "preserves the filesystem" do
+          subject.finish
+
+          expect(fs_controller.blk_device.formatted?).to eq(true)
+          expect(fs_controller.blk_device.filesystem.type.is?(:ext4)).to eq(true)
+        end
+      end
+
+      context "and the encryption is not currently formatted" do
+        before do
+          device.encryption.delete_filesystem
+        end
+
+        it "removes the encryption layer" do
+          subject.finish
+
+          expect(fs_controller.blk_device.encrypted?).to eq(false)
+        end
+      end
     end
 
     context "when it is not possible to change the encrypt" do
+      before do
+        allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
+      end
+
       let(:can_change_encrypt) { false }
 
       it "does nothing" do
@@ -191,6 +382,10 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     context "when it is possible to change the encrypt" do
+      before do
+        allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
+      end
+
       let(:scenario) { "logical_encrypted" }
       let(:can_change_encrypt) { true }
       let(:password) { "12345678" }
@@ -307,6 +502,10 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
     end
 
     context "when the device has an unused LvmPv" do
+      before do
+        allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
+      end
+
       let(:scenario) { "unused_lvm_pvs.xml" }
 
       let(:can_change_encrypt) { true }

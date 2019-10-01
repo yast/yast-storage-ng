@@ -44,6 +44,24 @@ module Y2Partitioner
         encrypt_method_options_widget.refresh(controller.method)
       end
 
+      # @macro seeAbstractWidget
+      #
+      # Note that "children" widgets need to be enabled.
+      def enable
+        super
+
+        widgets.map(&:enable)
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note that "children" widgets need to be disabled.
+      def disable
+        super
+
+        widgets.map(&:disable)
+      end
+
       # @macro seeCustomWidget
       def contents
         HVSquash(
@@ -57,7 +75,7 @@ module Y2Partitioner
         )
       end
 
-      # Handles the events comming from UI, forcing to refresh the encrypt
+      # Handles the events coming from UI, forcing to refresh the encrypt
       # options each time the encryption method is changed.
       #
       # @macro seeCustomWidget
@@ -132,18 +150,54 @@ module Y2Partitioner
       # @return [String]
       def help_content
         texts = controller.methods.map do |m|
-          text = send("help_for_#{m.id}", m)
+          text = send("help_for_#{m.id}")
           "<li>#{text}</li>"
         end
 
         texts.join
       end
 
+      # Help text for the Regular Luks1 encryption method
+      #
+      # @return [String]
+      def help_for_luks1
+        encrypt_method = Y2Storage::EncryptionMethod.find(:luks1)
+
+        format(
+          # TRANSLATORS: help text for Regular Luks1 encryption method
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS1 " \
+            "(Linux Unified Key Setup). You have to provide the encryption password.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
+      # Help text for the Pervasive encryption method
+      #
+      # @return [String]
+      def help_for_pervasive_luks2
+        encrypt_method = Y2Storage::EncryptionMethod.find(:pervasive_luks2)
+
+        format(
+          # TRANSLATORS: Pervasive encryption terminology. For the English version see
+          # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_crypt.html
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 with a master secure key " \
+            "processed by a Crypto Express cryptographic coprocessor configured in CCA mode.</p>" \
+           "<p>If the cryptographic system already contains a secure key associated to this " \
+           "volume, that key will be used. Otherwise, a new secure key will be generated and " \
+           "registered in the system. You need to provide an encryption password that will be " \
+           "used to protect the access to that master key.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
       # Help text for the Random Swap encryption method
       #
       # @return [String]
-      def help_for_random_swap(encrypt_method)
+      def help_for_random_swap
+        encrypt_method = Y2Storage::EncryptionMethod.find(:random_swap)
+
         format(
+          # TRANSLATORS: help text for Random Swap encryption method.
           _("<p><b>%{label}</b>: this encryption method uses randomly generated keys at boot and it " \
             "will not support Hibernation to hard disk. The swap device is re-encrypted during every " \
             "boot, and its previous content is destroyed. You should disable Hibernation through your " \
@@ -159,31 +213,43 @@ module Y2Partitioner
         )
       end
 
-      # Help text for the Regular Luks1 encryption method
+      # Help text for the Protected Swap encryption method
       #
       # @return [String]
-      def help_for_luks1(encrypt_method)
+      def help_for_protected_swap
+        random_swap = Y2Storage::EncryptionMethod.find(:random_swap)
+
+        protected_swap = Y2Storage::EncryptionMethod.find(:protected_swap)
+
         format(
-          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS1 " \
-            "(Linux Unified Key Setup). You have to provide the encryption password.</p>"),
-          label: encrypt_method.to_human_string
+          # TRANSLATORS: help text for encryption method with protected keys for z Systems. See
+          # https://www.ibm.com/support/knowledgecenter/en/linuxonibm/com.ibm.linux.z.lxdc/
+          # lxdc_swapdisks_scenario.html
+          _("<p><b>%{label}</b>: this encryption method uses a volatile protected AES key (without " \
+            "requiring a cryptographic co-processor) to encrypt a swap device. This is an improvement " \
+            "over %{random_swap_label} method and all considerations for such method still apply.</p>"),
+          label:             protected_swap.to_human_string,
+          random_swap_label: random_swap.to_human_string
         )
       end
 
-      # Help text for the  encryption method
+      # Help text for the Secure Swap encryption method
       #
       # @return [String]
-      def help_for_pervasive_luks2(encrypt_method)
+      def help_for_secure_swap
+        random_swap = Y2Storage::EncryptionMethod.find(:random_swap)
+
+        secure_swap = Y2Storage::EncryptionMethod.find(:secure_swap)
+
         format(
-          # TRANSLATORS: Pervasive encryption terminology. For the English version see
-          # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_crypt.html
-          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 with a master secure key " \
-            "processed by a Crypto Express cryptographic coprocessor configured in CCA mode.</p>" \
-           "<p>If the cryptographic system already contains a secure key associated to this " \
-           "volume, that key will be used. Otherwise, a new secure key will be generated and " \
-           "registered in the system. You need to provide an encryption password that will be " \
-           "used to protect the access to that master key.</p>"),
-          label: encrypt_method.to_human_string
+          # TRANSLATORS: help for encryption method with secure keys for z Systems. See
+          # https://www.ibm.com/support/knowledgecenter/en/linuxonibm/com.ibm.linux.z.lxdc/
+          # lxdc_swapdisks_scenario.html
+          _("<p><b>%{label}</b>: this encryption method uses a volatile secure AES key (generated " \
+            "from a cryptographic co-processor) for encrypting a swap device. This is an improvement " \
+            "over %{random_swap_label} method and all considerations for such method still apply.</p>"),
+          label:             secure_swap.to_human_string,
+          random_swap_label: random_swap.to_human_string
         )
       end
     end

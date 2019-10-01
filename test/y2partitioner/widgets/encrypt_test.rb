@@ -112,7 +112,13 @@ describe Y2Partitioner::Widgets::Encrypt do
   describe "#help" do
     before do
       allow(controller).to receive(:several_encrypt_methods?).and_return(several_encrypt_methods)
+
+      allow(controller).to receive(:methods).and_return(encrypt_methods)
     end
+
+    let(:several_encrypt_methods) { false }
+
+    let(:encrypt_methods) { [] }
 
     context "when there is only one encryption method" do
       let(:several_encrypt_methods) { false }
@@ -127,6 +133,56 @@ describe Y2Partitioner::Widgets::Encrypt do
 
       it "includes an introduction to the available methods" do
         expect(subject.help).to match(/can be chosen/)
+      end
+    end
+
+    context "when :luks1 encryption method is availabale" do
+      let(:encrypt_methods) { [luks1] }
+
+      let(:luks1) { Y2Storage::EncryptionMethod.find(:luks1) }
+
+      it "includes help for :luks1 encryption method" do
+        expect(subject.help).to include(luks1.to_human_string)
+      end
+    end
+
+    context "when :pervasive_luks2 encryption method is availabale" do
+      let(:encrypt_methods) { [pervasive_luks2] }
+
+      let(:pervasive_luks2) { Y2Storage::EncryptionMethod.find(:pervasive_luks2) }
+
+      it "includes help for :pervasive_luks2 encryption method" do
+        expect(subject.help).to include(pervasive_luks2.to_human_string)
+      end
+    end
+
+    context "when :random_swap encryption method is availabale" do
+      let(:encrypt_methods) { [random_swap] }
+
+      let(:random_swap) { Y2Storage::EncryptionMethod.find(:random_swap) }
+
+      it "includes help for :random_swap encryption method" do
+        expect(subject.help).to include(random_swap.to_human_string)
+      end
+    end
+
+    context "when :protected_swap encryption method is availabale" do
+      let(:encrypt_methods) { [protected_swap] }
+
+      let(:protected_swap) { Y2Storage::EncryptionMethod.find(:protected_swap) }
+
+      it "includes help for :protected_swap encryption method" do
+        expect(subject.help).to include(protected_swap.to_human_string)
+      end
+    end
+
+    context "when :secure_swap encryption method is availabale" do
+      let(:encrypt_methods) { [secure_swap] }
+
+      let(:secure_swap) { Y2Storage::EncryptionMethod.find(:secure_swap) }
+
+      it "includes help for :secure_swap encryption method" do
+        expect(subject.help).to include(secure_swap.to_human_string)
       end
     end
   end

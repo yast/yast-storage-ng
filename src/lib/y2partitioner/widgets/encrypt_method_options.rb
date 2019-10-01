@@ -42,8 +42,27 @@ module Y2Partitioner
         replace(options_for(encrypt_method))
       end
 
+      # @macro seeAbstractWidget
+      #
+      # Note its internal widget needs to be enabled.
+      def enable
+        super
+
+        @widget.enable
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note its internal widget needs to be disabled.
+      def disable
+        super
+
+        @widget.disable
+      end
+
       private
 
+      # @return [Actions::Controllers::Encryption]
       attr_reader :controller
 
       # @return [CWM::Empty] an empty widget
@@ -55,19 +74,19 @@ module Y2Partitioner
       # given encryption method
       def options_for(encrypt_method)
         case encrypt_method.to_sym
-        when :random_swap
-          RandomOptions.new(controller)
+        when :random_swap, :protected_swap, :secure_swap
+          SwapOptions.new(controller)
         when :luks1, :pervasive_luks2
-          LuksOptions.new(controller)
+          LuksOptions.new(controller, enable: enabled?)
         end
       end
     end
 
-    # Internal widget to display the options for random swap encryption
+    # Internal widget to display the options for a swap encryption method
     #
     # Since there is no available options yet, it is being used just to display
     # a warning message to the user.
-    class RandomOptions < CWM::CustomWidget
+    class SwapOptions < CWM::CustomWidget
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]
@@ -81,8 +100,8 @@ module Y2Partitioner
           Left(
             Label(
               _("Be careful: the system cannot hibernate when\n" \
-                "encrypting swap with random password. Please, \n" \
-                "read Help for more information.")
+                "encrypting swap with randomly generated keys. \n" \
+                "Please, read Help for more information.")
             )
           )
         )
@@ -94,13 +113,47 @@ module Y2Partitioner
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]
-      def initialize(controller)
+      # @param enable [Boolean] whether the widget should be enabled on init
+      def initialize(controller, enable: true)
         @controller = controller
+        @enable_on_init = enable
       end
 
       # @macro seeCustomWidget
       def contents
-        VBox(Widgets::EncryptPassword.new(@controller))
+        VBox(password_widget)
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note its internal widget needs to be enabled.
+      def enable
+        super
+
+        password_widget.enable
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note its internal widget needs to be disabled.
+      def disable
+        super
+
+        password_widget.disable
+      end
+
+      private
+
+      # Whether the widget is enabled on init
+      #
+      # @return [Boolean]
+      attr_reader :enable_on_init
+
+      # Widget to enter the password
+      #
+      # @return [Widgets::EncryptPassword]
+      def password_widget
+        @password_widget ||= Widgets::EncryptPassword.new(@controller, enable: enable_on_init)
       end
     end
   end

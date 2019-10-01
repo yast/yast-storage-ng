@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Sep 25 08:09:53 UTC 2019 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: allow encrypting swap with protected and secure
+  keys (part of jsc#SLE-7376).
+- Partitioner: allow importing mount points from encrypted swap
+  with protected and secure keys.
+- 4.2.42
+
+-------------------------------------------------------------------
 Mon Sep 23 11:08:38 UTC 2019 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: allows encrypting volumes using pervasive

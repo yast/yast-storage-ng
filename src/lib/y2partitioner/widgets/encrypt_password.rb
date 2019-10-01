@@ -26,11 +26,15 @@ module Y2Partitioner
     # Encrypted {Y2Storage::BlkDevice} password
     class EncryptPassword < CWM::CustomWidget
       # Constructor
-      def initialize(controller)
+      #
+      # @param controller [Actions::Controllers::Encryption]
+      # @param enable [Boolean] whether the widget should be enabled on init
+      def initialize(controller, enable: true)
         textdomain "storage"
 
         @controller = controller
         @checker = Y2Storage::EncryptPasswordChecker.new
+        @enable_on_init = enable
       end
 
       # @macro seeAbstractWidget
@@ -41,6 +45,11 @@ module Y2Partitioner
         Yast::Report.Error(msg)
         Yast::UI.SetFocus(Id(:pw1))
         false
+      end
+
+      # @macro seeAbstractWidget
+      def init
+        enable_on_init ? enable : disable
       end
 
       # @macro seeAbstractWidget
@@ -76,6 +85,9 @@ module Y2Partitioner
 
       # @return Y2Storage::EncryptPasswordChecker
       attr_reader :checker
+
+      # @return [Boolean] whether the widget should be enabled on init
+      attr_reader :enable_on_init
 
       # @return [String]
       def pw1

@@ -19,7 +19,6 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
-require "y2storage/crypttab"
 require "y2storage/encryption_method"
 
 module Y2Storage
@@ -65,6 +64,15 @@ module Y2Storage
     # @!attribute crypt_options
     #   @return [Array<String>] options for the encryption
     storage_forward :crypt_options
+
+    # @!attribute open_options
+    #
+    # Extra options for open call. The options are injected as-is to the
+    # command so must be properly quoted.
+    #
+    # @return [String]
+    storage_forward :open_options
+    storage_forward :open_options=
 
     # Sets crypt options
     #
@@ -289,48 +297,7 @@ module Y2Storage
         end
       end
 
-      # Saves encryption names indicated in a crypttab file
-      #
-      # For each entry in the crypttab file, it finds the corresponding device and updates
-      # its crypttab name with the value indicated in its crypttab entry. The device is
-      # not modified at all if it is not encrypted.
-      #
-      # @param devicegraph [Devicegraph]
-      # @param crypttab [Crypttab, String] Crypttab object or path to a crypttab file
-      def save_crypttab_names(devicegraph, crypttab)
-        crypttab = Crypttab.new(crypttab) if crypttab.is_a?(String)
-
-        crypttab.entries.each { |e| save_crypttab_name(devicegraph, e) }
-      end
-
       private
-
-      # Saves the crypttab name according to the value indicated in a crypttab entry
-      #
-      # Generally, when a crypttab entry points to a luks device, the encryption layer is probed. But in
-      # case of plain encrypted devices, the encryption layer could not exist in the probed devicegraph.
-      # Note that no headers are written into the device when using plain encryption. And, for this
-      # reason, plain encryption devices are only probed for the root filesystem by parsing its crypttab.
-      #
-      # Due to plain encryption devices could be not probed, this method creates the plain encryption
-      # layer to be able to save the encryption name indicated in the crypttab entry.
-      #
-      # @param devicegraph [Devicegraph]
-      # @param entry [SimpleEtcCrypttabEntry]
-      def save_crypttab_name(devicegraph, entry)
-        device = entry.find_device(devicegraph)
-
-        return unless device
-
-        if device.encrypted?
-          device.encryption.crypttab_name = entry.name
-        elsif entry.swap?
-          # Right now, a plain encryption device is created for swap only. Moreover, random password
-          # (urandom) is always considered, even when the crypttab file indicates another key file.
-          device.remove_descendants
-          device.encrypt(dm_name: entry.name, method: :random_swap)
-        end
-      end
 
       # Checks whether a given DeviceMapper table name is already in use by some
       # of the devices in the given devicegraph

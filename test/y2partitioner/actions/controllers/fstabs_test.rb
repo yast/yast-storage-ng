@@ -97,6 +97,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
   let(:scenario) { "mixed_disks.yml" }
 
+  let(:crypttab_path) { File.join(DATA_PATH, "crypttab") }
+
   describe "#fstabs" do
     it "returns the list of fstabs in the system" do
       expect(subject.fstabs).to eq(fstabs)
@@ -203,7 +205,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     let(:crypttabs) { [crypttab] }
 
-    let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+    let(:crypttab) { Y2Storage::Crypttab.new(crypttab_path) }
 
     let(:crypttab_entries) do
       [
@@ -534,8 +536,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:fstab1) { instance_double(Y2Storage::Fstab) }
       let(:fstab2) { instance_double(Y2Storage::Fstab) }
-      let(:crypttab1) { instance_double(Y2Storage::Crypttab) }
-      let(:crypttab2) { instance_double(Y2Storage::Crypttab) }
+      let(:crypttab1) { Y2Storage::Crypttab.new(crypttab_path) }
+      let(:crypttab2) { Y2Storage::Crypttab.new(crypttab_path) }
 
       let(:fstab1_filesystem) { system_graph.find_by_name("/dev/sdb2").filesystem }
       let(:fstab2_filesystem) { system_graph.find_by_name("/dev/sdb3").filesystem }
@@ -608,7 +610,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       end
     end
 
-    context "when the fstab contains a swap encrypted with random password" do
+    context "when the fstab contains a not found encrypted swap" do
       let(:scenario) { "empty_disks" }
 
       before do
@@ -617,6 +619,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         allow(crypttab).to receive(:entries).and_return(crypttab_entries)
         allow(crypttab).to receive(:filesystem).and_return(filesystem)
+
+        allow_any_instance_of(Y2Storage::EncryptionMethod).to receive(:available?).and_return(true)
       end
 
       let(:fstabs) { [fstab] }
@@ -625,7 +629,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:fstab) { instance_double(Y2Storage::Fstab) }
 
-      let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+      let(:crypttab) { Y2Storage::Crypttab.new(crypttab_path) }
 
       let(:filesystem) { current_graph.filesystems.first }
 
@@ -637,18 +641,46 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       let(:crypttab_entries) do
         [
-          crypttab_entry("cswap", "/dev/sda1", "/dev/urandom", ["swap"])
+          crypttab_entry("cswap", "/dev/sda1", key_file, ["swap"])
         ]
       end
 
-      it "creates an encrypted swap with random password" do
-        subject.import_mount_points
+      shared_examples "an encrypted swap" do |method|
+        it "creates an encrypted swap with #{method} method" do
+          subject.import_mount_points
 
-        sda1 = current_graph.find_by_name("/dev/sda1")
+          sda1 = current_graph.find_by_name("/dev/sda1")
 
-        expect(sda1.encrypted?).to eq(true)
-        expect(sda1.encryption.method.is?(:random_swap)).to eq(true)
-        expect(sda1.encryption.basename).to eq("cswap")
+          expect(sda1.encrypted?).to eq(true)
+          expect(sda1.encryption.method.is?(method)).to eq(true)
+        end
+
+        it "imports mount point and mount options for the encrypted swap" do
+          subject.import_mount_points
+
+          filesystem = current_graph.find_by_name("/dev/sda1").encryption.filesystem
+
+          expect(filesystem.mount_path).to eq("swap")
+          expect(filesystem.mount_options).to eq(["sw"])
+        end
+      end
+
+      context "and that swap was encrypted with random swap method" do
+        let(:key_file) { "/dev/urandom" }
+
+        include_examples "an encrypted swap", :random_swap
+      end
+
+      context "and that swap was encrypted with protected swap method" do
+        let(:key_file) { "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts" }
+
+        include_examples "an encrypted swap", :protected_swap
+      end
+
+      context "and that swap was encrypted with secure swap method" do
+        let(:key_file) { "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts" }
+
+        include_examples "an encrypted swap", :secure_swap
       end
     end
 

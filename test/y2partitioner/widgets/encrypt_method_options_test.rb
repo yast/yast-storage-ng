@@ -34,8 +34,8 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
   let(:dev_name) { "/dev/sda" }
 
   let(:controller) { Y2Partitioner::Actions::Controllers::Encryption.new(fs_controller) }
-  let(:random_swap) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
-  let(:luks1) { Y2Storage::EncryptionMethod::LUKS1 }
+  let(:random_swap) { Y2Storage::EncryptionMethod.find(:random_swap) }
+  let(:luks1) { Y2Storage::EncryptionMethod.find(:luks1) }
 
   before do
     devicegraph_stub("empty_hard_disk_50GiB.yml")
@@ -48,12 +48,12 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
     let(:fake_luks1_options) { CWM::Empty.new("__fake_luks1_options__") }
 
     before do
-      allow(Y2Partitioner::Widgets::RandomOptions).to receive(:new).and_return(fake_random_swap_options)
+      allow(Y2Partitioner::Widgets::SwapOptions).to receive(:new).and_return(fake_random_swap_options)
       allow(Y2Partitioner::Widgets::LuksOptions).to receive(:new).and_return(fake_luks1_options)
     end
 
     it "generates the new content based on the selected method" do
-      expect(Y2Partitioner::Widgets::RandomOptions).to receive(:new)
+      expect(Y2Partitioner::Widgets::SwapOptions).to receive(:new)
       subject.refresh(random_swap)
 
       expect(Y2Partitioner::Widgets::LuksOptions).to receive(:new)
@@ -69,7 +69,7 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
     end
   end
 
-  describe Y2Partitioner::Widgets::RandomOptions do
+  describe Y2Partitioner::Widgets::SwapOptions do
     subject { described_class.new(controller) }
 
     include_examples "CWM::CustomWidget"
@@ -90,7 +90,7 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
     describe "#contents" do
       it "displays the encryption password widget" do
-        expect(Y2Partitioner::Widgets::EncryptPassword).to receive(:new).with(controller)
+        expect(Y2Partitioner::Widgets::EncryptPassword).to receive(:new).with(controller, anything)
 
         subject.contents
       end
