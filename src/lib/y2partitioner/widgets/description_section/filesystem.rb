@@ -45,7 +45,7 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          [:fs_type, :mount_point, :mount_by, :label, :uuid] + btrfs_entries
+          [:fs_type, :mount_point, :mount_by, :label, :uuid] + ext_entries + btrfs_entries
         end
 
         # Extra entries when the filesystem is Btrfs
@@ -55,6 +55,15 @@ module Y2Partitioner
           return [] unless filesystem&.is?(:btrfs)
 
           [:btrfs_data_raid_level, :btrfs_metadata_raid_level]
+        end
+
+        # Extra entries when the filesystem is Ext
+        #
+        # @return [Array<Symbol>]
+        def ext_entries
+          return [] unless filesystem&.type&.is?(:ext3, :ext4)
+
+          [:journal]
         end
 
         # Information about the filesystem type
@@ -149,6 +158,13 @@ module Y2Partitioner
           return "" unless filesystem&.mount_point
 
           filesystem.mount_point.mount_by.to_human_string
+        end
+
+        # Information about journal
+        #
+        # @return [String]
+        def journal_value
+          format(_("Journal Device: %s"), filesystem&.journal_device&.name)
         end
       end
     end

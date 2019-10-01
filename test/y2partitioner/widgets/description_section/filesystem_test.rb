@@ -84,6 +84,38 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
       expect(subject.value).to match(/Mount Point: \/ \(not mounted\)/)
     end
 
+    context "when using a Ext3/4 filesystem" do
+      context "with an external journal" do
+        let(:scenario) { "multidevice-ext4.xml" }
+
+        let(:device_name) { "/dev/BACKUP_R6/BACKUP_R6" }
+
+        it "includes an entry about the journal device" do
+          expect(subject.value).to match(/Journal Device:/)
+        end
+
+        it "shows the device used to hold the journal" do
+          expect(subject.value).to match(/\/dev\/sdd1/)
+        end
+      end
+
+      context "without an external journal" do
+        let(:device_name) { "/dev/sda2" }
+
+        it "includes an empty entry about the journal device" do
+          expect(subject.value).to_not match(/Journal Device:$/)
+        end
+      end
+    end
+
+    context "when using a no Ext3/4 filesystem" do
+      let(:device_name) { "/dev/sdb5" }
+
+      it "does not include an entry about the journal" do
+        expect(subject.value).to_not match(/Journal Device:/)
+      end
+    end
+
     context "when using a Btrfs filesystem" do
       let(:scenario) { "btrfs_on_disk" }
 
