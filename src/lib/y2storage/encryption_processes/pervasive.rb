@@ -34,11 +34,13 @@ module Y2Storage
       ZKEY = "/usr/bin/zkey".freeze
       private_constant :ZKEY
 
+      # Cipher used for pervasive encryption
+      CIPHER = "paes-xts-plain64"
+      private_constant :CIPHER
+
       # @see Base.used_for?
       def self.used_for?(encryption)
-        # TODO: it should be possible to detect a preexisting pervasive encryption
-        # after extending a bit the libstorage-ng probing capabilities.
-        super
+        encryption.type.is?(:luks2) && encryption.cipher == CIPHER
       end
 
       # @see Base.available?

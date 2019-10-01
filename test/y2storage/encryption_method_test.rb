@@ -31,6 +31,10 @@ describe Y2Storage::EncryptionMethod do
     it "returns a method for a random swap" do
       expect(described_class.all.map(&:to_sym)).to include(:random_swap)
     end
+
+    it "returns a method for pervasive luks2" do
+      expect(described_class.all.map(&:to_sym)).to include(:pervasive_luks2)
+    end
   end
 
   describe ".available" do
@@ -90,12 +94,16 @@ describe Y2Storage::EncryptionMethod do
       it "returns the encryption method" do
         luks1 = described_class.find(:luks1)
         random_swap = described_class.find(:random_swap)
+        pervasive_luks2 = described_class.find(:pervasive_luks2)
 
         expect(luks1).to be_a Y2Storage::EncryptionMethod
         expect(luks1.id).to eq(:luks1)
 
         expect(random_swap).to be_a Y2Storage::EncryptionMethod
         expect(random_swap.id).to eq(:random_swap)
+
+        expect(pervasive_luks2).to be_a Y2Storage::EncryptionMethod
+        expect(pervasive_luks2.id).to eq(:pervasive_luks2)
       end
     end
 
@@ -219,6 +227,18 @@ describe Y2Storage::EncryptionMethod do
 
         expect(encryption_method).to be_a Y2Storage::EncryptionMethod
         expect(encryption_method.to_sym).to eq(:random_swap)
+      end
+    end
+
+    context "when the given encryption device is using pervasive LUKS2 encryption" do
+      let(:scenario) { "encrypted_pervasive_luks2.xml" }
+      let(:device_name) { "/dev/mapper/cr_ccw-0X0150-part1" }
+
+      it "returns the PERVASIVE_LUKS2 encryption method" do
+        encryption_method = described_class.for_device(device)
+
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method.to_sym).to eq(:pervasive_luks2)
       end
     end
   end
