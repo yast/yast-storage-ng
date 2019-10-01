@@ -410,9 +410,9 @@ module Y2Partitioner
         def add_devices?(filesystem)
           original_filesystem = original_filesystem(filesystem)
 
-          return unless original_filesystem&.multidevice?
+          return false unless original_filesystem&.multidevice?
 
-          # FIXME: check the UUID instead
+          # FIXME: check the fstab entry UUID instead
           filesystem.type == original_filesystem&.type
         end
 

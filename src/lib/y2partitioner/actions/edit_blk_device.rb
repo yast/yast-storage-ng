@@ -111,7 +111,7 @@ module Y2Partitioner
       # @return [Array<Strings>]
       def errors
         [
-          btrfs_error,
+          multidevice_btrfs_error,
           multidevice_fs_error,
           used_device_error,
           partitions_error,
@@ -140,29 +140,13 @@ module Y2Partitioner
         )
       end
 
-      # Error when trying to edit a device that is part of a multidevice filesystem
-      #
-      # @return [String, nil] nil if the device is not part of a multidevice filesystem
-      def multidevice_fs_error
-        fs = device.filesystem
-        return nil unless fs&.multidevice?
-
-        format(
-          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
-          # Since device names can be rather long, make sure the lines
-          # containing %{name} are sorter than the others.
-          _("The device %{name} belongs to a multi-device filesystem.\n" \
-            "It cannot be edited.\n\n"),
-          name: device.name
-        )
-      end
-
       # Error when trying to edit a device that is part of a multi-device Btrfs
       #
       # @return [String, nil] nil if the device is not part of a Btrfs
-      def btrfs_error
+      def multidevice_btrfs_error
         fs = device.filesystem
-        return nil unless fs&.type&.is?(:btrfs)
+
+        return nil unless fs&.multidevice? && fs&.type&.is?(:btrfs)
 
         format(
           # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
@@ -175,6 +159,23 @@ module Y2Partitioner
             "To use %{name} for other purpose, make sure it does not\n" \
             "belong to the Btrfs filesystem, either deleting the filesystem or\n" \
             "removing %{name} from it."),
+          name: device.name
+        )
+      end
+
+      # Error when trying to edit a device that is part of a multidevice filesystem
+      #
+      # @return [String, nil] nil if the device is not part of a multidevice filesystem
+      def multidevice_fs_error
+        fs = device.filesystem
+        return nil unless fs&.multidevice?
+
+        format(
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
+          # Since device names can be rather long, make sure the lines
+          # containing %{name} are sorter than the others.
+          _("The device %{name} belongs to a multi-device filesystem.\n" \
+            "It cannot be edited."),
           name: device.name
         )
       end

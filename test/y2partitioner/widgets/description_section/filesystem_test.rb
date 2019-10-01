@@ -86,7 +86,7 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
 
     context "when using a Ext3/4 filesystem" do
       context "with an external journal" do
-        let(:scenario) { "multidevice-ext4.xml" }
+        let(:scenario) { "bug_1145841.xml" }
 
         let(:device_name) { "/dev/BACKUP_R6/BACKUP_R6" }
 

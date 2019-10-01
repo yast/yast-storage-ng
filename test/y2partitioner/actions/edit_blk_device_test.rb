@@ -103,7 +103,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if called on a device that is part of a multi-device filesystem" do
-      let(:scenario) { "multidevice-ext4.xml" }
+      let(:scenario) { "bug_1145841.xml" }
       let(:dev_name) { "/dev/BACKUP_R6/BACKUP_R6" }
 
       it "shows a multi-device error popup" do

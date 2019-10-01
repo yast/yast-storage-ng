@@ -89,7 +89,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
 
     context "when the filesystem has an external journal" do
-      let(:scenario) { "multidevice-ext4.xml" }
+      let(:scenario) { "bug_1145841.xml" }
 
       let(:dev_name) { "/dev/BACKUP_R6/BACKUP_R6" }
 

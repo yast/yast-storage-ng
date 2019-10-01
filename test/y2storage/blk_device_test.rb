@@ -97,7 +97,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when the device has a filesystem" do
-      let(:scenario) { "multidevice-ext4.xml" }
+      let(:scenario) { "bug_1145841.xml" }
 
       context "and it holds a journal" do
         let(:device_name) { "/dev/sdd1" }

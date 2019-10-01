@@ -713,7 +713,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     end
 
     context "when the fstab contains a multi-device Ext4 entry" do
-      let(:scenario) { "multidevice-ext4.xml" }
+      let(:scenario) { "bug_1145841.xml" }
 
       let(:entries) do
         [
