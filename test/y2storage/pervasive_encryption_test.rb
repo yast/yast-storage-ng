@@ -130,6 +130,19 @@ describe "pervasive encryption" do
           blk_device.encrypt(method: pervasive, password: "12345678")
           manager.commit
         end
+
+        # We used to memoize the Cheetah recorder in an instance variable, which had nasty
+        # consequences when using the userdata mechanism to store and restore the process
+        it "does not break the serialization of the encryption process" do
+          enc = blk_device.encrypt(method: pervasive)
+          manager.commit
+
+          enc_new = manager.staging.find_device(enc.sid)
+          # Accessing the encryption process after having called the command
+          # "zkey-cryptsetup setvp" resulted in the following NoMethodError:
+          # "private method `allocate' called for Yast::Y2Logger:Class"
+          expect { enc_new.method }.to_not raise_error
+        end
       end
     end
 

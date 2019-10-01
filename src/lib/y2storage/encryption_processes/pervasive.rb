@@ -138,7 +138,7 @@ module Y2Storage
       #
       # @return [Recorder]
       def cheetah_recorder
-        @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
+        Recorder.new(Yast::Y2Logger.instance)
       end
 
       # Generates a new secure key for the given encryption device and registers
