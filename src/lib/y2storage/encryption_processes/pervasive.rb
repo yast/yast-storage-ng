@@ -36,9 +36,7 @@ module Y2Storage
 
       # @see Base.used_for?
       def self.used_for?(encryption)
-        # TODO: it should be possible to detect a preexisting pervasive encryption
-        # after extending a bit the libstorage-ng probing capabilities.
-        super
+        encryption.type.is?(:luks2) && encryption.cipher == "paes-xts-plain64"
       end
 
       # @see Base.available?

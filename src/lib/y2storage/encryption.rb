@@ -62,6 +62,16 @@ module Y2Storage
     storage_forward :key_file
     storage_forward :key_file=
 
+    # @!attribute cipher
+    #   @return [String] the encryption cipher
+    storage_forward :cipher
+    storage_forward :cipher=
+
+    # @!attribute key_size
+    #   @return [DiskSize] the encryption key size
+    storage_forward :key_size, as: "DiskSize"
+    storage_forward :key_size=
+
     # @!attribute crypt_options
     #   @return [Array<String>] options for the encryption
     storage_forward :crypt_options
