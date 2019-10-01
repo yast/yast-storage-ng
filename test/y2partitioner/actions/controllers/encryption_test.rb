@@ -193,13 +193,36 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
           end
 
           context "and the existing encryption cannot be used for the current device" do
-            before do
-              # The device is not a swap anymore
-              device.encryption.filesystem.mount_path = "/foo"
+            context "and the current filesystem already exists on disk" do
+              before do
+                # The device is not a swap anymore
+                device.encryption.filesystem.mount_path = "/foo"
+              end
+
+              it "returns :sanitize action" do
+                expect(subject.actions).to contain_exactly(:sanitize)
+              end
             end
 
-            it "returns :sanitize and :encrypt actions" do
-              expect(subject.actions).to contain_exactly(:sanitize, :encrypt)
+            context "and the current filesystem does not exist on disk yet" do
+              before do
+                device.encryption.delete_filesystem
+                device.encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+              end
+
+              it "returns :encrypt action" do
+                expect(subject.actions).to contain_exactly(:encrypt)
+              end
+            end
+
+            context "and the encryption is not currently formatted" do
+              before do
+                device.encryption.delete_filesystem
+              end
+
+              it "returns :encrypt action" do
+                expect(subject.actions).to contain_exactly(:encrypt)
+              end
             end
           end
         end

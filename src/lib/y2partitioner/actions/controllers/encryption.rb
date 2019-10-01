@@ -71,27 +71,14 @@ module Y2Partitioner
         # Actions that make sense for the block device
         #
         # @see #action
+        # @see #calculate_actions
         #
         # If there is more than one possible action, the user should be able to use the UI to select
-        # which one to perform. Note that :sanitize and :remove are not directly offered to the user in
-        # the UI.
+        # which one to perform.
         #
         # @return [Array<Symbol>]
         def actions
-          return @actions if @actions
-
-          @actions =
-            if fs_controller.encrypt
-              if sanitize_encryption?
-                [:sanitize, :encrypt]
-              elsif can_keep?
-                [:keep, :encrypt]
-              else
-                [:encrypt]
-              end
-            else
-              [:remove]
-            end
+          @actions ||= calculate_actions
         end
 
         # Whether there are more than one encryption methods available
@@ -168,6 +155,23 @@ module Y2Partitioner
             encryption.method
           else
             Y2Storage::EncryptionMethod::LUKS1
+          end
+        end
+
+        # Calculate actions that make sense for the block device
+        #
+        # @see #actions
+        #
+        # @return [Array<Symbol>]
+        def calculate_actions
+          return [:remove] unless fs_controller.encrypt
+
+          if sanitize_encryption? && !show_dialog?
+            [:sanitize]
+          elsif can_keep?
+            [:keep, :encrypt]
+          else
+            [:encrypt]
           end
         end
 
