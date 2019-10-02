@@ -600,6 +600,19 @@ module Y2Storage
       size - resize_info.min_size
     end
 
+    # Whether the block device is being used to hold a journal
+    #
+    # @return [Boolean]
+    def journal?
+      return false unless filesystem
+
+      to_storage_value.out_holders.to_a.any? do |holder|
+        return false unless Storage.filesystem_user?(holder)
+
+        Storage.to_filesystem_user(holder).journal?
+      end
+    end
+
     protected
 
     # Values for volume specification matching

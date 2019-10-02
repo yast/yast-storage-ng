@@ -148,7 +148,7 @@ module Y2Partitioner
         if device.multidevice?
           format(
             # TRANSLATORS: fs_type is the filesystem type. I.e., BtrFS
-            #              device_name is the base name of the block device. I.e., sda or sda1+
+            #              device_name is the base name of the block device. I.e., sda or sda1...
             _("%{fs_type} %{device_name}"),
             fs_type:     device.type.to_human_string,
             device_name: device.blk_device_basename
@@ -271,7 +271,7 @@ module Y2Partitioner
         partition:     N_("Partition")
       }
 
-      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of Btrfs sda1+, etc)
+      # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of Btrfs sda1..., etc)
       #
       # @param device [Y2Storage::Device]
       # @return [String]
@@ -281,13 +281,31 @@ module Y2Partitioner
 
         fs = filesystem(device)
 
-        if fs&.multidevice?
-          btrfs_multidevice_type_label(fs)
+        if device.journal?
+          journal_type_label(fs)
+        elsif show_multidevice_type_label?(fs)
+          multidevice_type_label(fs)
         elsif fs
           formatted_device_type_label(device, fs)
         else
           unformatted_device_type_label(device)
         end
+      end
+
+      # Whether the "Part of *fs.type*" label should be displayed
+      #
+      # The Ext3/4 filesystem could be detected as a multi-device filesystem
+      # when its journal is placed in an external device. However, we do not
+      # want to display "Part of ..." for them because we know that data
+      # partition is over a single device.
+      #
+      # @param filesystem [Y2Storage::Filesystems::Base]
+      # @return [Boolean] true if the filesystem is multi-device BUT not an Ext3/4 one
+      def show_multidevice_type_label?(filesystem)
+        return false unless filesystem
+        return false if filesystem.type.is?(:ext3, :ext4)
+
+        filesystem.multidevice?
       end
 
       # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
@@ -350,13 +368,34 @@ module Y2Partitioner
         format(_("PV of %s"), vg.basename)
       end
 
-      # Type label when the device belongs to a multidevice Btrfs filesystem
+      # Type label when the device holds a journal
       #
       # @param filesystem [Y2Storage::Filesystems::Base]
       # @return [String]
-      def btrfs_multidevice_type_label(filesystem)
-        # TRANSLATORS: %s is a device base name. E.g., sda1+
-        format(_("Part of Btrfs %s"), filesystem.blk_device_basename)
+      def journal_type_label(filesystem)
+        data_device = filesystem.blk_devices.find { |d| !d.journal? }
+
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{data_device_name} is the data device name. E.g., sda1
+        format(
+          _("%{fs_type} Journal (%{data_device_name})"),
+          fs_type:          filesystem.type.to_human_string,
+          data_device_name: data_device.basename
+        )
+      end
+
+      # Type label when the device belongs to a multidevice filesystem
+      #
+      # @param filesystem [Y2Storage::Filesystems::Base]
+      # @return [String]
+      def multidevice_type_label(filesystem)
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{blk_device_name} is a device base name. E.g., sda1...
+        format(
+          _("Part of %{fs_name} %{blk_device_name}"),
+          fs_name:         filesystem.type,
+          blk_device_name: filesystem.blk_device_basename
+        )
       end
 
       # Type label when the device is used as caching device in Bcache

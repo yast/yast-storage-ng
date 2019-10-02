@@ -102,6 +102,22 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       include_examples "edit_error"
     end
 
+    context "if called on a device that is part of a multi-device filesystem" do
+      let(:scenario) { "bug_1145841.xml" }
+      let(:dev_name) { "/dev/BACKUP_R6/BACKUP_R6" }
+
+      it "shows a multi-device error popup" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(/belongs to a multi-device filesystem/, hash_including(headline: :error))
+
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        expect(sequence.run).to eq :back
+      end
+    end
+
     context "if called on a device that is part of a multi-device Btrfs" do
       let(:scenario) { "btrfs2-devicegraph.xml" }
       let(:dev_name) { "/dev/sdb1" }

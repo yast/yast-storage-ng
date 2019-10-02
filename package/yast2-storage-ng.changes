@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Oct  2 13:35:42 UTC 2019 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: fix the type column value for Ext3/4 filesystems
+  with an external journal (bsc#1145841).
+- Do not crash when importing mount points from a multi-device
+  filesystem.
+- 4.2.45
+
+-------------------------------------------------------------------
 Wed Oct  2 08:46:10 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - At the end of installation, copy the pervasive encryption keys

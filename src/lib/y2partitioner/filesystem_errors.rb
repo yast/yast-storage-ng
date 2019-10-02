@@ -92,7 +92,7 @@ module Y2Partitioner
     def small_size_for_snapshots?(filesystem, new_size: nil)
       return false unless filesystem && filesystem_with_snapshots?(filesystem)
 
-      # TODO: check size for multidevice Btrfs
+      # TODO: check size for multi-device filesystem
       return false if filesystem.multidevice?
 
       size = new_size || filesystem.blk_devices.first.size

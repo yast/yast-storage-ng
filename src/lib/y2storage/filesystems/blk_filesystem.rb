@@ -134,11 +134,25 @@ module Y2Storage
         format(_("(%{basename}\u2026)"), basename: basename)
       end
 
-      # Whether it is a multidevice filesystem
+      # Whether it is a multi-device filesystem
+      #
+      # So far, filesystems detected as multi-device are
+      #
+      #   - Btrfs, when built over several devices
+      #   - Ext3/4, if the journal is placed in an external device
       #
       # @return [Boolean]
       def multidevice?
         blk_devices.size > 1
+      end
+
+      # Returns the device used to hold the journal
+      #
+      # Mainly useful for Ext3/4 filesystems with an external journal
+      #
+      # @return [BlkDevice, nil] nil if there is not a device used for the journal
+      def journal_device
+        blk_devices.find(&:journal?)
       end
 
       # Checks whether the filesystem has the capability of hosting Btrfs subvolumes

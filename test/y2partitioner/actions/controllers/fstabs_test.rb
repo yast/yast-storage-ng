@@ -712,6 +712,34 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       end
     end
 
+    context "when the fstab contains a multi-device Ext4 entry" do
+      let(:scenario) { "bug_1145841.xml" }
+
+      let(:entries) do
+        [
+          fstab_entry("/dev/BACKUP_R6/BACKUP_R6", "/", btrfs, ["defaults"], 0, 0)
+        ]
+      end
+
+      it "imports mount point and mount options for the multi-device Ext4 entry" do
+        subject.import_mount_points
+
+        filesystem = current_graph.find_by_name("/dev/BACKUP_R6/BACKUP_R6").filesystem
+
+        expect(filesystem.mount_path).to eq("/")
+        expect(filesystem.mount_options).to eq(["defaults"])
+      end
+
+      # TODO: the multi-device Ext4 should be created over all its devices
+      it "creates the Ext4 filesystem only over one device" do
+        subject.import_mount_points
+
+        filesystem = current_graph.find_by_name("/dev/BACKUP_R6/BACKUP_R6").filesystem
+
+        expect(filesystem.blk_devices.size).to eq(1)
+      end
+    end
+
     context "when the imported root is Btrfs" do
       using Y2Storage::Refinements::SizeCasts
 

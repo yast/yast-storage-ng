@@ -74,6 +74,9 @@ module Y2Storage
     # @note When the entry refers to an encryption device, it returs the encryption device
     # and not the underlying device.
     #
+    # FIXME: in case the device isn't indicated by UUID or label, ensure the returned device is the
+    # device indicated in the fstab entry
+    #
     # @param devicegraph [Devicegraph]
     # @return [BlkDevice, Filesystems::Nfs, nil]
     def device(devicegraph)
@@ -82,7 +85,7 @@ module Y2Storage
       if !filesystem
         find_device(devicegraph)
       elsif filesystem.respond_to?(:blk_devices)
-        filesystem.blk_devices.first
+        filesystem.blk_devices.min_by(&:name)
       else
         filesystem
       end

@@ -4,6 +4,7 @@ Yast.import "Mode"
 
 module Y2Partitioner
   module Widgets
+    # rubocop:disable Metrics/ModuleLength
     # Helper methods for generating widget helps.
     module Help
       extend Yast::I18n
@@ -123,8 +124,12 @@ module Y2Partitioner
                                       "Currently there are four supported modes: Writethrough, " \
                                       "Writeback, Writearound and None."),
 
+        journal:                   N_("<b>Journal Device</b> shows the device holding the " \
+                                      "external journal."),
+
         btrfs_devices:             N_("<b>Devices</b> shows the kernel name of the devices used by a "\
                                       "Btrfs file system."),
+
         btrfs_metadata_raid_level: N_("<b>Metadata RAID Level</b> shows the RAID level for the Btrfs " \
                                       "metadata."),
 
@@ -159,5 +164,6 @@ module Y2Partitioner
         ret << "</p>"
       end
     end
+    # rubocop:enable Metrics/ModuleLength
   end
 end
