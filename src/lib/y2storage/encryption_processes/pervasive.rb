@@ -21,6 +21,7 @@ require "y2storage/encryption_type"
 require "y2storage/encryption_processes/base"
 require "y2storage/encryption_processes/secure_key"
 require "yast2/execute"
+require "yast"
 
 module Y2Storage
   module EncryptionProcesses
@@ -104,11 +105,12 @@ module Y2Storage
         end
       end
 
-      # Custom Cheetah recorder to prevent leaking the password to the logs
+      # @see Base#finish_installation
       #
-      # @return [Recorder]
-      def cheetah_recorder
-        @cheetah_recorder ||= Recorder.new(Yast::Y2Logger.instance)
+      # Copies the keys from the zkey repository of the inst-sys to the
+      # repository of the target system.
+      def finish_installation
+        secure_key.copy_to_repository(Yast::Installation.destdir)
       end
 
       # Class to prevent Yast::Execute from leaking to the logs the password
@@ -130,6 +132,13 @@ module Y2Storage
       # @see Base#encryption_type
       def encryption_type
         EncryptionType::LUKS2
+      end
+
+      # Custom Cheetah recorder to prevent leaking the password to the logs
+      #
+      # @return [Recorder]
+      def cheetah_recorder
+        Recorder.new(Yast::Y2Logger.instance)
       end
 
       # Generates a new secure key for the given encryption device and registers

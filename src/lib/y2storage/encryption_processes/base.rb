@@ -109,6 +109,10 @@ module Y2Storage
       # @param _device [Encryption]
       def post_commit(_device); end
 
+      # Executes the actions that must be performed at the end of the installation,
+      # before unmounting the target system
+      def finish_installation; end
+
       # Open options for the encryption device
       #
       # @return [Array<String>]
