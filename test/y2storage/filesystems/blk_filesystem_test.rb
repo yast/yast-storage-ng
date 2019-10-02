@@ -77,6 +77,28 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#journal_device" do
+    context "when the filesystem does not have an external journal" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "returns nil" do
+        expect(subject.journal_device).to be_nil
+      end
+    end
+
+    context "when the filesystem has an external journal" do
+      let(:scenario) { "multidevice-ext4.xml" }
+
+      let(:dev_name) { "/dev/BACKUP_R6/BACKUP_R6" }
+
+      it "returns the device used to hold the journal" do
+        expect(subject.journal_device.is_a?(Y2Storage::BlkDevice)).to eq(true)
+      end
+    end
+  end
+
   describe "#supports_btrfs_subvolumes?" do
     context "for a Btrfs filesystem" do
       let(:dev_name) { btrfs_part }

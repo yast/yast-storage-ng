@@ -146,6 +146,15 @@ module Y2Storage
         blk_devices.size > 1
       end
 
+      # Returns the device used to hold the journal
+      #
+      # Mainly useful for Ext3/4 filesystems with an external journal
+      #
+      # @return [BlkDevice, nil] nil if there is not a device used for the journal
+      def journal_device
+        blk_devices.find(&:journal?)
+      end
+
       # Checks whether the filesystem has the capability of hosting Btrfs subvolumes
       #
       # It only should be true for Btrfs.
