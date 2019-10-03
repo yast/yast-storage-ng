@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Oct  3 16:58:02 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- AutoYaST: do not fail if the uuid is specified for a new
+  filesystem (bsc#1148477, bsc#1152535).
+- AutoYaST: partitions and logical volumes to be reused can now be
+  found by uuid (bsc#1148477, bsc#1152535).
+- 4.1.88
+
+-------------------------------------------------------------------
 Wed Sep 18 09:31:41 UTC 2019 - Steffen Winterfeldt <snwint@suse.com>
 
 - bind-mount /run from inst-sys to target system during install
