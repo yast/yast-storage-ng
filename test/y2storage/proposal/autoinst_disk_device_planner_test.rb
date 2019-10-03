@@ -84,6 +84,25 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
     end
 
+    context "specifying the uuid" do
+      let(:scenario) { "autoyast_drive_examples" }
+
+      let(:disk_spec) do
+        { "device" => "/dev/sdc", "partitions" => [root_spec] }
+      end
+
+      let(:root_spec) do
+        { "mount" => "/", "filesystem" => "btrfs", "uuid" => "root-uuid" }
+      end
+
+      it "ignores it" do
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
+
+        expect(root.uuid).to be_nil
+      end
+    end
+
     context "specifying size" do
       using Y2Storage::Refinements::SizeCasts
 
