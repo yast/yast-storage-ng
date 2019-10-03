@@ -230,6 +230,8 @@ module Y2Storage
         device =
           if part_section.partition_nr
             disk.partitions.find { |i| i.number == part_section.partition_nr }
+          elsif part_section.uuid
+            disk.partitions.find { |i| i.filesystem_uuid == part_section.uuid }
           elsif part_section.label
             disk.partitions.find { |i| i.filesystem_label == part_section.label }
           else

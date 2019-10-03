@@ -365,6 +365,25 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
       end
 
+      context "when an uuid is specified" do
+        let(:scenario) { "autoyast_drive_examples" }
+
+        let(:disk_spec) do
+          { "device" => "/dev/sdc", "partitions" => [root_spec] }
+        end
+
+        let(:root_spec) do
+          { "create" => false, "uuid" => "root-uuid" }
+        end
+
+        it "reuses the partition with that uuid" do
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.uuid == "root-uuid" }
+
+          expect(root.reuse_name).to eq("/dev/sdc3")
+        end
+      end
+
       context "when the partition to reuse does not exist" do
         let(:root_spec) do
           { "create" => false, "mount" => "/", "filesystem" => :btrfs, "partition_nr" => 99 }

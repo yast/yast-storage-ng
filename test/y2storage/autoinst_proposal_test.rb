@@ -224,6 +224,22 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
+      context "when an existing uuid is specified" do
+        let(:root) do
+          { "mount" => "/", "uuid" => "sda3-uuid", "create" => false }
+        end
+
+        it "reuses the partition with the given uuid" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_part = devicegraph.partitions.find { |p| p.filesystem_uuid == "sda3-uuid" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::EXT4,
+            filesystem_mountpoint: "/"
+          )
+        end
+      end
+
       context "when partition is marked to be formatted" do
         let(:root) do
           { "mount" => "/", "partition_nr" => 3, "create" => false,
@@ -400,13 +416,6 @@ describe Y2Storage::AutoinstProposal do
 
       let(:lvm_group) { "vg0" }
 
-      let(:root) do
-        {
-          "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
-          "size" => "20G"
-        }
-      end
-
       let(:partitioning) do
         [
           { "device" => "/dev/sda", "use" => "all", "partitions" => [pv] }, vg
@@ -421,21 +430,57 @@ describe Y2Storage::AutoinstProposal do
         { "create" => false, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
       end
 
-      it "reuses the volume group" do
-        proposal.propose
-        devicegraph = proposal.devices
-        expect(devicegraph.partitions).to contain_exactly(
-          an_object_having_attributes("name" => "/dev/sda1"), # new pv
-          an_object_having_attributes("name" => "/dev/sda3"),
-          an_object_having_attributes("name" => "/dev/sda5")
-        )
+      RSpec.shared_examples "autoinst LVM reuse" do
+        it "reuses the volume group" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/sda1"), # new pv
+            an_object_having_attributes("name" => "/dev/sda3"),
+            an_object_having_attributes("name" => "/dev/sda5")
+          )
 
-        vg = devicegraph.lvm_vgs.first
-        expect(vg.vg_name).to eq(lvm_group)
-        expect(vg.lvm_pvs.map(&:blk_device)).to contain_exactly(
-          an_object_having_attributes("name" => "/dev/sda1"), # new pv
-          an_object_having_attributes("name" => "/dev/sda5")
-        )
+          vg = devicegraph.lvm_vgs.first
+          expect(vg.vg_name).to eq(lvm_group)
+          expect(vg.lvm_pvs.map(&:blk_device)).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/sda1"), # new pv
+            an_object_having_attributes("name" => "/dev/sda5")
+          )
+        end
+
+        it "reuses the indicated logical volumes" do
+          lv2 = fake_devicegraph.find_by_name("/dev/vg0/lv2")
+
+          proposal.propose
+          devicegraph = proposal.devices
+
+          root_lv = devicegraph.lvm_lvs.find { |lv| lv.filesystem_mountpoint == "/" }
+          expect(root_lv.sid).to eq lv2.sid
+        end
+      end
+
+      context "by lv_name" do
+        let(:root) do
+          { "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv2" }
+        end
+
+        include_examples "autoinst LVM reuse"
+      end
+
+      context "by label" do
+        let(:root) do
+          { "create" => false, "mount" => "/", "filesystem" => "ext4", "label" => "rootfs" }
+        end
+
+        include_examples "autoinst LVM reuse"
+      end
+
+      context "by label" do
+        let(:root) do
+          { "create" => false, "mount" => "/", "filesystem" => "ext4", "uuid" => "lv2-uuid" }
+        end
+
+        include_examples "autoinst LVM reuse"
       end
     end
 

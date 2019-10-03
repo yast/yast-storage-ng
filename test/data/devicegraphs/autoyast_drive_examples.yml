@@ -81,6 +81,7 @@
         name:         /dev/sdc3
         file_system:  ext4
         mount_point:  /
+        uuid:         root-uuid
         label:        root
         mount_by:     uuid
         mkfs_options: -b 2048

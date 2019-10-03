@@ -24,6 +24,7 @@
         name:         /dev/sda3
         file_system:  ext4
         label:        root
+        uuid:         sda3-uuid
 
 - disk:
     name: /dev/sdb

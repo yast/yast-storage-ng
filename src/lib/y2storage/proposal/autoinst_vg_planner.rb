@@ -144,6 +144,8 @@ module Y2Storage
       def find_lv_in_vg(vg, part_section)
         if part_section.lv_name
           vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+        elsif part_section.uuid
+          vg.lvm_lvs.find { |v| v.filesystem_uuid == part_section.uuid }
         elsif part_section.label
           vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
         else
