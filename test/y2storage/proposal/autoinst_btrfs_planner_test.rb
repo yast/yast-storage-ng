@@ -102,8 +102,8 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
     context "when the partition section specifies the uuid" do
       let(:partition_spec) { { "uuid" => "111-2222-33333" } }
 
-      it "sets the uuid" do
-        expect(planned_btrfs.uuid).to eq("111-2222-33333")
+      it "does not set the uuid" do
+        expect(planned_btrfs.uuid).to be_nil
       end
     end
 
