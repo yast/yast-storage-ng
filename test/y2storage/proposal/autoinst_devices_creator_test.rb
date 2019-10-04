@@ -388,14 +388,16 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         end
 
         let(:root) do
-          planned_partition(disk: "/dev/bcache0", mount_point: "/", min_size: 250.GiB)
+          planned_partition(
+            disk: "/dev/bcache0", mount_point: "/", min_size: 250.GiB, filesystem_type: filesystem_type
+          )
         end
 
         it "shrinks the partition to make it fit into the bcache" do
           result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
           devicegraph = result.devicegraph
           root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
-          expect(root.size).to eq(20.GiB)
+          expect(root.size).to be < 20.GiB
         end
 
         it "registers which devices were shrinked" do

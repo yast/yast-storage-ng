@@ -73,6 +73,7 @@
             lv_name:      lv2
             file_system:  ext4
             label:        rootfs
+            uuid:         lv2-uuid
 
 - lvm_vg:
     vg_name: vg1
