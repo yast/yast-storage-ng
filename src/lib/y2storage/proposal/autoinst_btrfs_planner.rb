@@ -123,13 +123,14 @@ module Y2Storage
       # @param filesystem [Planned::Btrfs]
       # @param partition_section [AutoinstProfile::PartitionSection]
       def reuse_btrfs(filesystem, partition_section)
-        reused_btrfs = reused_btrfs(filesystem, partition_section)
+        reused_btrfs = reused_btrfs(partition_section)
 
         if !reused_btrfs
           issues_list.add(:missing_reusable_device, partition_section)
           return
         end
 
+        filesystem.uuid = reused_btrfs.uuid
         filesystem.reuse_sid = reused_btrfs.sid
       end
 
@@ -137,14 +138,13 @@ module Y2Storage
       #
       # @note The filesystem UUID must be given in the AutoYaST profile (partition section).
       #
-      # @param filesystem [Planned::Btrfs]
       # @param partition_section [AutoinstProfile::PartitionSection]
       #
       # @return [Filesystems::Btrfs, nil] nil if no filesystem found
-      def reused_btrfs(filesystem, partition_section)
+      def reused_btrfs(partition_section)
         return nil unless partition_section.uuid
 
-        devicegraph.btrfs_filesystems.detect { |f| f.uuid == filesystem.uuid }
+        devicegraph.btrfs_filesystems.detect { |f| f.uuid == partition_section.uuid }
       end
     end
   end

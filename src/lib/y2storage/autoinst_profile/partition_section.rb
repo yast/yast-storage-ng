@@ -113,7 +113,8 @@ module Y2Storage
       #   @return [String] label of the filesystem
 
       # @!attribute uuid
-      #   @return [String] UUID of the partition
+      #   @return [String] UUID of the partition, only useful for reusing
+      #     existing filesystems
 
       # @!attribute lv_name
       #   @return [String] name of the LVM logical volume
@@ -189,7 +190,6 @@ module Y2Storage
       # @return [PartitionSection]
       def self.new_from_storage(device)
         result = new
-        # So far, only real partitions are supported
         result.init_from_device(device)
         result
       end
@@ -380,7 +380,6 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem]
       def init_blk_filesystem_fields(filesystem)
         @filesystem = filesystem.type.to_sym
-        @uuid = filesystem.uuid
         @label = filesystem.label unless filesystem.label.empty?
         @mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
         init_subvolumes(filesystem)

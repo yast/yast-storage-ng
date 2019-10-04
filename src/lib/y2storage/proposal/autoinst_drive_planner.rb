@@ -97,7 +97,6 @@ module Y2Storage
       def add_filesystem_attrs(device, partition_section)
         device.mount_point = partition_section.mount
         device.label = partition_section.label
-        device.uuid = partition_section.uuid
         device.filesystem_type = filesystem_for(partition_section)
         device.mount_by = partition_section.type_for_mountby
         device.mkfs_options = partition_section.mkfs_options
@@ -193,6 +192,7 @@ module Y2Storage
       # @param device         [Y2Storage::Device] Device to reuse
       # @param section        [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_device_reuse(planned_device, device, section)
+        planned_device.uuid = section.uuid
         planned_device.reuse_name = device.is_a?(LvmVg) ? device.volume_group_name : device.name
         planned_device.reformat = !!section.format
         planned_device.resize = !!section.resize if planned_device.respond_to?(:resize=)
@@ -254,6 +254,8 @@ module Y2Storage
         device =
           if part_section.partition_nr
             disk.partitions.find { |i| i.number == part_section.partition_nr }
+          elsif part_section.uuid
+            disk.partitions.find { |i| i.filesystem_uuid == part_section.uuid }
           elsif part_section.label
             disk.partitions.find { |i| i.filesystem_label == part_section.label }
           else

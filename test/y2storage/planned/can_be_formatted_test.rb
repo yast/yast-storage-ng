@@ -130,6 +130,8 @@ describe Y2Storage::Planned::CanBeFormatted do
         planned.mount_point = "/old"
         planned.mount_by = mount_by
         allow(planned).to receive(:final_device!).and_return(blk_device)
+
+        blk_device.filesystem.mount_path = "/"
       end
 
       context "and a mount point has been set" do
