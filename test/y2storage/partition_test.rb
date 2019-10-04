@@ -462,6 +462,8 @@ describe Y2Storage::Partition do
       volume.partition_id = volume_partition_id
       volume.fs_types = volume_fs_types
       volume.min_size = volume_min_size
+
+      partition.filesystem.mount_path = "swap"
     end
 
     context "when the partition has the same values than the volume" do

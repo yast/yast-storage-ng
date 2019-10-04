@@ -114,7 +114,8 @@ module Y2Storage
       #   @return [String] label of the filesystem
 
       # @!attribute uuid
-      #   @return [String] UUID of the partition
+      #   @return [String] UUID of the partition, only useful for reusing
+      #     existing filesystems
 
       # @!attribute lv_name
       #   @return [String] name of the LVM logical volume
@@ -186,7 +187,6 @@ module Y2Storage
       # @return [PartitionSection]
       def self.new_from_storage(device)
         result = new
-        # So far, only real partitions are supported
         result.init_from_device(device)
         result
       end

@@ -41,7 +41,10 @@ describe Y2Storage::AutoinstIssues::ShrinkedPlannedDevices do
     ]
   end
 
-  before { fake_scenario("windows-linux-free-pc") }
+  before do
+    fake_scenario("windows-linux-free-pc")
+    real_root.filesystem.mount_path = "/"
+  end
 
   describe "#message" do
     it "returns a description of the issue" do
