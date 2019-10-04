@@ -622,8 +622,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           an_object_having_attributes(
             filesystem: :btrfs,
             mount:      "/test",
-            mountby:    :device,
-            uuid:       "b7b96325-feb5-4e7e-a7f4-014ce2402e71"
+            mountby:    :device
           )
         )
       end

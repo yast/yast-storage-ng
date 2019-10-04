@@ -383,8 +383,9 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.filesystem).to eq(filesystem.type.to_sym)
       end
 
-      it "initializes uuid with the filesystem uuid" do
-        expect(section.uuid).to eq(filesystem.uuid)
+      # See bug#1148477
+      it "does not initialize the uuid" do
+        expect(section.uuid).to be_nil
       end
 
       context "when the filesystem has a label" do

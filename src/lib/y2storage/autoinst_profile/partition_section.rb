@@ -380,7 +380,6 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem]
       def init_blk_filesystem_fields(filesystem)
         @filesystem = filesystem.type.to_sym
-        @uuid = filesystem.uuid
         @label = filesystem.label unless filesystem.label.empty?
         @mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
         init_subvolumes(filesystem)
