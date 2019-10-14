@@ -619,8 +619,6 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         allow(crypttab).to receive(:entries).and_return(crypttab_entries)
         allow(crypttab).to receive(:filesystem).and_return(filesystem)
-
-        allow_any_instance_of(Y2Storage::EncryptionMethod::Base).to receive(:available?).and_return(true)
       end
 
       let(:fstabs) { [fstab] }
@@ -668,17 +666,29 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       context "and that swap was encrypted with random swap method" do
         let(:key_file) { "/dev/urandom" }
 
+        before do
+          allow_any_instance_of(Y2Storage::EncryptionMethod::RandomSwap).to receive(:available?).and_return(true)
+        end
+
         include_examples "an encrypted swap", :random_swap
       end
 
       context "and that swap was encrypted with protected swap method" do
         let(:key_file) { "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts" }
 
+        before do
+          allow_any_instance_of(Y2Storage::EncryptionMethod::ProtectedSwap).to receive(:available?).and_return(true)
+        end
+
         include_examples "an encrypted swap", :protected_swap
       end
 
       context "and that swap was encrypted with secure swap method" do
         let(:key_file) { "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts" }
+
+        before do
+          allow_any_instance_of(Y2Storage::EncryptionMethod::SecureSwap).to receive(:available?).and_return(true)
+        end
 
         include_examples "an encrypted swap", :secure_swap
       end
