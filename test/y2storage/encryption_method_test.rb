@@ -444,4 +444,81 @@ describe Y2Storage::EncryptionMethod do
       end
     end
   end
+
+  describe "#ensure_suitable_mount_by" do
+    before do
+      devicegraph_stub(scenario)
+
+      # Ensure a fixed default
+      conf = Y2Storage::StorageManager.instance.configuration
+      conf.default_mount_by = Y2Storage::Filesystems::MountByType::UUID
+    end
+
+    let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
+    subject(:encryption) { blk_device.encryption }
+
+    context "for a LUKS2 encryption" do
+      let(:scenario) { "encrypted_pervasive_luks2.xml" }
+      let(:dev_name) { "/dev/dasdc1" }
+
+      it "sets #mount_by to the default UUID if it was previously set to PATH" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::PATH
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:uuid))
+      end
+
+      it "leaves #mount_by untouched if it was previously set to UUID" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::UUID
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:uuid))
+      end
+
+      context "without a label" do
+        it "sets #mount_by to the default UUID if it was previously set to LABEL" do
+          encryption.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+          encryption.ensure_suitable_mount_by
+          expect(encryption.mount_by.is?(:uuid))
+        end
+      end
+
+      context "with a label" do
+        before { expect(encryption).to receive(:label).and_return "something" }
+
+        it "leaves #mount_by untouched if it was previously set to LABEL" do
+          encryption.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+          encryption.ensure_suitable_mount_by
+          expect(encryption.mount_by.is?(:label))
+        end
+      end
+    end
+
+    context "for a random encryption" do
+      let(:scenario) { "encrypted_random_swap.xml" }
+      let(:dev_name) { "/dev/vda3" }
+
+      it "sets #mount_by to DEVICE if it was previously set to PATH" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::PATH
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:device))
+      end
+
+      it "sets #mount_by to DEVICE if it was previously set to UUID" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::UUID
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:device))
+      end
+
+      it "sets #mount_by to DEVICE if it was previously set to LABEL" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:device))
+      end
+
+      it "leaves #mount_by untouched if it was previously set to DEVICE" do
+        encryption.mount_by = Y2Storage::Filesystems::MountByType::DEVICE
+        encryption.ensure_suitable_mount_by
+        expect(encryption.mount_by.is?(:device))
+      end
+    end
+  end
 end

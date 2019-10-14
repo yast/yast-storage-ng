@@ -19,6 +19,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
+require "y2storage/filesystems/mount_by_type"
 require "y2storage/encryption_method"
 
 module Y2Storage
@@ -102,6 +103,28 @@ module Y2Storage
       in_etc_crypttab?
     end
 
+    # @!attribute mount_by
+    #   This defines the form of the second field in the crypttab file.
+    #
+    #   The concrete meaning depends on the value. Note that some types address
+    #   the encryption device while others address the underlying device.
+    #
+    #   * DEVICE: the kernel device name or a link in /dev (but not in /dev/disk)
+    #     of the plain device being encrypted.
+    #   * UUID: the UUID of the LUKS device. This only works with LUKS,
+    #     useless with plain encryption.
+    #   * LABEL: the label of the LUKS device. This only works with LUKS2, there
+    #     are no labels in LUKS1 or in plain encryption.
+    #   * ID: one of the /dev/disk/by-id links to the plain device being encrypted.
+    #   * PATH: one of the /dev/disk/by-path links to the plain device being encrypted.
+    #
+    #   Not to be confused with {Mountable#mount_by}, which refers to the form
+    #   of the fstab file.
+    #
+    #   @return [Filesystems::MountByType]
+    storage_forward :mount_by, as: "Filesystems::MountByType"
+    storage_forward :mount_by=
+
     # Low level setter to enforce a value for {#dm_table_name} without
     # updating {#auto_dm_name?}
     #
@@ -137,6 +160,17 @@ module Y2Storage
     # @param value [Boolean]
     def auto_dm_name=(value)
       save_userdata(:auto_dm_name, value)
+    end
+
+    # @see BlkDevice#stable_name?
+    #
+    # For encryption devices configured during boot, their name is based on
+    # the DeviceMapper specified in the crypttab file. So it should remain
+    # stable across reboots.
+    #
+    # @return [Boolean]
+    def stable_name?
+      true
     end
 
     # Whether the encryption device matches with a given crypttab spec
@@ -233,8 +267,20 @@ module Y2Storage
       encryption_process&.finish_installation
     end
 
+    # If the current mount_by is suitable, it does nothing.
+    #
+    # Otherwise, it assigns the best option from all the suitable ones
+    #
+    # @see #suitable_mount_by?
+    def ensure_suitable_mount_by
+      return if suitable_mount_by?(mount_by)
+
+      self.mount_by = Filesystems::MountByType.best_for(blk_device, suitable_mount_bys)
+    end
+
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :encryption
     end
@@ -262,6 +308,33 @@ module Y2Storage
     # @see #encryption_process
     def save_encryption_process
       self.encryption_process = encryption_process
+    end
+
+    # Whether the given type makes sense for the {#mount_by} attribute of the
+    # encryption device
+    #
+    # Using a value that is not suitable would lead to libstorage-ng ignoring
+    # that value during the commit phase. In such case, DEVICE} is used by the
+    # library as fallback.
+    #
+    # @param type [Filesystems::MountByType]
+    # @return [Boolean]
+    def suitable_mount_by?(type)
+      return true if type.is?(:device)
+      return true if type.is?(:id) && blk_device.udev_ids.any?
+      return true if type.is?(:path) && blk_device.udev_paths.any?
+
+      false
+    end
+
+    # List of all the mount_by types that are suitable for this encryption
+    # device
+    #
+    # @see #suitable_mount_by?
+    #
+    # @return [Array<Filesystems::MountByType>]
+    def suitable_mount_bys
+      Filesystems::MountByType.all.select { |type| suitable_mount_by?(type) }
     end
 
     class << self

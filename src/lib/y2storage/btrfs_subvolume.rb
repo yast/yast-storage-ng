@@ -91,7 +91,8 @@ module Y2Storage
     def copy_mount_by_from_filesystem
       return nil if mount_point.nil? || filesystem.mount_point.nil?
 
-      mount_point.mount_by = filesystem.mount_point.mount_by
+      mount_point.manual_mount_by = filesystem.mount_point.manual_mount_by?
+      mount_point.assign_mount_by(filesystem.mount_point.mount_by)
     end
 
     # Whether the subvolume can be auto deleted, for example when a proposed

@@ -77,6 +77,29 @@ module Y2Storage
         false
       end
 
+      # Whether the kernel name used to reference the filesystem (that is, the
+      # one used when mounting via {Filesystems::MountByType::Device) is stable
+      # and remains equal across system reboots
+      #
+      # @return [Boolean]
+      def stable_name?
+        true
+      end
+
+      # Whether the filesystem sits directly on top of an encrypted device
+      #
+      # @return [Boolean]
+      def encrypted?
+        false
+      end
+
+      # Whether the content of the filesystem is lost after each system reboot
+      #
+      # @return [Boolean] true for swap devices encrypted with volatile keys
+      def volatile?
+        false
+      end
+
       # Whether the current filesystem matches with a given fstab spec
       #
       # Most formats supported in the first column of /etc/fstab are recognized.
@@ -98,10 +121,12 @@ module Y2Storage
 
       protected
 
+      # @see Device#is?
       def types_for_is
         super << :filesystem
       end
 
+      # Value to return as fallback when the free space cannot be computed
       FREE_SPACE_FALLBACK = DiskSize.zero
       def compute_free_space
         # e.g. nfs where blk_devices cannot be queried

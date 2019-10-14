@@ -48,6 +48,10 @@ module Y2Storage
     storage_forward :format_options
     storage_forward :format_options=
 
+    # @!method label
+    #   @return [String] LUKS label, only available in LUKS version 2
+    storage_forward :label
+
     # Whether the LUKS encryption device matches with a given crypttab spec
     #
     # @see Encryption#match_crypttab_spec?
@@ -68,8 +72,18 @@ module Y2Storage
 
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :luks
+    end
+
+    # @see Encryption#suitable_mount_by?
+    def suitable_mount_by?(type)
+      return true if super
+      return true if type.is?(:uuid)
+      return true if type.is?(:label) && self.type.is?(:luks2) && !label.empty?
+
+      false
     end
   end
 end

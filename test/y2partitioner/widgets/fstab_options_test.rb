@@ -169,7 +169,7 @@ describe Y2Partitioner::Widgets do
       before do
         allow(Yast::UI).to receive(:ChangeWidget).and_call_original
         allow(controller).to receive(:mount_point).and_return(mount_point)
-        allow(mount_point).to receive(:possible_mount_bys).and_return(possible_mount_bys)
+        allow(mount_point).to receive(:suitable_mount_bys).and_return(possible_mount_bys)
       end
 
       let(:mount_point) { controller.filesystem.mount_point }
@@ -185,7 +185,7 @@ describe Y2Partitioner::Widgets do
         ]
       end
 
-      it "disables not possible mount bys" do
+      it "disables not suitable mount bys" do
         expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:label), :Enabled, false)
         expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:id), :Enabled, false)
         subject.init

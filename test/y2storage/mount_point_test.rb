@@ -81,6 +81,239 @@ describe Y2Storage::MountPoint do
     end
   end
 
+  describe "#ensure_suitable_mount_by with ID as default mount_by" do
+    let(:scenario) { "bug_1151075.xml" }
+    let(:filesystem) { blk_device.filesystem }
+    subject(:mount_point) { filesystem.create_mount_point("/") }
+
+    before do
+      conf = Y2Storage::StorageManager.instance.configuration
+      conf.default_mount_by = Y2Storage::Filesystems::MountByType::ID
+    end
+
+    context "for a partition with udev path and without label" do
+      let(:dev_name) { "/dev/nvme1n1p1" }
+
+      it "leaves #mount_by untouched if it was previously set to PATH" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::PATH
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:path))
+      end
+
+      it "sets #mount_by to the default if it was previously set to LABEL" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:id))
+      end
+
+      it "leaves #mount_by untouched if it was previously set to UUID" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:uuid))
+      end
+    end
+
+    context "for a logical volume without label" do
+      let(:dev_name) { "/dev/volgroup/lv1" }
+
+      it "sets #mount_by to DEVICE if it was previously set to PATH" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::PATH
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:device))
+      end
+
+      it "sets #mount_by to DEVICE if it was previously set to LABEL" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:device))
+      end
+
+      it "leaves #mount_by untouched if it was previously set to UUID" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:uuid))
+      end
+    end
+
+    context "for a NFS share" do
+      let(:blk_device) { nil }
+      subject(:filesystem) { fake_devicegraph.nfs_mounts.first }
+
+      it "sets #mount_by to DEVICE if it was previously set to PATH" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::PATH
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:device))
+      end
+
+      it "sets #mount_by to DEVICE if it was previously set to LABEL" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:device))
+      end
+
+      it "sets #mount_by to DEVICE if it was previously set to LABEL" do
+        mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+        mount_point.ensure_suitable_mount_by
+        expect(mount_point.mount_by.is?(:uuid))
+      end
+    end
+  end
+
+  describe "#suitable_mount_bys" do
+    let(:scenario) { "encrypted_partition.xml" }
+    let(:filesystem) { blk_device.filesystem }
+
+    context "for a block device with all the udev links" do
+      let(:dev_name) { "/dev/sda2" }
+
+      subject(:mount_point) { filesystem.create_mount_point("/") }
+
+      context "if no assumption is done about the label" do
+        let(:label) { nil }
+
+        context "and the filesystem has a label" do
+          before { filesystem.label = "something" }
+
+          it "returns all the existing types" do
+            expect(mount_point.suitable_mount_bys(label: label))
+              .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
+          end
+        end
+
+        context "and the filesystem has no label" do
+          it "returns all the existing types except LABEL" do
+            types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:label) }
+            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+          end
+        end
+      end
+
+      context "if we take a label for granted" do
+        let(:label) { true }
+
+        context "and the filesystem has a label" do
+          before { filesystem.label = "something" }
+
+          it "returns all the existing types" do
+            expect(mount_point.suitable_mount_bys(label: label))
+              .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
+          end
+        end
+
+        context "and the filesystem has no label" do
+          it "returns all the existing types" do
+            expect(mount_point.suitable_mount_bys(label: label))
+              .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
+          end
+        end
+      end
+
+      context "if no assumption is not done regarding encryption" do
+        let(:encryption) { nil }
+
+        it "includes ID or PATH if the corresponding udev links are available" do
+          types = mount_point.suitable_mount_bys(encryption: encryption)
+          expect(types).to include(Y2Storage::Filesystems::MountByType::ID)
+          expect(types).to include(Y2Storage::Filesystems::MountByType::PATH)
+        end
+      end
+
+      context "if we assume the device is going to be encrypted" do
+        let(:encryption) { true }
+
+        it "does not include ID or PATH" do
+          types = mount_point.suitable_mount_bys(encryption: encryption)
+          expect(types).to_not include(Y2Storage::Filesystems::MountByType::ID)
+          expect(types).to_not include(Y2Storage::Filesystems::MountByType::PATH)
+        end
+      end
+    end
+
+    context "for an encrypted device" do
+      let(:dev_name) { "/dev/mapper/cr_sda1" }
+
+      subject(:mount_point) { filesystem.create_mount_point("/") }
+
+      context "if no assumption is done about the label" do
+        let(:label) { nil }
+
+        context "and the filesystem has a label" do
+          before { filesystem.label = "something" }
+
+          it "returns all the existing types except the ones associated to udev links" do
+            types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
+            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+          end
+        end
+
+        context "and the filesystem has no label" do
+          it "returns only DEVICE and UUID" do
+            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(
+              Y2Storage::Filesystems::MountByType::DEVICE, Y2Storage::Filesystems::MountByType::UUID
+            )
+          end
+        end
+      end
+
+      context "if we take a label for granted" do
+        let(:label) { true }
+
+        context "and the filesystem has a label" do
+          before { filesystem.label = "something" }
+
+          it "returns all the existing types except the ones associated to udev links" do
+            types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
+            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+          end
+        end
+
+        context "although the filesystem has no label" do
+          it "returns all the existing types except the ones associated to udev links" do
+            types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
+            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+          end
+        end
+      end
+
+      context "if we assume the encryption is going to be removed" do
+        let(:encryption) { false }
+
+        context "and the filesystem has a label" do
+          before { filesystem.label = "something" }
+
+          it "returns all the existing types" do
+            expect(mount_point.suitable_mount_bys(encryption: encryption))
+              .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
+          end
+        end
+
+        context "and the filesystem has no label" do
+          it "returns all the existing types except LABEL" do
+            types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:label) }
+            expect(mount_point.suitable_mount_bys(encryption: encryption)).to contain_exactly(*types)
+          end
+        end
+      end
+    end
+
+    context "for a device encrypted with volatile encryption" do
+      let(:dev_name) { "/dev/sda2" }
+
+      before do
+        blk_device.remove_descendants
+        enc = blk_device.encrypt(method: Y2Storage::EncryptionMethod::RANDOM_SWAP)
+        filesystem = enc.create_filesystem(Y2Storage::Filesystems::Type::SWAP)
+        filesystem.label = "something"
+      end
+
+      subject(:mount_point) { filesystem.create_mount_point("swap") }
+
+      it "returns an array containing only DEVICE" do
+        expect(mount_point.suitable_mount_bys).to eq [Y2Storage::Filesystems::MountByType::DEVICE]
+      end
+    end
+  end
+
   describe "#passno" do
     let(:scenario) { "empty_hard_disk_50GiB" }
 

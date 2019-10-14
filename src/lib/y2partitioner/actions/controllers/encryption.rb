@@ -224,6 +224,8 @@ module Y2Partitioner
           else
             finish_remove
           end
+
+          adjust_mount_point
         end
 
         # Sanitizes (removes) the encryption layer when needed
@@ -294,6 +296,16 @@ module Y2Partitioner
           return false if sanitize_encryption?
 
           encryption.active?
+        end
+
+        # Adjusts the properties of the mount point after having added or
+        # removed the encryption device
+        def adjust_mount_point
+          mp = filesystem&.mount_point
+          return if mp.nil?
+
+          mp.set_default_mount_by unless mp.manual_mount_by?
+          mp.ensure_suitable_mount_by
         end
       end
     end

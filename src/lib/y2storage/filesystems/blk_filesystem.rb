@@ -99,8 +99,11 @@ module Y2Storage
       #
       #   In most cases, this collection will contain just one element, since
       #   most filesystems sit on top of just one block device.
-      #   But that's not necessarily true for Btrfs, see
+      #   But that's not necessarily true for Btrfs or for filesystems in which
+      #   the journal or the metadata is stored in a separate device.
+      #   For the Btrfs case, see
       #   https://btrfs.wiki.kernel.org/index.php/Using_Btrfs_with_Multiple_Devices
+      #   For the extX case, see the journal options at mkfs.ext4 documentation.
       #
       #   @return [Array<BlkDevice>]
       storage_forward :blk_devices, as: "BlkDevice"
@@ -168,6 +171,27 @@ module Y2Storage
         disks.any?(&:in_network?)
       end
 
+      # @see Base#stable_name?
+      def stable_name?
+        blk_devices.all?(&:stable_name?)
+      end
+
+      # @see Base#encrypted?
+      def encrypted?
+        plain_blk_devices.any?(&:encrypted?)
+      end
+
+      # @see Base#encrypted?
+      def volatile?
+        blk_dev = blk_devices.first
+        return false unless blk_dev.is?(:encryption)
+
+        enc_method = blk_dev.method
+        return false unless enc_method
+
+        enc_method.only_for_swap?
+      end
+
       # Checks if this filesystem type supports any kind of resize at all,
       # either shrinking or growing.
       #
@@ -214,6 +238,7 @@ module Y2Storage
 
       protected
 
+      # @see Device#is?
       def types_for_is
         super << :blk_filesystem
       end

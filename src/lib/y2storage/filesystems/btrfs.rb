@@ -451,11 +451,13 @@ module Y2Storage
         return nil if mount_point.nil?
 
         mount_by = mount_point.mount_by
+        manual = mount_point.manual_mount_by?
         log.info "copying mount_by #{mount_by} to all subvolumes"
         btrfs_subvolumes.each do |subvol|
           next if subvol.mount_point.nil?
 
-          subvol.mount_point.mount_by = mount_by
+          subvol.mount_point.assign_mount_by(mount_by)
+          subvol.mount_point.manual_mount_by = manual
         end
         mount_by
       end

@@ -20,5 +20,5 @@ require "yast/rake"
 
 Yast::Tasks.configuration do |conf|
   conf.skip_license_check << /.*/
-  conf.documentation_minimal = 89
+  conf.documentation_minimal = 91
 end

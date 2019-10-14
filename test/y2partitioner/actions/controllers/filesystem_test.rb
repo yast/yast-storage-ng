@@ -257,10 +257,28 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     end
 
     RSpec.shared_examples "default_mount_by" do
-      it "sets mount by to the default value" do
-        subject.apply_role
-        expect(subject.filesystem.mount_point.mount_by)
-          .to eq(Y2Storage::StorageManager.instance.configuration.default_mount_by)
+      before do
+        Y2Storage::StorageManager.instance.configuration.default_mount_by = default_mount_by
+      end
+      let(:default_mount_by) { Y2Storage::Filesystems::MountByType::UUID }
+
+      context "if the default mount_by is suitable for the device" do
+        let(:default_mount_by) { Y2Storage::Filesystems::MountByType::UUID }
+
+        it "sets mount by to the default value" do
+          subject.apply_role
+          expect(subject.filesystem.mount_point.mount_by)
+            .to eq(Y2Storage::StorageManager.instance.configuration.default_mount_by)
+        end
+      end
+
+      context "if the default mount_by is not suitable for the device" do
+        let(:default_mount_by) { Y2Storage::Filesystems::MountByType::PATH }
+
+        it "sets mount by to the first suitable value" do
+          subject.apply_role
+          expect(subject.filesystem.mount_point.mount_by.is?(:uuid)).to eq true
+        end
       end
     end
 
