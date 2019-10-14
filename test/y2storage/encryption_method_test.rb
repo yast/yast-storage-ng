@@ -104,7 +104,7 @@ describe Y2Storage::EncryptionMethod do
 
     context "if protected swap is available" do
       before do
-        allow(Y2Storage::EncryptionProcesses::ProtectedSwap).to receive(:available?).and_return(true)
+        allow_any_instance_of(Y2Storage::EncryptionMethod::ProtectedSwap).to receive(:available?).and_return(true)
       end
 
       it "includes protected swap method" do
@@ -114,7 +114,7 @@ describe Y2Storage::EncryptionMethod do
 
     context "if protected swap is not available" do
       before do
-        allow(Y2Storage::EncryptionProcesses::ProtectedSwap).to receive(:available?).and_return(false)
+        allow_any_instance_of(Y2Storage::EncryptionMethod::ProtectedSwap).to receive(:available?).and_return(false)
       end
 
       it "does not include protected swap method" do
@@ -124,7 +124,7 @@ describe Y2Storage::EncryptionMethod do
 
     context "if secure swap is available" do
       before do
-        allow(Y2Storage::EncryptionProcesses::SecureSwap).to receive(:available?).and_return(true)
+        allow_any_instance_of(Y2Storage::EncryptionMethod::SecureSwap).to receive(:available?).and_return(true)
       end
 
       it "includes secure swap method" do

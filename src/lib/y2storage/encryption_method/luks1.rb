@@ -26,6 +26,21 @@ module Y2Storage
       def initialize
         super(:luks1, _("Regular LUKS1"), EncryptionProcesses::Luks1)
       end
+
+      # Whether the process was used for the given encryption device
+      #
+      # @param encryption [Y2Storage::Encryption] the encryption device to check
+      # @return [Boolean] true when the encryption type is LUKS1; false otherwise
+      def used_for?(encryption)
+        encryption.type.is?(:luks1)
+      end
+
+      private
+
+      # @see Base#encryption_process
+      def encryption_process
+        EncryptionProcesses::Luks1.new(self)
+      end
     end
   end
 end

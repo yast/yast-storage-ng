@@ -30,45 +30,6 @@ module Y2Storage
     class Base
       include Yast::Logger
 
-      # Whether the process was used for the given encryption device
-      #
-      # @param _encryption [Y2Storage::Encryption] the encryption device to check
-      # @return [Boolean] true if the given device looks to be encrypted with
-      # the process; false otherwise
-      def self.used_for?(_encryption)
-        false
-      end
-
-      # Whether the process was used for the given crypttab entry
-      #
-      # Note that the encryption process can only be detected when using a swap process (see {Swap}).
-      # For other processes (e.g., :luks1) is not possible to infer it by using only the crypttab
-      # information.
-      #
-      # @param _entry [Y2Storage::SimpleEtcCrypttabEntry]
-      # @return [Boolean]
-      def self.used_for_crypttab?(_entry)
-        false
-      end
-
-      # Whether the process can be executed in the current system
-      #
-      # @see EncryptionMethod#available?
-      #
-      # @return [Boolean]
-      def self.available?
-        true
-      end
-
-      # Whether the process is mainly useful for swap disks
-      #
-      # @see EncryptionMethod#only_for_swap?
-      #
-      # @return [Boolean]
-      def self.only_for_swap?
-        false
-      end
-
       # Constructor
       #
       # @param method [Y2Storage::EncryptionMethod]

@@ -20,12 +20,34 @@
 
 require "y2storage/encryption_method/base"
 require "y2storage/encryption_processes/pervasive"
+require "y2storage/encryption_processes/secure_key"
 
 module Y2Storage
   module EncryptionMethod
     class PervasiveLuks2 < Base
+      # Cipher used for pervasive encryption
+      CIPHER = "paes-xts-plain64".freeze
+      private_constant :CIPHER
+
       def initialize
         super(:pervasive_luks2, _("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive)
+      end
+
+      # @see Base#used_for?
+      def used_for?(encryption)
+        encryption.type.is?(:luks2) && encryption.cipher == CIPHER
+      end
+
+      # @see Base#available?
+      def available?
+        EncryptionProcesses::SecureKey.available?
+      end
+
+      private
+
+      # @see Base#encryption_process
+      def encryption_process
+        EncryptionProcesses::Pervasive.new(self)
       end
     end
   end

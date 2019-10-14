@@ -21,38 +21,5 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::EncryptionProcesses::Pervasive do
-  subject(:process) { described_class.new(method) }
-  let(:method) { double }
-
-  describe ".used_for?" do
-    let(:encryption) { double(Y2Storage::Encryption, type: type, cipher: cipher) }
-
-    context "when the encryption type is LUKS2 and the encryption cipher is paes-xts-plain64" do
-      let(:type) { Y2Storage::EncryptionType::LUKS2 }
-      let(:cipher) { "paes-xts-plain64" }
-
-      it "returns true" do
-        expect(described_class.used_for?(encryption)).to eq(true)
-      end
-    end
-
-    context "when the encryption type is LUKS1 and the encryption cipher is paes-xts-plain64" do
-      let(:type) { Y2Storage::EncryptionType::LUKS1 }
-      let(:cipher) { "paes-xts-plain64" }
-
-      it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
-      end
-    end
-
-    context "when the encryption type is LUKS2 and the encryption cipher is aes-xts-plain64" do
-      let(:type) { Y2Storage::EncryptionType::LUKS2 }
-      let(:cipher) { "aes-xts-plain64" }
-
-      it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
-      end
-    end
-  end
+xdescribe Y2Storage::EncryptionProcesses::Pervasive do
 end

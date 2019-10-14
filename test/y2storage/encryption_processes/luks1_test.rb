@@ -25,32 +25,6 @@ describe Y2Storage::EncryptionProcesses::Luks1 do
   subject(:process) { described_class.new(method) }
   let(:method) { double }
 
-  describe ".used_for?" do
-    let(:encryption) { double(Y2Storage::Encryption, type: type) }
-
-    context "when the encryption type is LUKS1'" do
-      let(:type) { Y2Storage::EncryptionType::LUKS1 }
-
-      it "returns true" do
-        expect(described_class.used_for?(encryption)).to eq(true)
-      end
-    end
-
-    context "when the encryption type is not LUKS1'" do
-      let(:type) { Y2Storage::EncryptionType::PLAIN }
-
-      it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
-      end
-    end
-  end
-
-  describe ".only_for_swap?" do
-    it "returns false" do
-      expect(described_class.only_for_swap?).to eq(false)
-    end
-  end
-
   describe "#create_device" do
     let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
     let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
