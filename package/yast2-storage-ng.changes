@@ -1,7 +1,8 @@
 -------------------------------------------------------------------
 Fri Oct 11 14:26:23 CEST 2019 - aschnell@suse.com
 
-- Added translation for new enum value RB_PASSWORD_REQUIRED.
+- Added translation for new enum value RB_PASSWORD_REQUIRED
+  (bsc#1153871).
 - 4.2.47
 
 -------------------------------------------------------------------
