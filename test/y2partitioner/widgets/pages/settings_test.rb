@@ -48,8 +48,11 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
 
       allow(Yast::SCR).to receive(:Write)
 
-      Y2Storage::StorageManager.instance.default_mount_by = mount_by_label
+      Y2Storage::StorageManager.create_test_instance
+      configuration.default_mount_by = mount_by_label
     end
+
+    let(:configuration) { Y2Storage::StorageManager.instance.configuration }
 
     let(:value) { mount_by_id }
 
@@ -63,9 +66,9 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
       let(:events) { { "ID" => widget_id } }
 
       it "updates the default value for mount_by" do
-        expect(Y2Storage::StorageManager.instance.default_mount_by).to_not eq(value)
+        expect(configuration.default_mount_by).to_not eq(value)
         subject.handle(events)
-        expect(Y2Storage::StorageManager.instance.default_mount_by).to eq(value)
+        expect(configuration.default_mount_by).to eq(value)
       end
 
       it "saves the selected value into the config file" do
@@ -82,9 +85,9 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
       let(:events) { { "ID" => "other_widget_id" } }
 
       it "does not update the default value for mount_by" do
-        expect(Y2Storage::StorageManager.instance.default_mount_by.to_sym).to_not eq(value)
+        expect(configuration.default_mount_by.to_sym).to_not eq(value)
         subject.handle(events)
-        expect(Y2Storage::StorageManager.instance.default_mount_by).to_not eq(value)
+        expect(configuration.default_mount_by).to_not eq(value)
       end
 
       it "does not save the selected value into the config file" do

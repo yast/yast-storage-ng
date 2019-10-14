@@ -310,7 +310,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       it "sets mount by to the default value" do
         subject.apply_role
         expect(subject.filesystem.mount_point.mount_by)
-          .to eq(Y2Storage::StorageManager.instance.default_mount_by)
+          .to eq(Y2Storage::StorageManager.instance.configuration.default_mount_by)
       end
     end
 

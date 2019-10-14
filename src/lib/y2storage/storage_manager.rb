@@ -28,7 +28,7 @@ require "y2storage/disk_analyzer"
 require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
-require "y2storage/sysconfig_storage"
+require "y2storage/configuration"
 require "yast2/fs_snapshot"
 
 Yast.import "Mode"
@@ -38,11 +38,10 @@ module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
   # to store related state information.
   #
-  # FIXME: This class exceeds the maximum allowed length (250 lines of code), but
-  # there are quite some code that could be extracted to a new place, mainly all
-  # stuff related to testing (e.g., {#probe_from_yaml}).
+  # FIXME: This class contains some responsibilities (and code) that could
+  # be extracted to a new place, mainly all stuff related to testing
+  # (e.g., {#probe_from_yaml}).
   #
-  # rubocop:disable Metrics/ClassLength
   class StorageManager
     include Yast::Logger
     extend Forwardable
@@ -89,35 +88,13 @@ module Y2Storage
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
-      apply_storage_defaults
+      @configuration = nil
+      configuration.apply_defaults
 
       @probed = false
       reset_probed
       reset_staging
       reset_staging_revision
-    end
-
-    # Default value for mount_by option
-    #
-    # @note This value is initialized with the value from {SysconfigStorage}.
-    #
-    # @see #apply_storage_defaults
-    #
-    # @return [Filesystems::MountByType]
-    def default_mount_by
-      Filesystems::MountByType.new(@storage.default_mount_by)
-    end
-
-    # Sets the default mount_by value
-    #
-    # @param mount_by [Filesystems::MountByType]
-    def default_mount_by=(mount_by)
-      @storage.default_mount_by = mount_by.to_storage_value
-    end
-
-    # Updates sysconfig values
-    def update_sysconfig
-      SysconfigStorage.instance.default_mount_by = default_mount_by
     end
 
     # Whether probing has been done
@@ -380,6 +357,13 @@ module Y2Storage
       end
     end
 
+    # Configuration of Y2Storage
+    #
+    # @return [Configuration]
+    def configuration
+      @configuration ||= Configuration.new(@storage)
+    end
+
   private
 
     # Value of #staging_revision right after executing the latest libstorage
@@ -389,13 +373,6 @@ module Y2Storage
     #
     # @return [Integer]
     attr_reader :staging_revision_after_probing
-
-    # Sets default values for Storage object
-    #
-    # @see SysconfigStorage
-    def apply_storage_defaults
-      self.default_mount_by = SysconfigStorage.instance.default_mount_by
-    end
 
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
@@ -678,7 +655,6 @@ module Y2Storage
         callbacks.retry?
       end
     end
-    # rubocop:enable Metrics/ClassLength
 
     # Logger class for libstorage. This is needed to make libstorage log to the
     # y2log.
