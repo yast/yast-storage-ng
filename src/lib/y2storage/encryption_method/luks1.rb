@@ -22,9 +22,11 @@ require "y2storage/encryption_processes/luks1"
 
 module Y2Storage
   module EncryptionMethod
+    # The encryption method that allows to create and identify an encrypted
+    # device using LUKS1
     class Luks1 < Base
       def initialize
-        super(:luks1, _("Regular LUKS1"), EncryptionProcesses::Luks1)
+        super(:luks1, _("Regular LUKS1"))
       end
 
       # Whether the process was used for the given encryption device

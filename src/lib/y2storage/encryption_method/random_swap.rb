@@ -17,14 +17,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_method/base"
-require "y2storage/encryption_processes/random_swap"
+require "y2storage/encryption_method/swap"
 
 module Y2Storage
   module EncryptionMethod
-    class RandomSwap < Base
+    # Encryption swap method (see {Swap}) to encrypt a device by using a random password
+    class RandomSwap < Swap
+      KEY_FILE = "/dev/urandom".freeze
+      private_constant :KEY_FILE
+
       def initialize
-        super(:random_swap, _("Volatile Encryption with Random Key"), EncryptionProcesses::RandomSwap)
+        super(:random_swap, _("Volatile Encryption with Random Key"))
       end
     end
   end

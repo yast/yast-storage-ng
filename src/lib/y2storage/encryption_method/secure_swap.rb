@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/encryption_method/swap"
-require "y2storage/encryption_processes/secure_swap"
 
 module Y2Storage
   module EncryptionMethod
@@ -37,7 +36,7 @@ module Y2Storage
 
       # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using secure keys
       def initialize
-        super(:secure_swap, _("Volatile Encryption with Secure Key"), EncryptionProcesses::SecureSwap)
+        super(:secure_swap, _("Volatile Encryption with Secure Key"))
       end
     end
   end

@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/encryption_method/swap"
-require "y2storage/encryption_processes/protected_swap"
 
 module Y2Storage
   module EncryptionMethod
@@ -38,7 +37,7 @@ module Y2Storage
 
 
       def initialize
-        super(:protected_swap, _("Volatile Encryption with Protected Key"), EncryptionProcesses::ProtectedSwap)
+        super(:protected_swap, _("Volatile Encryption with Protected Key"))
       end
     end
   end

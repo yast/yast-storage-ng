@@ -26,14 +26,11 @@ module Y2Storage
       #
       # @param id [Symbol]
       # @param label [String]
-      # @param process_class [#new] class name of the encryption process (e.g.,
-      #   EncryptionProcesses::Luks1)
-      def initialize(id, label, process_class)
+      def initialize(id, label)
         textdomain "storage"
 
         @id = id
         @label = label
-        @process_class = process_class
       end
 
       # @return [Symbol] name to represent the encryption method (e.g., :luks1, :random_swap)
@@ -109,13 +106,20 @@ module Y2Storage
       # @param dm_name [String]
       # @return [Y2Storage::Encryption]
       def create_device(blk_device, dm_name)
-        process_class.new(self).create_device(blk_device, dm_name)
+        encryption_process.create_device(blk_device, dm_name)
       end
 
       private
 
-      # @return [Y2Storage::EncryptionProcesses] the process used by the method to perform the encryption
-      attr_accessor :process_class
+      # Returns an instance of the encryption process (e.g. EncryptionProcesses::Luks1)
+      #
+      # This method is responsible for configuring the process and it is expected to
+      # be redefined for each encryption method.
+      #
+      # @return [EncryptionProcesses::Base]
+      def encryption_process
+        raise "Undefined encryption process for '#{id}' encryption method"
+      end
     end
   end
 end

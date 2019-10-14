@@ -112,6 +112,13 @@ module Y2Storage
       def use_key_file?(key_file)
         key_file == self.key_file
       end
+
+      # @see Base#encryption_process
+      def encryption_process
+        EncryptionProcesses::Volatile.new(
+          self, key_file: key_file, cipher: cipher, key_size: key_size, sector_size: sector_size
+        )
+      end
     end
   end
 end

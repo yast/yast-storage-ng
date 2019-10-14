@@ -30,7 +30,7 @@ module Y2Storage
       private_constant :CIPHER
 
       def initialize
-        super(:pervasive_luks2, _("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive)
+        super(:pervasive_luks2, _("Pervasive Volume Encryption"))
       end
 
       # @see Base#used_for?
