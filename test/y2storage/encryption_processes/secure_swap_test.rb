@@ -25,7 +25,7 @@ require "y2storage"
 describe Y2Storage::EncryptionProcesses::SecureSwap do
   subject { described_class.new(method) }
 
-  let(:method) { instance_double(Y2Storage::EncryptionMethod) }
+  let(:method) { instance_double(Y2Storage::EncryptionMethod::Base) }
 
   let(:secure_key_file) { described_class.key_file }
 

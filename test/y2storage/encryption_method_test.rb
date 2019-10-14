@@ -150,13 +150,13 @@ describe Y2Storage::EncryptionMethod do
         random_swap = described_class.find(:random_swap)
         pervasive_luks2 = described_class.find(:pervasive_luks2)
 
-        expect(luks1).to be_a Y2Storage::EncryptionMethod
+        expect(luks1).to be_a Y2Storage::EncryptionMethod::Base
         expect(luks1.id).to eq(:luks1)
 
-        expect(random_swap).to be_a Y2Storage::EncryptionMethod
+        expect(random_swap).to be_a Y2Storage::EncryptionMethod::Base
         expect(random_swap.id).to eq(:random_swap)
 
-        expect(pervasive_luks2).to be_a Y2Storage::EncryptionMethod
+        expect(pervasive_luks2).to be_a Y2Storage::EncryptionMethod::Base
         expect(pervasive_luks2.id).to eq(:pervasive_luks2)
       end
     end
@@ -297,7 +297,7 @@ describe Y2Storage::EncryptionMethod do
       it "returns :luks1 encryption method" do
         encryption_method = described_class.for_device(device)
 
-        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod::Base
         expect(encryption_method.to_sym).to eq(:luks1)
       end
     end
@@ -310,7 +310,7 @@ describe Y2Storage::EncryptionMethod do
       it "returns :random_swap encryption method" do
         encryption_method = described_class.for_device(device)
 
-        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod::Base
         expect(encryption_method.to_sym).to eq(:random_swap)
       end
     end
@@ -327,7 +327,7 @@ describe Y2Storage::EncryptionMethod do
       it "returns :protected_swap encryption method" do
         encryption_method = described_class.for_device(device)
 
-        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod::Base
         expect(encryption_method.to_sym).to eq(:protected_swap)
       end
     end
@@ -344,7 +344,7 @@ describe Y2Storage::EncryptionMethod do
       it "returns :secure_swap encryption method" do
         encryption_method = described_class.for_device(device)
 
-        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod::Base
         expect(encryption_method.to_sym).to eq(:secure_swap)
       end
     end
@@ -357,7 +357,7 @@ describe Y2Storage::EncryptionMethod do
       it "returns :pervasive_luks2 encryption method" do
         encryption_method = described_class.for_device(device)
 
-        expect(encryption_method).to be_a Y2Storage::EncryptionMethod
+        expect(encryption_method).to be_a Y2Storage::EncryptionMethod::Base
         expect(encryption_method.to_sym).to eq(:pervasive_luks2)
       end
     end
@@ -405,7 +405,7 @@ describe Y2Storage::EncryptionMethod do
         it "returns :random_swap encryption method" do
           encryption_method = described_class.for_crypttab(entry)
 
-          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod::Base)
           expect(encryption_method.to_sym).to eq(:random_swap)
         end
       end
@@ -416,7 +416,7 @@ describe Y2Storage::EncryptionMethod do
         it "returns :protected_swap encryption method" do
           encryption_method = described_class.for_crypttab(entry)
 
-          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod::Base)
           expect(encryption_method.to_sym).to eq(:protected_swap)
         end
       end
@@ -427,7 +427,7 @@ describe Y2Storage::EncryptionMethod do
         it "returns :secure_swap encryption method" do
           encryption_method = described_class.for_crypttab(entry)
 
-          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod)
+          expect(encryption_method).to be_a(Y2Storage::EncryptionMethod::Base)
           expect(encryption_method.to_sym).to eq(:secure_swap)
         end
       end

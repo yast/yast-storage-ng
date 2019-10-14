@@ -17,11 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_processes/luks1"
-require "y2storage/encryption_processes/pervasive"
-require "y2storage/encryption_processes/random_swap"
-require "y2storage/encryption_processes/protected_swap"
-require "y2storage/encryption_processes/secure_swap"
+require "y2storage/encryption_method/luks1"
+require "y2storage/encryption_method/pervasive_luks2"
+require "y2storage/encryption_method/random_swap"
+require "y2storage/encryption_method/protected_swap"
+require "y2storage/encryption_method/secure_swap"
 
 module Y2Storage
   # YaST provides different Encryption Methods to encrypt a block device. Not to be confused with the
@@ -41,166 +41,52 @@ module Y2Storage
   #   method = EncryptionMethod.find(:luks1)
   #   method = EncryptionMethod.find(:random_swap)
   #   method = EncryptionMethod.new #=> error, private method
-  class EncryptionMethod
-    include Yast::I18n
-    extend Yast::I18n
+  module EncryptionMethod
+    LUKS1 = Luks1.new
+    PERVASIVE_LUKS2 = PervasiveLuks2.new
+    RANDOM_SWAP = RandomSwap.new
+    PROTECTED_SWAP = ProtectedSwap.new
+    SECURE_SWAP = SecureSwap.new
+    ALL = [
+      LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP
+    ]
 
-    # Constructor
+    # Sorted list of all possible encryption methods
     #
-    # @param id [Symbol]
-    # @param label [String]
-    # @param process_class [#new] class name of the encryption process (e.g.,
-    #   EncryptionProcesses::Luks1)
-    def initialize(id, label, process_class)
-      textdomain "storage"
-
-      @id = id
-      @label = label
-      @process_class = process_class
+    # @return [Array<Y2Storage::EncryptionMethod>]
+    def self.all
+      ALL.dup
     end
 
-    LUKS1 = new(
-      :luks1, N_("Regular LUKS1"), EncryptionProcesses::Luks1
-    )
-
-    PERVASIVE_LUKS2 = new(
-      :pervasive_luks2, N_("Pervasive Volume Encryption"), EncryptionProcesses::Pervasive
-    )
-
-    RANDOM_SWAP = new(
-      :random_swap, N_("Volatile Encryption with Random Key"), EncryptionProcesses::RandomSwap
-    )
-
-    PROTECTED_SWAP = new(
-      :protected_swap, N_("Volatile Encryption with Protected Key"), EncryptionProcesses::ProtectedSwap
-    )
-
-    SECURE_SWAP = new(
-      :secure_swap, N_("Volatile Encryption with Secure Key"), EncryptionProcesses::SecureSwap
-    )
-
-    ALL = [LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP].freeze
-    private_constant :ALL
-
-    class << self
-      # Make sure only the class itself can create objects, which can be used through .all, .find, and
-      # .for_device
-      private :new
-
-      # Sorted list of all possible encryption methods
-      #
-      # @return [Array<Y2Storage::EncryptionMethod>]
-      def all
-        ALL.dup
-      end
-
-      # Sorted list of all encryption methods that can be used in this system
-      #
-      # @return [Array<Y2Storage::EncryptionMethod>]
-      def available
-        all.select(&:available?)
-      end
-
-      # Looks for the encryption method used for the given encryption device
-      #
-      # @param encryption [Y2Storage::Encryption]
-      # @return [Y2Storage::EncryptionMethod, nil]
-      def for_device(encryption)
-        all.find { |m| m.used_for?(encryption) }
-      end
-
-      # Looks for the encryption method used for the given crypttab entry
-      #
-      # @param entry [Y2Storage::SimpleEtcCrypttabEntry]
-      # @return [Y2Storage::EncryptionMethod, nil]
-      def for_crypttab(entry)
-        all.find { |m| m.used_for_crypttab?(entry) }
-      end
-
-      # Looks for the encryption method by its symbol representation
-      #
-      # @param value [#to_sym]
-      # @return [Y2Storage::EncryptionMethod, nil] the encryption method found if any; nil otherwise
-      def find(value)
-        all.find { |i| i.is?(value) }
-      end
-    end
-
-    # @return [Symbol] name to represent the encryption method (e.g., :luks1, :random_swap)
-    attr_reader :id
-    alias_method :to_sym, :id
-
-    # Localized label to represent the encryption method
+    # Sorted list of all encryption methods that can be used in this system
     #
-    # @return [String] very likely, a frozen string
-    def to_human_string
-      _(@label)
+    # @return [Array<Y2Storage::EncryptionMethod>]
+    def self.available
+      all.select(&:available?)
     end
 
-    # Compares two encryption methods
-    #
-    # @param other [Y2Storage::EncryptionMethod]
-    # @return [Boolean] true if compared encryption methods have the same class and id; false if not
-    def ==(other)
-      other.class == self.class && other.id == id
-    end
-
-    alias_method :eql?, :==
-
-    # Whether the given value matches with the symbol representation (id) of the
-    # encryption method
-    #
-    # @param value [#to_sym]
-    # @return [Boolean]
-    def is?(value)
-      id == value.to_sym
-    end
-
-    # Whether the encryption method was used for the given encryption device
+    # Looks for the encryption method used for the given encryption device
     #
     # @param encryption [Y2Storage::Encryption]
-    # @return [Boolean]
-    def used_for?(encryption)
-      process_class.used_for?(encryption)
+    # @return [Y2Storage::EncryptionMethod, nil]
+    def self.for_device(encryption)
+      all.find { |m| m.used_for?(encryption) }
     end
 
-    # Whether the encryption method was used for the given crypttab entry
+    # Looks for the encryption method used for the given crypttab entry
     #
     # @param entry [Y2Storage::SimpleEtcCrypttabEntry]
-    # @return [Boolean]
-    def used_for_crypttab?(entry)
-      process_class.used_for_crypttab?(entry)
+    # @return [Y2Storage::EncryptionMethod, nil]
+    def self.for_crypttab(entry)
+      all.find { |m| m.used_for_crypttab?(entry) }
     end
 
-    # Whether the encryption method can be used in this system
+    # Looks for the encryption method by its symbol representation
     #
-    # @return [Boolean]
-    def available?
-      process_class.available?
+    # @param value [#to_sym]
+    # @return [Y2Storage::EncryptionMethod, nil] the encryption method found if any; nil otherwise
+    def self.find(value)
+      all.find { |i| i.is?(value) }
     end
-
-    # Whether the encryption method is useful only for swap
-    #
-    # Some encryption methods are mainly useful for encrypting swap disks since they produce a new key
-    # on every boot cycle.
-    #
-    # @return [Boolean]
-    def only_for_swap?
-      process_class.only_for_swap?
-    end
-
-    # Creates an encryption device for the given block device
-    #
-    # @param blk_device [Y2Storage::BlkDevice]
-    # @param dm_name [String]
-    # @return [Y2Storage::Encryption]
-    def create_device(blk_device, dm_name)
-      process_class.new(self).create_device(blk_device, dm_name)
-    end
-
-    private
-
-    # @return [Y2Storage::EncryptionProcesses] the process used by the method to perform the encryption
-    attr_accessor :process_class
   end
 end

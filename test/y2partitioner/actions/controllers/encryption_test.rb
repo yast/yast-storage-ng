@@ -247,13 +247,13 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
     it "returns a collection of encryption methods" do
       expect(subject.methods).to be_a Array
-      expect(subject.methods.first).to be_a Y2Storage::EncryptionMethod
+      expect(subject.methods.first).to be_a Y2Storage::EncryptionMethod::Base
     end
 
     shared_context "double methods" do
-      let(:method_only_for_swap) { instance_double(Y2Storage::EncryptionMethod, only_for_swap?: true) }
+      let(:method_only_for_swap) { instance_double(Y2Storage::EncryptionMethod::Base, only_for_swap?: true) }
 
-      let(:another_method) { instance_double(Y2Storage::EncryptionMethod, only_for_swap?: false) }
+      let(:another_method) { instance_double(Y2Storage::EncryptionMethod::Base, only_for_swap?: false) }
 
       let(:encryption_methods) { [method_only_for_swap, another_method] }
 

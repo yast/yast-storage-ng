@@ -620,7 +620,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
         allow(crypttab).to receive(:entries).and_return(crypttab_entries)
         allow(crypttab).to receive(:filesystem).and_return(filesystem)
 
-        allow_any_instance_of(Y2Storage::EncryptionMethod).to receive(:available?).and_return(true)
+        allow_any_instance_of(Y2Storage::EncryptionMethod::Base).to receive(:available?).and_return(true)
       end
 
       let(:fstabs) { [fstab] }
