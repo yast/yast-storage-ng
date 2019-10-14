@@ -134,7 +134,7 @@ describe Y2Storage::EncryptionMethod do
 
     context "if secure swap is not available" do
       before do
-        allow(Y2Storage::EncryptionProcesses::SecureSwap).to receive(:available?).and_return(false)
+        allow(Y2Storage::EncryptionMethod::SecureSwap).to receive(:available?).and_return(false)
       end
 
       it "does not include secure swap method" do
