@@ -72,13 +72,15 @@ module Y2Partitioner
             _("Default Mount by")
           end
 
+          # @macro seeAbstractWidget
           def help
             _("<p><b>Default Mount by:</b> This is the method " \
               "how newly created filesystems are mounted.</p>")
           end
 
+          # @macro seeAbstractWidget
           def init
-            self.value = Y2Storage::StorageManager.instance.default_mount_by.to_s
+            self.value = configuration.default_mount_by.to_s
           end
 
           def items
@@ -103,10 +105,19 @@ module Y2Partitioner
           def handle(event)
             return unless event["ID"] == widget_id
 
-            Y2Storage::StorageManager.instance.default_mount_by = value
-            Y2Storage::StorageManager.instance.update_sysconfig
+            configuration.default_mount_by = value
+            configuration.update_sysconfig
 
             nil
+          end
+
+          private
+
+          # Object handling the Y2Storage configuration
+          #
+          # @return [Y2Storage::Configuration]
+          def configuration
+            Y2Storage::StorageManager.instance.configuration
           end
         end
       end
