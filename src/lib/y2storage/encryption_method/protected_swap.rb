@@ -37,7 +37,7 @@ module Y2Storage
 
       def initialize
         textdomain "storage"
-        super(:protected_swap, _("Volatile Encryption with Protected Key"))
+        super(:protected_swap, _("Encryption with Volatile Protected Key"))
       end
     end
   end
