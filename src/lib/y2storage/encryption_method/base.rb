@@ -19,6 +19,14 @@
 
 module Y2Storage
   module EncryptionMethod
+    # Base class for encryption methods.
+    #
+    # Encryption method classes offer an API to:
+    #
+    # * determine whether a encryption method is available in the running system (see
+    #   {#available?}),
+    # * find out which method was used to encrypt a given device (see {#used_for?}),
+    # * encrypt a device. In this case, it relies on {Y2Storage::EncryptionProcesses} classes.
     class Base
       include Yast::I18n
 
@@ -65,7 +73,7 @@ module Y2Storage
 
       # Whether the encryption method was used for the given encryption device
       #
-      # @param encryption [Y2Storage::Encryption]
+      # @param _encryption [Y2Storage::Encryption]
       # @return [Boolean]
       def used_for?(_encryption)
         false
@@ -77,9 +85,9 @@ module Y2Storage
       # For other processes (e.g., :luks1) is not possible to infer it by using only the crypttab
       # information.
       #
-      # @param entry [Y2Storage::SimpleEtcCrypttabEntry]
+      # @param _entry [Y2Storage::SimpleEtcCrypttabEntry]
       # @return [Boolean]
-      def used_for_crypttab?(entry)
+      def used_for_crypttab?(_entry)
         false
       end
 

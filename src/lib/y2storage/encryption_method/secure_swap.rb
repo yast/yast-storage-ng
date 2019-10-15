@@ -21,6 +21,7 @@ require "y2storage/encryption_method/swap"
 
 module Y2Storage
   module EncryptionMethod
+    # Encryption swap method (see {Swap}) for z Systems to encrypt a device by using secure keys
     class SecureSwap < Swap
       KEY_FILE = "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts".freeze
       private_constant :KEY_FILE
@@ -36,6 +37,7 @@ module Y2Storage
 
       # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using secure keys
       def initialize
+        textdomain "storage"
         super(:secure_swap, _("Volatile Encryption with Secure Key"))
       end
     end

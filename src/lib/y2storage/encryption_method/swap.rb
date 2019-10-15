@@ -22,6 +22,7 @@ require "y2storage/encryption_processes/volatile"
 
 module Y2Storage
   module EncryptionMethod
+    # Base class for swap encryption methods.
     class Swap < Base
       # @see Base#used_for?
       def used_for?(encryption)

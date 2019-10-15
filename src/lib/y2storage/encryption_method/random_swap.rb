@@ -27,6 +27,7 @@ module Y2Storage
       private_constant :KEY_FILE
 
       def initialize
+        textdomain "storage"
         super(:random_swap, _("Volatile Encryption with Random Key"))
       end
     end

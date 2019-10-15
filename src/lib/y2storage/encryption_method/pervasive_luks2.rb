@@ -24,12 +24,15 @@ require "y2storage/encryption_processes/secure_key"
 
 module Y2Storage
   module EncryptionMethod
+    # Encryption method that allows to create and identify a volume encrypted
+    # with Pervasive Encryption.
     class PervasiveLuks2 < Base
       # Cipher used for pervasive encryption
       CIPHER = "paes-xts-plain64".freeze
       private_constant :CIPHER
 
       def initialize
+        textdomain "storage"
         super(:pervasive_luks2, _("Pervasive Volume Encryption"))
       end
 

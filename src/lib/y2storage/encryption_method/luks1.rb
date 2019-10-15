@@ -26,6 +26,7 @@ module Y2Storage
     # device using LUKS1
     class Luks1 < Base
       def initialize
+        textdomain "storage"
         super(:luks1, _("Regular LUKS1"))
       end
 

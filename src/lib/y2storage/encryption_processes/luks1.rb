@@ -25,7 +25,6 @@ module Y2Storage
     # The encryption process that allows to create and identify an encrypted
     # device using LUKS1
     class Luks1 < Base
-
       private
 
       # @see EncryptionProcesses::Base#encryption_type

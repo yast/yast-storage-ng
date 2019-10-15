@@ -31,16 +31,14 @@ module Y2Storage
   # An Encryption Method is identified by a name and it encapsulates a set of steps to encrypt the
   # device.
   #
-  # Users of this class cannot create new Encryption Methods. This class offers a catalog of possible
-  # Encryption Methods, see {EncryptionMethod.all}.
+  # This class offers a catalog of possible Encryption Methods, see {EncryptionMethod.all}.
   #
   # @example
   #
-  #   method = EncryptionMethod.all.first
-  #   method = EncryptionMethod.available.first
-  #   method = EncryptionMethod.find(:luks1)
-  #   method = EncryptionMethod.find(:random_swap)
-  #   method = EncryptionMethod.new #=> error, private method
+  #   EncryptionMethod.all.first
+  #   EncryptionMethod.available.first
+  #   EncryptionMethod.find(:luks1)
+  #   EncryptionMethod.find(:random_swap)
   module EncryptionMethod
     LUKS1 = Luks1.new
     PERVASIVE_LUKS2 = PervasiveLuks2.new
