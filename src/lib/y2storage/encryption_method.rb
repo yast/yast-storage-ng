@@ -40,14 +40,23 @@ module Y2Storage
   #   EncryptionMethod.find(:luks1)
   #   EncryptionMethod.find(:random_swap)
   module EncryptionMethod
+    # Instance of the Luks1 method to be always returned by the module
     LUKS1 = Luks1.new
+    # Instance of the PervasiveLuks2 method to be always returned by the module
     PERVASIVE_LUKS2 = PervasiveLuks2.new
+    # Instance of the RandomSwap method to be always returned by the module
     RANDOM_SWAP = RandomSwap.new
+    # Instance of the ProtectedSwap method to be always returned by the module
     PROTECTED_SWAP = ProtectedSwap.new
+    # Instance of the SecureSwap method to be always returned by the module
     SECURE_SWAP = SecureSwap.new
+
+    # Sorted list of all the method instances
+    # @see .all
     ALL = [
       LUKS1, PERVASIVE_LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP
     ]
+    private_constant :ALL
 
     # Sorted list of all possible encryption methods
     #

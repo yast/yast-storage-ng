@@ -35,7 +35,7 @@ module Y2Storage
       # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using secure keys
       def initialize
         textdomain "storage"
-        super(:secure_swap, _("Volatile Encryption with Secure Key"))
+        super(:secure_swap, _("Encryption with Volatile Secure Key"))
       end
     end
   end
