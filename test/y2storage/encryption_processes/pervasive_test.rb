@@ -1,0 +1,58 @@
+#!/usr/bin/env rspec
+# Copyright (c) [2019] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require_relative "../spec_helper"
+require "y2storage"
+
+# For a complete pervasive encryption test, see test/y2storage/pervasive_encryption_test.rb
+describe Y2Storage::EncryptionProcesses::Pervasive do
+  subject(:process) { described_class.new(method) }
+
+  let(:method) { double }
+  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
+  let(:dm_name) { "cr_sda" }
+
+  before do
+    devicegraph_stub("empty_hard_disk_50GiB.yml")
+  end
+
+  describe "#create_device" do
+    it "returns an encryption device" do
+      encryption = process.create_device(blk_device, dm_name)
+      expect(encryption.is?(:encryption)).to eq(true)
+    end
+
+    it "creates an luks2 encryption device for given block device" do
+      encryption = process.create_device(blk_device, dm_name)
+      expect(encryption.type).to eq(Y2Storage::EncryptionType::LUKS2)
+    end
+
+    it "does not set any specific encryption option" do
+      encryption = subject.create_device(blk_device, dm_name)
+      expect(encryption.crypt_options).to be_empty
+    end
+
+    it "does not set any specific open option" do
+      encryption = subject.create_device(blk_device, dm_name)
+      expect(encryption.open_options).to be_empty
+    end
+  end
+end
