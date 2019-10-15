@@ -102,19 +102,24 @@ module Y2Storage
     storage_forward :mount_by, as: "Filesystems::MountByType"
 
     # @!method assign_mount_by
-    #   Low level setter to enforce a value for {#mount_by} without updating
-    #   {#manual_mount_by?}
+    #   Low level setter to enforce a value for {#mount_by} without performing
+    #   any consistency fix, like updating {#manual_mount_by?} or syncing the
+    #   Btrfs subvolumes
     #
     #   @see #mount_by=
     storage_forward :assign_mount_by, to: :mount_by=
 
     # Setter for {#mount_by} which ensures a consistent value for
-    # {#manual_mount_by?}
+    # {#manual_mount_by?} and for the corresponding attribute of the Btrfs
+    # subvolumes (if applicable)
     #
     # @param value [Filesystems::MountByType]
     def mount_by=(value)
       self.manual_mount_by = true
       assign_mount_by(value)
+      return unless mountable.respond_to?(:copy_mount_by_to_subvolumes)
+
+      mountable.copy_mount_by_to_subvolumes
     end
 
     # @!method mount_options
