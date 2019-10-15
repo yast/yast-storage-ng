@@ -35,27 +35,23 @@ module Y2Storage
       attr_reader :key_file
       attr_reader :cipher
       attr_reader :key_size
-      attr_reader :sector_size
 
       # Constructor
       #
       # @param key_file [String]         Path to the key file
       # @param cipher   [String,nil]     Cipher type
       # @param key_size [Integer,nil]    Key size
-      # @param sector_size [Integer,nil] Sector size
-      def initialize(method, key_file: nil, cipher: nil, key_size: nil, sector_size: nil)
+      def initialize(method, key_file: nil, cipher: nil, key_size: nil)
         super(method)
         @key_file = key_file
         @cipher = cipher
         @key_size = key_size
-        @sector_size = sector_size
       end
 
       # @see Base#create_device
       def create_device(blk_device, dm_name)
         enc = super
         enc.key_file = key_file if key_file
-        enc.crypt_options = crypt_options + enc.crypt_options
         enc
       end
 
@@ -65,16 +61,18 @@ module Y2Storage
 
       # Encryption options to add to the encryption device (crypttab options)
       #
+      # @param blk_device [BlkDevice] Block device to encrypt
       # @return [Array<String>]
-      def crypt_options
-        [swap_option, cipher_option, key_size_option, sector_size_option].compact
+      def crypt_options(blk_device)
+        [swap_option, cipher_option, key_size_option, sector_size_option(blk_device)].compact
       end
 
       # Encryption options to open the encryption device
       #
+      # @param blk_device [BlkDevice] Block device to encrypt
       # @return [Array<String>]
-      def open_options
-        [cipher_open_option, key_size_open_option, sector_size_open_option].compact
+      def open_options(blk_device)
+        [cipher_open_option, key_size_open_option, sector_size_open_option(blk_device)].compact
       end
 
       # Wheter a specific cipher is used
@@ -92,8 +90,11 @@ module Y2Storage
       end
 
       # Whether a specific sector size is used
-      def sector_size?
-        !sector_size.nil?
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Boolean]
+      def sector_size?(blk_device)
+        !sector_size(blk_device).nil?
       end
 
       private
@@ -125,11 +126,12 @@ module Y2Storage
 
       # Sector size option for the encryption
       #
+      # @param blk_device [BlkDevice] Block device to encrypt
       # @return [String, nil] nil if no specific sector size
-      def sector_size_option
-        return nil unless sector_size?
+      def sector_size_option(blk_device)
+        return nil unless sector_size?(blk_device)
 
-        "sector-size=#{sector_size}"
+        "sector-size=#{sector_size(blk_device)}"
       end
 
       # Cipher option to open the encryption device
@@ -152,11 +154,25 @@ module Y2Storage
 
       # Sector size option to open the encryption device
       #
+      # @param blk_device [BlkDevice] Block device to encrypt
       # @return [String, nil] nil if no specific sector size
-      def sector_size_open_option
-        return nil unless sector_size?
+      def sector_size_open_option(blk_device)
+        return nil unless sector_size?(blk_device)
 
-        "--sector-size '#{sector_size}'"
+        "--sector-size '#{sector_size(blk_device)}'"
+      end
+
+      IDEAL_SECTOR_SIZE = 4096
+
+      # Sector size for a given device
+      #
+      # For performance reasons, it tries to use 4k when possible. Otherwise, it returns
+      # nil so the default is used.
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Integer,nil]
+      def sector_size(blk_device)
+        return IDEAL_SECTOR_SIZE if blk_device.region.block_size >= IDEAL_SECTOR_SIZE
       end
     end
   end

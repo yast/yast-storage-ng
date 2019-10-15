@@ -73,13 +73,6 @@ module Y2Storage
         self.class.const_get(:KEY_SIZE) if self.class.const_defined?(:KEY_SIZE)
       end
 
-      # Sector size for the encryption
-      #
-      # @return [String, nil] nil if no specific sector size
-      def sector_size
-        self.class.const_get(:SECTOR_SIZE) if self.class.const_defined?(:SECTOR_SIZE)
-      end
-
       private
 
       SWAP_OPTION = "swap".freeze
@@ -111,7 +104,7 @@ module Y2Storage
       # @see Base#encryption_process
       def encryption_process
         EncryptionProcesses::Volatile.new(
-          self, key_file: key_file, cipher: cipher, key_size: key_size, sector_size: sector_size
+          self, key_file: key_file, cipher: cipher, key_size: key_size
         )
       end
     end

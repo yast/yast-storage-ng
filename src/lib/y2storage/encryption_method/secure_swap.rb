@@ -32,9 +32,6 @@ module Y2Storage
       KEY_SIZE = "1024".freeze
       private_constant :KEY_SIZE
 
-      SECTOR_SIZE = "4096".freeze
-      private_constant :SECTOR_SIZE
-
       # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using secure keys
       def initialize
         textdomain "storage"

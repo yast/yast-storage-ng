@@ -32,9 +32,6 @@ module Y2Storage
       KEY_SIZE = "1280".freeze
       private_constant :KEY_SIZE
 
-      SECTOR_SIZE = "4096".freeze
-      private_constant :SECTOR_SIZE
-
       def initialize
         textdomain "storage"
         super(:protected_swap, _("Volatile Encryption with Protected Key"))
