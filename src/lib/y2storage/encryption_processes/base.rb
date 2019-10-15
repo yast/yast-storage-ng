@@ -100,6 +100,41 @@ module Y2Storage
       def open_command_options(blk_device)
         open_options(blk_device).join(" ")
       end
+
+      # Sector size option for the encryption
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [String, nil] nil if no specific sector size
+      def sector_size_option(blk_device)
+        sector_size = sector_size_for(blk_device)
+        return nil unless sector_size
+
+        "sector-size=#{sector_size}"
+      end
+
+      # Sector size option to open the encryption device
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [String, nil] nil if no specific sector size
+      def sector_size_open_option(blk_device)
+        sector_size = sector_size_for(blk_device)
+        return nil unless sector_size
+
+        "--sector-size '#{sector_size}'"
+      end
+
+      IDEAL_SECTOR_SIZE = 4096
+
+      # Sector size for a given device
+      #
+      # For performance reasons, it tries to use 4k when possible. Otherwise, it returns
+      # nil so the default is used.
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Integer,nil]
+      def sector_size_for(blk_device)
+        return IDEAL_SECTOR_SIZE if blk_device.region.block_size.to_i >= IDEAL_SECTOR_SIZE
+      end
     end
   end
 end

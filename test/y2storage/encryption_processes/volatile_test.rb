@@ -26,9 +26,9 @@ describe Y2Storage::EncryptionProcesses::Volatile do
   subject do
     described_class.new(
       method,
-      key_file:    key_file,
-      cipher:      cipher,
-      key_size:    key_size
+      key_file: key_file,
+      cipher:   cipher,
+      key_size: key_size
     )
   end
 
@@ -50,7 +50,7 @@ describe Y2Storage::EncryptionProcesses::Volatile do
 
     let(:dm_name) { "cr_sda" }
 
-    let(:block_size) { 4096 }
+    let(:block_size) { Y2Storage::DiskSize.new(4096) }
 
     let(:region) { instance_double(Y2Storage::Region, block_size: block_size) }
 
@@ -130,8 +130,8 @@ describe Y2Storage::EncryptionProcesses::Volatile do
       end
     end
 
-    context "when the block size of ther underlying device is greater than 4k" do
-      let(:block_size) { 8192 }
+    context "when the block size of the underlying device is greater than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(8192) }
 
       it "sets the sector-size encryption option to 4096" do
         encryption = subject.create_device(device, dm_name)
@@ -144,8 +144,8 @@ describe Y2Storage::EncryptionProcesses::Volatile do
       end
     end
 
-    context "when the block size of ther underlying device is 4k" do
-      let(:block_size) { 4096 }
+    context "when the block size of the underlying device is 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(4096) }
 
       it "sets the sector-size encryption option to 4096" do
         encryption = subject.create_device(device, dm_name)
@@ -158,15 +158,15 @@ describe Y2Storage::EncryptionProcesses::Volatile do
       end
     end
 
-    context "when the block size of ther underlying less than 4k" do
-      let(:block_size) { 2048 }
+    context "when the block size of the underlying less than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(2048) }
 
       it "does not set the sector-size option" do
         encryption = subject.create_device(device, dm_name)
         expect(encryption.crypt_options).to_not include("sector-size=2048")
       end
 
-      it "sets the sector-size open option for secure key" do
+      it "does not set the sector-size open option for secure key" do
         encryption = subject.create_device(device, dm_name)
         expect(encryption.open_options).to_not include("--sector-size '2048'")
       end

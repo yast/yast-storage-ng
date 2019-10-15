@@ -29,13 +29,15 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
   let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
   let(:dm_name) { "cr_sda" }
+  let(:secure_key) { nil }
+  let(:block_size) { Y2Storage::DiskSize.new(4096) }
+  let(:region) { instance_double(Y2Storage::Region, block_size: block_size) }
+
   let(:zkey_cryptsetup) do
     "cryptsetup luksFormat --foo bar --dummy /dev/dasdc1\n" \
       "zkey-cryptsetup setvp --volumes /dev/dasdc1\n" \
       "third-command"
   end
-
-  let(:secure_key) { nil }
 
   before do
     devicegraph_stub("empty_hard_disk_50GiB.yml")
@@ -44,6 +46,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       .and_return(zkey_cryptsetup)
     allow(Y2Storage::EncryptionProcesses::SecureKey).to receive(:for_device)
       .and_return(secure_key)
+    allow(blk_device).to receive(:region).and_return(region)
   end
 
   describe "#create_device" do
@@ -69,14 +72,46 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       end
     end
 
-    it "does not set any specific encryption option" do
-      encryption = subject.create_device(blk_device, dm_name)
-      expect(encryption.crypt_options).to be_empty
+    context "when the block size of the underlying device is greater than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(8192) }
+
+      it "sets the sector-size encryption option to 4096" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.crypt_options).to include("sector-size=4096")
+      end
+
+      it "sets the sector-size open option for secure key" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.open_options).to include("--sector-size '4096'")
+      end
     end
 
-    it "does not set any specific open option" do
-      encryption = subject.create_device(blk_device, dm_name)
-      expect(encryption.open_options).to be_empty
+    context "when the block size of the underlying device is 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(4096) }
+
+      it "sets the sector-size encryption option to 4096" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.crypt_options).to include("sector-size=4096")
+      end
+
+      it "sets the sector-size open option for secure key" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.open_options).to include("--sector-size '4096'")
+      end
+    end
+
+    context "when the block size of the underlying less than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(2048) }
+
+      it "does not set the sector-size option" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.crypt_options).to_not include("sector-size=2048")
+      end
+
+      it "sets the sector-size open option for secure key" do
+        encryption = subject.create_device(blk_device, dm_name)
+        expect(encryption.open_options).to_not include("--sector-size '2048'")
+      end
     end
   end
 
@@ -93,12 +128,43 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
     before do
       allow(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
         .and_return(generated_key)
+      allow(encryption).to receive(:blk_device).and_return(blk_device)
     end
 
     it "generates a new secure key for the device" do
       expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-        .with("YaST_cr_sda", volumes: [encryption]).and_return(generated_key)
+        .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
       subject.pre_commit(encryption)
+    end
+
+    context "when the block size of the underlying device is greater than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(8192) }
+
+      it "sets the sector-size for the encryption key to 4096" do
+        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
+          .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
+        subject.pre_commit(encryption)
+      end
+    end
+
+    context "when the block size of the underlying device is 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(4096) }
+
+      it "sets the sector-size for the encryption key to 4096" do
+        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
+          .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
+        subject.pre_commit(encryption)
+      end
+    end
+
+    context "when the block size of the underlying device less than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(2048) }
+
+      it "sets the sector-size for the encryption key to 4096" do
+        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
+          .with("YaST_cr_sda", volumes: [encryption], sector_size: nil).and_return(generated_key)
+        subject.pre_commit(encryption)
+      end
     end
 
     context "when a secure key for the device was found" do

@@ -91,6 +91,22 @@ module Y2Storage
         end
       end
 
+      # Encryption options to add to the encryption device (crypttab options)
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Array<String>]
+      def crypt_options(blk_device)
+        [sector_size_option(blk_device)].compact
+      end
+
+      # Encryption options to open the encryption device
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Array<String>]
+      def open_options(blk_device)
+        [sector_size_open_option(blk_device)].compact
+      end
+
       # @see Base#finish_installation
       #
       # Copies the keys from the zkey repository of the inst-sys to the
@@ -134,7 +150,7 @@ module Y2Storage
       # @return [SecureKey]
       def generate_secure_key(device)
         key_name = "YaST_#{device.dm_table_name}"
-        key = SecureKey.generate(key_name, volumes: [device])
+        key = SecureKey.generate(key_name, volumes: [device], sector_size: sector_size_for(device.blk_device))
         log.info "Generated secure key #{key.name}"
 
         key
