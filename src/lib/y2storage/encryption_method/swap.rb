@@ -52,9 +52,9 @@ module Y2Storage
       #
       # @return [String]
       def key_file
+        raise "Not defined key file" unless self.class.const_defined?(:KEY_FILE)
+
         self.class.const_get(:KEY_FILE)
-      rescue NameError
-        raise "No key file indicated!"
       end
 
       # Encryption cipher
@@ -63,27 +63,21 @@ module Y2Storage
       #
       # @return [String, nil] nil if no specific cipher
       def cipher
-        self.class.const_get(:CIPHER)
-      rescue NameError
-        nil
+        self.class.const_get(:CIPHER) if self.class.const_defined?(:CIPHER)
       end
 
       # Size of the encryption key
       #
       # @return [String, nil] nil if no specific size
       def key_size
-        self.class.const_get(:KEY_SIZE)
-      rescue NameError
-        nil
+        self.class.const_get(:KEY_SIZE) if self.class.const_defined?(:KEY_SIZE)
       end
 
       # Sector size for the encryption
       #
       # @return [String, nil] nil if no specific sector size
       def sector_size
-        self.class.const_get(:SECTOR_SIZE)
-      rescue NameError
-        nil
+        self.class.const_get(:SECTOR_SIZE) if self.class.const_defined?(:SECTOR_SIZE)
       end
 
       private
