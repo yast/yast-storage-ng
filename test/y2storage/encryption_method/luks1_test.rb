@@ -17,20 +17,33 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_type"
-require "y2storage/encryption_processes/base"
+require_relative "../spec_helper"
+require "y2storage"
 
-module Y2Storage
-  module EncryptionProcesses
-    # The encryption process that allows to create and identify an encrypted
-    # device using LUKS1
-    class Luks1 < Base
-      private
+describe Y2Storage::EncryptionMethod::Luks1 do
+  describe ".used_for?" do
+    let(:encryption) { double(Y2Storage::Encryption, type: type) }
 
-      # @see EncryptionProcesses::Base#encryption_type
-      def encryption_type
-        EncryptionType::LUKS1
+    context "when the encryption type is LUKS1'" do
+      let(:type) { Y2Storage::EncryptionType::LUKS1 }
+
+      it "returns true" do
+        expect(subject.used_for?(encryption)).to eq(true)
       end
+    end
+
+    context "when the encryption type is not LUKS1'" do
+      let(:type) { Y2Storage::EncryptionType::PLAIN }
+
+      it "returns false" do
+        expect(subject.used_for?(encryption)).to eq(false)
+      end
+    end
+  end
+
+  describe ".only_for_swap?" do
+    it "returns false" do
+      expect(subject.only_for_swap?).to eq(false)
     end
   end
 end

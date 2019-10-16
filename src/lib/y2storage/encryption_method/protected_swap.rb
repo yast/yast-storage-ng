@@ -17,11 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_processes/swap"
+require "y2storage/encryption_method/swap"
 
 module Y2Storage
-  module EncryptionProcesses
-    # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using protected keys
+  module EncryptionMethod
+    # Encryption swap method (see {Swap}) for z Systems to encrypt a device by using protected keys
     class ProtectedSwap < Swap
       KEY_FILE = "/sys/devices/virtual/misc/pkey/protkey/protkey_aes_256_xts".freeze
       private_constant :KEY_FILE
@@ -35,26 +35,9 @@ module Y2Storage
       SECTOR_SIZE = "4096".freeze
       private_constant :SECTOR_SIZE
 
-      class << self
-        # @see Swap.key_file
-        def key_file
-          KEY_FILE
-        end
-
-        # @see Swap.cipher
-        def cipher
-          CIPHER
-        end
-
-        # @see Swap.key_size
-        def key_size
-          KEY_SIZE
-        end
-
-        # @see Swap.sector_size
-        def sector_size
-          SECTOR_SIZE
-        end
+      def initialize
+        textdomain "storage"
+        super(:protected_swap, _("Volatile Encryption with Protected Key"))
       end
     end
   end

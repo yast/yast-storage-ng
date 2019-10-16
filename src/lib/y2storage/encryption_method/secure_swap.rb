@@ -17,20 +17,28 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_processes/swap"
+require "y2storage/encryption_method/swap"
 
 module Y2Storage
-  module EncryptionProcesses
-    # Encryption swap process (see {Swap}) to encrypt a device by using random password
-    class RandomSwap < Swap
-      KEY_FILE = "/dev/urandom".freeze
+  module EncryptionMethod
+    # Encryption swap method (see {Swap}) for z Systems to encrypt a device by using secure keys
+    class SecureSwap < Swap
+      KEY_FILE = "/sys/devices/virtual/misc/pkey/ccadata/ccadata_aes_256_xts".freeze
       private_constant :KEY_FILE
 
-      class << self
-        # @see Swap.key_file
-        def key_file
-          KEY_FILE
-        end
+      CIPHER = "paes-xts-plain64".freeze
+      private_constant :CIPHER
+
+      KEY_SIZE = "1024".freeze
+      private_constant :KEY_SIZE
+
+      SECTOR_SIZE = "4096".freeze
+      private_constant :SECTOR_SIZE
+
+      # Encryption swap process (see {Swap}) for z Systems to encrypt a device by using secure keys
+      def initialize
+        textdomain "storage"
+        super(:secure_swap, _("Volatile Encryption with Secure Key"))
       end
     end
   end

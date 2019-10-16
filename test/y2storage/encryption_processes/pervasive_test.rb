@@ -21,42 +21,37 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::EncryptionProcesses::Luks1 do
+# For a complete pervasive encryption test, see test/y2storage/pervasive_encryption_test.rb
+describe Y2Storage::EncryptionProcesses::Pervasive do
   subject(:process) { described_class.new(method) }
+
   let(:method) { double }
+  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
+  let(:dm_name) { "cr_sda" }
+
+  before do
+    devicegraph_stub("empty_hard_disk_50GiB.yml")
+  end
 
   describe "#create_device" do
-    let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
-    let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda") }
-    let(:dm_name) { "cr_sda" }
-
-    before do
-      devicegraph_stub("empty_hard_disk_50GiB.yml")
-    end
-
     it "returns an encryption device" do
       encryption = process.create_device(blk_device, dm_name)
-
       expect(encryption.is?(:encryption)).to eq(true)
     end
 
-    it "creates an luks1 encryption device for given block device" do
-      expect(blk_device).to receive(:create_encryption)
-        .with(anything, Y2Storage::EncryptionType::LUKS1)
-        .and_call_original
-
-      process.create_device(blk_device, dm_name)
+    it "creates an luks2 encryption device for given block device" do
+      encryption = process.create_device(blk_device, dm_name)
+      expect(encryption.type).to eq(Y2Storage::EncryptionType::LUKS2)
     end
 
     it "does not set any specific encryption option" do
       encryption = subject.create_device(blk_device, dm_name)
-
       expect(encryption.crypt_options).to be_empty
     end
 
     it "does not set any specific open option" do
       encryption = subject.create_device(blk_device, dm_name)
-
       expect(encryption.open_options).to be_empty
     end
   end

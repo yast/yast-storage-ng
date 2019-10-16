@@ -1,4 +1,3 @@
-#!/usr/bin/env rspec
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -21,11 +20,8 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::EncryptionProcesses::Pervasive do
-  subject(:process) { described_class.new(method) }
-  let(:method) { double }
-
-  describe ".used_for?" do
+describe Y2Storage::EncryptionMethod::PervasiveLuks2 do
+  describe "#used_for?" do
     let(:encryption) { double(Y2Storage::Encryption, type: type, cipher: cipher) }
 
     context "when the encryption type is LUKS2 and the encryption cipher is paes-xts-plain64" do
@@ -33,7 +29,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       let(:cipher) { "paes-xts-plain64" }
 
       it "returns true" do
-        expect(described_class.used_for?(encryption)).to eq(true)
+        expect(subject.used_for?(encryption)).to eq(true)
       end
     end
 
@@ -42,7 +38,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       let(:cipher) { "paes-xts-plain64" }
 
       it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
+        expect(subject.used_for?(encryption)).to eq(false)
       end
     end
 
@@ -51,7 +47,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       let(:cipher) { "aes-xts-plain64" }
 
       it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
+        expect(subject.used_for?(encryption)).to eq(false)
       end
     end
   end

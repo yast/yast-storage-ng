@@ -35,20 +35,6 @@ module Y2Storage
       ZKEY = "/usr/bin/zkey".freeze
       private_constant :ZKEY
 
-      # Cipher used for pervasive encryption
-      CIPHER = "paes-xts-plain64".freeze
-      private_constant :CIPHER
-
-      # @see Base.used_for?
-      def self.used_for?(encryption)
-        encryption.type.is?(:luks2) && encryption.cipher == CIPHER
-      end
-
-      # @see Base.available?
-      def self.available?
-        SecureKey.available?
-      end
-
       # @see Base#create_device
       def create_device(blk_device, dm_name)
         @secure_key = SecureKey.for_device(blk_device)

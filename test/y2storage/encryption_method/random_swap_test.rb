@@ -1,5 +1,3 @@
-#!/usr/bin/env rspec
-
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -22,14 +20,10 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::EncryptionProcesses::RandomSwap do
-  subject { described_class.new(method) }
+describe Y2Storage::EncryptionMethod::RandomSwap do
+  let(:random_key_file) { subject.key_file }
 
-  let(:method) { instance_double(Y2Storage::EncryptionMethod) }
-
-  let(:random_key_file) { described_class.key_file }
-
-  describe ".available?" do
+  describe "#available?" do
     before do
       allow(File).to receive(:exist?).with(random_key_file).and_return(exist_key_file)
     end
@@ -40,7 +34,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:exist_key_file) { true }
 
       it "returns true" do
-        expect(described_class.available?).to eq(true)
+        expect(subject.available?).to eq(true)
       end
     end
 
@@ -48,18 +42,18 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:exist_key_file) { false }
 
       it "returns false" do
-        expect(described_class.available?).to eq(false)
+        expect(subject.available?).to eq(false)
       end
     end
   end
 
   describe "#only_for_swap?" do
     it "returns true" do
-      expect(described_class.only_for_swap?).to eq(true)
+      expect(subject.only_for_swap?).to eq(true)
     end
   end
 
-  describe ".used_for?" do
+  describe "#used_for?" do
     let(:encryption) do
       instance_double(Y2Storage::Encryption, key_file: key_file, crypt_options: crypt_options)
     end
@@ -72,7 +66,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:crypt_options) { ["something", "else"] }
 
       it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
+        expect(subject.used_for?(encryption)).to eq(false)
       end
     end
 
@@ -80,7 +74,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:key_file) { "/dev/other" }
 
       it "returns false" do
-        expect(described_class.used_for?(encryption)).to eq(false)
+        expect(subject.used_for?(encryption)).to eq(false)
       end
     end
 
@@ -90,12 +84,12 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:key_file) { random_key_file }
 
       it "returns true" do
-        expect(described_class.used_for?(encryption)).to eq(true)
+        expect(subject.used_for?(encryption)).to eq(true)
       end
     end
   end
 
-  describe ".used_for_crypttab?" do
+  describe "#used_for_crypttab?" do
     let(:entry) do
       instance_double(
         Y2Storage::SimpleEtcCrypttabEntry, password: password, crypt_options: crypt_options
@@ -110,7 +104,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:crypt_options) { ["something", "else"] }
 
       it "returns false" do
-        expect(described_class.used_for_crypttab?(entry)).to eq(false)
+        expect(subject.used_for_crypttab?(entry)).to eq(false)
       end
     end
 
@@ -118,7 +112,7 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:password) { "/dev/other" }
 
       it "returns false" do
-        expect(described_class.used_for_crypttab?(entry)).to eq(false)
+        expect(subject.used_for_crypttab?(entry)).to eq(false)
       end
     end
 
@@ -128,53 +122,8 @@ describe Y2Storage::EncryptionProcesses::RandomSwap do
       let(:password) { random_key_file }
 
       it "returns true" do
-        expect(described_class.used_for_crypttab?(entry)).to eq(true)
+        expect(subject.used_for_crypttab?(entry)).to eq(true)
       end
-    end
-  end
-
-  describe "#create_device" do
-    before do
-      fake_scenario("empty_hard_disk_50GiB")
-    end
-
-    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
-
-    let(:device) { devicegraph.find_by_name("/dev/sda") }
-
-    let(:dm_name) { "cr_sda" }
-
-    it "returns an encryption device" do
-      result = subject.create_device(device, dm_name)
-
-      expect(result.is?(:encryption)).to eq(true)
-    end
-
-    it "creates an plain encryption device for the given device" do
-      expect(device.encrypted?).to eq(false)
-
-      subject.create_device(device, dm_name)
-
-      expect(device.encrypted?).to eq(true)
-      expect(device.encryption.type.is?(:plain)).to eq(true)
-    end
-
-    it "sets the key file for urandom key" do
-      encryption = subject.create_device(device, dm_name)
-
-      expect(encryption.key_file).to eq(random_key_file)
-    end
-
-    it "sets the 'swap' encryption option" do
-      encryption = subject.create_device(device, dm_name)
-
-      expect(encryption.crypt_options).to contain_exactly("swap")
-    end
-
-    it "does not set any specific open option" do
-      encryption = subject.create_device(device, dm_name)
-
-      expect(encryption.open_options).to be_empty
     end
   end
 end

@@ -17,19 +17,32 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_type"
-require "y2storage/encryption_processes/base"
+require "y2storage/encryption_method/base"
+require "y2storage/encryption_processes/luks1"
 
 module Y2Storage
-  module EncryptionProcesses
-    # The encryption process that allows to create and identify an encrypted
+  module EncryptionMethod
+    # The encryption method that allows to create and identify an encrypted
     # device using LUKS1
     class Luks1 < Base
+      def initialize
+        textdomain "storage"
+        super(:luks1, _("Regular LUKS1"))
+      end
+
+      # Whether the process was used for the given encryption device
+      #
+      # @param encryption [Y2Storage::Encryption] the encryption device to check
+      # @return [Boolean] true when the encryption type is LUKS1; false otherwise
+      def used_for?(encryption)
+        encryption.type.is?(:luks1)
+      end
+
       private
 
-      # @see EncryptionProcesses::Base#encryption_type
-      def encryption_type
-        EncryptionType::LUKS1
+      # @see Base#encryption_process
+      def encryption_process
+        EncryptionProcesses::Luks1.new(self)
       end
     end
   end

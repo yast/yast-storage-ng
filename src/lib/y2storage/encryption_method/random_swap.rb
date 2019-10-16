@@ -17,19 +17,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_type"
-require "y2storage/encryption_processes/base"
+require "y2storage/encryption_method/swap"
 
 module Y2Storage
-  module EncryptionProcesses
-    # The encryption process that allows to create and identify an encrypted
-    # device using LUKS1
-    class Luks1 < Base
-      private
+  module EncryptionMethod
+    # Encryption swap method (see {Swap}) to encrypt a device by using a random password
+    class RandomSwap < Swap
+      KEY_FILE = "/dev/urandom".freeze
+      private_constant :KEY_FILE
 
-      # @see EncryptionProcesses::Base#encryption_type
-      def encryption_type
-        EncryptionType::LUKS1
+      def initialize
+        textdomain "storage"
+        super(:random_swap, _("Volatile Encryption with Random Key"))
       end
     end
   end
