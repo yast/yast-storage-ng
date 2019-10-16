@@ -142,7 +142,11 @@ module Y2Storage
       # @return [SecureKey]
       def generate_secure_key(device)
         key_name = "YaST_#{device.dm_table_name}"
-        key = SecureKey.generate(key_name, volumes: [device], sector_size: sector_size_for(device.blk_device))
+        key = SecureKey.generate(
+          key_name,
+          volumes:     [device],
+          sector_size: sector_size_for(device.blk_device)
+        )
         log.info "Generated secure key #{key.name}"
 
         key
