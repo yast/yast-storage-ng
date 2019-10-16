@@ -196,6 +196,7 @@ module Y2Partitioner
           # changing the filesystem type, with the exceptions below
           mount_path = current_value_for(:mount_point)
           mount_by = current_value_for(:mount_by)
+          manual = current_value_for(:manual_mount_by)
           label = current_value_for(:label)
 
           if type.is?(:swap)
@@ -208,7 +209,9 @@ module Y2Partitioner
           create_filesystem(type, label: label)
           self.partition_id = filesystem.type.default_partition_id
 
-          create_mount_point(mount_path, mount_by: mount_by) unless mount_path.nil?
+          return if mount_path.nil?
+
+          create_mount_point(mount_path, mount_by: mount_by, manual_mount_by: manual)
         end
 
         # Makes the changes related to the option "do not format" in the UI, which
@@ -344,6 +347,8 @@ module Y2Partitioner
           elsif blk_device.encrypted? && !encrypt
             blk_device.remove_encryption
           end
+
+          adjust_mount_point
         ensure
           @restorer.update_checkpoint
         end
@@ -481,11 +486,12 @@ module Y2Partitioner
         def restore_filesystem
           mount_path = filesystem.mount_path
           mount_by = filesystem.mount_by
+          manual = filesystem.mount_point&.manual_mount_by?
 
           @restorer.restore_from_system
           @encrypt = blk_device.encrypted?
 
-          restore_mount_point(mount_path, mount_by: mount_by)
+          restore_mount_point(mount_path, mount_by: mount_by, manual_mount_by: manual)
           blk_device.update_etc_status
         end
 
@@ -506,7 +512,13 @@ module Y2Partitioner
           # another layer of indirection.
           # See RFC 1925 section 6a (and section 3).
           options.each_pair do |attr, value|
-            mount_point.send(:"#{attr}=", value) unless value.nil?
+            next if value.nil?
+
+            if attr == :mount_by
+              mount_point.assign_mount_by(value)
+            else
+              mount_point.send(:"#{attr}=", value)
+            end
           end
 
           # Special handling for some mount paths ("/", "/boot/*")
@@ -520,6 +532,8 @@ module Y2Partitioner
           case attribute
           when :mount_by
             filesystem.mount_by
+          when :manual_mount_by
+            filesystem.mount_point&.manual_mount_by?
           when :mount_point
             filesystem.mount_path
           when :label
@@ -684,6 +698,16 @@ module Y2Partitioner
           opt = filesystem.type.special_path_fstab_options(mount_options, path)
           opt.push("ro") if read_only?(path)
           opt
+        end
+
+        # Adjusts the properties of the mount point after having added or
+        # removed the encryption device
+        def adjust_mount_point
+          mp = filesystem&.mount_point
+          return if mp.nil?
+
+          mp.set_default_mount_by unless mp.manual_mount_by?
+          mp.ensure_suitable_mount_by
         end
       end
     end

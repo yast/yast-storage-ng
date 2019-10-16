@@ -58,8 +58,14 @@ module Y2Storage
 
   protected
 
+    # @see Device#is?
     def types_for_is
       super << :luks
+    end
+
+    # @see Encryption#suitable_mount_by?
+    def suitable_mount_by?(type)
+      super || type.is?(:uuid)
     end
   end
 end
