@@ -99,14 +99,6 @@ module Y2Storage
         [sector_size_option(blk_device)].compact
       end
 
-      # Encryption options to open the encryption device
-      #
-      # @param blk_device [BlkDevice] Block device to encrypt
-      # @return [Array<String>]
-      def open_options(blk_device)
-        [sector_size_open_option(blk_device)].compact
-      end
-
       # @see Base#finish_installation
       #
       # Copies the keys from the zkey repository of the inst-sys to the
