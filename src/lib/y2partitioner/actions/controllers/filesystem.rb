@@ -486,7 +486,7 @@ module Y2Partitioner
         def restore_filesystem
           mount_path = filesystem.mount_path
           mount_by = filesystem.mount_by
-          manual = filesystem.mount_point&.manual_mount_by?
+          manual = filesystem.mount_point ? filesystem.mount_point.manual_mount_by? : nil
 
           @restorer.restore_from_system
           @encrypt = blk_device.encrypted?
@@ -533,13 +533,21 @@ module Y2Partitioner
           when :mount_by
             filesystem.mount_by
           when :manual_mount_by
-            filesystem.mount_point&.manual_mount_by?
+            manual_mount_by_value
           when :mount_point
             filesystem.mount_path
           when :label
             # label is kept to be consistent with old partitioner (bsc#1087229)
             filesystem.label
           end
+        end
+
+        # @see #current_value_for
+        def manual_mount_by_value
+          return nil unless filesystem
+          return nil unless filesystem.mount_point
+
+          filesystem.mount_point.manual_mount_by?
         end
 
         def before_change_mount_point
@@ -703,7 +711,8 @@ module Y2Partitioner
         # Adjusts the properties of the mount point after having added or
         # removed the encryption device
         def adjust_mount_point
-          mp = filesystem&.mount_point
+          return unless filesystem
+          mp = filesystem.mount_point
           return if mp.nil?
 
           mp.set_default_mount_by unless mp.manual_mount_by?
