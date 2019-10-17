@@ -311,7 +311,7 @@ module Y2Storage
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
       enc.ensure_suitable_mount_by
-      enc.mount_point.ensure_suitable_mount_by if enc.mount_point
+      enc.mount_point&.ensure_suitable_mount_by
 
       Encryption.update_dm_names(devicegraph)
 
