@@ -88,7 +88,6 @@ module Y2Storage
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
-      @configuration = nil
       configuration.apply_defaults
 
       @probed = false

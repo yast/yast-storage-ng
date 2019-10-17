@@ -17,7 +17,7 @@ The two mount_by attributes are the following.
 
   * `#set_default_mount_by` is used internally when creating a new mount point
     with `Mountable#create_mount_point`. It relies on
-    `Mountable#get_default_mount_point` which almost always just returns the
+    `MountableImp#get_default_mount_by` which almost always just returns the
     global default mount_by. The only two exceptions that always return `DEVICE`
     are NFS filesystems and filesystems directly on top of an LVM LV.
 

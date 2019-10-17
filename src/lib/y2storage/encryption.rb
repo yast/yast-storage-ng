@@ -209,7 +209,7 @@ module Y2Storage
     # encryption device
     #
     # Using a value that is not suitable would lead to libstorage-ng ignoring
-    # that value during the commit phase. In such case, DEVICE} is used by the
+    # that value during the commit phase. In such case, DEVICE is used by the
     # library as fallback.
     #
     # @param type [Filesystems::MountByType]
