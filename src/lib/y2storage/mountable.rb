@@ -116,6 +116,8 @@ module Y2Storage
       mp.path = path
       # Recalculate etc status for the parent devices
       update_etc_status
+      # Ensure the mount_by makes sense
+      mp.ensure_suitable_mount_by
       mp
     end
 

@@ -18,11 +18,15 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_enum_wrapper"
+require "y2storage/storage_manager"
 
 module Y2Storage
   module Filesystems
     # Class to represent all the possible name schemas to use when mounting a
-    # filesystem
+    # filesystem or when referencing an encryption device in the crypttab file
+    #
+    # For the concrete meaning of each possible value, check the corresponding
+    # documentation of {Mountable#mount_by} and {Encryption#mount_by}.
     #
     # This is a wrapper for the Storage::MountByType enum
     class MountByType
@@ -37,21 +41,27 @@ module Y2Storage
       # Keys are the symbols representing the types and values are hashes that
       # can contain:
       # - `:name` for human string
+      # - `:stability` to rate how stable is the corresponding name
       PROPERTIES = {
         device: {
-          name: N_("Device Name")
-        },
-        id:     {
-          name: N_("Device ID")
-        },
-        label:  {
-          name: N_("Volume Label")
+          name:      N_("Device Name"),
+          stability: 1
         },
         path:   {
-          name: N_("Device Path")
+          name:      N_("Device Path"),
+          stability: 2
+        },
+        id:     {
+          name:      N_("Device ID"),
+          stability: 3
+        },
+        label:  {
+          name:      N_("Volume Label"),
+          stability: 4
         },
         uuid:   {
-          name: N_("UUID")
+          name:      N_("UUID"),
+          stability: 5
         }
       }.freeze
 
@@ -67,21 +77,48 @@ module Y2Storage
         name.nil? ? to_s : _(name)
       end
 
-      # Type corresponding to the given fstab spec
-      #
-      # @param spec [String] content of the first column of an /etc/fstab entry
-      # @return [MountByType, nil] nil if the string doesn't match any known format
-      def self.from_fstab_spec(spec)
-        if spec.start_with?("UUID=", "/dev/disk/by-uuid/")
-          UUID
-        elsif spec.start_with?("LABEL=", "/dev/disk/by-label/")
-          LABEL
-        elsif spec.start_with?("/dev/disk/by-id/")
-          ID
-        elsif spec.start_with?("/dev/disk/by-path/")
-          PATH
-        elsif spec.start_with?("/dev/")
-          DEVICE
+      class << self
+        # Type corresponding to the given fstab spec
+        #
+        # @param spec [String] content of the first column of an /etc/fstab entry
+        # @return [MountByType, nil] nil if the string doesn't match any known format
+        def from_fstab_spec(spec)
+          if spec.start_with?("UUID=", "/dev/disk/by-uuid/")
+            UUID
+          elsif spec.start_with?("LABEL=", "/dev/disk/by-label/")
+            LABEL
+          elsif spec.start_with?("/dev/disk/by-id/")
+            ID
+          elsif spec.start_with?("/dev/disk/by-path/")
+            PATH
+          elsif spec.start_with?("/dev/")
+            DEVICE
+          end
+        end
+
+        # Most adequate mount_by value to the given device, from the list of
+        # possible candidate values
+        #
+        # @param device [#stable_name?] device that will be referenced
+        # @param candidates [Array<MountByType>] list of acceptable values, it
+        #   must contain at least DEVICE (since it should always be possible to
+        #   use the kernel name to reference a device)
+        # @return [MountByType]
+        def best_for(device, candidates)
+          return default if candidates.include?(default)
+
+          # DEVICE is always a candidate
+          return DEVICE if device.stable_name?
+
+          # Again, we are sure that at least DEVICE will be found here
+          candidates.max_by { |type| PROPERTIES[type.to_sym][:stability] }
+        end
+
+      private
+
+        # Default value, according to the system configuration
+        def default
+          StorageManager.instance.configuration.default_mount_by
         end
       end
 

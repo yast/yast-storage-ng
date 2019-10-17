@@ -68,6 +68,14 @@ module Y2Storage
     storage_forward :name
     storage_forward :name=
 
+    # Whether the method {#name} returns a stable name that will remain equal
+    # across system reboots
+    #
+    # @return [Boolean]
+    def stable_name?
+      false
+    end
+
     # @!attribute region
     #   @return [Region]
     storage_forward :region, as: "Region"
@@ -302,6 +310,8 @@ module Y2Storage
       enc = method.create_device(self, dm_name)
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
+      enc.ensure_suitable_mount_by
+      enc.mount_point.ensure_suitable_mount_by if enc.mount_point
 
       Encryption.update_dm_names(devicegraph)
 

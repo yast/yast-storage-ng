@@ -171,6 +171,9 @@ module Y2Storage
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
         filesystem.mkfs_options = mkfs_options if mkfs_options
+        # Note that a good reason for this to be the last step is that the
+        # previous properties can affect the suitable mount_by, so they must be
+        # set in advance
         setup_mount_point(filesystem)
       end
 

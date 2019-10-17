@@ -149,7 +149,7 @@ describe Y2Storage::StorageManager do
 
       context "and storage system is not locked" do
         before do
-          allow_any_instance_of(described_class).to receive(:default_mount_by=)
+          allow_any_instance_of(Y2Storage::Configuration).to receive(:default_mount_by=)
         end
 
         shared_examples "creates read-only instance" do
@@ -308,8 +308,8 @@ describe Y2Storage::StorageManager do
 
     let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
 
-    it "initializes #default_mount_by with the value at sysconfig file" do
-      expect(manager.default_mount_by).to eq(mount_by_label)
+    it "initializes Configuration#default_mount_by with the value at sysconfig file" do
+      expect(manager.configuration.default_mount_by).to eq(mount_by_label)
     end
   end
 
@@ -388,48 +388,6 @@ describe Y2Storage::StorageManager do
     it "initializes #staging_revision" do
       manager = described_class.create_test_instance
       expect(manager.staging_revision).to be_zero
-    end
-  end
-
-  describe "#default_mount_by" do
-    it "returns a MountByType value" do
-      expect(manager.default_mount_by).to be_a(Y2Storage::Filesystems::MountByType)
-    end
-  end
-
-  describe "#default_mount_by=" do
-    before do
-      allow(Yast::SCR).to receive(:Read) do |path|
-        expect(path.to_s).to match(/DEVICE_NAMES/)
-      end.and_return("uuid")
-
-      described_class.create_test_instance
-    end
-
-    it "updates the default mount_by value" do
-      mount_by_id = Y2Storage::Filesystems::MountByType::ID
-
-      expect(manager.default_mount_by).to_not eq(mount_by_id)
-      manager.default_mount_by = mount_by_id
-      expect(manager.default_mount_by).to eq(mount_by_id)
-    end
-  end
-
-  describe "#update_sysconfig" do
-    before do
-      allow(Yast::SCR).to receive(:Write)
-    end
-
-    it "stores current default mount_by into sysconfig file" do
-      mount_by_label = Y2Storage::Filesystems::MountByType::LABEL
-      manager.default_mount_by = mount_by_label
-
-      expect(Yast::SCR).to receive(:Write) do |path, value|
-        expect(path.to_s).to match(/storage/)
-        expect(value).to eq("label")
-      end
-
-      manager.update_sysconfig
     end
   end
 
