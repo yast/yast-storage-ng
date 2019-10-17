@@ -28,6 +28,15 @@ module Y2Storage
     # password generated at boot time. Generally, the new password is generated based on
     # /dev/urandom data (see {EncryptionMethod::RandomSwap}), but IBM offers other mechanisms for z
     # Systems (see {EncryptionMethod::ProtectedSwap} and {EncryptionMethod::SecureSwap} processes).
+    #
+    # ## Encryption and open options
+    #
+    # When using volatile encryption, there are a few options that should be present in the
+    # `/etc/crypttab`: the cipher method, the key size and the sector size. Additionally, the `swap`
+    # option should be present too. See {#crypt_options}.
+    #
+    # In a similar way, it is expected to specify these options (except `swap`) when running the
+    # luksOpen command (see {#open_options}).
     class Volatile < Base
       SWAP_OPTION = "swap".freeze
       private_constant :SWAP_OPTION
