@@ -114,7 +114,7 @@ module Y2Storage
           candidates.max_by { |type| PROPERTIES[type.to_sym][:stability] }
         end
 
-      private
+        private
 
         # Default value, according to the system configuration
         def default

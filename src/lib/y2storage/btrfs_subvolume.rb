@@ -90,6 +90,7 @@ module Y2Storage
     # @return [Filesystems::MountByType, nil]
     def copy_mount_by_from_filesystem
       return nil if mount_point.nil? || filesystem.mount_point.nil?
+
       mount_point.manual_mount_by = filesystem.mount_point.manual_mount_by?
       mount_point.assign_mount_by(filesystem.mount_point.mount_by)
     end

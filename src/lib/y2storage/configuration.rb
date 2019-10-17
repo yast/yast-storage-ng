@@ -58,7 +58,7 @@ module Y2Storage
       SysconfigStorage.instance.default_mount_by = default_mount_by
     end
 
-  private
+    private
 
     # Libstorage object
     #

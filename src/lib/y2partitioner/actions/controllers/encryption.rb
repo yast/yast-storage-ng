@@ -298,16 +298,16 @@ module Y2Partitioner
           encryption.active?
         end
 
-				# Adjusts the properties of the mount point after having added or
-				# removed the encryption device
-				def adjust_mount_point
-					mp = filesystem&.mount_point
-					return if mp.nil?
+        # Adjusts the properties of the mount point after having added or
+        # removed the encryption device
+        def adjust_mount_point
+          mp = filesystem&.mount_point
+          return if mp.nil?
 
-					mp.set_default_mount_by unless mp.manual_mount_by?
-					mp.ensure_suitable_mount_by
-				end
-			end
-		end
+          mp.set_default_mount_by unless mp.manual_mount_by?
+          mp.ensure_suitable_mount_by
+        end
+      end
+    end
   end
 end

@@ -111,7 +111,7 @@ module Y2Partitioner
             nil
           end
 
-        private
+          private
 
           # Object handling the Y2Storage configuration
           #
