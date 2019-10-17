@@ -98,7 +98,7 @@ module Y2Storage
       end
     end
 
-    # Whether the encrytion layer should be created for a swap device according to the given crypttab
+    # Whether the encryption layer should be created for a swap device according to the given crypttab
     # entry
     #
     # @param device [BlkDevice]

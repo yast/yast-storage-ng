@@ -26,10 +26,9 @@ describe Y2Storage::EncryptionProcesses::Volatile do
   subject do
     described_class.new(
       method,
-      key_file:    key_file,
-      cipher:      cipher,
-      key_size:    key_size,
-      sector_size: sector_size
+      key_file: key_file,
+      cipher:   cipher,
+      key_size: key_size
     )
   end
 
@@ -38,11 +37,11 @@ describe Y2Storage::EncryptionProcesses::Volatile do
   let(:key_file) { "/sys/some-key" }
   let(:cipher) { "paes-xts-plain64" }
   let(:key_size) { 1024 }
-  let(:sector_size) { 4096 }
 
   describe "#create_device" do
     before do
       fake_scenario("empty_hard_disk_50GiB")
+      allow(device).to receive(:region).and_return(region)
     end
 
     let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
@@ -50,6 +49,10 @@ describe Y2Storage::EncryptionProcesses::Volatile do
     let(:device) { devicegraph.find_by_name("/dev/sda") }
 
     let(:dm_name) { "cr_sda" }
+
+    let(:block_size) { Y2Storage::DiskSize.new(4096) }
+
+    let(:region) { instance_double(Y2Storage::Region, block_size: block_size) }
 
     it "returns an encryption device" do
       result = subject.create_device(device, dm_name)
@@ -127,27 +130,45 @@ describe Y2Storage::EncryptionProcesses::Volatile do
       end
     end
 
-    it "sets the sector-size encyption option" do
-      encryption = subject.create_device(device, dm_name)
-      expect(encryption.crypt_options).to include("sector-size=4096")
-    end
+    context "when the block size of the underlying device is greater than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(8192) }
 
-    it "sets the sector-size open option for secure key" do
-      encryption = subject.create_device(device, dm_name)
-      expect(encryption.open_options).to include("--sector-size '4096'")
-    end
-
-    context "when the sector size is not defined" do
-      let(:sector_size) { nil }
-
-      it "does not set the sector-size encyption option" do
+      it "sets the sector-size encryption option to 4096" do
         encryption = subject.create_device(device, dm_name)
-        expect(encryption.crypt_options).to_not include("sector-size=4096")
+        expect(encryption.crypt_options).to include("sector-size=4096")
       end
 
       it "sets the sector-size open option for secure key" do
         encryption = subject.create_device(device, dm_name)
-        expect(encryption.open_options).to_not include("--sector-size '4096'")
+        expect(encryption.open_options).to include("--sector-size '4096'")
+      end
+    end
+
+    context "when the block size of the underlying device is 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(4096) }
+
+      it "sets the sector-size encryption option to 4096" do
+        encryption = subject.create_device(device, dm_name)
+        expect(encryption.crypt_options).to include("sector-size=4096")
+      end
+
+      it "sets the sector-size open option for secure key" do
+        encryption = subject.create_device(device, dm_name)
+        expect(encryption.open_options).to include("--sector-size '4096'")
+      end
+    end
+
+    context "when the block size of the underlying less than 4k" do
+      let(:block_size) { Y2Storage::DiskSize.new(2048) }
+
+      it "does not set the sector-size option" do
+        encryption = subject.create_device(device, dm_name)
+        expect(encryption.crypt_options).to_not include("sector-size=2048")
+      end
+
+      it "does not set the sector-size open option for secure key" do
+        encryption = subject.create_device(device, dm_name)
+        expect(encryption.open_options).to_not include("--sector-size '2048'")
       end
     end
   end

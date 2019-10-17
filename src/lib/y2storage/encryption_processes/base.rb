@@ -46,7 +46,8 @@ module Y2Storage
       # @param dm_name [String]
       def create_device(blk_device, dm_name)
         enc = blk_device.create_encryption(dm_name || "", encryption_type)
-        enc.open_options = open_command_options
+        enc.open_options = open_command_options(blk_device)
+        enc.crypt_options = crypt_options(blk_device) + enc.crypt_options
         enc.encryption_process = self
         enc
       end
@@ -76,8 +77,17 @@ module Y2Storage
 
       # Open options for the encryption device
       #
+      # @param _blk_device [BlkDevice] Block device to encrypt
       # @return [Array<String>]
-      def open_options
+      def open_options(_blk_device)
+        []
+      end
+
+      # Crypt options for the encryption device
+      #
+      # @param _blk_device [BlkDevice] Block device to encrypt
+      # @return [Array<String>]
+      def crypt_options(_blk_device)
         []
       end
 
@@ -85,9 +95,23 @@ module Y2Storage
 
       # Open options with the format expected by the underlying tools (cryptsetup)
       #
+      # @param blk_device [BlkDevice] Block device to encrypt
       # @return [String]
-      def open_command_options
-        open_options.join(" ")
+      def open_command_options(blk_device)
+        open_options(blk_device).join(" ")
+      end
+
+      IDEAL_SECTOR_SIZE = 4096
+
+      # Sector size for a given device
+      #
+      # For performance reasons, it tries to use 4k when possible. Otherwise, it returns
+      # nil so the default is used.
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [Integer,nil]
+      def sector_size_for(blk_device)
+        return IDEAL_SECTOR_SIZE if blk_device.region.block_size.to_i >= IDEAL_SECTOR_SIZE
       end
     end
   end

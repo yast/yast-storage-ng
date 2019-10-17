@@ -45,15 +45,20 @@ module Y2Storage
       # @return [String] name of the secure key
       attr_reader :name
 
+      # @return [Integer, nil] sector size in bytes
+      attr_reader :sector_size
+
       # Constructor
       #
       # @note: creating a SecureKey object does not generate a new record for it
       # in the keys database. See {#generate}.
       #
       # @param name [String] see {#name}
-      def initialize(name)
+      # @param sector_size [Integer, nil] see {#sector_size}
+      def initialize(name, sector_size: nil)
         @name = name
         @volume_entries = []
+        @sector_size = sector_size
       end
 
       # Whether the key contains an entry in its list of volumes referencing the
@@ -108,9 +113,9 @@ module Y2Storage
           "--name", name,
           "--xts",
           "--keybits", "256",
-          "--volume-type", "LUKS2",
-          "--sector-size", "4096"
+          "--volume-type", "LUKS2"
         ]
+        args += ["--sector-size", sector_size.to_s] if sector_size
         args += ["--volumes", volume_entries.map(&:to_s).join(",")] if volume_entries.any?
 
         Yast::Execute.locally(ZKEY, "generate", *args)
@@ -208,10 +213,12 @@ module Y2Storage
         # @param name [String] temptative name for the new key
         # @param volumes [Array<Encryption>] encryption devices to register in
         #   the "volumes" section of the new key
+        # @param sector_size [Integer,nil] sector size to set in the register.
+        #   Use the nil to use the system's default.
         # @return [SecureKey] an object representing the new key
-        def generate(name, volumes: [])
+        def generate(name, sector_size: nil, volumes: [])
           name = exclusive_name(name)
-          key = new(name)
+          key = new(name, sector_size: sector_size)
           volumes.each { |vol| key.add_device(vol) }
           key.generate
           key
@@ -220,9 +227,28 @@ module Y2Storage
         # Finds an existing secure key that references the given device in
         # one of its "volumes" entries
         #
+        # @param device [BlkDevice] Block device to search the secure key for
         # @return [SecureKey, nil] nil if no key is found for the device
         def for_device(device)
           all.find { |key| key.for_device?(device) }
+        end
+
+        # Parses the representation of a secure key, in the format used by
+        # "zkey list", and returns a SecureKey object representing it
+        #
+        # @param string [String] portion of the output of "zkey list" that
+        #   represents a concrete secure key
+        def new_from_zkey(string)
+          lines = string.lines
+          attrs = lines.map { |l| l.split(":", 2) }.each_with_object({}) do |parts, all|
+            next if parts.size != 2
+
+            all[parts[0].strip] = parts[1].strip
+          end
+          sector_size = attrs["Sector size"].start_with?(/\d/) ? attrs["Sector size"].to_i : nil
+          key = new(attrs["Key"], sector_size: sector_size)
+          key.add_zkey_volumes(string)
+          key
         end
 
         private
@@ -236,19 +262,6 @@ module Y2Storage
 
           entries = output&.split("\n\n") || []
           entries.map { |entry| new_from_zkey(entry) }
-        end
-
-        # Parses the representation of a secure key, in the format used by
-        # "zkey list", and returns a SecureKey object representing it
-        #
-        # @param string [String] portion of the output of "zkey list" that
-        #   represents a concrete secure key
-        def new_from_zkey(string)
-          lines = string.lines
-          name = lines.first.strip.split(/\s/).last
-          key = new(name)
-          key.add_zkey_volumes(string)
-          key
         end
 
         # Returns the name that is available for a new key taking original_name
