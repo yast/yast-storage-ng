@@ -71,8 +71,18 @@ YaST needs to ensure a reasonable (or, at least, acceptable) value for both
 mount_by attributes. The libstorage-ng behavior of almost blindly assigning the
 global default value to everything may be problematic.
 
+Moreover, in the Partitioner only the mount methods that are really suitable for
+each case must be presented to the users when they click on "Fstab Options".
+Relying on the mentioned `MountPoint#possible_mount_bys` is clearly not enough.
+
 That's why `Y2Storage` implements the concept of "suitable mount_by", which is
 used at several points to minimize the possibilities of triggering the
 libstorage-ng fallback to DEVICE (which is only executed during the commit
 phase) and to minimize some risks related to the usage of encryption with
 volatile keys.
+
+On the other hand, `Y2Storage` also includes some mechanisms to keep the
+consistency of the mount_by attributes of a Btrfs filesystem and its subvolumes.
+Every time the attribute is changed for a filesystem or when a new subvolume is
+created, the corresponding method (`Btrfs#copy_mount_by_to_subvolumes` or
+`BtrfsSubvolume#copy_mount_by_from_filesystem`) is called internally.
