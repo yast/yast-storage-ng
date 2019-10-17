@@ -213,6 +213,8 @@ module Y2Storage
         # @param name [String] temptative name for the new key
         # @param volumes [Array<Encryption>] encryption devices to register in
         #   the "volumes" section of the new key
+        # @param sector_size [Integer,nil] sector size to set in the register.
+        #   Use the nil to use the system's default.
         # @return [SecureKey] an object representing the new key
         def generate(name, sector_size: nil, volumes: [])
           name = exclusive_name(name)

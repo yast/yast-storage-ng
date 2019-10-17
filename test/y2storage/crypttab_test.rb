@@ -88,7 +88,7 @@ describe Y2Storage::Crypttab do
         expect(device.encryption.method.to_sym).to eq(encryption_method)
       end
 
-      it "uses the crypttab name for the new encrytion device" do
+      it "uses the crypttab name for the new encryption device" do
         subject.save_encryption_names(devicegraph)
 
         expect(device.encryption.basename).to eq("luks1")

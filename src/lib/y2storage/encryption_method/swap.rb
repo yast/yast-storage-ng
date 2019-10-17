@@ -77,7 +77,7 @@ module Y2Storage
 
       SWAP_OPTION = "swap".freeze
 
-      # Checks whether the process was used according to the given key file and encrytion options
+      # Checks whether the process was used according to the given key file and encryption options
       #
       # @param key_file [String]
       # @param crypt_options [Array<String>]
