@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Oct 16 14:09:42 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- If a given device cannot be mounted by the method configured as
+  default, try to find the most stable alternative instead of just
+  using the device kernel name (bsc#1151075).
+- 4.1.89
+
+-------------------------------------------------------------------
 Thu Oct  3 16:58:02 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - AutoYaST: do not fail if the uuid is specified for a new

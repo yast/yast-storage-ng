@@ -34,6 +34,16 @@ module Y2Storage
     #     with BlkDevice#name (e.g. "/dev/mapper/vg0/lv1")
     storage_forward :lv_name
 
+    # @see BlkDevice#stable_name?
+    #
+    # The name is based on {#lv_name} and {LvmVg#vg_name}. Since both are
+    # stable, the name should not change across reboots.
+    #
+    # @return [Boolean]
+    def stable_name?
+      true
+    end
+
     # @!method lvm_vg
     #   @return [LvmVg] volume group the LV belongs to
     storage_forward :lvm_vg, as: "LvmVg"

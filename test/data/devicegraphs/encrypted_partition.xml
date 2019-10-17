@@ -49,11 +49,6 @@
       <dm-table-name>cr_sda1</dm-table-name>
       <mount-by>uuid</mount-by>
       <in-etc-crypttab>true</in-etc-crypttab>
-      <udev-path>pci-0000:00:1f.2-ata-1-cr_part1</udev-path>
-      <udev-id>ata-VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
-      <udev-id>scsi-0ATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
-      <udev-id>scsi-1ATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
-      <udev-id>scsi-SATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
       <uuid>ccd40fe6-48df-491e-b862-02e5941e5d13</uuid>
     </Luks>
     <Partition>
