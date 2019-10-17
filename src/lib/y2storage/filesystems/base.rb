@@ -86,6 +86,20 @@ module Y2Storage
         true
       end
 
+      # Whether the filesystem sits directly on top of an encrypted device
+      #
+      # @return [Boolean]
+      def encrypted?
+        false
+      end
+
+      # Whether the content of the filesystem is lost after each system reboot
+      #
+      # @return [Boolean] true for swap devices encrypted with volatile keys
+      def volatile?
+        false
+      end
+
       # Whether the current filesystem matches with a given fstab spec
       #
       # Most formats supported in the first column of /etc/fstab are recognized.

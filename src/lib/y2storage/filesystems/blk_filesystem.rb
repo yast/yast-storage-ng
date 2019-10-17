@@ -176,6 +176,22 @@ module Y2Storage
         blk_devices.all?(&:stable_name?)
       end
 
+      # @see Base#encrypted?
+      def encrypted?
+        plain_blk_devices.any?(&:encrypted?)
+      end
+
+      # @see Base#encrypted?
+      def volatile?
+        blk_dev = blk_devices.first
+        return false unless blk_dev.is?(:encryption)
+
+        enc_method = blk_dev.method
+        return false unless enc_method
+
+        enc_method.only_for_swap?
+      end
+
       # Checks if this filesystem type supports any kind of resize at all,
       # either shrinking or growing.
       #

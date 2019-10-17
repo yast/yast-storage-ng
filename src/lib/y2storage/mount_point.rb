@@ -19,6 +19,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/encryption_type"
 require "y2storage/filesystems/mount_by_type"
 require "pathname"
 
@@ -259,12 +260,32 @@ module Y2Storage
     # that value during the commit phase. In such case, DEVICE is used by the
     # library as fallback.
     #
+    # @param label [Boolean, nil] whether the associated filesystem has a label.
+    #   If set to nil, that is checked in the devicegraph. If set to true, it
+    #   will assume the filesystem has a label. If set to false, it will assume
+    #   there is no label, no matter what the devicegraph says.
+    # @param encryption [Boolean, nil] whether the filesystem sits on top of an
+    #   encrypted device. Regarding the possible values (nil, true and false) it
+    #   behaves like the label argument.
+    #
     # @return [Array<Filesystems::MountByType>]
-    def suitable_mount_bys
+    def suitable_mount_bys(label: nil, encryption: nil)
+      mount_point = mount_point_for_suitable(encryption)
+      fs = mount_point.filesystem
+
+      # For swaps encrypted with volatile keys, UUID and LABEL are not an option
+      # because their are re-created on every boot.
+      # PATH and ID are not an option either, because encryption devices don't
+      # have udev links.
+      return [Filesystems::MountByType::DEVICE] if fs.volatile?
+
       # #possible_mount_bys already filters out ID and PATH for devices without
       # a current udev id and/or path recognized by libstorage-ng
-      candidates = possible_mount_bys
-      candidates.delete(Filesystems::MountByType::LABEL) unless label?
+      candidates = mount_point.possible_mount_bys
+      return candidates unless fs.is?(:blk_filesystem)
+
+      label = (fs.label.size > 0) if label.nil?
+      candidates.delete(Filesystems::MountByType::LABEL) unless label
       candidates
     end
 
@@ -314,12 +335,33 @@ module Y2Storage
       filesystem.type.is?(*TYPES_WITH_PASSNO)
     end
 
-    # Whether the mount point is associated to a filesystem that contains a
-    # valid label that can be used to mount the device
+    # DeviceMapper name for the temporary encryption created to calculate the
+    # suitable mount by types
+    TMP_NAME = "dmtemp".freeze
+    private_constant :TMP_NAME
+
+    # Temporary mount point used for the calculation of {#suitable_mount_bys}
     #
-    # @return [Boolean]
-    def label?
-      filesystem.is?(:blk_filesystem) && filesystem.label.size > 0
+    # @param encryption [Boolean]
+    # @return [MountPoint]
+    def mount_point_for_suitable(encryption)
+      return self if encryption.nil? || encryption == filesystem.encrypted?
+      return self unless filesystem.is?(:blk_filesystem)
+      # Since it's hard to know what to do in this case...
+      return self if filesystem.multidevice?
+
+      # NOTE: could this short-lived devicegraph be a problem with
+      # the garbage collector?
+      tmp_graph = devicegraph.dup
+      tmp_mount_point = tmp_graph.find_device(sid)
+      tmp_blk_dev = tmp_mount_point.filesystem.blk_devices.first
+      if encryption
+        tmp_blk_dev.create_encryption(TMP_NAME, EncryptionType::PLAIN)
+      else
+        tmp_blk_dev.blk_device.remove_encryption
+      end
+
+      tmp_mount_point
     end
   end
 end
