@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Oct 17 14:48:34 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Fix translation of some encryption related widgets (bsc#1154364).
+- 4.2.50
+
+-------------------------------------------------------------------
 Fri Oct 18 15:20:01 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Avoid false warning about booting from LUKS2 in s390
