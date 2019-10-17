@@ -24,11 +24,6 @@ module Y2Storage
   module EncryptionProcesses
     # The encryption process that allows to create and identify an encrypted
     # device using LUKS1
-    #
-    # ## Encryption and open options
-    #
-    # In this case, the luksOpen command does not receive any additional argument (see
-    # {Base#open_options}) and no options are written to `/etc/crypttab` (see {Base#crypt_options}).
     class Luks1 < Base
       private
 

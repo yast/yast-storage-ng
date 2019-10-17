@@ -30,11 +30,6 @@ module Y2Storage
     #
     # For more information, see
     # https://www.ibm.com/support/knowledgecenter/linuxonibm/liaaf/lnz_r_dccnt.html
-    #
-    # ## Encryption and open options
-    #
-    # When using pervasive, only the sector size is written to `/etc/crypttab` (see {#crypt_options}).
-    # No additional arguments are given to the luksOpen command (see {Base#open_options}).
     class Pervasive < Base
       # Location of the zkey command
       ZKEY = "/usr/bin/zkey".freeze
@@ -94,14 +89,6 @@ module Y2Storage
             Yast::Execute.locally(*args)
           end
         end
-      end
-
-      # Encryption options to add to the encryption device (crypttab options)
-      #
-      # @param blk_device [BlkDevice] Block device to encrypt
-      # @return [Array<String>]
-      def crypt_options(blk_device)
-        [sector_size_option(blk_device)].compact
       end
 
       # @see Base#finish_installation

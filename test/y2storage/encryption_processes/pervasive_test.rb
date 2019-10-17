@@ -72,32 +72,9 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       end
     end
 
-    context "when the block size of the underlying device is greater than 4k" do
-      let(:block_size) { Y2Storage::DiskSize.new(8192) }
-
-      it "sets the sector-size encryption option to 4096" do
-        encryption = subject.create_device(blk_device, dm_name)
-        expect(encryption.crypt_options).to include("sector-size=4096")
-      end
-    end
-
-    context "when the block size of the underlying device is 4k" do
-      let(:block_size) { Y2Storage::DiskSize.new(4096) }
-
-      it "sets the sector-size encryption option to 4096" do
-        encryption = subject.create_device(blk_device, dm_name)
-        expect(encryption.crypt_options).to include("sector-size=4096")
-      end
-
-    end
-
-    context "when the block size of the underlying less than 4k" do
-      let(:block_size) { Y2Storage::DiskSize.new(2048) }
-
-      it "does not set the sector-size option" do
-        encryption = subject.create_device(blk_device, dm_name)
-        expect(encryption.crypt_options).to_not include("sector-size=2048")
-      end
+    it "does not set any option for secure key" do
+      encryption = subject.create_device(blk_device, dm_name)
+      expect(encryption.crypt_options).to be_empty
     end
 
     it "does not set any open option for secure key" do

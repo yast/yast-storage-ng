@@ -28,15 +28,6 @@ module Y2Storage
     # password generated at boot time. Generally, the new password is generated based on
     # /dev/urandom data (see {EncryptionMethod::RandomSwap}), but IBM offers other mechanisms for z
     # Systems (see {EncryptionMethod::ProtectedSwap} and {EncryptionMethod::SecureSwap} processes).
-    #
-    # ## Encryption and open options
-    #
-    # When using volatile encryption, there are a few options that should be present in the
-    # `/etc/crypttab`: the cipher method, the key size and the sector size. Additionally, the `swap`
-    # option should be present too. See {#crypt_options}.
-    #
-    # In a similar way, it is expected to specify these options (except `swap`) when running the
-    # luksOpen command (see {#open_options}).
     class Volatile < Base
       SWAP_OPTION = "swap".freeze
       private_constant :SWAP_OPTION
@@ -141,6 +132,28 @@ module Y2Storage
         return nil unless key_size?
 
         "--key-size '#{key_size}'"
+      end
+
+      # Sector size option for the encryption
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [String, nil] nil if no specific sector size
+      def sector_size_option(blk_device)
+        sector_size = sector_size_for(blk_device)
+        return nil unless sector_size
+
+        "sector-size=#{sector_size}"
+      end
+
+      # Sector size option to open the encryption device
+      #
+      # @param blk_device [BlkDevice] Block device to encrypt
+      # @return [String, nil] nil if no specific sector size
+      def sector_size_open_option(blk_device)
+        sector_size = sector_size_for(blk_device)
+        return nil unless sector_size
+
+        "--sector-size '#{sector_size}'"
       end
     end
   end
