@@ -110,6 +110,17 @@ module Y2Storage
         )
         SetupError.new(message: error_message)
       end
+
+      # Whether the grub partition is readable
+      #
+      # Even if the /boot partition is encrypted using a technology different from
+      # LUKS1, it is possible to read it if theres is an unencrypted zipl partition.
+      #
+      # @see Base#readable_grub?
+      def readable_grub?
+        return true if super
+        analyzer.device_for_zipl && !analyzer.encrypted_zipl?
+      end
     end
   end
 end

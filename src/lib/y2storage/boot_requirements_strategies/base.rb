@@ -83,7 +83,7 @@ module Y2Storage
       def warnings
         res = []
 
-        if !encrypted_for_grub?
+        if !readable_grub?
           error_message =
             _(
               "The boot loader cannot access the file system mounted at /boot. " \
@@ -147,7 +147,7 @@ module Y2Storage
       end
 
       def boot_partition_needed?
-        !encrypted_for_grub?
+        !readable_grub?
       end
 
       def too_small_boot?
@@ -213,10 +213,15 @@ module Y2Storage
         SetupError.new(message: error_message)
       end
 
-      # Whether the boot device is encrypted and grub can decrypt it
+      # Whether the boot device can be read by grub
       #
-      # @return [Boolean] true if grub can decrypt boot device (or it is unencrypted)
-      def encrypted_for_grub?
+      # The boot device can be read by grub when:
+      #
+      # * it is not encrypted (obviously),
+      # * or it is encrypted using LUKS1.
+      #
+      # @return [Boolean] true if grub can read decrypt boot device (or it is unencrypted)
+      def readable_grub?
         t = boot_encryption_type
         t.is?(:none) || t.is?(:luks1)
       end

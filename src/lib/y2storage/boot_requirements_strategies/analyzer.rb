@@ -321,6 +321,40 @@ module Y2Storage
         end
       end
 
+      # Device (planned or from the devicegraph) containing the "/boot/zipl" path
+      #
+      # @see #planned_devices
+      # @see #devicegraph
+      #
+      # @return [Filesystems::Base, Planned::Device, nil] nil if there is no
+      #   filesystem or plan for anything containing "/boot/zipl"
+      def device_for_zipl
+        zipl_planned_dev || zipl_filesystem
+      end
+
+      # Planned device for a separate /boot
+      #
+      # @return [Planned::Device, nil] nil if no separate /boot is planned
+      def zipl_planned_dev
+        @zipl_planned_dev ||= planned_for_mountpoint("/boot/zipl")
+      end
+
+      # Filesystem mounted at /boot
+      #
+      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot
+      def zipl_filesystem
+        @zipl_filesystem ||= filesystem_for_mountpoint("/boot/zipl")
+      end
+
+      # Whether the filesystem containing /boot/zipl is going to be in an encrypted device
+      #
+      # @return [Boolean] true if the filesystem where /boot/zipl resides is going to
+      #   be in an encrypted device. False if such filesystem is unknown (not in
+      #   the planned devices or in the devicegraph) or is not encrypted.
+      def encrypted_zipl?
+        encrypted?(device_for_zipl)
+      end
+
       protected
 
       attr_reader :devicegraph
