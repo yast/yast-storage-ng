@@ -524,7 +524,9 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     end
 
     context "if '/boot/zipl' is a planned encrypted partition" do
-      let(:planned_zipl) { planned_partition(mount_point: "/boot/zipl", encryption_password: "12345678") }
+      let(:planned_zipl) do
+        planned_partition(mount_point: "/boot/zipl", encryption_password: "12345678")
+      end
 
       it "returns true" do
         expect(analyzer.encrypted_zipl?).to eq true

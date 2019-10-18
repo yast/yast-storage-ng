@@ -119,6 +119,7 @@ module Y2Storage
       # @see Base#readable_grub?
       def readable_grub?
         return true if super
+
         analyzer.device_for_zipl && !analyzer.encrypted_zipl?
       end
     end
