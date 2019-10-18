@@ -275,23 +275,24 @@ module Y2Storage
     #
     # @return [Array<Filesystems::MountByType>]
     def suitable_mount_bys(label: nil, encryption: nil)
-      mount_point = mount_point_for_suitable(encryption)
-      fs = mount_point.filesystem
+      with_mount_point_for_suitable(encryption) do |mount_point|
+        fs = mount_point.filesystem
 
-      # For swaps encrypted with volatile keys, UUID and LABEL are not an option
-      # because their are re-created on every boot.
-      # PATH and ID are not an option either, because encryption devices don't
-      # have udev links.
-      return [Filesystems::MountByType::DEVICE] if fs.volatile?
+        # For swaps encrypted with volatile keys, UUID and LABEL are not an option
+        # because their are re-created on every boot.
+        # PATH and ID are not an option either, because encryption devices don't
+        # have udev links.
+        return [Filesystems::MountByType::DEVICE] if fs.volatile?
 
-      # #possible_mount_bys already filters out ID and PATH for devices without
-      # a current udev id and/or path recognized by libstorage-ng
-      candidates = mount_point.possible_mount_bys
-      return candidates unless fs.is?(:blk_filesystem)
+        # #possible_mount_bys already filters out ID and PATH for devices without
+        # a current udev id and/or path recognized by libstorage-ng
+        candidates = mount_point.possible_mount_bys
+        return candidates unless fs.is?(:blk_filesystem)
 
-      label = (fs.label.size > 0) if label.nil?
-      candidates.delete(Filesystems::MountByType::LABEL) unless label
-      candidates
+        label = (fs.label.size > 0) if label.nil?
+        candidates.delete(Filesystems::MountByType::LABEL) unless label
+        candidates
+      end
     end
 
     # If the current mount_by is suitable, it does nothing.
@@ -340,6 +341,37 @@ module Y2Storage
       filesystem.type.is?(*TYPES_WITH_PASSNO)
     end
 
+    # Executes the given block on a mount point that has been adapted to honor
+    # the argument "encryption" of {#suitable_mount_bys}
+    #
+    # @param encryption [Boolean, nil] see {#suitable_mount_bys}
+    def with_mount_point_for_suitable(encryption, &block)
+      mount_point =
+        if tmp_mount_point_needed?(encryption)
+          # Instance the temporary devicegraph here to make sure the garbage
+          # collector doesn't kill it before calling the given block
+          tmp_graph = devicegraph.dup
+          mount_point_for_suitable(tmp_graph)
+        else
+          self
+        end
+
+      block.call(mount_point)
+    end
+
+    # @see #with_mount_point_for_suitable
+    #
+    # @param encryption [Boolean, nil]
+    # @return [Boolean]
+    def tmp_mount_point_needed?(encryption)
+      return false if encryption.nil? || encryption == filesystem.encrypted?
+      return false unless filesystem.is?(:blk_filesystem)
+      # Since it's hard to know what to do in this case...
+      return false if filesystem.multidevice?
+
+      true
+    end
+
     # DeviceMapper name for the temporary encryption created to calculate the
     # suitable mount by types
     TMP_NAME = "dmtemp".freeze
@@ -347,26 +379,20 @@ module Y2Storage
 
     # Temporary mount point used for the calculation of {#suitable_mount_bys}
     #
-    # @param encryption [Boolean]
+    # @param graph [Devicegraph] temporary devicegraph to safely do any change
     # @return [MountPoint]
-    def mount_point_for_suitable(encryption)
-      return self if encryption.nil? || encryption == filesystem.encrypted?
-      return self unless filesystem.is?(:blk_filesystem)
-      # Since it's hard to know what to do in this case...
-      return self if filesystem.multidevice?
-
-      # NOTE: could this short-lived devicegraph be a problem with
-      # the garbage collector?
-      tmp_graph = devicegraph.dup
-      tmp_mount_point = tmp_graph.find_device(sid)
-      tmp_blk_dev = tmp_mount_point.filesystem.blk_devices.first
-      if encryption
-        tmp_blk_dev.create_encryption(TMP_NAME, EncryptionType::PLAIN)
+    def mount_point_for_suitable(graph)
+      mount_point = graph.find_device(sid)
+      blk_dev = mount_point.filesystem.blk_devices.first
+      if blk_dev.is?(:encryption)
+        blk_dev.blk_device.remove_encryption
       else
-        tmp_blk_dev.blk_device.remove_encryption
+        # We don't know which encryption type will be used, but LUKS1 is the
+        # default and, in most cases, the only option
+        blk_dev.create_encryption(TMP_NAME, EncryptionType::LUKS1)
       end
 
-      tmp_mount_point
+      mount_point
     end
   end
 end
