@@ -4,6 +4,9 @@ Wed Oct 16 14:09:42 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 - If a given device cannot be mounted by the method configured as
   default, try to find the most stable alternative instead of just
   using the device kernel name (bsc#1151075).
+- Improved support for volatile encryption (related to
+  jsc#SLE-7376).
+- Partitioner: more accurate mount_by options in Fstab Options.
 - 4.2.49
 
 -------------------------------------------------------------------
