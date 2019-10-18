@@ -100,7 +100,11 @@ module Y2Partitioner
           Left(
             Label(
               _("Be careful: the system cannot hibernate when\n" \
-                "encrypting swap with randomly generated keys. \n" \
+                "encrypting swap with randomly generated keys.\n" \
+                "\n" \
+                "Moreover, using this with some kinds of devices\n" \
+                "may imply a certain risk of loosing data.\n" \
+                "\n" \
                 "Please, read Help for more information.")
             )
           )
