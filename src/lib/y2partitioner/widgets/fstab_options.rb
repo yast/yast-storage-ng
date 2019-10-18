@@ -39,6 +39,7 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def init
         init_regexp if self.class.const_defined?("REGEXP")
       end
@@ -78,11 +79,13 @@ module Y2Partitioner
         [Left(widget), VSpacing(1)]
       end
 
+      # Removes from the MountPoint object the options that not longer apply
       def delete_fstab_option!(option)
         # The options can only be modified using MountPoint#mount_options=
         mount_point.mount_options = mount_point.mount_options.reject { |o| o =~ option }
       end
 
+      # Adds new options to the MountPoint object
       def add_fstab_options(*options)
         # The options can only be modified using MountPoint#mount_options=
         mount_point.mount_options = mount_point.mount_options + options
@@ -146,10 +149,12 @@ module Y2Partitioner
     class FstabOptionsButton < CWM::PushButton
       include FstabCommon
 
+      # @macro seeAbstractWidget
       def label
         _("Fstab Options...")
       end
 
+      # @macro seeAbstractWidget
       def handle
         log.info("fstab_options before dialog: #{mount_point.mount_options}")
         Dialogs::FstabOptions.new(@controller).run
@@ -164,6 +169,7 @@ module Y2Partitioner
     class FstabOptions < CWM::CustomWidget
       include FstabCommon
 
+      # Filesystem types that can be configured
       SUPPORTED_FILESYSTEMS = [:btrfs, :ext2, :ext3, :ext4].freeze
 
       def initialize(controller)
@@ -172,6 +178,7 @@ module Y2Partitioner
         self.handle_all_events = true
       end
 
+      # @macro seeAbstractWidget
       def init
         @contents = nil
         @values = nil
@@ -179,6 +186,7 @@ module Y2Partitioner
         disable if !supported_by_filesystem?
       end
 
+      # @macro seeAbstractWidget
       def handle(event)
         case event["ID"]
         when :help
@@ -194,6 +202,7 @@ module Y2Partitioner
         nil
       end
 
+      # @macro seeCustomWidget
       def contents
         @contents ||=
           VBox(
@@ -248,14 +257,17 @@ module Y2Partitioner
         @parent_widget = parent_widget
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Volume &Label")
       end
 
+      # @macro seeAbstractWidget
       def store
         filesystem.label = value
       end
 
+      # @macro seeAbstractWidget
       def init
         self.value = filesystem.label
         Yast::UI.ChangeWidget(Id(widget_id), :ValidChars, valid_chars)
@@ -363,23 +375,23 @@ module Y2Partitioner
     class MountBy < CWM::CustomWidget
       include FstabCommon
 
+      # @macro seeAbstractWidget
       def label
         _("Mount in /etc/fstab By")
       end
 
+      # @macro seeAbstractWidget
       def store
         mount_point.mount_by = selected_mount_by
-        filesystem.copy_mount_by_to_subvolumes if btrfs?
-        # TODO: If some day we get more a more sophisticated UI for editing
-        # subvolumes, don't always simply overwrite the subvolumes' mount_by
-        # with whatever is set here - ask the user if this is desired.
       end
 
+      # @macro seeAbstractWidget
       def init
         select_default_mount_by
-        disable_not_possible_mount_bys
+        disable_not_suitable_mount_bys
       end
 
+      # @macro seeCustomWidget
       def contents
         RadioButtonGroup(
           Id(:mt_group),
@@ -416,9 +428,12 @@ module Y2Partitioner
         Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
       end
 
-      def disable_not_possible_mount_bys
-        not_possible_mount_bys = Y2Storage::Filesystems::MountByType.all - mount_point.possible_mount_bys
-        not_possible_mount_bys.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
+      # Disables the corresponding widget for all the mount_by types that should
+      # not be offered
+      def disable_not_suitable_mount_bys
+        suitable = mount_point.suitable_mount_bys(label: true, encryption: @controller.encrypt)
+        invalid = Y2Storage::Filesystems::MountByType.all - suitable
+        invalid.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
       end
     end
 
@@ -426,6 +441,7 @@ module Y2Partitioner
     class GeneralOptions < CWM::CustomWidget
       include FstabCommon
 
+      # @macro seeCustomWidget
       def contents
         return Empty() unless widgets.any?(&:supported_by_filesystem?)
 
@@ -448,10 +464,12 @@ module Y2Partitioner
     class FstabCheckBox < CWM::CheckBox
       include FstabCommon
 
+      # @macro seeAbstractWidget
       def init
         self.value = mount_point.mount_options.include?(checked_value)
       end
 
+      # @macro seeAbstractWidget
       def store
         delete_fstab_option!(Regexp.union(options))
         add_fstab_option(checked_value) if value
@@ -459,6 +477,7 @@ module Y2Partitioner
 
       private
 
+      # Possible values
       def options
         self.class::VALUES
       end
@@ -470,8 +489,10 @@ module Y2Partitioner
 
     # CheckBox to disable the automount option when starting up
     class Noauto < FstabCheckBox
+      # Possible values of the widget
       VALUES = ["noauto", "auto"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("Do Not Mount at System &Start-up")
       end
@@ -480,12 +501,16 @@ module Y2Partitioner
     # CheckBox to enable the read only option ("ro")
     class ReadOnly < FstabCheckBox
       include FstabCommon
+
+      # Possible values of the widget
       VALUES = ["ro", "rw"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("Mount &Read-Only")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Mount Read-Only:</b>\n" \
         "Writing to the file system is not possible. Default is false. During installation\n" \
@@ -495,12 +520,15 @@ module Y2Partitioner
 
     # CheckBox to enable the noatime option
     class Noatime < FstabCheckBox
+      # Possible values of the widget
       VALUES = ["noatime", "atime"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("No &Access Time")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>No Access Time:</b>\nAccess times are not " \
         "updated when a file is read. Default is false.</p>\n")
@@ -510,12 +538,15 @@ module Y2Partitioner
     # CheckBox to enable the user option which means allow to mount the
     # filesystem by an ordinary user
     class MountUser < FstabCheckBox
+      # Possible values of the widget
       VALUES = ["user", "nouser"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("Mountable by User")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Mountable by User:</b>\nThe file system may be " \
         "mounted by an ordinary user. Default is false.</p>\n")
@@ -525,22 +556,28 @@ module Y2Partitioner
     # CheckBox to enable the use of user quotas
     class Quota < CWM::CheckBox
       include FstabCommon
+
+      # Possible values of the widget
       VALUES = ["grpquota", "usrquota"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("Enable &Quota Support")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Enable Quota Support:</b>\n" \
           "The file system is mounted with user quotas enabled.\n" \
           "Default is false.</p>")
       end
 
+      # @macro seeAbstractWidget
       def init
         self.value = mount_point.mount_options.any? { |o| VALUES.include?(o) }
       end
 
+      # @macro seeAbstractWidget
       def store
         delete_fstab_option!(Regexp.union(VALUES))
         add_fstab_options("usrquota", "grpquota") if value
@@ -551,6 +588,7 @@ module Y2Partitioner
     class AclOptions < CWM::CustomWidget
       include FstabCommon
 
+      # @macro seeCustomWidget
       def contents
         return Empty() unless widgets.any?(&:supported_by_filesystem?)
 
@@ -569,12 +607,15 @@ module Y2Partitioner
     class Acl < FstabCheckBox
       include FstabCommon
 
+      # Possible values of the widget
       VALUES = ["acl", "noacl"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("&Access Control Lists (ACL)")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Access Control Lists (acl):</b>\n" \
           "Enable POSIX access control lists and thus more fine-grained " \
@@ -586,12 +627,15 @@ module Y2Partitioner
     class UserXattr < FstabCheckBox
       include FstabCommon
 
+      # Possible values of the widget
       VALUES = ["user_xattr", "nouser_xattr"].freeze
 
+      # @macro seeAbstractWidget
       def label
         _("&Extended User Attributes")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Extended User Attributes (user_xattr):</b>\n" \
           "Enable extended attributes (name:value pairs) on files and directories.\n" \
@@ -687,8 +731,10 @@ module Y2Partitioner
 
     # ComboBox to specify the journal mode to use by the filesystem
     class JournalOptions < FstabComboBox
+      # Format of the option
       REGEXP = /^data=/
 
+      # @macro seeAbstractWidget
       def label
         _("Data &Journaling Mode")
       end
@@ -711,6 +757,7 @@ module Y2Partitioner
         mount_path != "/"
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Data Journaling Mode:</b>\n" \
         "Specifies the journaling mode for file data.\n" \
@@ -736,18 +783,22 @@ module Y2Partitioner
         @other_regexps = nil
       end
 
+      # @macro seeCustomWidget
       def opt
         [:hstretch]
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Arbitrary Option &Value")
       end
 
+      # @macro seeAbstractWidget
       def init
         self.value = unhandled_options(mount_point.mount_options).join(",")
       end
 
+      # @macro seeAbstractWidget
       def store
         keep_only_options_handled_in_other_widgets
         return unless value
@@ -765,6 +816,7 @@ module Y2Partitioner
         add_fstab_options(*options)
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Arbitrary Option Value:</b> " \
           "Enter any other mount options here, separated with commas. " \
@@ -821,6 +873,7 @@ module Y2Partitioner
     class FilesystemsOptions < CWM::CustomWidget
       include FstabCommon
 
+      # @macro seeCustomWidget
       def contents
         return Empty() unless widgets.any?(&:supported_by_filesystem?)
 
@@ -840,19 +893,25 @@ module Y2Partitioner
     class SwapPriority < CWM::InputField
       include FstabCommon
 
+      # Possible values of the widget
       VALUES = ["pri="].freeze
+      # Format of the option
       REGEXP  = /^pri=/
+      # Default value of the widget
       DEFAULT = "".freeze
 
+      # @macro seeAbstractWidget
       def label
         _("Swap &Priority")
       end
 
+      # @macro seeAbstractWidget
       def store
         delete_fstab_option!(REGEXP)
         add_fstab_option("pri=#{value}") if value && !value.empty?
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Swap Priority:</b>\nEnter the swap priority. " \
         "Higher numbers mean higher priority.</p>\n")
@@ -861,13 +920,16 @@ module Y2Partitioner
 
     # VFAT IOCharset
     class IOCharset < FstabComboBox
+      # Format of the option
       REGEXP = /^iocharset=/
+      # Possible values
       ITEMS = [
         "", "iso8859-1", "iso8859-15", "iso8859-2", "iso8859-5", "iso8859-7",
         "iso8859-9", "utf8", "koi8-r", "euc-jp", "sjis", "gb2312", "big5",
         "euc-kr"
       ].freeze
 
+      # @macro seeAbstractWidget
       def store
         delete_fstab_option!(/^utf8=.*/)
         super
@@ -886,10 +948,12 @@ module Y2Partitioner
         mount_path != "/boot" && !mount_path.start_with?("/boot/")
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Char&set for File Names")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Charset for File Names:</b>\nSet the charset used for display " \
         "of file names in Windows partitions.</p>\n")
@@ -898,7 +962,9 @@ module Y2Partitioner
 
     # VFAT Codepage
     class Codepage < FstabComboBox
+      # Format of the option
       REGEXP = /^codepage=/
+      # Possible values
       ITEMS = ["", "437", "852", "932", "936", "949", "950"].freeze
 
       def default_value
@@ -906,10 +972,12 @@ module Y2Partitioner
         ITEMS.include?(cp) ? cp : ITEMS.first
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Code&page for Short FAT Names")
       end
 
+      # @macro seeAbstractWidget
       def help
         _("<p><b>Codepage for Short FAT Names:</b>\nThis codepage is used for " \
         "converting to shortname characters on FAT file systems.</p>\n")

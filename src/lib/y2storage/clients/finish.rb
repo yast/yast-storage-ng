@@ -60,7 +60,7 @@ module Y2Storage
       #
       # @note This updates the sysconfig file in the target system.
       def update_sysconfig
-        StorageManager.instance.update_sysconfig
+        StorageManager.instance.configuration.update_sysconfig
       end
 
       # Checks whether multipath will be used in the target system

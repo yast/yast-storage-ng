@@ -28,7 +28,7 @@ module Y2Storage
 
       def initialize
         textdomain "storage"
-        super(:random_swap, _("Volatile Encryption with Random Key"))
+        super(:random_swap, _("Encryption with Volatile Random Key"))
       end
     end
   end

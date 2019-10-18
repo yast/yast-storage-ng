@@ -55,8 +55,8 @@ describe Y2Storage::Clients::Finish do
       it "updates sysconfig file" do
         mount_by_id = Y2Storage::Filesystems::MountByType::ID
 
-        manager = Y2Storage::StorageManager.instance
-        manager.default_mount_by = mount_by_id
+        config = Y2Storage::StorageManager.instance.configuration
+        config.default_mount_by = mount_by_id
 
         expect(Yast::SCR).to receive(:Write) do |path, value|
           expect(path.to_s).to match(/DEVICE_NAMES/)

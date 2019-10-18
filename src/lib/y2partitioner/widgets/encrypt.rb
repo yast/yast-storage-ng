@@ -203,12 +203,18 @@ module Y2Partitioner
             "boot, and its previous content is destroyed. You should disable Hibernation through your " \
             "respective DE Power Management Utility and set it to Shutdown on Critical to avoid Data " \
             "Loss!</p>" \
-            "<p>Please, make sure your swap device is mounted by a stable name that is not subject to " \
-            "change on every reboot. For example, for a swap partition use the udev device id instead " \
-            "of the partition device name. Otherwise a wrong device could be encrypted instead of " \
-            "your swap! In that regard, note both the file system label and the UUID change every " \
-            "time the swap is re-encrypted, so they are not valid options to mount a " \
-            "randomly encrypted swap device.</p>"),
+            "<p>Note both the file system label and the UUID change every time the swap is " \
+            "re-encrypted, so they are not valid options to mount a randomly encrypted swap " \
+            "device.</p>" \
+            "<p>It's also important to make sure the swap device is referenced in the /etc/crypttab " \
+            "file by a stable name that is not subject to change on every reboot. For example, for " \
+            "a swap partition it is safer to use the udev device id or path instead of the partition " \
+            "device name, since that device name may be assigned to a different partition during the " \
+            "next boot. If that happens, a wrong device could be encrypted instead of your swap!</p>" \
+            "<p>YaST tries to use stable names in /etc/crypttab, unless it is configured to always " \
+            "use device names (see the Settings section of the Partitioner). But for some devices " \
+            "finding a fully stable name may not be possible. Please, only use encryption with " \
+            "volatile keys if you are sure about the implications.</p>"),
           label: encrypt_method.to_human_string
         )
       end

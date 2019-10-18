@@ -19,6 +19,8 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/encryption_type"
+require "y2storage/filesystems/mount_by_type"
 require "pathname"
 
 module Y2Storage
@@ -75,10 +77,50 @@ module Y2Storage
         end
     end
 
-    # @!attribute mount_by
+    # @!method mount_by
+    #   The way the "mount" command identifies the mountable
+    #
+    #   This defines the form of the first field in the fstab file.
+    #
+    #   The concrete meaning depends on the value. Note that some types
+    #   address the filesystem while others address the underlying device.
+    #
+    #   * DEVICE: For NFS, the server and path. For regular filesystems, the
+    #     kernel device name or a link in /dev (but not in /dev/disk) of the
+    #     block device that contains the filesystem.
+    #   * UUID: The UUID of the filesystem.
+    #   * LABEL: the label of the filesystem.
+    #   * ID: one of the links in /dev/disk/by-id to the block device
+    #     containing the filesystem.
+    #   * PATH: one of the links in /dev/disk/by-path to the block device
+    #     containing the filesystem.
+    #
+    #   Not to be confused with {Encryption#mount_by}, which refers to the form
+    #   of the crypttab file.
+    #
     #   @return [Filesystems::MountByType]
     storage_forward :mount_by, as: "Filesystems::MountByType"
-    storage_forward :mount_by=
+
+    # @!method assign_mount_by
+    #   Low level setter to enforce a value for {#mount_by} without performing
+    #   any consistency fix, like updating {#manual_mount_by?} or syncing the
+    #   Btrfs subvolumes
+    #
+    #   @see #mount_by=
+    storage_forward :assign_mount_by, to: :mount_by=
+
+    # Setter for {#mount_by} which ensures a consistent value for
+    # {#manual_mount_by?} and for the corresponding attribute of the Btrfs
+    # subvolumes (if applicable)
+    #
+    # @param value [Filesystems::MountByType]
+    def mount_by=(value)
+      self.manual_mount_by = true
+      assign_mount_by(value)
+      return unless mountable.respond_to?(:copy_mount_by_to_subvolumes)
+
+      mountable.copy_mount_by_to_subvolumes
+    end
 
     # @!method mount_options
     #   Options to use in /etc/fstab for a newly created mount point.
@@ -217,8 +259,75 @@ module Y2Storage
       Pathname.new(other_path).cleanpath == Pathname.new(path).cleanpath
     end
 
+    # List of mount-by methods that make sense for the mount point
+    #
+    # Using a value that is not suitable would lead to libstorage-ng ignoring
+    # that value during the commit phase. In such case, DEVICE is used by the
+    # library as fallback.
+    #
+    # @param label [Boolean, nil] whether the associated filesystem has a label.
+    #   If set to nil, that is checked in the devicegraph. If set to true, it
+    #   will assume the filesystem has a label. If set to false, it will assume
+    #   there is no label, no matter what the devicegraph says.
+    # @param encryption [Boolean, nil] whether the filesystem sits on top of an
+    #   encrypted device. Regarding the possible values (nil, true and false) it
+    #   behaves like the label argument.
+    #
+    # @return [Array<Filesystems::MountByType>]
+    def suitable_mount_bys(label: nil, encryption: nil)
+      with_mount_point_for_suitable(encryption) do |mount_point|
+        fs = mount_point.filesystem
+
+        # For swaps encrypted with volatile keys, UUID and LABEL are not an option
+        # because their are re-created on every boot.
+        # PATH and ID are not an option either, because encryption devices don't
+        # have udev links.
+        return [Filesystems::MountByType::DEVICE] if fs.volatile?
+
+        # #possible_mount_bys already filters out ID and PATH for devices without
+        # a current udev id and/or path recognized by libstorage-ng
+        candidates = mount_point.possible_mount_bys
+        return candidates unless fs.is?(:blk_filesystem)
+
+        label = (fs.label.size > 0) if label.nil?
+        candidates.delete(Filesystems::MountByType::LABEL) unless label
+        candidates
+      end
+    end
+
+    # If the current mount_by is suitable, it does nothing.
+    #
+    # Otherwise, it assigns the best option from all the suitable ones
+    #
+    # @see #suitable_mount_bys
+    def ensure_suitable_mount_by
+      suitable = suitable_mount_bys
+      return if suitable.include?(mount_by)
+
+      assign_mount_by(Filesystems::MountByType.best_for(filesystem, suitable))
+    end
+
+    # Whether {#mount_by} was explicitly set by the user
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @return [Boolean]
+    def manual_mount_by?
+      !!userdata_value(:manual_mount_by)
+    end
+
+    # Enforces de value for {#manual_mount_by?}
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @param value [Boolean]
+    def manual_mount_by=(value)
+      save_userdata(:manual_mount_by, value)
+    end
+
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :mount_point
     end
@@ -230,6 +339,60 @@ module Y2Storage
       return false unless mountable&.is?(:filesystem)
 
       filesystem.type.is?(*TYPES_WITH_PASSNO)
+    end
+
+    # Executes the given block on a mount point that has been adapted to honor
+    # the argument "encryption" of {#suitable_mount_bys}
+    #
+    # @param encryption [Boolean, nil] see {#suitable_mount_bys}
+    def with_mount_point_for_suitable(encryption, &block)
+      mount_point =
+        if tmp_mount_point_needed?(encryption)
+          # Instance the temporary devicegraph here to make sure the garbage
+          # collector doesn't kill it before calling the given block
+          tmp_graph = devicegraph.dup
+          mount_point_for_suitable(tmp_graph)
+        else
+          self
+        end
+
+      block.call(mount_point)
+    end
+
+    # @see #with_mount_point_for_suitable
+    #
+    # @param encryption [Boolean, nil]
+    # @return [Boolean]
+    def tmp_mount_point_needed?(encryption)
+      return false if encryption.nil? || encryption == filesystem.encrypted?
+      return false unless filesystem.is?(:blk_filesystem)
+      # Since it's hard to know what to do in this case...
+      return false if filesystem.multidevice?
+
+      true
+    end
+
+    # DeviceMapper name for the temporary encryption created to calculate the
+    # suitable mount by types
+    TMP_NAME = "dmtemp".freeze
+    private_constant :TMP_NAME
+
+    # Temporary mount point used for the calculation of {#suitable_mount_bys}
+    #
+    # @param graph [Devicegraph] temporary devicegraph to safely do any change
+    # @return [MountPoint]
+    def mount_point_for_suitable(graph)
+      mount_point = graph.find_device(sid)
+      blk_dev = mount_point.filesystem.blk_devices.first
+      if blk_dev.is?(:encryption)
+        blk_dev.blk_device.remove_encryption
+      else
+        # We don't know which encryption type will be used, but LUKS1 is the
+        # default and, in most cases, the only option
+        blk_dev.create_encryption(TMP_NAME, EncryptionType::LUKS1)
+      end
+
+      mount_point
     end
   end
 end

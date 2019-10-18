@@ -2,4 +2,13 @@
 
 ## Type: string(id,path,device,uuid,label)
 # Default mount-by method.
+#
+# Mounting by path is the default value in s390.
+# Other methods cause problems for Linux on System Z users that use disk-to-disk
+# copying for cloning purposes. When disks are copied, the value of by-id or
+# by-uuid is going to be different. A number of users have experienced problems
+# with kernel panics due to the root file system not being found.
+# On the other hand, using file system labels isn't a good option in 390 either,
+# since conflicts will be encountered if a user tries to mount a file system
+# from another z/VM guest or LPAR.
 DEVICE_NAMES="path"
