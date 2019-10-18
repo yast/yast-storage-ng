@@ -658,8 +658,7 @@ module Y2Storage
     end
 
     ENCRYPTION_METHOD_ALIASES = {
-      "luks"  => "luks1",
-      "luks2" => "pervasive_luks2"
+      "luks" => "luks1"
     }.freeze
     private_constant :ENCRYPTION_METHOD_ALIASES
     # Factory method to create an encryption layer.

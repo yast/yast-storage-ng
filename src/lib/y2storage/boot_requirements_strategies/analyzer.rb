@@ -332,16 +332,16 @@ module Y2Storage
         zipl_planned_dev || zipl_filesystem
       end
 
-      # Planned device for a separate /boot
+      # Planned device for a separate /boot/zipl
       #
-      # @return [Planned::Device, nil] nil if no separate /boot is planned
+      # @return [Planned::Device, nil] nil if no separate /boot/zipl is planned
       def zipl_planned_dev
         @zipl_planned_dev ||= planned_for_mountpoint("/boot/zipl")
       end
 
-      # Filesystem mounted at /boot
+      # Filesystem mounted at /boot/zipl
       #
-      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot
+      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot/zipl
       def zipl_filesystem
         @zipl_filesystem ||= filesystem_for_mountpoint("/boot/zipl")
       end
