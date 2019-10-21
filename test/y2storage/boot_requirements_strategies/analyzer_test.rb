@@ -542,7 +542,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       end
     end
 
-    xcontext "if '/boot/zipl' is an encrypted partition from the devicegraph" do
+    context "if '/boot/zipl' is an encrypted partition from the devicegraph" do
       let(:planned_devs) { [] }
       let(:scenario) { "s390_luks2" }
 
