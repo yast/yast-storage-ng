@@ -657,6 +657,10 @@ module Y2Storage
       disk_name
     end
 
+    ENCRYPTION_METHOD_ALIASES = {
+      "luks" => "luks1"
+    }.freeze
+    private_constant :ENCRYPTION_METHOD_ALIASES
     # Factory method to create an encryption layer.
     #
     # @param parent [String] parent device name ("/dev/sda1" etc.)
@@ -673,11 +677,13 @@ module Y2Storage
       name = encryption_name(args["name"], parent)
       password = args["password"]
       type_name = args["type"] || "luks"
+      type_name = ENCRYPTION_METHOD_ALIASES[type_name] if ENCRYPTION_METHOD_ALIASES.key?(type_name)
       # We only support creating LUKS so far
-      raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
+      method = EncryptionMethod.find(type_name)
+      raise ArgumentError, "Unsupported encryption type #{type_name}" unless method
 
       blk_parent = BlkDevice.find_by_name(@devicegraph, parent)
-      encryption = blk_parent.encrypt(dm_name: name, password: password)
+      encryption = blk_parent.encrypt(dm_name: name, password: password, method: method)
       if @file_system_data.key?(parent)
         # Notify create_file_system that this partition is encrypted
         @file_system_data[parent]["encryption"] = encryption.name

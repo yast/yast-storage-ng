@@ -511,6 +511,56 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     end
   end
 
+  describe "#encrypted_zipl?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let(:planned_devs) { [planned_zipl] }
+
+    context "if '/boot/zipl' is a planned plain partition" do
+      let(:planned_zipl) { planned_partition(mount_point: "/boot/zipl") }
+
+      it "returns false" do
+        expect(analyzer.encrypted_zipl?).to eq false
+      end
+    end
+
+    context "if '/boot/zipl' is a planned encrypted partition" do
+      let(:planned_zipl) do
+        planned_partition(mount_point: "/boot/zipl", encryption_password: "12345678")
+      end
+
+      it "returns true" do
+        expect(analyzer.encrypted_zipl?).to eq true
+      end
+    end
+
+    context "if '/boot/zipl' is a plain partition from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "output/s390_dasd_zipl" }
+
+      it "returns false" do
+        expect(analyzer.encrypted_zipl?).to eq false
+      end
+    end
+
+    context "if '/boot/zipl' is an encrypted partition from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "s390_luks2" }
+
+      it "returns true" do
+        expect(analyzer.encrypted_zipl?).to eq true
+      end
+    end
+
+    context "if no device or planned device is configured as '/boot/zipl'" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "several-dasds" }
+
+      it "returns false" do
+        expect(analyzer.encrypted_zipl?).to eq false
+      end
+    end
+  end
+
   describe "#btrfs_root?" do
     subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
     let(:ext4) { Y2Storage::Filesystems::Type::EXT4 }
