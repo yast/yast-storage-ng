@@ -93,11 +93,14 @@ module Y2Storage
         drives.map(&:to_hashes)
       end
 
+      DISK_DRIVE_TYPES = [:CT_DISK, :CT_DMMULTIPATH].freeze
+      private_constant :DISK_DRIVE_TYPES
+
       # Drive sections with type :CT_DISK
       #
       # @return [Array<DriveSection>]
       def disk_drives
-        drives.select { |d| d.type == :CT_DISK }
+        drives.select { |d| DISK_DRIVE_TYPES.include?(d.type) }
       end
 
       # Drive sections with type :CT_LVM

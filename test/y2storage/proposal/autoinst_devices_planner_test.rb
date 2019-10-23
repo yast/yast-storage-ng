@@ -53,6 +53,32 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   describe "#planned_devices" do
+    context "using CT_DISK as type" do
+      let(:partitioning_array) do
+        [{
+          "type" => :CT_DISK, "partitions" => [{ "mount" => "/" }]
+        }]
+      end
+
+      it "plans a disk device" do
+        devices = planner.planned_devices(drives_map)
+        expect(devices.disks).to_not be_empty
+      end
+    end
+
+    context "using CT_DMMULTIPATH as type" do
+      let(:partitioning_array) do
+        [{
+          "type" => :CT_DMMULTIPATH, "partitions" => [{ "mount" => "/" }]
+        }]
+      end
+
+      it "plans a disk device" do
+        devices = planner.planned_devices(drives_map)
+        expect(devices.disks).to_not be_empty
+      end
+    end
+
     context "using NFS with the old format" do
       let(:partitioning_array) do
         [{

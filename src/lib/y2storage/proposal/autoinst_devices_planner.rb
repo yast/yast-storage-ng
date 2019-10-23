@@ -84,7 +84,7 @@ module Y2Storage
       # @return [Array<Planned::Device>, nil] nil if the device cannot be planned
       def planned_for_drive(drive, disk_name)
         case drive.type
-        when :CT_DISK
+        when :CT_DISK, :CT_DMMULTIPATH
           planned_for_disk_device(drive, disk_name)
         when :CT_LVM
           planned_for_vg(drive)
