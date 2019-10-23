@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct 23 13:35:49 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Proposal: in the initial attempt, consider only up to ten disks
+  (bsc#1154070).
+- 4.0.222
+
+-------------------------------------------------------------------
 Wed Jul 10 11:31:18 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Add execute permissions to test files (bsc#1141006).
