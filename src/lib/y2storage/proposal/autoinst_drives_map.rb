@@ -211,7 +211,7 @@ module Y2Storage
       # @see Y2Storage::Devicegraph#find_by_any_name
       #
       # @param devicegraph [Devicegraph]
-      # @param device_name [String, nil] e.g., "/dev/sda"
+      # @param device_name [String] e.g., "/dev/sda"
       #
       # @return [Disk, nil] Usable disk or nil if none is found
       def find_disk(devicegraph, device_name)
