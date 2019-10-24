@@ -27,18 +27,20 @@ describe Y2Storage::Planned::CanBeEncrypted do
   class EncryptableDevice < Y2Storage::Planned::Device
     include Y2Storage::Planned::CanBeEncrypted
 
-    def initialize(password)
+    def initialize(method, password)
       initialize_can_be_encrypted
+      self.encryption_method = method
       self.encryption_password = password
     end
   end
 
   describe "#final_device!" do
-    let(:planned) { EncryptableDevice.new(password) }
+    let(:planned) { EncryptableDevice.new(method, password) }
     # TODO: test also #encrypted? => true
     let(:plain_device) { instance_double("Y2Storage::BlkDevice", encrypted?: false) }
 
-    context "if the planned device has not encryption password" do
+    context "if the planned device has no encryption method or password" do
+      let(:method) { nil }
       let(:password) { nil }
 
       it "returns the plain device" do
@@ -52,11 +54,23 @@ describe Y2Storage::Planned::CanBeEncrypted do
       end
     end
 
-    context "if volume has encryption password" do
+    context "if volume has an encryption method" do
+      let(:method) { Y2Storage::EncryptionMethod.find(:luks1) }
       let(:password) { "12345678" }
 
       it "encrypts the device with the right password and a default name" do
-        expect(plain_device).to receive(:encrypt).with(password: password)
+        expect(plain_device).to receive(:encrypt).with(method: method, password: password)
+        planned.final_device!(plain_device)
+      end
+    end
+
+    context "if volume has an encryption password" do
+      let(:method) { nil }
+      let(:password) { "12345678" }
+
+      it "encrypts the device with the right password and a default name" do
+        expect(plain_device).to receive(:encrypt)
+          .with(method: Y2Storage::EncryptionMethod.find(:luks1), password: password)
         planned.final_device!(plain_device)
       end
     end
