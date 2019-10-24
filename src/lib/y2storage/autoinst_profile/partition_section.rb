@@ -63,6 +63,7 @@ module Y2Storage
         { name: :size },
         { name: :crypt_fs },
         { name: :loop_fs },
+        { name: :crypt_method },
         { name: :crypt_key },
         { name: :raid_name },
         { name: :raid_options },
@@ -93,6 +94,10 @@ module Y2Storage
 
       # @!attribute crypt_fs
       #   @return [Boolean] whether the partition must be encrypted
+
+      # @!attribute crypt_method
+      #   @return [Symbol,nil] encryption method (:luks1, :pervasive_luks2,
+      #     :random_swap, :volatile_swap or :secure_swap). See {Y2Storage::EncryptionMethod}.
 
       # @!attribute crypt_key
       #   @return [String] encryption key
@@ -364,6 +369,7 @@ module Y2Storage
 
         @crypt_fs = true
         @loop_fs = true
+        @crypt_method = partition.encryption.method.id
         @crypt_key = CRYPT_KEY_VALUE
       end
 
