@@ -80,7 +80,7 @@ module Y2Storage
           secure_key_volume = @secure_key.add_device(device)
 
           Yast::Execute.locally(ZKEY, "change", "--name", secure_key.name, "--volumes",
-            "+#{secure_key_volume.plain_name.shellescape}:#{secure_key_volume.dm_name.shellescape}")
+            "+#{secure_key_volume}")
         end
 
         zkey_cryptsetup_output = execute_zkey_cryptsetup(device)

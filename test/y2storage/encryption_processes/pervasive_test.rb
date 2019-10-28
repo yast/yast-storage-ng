@@ -161,7 +161,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     let(:secure_key_volume) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKeyVolume,
-        plain_name: "/dev/dasdc1", dm_name: "cr_1")
+        plain_name: "/dev/dasdc1", dm_name: "cr_1", to_s: "/dev/dasdc1:cr_1")
     end
 
     before do
