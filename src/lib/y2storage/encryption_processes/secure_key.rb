@@ -99,8 +99,10 @@ module Y2Storage
       #   saving the volume entry in the keys database.
       #
       # @param device [Encryption]
+      # @return [SecureKeyVolume] the newly added SecureKeyVolume
       def add_device(device)
         @volume_entries << SecureKeyVolume.new_from_encryption(device)
+        @volume_entries.last
       end
 
       # Registers the key in the keys database by invoking "zkey generate"

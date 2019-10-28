@@ -101,7 +101,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "generates a new secure key for the device" do
       expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-        .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
+        .with("YaST_cr_sda", sector_size: 4096).and_return(generated_key)
       subject.pre_commit(encryption)
     end
 
@@ -109,9 +109,8 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       let(:block_size) { Y2Storage::DiskSize.new(8192) }
 
       it "sets the sector-size for the encryption key to 4096" do
-        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-          .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
         subject.pre_commit(encryption)
+        expect(encryption.format_options).to include("--sector-size 4096")
       end
     end
 
@@ -119,19 +118,17 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
       let(:block_size) { Y2Storage::DiskSize.new(4096) }
 
       it "sets the sector-size for the encryption key to 4096" do
-        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-          .with("YaST_cr_sda", volumes: [encryption], sector_size: 4096).and_return(generated_key)
         subject.pre_commit(encryption)
+        expect(encryption.format_options).to include("--sector-size 4096")
       end
     end
 
     context "when the block size of the underlying device less than 4k" do
       let(:block_size) { Y2Storage::DiskSize.new(2048) }
 
-      it "sets the sector-size for the encryption key to 4096" do
-        expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-          .with("YaST_cr_sda", volumes: [encryption], sector_size: nil).and_return(generated_key)
+      it "does not set the sector-size for the encryption key" do
         subject.pre_commit(encryption)
+        expect(encryption.format_options).to_not include("--sector-size")
       end
     end
 
@@ -146,7 +143,11 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "sets LUKS format options" do
       subject.pre_commit(encryption)
-      expect(encryption.format_options).to include("--foo bar --dummy --pbkdf pbkdf2")
+      expect(encryption.format_options).to include("--master-key-file "\
+        "/etc/zkey/repository/secure_xtskey1.skey")
+      expect(encryption.format_options).to include("--key-size 1024")
+      expect(encryption.format_options).to include("--cipher paes-xts-plain64")
+      expect(encryption.format_options).to include("--pbkdf pbkdf2")
     end
   end
 
@@ -158,20 +159,43 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
         plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1")
     end
 
+    let(:secure_key_volume) do
+      instance_double(Y2Storage::EncryptionProcesses::SecureKeyVolume,
+        plain_name: "/dev/dasdc1", dm_name: "cr_1")
+    end
+
     before do
       subject.pre_commit(encryption)
     end
 
     it "executes commands reported by zkey cryptsetup skipping the first one" do
+      allow(secure_key).to receive(:for_device?).and_return(false)
+
+      expect(secure_key).to receive(:add_device).and_return(secure_key_volume)
+
+      expect(Yast::Execute).to receive(:locally).with(/zkey/, "change", "--name", "secure_xtskey1",
+        "--volumes", "+/dev/dasdc1:cr_1", any_args)
+
+      expect(Yast::Execute).to receive(:locally).with(/zkey-cryptsetup/, any_args)
+      expect(Yast::Execute).to receive(:locally).with("third-command")
+      subject.post_commit(encryption)
+    end
+
+    it "executes commands reported by zkey cryptsetup skipping the first one" do
+      allow(secure_key).to receive(:for_device?).and_return(true)
+      expect(secure_key).to_not receive(:add_device)
       expect(Yast::Execute).to receive(:locally).with(/zkey-cryptsetup/, any_args)
       expect(Yast::Execute).to receive(:locally).with("third-command")
       subject.post_commit(encryption)
     end
 
     it "adds the --key-file option to the setvp command" do
-      allow(Yast::Execute).to receive(:locally)
-      expect(Yast::Execute).to receive(:locally)
-        .with(/zkey-cryptsetup/, "setvp", "--volumes", "/dev/dasdc1", "--key-file", "-", any_args)
+      allow(secure_key).to receive(:for_device?).and_return(true)
+      expect(Yast::Execute).to receive(:locally).with(/zkey/, "cryptsetup", "--volumes",
+        "/dev/dasdc1", any_args)
+      expect(Yast::Execute).to receive(:locally).with(/zkey-cryptsetup/, "setvp", "--volumes",
+        "/dev/dasdc1", "--key-file", "-", any_args)
+      expect(Yast::Execute).to receive(:locally).with("third-command")
       subject.post_commit(encryption)
     end
   end

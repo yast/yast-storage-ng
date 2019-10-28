@@ -100,11 +100,11 @@ describe "pervasive encryption" do
       context "if the 'zkey cryptsetup' command fails" do
         let(:zkey_cryptsetup) { nil }
 
-        it "does not modify the options for 'cryptsetup luksFormat'" do
+        it "anyway sets options for 'cryptsetup luksFormat'" do
           enc = blk_device.encrypt(method: pervasive)
           manager.commit
 
-          expect(enc.format_options).to be_empty
+          expect(enc.format_options).to include("--master-key-file")
         end
       end
 
@@ -115,11 +115,11 @@ describe "pervasive encryption" do
             "third command"
         end
 
-        it "generates arguments for 'cryptsetup luksFormat'" do
+        it "ignores arguments from 'zkey' for 'cryptsetup luksFormat'" do
           enc = blk_device.encrypt(method: pervasive)
           manager.commit
 
-          expect(enc.format_options).to eq "--one two --three --pbkdf pbkdf2"
+          expect(enc.format_options).to_not include("--one two")
         end
 
         it "executes the post-commit commands providing the password when needed" do
@@ -166,7 +166,7 @@ describe "pervasive encryption" do
       it "tries to generate a new secure key with the appropriate name and arguments" do
         expect(Yast::Execute).to receive(:locally).with(
           /zkey/, "generate", "--name", "YaST_cr_dasdc1_1", "--xts", "--keybits", "256",
-          "--volume-type", "LUKS2", "--sector-size", "4096", "--volumes", "/dev/dasdc1:cr_dasdc1"
+          "--volume-type", "LUKS2", "--sector-size", "4096"
         )
 
         blk_device.encrypt(method: pervasive)
