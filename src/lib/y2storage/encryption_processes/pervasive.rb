@@ -60,7 +60,7 @@ module Y2Storage
         # API to allow sharing a new key among several volumes.
         @secure_key ||= generate_secure_key(device)
 
-        master_key_file = "/etc/zkey/repository/#{@secure_key.name}.skey"
+        master_key_file = @secure_key.filename
         sector_size = sector_size_for(device.blk_device)
 
         device.format_options = "--master-key-file #{master_key_file.shellescape} --key-size 1024 "\

@@ -90,7 +90,8 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     let(:generated_key) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKey,
-        plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1")
+        plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1",
+        filename: "/etc/zkey/repository/secure_xtskey1.skey")
     end
 
     before do
@@ -156,7 +157,8 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     let(:secure_key) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKey,
-        plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1")
+        plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1",
+        filename: "/etc/zkey/repository/secure_xtskey1.skey")
     end
 
     let(:secure_key_volume) do

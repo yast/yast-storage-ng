@@ -146,6 +146,13 @@ module Y2Storage
         @volume_entries += volumes.map { |str| SecureKeyVolume.new_from_str(str) }
       end
 
+      # Full filename of the secure key file.
+      #
+      # @return [String]
+      def filename
+        File.join(repo_dir, name + ".skey")
+      end
+
       # Copies the files of this key from the current keys repository to the
       # repository of a target system
       #

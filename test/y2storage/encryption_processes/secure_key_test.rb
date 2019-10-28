@@ -63,7 +63,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
   end
 
   describe "#generate" do
-    it "runs zkey to create the a LUKS2 key with the given name and sector size" do
+    it "runs zkey to create the LUKS2 key with the given name and sector size" do
       expect(Yast::Execute).to receive(:locally).with(
         "/usr/bin/zkey", "generate", "--name", key.name, "--xts", "--keybits", "256",
         "--volume-type", "LUKS2", "--sector-size", key.sector_size.to_s
@@ -81,6 +81,12 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
 
         key.generate
       end
+    end
+  end
+
+  describe "#filename" do
+    it "returns the correct filename" do
+      expect(key.filename).to eq("/etc/zkey/repository/cr.skey")
     end
   end
 end
