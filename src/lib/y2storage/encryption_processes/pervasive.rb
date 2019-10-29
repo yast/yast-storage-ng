@@ -76,12 +76,7 @@ module Y2Storage
       #
       # @param device [Encryption] encryption that has just been created in the system
       def post_commit(device)
-        if !@secure_key.for_device?(device)
-          secure_key_volume = @secure_key.add_device(device)
-
-          Yast::Execute.locally(ZKEY, "change", "--name", secure_key.name, "--volumes",
-            "+#{secure_key_volume}")
-        end
+        @secure_key.add_device_and_write(device) unless @secure_key.for_device?(device)
 
         zkey_cryptsetup_output = execute_zkey_cryptsetup(device)
         commands = zkey_cryptsetup_output[1..-1]

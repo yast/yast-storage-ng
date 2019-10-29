@@ -105,6 +105,19 @@ module Y2Storage
         @volume_entries.last
       end
 
+      # Adds the given device to the list of volumes registered for this key
+      #
+      # @param device [Encryption]
+      # @return [SecureKeyVolume] the newly added SecureKeyVolume
+      def add_device_and_write(device)
+        secure_key_volume = add_device(device)
+
+        Yast::Execute.locally(ZKEY, "change", "--name", name, "--volumes",
+          "+#{secure_key_volume}")
+
+        secure_key_volume
+      end
+
       # Registers the key in the keys database by invoking "zkey generate"
       #
       # The generated key will have the name and the list of volumes from this

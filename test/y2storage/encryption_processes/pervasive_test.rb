@@ -172,12 +172,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "executes commands reported by zkey cryptsetup skipping the first one" do
       allow(secure_key).to receive(:for_device?).and_return(false)
-
-      expect(secure_key).to receive(:add_device).and_return(secure_key_volume)
-
-      expect(Yast::Execute).to receive(:locally).with(/zkey/, "change", "--name", "secure_xtskey1",
-        "--volumes", "+/dev/dasdc1:cr_1", any_args)
-
+      expect(secure_key).to receive(:add_device_and_write).and_return(secure_key_volume)
       expect(Yast::Execute).to receive(:locally).with(/zkey-cryptsetup/, any_args)
       expect(Yast::Execute).to receive(:locally).with("third-command")
       subject.post_commit(encryption)
