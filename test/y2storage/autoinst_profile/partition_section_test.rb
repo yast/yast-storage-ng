@@ -590,8 +590,18 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "if the partition is encrypted" do
-      it "initializes #crypt_key to a generic string" do
-        expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
+      context "and the encryption method requires a password" do
+        it "initializes #crypt_key to a generic string" do
+          expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
+        end
+      end
+
+      context "and the encryption method does not require a password" do
+        let(:scenario) { "encrypted_random_swap.xml" }
+
+        it "does not initialize #crypt_key" do
+          expect(section_for("vda3").crypt_key).to be_nil
+        end
       end
 
       it "initializes #loop_fs and #crypt_fs to true" do

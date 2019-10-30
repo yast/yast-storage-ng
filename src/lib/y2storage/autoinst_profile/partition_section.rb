@@ -369,8 +369,9 @@ module Y2Storage
 
         @crypt_fs = true
         @loop_fs = true
-        @crypt_method = partition.encryption.method.id
-        @crypt_key = CRYPT_KEY_VALUE
+        method = partition.encryption.method
+        @crypt_method = method.id
+        @crypt_key = CRYPT_KEY_VALUE if method.password_required?
       end
 
       def init_filesystem_fields(partition)
