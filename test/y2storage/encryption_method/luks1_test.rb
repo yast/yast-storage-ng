@@ -46,4 +46,10 @@ describe Y2Storage::EncryptionMethod::Luks1 do
       expect(subject.only_for_swap?).to eq(false)
     end
   end
+
+  describe "#password_required?" do
+    it "returns true" do
+      expect(subject.password_required?).to eq(true)
+    end
+  end
 end

@@ -98,6 +98,13 @@ module Y2Storage
         true
       end
 
+      # Determines whether a user provided password is required
+      #
+      # @return [Boolean]
+      def password_required?
+        true
+      end
+
       # Whether the encryption method is useful only for swap
       #
       # Some encryption methods are mainly useful for encrypting swap disks since they produce a new key

@@ -44,6 +44,11 @@ module Y2Storage
         File.exist?(key_file)
       end
 
+      # @see Base#password_required?
+      def password_required?
+        false
+      end
+
       # Encryption key file
       #
       # Each Swap process could use a different key file.
