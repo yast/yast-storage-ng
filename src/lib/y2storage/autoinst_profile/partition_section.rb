@@ -93,7 +93,8 @@ module Y2Storage
       #   @return [Boolean] whether the partition must be created or exists
 
       # @!attribute crypt_fs
-      #   @return [Boolean] whether the partition must be encrypted
+      #   @return [Boolean] whether the partition must be encrypted.
+      #   @deprecated Use #crypt_method instead.
 
       # @!attribute crypt_method
       #   @return [Symbol,nil] encryption method (:luks1, :pervasive_luks2,
@@ -367,7 +368,6 @@ module Y2Storage
       def init_encryption_fields(partition)
         return unless partition.encrypted?
 
-        @crypt_fs = true
         @loop_fs = true
         method = partition.encryption.method
         @crypt_method = method.id

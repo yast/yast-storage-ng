@@ -604,9 +604,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
-      it "initializes #loop_fs and #crypt_fs to true" do
+      it "initializes #loop_fs to true" do
         section = section_for("sdf7")
-        expect(section.crypt_fs).to eq true
         expect(section.loop_fs).to eq true
       end
 
@@ -622,9 +621,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
       end
 
-      it "initializes #crypt_fs, #loop_fs, #crypt_method and #crypt_key to nil" do
+      it "initializes #loop_fs, #crypt_method and #crypt_key to nil" do
         section = section_for("sdf6")
-        expect(section.crypt_fs).to be_nil
         expect(section.loop_fs).to be_nil
         expect(section.crypt_method).to be_nil
         expect(section.crypt_key).to be_nil
