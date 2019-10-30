@@ -51,10 +51,7 @@ module Y2Storage
       # @see Base#pre_commit
       #
       # If there is no secure key to be used for this device, a new key is
-      # generated. In addition to that, the "zkey cryptsetup" command is
-      # executed to know the sequence of commands that must be used to set the
-      # pervasive encryption and the LUKS format options are adjusted
-      # accordingly.
+      # generated.
       #
       # @param device [Encryption] encryption that will be created in the system
       def pre_commit(device)
@@ -63,19 +60,25 @@ module Y2Storage
         # API to allow sharing a new key among several volumes.
         @secure_key ||= generate_secure_key(device)
 
-        @zkey_cryptsetup_output = execute_zkey_cryptsetup(device)
-        return if @zkey_cryptsetup_output.empty?
+        master_key_file = @secure_key.filename
+        sector_size = sector_size_for(device.blk_device)
 
-        device.format_options = luksformat_options_string + " --pbkdf pbkdf2"
+        device.format_options = "--master-key-file #{master_key_file.shellescape} --key-size 1024 "\
+                                "--cipher paes-xts-plain64"
+        device.format_options += " --sector-size #{sector_size}" if sector_size
+        device.format_options += " --pbkdf pbkdf2"
       end
 
       # @see Base#post_commit
       #
-      # Executes the extra commands reported by the former call to
-      # "zkey cryptsetup".
+      # Adds the device to the secure key if needed and executes the
+      # extra commands reported by a call to "zkey cryptsetup".
       #
       # @param device [Encryption] encryption that has just been created in the system
       def post_commit(device)
+        @secure_key.add_device_and_write(device) unless @secure_key.for_device?(device)
+
+        zkey_cryptsetup_output = execute_zkey_cryptsetup(device)
         commands = zkey_cryptsetup_output[1..-1]
         return if commands.nil?
 
@@ -127,8 +130,9 @@ module Y2Storage
         Recorder.new(Yast::Y2Logger.instance)
       end
 
-      # Generates a new secure key for the given encryption device and registers
-      # it into the keys database of the system
+      # Generates a new secure key for the given encryption device and
+      # registers it into the keys database of the system. The secure
+      # does not include the volume since that may not exist yet.
       #
       # @param device [Encryption]
       # @return [SecureKey]
@@ -136,7 +140,6 @@ module Y2Storage
         key_name = "YaST_#{device.dm_table_name}"
         key = SecureKey.generate(
           key_name,
-          volumes:     [device],
           sector_size: sector_size_for(device.blk_device)
         )
         log.info "Generated secure key #{key.name}"
@@ -152,17 +155,6 @@ module Y2Storage
         name = secure_key.plain_name(device)
         command = [ZKEY, "cryptsetup", "--volumes", name]
         Yast::Execute.locally(*command, stdout: :capture)&.lines&.map(&:strip) || []
-      end
-
-      # Options to be passed to the "cryptsetup luksFormat" during the commit
-      # phase
-      #
-      # @see Luks#format_options
-      #
-      # @return [String]
-      def luksformat_options_string
-        luksformat_command = zkey_cryptsetup_output.first
-        luksformat_command.split("luksFormat ").last.gsub(/ \/dev[^\s]*/, "")
       end
     end
   end

@@ -63,7 +63,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
   end
 
   describe "#generate" do
-    it "runs zkey to create the a LUKS2 key with the given name and sector size" do
+    it "runs zkey to create the LUKS2 key with the given name and sector size" do
       expect(Yast::Execute).to receive(:locally).with(
         "/usr/bin/zkey", "generate", "--name", key.name, "--xts", "--keybits", "256",
         "--volume-type", "LUKS2", "--sector-size", key.sector_size.to_s
@@ -81,6 +81,29 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
 
         key.generate
       end
+    end
+  end
+
+  describe "#filename" do
+    it "returns the correct filename" do
+      expect(key.filename).to eq("/etc/zkey/repository/cr.skey")
+    end
+  end
+
+  describe "#add_device_and_write" do
+    let(:blk_device) do
+      instance_double(Y2Storage::BlkDevice, udev_full_ids: ["/dev/dasdc1"])
+    end
+
+    let(:device) do
+      instance_double(Y2Storage::Encryption, blk_device: blk_device, dm_table_name: "cr_1")
+    end
+
+    it "calls zkey to add the volume" do
+      expect(Yast::Execute).to receive(:locally).with(/zkey/, "change", "--name", "cr",
+        "--volumes", "+/dev/dasdc1:cr_1", any_args)
+
+      key.add_device_and_write(device)
     end
   end
 end

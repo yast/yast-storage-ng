@@ -99,8 +99,23 @@ module Y2Storage
       #   saving the volume entry in the keys database.
       #
       # @param device [Encryption]
+      # @return [SecureKeyVolume] the newly added SecureKeyVolume
       def add_device(device)
         @volume_entries << SecureKeyVolume.new_from_encryption(device)
+        @volume_entries.last
+      end
+
+      # Adds the given device to the list of volumes registered for this key
+      #
+      # @param device [Encryption]
+      # @return [SecureKeyVolume] the newly added SecureKeyVolume
+      def add_device_and_write(device)
+        secure_key_volume = add_device(device)
+
+        Yast::Execute.locally(ZKEY, "change", "--name", name, "--volumes",
+          "+#{secure_key_volume}")
+
+        secure_key_volume
       end
 
       # Registers the key in the keys database by invoking "zkey generate"
@@ -142,6 +157,13 @@ module Y2Storage
         volumes = volumes_str.split("\n").map(&:strip)
 
         @volume_entries += volumes.map { |str| SecureKeyVolume.new_from_str(str) }
+      end
+
+      # Full filename of the secure key file.
+      #
+      # @return [String]
+      def filename
+        File.join(repo_dir, name + ".skey")
       end
 
       # Copies the files of this key from the current keys repository to the
