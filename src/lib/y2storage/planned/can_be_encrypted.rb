@@ -56,6 +56,14 @@ module Y2Storage
         !!(encryption_method || encryption_password)
       end
 
+      # Determines whether the device can be ciphered using the given encryption method
+      #
+      # @param method [EncryptionMethod] Encryption method
+      # @return [Boolean]
+      def supported_encryption_method?(method)
+        !method.only_for_swap? || swap?
+      end
+
       # Returns the (possibly encrypted) device to be used for the planned
       # device.
       #

@@ -25,9 +25,10 @@ describe Y2Storage::Planned::CanBeEncrypted do
 
   # Dummy class to test the mixin
   class EncryptableDevice < Y2Storage::Planned::Device
+    include Y2Storage::Planned::CanBeMounted
     include Y2Storage::Planned::CanBeEncrypted
 
-    def initialize(method, password)
+    def initialize(method = Y2Storage::EncryptionMethod::LUKS1, password = "")
       initialize_can_be_encrypted
       self.encryption_method = method
       self.encryption_password = password
@@ -72,6 +73,36 @@ describe Y2Storage::Planned::CanBeEncrypted do
         expect(plain_device).to receive(:encrypt)
           .with(method: Y2Storage::EncryptionMethod.find(:luks1), password: password)
         planned.final_device!(plain_device)
+      end
+    end
+  end
+
+  describe "#support_encryption_method?" do
+    let(:planned) { EncryptableDevice.new }
+
+    context "when the encryption method is restricted to swap devices" do
+      let(:encryption_method) { Y2Storage::EncryptionMethod.find(:random_swap) }
+
+      context "and the planned device will be a swap device" do
+        before { planned.mount_point = "swap" }
+
+        it "returns true" do
+          expect(planned.supported_encryption_method?(encryption_method)).to eq(true)
+        end
+      end
+
+      context "and the planned device will not be a swap device" do
+        it "returns false" do
+          expect(planned.supported_encryption_method?(encryption_method)).to eq(false)
+        end
+      end
+
+      context "when the encryption method is not restricted to swap devices" do
+        let(:encryption_method) { Y2Storage::EncryptionMethod.find(:luks1) }
+
+        it "returns true" do
+          expect(planned.supported_encryption_method?(encryption_method)).to eq(true)
+        end
       end
     end
   end
