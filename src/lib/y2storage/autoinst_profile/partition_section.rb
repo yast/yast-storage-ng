@@ -97,7 +97,7 @@ module Y2Storage
 
       # @!attribute crypt_method
       #   @return [Symbol,nil] encryption method (:luks1, :pervasive_luks2,
-      #     :random_swap, :volatile_swap or :secure_swap). See {Y2Storage::EncryptionMethod}.
+      #     :protected_swap, :random_swap or :secure_swap). See {Y2Storage::EncryptionMethod}.
 
       # @!attribute crypt_key
       #   @return [String] encryption key

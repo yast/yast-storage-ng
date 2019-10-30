@@ -343,11 +343,94 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       let(:root_spec) do
         { "mount" => "/", "filesystem" => "btrfs", "crypt_fs" => true, "crypt_key" => "secret" }
       end
+      let(:encryption_method) { Y2Storage::EncryptionMethod::PERVASIVE_LUKS2 }
+      let(:available?) { true }
+
+      before do
+        allow(encryption_method).to receive(:available?).and_return(available?) if encryption_method
+      end
 
       it "sets the encryption password" do
         disk = planner.planned_devices(drive).first
         root = disk.partitions.find { |d| d.mount_point == "/" }
         expect(root.encryption_password).to eq("secret")
+      end
+
+      it "sets the encryption method to 'luks1'" do
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
+        expect(root.encryption_method).to eq(Y2Storage::EncryptionMethod::LUKS1)
+      end
+
+      context "when a encryption method is specified" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "crypt_method" => crypt_method }
+        end
+        let(:crypt_method) { :pervasive_luks2 }
+        let(:encryption_method) { Y2Storage::EncryptionMethod::PERVASIVE_LUKS2 }
+
+        it "sets the method to the given one" do
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
+          expect(root.encryption_method).to eq(encryption_method)
+        end
+
+        context "and the method is not available" do
+          let(:available?) { false }
+
+          it "does not set encryption method or password" do
+            disk = planner.planned_devices(drive).first
+            root = disk.partitions.find { |d| d.mount_point == "/" }
+            expect(root.encryption_method).to be_nil
+            expect(root.encryption_password).to be_nil
+          end
+
+          it "registers an issue" do
+            planner.planned_devices(drive)
+            issue = subject.issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+            end
+            expect(issue.reason).to eq(:unavailable)
+          end
+        end
+
+        context "and the method is unknown" do
+          let(:crypt_method) { :foo }
+
+          it "does not set encryption method or password" do
+            disk = planner.planned_devices(drive).first
+            root = disk.partitions.find { |d| d.mount_point == "/" }
+            expect(root.encryption_method).to be_nil
+            expect(root.encryption_password).to be_nil
+          end
+
+          it "registers an issue" do
+            planner.planned_devices(drive)
+            issue = subject.issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+            end
+            expect(issue.reason).to eq(:unknown)
+          end
+        end
+
+        context "when the device is not suitable for the given encryption" do
+          let(:crypt_method) { :random_swap }
+
+          it "does not set encryption method or password" do
+            disk = planner.planned_devices(drive).first
+            root = disk.partitions.find { |d| d.mount_point == "/" }
+            expect(root.encryption_method).to be_nil
+            expect(root.encryption_password).to be_nil
+          end
+
+          it "registers an issue" do
+            planner.planned_devices(drive)
+            issue = subject.issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+            end
+            expect(issue.reason).to eq(:unsuitable)
+          end
+        end
       end
     end
 
