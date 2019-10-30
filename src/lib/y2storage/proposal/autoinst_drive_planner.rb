@@ -84,7 +84,7 @@ module Y2Storage
       DEFAULT_ENCRYPTION_METHOD = EncryptionMethod.find(:luks1)
       private_constant :DEFAULT_ENCRYPTION_METHOD
 
-      # Sets common devices attributes
+      # Sets encryption attributes
       #
       # @param device [Planned::Device] Planned device
       # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
@@ -118,8 +118,12 @@ module Y2Storage
             :unsuitable
           end
 
-        issues_list.add(:invalid_encryption, partition_section, error) if error
-        error ? nil : encryption_method
+        if error
+          issues_list.add(:invalid_encryption, partition_section, error)
+          return
+        end
+
+        encryption_method
       end
 
       # Extracts the encryption password for a partition section
