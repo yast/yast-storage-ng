@@ -365,11 +365,14 @@ module Y2Storage
         @btrfs_name = name_for_btrfs(lv.filesystem)
       end
 
+      DEFAULT_ENCRYPTION_METHOD = Y2Storage::EncryptionMethod.find(:luks1)
+      private_constant :DEFAULT_ENCRYPTION_METHOD
+
       def init_encryption_fields(partition)
         return unless partition.encrypted?
 
+        method = partition.encryption.method || DEFAULT_ENCRYPTION_METHOD
         @loop_fs = true
-        method = partition.encryption.method
         @crypt_method = method.id
         @crypt_key = CRYPT_KEY_VALUE if method.password_required?
       end

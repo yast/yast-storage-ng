@@ -604,6 +604,26 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
       end
 
+      context "and the encryption method is unknown" do
+        before do
+          allow_any_instance_of(Y2Storage::Encryption).to receive(:method).and_return(nil)
+        end
+
+        it "initializes #crypt_method to 'luks1'" do
+          section = section_for("sdf7")
+          expect(section.crypt_method).to eq(:luks1)
+        end
+
+        it "initializes #crypt_key to a generic string" do
+          expect(section_for("sdf7").crypt_key).to eq("ENTER KEY HERE")
+        end
+
+        it "initializes #loop_fs to true" do
+          section = section_for("sdf7")
+          expect(section.loop_fs).to eq true
+        end
+      end
+
       it "initializes #loop_fs to true" do
         section = section_for("sdf7")
         expect(section.loop_fs).to eq true
