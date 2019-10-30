@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct 30 09:55:48 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: add support to set the encryption method (related to
+  jsc#SLE-7376).
+- 4.2.53
+
+-------------------------------------------------------------------
 Mon Oct 28 14:22:24 CET 2019 - aschnell@suse.com
 
 - fix creation of secure key for new partitions (bsc#1154267)

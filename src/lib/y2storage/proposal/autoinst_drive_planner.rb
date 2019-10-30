@@ -63,9 +63,8 @@ module Y2Storage
       # @param drive_section [AutoinstProfile::DriveSection] AutoYaST drive
       #   section containing the partition one
       def configure_device(device, partition_section, drive_section)
-        add_device_attrs(device, partition_section)
-
         configure_filesystem(device, partition_section, drive_section)
+        add_encryption_attrs(device, partition_section)
       end
 
       alias_method :device_config, :configure_device
@@ -82,12 +81,62 @@ module Y2Storage
         configure_subvolumes(device, partition_section)
       end
 
-      # Sets common devices attributes
+      DEFAULT_ENCRYPTION_METHOD = EncryptionMethod.find(:luks1)
+      private_constant :DEFAULT_ENCRYPTION_METHOD
+
+      # Sets encryption attributes
       #
       # @param device [Planned::Device] Planned device
       # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_device_attrs(device, partition_section)
-        device.encryption_password = partition_section.crypt_key if partition_section.crypt_fs
+      def add_encryption_attrs(device, partition_section)
+        return unless partition_section.crypt_fs || partition_section.crypt_method
+
+        device.encryption_method =
+          if partition_section.crypt_method
+            find_encryption_method(device, partition_section)
+          else
+            DEFAULT_ENCRYPTION_METHOD
+          end
+        return unless device.encryption_method&.password_required?
+
+        device.encryption_password = find_encryption_password(partition_section)
+      end
+
+      # Determines the encryption method for a partition section
+      #
+      # @param device [Planned::Device] Planned device
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [EncryptionMethod,nil] Encryption method ID or nil if it could not be determined
+      def find_encryption_method(device, partition_section)
+        encryption_method = EncryptionMethod.find(partition_section.crypt_method)
+        error =
+          if encryption_method.nil?
+            :unknown
+          elsif !encryption_method.available?
+            :unavailable
+          elsif !device.supported_encryption_method?(encryption_method)
+            :unsuitable
+          end
+
+        if error
+          issues_list.add(:invalid_encryption, partition_section, error)
+          return
+        end
+
+        encryption_method
+      end
+
+      # Extracts the encryption password for a partition section
+      #
+      # Additionally it registers an issue if it is not found.
+      #
+      # @return [String,nil]
+      def find_encryption_password(partition_section)
+        if partition_section.crypt_key.nil? || partition_section.crypt_key.empty?
+          issues_list.add(:missing_value, partition_section, :crypt_key)
+          return
+        end
+        partition_section.crypt_key
       end
 
       # Sets common filesystem attributes

@@ -51,4 +51,10 @@ describe Y2Storage::EncryptionMethod::PervasiveLuks2 do
       end
     end
   end
+
+  describe "#password_required?" do
+    it "returns true" do
+      expect(subject.password_required?).to eq(true)
+    end
+  end
 end

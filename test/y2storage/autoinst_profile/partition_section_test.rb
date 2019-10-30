@@ -590,14 +590,48 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "if the partition is encrypted" do
-      it "initializes #crypt_key to a generic string" do
-        expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
+      context "and the encryption method requires a password" do
+        it "initializes #crypt_key to a generic string" do
+          expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
+        end
       end
 
-      it "initializes #loop_fs and #crypt_key to true" do
+      context "and the encryption method does not require a password" do
+        let(:scenario) { "encrypted_random_swap.xml" }
+
+        it "does not initialize #crypt_key" do
+          expect(section_for("vda3").crypt_key).to be_nil
+        end
+      end
+
+      context "and the encryption method is unknown" do
+        before do
+          allow_any_instance_of(Y2Storage::Encryption).to receive(:method).and_return(nil)
+        end
+
+        it "initializes #crypt_method to 'luks1'" do
+          section = section_for("sdf7")
+          expect(section.crypt_method).to eq(:luks1)
+        end
+
+        it "initializes #crypt_key to a generic string" do
+          expect(section_for("sdf7").crypt_key).to eq("ENTER KEY HERE")
+        end
+
+        it "initializes #loop_fs to true" do
+          section = section_for("sdf7")
+          expect(section.loop_fs).to eq true
+        end
+      end
+
+      it "initializes #loop_fs to true" do
         section = section_for("sdf7")
-        expect(section.crypt_fs).to eq true
         expect(section.loop_fs).to eq true
+      end
+
+      it "initializes #crypt_method to the encryption method" do
+        section = section_for("sdf7")
+        expect(section.crypt_method).to eq(:luks1)
       end
     end
 
@@ -607,11 +641,11 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
       end
 
-      it "initializes #crypt_key, #loop_fs and #crypt_key to nil" do
+      it "initializes #loop_fs, #crypt_method and #crypt_key to nil" do
         section = section_for("sdf6")
-        expect(section.crypt_fs).to be_nil
-        expect(section.crypt_fs).to be_nil
         expect(section.loop_fs).to be_nil
+        expect(section.crypt_method).to be_nil
+        expect(section.crypt_key).to be_nil
       end
     end
 

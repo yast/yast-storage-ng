@@ -37,9 +37,13 @@ module Y2Storage
       ENCRYPTION_OVERHEAD = DiskSize.MiB(2)
       private_constant :ENCRYPTION_OVERHEAD
 
-      # @!attribute encryption_password
-      #   @return [String, nil] password used to encrypt the device. If is nil,
+      # @!attribute encryption_method
+      #   @return [String, nil] method used to encrypt the device. If is nil,
       #     it means the device will not be encrypted
+      secret_attr :encryption_method
+
+      # @!attribute encryption_password
+      #   @return [String, nil] password used to encrypt the device.
       secret_attr :encryption_password
 
       # Initializations of the mixin, to be called from the class constructor.
@@ -49,7 +53,15 @@ module Y2Storage
       #
       # @return [Boolean]
       def encrypt?
-        !encryption_password.nil?
+        !!(encryption_method || encryption_password)
+      end
+
+      # Determines whether the device can be ciphered using the given encryption method
+      #
+      # @param method [EncryptionMethod] Encryption method
+      # @return [Boolean]
+      def supported_encryption_method?(method)
+        !method.only_for_swap? || swap?
       end
 
       # Returns the (possibly encrypted) device to be used for the planned
@@ -66,7 +78,8 @@ module Y2Storage
       def final_device!(plain_device)
         result = super
         if create_encryption?
-          result = result.encrypt(password: encryption_password)
+          method = encryption_method || EncryptionMethod.find(:luks1)
+          result = result.encrypt(method: method, password: encryption_password)
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"

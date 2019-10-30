@@ -126,4 +126,10 @@ describe Y2Storage::EncryptionMethod::RandomSwap do
       end
     end
   end
+
+  describe "#password_required?" do
+    it "returns false" do
+      expect(subject.password_required?).to eq(false)
+    end
+  end
 end
