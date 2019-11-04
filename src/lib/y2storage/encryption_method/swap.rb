@@ -23,6 +23,18 @@ require "y2storage/encryption_processes/volatile"
 module Y2Storage
   module EncryptionMethod
     # Base class for swap encryption methods.
+    #
+    # Note that system hibernation does not work when using a volatile key for encrypting a swap device
+    # (see {RandomSwap}, {ProtectedSwap} and {SecureSwap}). For these encryption methods, the swap is
+    # re-encrypted during the boot process and its previous content is lost.
+    #
+    # The system does not prevent hibernation when using a volatile key. To prevent hibernation,
+    # 'hibernate' target must be masked (i.e., systemctl mask hibernate.target).
+    #
+    # YaST does not offer any mechanism to prevent hibernation either. If a swap encryption method is
+    # used, the user is responsible of configuring the system to avoid hibernation (as suggested in the
+    # help of the encryption dialog). In case YaST will offer any way to disable hibernation, make sure
+    # to also offer an option to enable it again easily.
     class Swap < Base
       # @see Base#used_for?
       def used_for?(encryption)
