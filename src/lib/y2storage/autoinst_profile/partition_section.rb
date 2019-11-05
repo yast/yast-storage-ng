@@ -283,7 +283,7 @@ module Y2Storage
         return unless device.is?(:blk_device)
 
         init_encryption_fields(device)
-        init_filesystem_fields(device)
+        init_filesystem_fields(device) unless device.filesystem&.multidevice?
 
         # NOTE: The old AutoYaST exporter does not report the real size here.
         # It intentionally reports one cylinder less. Cylinders is an obsolete

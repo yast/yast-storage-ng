@@ -544,6 +544,21 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
+    context "given a partition which is part of a Btrfs multidevice" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+
+      it "includes the Btrfs name" do
+        expect(section_for("sdd1").btrfs_name).to eq("btrfs_63")
+      end
+
+      it "does not include filesystem attributes" do
+        section = section_for("sdd1")
+        expect(section.filesystem).to be_nil
+        expect(section.mkfs_options).to be_nil
+        expect(section.fstab_options).to be_nil
+      end
+    end
+
     context "if the device is formatted" do
       it "initializes #format to true for most partition ids" do
         expect(section_for("nvme0n1p1").format).to eq true
