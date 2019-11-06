@@ -362,7 +362,7 @@ module Y2Storage
         @partitions = partitions_from_collection(vg.lvm_lvs)
         return false if @partitions.empty?
 
-        @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem))
+        @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem).compact)
         @pesize = vg.extent_size.to_i.to_s
         true
       end
@@ -572,13 +572,18 @@ module Y2Storage
 
       # Determine whether snapshots are enabled
       #
-      # Currently AutoYaST does not support enabling/disabling snapshots
-      # for a partition but for the whole disk/volume group.
+      # Currently AutoYaST only supports enabling/disabling snapshots
+      # for the root filesystem and this setting is specified at
+      # drive section level.
       #
       # @param filesystems [Array<Y2Storage::Filesystem>] Filesystems to evaluate
-      # @return [Boolean] true if snapshots are enabled
+      # @return [Boolean,nil] true if snapshots are enabled; false if they are not enabled;
+      #   nil if the root filesystem is not applicable.
       def enabled_snapshots?(filesystems)
-        filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
+        root_fs = filesystems.find { |f| f.respond_to?(:root?) && f.root? }
+        return nil if root_fs.nil? || (@type != :CT_BTRFS && root_fs.multidevice?)
+
+        root_fs.respond_to?(:snapshots?) && root_fs.snapshots?
       end
 
       # Determine whether the disk is used or not
