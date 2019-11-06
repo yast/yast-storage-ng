@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Nov  6 11:49:35 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: do not repeat filesystem related information when
+  cloning multidevice Btrfs filesystems (bsc#1148578).
+- AutoYaST: do not export the enable_snapshots element for drive
+  which do not contain the root filesystem.
+- 4.2.54
+
+-------------------------------------------------------------------
 Wed Oct 30 09:55:48 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: add support to set the encryption method (related to
