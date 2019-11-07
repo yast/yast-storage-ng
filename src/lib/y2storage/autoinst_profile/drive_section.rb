@@ -623,7 +623,7 @@ module Y2Storage
         end
       end
 
-      # Determined whether the section is describine a multi-device Btrfs filesystem
+      # Determines whether the section is describing a multi-device Btrfs filesystem
       #
       # @return [Boolean]
       def btrfs_drive_section?
