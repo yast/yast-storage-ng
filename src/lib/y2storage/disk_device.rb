@@ -33,13 +33,6 @@ module Y2Storage
       false
     end
 
-    # Checks whether it's in network
-    #
-    # @return [Boolean]
-    def in_network?
-      false
-    end
-
     # Checks whether the device is a multipath wire
     #
     # @return [Boolean]

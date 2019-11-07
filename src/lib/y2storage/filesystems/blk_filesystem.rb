@@ -167,8 +167,7 @@ module Y2Storage
 
       # @return [Boolean]
       def in_network?
-        disks = ancestors.find_all { |d| d.is?(:disk) }
-        disks.any?(&:in_network?)
+        blk_devices.any?(&:in_network?)
       end
 
       # @see Base#stable_name?

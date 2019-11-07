@@ -278,6 +278,11 @@ module Y2Storage
       self.mount_by = Filesystems::MountByType.best_for(blk_device, suitable_mount_bys)
     end
 
+    # @see BlkDevice#in_network?
+    def in_network?
+      blk_device.in_network?
+    end
+
     protected
 
     # @see Device#is?

@@ -623,6 +623,13 @@ module Y2Storage
       end
     end
 
+    # Whether this is a network device
+    #
+    # @return [Boolean] true if this is a network-based disk or depends on one
+    def in_network?
+      false
+    end
+
     protected
 
     # Values for volume specification matching
