@@ -76,8 +76,7 @@ configuration for the installation product.
 ## Level 2 Procedure
 
 With this approach, the user can define some high-level settings and let
-AutoYaST build the proposal. It is like setting the guided proposal parameters
-in the regular installer.
+AutoYaST build the proposal.
 
     <general>
       <storage>
@@ -88,8 +87,14 @@ in the regular installer.
       </storage>
     </general>
 
-The `proposal` and `volumes` sections will replace those in the control file, so
-it opens the door to adjust product settings.
+(TODO) The elements in the `proposal` section are merged with those in the
+product's control file. It is like adjusting the guided proposal parameters in
+the regular installer.
+
+(TODO) Apart from other elements which are described in the AutoYaST Guide, an
+special `propose_lvm` element is supported. It just exists for backward
+compatibility reasons, and it is equivalent to set `proposal/lvm` to `true` --
+as seen in the previous example --.
 
 ## Level 3 procedure
 
