@@ -219,18 +219,13 @@ whether the system is bootable and determining the missing partitions (if any).
 ## Issues reporting
 
 It is possible that, given a profile, AutoYaST finds issues when trying to
-figure out the partitioning layout. Some of those issues might be serious
-enough to stop the installation; in other cases, just displaying a warning is
-the way to go.
+figure out the partitioning layout. Some of those issues might be severe
+enough to stop the installation; in other cases, it just displays a warning.
 
 The {Y2Storage::AutoinstIssues} module features a
-{Y2Storage::AutoinstIssues::List} where issues are registered. After trying
-(successfully or not) to create the proposal, AutoYaST displays the list of
-issues (if any) to the user. If any of those issues is severe enough, it will
-not allow the user to continue.
-
-{Y2Storage::AutoinstIssues} contains a set of possible issues (all of them are
-classes which inherit from {Y2Storage::AutoinstIssues::Issue}).
+{Y2Storage::AutoinstIssues::List} class where issues are
+registered. {Y2Storage::AutoinstIssues} contains a set of possible issues -- all
+of them are classes which inherit from {Y2Storage::AutoinstIssues::Issue} --.
 
 [1]: https://doc.opensuse.org/projects/autoyast/#CreateProfile.General.storage "General section documentation"
 [2]: https://doc.opensuse.org/projects/autoyast/#CreateProfile.Partitioning "Partitioning documentation"
