@@ -338,7 +338,7 @@ module Y2Storage
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
-        filesystems = disk.filesystem ? [disk.filesystem] : disk.partitions.map(&:filesystem)
+        filesystems = disk.filesystem ? [disk.filesystem] : disk.partitions.map(&:filesystem).compact
         @enable_snapshots = enabled_snapshots?(filesystems)
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
@@ -362,7 +362,7 @@ module Y2Storage
         @partitions = partitions_from_collection(vg.lvm_lvs)
         return false if @partitions.empty?
 
-        @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem))
+        @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem).compact)
         @pesize = vg.extent_size.to_i.to_s
         true
       end
@@ -572,13 +572,18 @@ module Y2Storage
 
       # Determine whether snapshots are enabled
       #
-      # Currently AutoYaST does not support enabling/disabling snapshots
-      # for a partition but for the whole disk/volume group.
+      # Currently AutoYaST only supports enabling/disabling snapshots
+      # for the root filesystem and this setting is specified at
+      # drive section level.
       #
       # @param filesystems [Array<Y2Storage::Filesystem>] Filesystems to evaluate
-      # @return [Boolean] true if snapshots are enabled
+      # @return [Boolean,nil] true if snapshots are enabled; false if they are not enabled;
+      #   nil if the root filesystem is not applicable.
       def enabled_snapshots?(filesystems)
-        filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
+        root_fs = filesystems.find(&:root?)
+        return nil if root_fs.nil? || (root_fs.multidevice? && !btrfs_drive_section?)
+
+        root_fs.respond_to?(:snapshots?) && root_fs.snapshots?
       end
 
       # Determine whether the disk is used or not
@@ -616,6 +621,13 @@ module Y2Storage
         else
           "all"
         end
+      end
+
+      # Determines whether the section is describing a multi-device Btrfs filesystem
+      #
+      # @return [Boolean]
+      def btrfs_drive_section?
+        @type == :CT_BTRFS
       end
     end
   end

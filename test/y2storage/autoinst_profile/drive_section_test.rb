@@ -397,47 +397,63 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       context "when the RAID is partitioned" do
-        before { fake_scenario("partitioned_md_raid.xml") }
+        before { fake_scenario("root_partitioned_md_raid") }
 
-        context "and snapshots are enabled for some partition" do
+        context "and snapshots are enabled for the root (/) partition" do
           it "initializes enable_snapshots setting to true" do
-            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+            expect(described_class.new_from_storage(device("md0")).enable_snapshots).to eq(true)
           end
         end
 
-        context "and snapshots are not enabled for any partition" do
+        context "and snapshots are not enabled for the root (/) partition" do
           before do
-            md = device("md/md0")
-            btrfs = md.partitions.first.filesystem
+            md = device("md0")
+            btrfs = md.partitions.map(&:filesystem).find { |f| f.mount_point.path == "/" }
             btrfs.btrfs_subvolumes.first.remove_descendants
           end
 
           it "initializes enable_snapshots setting to false" do
-            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+            expect(described_class.new_from_storage(device("md0")).enable_snapshots).to eq(false)
+          end
+        end
+
+        context "and the RAID does not contain the root partition" do
+          before { fake_scenario("partitioned_md_raid.xml") }
+
+          it "does not initialize enable_snapshots setting" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to be_nil
           end
         end
       end
 
       context "when the RAID is not partitioned" do
-        context "when snapshots are enabled" do
-          before { fake_scenario("btrfs_md_raid.xml") }
+        context "and it is mounted at /" do
+          before { fake_scenario("root_md_raid") }
 
-          it "initializes enable_snapshots setting" do
-            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+          context "and snapshots are enabled" do
+            it "initializes enable_snapshots setting to true" do
+              expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+            end
+          end
+
+          context "and snapshots are not enabled" do
+            before do
+              md = device("md/md0")
+              btrfs = md.filesystem
+              btrfs.btrfs_subvolumes.first.remove_descendants
+            end
+
+            it "initializes enable_snapshots setting to false" do
+              expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+            end
           end
         end
 
-        context "when snapshots are not enabled" do
+        context "and it is not mounted at /" do
           before { fake_scenario("btrfs_md_raid.xml") }
 
-          before do
-            md = device("md/md0")
-            btrfs = md.filesystem
-            btrfs.btrfs_subvolumes.first.remove_descendants
-          end
-
-          it "initializes enable_snapshots setting" do
-            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+          it "does not initialize enable_snapshots" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to be_nil
           end
         end
       end
@@ -631,23 +647,37 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(section.btrfs_options).to be_a(Y2Storage::AutoinstProfile::BtrfsOptionsSection)
       end
 
-      context "when snapshots are enabled" do
+      context "when the filesystem is mounted at /" do
         before do
-          filesystem.configure_snapper = true
+          allow(filesystem).to receive(:root?).and_return(true)
+          filesystem.configure_snapper = snapshots?
         end
 
-        it "initializes enable_snapshots setting to true" do
-          expect(section.enable_snapshots).to eq(true)
+        context "and snapshots are enabled" do
+          let(:snapshots?) { true }
+
+          it "initializes enable_snapshots setting to true" do
+            expect(section.enable_snapshots).to eq(true)
+          end
+        end
+
+        context "and snapshots are disabled" do
+          let(:snapshots?) { false }
+
+          it "initializes enable_snapshots setting to false" do
+            expect(section.enable_snapshots).to eq(false)
+          end
         end
       end
 
-      context "when snapshots are not enabled" do
+      context "when the filesystem is not mounted at /" do
         before do
-          filesystem.configure_snapper = false
+          allow(filesystem).to receive(:root?).and_return(false)
+          filesystem.configure_snapper = true
         end
 
-        it "initializes enable_snapshots setting to false" do
-          expect(section.enable_snapshots).to eq(false)
+        it "does not initialize the enable_snapshots setting" do
+          expect(section.enable_snapshots).to be_nil
         end
       end
     end
