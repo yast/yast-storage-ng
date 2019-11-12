@@ -51,15 +51,18 @@ module Y2Storage
     # Constructor
     #
     # @param partitioning [Array<Hash>] Partitioning schema from an AutoYaST profile
+    # @param proposal_settings [Y2Storage::ProposalSettings] Guided proposal settings
     # @param devicegraph  [Devicegraph] starting point. If nil, then probed devicegraph
     #   will be used
     # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
     #   based on the initial devicegraph or will use the one in {StorageManager} if
     #   starting from probed (i.e. 'devicegraph' argument is also missing)
     # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
-    def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil, issues_list: nil)
+    def initialize(partitioning: [], proposal_settings: nil, devicegraph: nil, disk_analyzer: nil,
+      issues_list: nil)
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
       @issues_list = issues_list || Y2Storage::AutoinstIssues::List.new
+      @proposal_settings = proposal_settings
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
     end
 
@@ -292,7 +295,7 @@ module Y2Storage
     #
     # @see Y2Storage::BlkDevice#name
     def proposal_settings_for_disks(drives)
-      settings = ProposalSettings.new_for_current_product
+      settings = @proposal_settings || ProposalSettings.new_for_current_product
       settings.use_snapshots = drives.use_snapshots?
       settings.candidate_devices = drives.disk_names
       settings
