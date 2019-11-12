@@ -170,6 +170,27 @@ module Y2Storage
         blk_devices.any?(&:in_network?)
       end
 
+      # Option used in the fstab file for devices that require network
+      NETWORK_OPTION = "_netdev".freeze
+      private_constant :NETWORK_OPTION
+
+      # @see Mountable#extra_default_mount_options
+      #
+      # @return [Array<String>]
+      def extra_default_mount_options
+        # Adding _netdev is implemented in BlkFilesystem so far.
+        #  - Fully network-based filesystems like NFS do not need it because systemd
+        #    always detect those right, without the need of _netdev.
+        #  - We don't specify extra options for Btrfs subvolumes because the current
+        #    libstorage-ng implementation would ignore them (BtrfsSubvolume#mount_options
+        #    is bypassed to only return subvol=$path).
+        if in_network?
+          (super + [NETWORK_OPTION]).uniq
+        else
+          super
+        end
+      end
+
       # @see Base#stable_name?
       def stable_name?
         blk_devices.all?(&:stable_name?)

@@ -957,7 +957,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     end
 
     context "when the currently editing device has filesystem" do
-      let(:dev_name) { "/dev/sdd1" }
+      let(:dev_name) { "/dev/sdb6" }
 
       context "and the filesystem has no mount point" do
         before do
@@ -991,6 +991,13 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
             expect(filesystem.mount_point.sid).to eq(mount_point_sid)
             expect(filesystem.mount_point.path).to eq(mount_path)
+          end
+
+          it "creates a mount point with default mount options" do
+            subject.update_mount_point(mount_path)
+
+            expect(filesystem.mount_point.mount_options).to_not be_empty
+            expect(filesystem.mount_point.mount_options).to eq(filesystem.type.default_mount_options)
           end
 
           context "and the filesystem is btrfs" do

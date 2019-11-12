@@ -145,5 +145,21 @@ module Y2Storage
     def adjust_crypt_options
       ancestors.select { |d| d.is?(:encryption) }.each(&:adjust_crypt_options)
     end
+
+    # Mount options proposed by YaST for mount points associated to this device,
+    # in addition to the ones returned by libstorage-ng
+    #
+    # @see MountPoint#default_mount_options
+    #
+    # @note This method contains the 'extra' prefix in the name for two reasons.
+    #   To make clear these options are added to the one provided by the library
+    #   and to avoid possible conflicts in the future if the corresponding
+    #   library methods become public (so far, they are internal but also called
+    #   #default_mount_options).
+    #
+    # @return [Array<String>]
+    def extra_default_mount_options
+      []
+    end
   end
 end

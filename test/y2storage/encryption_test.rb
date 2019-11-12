@@ -175,4 +175,75 @@ describe Y2Storage::Encryption do
       expect(subject.match_crypttab_spec?("/dev/disks/by-uuid/111-2222-3333")).to eq(false)
     end
   end
+
+  describe "setting the crypttab options" do
+    let(:scenario) { "encrypted_partition.xml" }
+    let(:disk) { devicegraph.find_by_name("/dev/sda") }
+    let(:partition) { devicegraph.find_by_name(partition_name) }
+
+    before { allow(disk.transport).to receive(:network?).and_return network }
+
+    RSpec.shared_examples "netdev for network device" do
+      context "within a network disk" do
+        let(:network) { true }
+
+        it "makes sure #crypt_options include _netdev" do
+          expect(encryption.crypt_options).to include("_netdev")
+        end
+      end
+
+      context "within a local disk" do
+        let(:network) { false }
+
+        it "makes no changes to #crypt_options" do
+          expect(encryption.crypt_options).to be_empty
+        end
+      end
+    end
+
+    context "when mounting an encryption device that already existed" do
+      let(:partition_name) { "/dev/sda1" }
+      subject(:encryption) { partition.encryption }
+
+      before do
+        fs = encryption.filesystem
+        fs.create_mount_point("/mnt")
+        fs.mount_point.set_default_mount_options
+      end
+
+      include_examples "netdev for network device"
+    end
+
+    context "when encrypting and mounting a device" do
+      let(:partition_name) { "/dev/sda2" }
+
+      subject(:encryption) { partition.encryption }
+
+      def create_btrfs(blk_dev)
+        fs = blk_dev.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        fs.create_mount_point("/")
+        # To have full effect, this must be done after creating the mount point
+        fs.add_btrfs_subvolumes(Y2Storage::SubvolSpecification.fallback_list)
+        fs.mount_point.set_default_mount_options
+        fs
+      end
+
+      before do
+        partition.remove_descendants
+        create_btrfs(partition.encrypt)
+      end
+
+      include_examples "netdev for network device"
+
+      context "if the mount point is created before the encryption (e.g. Partitioner)" do
+        before do
+          partition.remove_descendants
+          create_btrfs(partition)
+          partition.encrypt
+        end
+
+        include_examples "netdev for network device"
+      end
+    end
+  end
 end
