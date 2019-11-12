@@ -312,6 +312,7 @@ module Y2Storage
       enc.password = password if password
       enc.ensure_suitable_mount_by
       enc.mount_point&.ensure_suitable_mount_by
+      enc.adjust_crypt_options
 
       Encryption.update_dm_names(devicegraph)
 

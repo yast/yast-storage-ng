@@ -149,6 +149,7 @@ module Y2Storage
     def mount_options=(options)
       to_storage_value.mount_options.clear
       options&.each { |o| to_storage_value.mount_options << o }
+      mountable.adjust_crypt_options
       mount_options
     end
 
