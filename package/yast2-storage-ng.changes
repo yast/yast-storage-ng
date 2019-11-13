@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov 12 11:27:38 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: allow to inject settings for the guided proposal
+  (related to boo#1156539).
+- 4.2.55
+
+-------------------------------------------------------------------
 Wed Nov  6 11:49:35 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: do not repeat filesystem related information when

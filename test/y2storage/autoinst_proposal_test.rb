@@ -28,13 +28,17 @@ describe Y2Storage::AutoinstProposal do
 
   subject(:proposal) do
     described_class.new(
-      partitioning: partitioning, devicegraph: fake_devicegraph, issues_list: issues_list
+      partitioning: partitioning, proposal_settings: proposal_settings,
+      devicegraph: fake_devicegraph, issues_list: issues_list
     )
   end
 
   let(:partitioning) { [] }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
   let(:vg_name) { "system" }
+  let(:proposal_settings) do
+    Y2Storage::ProposalSettings.new_for_current_product
+  end
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)
@@ -734,7 +738,7 @@ describe Y2Storage::AutoinstProposal do
         [{ "device" => "/dev/sda", "use" => use }]
       end
 
-      let(:settings) do
+      let(:proposal_settings) do
         Y2Storage::ProposalSettings.new_for_current_product.tap do |settings|
           settings.use_lvm = false
           settings.use_separate_home = true
@@ -757,10 +761,8 @@ describe Y2Storage::AutoinstProposal do
       let(:use) { "all" }
 
       before do
-        allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
-          .and_return(settings)
         allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
-          .with(settings, Y2Storage::Devicegraph)
+          .with(proposal_settings, Y2Storage::Devicegraph)
           .and_return(planner)
       end
 
@@ -790,7 +792,7 @@ describe Y2Storage::AutoinstProposal do
         end
 
         it "disables use_snapshots setting" do
-          expect(settings).to receive(:use_snapshots=).with(false)
+          expect(proposal_settings).to receive(:use_snapshots=).with(false)
           proposal.propose
         end
       end
@@ -801,7 +803,7 @@ describe Y2Storage::AutoinstProposal do
         end
 
         it "enables use_snapshots setting" do
-          expect(settings).to receive(:use_snapshots=).with(true)
+          expect(proposal_settings).to receive(:use_snapshots=).with(true)
           proposal.propose
         end
       end
