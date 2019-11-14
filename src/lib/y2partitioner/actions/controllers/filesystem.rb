@@ -279,14 +279,13 @@ module Y2Partitioner
         # Updates the current filesystem mount point
         #
         # @param path [String]
-        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
-        def update_mount_point(path, options = {})
+        def update_mount_point(path)
           return if mount_point.nil?
-          return if mount_point.path == path && (options.nil? || options.empty?)
+          return if mount_point.path == path
 
           before_change_mount_point
           mount_point.path = path
-          apply_mount_point_options(options)
+          apply_mount_point_options({})
           after_change_mount_point
         end
 
@@ -294,14 +293,13 @@ module Y2Partitioner
         # mount point is updated.
         #
         # @param path [String]
-        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
-        def create_or_update_mount_point(path, options = {})
+        def create_or_update_mount_point(path)
           return if filesystem.nil?
 
           if mount_point.nil?
-            create_mount_point(path, options)
+            create_mount_point(path, {})
           else
-            update_mount_point(path, options)
+            update_mount_point(path)
           end
         end
 
