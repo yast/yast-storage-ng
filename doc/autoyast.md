@@ -87,14 +87,9 @@ AutoYaST build the proposal.
       </storage>
     </general>
 
-(TODO) The elements in the `proposal` section are merged with those in the
-product's control file. It is like adjusting the guided proposal parameters in
-the regular installer.
-
-(TODO) Apart from other elements which are described in the AutoYaST Guide, an
-special `propose_lvm` element is supported. It just exists for backward
-compatibility reasons, and it is equivalent to set `proposal/lvm` to `true` --
-as seen in the previous example --.
+The elements in the `proposal` section are merged with those in the product's
+control file. It is like adjusting the guided proposal parameters in the regular
+installer. However, only a [few of them are supported][11].
 
 ## Level 3 procedure
 
@@ -237,3 +232,4 @@ of them are classes which inherit from {Y2Storage::AutoinstIssues::Issue} --.
 [8]: https://github.com/yast/yast-autoinstallation/blob/942413b8b54171ec3a79884c9be2138d11ba6803/src/modules/AutoinstStorage.rb#L272 "AutoinstStorage#valid_proposal?"
 [9]: https://github.com/yast/yast-autoinstallation/blob/942413b8b54171ec3a79884c9be2138d11ba6803/src/modules/AutoinstStorage.rb#L296 "Present issues to the user"
 [10]: https://github.com/yast/yast-autoinstallation/blob/942413b8b54171ec3a79884c9be2138d11ba6803/src/lib/autoinstall/storage_proposal.rb "StorageProposal"
+[11]: https://github.com/yast/yast-autoinstallation/blob/b3bf9dc19dd0eeb31dd6af566c42af46c0dfe3d4/src/modules/AutoinstStorage.rb#L332 "AutoinstStorage#proposal_settings_from_profile"
