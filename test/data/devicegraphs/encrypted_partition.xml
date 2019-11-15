@@ -48,7 +48,7 @@
       </region>
       <dm-table-name>cr_sda1</dm-table-name>
       <mount-by>uuid</mount-by>
-      <in-etc-crypttab>true</in-etc-crypttab>
+      <in-etc-crypttab>false</in-etc-crypttab>
       <uuid>ccd40fe6-48df-491e-b862-02e5941e5d13</uuid>
     </Luks>
     <Partition>

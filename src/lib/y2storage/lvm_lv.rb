@@ -152,6 +152,13 @@ module Y2Storage
       log.info "Size of #{name} set to #{size}"
     end
 
+    # @see BlkDevice#in_network?
+    #
+    # @return [Boolean]
+    def in_network?
+      lvm_vg.lvm_pvs.map(&:blk_device).any?(&:in_network?)
+    end
+
     protected
 
     def types_for_is

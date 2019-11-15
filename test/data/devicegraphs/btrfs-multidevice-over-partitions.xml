@@ -59,7 +59,7 @@
       </region>
       <range>256</range>
       <rotational>true</rotational>
-      <transport>ATA</transport>
+      <transport>iSCSI</transport>
     </Disk>
     <Gpt>
       <sid>143</sid>

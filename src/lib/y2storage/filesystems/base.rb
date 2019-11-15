@@ -77,6 +77,17 @@ module Y2Storage
         false
       end
 
+      # @see Mountable#extra_default_mount_options
+      #
+      # @return [Array<String>]
+      def extra_default_mount_options
+        if mount_point
+          (super + type.default_fstab_options(mount_path)).uniq
+        else
+          super
+        end
+      end
+
       # Whether the kernel name used to reference the filesystem (that is, the
       # one used when mounting via {Filesystems::MountByType::Device) is stable
       # and remains equal across system reboots

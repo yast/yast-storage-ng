@@ -16,7 +16,7 @@
         size:         2 GiB
 
     - partition:
-        size:         unlimited
+        size:         80 GiB
         name:         /dev/sda2
         mount_point:  /
         label:        root
@@ -58,6 +58,12 @@
             - subvolume:
                 path: "@/var/lib/pgsql"
                 nocow: true
+
+    - partition:
+        size:         unlimited
+        name:         /dev/sda3
+        mount_point:  /mnt
+        file_system:  ext3
 
 - disk:
     name: /dev/sdb
@@ -115,7 +121,8 @@
         size:         500 GiB
         name:         /dev/sdb6
         type:         logical
-        file_system:  xfs
+        file_system:  ext3
+        mount_point:  /mnt/data
         label:        data
 
     - partition:

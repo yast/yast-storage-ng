@@ -116,6 +116,8 @@ module Y2Storage
       mp.path = path
       # Recalculate etc status for the parent devices
       update_etc_status
+      # Recalculate the crypt_options for parent encryption devices
+      adjust_crypt_options
       # Ensure the mount_by makes sense
       mp.ensure_suitable_mount_by
       mp
@@ -126,6 +128,7 @@ module Y2Storage
     # @raise [Storage::Exception] if the mountable has no mount point
     def remove_mount_point
       storage_remove_mount_point
+      adjust_crypt_options
       update_etc_status
     end
 
@@ -134,6 +137,29 @@ module Y2Storage
     # @return [Boolean]
     def active_mount_point?
       !mount_point.nil? && mount_point.active?
+    end
+
+    # Updates the crypttab options for all the associated encryption devices
+    #
+    # @see Encryption#adjust_crypt_options
+    def adjust_crypt_options
+      ancestors.select { |d| d.is?(:encryption) }.each(&:adjust_crypt_options)
+    end
+
+    # Mount options proposed by YaST for mount points associated to this device,
+    # in addition to the ones returned by libstorage-ng
+    #
+    # @see MountPoint#default_mount_options
+    #
+    # @note This method contains the 'extra' prefix in the name for two reasons.
+    #   To make clear these options are added to the one provided by the library
+    #   and to avoid possible conflicts in the future if the corresponding
+    #   library methods become public (so far, they are internal but also called
+    #   #default_mount_options).
+    #
+    # @return [Array<String>]
+    def extra_default_mount_options
+      []
     end
   end
 end

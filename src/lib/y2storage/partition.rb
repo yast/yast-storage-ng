@@ -281,6 +281,11 @@ module Y2Storage
       id.is?(:esp) && formatted_as?(:vfat)
     end
 
+    # @see BlkDevice#in_network?
+    def in_network?
+      partitionable.in_network?
+    end
+
     protected
 
     # Values for volume specification matching

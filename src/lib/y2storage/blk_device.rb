@@ -312,6 +312,7 @@ module Y2Storage
       enc.password = password if password
       enc.ensure_suitable_mount_by
       enc.mount_point&.ensure_suitable_mount_by
+      enc.adjust_crypt_options
 
       Encryption.update_dm_names(devicegraph)
 
@@ -621,6 +622,13 @@ module Y2Storage
 
         Storage.to_filesystem_user(holder).journal?
       end
+    end
+
+    # Whether this is a network device
+    #
+    # @return [Boolean] true if this is a network-based disk or depends on one
+    def in_network?
+      false
     end
 
     protected

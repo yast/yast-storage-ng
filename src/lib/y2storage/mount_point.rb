@@ -61,6 +61,9 @@ module Y2Storage
     storage_forward :storage_path=, to: :path=
     private :storage_path=
 
+    storage_forward :storage_default_mount_options, to: :default_mount_options
+    private :storage_default_mount_options
+
     # Sets the value for {#path} and ensures {#passno} has a value consistent
     # with the new path
     #
@@ -149,6 +152,7 @@ module Y2Storage
     def mount_options=(options)
       to_storage_value.mount_options.clear
       options&.each { |o| to_storage_value.mount_options << o }
+      mountable.adjust_crypt_options
       mount_options
     end
 
@@ -162,11 +166,6 @@ module Y2Storage
     #
     #   @return [Array<Filesystems::MountByType>]
     storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
-
-    # @!method set_default_mount_options
-    #   Sets the mount options to the default mount options. So far the
-    #   default mount options only contain the subvol for btrfs subvolumes.
-    storage_forward :set_default_mount_options, to: :default_mount_options=
 
     # @!attribute mount_type
     #   Filesystem type used to mount the device, as specified in fstab and/or
@@ -323,6 +322,29 @@ module Y2Storage
     # @param value [Boolean]
     def manual_mount_by=(value)
       save_userdata(:manual_mount_by, value)
+    end
+
+    # Mount options that YaST would propose as the default ones for this mount
+    # point, having into account the mount path, the type of filesystem, the
+    # underlying device and similar criteria
+    #
+    # @note This extends the corresponding Storage::MountPoint#default_mount_options
+    #   provided by libstorage-ng. This adds YaST-specific options on top of the
+    #   ones provided by the method in the library (which so far only returns the
+    #   'subvol=' option when needed).
+    #
+    # @return [Array<String>]
+    def default_mount_options
+      storage_default_mount_options + mountable.extra_default_mount_options
+    end
+
+    # Set {#mount_options} to the default value
+    #
+    # This overrides the Storage::MountsPoint#set_default_mount_options method
+    # provided by libstorage-ng. The original one only sets the default values
+    # calculated by the library, while this relies on {#default_mount_options}.
+    def set_default_mount_options
+      self.mount_options = default_mount_options
     end
 
     protected
