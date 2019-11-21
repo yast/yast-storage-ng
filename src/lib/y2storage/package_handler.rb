@@ -108,7 +108,7 @@ module Y2Storage
     # them immediately.
     #
     def commit
-      if Yast::Mode.installation
+      if installation?
         set_proposal_packages
       else
         install
@@ -157,7 +157,8 @@ module Y2Storage
     #
     def compact
       @pkg_list.uniq!
-      @pkg_list = @pkg_list.delete_if { |pkg| Yast::Package.Installed(pkg) }
+      @pkg_list.reject! { |pkg| Yast::Package.Installed(pkg) } unless installation?
+      @pkg_list
     end
 
     private
@@ -178,6 +179,16 @@ module Y2Storage
       pkg_list = @pkg_list.join(", ")
       # TRANSLATORS: error popup. %s is the list of affected packages.
       Yast::Report.Error(_("Adding the following packages failed: %s") % pkg_list)
+    end
+
+    # Whether the operating system is being installed
+    #
+    # If that's the case, we don't want to query and manage the packages in the
+    # current system, but to prepare the proposal for the target one.
+    #
+    # @return [Boolean]
+    def installation?
+      Yast::Mode.installation
     end
   end
 end

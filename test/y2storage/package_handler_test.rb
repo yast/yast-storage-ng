@@ -64,37 +64,60 @@ describe Y2Storage::PackageHandler do
       expect(subject.pkg_list).to contain_exactly("btrfsprogs", "e2fsprogs", "lvm2")
     end
 
-    it "sets the proposal packages during installation" do
-      allow(Yast::Mode).to receive(:installation).and_return(true)
-      allow(Yast::Package).to receive(:DoInstall).and_return(true)
-      allow(Yast::PackagesProposal).to receive(:SetResolvables).and_return(true)
-      expect(Yast::PackagesProposal).to receive(:SetResolvables)
-      subject.commit
-    end
+    describe "#commit" do
+      before { allow(Yast::Mode).to receive(:installation).and_return(installation) }
 
-    it "installs packages directly in the installed system" do
-      allow(Yast::Mode).to receive(:installation).and_return(false)
-      allow(Yast::Package).to receive(:DoInstall).and_return(true)
-      expect(Yast::Package).to receive(:DoInstall).with(subject.pkg_list)
-      subject.commit
-    end
+      context "during installation" do
+        let(:installation) { true }
 
-    it "pops up an error dialog if setting the proposal packages failed" do
-      allow(Yast::Mode).to receive(:installation).and_return(true)
-      allow(Yast::PackagesProposal).to receive(:SetResolvables).and_return(false)
-      allow(Yast::Report).to receive(:Error)
-      expect(Yast::PackagesProposal).to receive(:SetResolvables)
-      expect(Yast::Report).to receive(:Error)
-      subject.commit
-    end
+        it "sets the proposal packages" do
+          expect(Yast::PackagesProposal).to receive(:SetResolvables)
+          subject.commit
+        end
 
-    it "pops up an error dialog if package installation failed" do
-      allow(Yast::Mode).to receive(:installation).and_return(false)
-      allow(Yast::Package).to receive(:DoInstall).and_return(false)
-      allow(Yast::Report).to receive(:Error)
-      expect(Yast::Package).to receive(:DoInstall).with(subject.pkg_list)
-      expect(Yast::Report).to receive(:Error)
-      subject.commit
+        it "does not try to install the packages" do
+          allow(Yast::PackagesProposal).to receive(:SetResolvables)
+          expect(Yast::Package).to_not receive(:DoInstall)
+          subject.commit
+        end
+
+        it "pops up an error dialog if setting the proposal packages failed" do
+          allow(Yast::PackagesProposal).to receive(:SetResolvables).and_return(false)
+          expect(Yast::Report).to receive(:Error)
+          subject.commit
+        end
+
+        it "does not check for already installed packages" do
+          allow(Yast::PackagesProposal).to receive(:SetResolvables)
+          expect(Yast::Package).to_not receive(:Installed)
+          subject.commit
+        end
+      end
+
+      context "in the installed system" do
+        let(:installation) { false }
+        before { allow(Yast::Package).to receive(:Installed).and_return false }
+
+        it "installs packages directly in the installed system" do
+          expect(Yast::Package).to receive(:DoInstall).with(subject.pkg_list)
+          subject.commit
+        end
+
+        it "does not install packages that are already installed" do
+          list = subject.pkg_list
+          # Let's simulate the first package is already installed
+          allow(Yast::Package).to receive(:Installed).with(list[0]).and_return true
+
+          expect(Yast::Package).to receive(:DoInstall).with(list[1..-1])
+          subject.commit
+        end
+
+        it "pops up an error dialog if package installation failed" do
+          allow(Yast::Package).to receive(:DoInstall).and_return(false)
+          expect(Yast::Report).to receive(:Error)
+          subject.commit
+        end
+      end
     end
   end
 
