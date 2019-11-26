@@ -108,7 +108,7 @@ RSpec.configure do |c|
     # This should be properly unmocked in the tests where real Bcache checking needs
     # to be performed (e.g., DevicegraphSanitizer tests).
     allow_any_instance_of(Y2Storage::DevicegraphSanitizer)
-      .to receive(:errors_for_bcache).and_return([])
+      .to receive(:bcaches_errors).and_return([])
   end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize
