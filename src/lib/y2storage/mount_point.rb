@@ -33,6 +33,9 @@ module Y2Storage
     # @return [Pathname] Object that represents the root path
     ROOT_PATH = Pathname.new("/").freeze
 
+    # @return [Pathname] Object that represents the ESP path
+    ESP_PATH = Pathname.new("/boot/efi").freeze
+
     # @return [Pathname] Object that represents the swap path
     SWAP_PATH = Pathname.new("swap").freeze
 
@@ -241,6 +244,13 @@ module Y2Storage
       path == ROOT_PATH.to_s
     end
 
+    # Whether the mount point is the ESP
+    #
+    # @return [Boolean]
+    def esp?
+      path == ESP_PATH.to_s
+    end
+
     # @see Device#in_etc?
     # @see #in_etc_fstab
     def in_etc?
@@ -360,7 +370,7 @@ module Y2Storage
     def passno_must_be_set?
       return false unless mountable&.is?(:filesystem)
 
-      filesystem.type.is?(*TYPES_WITH_PASSNO)
+      filesystem.type.is?(*TYPES_WITH_PASSNO) || esp?
     end
 
     # Executes the given block on a mount point that has been adapted to honor
