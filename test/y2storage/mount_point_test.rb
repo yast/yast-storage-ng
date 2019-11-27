@@ -135,7 +135,7 @@ describe Y2Storage::MountPoint do
       end
     end
 
-    context "for a NFS share" do
+    context "for an NFS share" do
       let(:blk_device) { nil }
       subject(:filesystem) { fake_devicegraph.nfs_mounts.first }
 
@@ -412,6 +412,48 @@ describe Y2Storage::MountPoint do
 
         it "is set to 0" do
           expect(mount_point.passno).to eq 0
+        end
+      end
+    end
+
+    context "for a VFAT filesystem" do
+      let(:fs_type) { Y2Storage::Filesystems::Type::VFAT }
+
+      context "mounted at /" do
+        let(:path) { "/" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+
+        context "and later reassigned to another path" do
+          it "is set to 0" do
+            mount_point.path = "/var"
+            expect(mount_point.passno).to eq 0
+          end
+        end
+
+        context "and later reassigned to /boot/efi" do
+          it "is set to 2" do
+            mount_point.path = "/boot/efi"
+            expect(mount_point.passno).to eq 2
+          end
+        end
+      end
+
+      context "mounted at a non-root location" do
+        let(:path) { "/home" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+
+      context "mounted at /boot/efi" do
+        let(:path) { "/boot/efi" }
+
+        it "is set to 2" do
+          expect(mount_point.passno).to eq 2
         end
       end
     end
