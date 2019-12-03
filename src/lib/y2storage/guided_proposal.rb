@@ -213,7 +213,11 @@ module Y2Storage
       return @populated_settings if @populated_settings
 
       populated = settings.dup
-      populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)
+      # In the initial attempt, before the user has had any opportunity to
+      # select the candidate devices, consider only the first 10 disks.
+      # Otherwise, the process to find the optimal layout can be very slow
+      # specially if LVM is enabled by default for the product. See bsc#1154070
+      populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)[0, 10]
 
       @populated_settings = populated
     end
