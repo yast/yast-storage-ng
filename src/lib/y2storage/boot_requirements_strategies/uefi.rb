@@ -129,16 +129,11 @@ module Y2Storage
       end
 
       def reusable_efi
-        @reusable_efi = biggest_efi_in_boot_device
+        @reusable_efi ||= biggest_efi_in_boot_device
       end
 
       def biggest_efi_in_boot_device
         biggest_partition(suitable_efi_partitions(boot_disk))
-      end
-
-      def biggest_efi
-        efi_partitions = devicegraph.disk_devices.map { |d| suitable_efi_partitions(d) }.flatten
-        biggest_partition(efi_partitions)
       end
 
       def suitable_efi_partitions(device)
