@@ -173,7 +173,6 @@ describe Y2Storage::GuidedProposal do
 
     context "when forced to create a small partition" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }
-      let(:windows_partitions) { {} }
       let(:separate_home) { true }
       let(:lvm) { false }
 
@@ -194,7 +193,6 @@ describe Y2Storage::GuidedProposal do
 
     context "when installing in a multipath device" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
-      let(:windows_partitions) { {} }
       let(:separate_home) { true }
       let(:lvm) { false }
 
@@ -238,7 +236,6 @@ describe Y2Storage::GuidedProposal do
 
     context "when installing in a DM RAID" do
       let(:scenario) { "empty-dm_raids_no_sda.xml" }
-      let(:windows_partitions) { {} }
       let(:separate_home) { false }
       let(:lvm) { false }
 
@@ -312,7 +309,6 @@ describe Y2Storage::GuidedProposal do
       end
 
       let(:scenario) { "swaps" }
-      let(:windows_partitions) { {} }
       let(:all_volumes) do
         [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
