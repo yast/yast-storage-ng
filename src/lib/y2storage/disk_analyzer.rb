@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,13 +19,11 @@
 
 require "yast"
 require "storage"
-require "fileutils"
 require "y2packager/repository"
 require "y2storage/disk_size"
 require "y2storage/blk_device"
 require "y2storage/lvm_pv"
 require "y2storage/partition_id"
-require "y2storage/existing_filesystem"
 
 Yast.import "Arch"
 
@@ -47,18 +41,20 @@ module Y2Storage
   class DiskAnalyzer
     include Yast::Logger
 
-    NO_INSTALLATION_IDS =
-      [
-        PartitionId::SWAP,
-        PartitionId::EXTENDED,
-        PartitionId::LVM
-      ]
-
-    # Maximum number of checks for "expensive" operations.
-    DEFAULT_CHECK_LIMIT = 10
-
+    # Constructor
+    #
+    # @param devicegraph [Devicegraph]
     def initialize(devicegraph)
       @devicegraph = devicegraph
+    end
+
+    # Whether there is a Windows system
+    #
+    # @param disks [Disk, String] disks to analyze. All disks by default.
+    def windows_system?(*disks)
+      return false unless windows_architecture?
+
+      filesystems_collection(*disks).any?(&:windows_system?)
     end
 
     # Partitions containing an installation of MS Windows
@@ -69,83 +65,80 @@ module Y2Storage
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<Partition>]
     def windows_partitions(*disks)
-      data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
+      return [] unless windows_architecture?
+
+      windows_filesystems(*disks).flat_map(&:blk_devices)
     end
 
-    # Linux partitions.
+    # Partitions with a proper Linux partition Id
     #
     # @see PartitionId.linux_system_ids
     #
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<Partition>]
     def linux_partitions(*disks)
-      data_for(*disks, :linux_partitions, &:linux_system_partitions)
+      disks_collection(*disks).flat_map(&:linux_system_partitions)
     end
 
-    # Release names of installed systems for every disk.
+    # Name of installed systems
     #
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def installed_systems(*disks)
-      data_for(*disks, :installed_systems) { |d| find_installed_systems(d) }
+      windows_systems(*disks) + linux_systems(*disks)
     end
 
-    # Release names of installed Windows systems for every disk.
+    # Name of installed Windows systems
     #
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def windows_systems(*disks)
-      data_for(*disks, :windows_systems) { |d| find_windows_systems(d) }
+      windows_filesystems(*disks).map(&:system_name).compact
     end
 
-    # Release names of installed Linux systems for every disk.
+    # Release name of installed Linux systems
     #
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def linux_systems(*disks)
-      data_for(*disks, :linux_systems) { |d| find_linux_systems(d) }
+      linux_suitable_filesystems(*disks).map(&:release_name).compact
     end
 
     # All fstabs found in the system
     #
-    # FIXME: this method is not using the {#data_for} caching mechanism. The reason
-    # is because fstab information needs to be stored by filesystem, but {#data_for}
-    # saves information by disk. As a consequence, this method could mount a device
-    # that was already mounted previously to read some information on it, for
-    # example the {#installed_systems}.
+    # Note that all filesystems are considered here, including filesystems over LVM LVs, see
+    # {#all_linux_suitable_filesystems}.
     #
     # @return [Array<Fstab>]
     def fstabs
-      return @fstabs if @fstabs
-
-      save_config_files
-      @fstabs
+      @fstabs ||= all_linux_suitable_filesystems.map(&:fstab).compact
     end
 
     # All crypttabs found in the system
     #
-    # FIXME: this method is not using the {#data_for} caching mechanism. The reason
-    # is because crypttab information needs to be stored by filesystem, but {#data_for}
-    # saves information by disk. As a consequence, this method could mount a device
-    # that was already mounted previously to read some information on it, for
-    # example the {#installed_systems}.
+    # Note that all filesystems are considered here, including filesystems over LVM LVs, see
+    # {#all_linux_suitable_filesystems}.
     #
     # @return [Array<Crypttab>]
     def crypttabs
-      return @crypttabs if @crypttabs
-
-      save_config_files
-      @crypttabs
+      @crypttabs ||= all_linux_suitable_filesystems.map(&:crypttab).compact
     end
 
     # Disks that are suitable for installing Linux.
     #
-    # @return [Array<Disk>] candidate disks
+    # Finds devices (disk devices and software RAIDs) that are suitable for installing Linux
+    #
+    # From fate#326573 on, software RAIDs with partition table or without children are also
+    # considered as valid candidates.
+    #
+    # @return [Array<BlkDevice>] candidate
     def candidate_disks
       return @candidate_disks if @candidate_disks
 
-      @candidate_disks = find_candidate_disks
+      @candidate_disks = candidate_software_raids + candidate_disk_devices
+
       log.info("Found candidate disks: #{@candidate_disks}")
+
       @candidate_disks
     end
 
@@ -159,20 +152,15 @@ module Y2Storage
 
     private
 
+    # @return [Devicegraph]
     attr_reader :devicegraph
 
-    # Gets data for a set of disks, stores it and returns that data.
+    # Whether the architecture of the system is supported by MS Windows
     #
-    # @param disks [Disk, String] disks to analyze. All disks by default.
-    # @param data [Symbol] data name.
-    def data_for(*disks, data)
-      @disks_data ||= {}
-      @disks_data[data] ||= {}
-      disks = disks_collection(disks)
-      disks.each do |disk|
-        @disks_data[data][disk.name] ||= yield(disk)
-      end
-      disks.map { |d| @disks_data[data][d.name] }.flatten.compact
+    # @return [Boolean]
+    def windows_architecture?
+      # Should we include ARM here?
+      Yast::Arch.x86_64 || Yast::Arch.i386
     end
 
     # Obtains a list of disk devices, software RAIDs, and bcaches
@@ -181,7 +169,7 @@ module Y2Storage
     #
     # @param disks [Array<BlkDevice, String>] blk device to analyze.
     # @return [Array<BlkDevice>] a list of blk devices
-    def disks_collection(disks)
+    def disks_collection(*disks)
       return default_disks_collection if disks.empty?
 
       disks.map! { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }
@@ -198,99 +186,58 @@ module Y2Storage
       devicegraph.disk_devices + devicegraph.software_raids + devicegraph.bcaches
     end
 
-    # @see #windows_partitions
-    def find_windows_partitions(disk)
-      disk.partitions.select { |p| windows_partition?(p) }
-    end
-
-    # Check if the partition contains a MS Windows system that could possibly be resized.
+    # All partitions from the given disks
     #
-    # @param partition [Partition] partition to check
-    # @return [Boolean]
-    def windows_partition?(partition)
-      return false unless partition.formatted?
-
-      filesystem = partition.filesystem
-      ExistingFilesystem.new(filesystem).windows?
-    end
-
-    # Obtain release names of installed systems in a disk.
+    # @see #disks_collection
     #
-    # @param disk [Disk] disk to check
-    # @return [Array<String>] release names
-    def find_installed_systems(disk)
-      windows_systems(disk) + linux_systems(disk)
+    # @param disks [Array<BlkDevice, String>]
+    # @return [Array<Partition>]
+    def partitions_collection(*disks)
+      disks_collection(*disks).flat_map(&:partitions)
     end
 
-    # Obtain release names of installed Windows systems in a disk.
+    # All filesystems from the given disks
     #
-    # @param disk [Disk] disk to check
-    # @return [Array<String>] release names
-    def find_windows_systems(disk)
-      systems = []
-      systems << "Windows" unless windows_partitions(disk).empty?
-      systems
-    end
-
-    # Obtain release names of installed Linux systems in a disk.
+    # @see #disks_collection
+    # @see #partitions_collection
     #
-    # @param disk [Disk] disk to check
-    # @return [Array<String>] release names
-    def find_linux_systems(disk)
-      filesystems = linux_partitions(disk).map(&:filesystem)
-      filesystems << disk.filesystem
-      filesystems.compact!
-      filesystems.map { |f| release_name(f) }.compact
+    # @param disks [Array<BlkDevice, String>]
+    # @return [Array<Filesystems::BlkFilesystem>]
+    def filesystems_collection(*disks)
+      blk_devices = disks_collection(*disks) + partitions_collection(*disks)
+
+      blk_devices.map(&:filesystem).compact
     end
 
-    # Saves all found fstab and crypttab files
-    def save_config_files
-      @fstabs, @crypttabs = find_config_files
-    end
-
-    # Finds fstab and crypttab files in all suitable filesystems for root
+    # All filesystems that contain a Windows system from the given disks
     #
-    # @see #suitable_root_filesystems
+    # @see #filesystems_collection
     #
-    # @return [Array<Array<Fstab>, Array<Crypttab>>]
-    def find_config_files
-      fstabs = []
-      crypttabs = []
-
-      suitable_root_filesystems.each do |filesystem|
-        fs = ExistingFilesystem.new(filesystem)
-
-        fstabs << fs.fstab
-        crypttabs << fs.crypttab
-      end
-
-      fstabs.compact!
-      crypttabs.compact!
-
-      [fstabs, crypttabs]
+    # @param disks [Array<BlkDevice, String>]
+    # @return [Array<Filesystems::BlkFilesystem>]
+    def windows_filesystems(*disks)
+      filesystems_collection(*disks).select(&:windows_system?)
     end
 
-    # Filesystems that could contain a Linux installation
+    # All filesystems that could contain Linux system from the given disks
+    #
+    # Note that filesystems over LVM LVs are not included.
+    #
+    # @see #filesystems_collection
+    #
+    # @param disks [Array<BlkDevice, String>]
+    # @return [Array<Filesystems::BlkFilesystem>]
+    def linux_suitable_filesystems(*disks)
+      filesystems_collection(*disks).select(&:root_suitable?)
+    end
+
+    # All filesystems that could contain a Linux system
+    #
+    # Note that {#linux_suitable_filesystems} does not take into account filesystems over a LVM LV.
     #
     # @return [Array<Filesystems::Base>]
-    def suitable_root_filesystems
-      devicegraph.filesystems.select { |f| f.type.root_ok? }
-    end
-
-    def release_name(filesystem)
-      fs = ExistingFilesystem.new(filesystem)
-      fs.release_name
-    end
-
-    # Finds devices (disk devices and software RAIDs) that are suitable for installing Linux
-    #
-    # From fate#326573 on, software RAIDs with partition table or without children are also
-    # considered as valid candidates.
-    #
-    # @return [Array<BlkDevice>] candidate devices (disk devices and software RAIDs matching the
-    #   conditions explained above)
-    def find_candidate_disks
-      find_candidate_software_raids + find_candidate_disk_devices
+    def all_linux_suitable_filesystems
+      @all_linux_suitable_filesystems ||= devicegraph.filesystems.select(&:root_suitable?)
     end
 
     # Finds software RAIDs that are considered valid candidates for a Linux installation
@@ -299,8 +246,8 @@ module Y2Storage
     # either, have a partition table or do not have children.
     #
     # @return [Array<Md>]
-    def find_candidate_software_raids
-      @find_candidate_software_raids ||= devicegraph.software_raids.select do |md|
+    def candidate_software_raids
+      devicegraph.software_raids.select do |md|
         (md.partition_table? || md.children.empty?) && candidate_disk?(md)
       end
     end
@@ -310,8 +257,8 @@ module Y2Storage
     # Basically, all available disk devices except those that are part of a candidate software RAID.
     #
     # @return [Array<BlkDevice>]
-    def find_candidate_disk_devices
-      rejected_disk_devices = find_candidate_software_raids.map(&:ancestors).flatten
+    def candidate_disk_devices
+      rejected_disk_devices = candidate_software_raids.map(&:ancestors).flatten
       candidate_disk_devices = devicegraph.disk_devices.select { |d| candidate_disk?(d) }
 
       candidate_disk_devices - rejected_disk_devices
@@ -319,9 +266,8 @@ module Y2Storage
 
     # Checks whether a device can be used as candidate disk for installation
     #
-    # @note A device is candidate for installation if no filesystem belonging
-    #   to the device is mounted and the device does not contain a repository
-    #   for installation.
+    # A device is candidate for installation if no filesystem belonging to the device is mounted and the
+    # device does not contain a repository for installation.
     #
     # @param device [BlkDevice]
     # @return [Boolean]
@@ -342,10 +288,9 @@ module Y2Storage
 
     # All filesystems inside a device
     #
-    # @note The device could be directly formatted or the filesystem could belong
-    #   to a partition inside the device. Moreover, when the device (on any of its
-    #   partitions) is used as LVM PV, all filesystem inside the LVM VG are considered
-    #   as belonging to the device.
+    # The device could be directly formatted or the filesystem could belong to a partition inside the
+    # device. Moreover, when the device (on any of its partitions) is used as LVM PV, all filesystem
+    # inside the LVM VG are considered as belonging to the device.
     #
     # @param device [BlkDevice]
     # @return [Array<BlkFilesystem>]
@@ -411,9 +356,7 @@ module Y2Storage
     #
     # @return [Array<String>]
     def repositories_devices
-      return @repositories_devices if @repositories_devices
-
-      @repositories_devices = local_repositories.map { |r| repository_devices(r) }.flatten
+      @repositories_devices ||= local_repositories.map { |r| repository_devices(r) }.flatten
     end
 
     # TODO: This method should be moved to Y2Packager::Repository class

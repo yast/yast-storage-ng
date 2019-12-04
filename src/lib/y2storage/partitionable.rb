@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -195,17 +195,6 @@ module Y2Storage
     # @return [Array<Partition>]
     def linux_system_partitions
       partitions_with_id(:linux_system)
-    end
-
-    # Partitions that could potentially contain a MS Windows installation
-    #
-    # @see ParitionId.windows_system_ids
-    #
-    # @return [Array<Partition>]
-    def possible_windows_partitions
-      # Sorting is not mandatory, but keeping the output stable looks like a
-      # sane practice.
-      partitions.select(&:suitable_for_windows?).sort_by(&:number)
     end
 
     # Size between MBR and first partition.

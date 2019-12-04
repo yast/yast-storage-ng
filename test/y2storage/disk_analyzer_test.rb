@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,6 +29,74 @@ describe Y2Storage::DiskAnalyzer do
 
   before do
     fake_scenario(scenario)
+  end
+
+  describe "#windows_system?" do
+    let(:scenario) { "double-windows-pc" }
+
+    context "when the architecture is not supported by Windows" do
+      let(:architecture) { :ppc }
+
+      it "returns false" do
+        expect(analyzer.windows_system?).to eq(false)
+      end
+
+      it "does not inspect any filesystem" do
+        expect_any_instance_of(Y2Storage::Filesystems::Base).to_not receive(:windows_system?)
+
+        analyzer.windows_system?
+      end
+    end
+
+    context "when the architecture is supported by Windows" do
+      let(:architecture) { :x86_64 }
+
+      context "and there is a partition with a Windows system" do
+        before do
+          allow(Y2Storage::FilesystemReader).to receive(:new).and_return(reader)
+
+          allow(reader).to receive(:windows?).and_return(*windows)
+        end
+
+        let(:reader) { double("Y2Storage::FilesystemReader").as_null_object }
+
+        let(:windows) { [true] }
+
+        it "returns true" do
+          expect(analyzer.windows_system?).to eq(true)
+        end
+
+        context "when a Windows is found for a filesystem" do
+          before do
+            allow_any_instance_of(Y2Storage::Filesystems::Base)
+              .to receive(:windows_suitable?).and_return(true)
+          end
+
+          let(:windows) { [true, false, false, false] }
+
+          it "does not check the next filesystem" do
+            expect(Y2Storage::FilesystemReader).to receive(:new).once.and_return(reader)
+
+            analyzer.windows_system?
+          end
+        end
+
+        context "when a Windows is not found for a filesystem" do
+          before do
+            allow_any_instance_of(Y2Storage::Filesystems::Base)
+              .to receive(:windows_suitable?).and_return(true)
+          end
+
+          let(:windows) { [false, false, true, true] }
+
+          it "checks the next filesystem" do
+            expect(Y2Storage::FilesystemReader).to receive(:new).exactly(3).times.and_return(reader)
+
+            analyzer.windows_system?
+          end
+        end
+      end
+    end
   end
 
   describe "#windows_partitions" do
@@ -72,11 +140,43 @@ describe Y2Storage::DiskAnalyzer do
     end
   end
 
+  describe "#linux_partitions" do
+    context "for a disk with no linux partitions" do
+      let(:scenario) { "windows-pc-gpt" }
+
+      it "returns an empty array" do
+        expect(analyzer.linux_partitions("/dev/sda").empty?).to eq(true)
+      end
+    end
+
+    context "for a disk with linux partitions" do
+      let(:scenario) { "mixed_disks" }
+
+      it "returns a list of partitions" do
+        expect(analyzer.linux_partitions("/dev/sda")).to be_a(Array)
+        expect(analyzer.linux_partitions("/dev/sda")).to all(be_a(Y2Storage::Partition))
+      end
+
+      it "includes all linux partitions" do
+        expect(analyzer.linux_partitions("/dev/sda").map(&:basename)).to contain_exactly("sda2")
+      end
+    end
+
+    context "when no disk is indicated" do
+      let(:scenario) { "mixed_disks" }
+
+      it "includes all linux partitions from all disks" do
+        expect(analyzer.linux_partitions.map(&:basename))
+          .to contain_exactly("sda2", "sdb1", "sdb2", "sdb3", "sdb5", "sdb6", "sdb7")
+      end
+    end
+  end
+
   describe "#installed_systems" do
     before do
       allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
         .and_return(content_info)
-      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:release_name)
+      allow_any_instance_of(Y2Storage::Filesystems::Base).to receive(:release_name)
         .and_return release_name
     end
 
@@ -123,52 +223,52 @@ describe Y2Storage::DiskAnalyzer do
 
   describe "#fstabs" do
     before do
-      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:fstab)
-        .and_return(Y2Storage::Fstab.new)
+      allow_any_instance_of(Y2Storage::Filesystems::Base)
+        .to receive(:fstab).and_return(Y2Storage::Fstab.new)
     end
 
-    it "returns a list with all found fstab files" do
+    it "returns a list of fstab files" do
       fstabs = analyzer.fstabs
 
       expect(fstabs).to be_a(Array)
       expect(fstabs).to all(be_a(Y2Storage::Fstab))
     end
 
-    it "tries to read a fstab file for each suitable root filesystem" do
-      expect(Y2Storage::ExistingFilesystem).to receive(:new).exactly(5).times.and_call_original
-
-      analyzer.fstabs
+    it "return fstab files from all root suitable filesystems" do
+      expect(analyzer.fstabs.size).to eq(5)
     end
 
     it "does not try to read fstab files again in subsequent calls" do
       analyzer.fstabs
-      expect(Y2Storage::ExistingFilesystem).to_not receive(:new)
+
+      expect(Y2Storage::Fstab).to_not receive(:new)
+
       analyzer.fstabs
     end
   end
 
   describe "#crypttabs" do
     before do
-      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:crypttab)
-        .and_return(Y2Storage::Crypttab.new)
+      allow_any_instance_of(Y2Storage::Filesystems::Base)
+        .to receive(:crypttab).and_return(Y2Storage::Crypttab.new)
     end
 
-    it "returns a list with all found crypttab files" do
+    it "returns a list of crypttab files" do
       crypttabs = analyzer.crypttabs
 
       expect(crypttabs).to be_a(Array)
       expect(crypttabs).to all(be_a(Y2Storage::Crypttab))
     end
 
-    it "tries to read a crypttab file for each suitable root filesystem" do
-      expect(Y2Storage::ExistingFilesystem).to receive(:new).exactly(5).times.and_call_original
-
-      analyzer.crypttabs
+    it "return crypttab files from suitable root filesystems" do
+      expect(analyzer.crypttabs.size).to eq(5)
     end
 
     it "does not try to read crypttab files again in subsequent calls" do
       analyzer.crypttabs
-      expect(Y2Storage::ExistingFilesystem).to_not receive(:new)
+
+      expect(Y2Storage::Crypttab).to_not receive(:new)
+
       analyzer.crypttabs
     end
   end
