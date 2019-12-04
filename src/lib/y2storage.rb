@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2017] SUSE LLC
+# Copyright (c) [2016-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -64,7 +64,7 @@ require "y2storage/btrfs_raid_level"
 require "y2storage/exceptions"
 require "y2storage/boot_requirements_checker"
 require "y2storage/disk_analyzer"
-require "y2storage/existing_filesystem"
+require "y2storage/filesystem_reader"
 require "y2storage/disk_size"
 require "y2storage/fake_device_factory"
 require "y2storage/free_disk_space"
