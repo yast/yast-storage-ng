@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -544,9 +544,7 @@ describe Y2Storage::Partition do
     end
   end
 
-  describe "#suitable_for_windows?" do
-    let(:scenario) { "mixed_disks" }
-
+  describe "#windows_suitable?" do
     subject(:partition) { fake_devicegraph.find_by_name(device_name) }
 
     before do
@@ -555,30 +553,44 @@ describe Y2Storage::Partition do
 
     let(:id) { Y2Storage::PartitionId::LINUX }
 
-    context "when it is not a primary partition" do
-      let(:device_name) { "/dev/sdb5" }
+    context "when the partition does not belongs to a disk" do
+      let(:scenario) { "partitioned_md" }
+
+      let(:device_name) { "/dev/md0p1" }
 
       it "returns false" do
-        expect(subject.suitable_for_windows?).to eq(false)
+        expect(subject.windows_suitable?).to eq(false)
       end
     end
 
-    context "when it is a primary partition" do
-      let(:device_name) { "/dev/sda1" }
+    context "when the partition belongs to a disk" do
+      let(:scenario) { "mixed_disks" }
 
-      context "and it has 'windows_system' id" do
-        let(:id) { Y2Storage::PartitionId::NTFS }
+      context "but it is not a primary partition" do
+        let(:device_name) { "/dev/sdb5" }
 
-        it "returns true" do
-          expect(subject.suitable_for_windows?).to eq(true)
+        it "returns false" do
+          expect(subject.windows_suitable?).to eq(false)
         end
       end
 
-      context "and it has no 'windows_system' id" do
-        let(:id) { Y2Storage::PartitionId::LVM }
+      context "and it is a primary partition" do
+        let(:device_name) { "/dev/sda1" }
 
-        it "returns false" do
-          expect(subject.suitable_for_windows?).to eq(false)
+        context "and it has 'windows_system' id" do
+          let(:id) { Y2Storage::PartitionId::NTFS }
+
+          it "returns true" do
+            expect(subject.windows_suitable?).to eq(true)
+          end
+        end
+
+        context "and it has no 'windows_system' id" do
+          let(:id) { Y2Storage::PartitionId::LVM }
+
+          it "returns false" do
+            expect(subject.windows_suitable?).to eq(false)
+          end
         end
       end
     end

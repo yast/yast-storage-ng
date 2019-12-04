@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/boot_requirements_strategies/uefi"
-require "y2storage/existing_filesystem"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -114,7 +113,7 @@ module Y2Storage
         filesystem = partition.direct_blk_filesystem
         return false if filesystem.nil? || !filesystem.type.is?(:vfat)
 
-        ExistingFilesystem.new(filesystem).rpi_boot?
+        filesystem.rpi_boot?
       end
 
       # First partition in a disk

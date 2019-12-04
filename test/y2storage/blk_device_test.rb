@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -1280,6 +1281,14 @@ describe Y2Storage::BlkDevice do
           expect_no_dm_duplicates
         end
       end
+    end
+  end
+
+  describe "#windows_suitable?" do
+    let(:device_name) { "/dev/sdb" }
+
+    it "returns false" do
+      expect(subject.windows_suitable?).to eq(false)
     end
   end
 end

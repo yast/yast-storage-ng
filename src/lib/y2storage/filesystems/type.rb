@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -167,6 +167,8 @@ module Y2Storage
       # filesystems that can embed grub
       GRUB_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs]
 
+      WINDOWS_FILESYSTEMS = [:ntfs, :vfat]
+
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
         :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS, :JOURNAL_OPTIONS,
@@ -221,22 +223,28 @@ module Y2Storage
         GRUB_FILESYSTEMS.map { |f| find(f) }
       end
 
+      # Allowed filesystems for Windows
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.windows_filesystems
+        WINDOWS_FILESYSTEMS.map { |f| find(f) }
+      end
+
       # Check if filesystem is usable as root (mountpoint "/") filesystem.
       #
-      # return [Boolean]
+      # @return [Boolean]
       #
       # @example
       #   devicegraph.filesystems.each do |fs|
       #     puts "#{fs.type}: #{fs.type.root_ok?}"
       #   end
-      #
       def root_ok?
         Type.root_filesystems.include?(self)
       end
 
       # Check if filesystem was usable as root (mountpoint "/") filesystem.
       #
-      # return [Boolean]
+      # @return [Boolean]
       #
       # @example
       #   devicegraph.filesystems.each do |fs|
@@ -249,7 +257,7 @@ module Y2Storage
 
       # Check if filesystem is usable as home (mountpoint "/home") filesystem.
       #
-      # return [Boolean]
+      # @return [Boolean]
       #
       # @example
       #   devicegraph.filesystems.each do |fs|
@@ -277,7 +285,7 @@ module Y2Storage
 
       # Check if filesystem was usable as home (mountpoint "/home") filesystem.
       #
-      # return [Boolean]
+      # @return [Boolean]
       #
       # @example
       #   devicegraph.filesystems.each do |fs|
@@ -286,6 +294,13 @@ module Y2Storage
       #
       def legacy_home?
         Type.legacy_home_filesystems.include?(self)
+      end
+
+      # Whether is usable for installing a Windows system.
+      #
+      # @return [Boolean]
+      def windows_ok?
+        Type.windows_filesystems.include?(self)
       end
 
       # Human readable text for a filesystem

@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -252,6 +252,32 @@ describe Y2Storage::Filesystems::Type do
       expect(chars).not_to include(" ")
       expect(chars).not_to include("\t")
       expect(chars).not_to include("\n")
+    end
+  end
+
+  describe ".windows_filesystems" do
+    it "returns a list" do
+      expect(described_class.windows_filesystems).to be_a(Array)
+    end
+
+    it "only includes ntfs and vfat" do
+      expect(described_class.windows_filesystems.map(&:to_sym)).to contain_exactly(:ntfs, :vfat)
+    end
+  end
+
+  describe "#windows_ok?" do
+    it "returns true for ntfs" do
+      expect(described_class::NTFS.windows_ok?).to eq(true)
+    end
+
+    it "returns true for vfat" do
+      expect(described_class::VFAT.windows_ok?).to eq(true)
+    end
+
+    it "returns false otherwise" do
+      types = described_class.all.reject { |t| t.is?(:ntfs, :vfat) }
+
+      expect(types.map(&:windows_ok?)).to all(be(false))
     end
   end
 end

@@ -631,6 +631,15 @@ module Y2Storage
       false
     end
 
+    # Whether the block device fulfills conditions to be used for a Windows system
+    #
+    # Note that only partitions can be used for installing Windows.
+    #
+    # @return [Boolean]
+    def windows_suitable?
+      false
+    end
+
     protected
 
     # Values for volume specification matching
