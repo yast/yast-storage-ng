@@ -105,11 +105,25 @@ module Y2Storage
         @efi_volume
       end
 
+      # Adjusts the given volume specification to enforce a minimal device that
+      # never grows beyond its minimum size
+      #
+      # @param vol [VolumeSpecification] specification that will be modified by the method
+      # @return [VolumeSpecification]
       def limit_volume_size_to_min(vol)
         vol.max_size = vol.min_size
         vol.desired_size = vol.min_size
         vol
       end
+
+      # Maximum offset within the boot disk in which the ESP partition can be located
+      #
+      # The limit of 2TiB has been used since the first versions of
+      # yast2-storage-ng, although the origin is not absolutely clear.
+      #
+      # @return [DiskSize]
+      EFI_MAX_START = DiskSize.TiB(2).freeze
+      private_constant :EFI_MAX_START
 
       # @return [Planned::Partition]
       def efi_partition(target)
@@ -121,7 +135,7 @@ module Y2Storage
         if reusable_efi
           planned_partition.reuse_name = reusable_efi.name
         else
-          planned_partition.max_start_offset = DiskSize.TiB(2)
+          planned_partition.max_start_offset = EFI_MAX_START
           planned_partition.disk = boot_disk.name
         end
 
@@ -136,11 +150,20 @@ module Y2Storage
         biggest_partition(suitable_efi_partitions(boot_disk))
       end
 
+      # Devices on the given disk that are usable as ESP for our purposes
+      #
+      # @param device [Y2Storage::Partitionable] disk device
+      # @return [Array<Y2Storage::Partition>]
       def suitable_efi_partitions(device)
-        device.partitions.select do |partition|
-          partition.match_volume?(efi_volume, exclude: :mount_point) &&
-            partition.id == PartitionId::ESP
-        end
+        device.partitions.select { |part| suitable_efi_partition?(part) }
+      end
+
+      # Whether the given partition is usable as ESP for our purposes
+      #
+      # @param partition [Y2Storage::Partition]
+      # @return [Boolean]
+      def suitable_efi_partition?(partition)
+        partition.match_volume?(efi_volume, exclude: :mount_point) && partition.id == PartitionId::ESP
       end
 
       def biggest_partition(partitions)
