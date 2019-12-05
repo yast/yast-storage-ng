@@ -103,63 +103,44 @@
 		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
 
 ## needed partitions in a Raspberry Pi
-- with a partitions-based proposal
-	- if there are no EFI partitions
-		- and there are firmware partitions in several disks, including the target
-			- **requires a new /boot/efi partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires a new /boot/efi partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
+- if the target boot disk initially contains a MBR partition table
+	- and the first partition in the boot disk has id DOS32 and a FAT filesystem
+		- and it contains an EFI directory
+			- **only requires to use the existing EFI partition (bootcode will be installed there)**
+		- and it contains a Raspberry Pi boot code but no EFI directory
+			- and there is also a suitable standard EFI partition in the target disk
+				- **requires to mount at /boot/vc the firmware partition from the target disk**
+				- **requires to use the existing EFI partition**
+			- and there is no suitable EFI partition in the target disk
+				- **requires to mount at /boot/vc the firmware partition from the target disk**
+				- **requires a new /boot/efi partition**
+				- **does not enforce the /boot/efi partition to be the first**
+				- **requires the /boot/efi partition to have id ESP (according to the EFI standard)**
+		- and the first partition contains no boot code or EFI files
 			- **requires only a new /boot/efi partition**
-	- if there is suitable EFI partition
-		- and there are firmware partitions in several disks, including the target
-			- **requires to use the existing EFI partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires to use the existing EFI partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
-			- **only requires to use the existing EFI partition**
-- with a LVM-based proposal
-	- if there are no EFI partitions
-		- and there are firmware partitions in several disks, including the target
-			- **requires a new /boot/efi partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires a new /boot/efi partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
+			- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+		- and there are no partitions in the boot disk
 			- **requires only a new /boot/efi partition**
-	- if there is suitable EFI partition
-		- and there are firmware partitions in several disks, including the target
-			- **requires to use the existing EFI partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires to use the existing EFI partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
-			- **only requires to use the existing EFI partition**
-- with an encrypted proposal
-	- if there are no EFI partitions
-		- and there are firmware partitions in several disks, including the target
-			- **requires a new /boot/efi partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires a new /boot/efi partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
-			- **requires only a new /boot/efi partition**
-	- if there is suitable EFI partition
-		- and there are firmware partitions in several disks, including the target
-			- **requires to use the existing EFI partition**
-			- **requires to mount at /boot/vc the firmware partition from the target disk**
-		- and there is a firmware partition in another disk
-			- **requires to use the existing EFI partition**
-			- **requires to mount the existing firmware partition at /boot/vc**
-		- and there is no firmware partition in the system
-			- **only requires to use the existing EFI partition**
+			- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+	- and the first partition in the boot disk is a standard EFI with id ESP
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+- if the target boot disk initially contains a GPT partition table
+	- even if the first partition has id DOS32 and a FAT filesystem with an EFI system
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+	- if there are no partitions in the boot disk
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+- if the target boot disk contains no partition table initially
+	- **requires only a new /boot/efi partition**
+	- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+	- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 - when proposing a new EFI partition
 	- **requires /boot/efi to be on the boot disk**
 	- **requires /boot/efi to be a non-encrypted vfat partition**

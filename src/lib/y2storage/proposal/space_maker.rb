@@ -254,6 +254,7 @@ module Y2Storage
 
         # restart evaluation
         @distribution = nil
+        force_ptables(planned_partitions)
 
         prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
@@ -265,6 +266,18 @@ module Y2Storage
         end
 
         raise Error unless @distribution
+      end
+
+      def force_ptables(planned_partitions)
+        Y2Storage::Partitionable.all(new_graph).each do |dev|
+          dev.forced_ptable_type = nil
+        end
+
+        forced = planned_partitions.select { |part| part.disk && part.ptable_type }
+        forced.each do |part|
+          disk = new_graph.find_by_name(part.disk)
+          disk.forced_ptable_type = part.ptable_type
+        end
       end
 
       # Performs the next action of {#resize_and_delete}

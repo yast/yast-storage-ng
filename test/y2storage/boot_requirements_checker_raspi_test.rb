@@ -29,163 +29,181 @@ describe Y2Storage::BootRequirementsChecker do
 
     include_context "boot requirements"
 
-    def rpi_boot_double(name)
-      region = Y2Storage::Region.create(1, 512, 512)
+    # Some shortcuts
+    let(:dos32_id) { Y2Storage::PartitionId::DOS32 }
+    let(:esp_id) { Y2Storage::PartitionId::ESP }
+    let(:vfat) { Y2Storage::Filesystems::Type::VFAT }
+
+    def partition_double(number, filesystem)
+      if number == 1
+        start = 1
+        id = first_partition_id
+      else
+        start = 2
+        id = second_partition_id
+      end
+      region = Y2Storage::Region.create(start, 512, 512)
+
       double(
-        "Partition", name: name,
-        direct_blk_filesystem: rpi_boot_fs, region: region, match_volume?: false
+        "Partition", name: "/dev/sda#{number}", id: id, size: 256.MiB, match_volume?: false,
+        filesystem: filesystem, direct_blk_filesystem: filesystem, region: region
       )
     end
 
     let(:architecture) { :aarch64 }
     let(:raspi_system) { true }
     let(:efi_partitions) { [] }
+    let(:sda_partitions) { [] }
     let(:use_lvm) { false }
-    let(:sdb_ptable) { double("PartitionTable", type: sdb_ptable_type) }
     let(:sda_ptable_type) { Y2Storage::PartitionTables::Type::MSDOS }
-    let(:sdb_ptable_type) { Y2Storage::PartitionTables::Type::MSDOS }
 
-    let(:rpi_boot_sda) { rpi_boot_double("/dev/sda1") }
-    let(:rpi_boot_sdb) { rpi_boot_double("/dev/sdb1") }
-    let(:rpi_boot_fs) do
-      instance_double(Y2Storage::Filesystems::BlkFilesystem,
-        type: Y2Storage::Filesystems::Type::VFAT, rpi_boot?: true)
-    end
+    let(:first_partition_id) { Y2Storage::PartitionId::LINUX }
+    let(:second_partition_id) { Y2Storage::PartitionId::LINUX }
+
+    let(:rpi_boot_fs) { double("BlkFilesystem", type: vfat, efi?: false, rpi_boot?: true) }
+    let(:rpi_boot_sda) { partition_double(1, rpi_boot_fs) }
+    let(:efi_fs) { double("BlkFilesystem", type: vfat, efi?: true, rpi_boot?: false) }
 
     before do
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
       allow(dev_sda).to receive(:partitions).and_return sda_partitions
       allow(dev_sda.partition_table).to receive(:type).and_return sda_ptable_type
-
-      allow(dev_sdb).to receive(:efi_partitions).and_return []
-      allow(dev_sdb).to receive(:partitions).and_return sdb_partitions
-      allow(dev_sdb).to receive(:partition_table).and_return sdb_ptable
     end
 
-    RSpec.shared_context "Raspberry Pi partitions" do
-      context "if there are no EFI partitions" do
-        let(:efi_partitions) { [] }
-
-        context "and there are firmware partitions in several disks, including the target" do
-          let(:sda_partitions) { [rpi_boot_sda] }
-          let(:sdb_partitions) { [rpi_boot_sdb] }
-
-          it "requires a new /boot/efi partition" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
-            )
-          end
-
-          it "requires to mount at /boot/vc the firmware partition from the target disk" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sda1")
-            )
-          end
-        end
-
-        context "and there is a firmware partition in another disk" do
-          let(:sda_partitions) { [] }
-          let(:sdb_partitions) { [rpi_boot_sdb] }
-
-          it "requires a new /boot/efi partition" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
-            )
-          end
-
-          it "requires to mount the existing firmware partition at /boot/vc" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sdb1")
-            )
-          end
-        end
-
-        context "and there is no firmware partition in the system" do
-          let(:sda_partitions) { [] }
-          let(:sdb_partitions) { [] }
-
-          it "requires only a new /boot/efi partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
-            )
-          end
-        end
+    RSpec.shared_examples "from scratch" do
+      it "requires only a new /boot/efi partition" do
+        expect(checker.needed_partitions).to contain_exactly(
+          an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
+        )
       end
 
-      context "if there is suitable EFI partition" do
-        let(:efi_partitions) { [efi_partition] }
-        let(:efi_partition) do
-          double(
-            "Partition", name: "/dev/sda2", size: 256.MiB, match_volume?: true,
-            direct_blk_filesystem: nil, region: Y2Storage::Region.create(2, 512, 512),
-            id: Y2Storage::PartitionId::ESP
-          )
-        end
+      it "requires /boot/efi to be the first partition of the device" do
+        planned = checker.needed_partitions.first
+        expect(planned.max_start_offset).to eq 1.MiB
+      end
 
-        context "and there are firmware partitions in several disks, including the target" do
-          let(:sda_partitions) { [rpi_boot_sda, efi_partition] }
-          let(:sdb_partitions) { [rpi_boot_sdb] }
+      it "requires /boot/efi to be in a MBR partition table, bumping any existing table if needed" do
+        planned = checker.needed_partitions.first
+        expect(planned.ptable_type.to_sym).to eq :msdos
+      end
 
-          it "requires to use the existing EFI partition" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda2")
-            )
-          end
-
-          it "requires to mount at /boot/vc the firmware partition from the target disk" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sda1")
-            )
-          end
-        end
-
-        context "and there is a firmware partition in another disk" do
-          let(:sda_partitions) { [efi_partition] }
-          let(:sdb_partitions) { [rpi_boot_sdb] }
-
-          it "requires to use the existing EFI partition" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda2")
-            )
-          end
-
-          it "requires to mount the existing firmware partition at /boot/vc" do
-            expect(checker.needed_partitions).to include(
-              an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sdb1")
-            )
-          end
-        end
-
-        context "and there is no firmware partition in the system" do
-          let(:sda_partitions) { [efi_partition] }
-          let(:sdb_partitions) { [] }
-
-          it "only requires to use the existing EFI partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda2")
-            )
-          end
-        end
+      it "requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)" do
+        planned = checker.needed_partitions.first
+        expect(planned.partition_id).to eq dos32_id
       end
     end
 
-    context "with a partitions-based proposal" do
-      let(:use_lvm) { false }
+    context "if the target boot disk initially contains a MBR partition table" do
+      let(:sda_ptable_type) { Y2Storage::PartitionTables::Type::MSDOS }
 
-      include_context "Raspberry Pi partitions"
+      context "and the first partition in the boot disk has id DOS32 and a FAT filesystem" do
+        let(:first_partition_id) { dos32_id }
+
+        context "and it contains an EFI directory" do
+          let(:efi_partitions) { [partition_double(1, efi_fs)] }
+          let(:sda_partitions) { efi_partitions }
+
+          it "only requires to use the existing EFI partition (bootcode will be installed there)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
+            )
+          end
+        end
+
+        context "and it contains a Raspberry Pi boot code but no EFI directory" do
+          context "and there is also a suitable standard EFI partition in the target disk" do
+            let(:second_partition_id) { esp_id }
+            let(:efi_partition) { partition_double(2, efi_fs) }
+            let(:efi_partitions) { [efi_partition] }
+            let(:sda_partitions) { [rpi_boot_sda, efi_partition] }
+            before { expect(efi_partition).to receive(:match_volume?).and_return true }
+
+            it "requires to mount at /boot/vc the firmware partition from the target disk" do
+              expect(checker.needed_partitions).to include(
+                an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sda1")
+              )
+            end
+
+            it "requires to use the existing EFI partition" do
+              expect(checker.needed_partitions).to include(
+                an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda2")
+              )
+            end
+          end
+
+          context "and there is no suitable EFI partition in the target disk" do
+            let(:sda_partitions) { [rpi_boot_sda] }
+
+            it "requires to mount at /boot/vc the firmware partition from the target disk" do
+              expect(checker.needed_partitions).to include(
+                an_object_having_attributes(mount_point: "/boot/vc", reuse_name: "/dev/sda1")
+              )
+            end
+
+            it "requires a new /boot/efi partition" do
+              expect(checker.needed_partitions).to include(
+                an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
+              )
+            end
+
+            it "does not enforce the /boot/efi partition to be the first" do
+              planned = checker.needed_partitions.find { |part| part.mount_point == "/boot/efi" }
+              expect(planned.max_start_offset).to be >= 1.MiB
+            end
+
+            it "requires the /boot/efi partition to have id ESP (according to the EFI standard)" do
+              planned = checker.needed_partitions.find { |part| part.mount_point == "/boot/efi" }
+              expect(planned.partition_id).to eq esp_id
+            end
+          end
+        end
+
+        context "and the first partition contains no boot code or EFI files" do
+          let(:sda_partitions) { [partition_double(1, nil)] }
+
+          include_examples "from scratch"
+        end
+
+        context "and there are no partitions in the boot disk" do
+          let(:sda_partitions) { [] }
+
+          include_examples "from scratch"
+        end
+      end
+
+      context "and the first partition in the boot disk is a standard EFI with id ESP" do
+        let(:first_partition_id) { esp_id }
+        let(:efi_partitions) { [partition_double(1, efi_fs)] }
+        let(:sda_partitions) { efi_partitions }
+
+        include_examples "from scratch"
+      end
     end
 
-    context "with a LVM-based proposal" do
-      let(:use_lvm) { true }
+    context "if the target boot disk initially contains a GPT partition table" do
+      let(:sda_ptable_type) { Y2Storage::PartitionTables::Type::GPT }
 
-      include_context "Raspberry Pi partitions"
+      context "even if the first partition has id DOS32 and a FAT filesystem with an EFI system" do
+        let(:first_partition_id) { dos32_id }
+        let(:efi_partitions) { [partition_double(1, efi_fs)] }
+        let(:sda_partitions) { efi_partitions }
+
+        include_examples "from scratch"
+      end
+
+      context "if there are no partitions in the boot disk" do
+        let(:sda_partitions) { [] }
+
+        include_examples "from scratch"
+      end
     end
 
-    context "with an encrypted proposal" do
-      let(:use_lvm) { false }
-      let(:use_encryption) { true }
+    context "if the target boot disk contains no partition table initially" do
+      before do
+        allow(dev_sda).to receive(:partition_table).and_return nil
+      end
 
-      include_context "Raspberry Pi partitions"
+      include_examples "from scratch"
     end
 
     context "when proposing a new EFI partition" do

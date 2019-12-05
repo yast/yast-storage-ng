@@ -204,6 +204,15 @@ module Y2Storage
         !!fs_attribute(:rpi_boot)
       end
 
+      # Whether the filesystem contains the directory layout of an ESP partition
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Boolean]
+      def efi?
+        !!fs_attribute(:efi)
+      end
+
       # Retrieves the fstab from the filesystem
       #
       # Note that the filesystem might be mounted when requested for first time.
@@ -249,7 +258,7 @@ module Y2Storage
       #
       # Note that the filesystem is only mounted the first time that an attribute is requested.
       #
-      # @param attr [Symbol] :windows, :release_name, :rpi_boot, :fstab, :crypttab
+      # @param attr [Symbol] :windows, :release_name, :rpi_boot, :efi, :fstab, :crypttab
       # @return [Object] attribute value
       def fs_attribute(attr)
         read_fs_attributes unless userdata_value(:fs_attributes_already_read)
@@ -272,6 +281,7 @@ module Y2Storage
         save_userdata(:windows, reader.windows?)
         save_userdata(:release_name, reader.release_name)
         save_userdata(:rpi_boot, reader.rpi_boot?)
+        save_userdata(:efi, reader.efi?)
         save_userdata(:fstab, reader.fstab)
         save_userdata(:crypttab, reader.crypttab)
       end

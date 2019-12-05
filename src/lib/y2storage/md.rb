@@ -184,10 +184,10 @@ module Y2Storage
     end
 
     # Default partition table type for newly created partition tables
-    # @see Partitionable#preferred_ptable_type
+    # @see Partitionable#default_ptable_type
     #
     # @return [PartitionTables::Type]
-    def preferred_ptable_type
+    def default_ptable_type
       # We always suggest GPT
       PartitionTables::Type.find(:gpt)
     end

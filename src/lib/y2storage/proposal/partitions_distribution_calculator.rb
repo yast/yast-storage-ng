@@ -200,8 +200,13 @@ module Y2Storage
         end
       end
 
+      # @param partition [Planned::Partition]
+      # @param space [FreeDiskSpace]
+      #
+      # @return [Boolean]
       def suitable_disk_space?(space, partition)
-        return false if partition.disk && partition.disk != space.disk_name
+        return false unless compatible_disk?(partition, space)
+        return false unless compatible_ptable?(partition, space)
         return false unless partition_fits_space?(partition, space)
 
         max_offset = partition.max_start_offset
@@ -214,8 +219,27 @@ module Y2Storage
       # @param space [FreeDiskSpace]
       #
       # @return [Boolean]
+      def compatible_disk?(partition, space)
+        return true unless partition.disk && partition.disk != space.disk_name
+      end
+
+      # @param partition [Planned::Partition]
+      # @param space [FreeDiskSpace]
+      #
+      # @return [Boolean]
       def partition_fits_space?(partition, space)
         space.growing? ? true : space.disk_size >= partition.min_size
+      end
+
+      # @param partition [Planned::Partition]
+      # @param space [FreeDiskSpace]
+      #
+      # @return [Boolean]
+      def compatible_ptable?(partition, space)
+        return true if partition.ptable_type.nil?
+        return true if space.disk.partition_table.nil?
+
+        partition.ptable_type == space.disk.partition_table.type
       end
 
       # All possible combinations of spaces and planned partitions.
