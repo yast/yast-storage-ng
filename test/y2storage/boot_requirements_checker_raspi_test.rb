@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -47,8 +47,10 @@ describe Y2Storage::BootRequirementsChecker do
 
     let(:rpi_boot_sda) { rpi_boot_double("/dev/sda1") }
     let(:rpi_boot_sdb) { rpi_boot_double("/dev/sdb1") }
-    let(:rpi_boot_fs) { double("BlkFilesystem", type: Y2Storage::Filesystems::Type::VFAT) }
-    let(:rpi_boot_existing_fs) { double("ExistingFilesystem", rpi_boot?: true) }
+    let(:rpi_boot_fs) do
+      instance_double(Y2Storage::Filesystems::BlkFilesystem,
+        type: Y2Storage::Filesystems::Type::VFAT, rpi_boot?: true)
+    end
 
     before do
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
@@ -58,8 +60,6 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sdb).to receive(:efi_partitions).and_return []
       allow(dev_sdb).to receive(:partitions).and_return sdb_partitions
       allow(dev_sdb).to receive(:partition_table).and_return sdb_ptable
-
-      allow(Y2Storage::ExistingFilesystem).to receive(:new).and_return rpi_boot_existing_fs
     end
 
     RSpec.shared_context "Raspberry Pi partitions" do

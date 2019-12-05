@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,9 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "tempfile"
+
 require "y2storage/storage_class_wrapper"
 require "y2storage/mountable"
 require "y2storage/filesystems/type"
+require "y2storage/filesystem_reader"
+require "y2storage/fstab"
+require "y2storage/crypttab"
 
 module Y2Storage
   module Filesystems
@@ -130,6 +135,93 @@ module Y2Storage
         false
       end
 
+      # Whether the filesystem is suitable for a root filesystem
+      #
+      # @see Filesystems::Type#root_ok?
+      #
+      # @return [Boolean]
+      def root_suitable?
+        type.root_ok?
+      end
+
+      # Whether the filesystem is suitable for a Windows system
+      #
+      # @see Filesystems::Type#windows_ok?
+      # @see BlkDevice#windows_suitable?
+      #
+      # @return [Boolean]
+      def windows_suitable?
+        type.windows_ok? && blk_devices.first.windows_suitable?
+      end
+
+      # Whether the filesystem contains a Windows system
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Boolean]
+      def windows_system?
+        return false unless windows_suitable?
+
+        !!fs_attribute(:windows)
+      end
+
+      # Whether the filesystem contains a Linux system
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Boolean]
+      def linux_system?
+        !release_name.nil?
+      end
+
+      # Name of the system allocated by the filesystem
+      #
+      # For a Windows system it simply returns "Windows" as system name. For Linux it tries to read the
+      # release name.
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [String, nil] nil if the system cannot be detected
+      def system_name
+        windows_system? ? "Windows" : release_name
+      end
+
+      # Release name of Linux system allocated by the filesystem
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [String, nil] nil if the system cannot be detected
+      def release_name
+        fs_attribute(:release_name)
+      end
+
+      # Whether the filesystem contains the Raspberry Pi boot code in the root path
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Boolean]
+      def rpi_boot?
+        !!fs_attribute(:rpi_boot)
+      end
+
+      # Retrieves the fstab from the filesystem
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Y2Storage::Fstab, nil] nil if the fstab file is not found
+      def fstab
+        @fstab ||= etc_file("fstab")
+      end
+
+      # Retrieves the crypttab from the filesystem
+      #
+      # Note that the filesystem might be mounted when requested for first time.
+      #
+      # @return [Y2Storage::Crypttab, nil] nil if the crypttab file is not found
+      def crypttab
+        @crypttab ||= etc_file("crypttab")
+      end
+
       protected
 
       # @see Device#is?
@@ -139,6 +231,7 @@ module Y2Storage
 
       # Value to return as fallback when the free space cannot be computed
       FREE_SPACE_FALLBACK = DiskSize.zero
+
       def compute_free_space
         # e.g. nfs where blk_devices cannot be queried
         return FREE_SPACE_FALLBACK unless respond_to?(:blk_devices)
@@ -150,6 +243,65 @@ module Y2Storage
         # it is questionable if this is correct behavior when resize_info failed,
         # but there is high chance we can't use it with libstorage, so better act like zero device.
         FREE_SPACE_FALLBACK
+      end
+
+      # Filesystem attribute obtained after mounting the filesystem
+      #
+      # Note that the filesystem is only mounted the first time that an attribute is requested.
+      #
+      # @param attr [Symbol] :windows, :release_name, :rpi_boot, :fstab, :crypttab
+      # @return [Object] attribute value
+      def fs_attribute(attr)
+        read_fs_attributes unless userdata_value(:fs_attributes_already_read)
+
+        userdata_value(attr)
+      end
+
+      # Reads and saves attributes from a probed filesystem
+      #
+      # It requires to mount the filesystem.
+      #
+      # @see Y2Storage::FilesystemReader
+      def read_fs_attributes
+        save_userdata(:fs_attributes_already_read, true)
+
+        return unless exists_in_probed?
+
+        reader = FilesystemReader.new(self)
+
+        save_userdata(:windows, reader.windows?)
+        save_userdata(:release_name, reader.release_name)
+        save_userdata(:rpi_boot, reader.rpi_boot?)
+        save_userdata(:fstab, reader.fstab)
+        save_userdata(:crypttab, reader.crypttab)
+      end
+
+      # Generates an etc file object
+      #
+      # Note that a temporary file is created with the content of the etc file because libstorage-ng API
+      # requires a file path, see {Y2Storage::Fstab} and {Y2Storage::Crypttab}.
+      #
+      # @param file_name [String] "fstab" or "crypttab"
+      # @return [Y2Storage::Fstab, Y2Storage::Crypttab, nil] nil if the file is not found
+      def etc_file(file_name)
+        file_content = fs_attribute(file_name.to_sym)
+
+        return nil if file_content.nil?
+
+        file_object = nil
+
+        Tempfile.open("yast-storage-ng") do |file|
+          file.write(file_content)
+          file.rewind
+
+          if file_name == "fstab"
+            file_object = Fstab.new(file.path, self)
+          elsif file_name == "crypttab"
+            file_object = Crypttab.new(file.path, self)
+          end
+        end
+
+        file_object
       end
     end
   end

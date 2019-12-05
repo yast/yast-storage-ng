@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -267,13 +267,6 @@ module Y2Storage
       id.is?(:swap) && formatted_as?(:swap)
     end
 
-    # Whether the partition fulfills conditions to be used for a Windows system
-    #
-    # @return [Boolean]
-    def suitable_for_windows?
-      type.is?(:primary) && id.is?(:windows_system)
-    end
-
     # Whether it is a (valid) EFI System partition
     #
     # @return [Boolean]
@@ -284,6 +277,13 @@ module Y2Storage
     # @see BlkDevice#in_network?
     def in_network?
       partitionable.in_network?
+    end
+
+    # Whether the partition fulfills conditions to be used for a Windows system
+    #
+    # @return [Boolean]
+    def windows_suitable?
+      !disk.nil? && type.is?(:primary) && id.is?(:windows_system)
     end
 
     protected
