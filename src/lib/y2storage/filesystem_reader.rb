@@ -91,6 +91,8 @@ module Y2Storage
       crypttab:     nil
     }.freeze
 
+    private_constant :FS_ATTRIBUTES
+
     # Filesystem attributes
     #
     # @return [Hash<Symbol, Object>]
@@ -216,14 +218,14 @@ module Y2Storage
 
     # Mounts the filesystem
     #
-    # @see execute
+    # @see #execute
     #
     # @note libstorage-ng has a couple of ways for immediate mounting/unmounting devices, but
     #   they cannot be easily used here.
     #
     #   For example, BlkFilesystem::detect_content_info uses an internal EnsureMounted object.
     #   EnsureMounted mounts a given filesystem during its construction and unmounts it during
-    #   its destuction. In ruby there is no a clear way of calling the destructor of a binding
+    #   its destruction. In ruby there is no a clear way of calling the destructor of a binding
     #   object, so EnsureMounted cannot be used for a temporary mount to inspect the filesystem
     #   content from YaST and then unmount it.
     #
@@ -247,7 +249,8 @@ module Y2Storage
 
     # Unmounts the filesystem
     #
-    # @see mount
+    # @see #mount
+    # @see #execute
     #
     # @raise [RuntimeError] when the filesystem cannot be unmounted
     def umount

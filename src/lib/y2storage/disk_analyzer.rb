@@ -106,7 +106,7 @@ module Y2Storage
 
     # All fstabs found in the system
     #
-    # Note that all filesystems are considered here, including filesystems over LVM LVs, see
+    # Note that all Linux filesystems are considered here, including filesystems over LVM LVs, see
     # {#all_linux_suitable_filesystems}.
     #
     # @return [Array<Fstab>]
@@ -116,7 +116,7 @@ module Y2Storage
 
     # All crypttabs found in the system
     #
-    # Note that all filesystems are considered here, including filesystems over LVM LVs, see
+    # Note that all Linux filesystems are considered here, including filesystems over LVM LVs, see
     # {#all_linux_suitable_filesystems}.
     #
     # @return [Array<Crypttab>]
