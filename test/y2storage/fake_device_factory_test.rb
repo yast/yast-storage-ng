@@ -426,7 +426,7 @@ describe Y2Storage::FakeDeviceFactory do
         disk = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sdb"))
 
         expect(disk.has_encryption).to be true
-        expect(disk.encryption.name).to eq "/dev/mapper/cr_sdb"
+        expect(disk.encryption.name).to eq "/dev/mapper/cr_data"
       end
     end
 
@@ -441,7 +441,7 @@ describe Y2Storage::FakeDeviceFactory do
               label: "backup"
               encryption:
                   type: "luks"
-                  name: "/dev/mapper/cr_data"
+                  name: "/dev/mapper/cr_custom_name"
         )
       end
 
@@ -451,7 +451,7 @@ describe Y2Storage::FakeDeviceFactory do
         disk = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sdb"))
 
         expect(disk.has_encryption).to be true
-        expect(disk.encryption.name).to eq "/dev/mapper/cr_data"
+        expect(disk.encryption.name).to eq "/dev/mapper/cr_custom_name"
       end
     end
 
@@ -466,7 +466,7 @@ describe Y2Storage::FakeDeviceFactory do
               label: "backup"
               encryption:
                   type: "luks"
-                  name: "cr_data"
+                  name: "cr_dm_name"
         )
       end
 
@@ -476,7 +476,7 @@ describe Y2Storage::FakeDeviceFactory do
         disk = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sdb"))
 
         expect(disk.has_encryption).to be true
-        expect(disk.encryption.name).to eq "/dev/mapper/cr_data"
+        expect(disk.encryption.name).to eq "/dev/mapper/cr_dm_name"
       end
     end
 

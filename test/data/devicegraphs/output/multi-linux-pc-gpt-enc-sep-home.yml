@@ -43,7 +43,7 @@
         mount_point:  "/"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda6"
+          name: "/dev/mapper/cr_root"
           password: '12345678'
 
     - partition:
@@ -54,7 +54,7 @@
         mount_point:  swap
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda7"
+          name: "/dev/mapper/cr_swap"
           password: '12345678'
 
     - partition:
@@ -65,7 +65,7 @@
         mount_point:  "/home"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda8"
+          name: "/dev/mapper/cr_home"
           password: '12345678'
 
     # The last 16.5 KiB of a GPT disk are not usable
