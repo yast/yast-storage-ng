@@ -19,6 +19,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/encryption"
 require "y2storage/encryption_type"
 require "y2storage/filesystems/mount_by_type"
 require "pathname"
@@ -81,6 +82,8 @@ module Y2Storage
         else
           0
         end
+
+      Y2Storage::Encryption.update_dm_names(devicegraph)
     end
 
     # @!method mount_by
