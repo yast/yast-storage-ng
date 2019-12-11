@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,9 +32,13 @@ module Y2Storage
 
         secret_attr :encryption_password
 
-        def initialize(uuid, attempt)
+        # Constructor
+        #
+        # @param info [Storage::LuksInfo]
+        # @param attempt [Numeric]
+        def initialize(info, attempt)
           textdomain "storage"
-          @uuid = uuid
+          @info = info
           @attempt = attempt
         end
 
@@ -78,7 +78,7 @@ module Y2Storage
 
         protected
 
-        attr_reader :uuid, :attempt
+        attr_reader :info, :attempt
 
         def create_dialog
           super
@@ -103,7 +103,10 @@ module Y2Storage
               )
             ),
             VSpacing(0.2),
-            Left(Label("UUID: #{uuid}")),
+            # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1)
+            Left(Label(format(_("Device Name: %{name}"), name: info.device_name))),
+            # TRANSLATORS: %{uuid} is replaced by a device UUID (e.g., 111-2222-33333)
+            Left(Label(format(_("LUKS UUID: %{uuid}"), uuid: info.uuid))),
             VSpacing(0.2),
             Left(
               Label(

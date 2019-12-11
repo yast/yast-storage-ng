@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2018] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,7 +26,11 @@ Yast.import "Popup"
 module Y2Storage
   module Callbacks
     # Class to implement callbacks used during libstorage-ng activation
-    class Activate < Storage::ActivateCallbacks
+    #
+    # Note that this class provides an implementation for the specialized callbacks
+    # `Storage::ActivateCallbacksLuks` instead of `Storage::ActivateCallbacks`. That specialized
+    # callbacks receives a more generic parameter when activating LUKS devices.
+    class Activate < Storage::ActivateCallbacksLuks
       include LibstorageCallback
       include Yast::Logger
       include Yast::I18n
@@ -56,9 +60,15 @@ module Y2Storage
         )
       end
 
-      def luks(uuid, attempt)
-        log.info("Trying to open luks UUID: #{uuid} (#{attempt} attempts)")
-        dialog = Dialogs::Callbacks::ActivateLuks.new(uuid, attempt)
+      # Decides whether a LUKS device should be activated
+      #
+      # @param info [Storage::LuksInfo]
+      # @param attempt [Numeric]
+      #
+      # @return [Storage::PairBoolString]
+      def luks(info, attempt)
+        log.info("Trying to open luks UUID: #{info.uuid} (#{attempt} attempts)")
+        dialog = Dialogs::Callbacks::ActivateLuks.new(info, attempt)
         result = dialog.run
 
         activate = result == :accept
