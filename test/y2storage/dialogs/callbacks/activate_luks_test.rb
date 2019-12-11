@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,9 +33,14 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
       .and_return(password)
   end
 
-  subject { described_class.new(uuid, attempts) }
+  subject { described_class.new(info, attempts) }
 
+  let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
+
+  let(:device_name) { "/dev/sda1" }
   let(:uuid) { "11111111-1111-1111-1111-11111111" }
+  let(:label) { "" }
+
   let(:attempts) { 1 }
   let(:action) { :cancel }
   let(:password) { nil }

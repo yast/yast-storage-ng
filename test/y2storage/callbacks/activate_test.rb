@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -39,25 +40,30 @@ describe Y2Storage::Callbacks::Activate do
       allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return dialog
     end
 
+    let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
+
+    let(:device_name) { "/dev/sda1" }
     let(:uuid) { "11111111-1111-1111-1111-11111111" }
+    let(:label) { "" }
+
     let(:attempts) { 1 }
     let(:action) { nil }
     let(:encryption_password) { "123456" }
 
     it "opens a dialog to request the password" do
       expect(dialog).to receive(:run).once
-      subject.luks(uuid, attempts)
+      subject.luks(info, attempts)
     end
 
     it "returns an object of the expected type" do
-      expect(subject.luks(uuid, attempts)).to be_a(Storage::PairBoolString)
+      expect(subject.luks(info, attempts)).to be_a(Storage::PairBoolString)
     end
 
     context "when the dialog is accepted" do
       let(:action) { :accept }
 
       it "returns the pair (true, password)" do
-        result = subject.luks(uuid, attempts)
+        result = subject.luks(info, attempts)
         expect(result.first).to eq(true)
         expect(result.second).to eq(encryption_password)
       end
@@ -67,7 +73,7 @@ describe Y2Storage::Callbacks::Activate do
       let(:action) { :cancel }
 
       it "returns the pair (false, \"\")" do
-        result = subject.luks(uuid, attempts)
+        result = subject.luks(info, attempts)
         expect(result.first).to eq(false)
         expect(result.second).to eq("")
       end
