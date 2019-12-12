@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Dec  5 12:47:25 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Proposal: in the initial attempt, consider only up to five disks
+  (bsc#1154070).
+- 4.0.223
+
+-------------------------------------------------------------------
 Wed Oct 23 13:35:49 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: in the initial attempt, consider only up to ten disks
