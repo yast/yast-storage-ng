@@ -120,6 +120,16 @@ module Y2Storage
       fs_attributes[attr] = value
     end
 
+    # Checks whether the file exists in the temporarily mounted filesystem
+    #
+    # @param path_parts [String] each component of the path (relative to the root
+    #   of the mounted filesystem), as used by File.join
+    # @return [Boolean]
+    def file_exist?(*path_parts)
+      full_path = File.join(mount_point, *path_parts)
+      File.exist?(full_path)
+    end
+
     # Reads the filesystem attributes
     #
     # Note that the filesystem is mounted the first time that the attributes are read.
@@ -169,8 +179,7 @@ module Y2Storage
     def read_release_name
       # This check is needed because {Yast::OSRelease.ReleaseName} returns a default release name when
       # the file is not found.
-      release_file_path = File.join(mount_point, Yast::OSRelease.class::OS_RELEASE_PATH)
-      return nil unless File.exist?(release_file_path)
+      return nil unless file_exist?(Yast::OSRelease.class::OS_RELEASE_PATH)
 
       release_name = Yast::OSRelease.ReleaseName(mount_point)
 
@@ -196,9 +205,9 @@ module Y2Storage
     # @param file_name [String] "etc", "crypttab"
     # @return [String, nil] nil if the filesystem does not contain that etc file
     def read_etc_file(file_name)
-      path = File.join(mount_point, "etc", file_name)
-      return nil unless File.exist?(path)
+      return nil unless file_exist?("etc", file_name)
 
+      path = File.join(mount_point, "etc", file_name)
       File.readlines(path).join
     end
 
@@ -209,8 +218,7 @@ module Y2Storage
       # Only lower-case is expected, but since casing is usually tricky in FAT
       # filesystem, let's do a second check just in case
       ["bootcode.bin", "BOOTCODE.BIN"].each do |name|
-        path = File.join(mount_point, name)
-        return true if File.exist?(path)
+        return true if file_exist?(name)
       end
 
       false
