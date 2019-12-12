@@ -18,10 +18,10 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast2/popup"
+
 require "y2storage/dialogs/callbacks/activate_luks"
 require "y2storage/callbacks/libstorage_callback"
-
-Yast.import "Popup"
 
 module Y2Storage
   module Callbacks
@@ -52,12 +52,12 @@ module Y2Storage
         return true if forced_multipath?
         return false unless looks_like_real_multipath
 
-        Yast::Popup.YesNo(
-          _(
-            "The system seems to have multipath hardware.\n"\
-            "Do you want to activate multipath?"
-          )
+        message = _(
+          "The system seems to have multipath hardware.\n" \
+          "Do you want to activate multipath?"
         )
+
+        Yast2::Popup.show(message, buttons: :yes_no) == :yes
       end
 
       # Decides whether a LUKS device should be activated
@@ -68,6 +68,9 @@ module Y2Storage
       # @return [Storage::PairBoolString]
       def luks(info, attempt)
         log.info("Trying to open luks UUID: #{info.uuid} (#{attempt} attempts)")
+
+        luks_error(attempt) if attempt > 1
+
         dialog = Dialogs::Callbacks::ActivateLuks.new(info, attempt)
         result = dialog.run
 
@@ -75,6 +78,23 @@ module Y2Storage
         password = activate ? dialog.encryption_password : ""
 
         Storage::PairBoolString.new(activate, password)
+      end
+
+      private
+
+      # Error popup when the LUKS could not be activated
+      #
+      # @param attempt [Numeric] current attempt
+      def luks_error(attempt)
+        message = format(
+          _("The encrypted volume could not be activated (attempt number %{attempt}).\n\n" \
+            "Please, make sure you are entering the correct password."),
+          attempt: attempt - 1
+        )
+
+        Yast2::Popup.show(message, headline: :error, buttons: :ok)
+
+        nil
       end
     end
   end

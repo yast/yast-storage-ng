@@ -38,6 +38,8 @@ describe Y2Storage::Callbacks::Activate do
       allow(dialog).to receive(:run).and_return(action)
       allow(dialog).to receive(:encryption_password).and_return(encryption_password)
       allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return dialog
+
+      allow(Yast2::Popup).to receive(:show)
     end
 
     let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
@@ -78,10 +80,30 @@ describe Y2Storage::Callbacks::Activate do
         expect(result.second).to eq("")
       end
     end
+
+    context "when there is another attempt (e.g., because wrong password)" do
+      let(:attempts) { 2 }
+
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show).with(/could not be activated/, anything)
+
+        subject.luks(info, attempts)
+      end
+
+      it "opens a dialog to request the password" do
+        expect(dialog).to receive(:run).once
+
+        subject.luks(info, attempts)
+      end
+    end
   end
 
   describe "#multipath" do
-    before { mock_env(env_vars) }
+    before do
+      mock_env(env_vars)
+
+      allow(Yast2::Popup).to receive(:show)
+    end
 
     context "if libstorage-ng found no multipath in the system" do
       let(:mp_detected) { false }
@@ -96,7 +118,7 @@ describe Y2Storage::Callbacks::Activate do
         end
 
         it "does not ask the user" do
-          expect(Yast::Popup).to_not receive(:YesNo)
+          expect(Yast2::Popup).to_not receive(:show)
           subject.multipath(mp_detected)
         end
 
@@ -111,7 +133,7 @@ describe Y2Storage::Callbacks::Activate do
         end
 
         it "does not ask the user" do
-          expect(Yast::Popup).to_not receive(:YesNo)
+          expect(Yast2::Popup).to_not receive(:show)
           subject.multipath(mp_detected)
         end
 
@@ -124,7 +146,7 @@ describe Y2Storage::Callbacks::Activate do
         let(:env_vars) { {} }
 
         it "does not ask the user" do
-          expect(Yast::Popup).to_not receive(:YesNo)
+          expect(Yast2::Popup).to_not receive(:show)
           subject.multipath(mp_detected)
         end
 
@@ -138,18 +160,19 @@ describe Y2Storage::Callbacks::Activate do
       let(:mp_detected) { true }
 
       before do
-        allow(Yast::Popup).to receive(:YesNo).and_return answer
+        allow(Yast2::Popup).to receive(:show).and_return answer
       end
-      let(:answer) { true }
+
+      let(:answer) { :yes }
 
       RSpec.shared_examples "ask user about multipath" do
         it "asks the user whether to activate multipath" do
-          expect(Yast::Popup).to receive(:YesNo).once
+          expect(Yast2::Popup).to receive(:show).once
           subject.multipath(mp_detected)
         end
 
         context "if the user accepts" do
-          let(:answer) { true }
+          let(:answer) { :yes }
 
           it "returns true" do
             expect(subject.multipath(mp_detected)).to eq true
@@ -157,7 +180,7 @@ describe Y2Storage::Callbacks::Activate do
         end
 
         context "if the user rejects" do
-          let(:answer) { false }
+          let(:answer) { :no }
 
           it "returns false" do
             expect(subject.multipath(mp_detected)).to eq false
@@ -171,7 +194,7 @@ describe Y2Storage::Callbacks::Activate do
         end
 
         it "does not ask the user" do
-          expect(Yast::Popup).to_not receive(:YesNo)
+          expect(Yast2::Popup).to_not receive(:show)
           subject.multipath(mp_detected)
         end
 
