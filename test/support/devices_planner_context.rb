@@ -40,6 +40,8 @@ RSpec.shared_context "devices planner" do
   let(:control_file_content) { nil }
 
   before do
+    Y2Storage::StorageManager.create_test_instance
+
     Yast::ProductFeatures.Import("partitioning" => control_file_content)
 
     allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
