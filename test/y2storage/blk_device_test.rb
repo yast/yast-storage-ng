@@ -1138,9 +1138,12 @@ describe Y2Storage::BlkDevice do
     end
 
     RSpec.shared_examples "auto-generated encryption name" do
-      it "creates an encryption device with an auto-generated name and #auto_dm_name?" do
-        expect(Y2Storage::Encryption).to receive(:dm_name_for).with(device).and_return "cr_auto"
+      before do
+        allow_any_instance_of(Y2Storage::Encryption)
+          .to receive(:auto_dm_table_name).and_return("cr_auto")
+      end
 
+      it "creates an encryption device with an auto-generated name and #auto_dm_name?" do
         expect(enc).to be_a Y2Storage::Encryption
         expect(enc.blk_device).to eq device
         expect(enc.dm_table_name).to eq "cr_auto"
@@ -1272,12 +1275,15 @@ describe Y2Storage::BlkDevice do
 
         before do
           # Ensure the first option for the name is already taken
-          enc_name = Y2Storage::Encryption.dm_name_for(sda2)
-          sda3.encryption.dm_table_name = enc_name
+          sda2.encrypt
+          sda3.encryption.dm_table_name = sda2.dm_table_name
+
+          sda2.remove_encryption
         end
 
         it "does not generate redundant DeviceMapper names" do
           sda2.encrypt
+
           expect_no_dm_duplicates
         end
       end

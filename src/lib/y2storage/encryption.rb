@@ -149,6 +149,26 @@ module Y2Storage
       super
     end
 
+    # Generates an unused device mapper name for the encryption device
+    #
+    # This name is used for devices with auto dm names, see {.update_dm_names}.
+    #
+    # @return [String]
+    def auto_dm_table_name
+      name =
+        if !blk_device.dm_table_name.empty?
+          blk_device.dm_table_name
+        elsif !mount_point.nil?
+          mount_point_to_dm_name
+        elsif blk_device.udev_ids.any?
+          blk_device.udev_ids.first
+        else
+          blk_device.basename
+        end
+
+      self.class.ensure_unused_dm_name(devicegraph, "cr_#{name}")
+    end
+
     # Whether {#dm_table_name} was automatically set by YaST.
     #
     # @note This relies on the userdata mechanism, see {#userdata_value}.
@@ -384,6 +404,18 @@ module Y2Storage
       end
     end
 
+    # Generates a base dm name from the mount point path
+    #
+    # @return [String, nil] nil if the encryption has no mount point.
+    def mount_point_to_dm_name
+      return nil if mount_point.nil?
+
+      return "root" if mount_point.root?
+
+      # Removes trailing slashes and replaces internal slashes by underscore
+      mount_point.path.gsub(/^\/|\/$/, "").gsub("/", "_")
+    end
+
     class << self
       # Updates the DeviceMapper name for all encryption devices in the device
       # that have a name automatically set by YaST.
@@ -409,23 +441,21 @@ module Y2Storage
 
         # ...reassign them according to the current names of the block devices
         encryptions.each do |enc|
-          dm_name = dm_name_for(enc.blk_device)
-          enc.assign_dm_table_name(dm_name)
+          enc.assign_dm_table_name(enc.auto_dm_table_name)
         end
       end
 
-      # Auto-generated DeviceMapper name to use for the encrypted version of the
-      # given device.
+      # Ensures that the given dm name is not used yet by adding a suffix if needed
       #
-      # @param device [BlkDevice] block device to be encrypted
+      # @param devicegraph [Devicegraph]
+      # @param dm_name [String]
+      #
       # @return [String]
-      def dm_name_for(device)
-        basename = dm_basename_for(device)
+      def ensure_unused_dm_name(devicegraph, dm_name)
         suffix = ""
-        devicegraph = device.devicegraph
 
         loop do
-          candidate = "#{basename}#{suffix}"
+          candidate = "#{dm_name}#{suffix}"
           return candidate unless dm_name_in_use?(devicegraph, candidate)
 
           suffix = next_dm_name_suffix(suffix)
@@ -444,21 +474,7 @@ module Y2Storage
         devicegraph.blk_devices.any? { |i| i.dm_table_name == name }
       end
 
-      # Initial part of {.dm_name_for}
-      #
-      # @param device [BlkDevice]
-      # @return [String]
-      def dm_basename_for(device)
-        device_name =
-          if device.dm_table_name.empty?
-            device.udev_ids.first || device.basename
-          else
-            device.dm_table_name
-          end
-        "cr_#{device_name}"
-      end
-
-      # @see #dm_name_for
+      # @see #ensure_unused_dm_name
       #
       # @param previous [String] previous value of the suffix
       # @return [String]

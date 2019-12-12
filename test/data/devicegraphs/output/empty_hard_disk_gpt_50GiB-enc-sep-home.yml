@@ -16,7 +16,7 @@
         mount_point:  "/"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda2"
+          name: "/dev/mapper/cr_root"
           password: '12345678'
     - partition:
         size:         2 GiB
@@ -26,7 +26,7 @@
         mount_point:  swap
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda3"
+          name: "/dev/mapper/cr_swap"
           password: '12345678'
     - partition:
         size:         unlimited
@@ -35,7 +35,7 @@
         mount_point:  "/home"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda4"
+          name: "/dev/mapper/cr_home"
           password: '12345678'
     - free:
         size: 16.5 KiB

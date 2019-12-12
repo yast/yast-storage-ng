@@ -25,7 +25,7 @@
         mount_point: "/"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda4"
+          name: "/dev/mapper/cr_root"
           password: '12345678'
 
     - partition:
@@ -36,7 +36,7 @@
         mount_point: swap
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda5"
+          name: "/dev/mapper/cr_swap"
           password: '12345678'
 
     - partition:
