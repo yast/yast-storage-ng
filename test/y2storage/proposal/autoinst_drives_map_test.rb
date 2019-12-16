@@ -137,8 +137,6 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       end
 
       it "uses the device name" do
-        described_class.new(fake_devicegraph, partitioning, issues_list)
-
         expect(drives_map.disk_names).to include("/dev/nfs")
       end
     end
