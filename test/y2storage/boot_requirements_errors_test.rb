@@ -453,9 +453,6 @@ describe Y2Storage::BootRequirementsChecker do
 
               include_examples "no warnings"
             end
-
-            xcontext "in a Software RAID setup" do
-            end
           end
         end
 
@@ -566,20 +563,6 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
 
-        # TODO: sorry, but I won't write it in xml and yaml does not support it
-        # scenario generator would be great
-        xcontext "with a Software RAID proposal" do
-          context "there is a PReP partition" do
-            let(:scenario) { "prep_raid" }
-            include_examples "no warnings"
-          end
-
-          context "PReP partition missing" do
-            let(:scenario) { "trivial_raid" }
-            include_examples "missing prep partition"
-          end
-        end
-
         context "with an encrypted proposal" do
           context "there is a PReP partition" do
             let(:scenario) { "prep_encrypted" }
@@ -611,21 +594,6 @@ describe Y2Storage::BootRequirementsChecker do
 
           context "and there is a /boot partition in the system" do
             let(:scenario) { "lvm_with_boot" }
-
-            include_examples "no warnings"
-          end
-        end
-
-        # TODO: support raid in YaML
-        xcontext "with a Software RAID proposal" do
-          context "and there is no /boot partition in the system" do
-            let(:scenario) { "trivial_raid" }
-
-            include_examples "missing boot partition"
-          end
-
-          context "and there is a /boot partition in the system" do
-            let(:scenario) { "raid_with_boot" }
 
             include_examples "no warnings"
           end

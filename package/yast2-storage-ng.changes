@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Dec 13 16:37:32 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Improved support for Raspberry Pi in the Guided Proposal: now it
+  also works without preexisting firmware partition (jsc#SLE-7298)
+- 4.2.63
+
+-------------------------------------------------------------------
 Wed Dec 11 15:19:00 UTC 2019 - José Iván López González <jlopez@suse.com>
 
 - Show device name when activating a LUKS device (related to

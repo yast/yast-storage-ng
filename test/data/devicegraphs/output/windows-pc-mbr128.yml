@@ -7,7 +7,7 @@
     partitions:
 
     - partition:
-        size: 755711 MiB
+        size: 773848960 KiB (0.72 TiB)
         start: 128 KiB
         name: /dev/sda1
         id: 0x7

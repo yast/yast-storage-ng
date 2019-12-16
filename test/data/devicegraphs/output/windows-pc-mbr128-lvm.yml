@@ -3,19 +3,19 @@
     name: "/dev/sda"
     size: 800 GiB
     partition_table: msdos
-    mbr_gap: 256 KiB
+    mbr_gap: 128 KiB
     partitions:
 
     - partition:
-        size: 755511 MiB
-        start: 256 KiB
+        size: 773643136 KiB (0.72 TiB)
+        start: 128 KiB
         name: /dev/sda1
         id: ntfs
         file_system: ntfs
         label: windows
 
     - partition:
-        size: 200 MiB
+        size: 201 MiB
         name: /dev/sda3
         id: linux
         file_system: ext4

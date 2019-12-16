@@ -45,38 +45,21 @@ describe Y2Storage::GuidedProposal do
       include_examples "all proposed layouts"
     end
 
-    # FIXME: all these cases work without proposing a separate /boot partition
-    xcontext "in a windows-only PC with 256 KiB of MBR gap" do
-      let(:scenario) { "windows-pc-mbr256" }
-      include_examples "LVM-based proposed layouts"
-      include_examples "partition-based proposed layouts"
-    end
-
-    # FIXME: it raises no exceptions but works like the (old) 256 KiB case above (adding /boot)
-    xcontext "in a windows-only PC with 128 KiB of MBR gap" do
+    context "in a windows-only PC with 128 KiB of MBR gap" do
       let(:scenario) { "windows-pc-mbr128" }
+      let(:separate_home) { false }
 
-      context "using LVM" do
+      context "using LVM (where a separate /boot would be needed)" do
         let(:lvm) { true }
 
-        context "with a separate home" do
-          let(:separate_home) { true }
-
-          it "fails to make a proposal" do
-            expect { proposal.propose }.to raise_error Y2Storage::Error
-          end
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-
-          it "fails to make a proposal" do
-            expect { proposal.propose }.to raise_error Y2Storage::Error
-          end
-        end
+        include_examples "proposed layout"
       end
 
-      include_examples "partition-based proposed layouts"
+      context "not using LVM (where a separate /boot is not needed)" do
+        let(:lvm) { false }
+
+        include_examples "proposed layout"
+      end
     end
 
     context "in a windows/linux multiboot PC with MBR partition table" do

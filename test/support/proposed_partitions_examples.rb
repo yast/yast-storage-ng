@@ -106,7 +106,7 @@ RSpec.shared_examples "proposed EFI partition basics" do
   end
 
   it "requires /boot/efi to be close enough to the beginning of disk" do
-    expect(efi_part.max_start_offset).to eq 2.TiB
+    expect(efi_part.max_start_offset).to be <= 2.TiB
   end
 end
 

@@ -60,6 +60,13 @@ module Y2Storage
       # @return [Boolean] whether the partition must be primary
       attr_accessor :primary
 
+      # @return [PartitionTables::Type, nil] type of the partition table. If nil,
+      #   the partition will be created in any available partition table. If this
+      #   is set to a particular type and {#disk} points to any device, the
+      #   proposal must ensure that such device contains a partition table of
+      #   the given type.
+      attr_accessor :ptable_type
+
       # Constructor.
       #
       # @param mount_point [string] See {#mount_point}

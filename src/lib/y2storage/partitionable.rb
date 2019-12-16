@@ -276,14 +276,29 @@ module Y2Storage
       remove_descendants if fake_ptable
     end
 
+    def forced_ptable_type
+      userdata_value(:forced_ptable_type)
+    end
+
+    def forced_ptable_type=(value)
+      save_userdata(:forced_ptable_type, value)
+    end
+
+    # Partition table type for newly created partition tables
+    #
+    # @return [PartitionTables::Type]
+    def preferred_ptable_type
+      forced_ptable_type || default_ptable_type
+    end
+
     # Default partition table type for newly created partition tables
     #
     # This method is needed because YaST criteria does not necessarily match
     # the one followed by Storage::Disk#default_partition_table_type (which
-    # defaults to GPT partition tables in many cases)
+    # used to default to MSDOS partition tables in many cases)
     #
     # @return [PartitionTables::Type]
-    def preferred_ptable_type
+    def default_ptable_type
       default_partition_table_type
     end
 

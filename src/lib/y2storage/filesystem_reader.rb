@@ -60,6 +60,13 @@ module Y2Storage
       !!fs_attribute(:rpi_boot)
     end
 
+    # Whether the filesystem contains the directories layout of an ESP partition
+    #
+    # @return [Boolean]
+    def efi?
+      !!fs_attribute(:efi)
+    end
+
     # Fstab raw content from the filesystem
     #
     # @return [String, nil] nil if the fstab file cannot be read
@@ -87,6 +94,7 @@ module Y2Storage
       windows:      nil,
       release_name: nil,
       rpi_boot:     nil,
+      efi:          nil,
       fstab:        nil,
       crypttab:     nil
     }.freeze
@@ -120,6 +128,18 @@ module Y2Storage
       fs_attributes[attr] = value
     end
 
+    # Checks whether the file exists in the temporarily mounted filesystem
+    #
+    # @param path_parts [String] each component of the path (relative to the root
+    #   of the mounted filesystem), as used by File.join
+    # @param directory [Boolean] return true only if the file exists and is a
+    #   directory
+    # @return [Boolean]
+    def file_exist?(*path_parts, directory: false)
+      full_path = File.join(mount_point, *path_parts)
+      directory ? File.directory?(full_path) : File.exist?(full_path)
+    end
+
     # Reads the filesystem attributes
     #
     # Note that the filesystem is mounted the first time that the attributes are read.
@@ -141,6 +161,7 @@ module Y2Storage
       mount
       save_fs_attribute(:release_name, read_release_name)
       save_fs_attribute(:rpi_boot, check_rpi_boot)
+      save_fs_attribute(:efi, check_efi)
       save_fs_attribute(:fstab, read_fstab)
       save_fs_attribute(:crypttab, read_crypttab)
       umount
@@ -169,8 +190,7 @@ module Y2Storage
     def read_release_name
       # This check is needed because {Yast::OSRelease.ReleaseName} returns a default release name when
       # the file is not found.
-      release_file_path = File.join(mount_point, Yast::OSRelease.class::OS_RELEASE_PATH)
-      return nil unless File.exist?(release_file_path)
+      return nil unless file_exist?(Yast::OSRelease.class::OS_RELEASE_PATH)
 
       release_name = Yast::OSRelease.ReleaseName(mount_point)
 
@@ -196,9 +216,9 @@ module Y2Storage
     # @param file_name [String] "etc", "crypttab"
     # @return [String, nil] nil if the filesystem does not contain that etc file
     def read_etc_file(file_name)
-      path = File.join(mount_point, "etc", file_name)
-      return nil unless File.exist?(path)
+      return nil unless file_exist?("etc", file_name)
 
+      path = File.join(mount_point, "etc", file_name)
       File.readlines(path).join
     end
 
@@ -209,8 +229,19 @@ module Y2Storage
       # Only lower-case is expected, but since casing is usually tricky in FAT
       # filesystem, let's do a second check just in case
       ["bootcode.bin", "BOOTCODE.BIN"].each do |name|
-        path = File.join(mount_point, name)
-        return true if File.exist?(path)
+        return true if file_exist?(name)
+      end
+
+      false
+    end
+
+    # Checks whether the typical ESP directories are at the root of the filesystem
+    #
+    # @return [Boolean]
+    def check_efi
+      # Upper-case vs lower-case is usually tricky in FAT filesystems
+      ["EFI", "efi"].each do |name|
+        return true if file_exist?(name, directory: true)
       end
 
       false

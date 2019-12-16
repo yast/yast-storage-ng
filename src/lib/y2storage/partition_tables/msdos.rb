@@ -39,7 +39,7 @@ module Y2Storage
       # @see #mbr_gap
       #
       # @return [DiskSize]
-      LOWER_MBR_GAP_LIMIT = DiskSize.B(512)
+      LOWER_MBR_GAP_LIMIT = DiskSize.B(512).freeze
       private_constant :LOWER_MBR_GAP_LIMIT
 
       # MBR_GAP_GRUB_LIMIT covers the size needed for embedding the grub image.
@@ -47,7 +47,14 @@ module Y2Storage
       # The value is not exact (it depends on the grub modules needed to
       # access the /boot partition [raid, lvm, encryption, ...]) but is
       # chosen big enough to be on the safe side.
-      MBR_GAP_GRUB_LIMIT = DiskSize.KiB(256)
+      MBR_GAP_GRUB_LIMIT = DiskSize.KiB(256).freeze
+
+      # Default value used by libstorage-ng to set the minimal MBR grap
+      #
+      # This is equivalent to the static const default_minimal_mbr_gap that is
+      # used internally in Storage::Msdos but not exposed in the API.
+      DEFAULT_MBR_GAP = DiskSize.MiB(1).freeze
+      private_constant :DEFAULT_MBR_GAP
 
       # @!attribute minimal_mbr_gap
       #   Minimal possible size of the so-called MBR gap. In other words, at
@@ -93,9 +100,16 @@ module Y2Storage
         !mbr_gap || mbr_gap >= MBR_GAP_GRUB_LIMIT
       end
 
-      # Sets #{minimal_mbr_gap} to the lower acceptable value
+      # Sets {#minimal_mbr_gap} to the lower acceptable value
       def reduce_minimal_mbr_gap
         self.minimal_mbr_gap = LOWER_MBR_GAP_LIMIT
+      end
+
+      # Default value used by libstorage-ng to set {#minimal_mbr_gap}
+      #
+      # @return [DiskSize]
+      def self.default_mbr_gap
+        DEFAULT_MBR_GAP.dup
       end
     end
   end
