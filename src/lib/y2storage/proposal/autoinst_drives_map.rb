@@ -227,6 +227,7 @@ module Y2Storage
 
         mp_device = device.multipath
         return mp_device if mp_device
+
         ([device] + device.ancestors).find { |d| d.is?(:disk_device, :stray_blk_device) }
       end
 
