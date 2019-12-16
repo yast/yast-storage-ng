@@ -35,7 +35,7 @@ module Y2Storage
     # firmware, so a completely dedicated partition is not always needed.
     class Raspi < UEFI
       # Path where the dedicated firmware partition, if any, should be mounted
-      FIRMWARE_MOUNT_PATH = "/boot/vc"
+      FIRMWARE_MOUNT_PATH = "/boot/vc".freeze
       private_constant :FIRMWARE_MOUNT_PATH
 
       # Partition id that must be used in the first partition. Otherwise,
@@ -120,10 +120,10 @@ module Y2Storage
 
       # Planned partition to reuse the existing dedicated firmware partition
       #
-      # This method only makes sense if there is a firmware partition to reuse.
-      #
-      # @return [Planned::Partition]
+      # @return [Planned::Partition, nil] nil if there is no firmware partition to reuse.
       def planned_firmware
+        return nil unless reusable_firmware_partition
+
         planned = Planned::Partition.new(FIRMWARE_MOUNT_PATH)
         planned.reuse_name = reusable_firmware_partition.name
         planned
