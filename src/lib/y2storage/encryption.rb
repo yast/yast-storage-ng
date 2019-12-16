@@ -155,6 +155,18 @@ module Y2Storage
     #
     # @return [String]
     def auto_dm_table_name
+      # TODO: Better encryption names can be generated for indirectly used encryption devices (e.g., an
+      # encrypted device used as LVM PV). But this implies to update the auto generated device mapper
+      # names at some quite points, for example, when a device is added/removed to a LVM VG, MD RAID,
+      # etc.
+      #
+      # Another option could be to update the encryption names just before the commit action, but in that
+      # case, the devicegraph would contain temporary encryption names all the time. Temporary names are
+      # a problem if they are presented to the user in the UI.
+      #
+      # Note that any change to the encryption name generation could affect to the pervasive encryption
+      # key generation, specially when probed encryption names are modified. Right now, probed names are
+      # not touched.
       name =
         if !blk_device.dm_table_name.empty?
           blk_device.dm_table_name
