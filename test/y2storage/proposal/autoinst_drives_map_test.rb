@@ -160,6 +160,23 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         expect(drives_map.disk_names).to include("root_fs")
       end
     end
+
+    context "when a multipath member is used" do
+      let(:scenario) { "multipath-formatted.xml" }
+
+      let(:partitioning_array) do
+        [
+          {
+            "device" => "/dev/sda", "use" => "all"
+          }
+        ]
+      end
+
+      it "uses the multipath device" do
+        expect(drives_map.disk_names)
+          .to eq(["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"])
+      end
+    end
   end
 
   describe "#each" do
