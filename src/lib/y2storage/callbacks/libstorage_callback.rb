@@ -20,6 +20,7 @@
 require "yast"
 require "storage"
 require "y2storage/storage_env"
+require "ui/text_helpers"
 
 Yast.import "Report"
 Yast.import "Popup"
@@ -33,6 +34,7 @@ module Y2Storage
     module LibstorageCallback
       include Yast::Logger
       include Yast::I18n
+      include UI::TextHelpers
 
       # Callback for libstorage-ng to show a message to the user.
       #
@@ -87,7 +89,7 @@ module Y2Storage
         focus = default_answer_to_error ? :yes : :no
 
         result = Yast::Report.yesno_popup(
-          msg, details: what, focus: focus, buttons: buttons
+          msg, details: wrap_text(what), focus: focus, buttons: buttons
         )
 
         log.info "User answer: #{result}"

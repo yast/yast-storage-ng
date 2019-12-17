@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Dec 17 12:48:40 UTC 2019 - Josef Reidinger <jreidinger@suse.com>
+
+- Wrap long details message when error happens (bsc#1085468)
+- 4.2.64
+
+-------------------------------------------------------------------
 Fri Dec 13 16:37:32 UTC 2019 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Improved support for Raspberry Pi in the Guided Proposal: now it
