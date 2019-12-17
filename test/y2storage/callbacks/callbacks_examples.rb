@@ -52,6 +52,29 @@ RSpec.shared_examples "general #error examples" do
     end
   end
 
+  # see https://bugzilla.suse.com/show_bug.cgi?id=1085468
+  context "with an long error" do
+    let(:what) do
+      "command '/usr/sbin/parted --script '/dev/sda' mklabel gpt' failed:\n\n\n" \
+      "stderr:\n"\
+      "Error: Partition(s) 1 on /dev/sda have been written, but we have been unable to inform the " \
+      "kernel of the change, probably because it/they are in use.  As a result, the old " \
+      "partition(s) will remain in use.  You should reboot now before making further changes.\n\n" \
+      "exit code:\n" \
+      "1"
+    end
+
+    it "wraps properly error message" do
+      MAX_LENGTH = 80
+      expect(Yast::Report).to receive(:yesno_popup) do |_message, options|
+        max_line = options[:details].lines.max_by(&:size)
+        expect(max_line.size < MAX_LENGTH).to eq(true), "Line '#{max_line}' is too long"
+      end
+
+      subject.error("message", what)
+    end
+  end
+
   context "with an empty what" do
     it "displays a generic error message to the user without hint about details" do
       expect(Yast::Report).to receive(:yesno_popup) do |message|
