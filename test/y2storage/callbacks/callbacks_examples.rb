@@ -53,7 +53,7 @@ RSpec.shared_examples "general #error examples" do
   end
 
   # see https://bugzilla.suse.com/show_bug.cgi?id=1085468
-  context "with an long error" do
+  context "with long error" do
     let(:what) do
       "command '/usr/sbin/parted --script '/dev/sda' mklabel gpt' failed:\n\n\n" \
       "stderr:\n"\
