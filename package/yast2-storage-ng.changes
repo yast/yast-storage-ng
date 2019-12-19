@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Dec 19 14:22:49 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: use the multipath device when the 'device' element
+  points to one of its wires (bsc#1159081).
+- 4.2.65
+
+-------------------------------------------------------------------
 Tue Dec 17 12:48:40 UTC 2019 - Josef Reidinger <jreidinger@suse.com>
 
 - Wrap long details message when error happens (bsc#1085468)

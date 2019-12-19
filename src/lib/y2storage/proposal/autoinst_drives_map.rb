@@ -225,6 +225,9 @@ module Y2Storage
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device
 
+        mp_device = device.multipath
+        return mp_device if mp_device
+
         ([device] + device.ancestors).find { |d| d.is?(:disk_device, :stray_blk_device) }
       end
 

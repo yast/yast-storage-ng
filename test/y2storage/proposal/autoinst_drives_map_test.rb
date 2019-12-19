@@ -137,8 +137,6 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       end
 
       it "uses the device name" do
-        described_class.new(fake_devicegraph, partitioning, issues_list)
-
         expect(drives_map.disk_names).to include("/dev/nfs")
       end
     end
@@ -158,6 +156,23 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         described_class.new(fake_devicegraph, partitioning, issues_list)
 
         expect(drives_map.disk_names).to include("root_fs")
+      end
+    end
+
+    context "when a multipath member is used" do
+      let(:scenario) { "multipath-formatted.xml" }
+
+      let(:partitioning_array) do
+        [
+          {
+            "device" => "/dev/sda", "use" => "all"
+          }
+        ]
+      end
+
+      it "uses the multipath device" do
+        expect(drives_map.disk_names)
+          .to eq(["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"])
       end
     end
   end
