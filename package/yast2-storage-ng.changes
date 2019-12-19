@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Dec 19 17:51:09 CET 2019 - aschnell@suse.com
+
+- Improved sorting of devices by device size (bonus to bsc#1140018)
+- 4.2.66
+
+-------------------------------------------------------------------
 Thu Dec 19 14:22:49 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: use the multipath device when the 'device' element
