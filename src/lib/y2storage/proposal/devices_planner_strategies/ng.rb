@@ -119,16 +119,8 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_sizes(planned_device, volume)
-          min_size = value_with_fallbacks(volume, :min_size)
-          desired_size = value_with_fallbacks(volume, :desired_size)
-          max_size = value_with_fallbacks(volume, :max_size)
-          max_size_lvm = value_with_fallbacks(volume, :max_size_lvm)
-
-          max_size = max_size_lvm if settings.lvm && max_size_lvm > DiskSize.zero
-          planned_device.max_size = max_size
-
-          min_size = (target == :min) ? min_size : desired_size
-          planned_device.min_size = min_size
+          planned_device.min_size = min_size(volume)
+          planned_device.max_size = max_size(volume)
 
           if volume.adjust_by_ram?
             planned_device.min_size = [planned_device.min_size, ram_size].max
@@ -136,6 +128,30 @@ module Y2Storage
           end
 
           nil
+        end
+
+        # Min size for the given volume, not having adjust_by_ram? into account
+        #
+        # @param volume [VolumeSpecification]
+        # @return [DiskSize]
+        def min_size(volume)
+          if :min == target
+            value_with_fallbacks(volume, :min_size)
+          else
+            value_with_fallbacks(volume, :desired_size)
+          end
+        end
+
+        # Max size for the given volume, not having adjust_by_ram? into account
+        #
+        # @param volume [VolumeSpecification]
+        # @return [DiskSize]
+        def max_size(volume)
+          if settings.lvm && max_size_lvm > DiskSize.zero
+            value_with_fallbacks(volume, :max_size_lvm)
+          else
+            value_with_fallbacks(volume, :max_size)
+          end
         end
 
         # Adjusts btrfs values according to settings
