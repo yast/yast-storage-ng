@@ -147,11 +147,19 @@ module Y2Storage
         # @param volume [VolumeSpecification]
         # @return [DiskSize]
         def max_size(volume)
-          if settings.lvm && max_size_lvm > DiskSize.zero
-            value_with_fallbacks(volume, :max_size_lvm)
-          else
-            value_with_fallbacks(volume, :max_size)
-          end
+          # If no LVM is involved, this is quite straightforward
+          return value_with_fallbacks(volume, :max_size) unless settings.lvm
+
+          # But with LVM, the behavior of fallback_max_size_lvm is not so obvious.
+          # From the existing tests, it can be inferred that such attribute only
+          # looks into max_size_lvm (never falling back to max_size), so it
+          # basically only makes sense when combined with an explicit max_size_lvm.
+          value = value_with_fallbacks(volume, :max_size_lvm)
+
+          # But for the current volume being calculated, it is expected to fallback to
+          # max_size when there is no max_size_lvm
+          value += volume.max_size if volume.max_size_lvm.zero?
+          value
         end
 
         # Adjusts btrfs values according to settings
