@@ -119,16 +119,8 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_sizes(planned_device, volume)
-          min_size = value_with_fallbacks(volume, :min_size)
-          desired_size = value_with_fallbacks(volume, :desired_size)
-          max_size = value_with_fallbacks(volume, :max_size)
-          max_size_lvm = value_with_fallbacks(volume, :max_size_lvm)
-
-          max_size = max_size_lvm if settings.lvm && max_size_lvm > DiskSize.zero
-          planned_device.max_size = max_size
-
-          min_size = (target == :min) ? min_size : desired_size
-          planned_device.min_size = min_size
+          planned_device.min_size = min_size(volume)
+          planned_device.max_size = max_size(volume)
 
           if volume.adjust_by_ram?
             planned_device.min_size = [planned_device.min_size, ram_size].max
@@ -136,6 +128,38 @@ module Y2Storage
           end
 
           nil
+        end
+
+        # Min size for the given volume, not having adjust_by_ram? into account
+        #
+        # @param volume [VolumeSpecification]
+        # @return [DiskSize]
+        def min_size(volume)
+          if :min == target
+            value_with_fallbacks(volume, :min_size)
+          else
+            value_with_fallbacks(volume, :desired_size)
+          end
+        end
+
+        # Max size for the given volume, not having adjust_by_ram? into account
+        #
+        # @param volume [VolumeSpecification]
+        # @return [DiskSize]
+        def max_size(volume)
+          # If no LVM is involved, this is quite straightforward
+          return value_with_fallbacks(volume, :max_size) unless settings.lvm
+
+          # But with LVM, the behavior of fallback_max_size_lvm is not so obvious.
+          # From the existing tests, it can be inferred that such attribute only
+          # looks into max_size_lvm (never falling back to max_size), so it
+          # basically only makes sense when combined with an explicit max_size_lvm.
+          value = value_with_fallbacks(volume, :max_size_lvm)
+
+          # But for the current volume being calculated, it is expected to fallback to
+          # max_size when there is no max_size_lvm
+          value += volume.max_size if volume.max_size_lvm.zero?
+          value
         end
 
         # Adjusts btrfs values according to settings

@@ -312,17 +312,28 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
               context "and it is proposing a LVM-based setup" do
                 let(:lvm) { true }
 
-                let(:max_size_lvm) { 10.GiB }
+                context "with the max size of the volume being based on max_size_lvm" do
+                  let(:max_size_lvm) { 10.GiB }
 
-                it "sets max_size including max_size_lvm fallback values" do
-                  expect(planned_device.max_size).to eq(max_size_lvm + home_max_size_lvm)
+                  it "sets max_size including max_size_lvm fallback values" do
+                    expect(planned_device.max_size).to eq(max_size_lvm + home_max_size_lvm)
+                  end
+                end
+
+                context "with the max size being based on max_size (no value for max_size_lvm)" do
+                  let(:max_size_lvm) { nil }
+                  let(:max_size) { 23.GiB }
+
+                  it "sets max_size including max_size_lvm fallback values" do
+                    expect(planned_device.max_size).to eq(max_size + home_max_size_lvm)
+                  end
                 end
               end
             end
           end
         end
 
-        context "when it is adjunsting the min_size" do
+        context "when it is adjusting the min_size" do
           context "and it is calculating desired sizes" do
             let(:target) { :desired }
 
