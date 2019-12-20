@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# Device::get_name_sort_key
-BuildRequires:	libstorage-ng-ruby >= 4.2.43
+# Storage.partition_id_name
+BuildRequires:	libstorage-ng-ruby >= 4.2.45
 BuildRequires:  update-desktop-files
 # for CWM sort_key helper
 BuildRequires:  yast2 >= 4.2.48
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# Device::get_name_sort_key
-Requires:       libstorage-ng-ruby >= 4.2.39
+# Storage.partition_id_name
+Requires:       libstorage-ng-ruby >= 4.2.45
 # for CWM sort_key helper
 Requires:       yast2 >= 4.2.48
 # Y2Packager::Repository
