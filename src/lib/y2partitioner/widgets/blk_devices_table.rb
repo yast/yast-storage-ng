@@ -143,7 +143,12 @@ module Y2Partitioner
       # Values
 
       def device_value(device)
-        return device.name unless device.is?(:blk_filesystem)
+        if !device.is?(:blk_filesystem)
+          name_sort_key = device.name_sort_key
+          return device.name if name_sort_key.empty?
+
+          return cell(device.name, sort_key(name_sort_key))
+        end
 
         if device.multidevice?
           format(
@@ -164,7 +169,7 @@ module Y2Partitioner
         # such devices without a direct and straightforward #size method.
         return "" unless device.respond_to?(:size)
 
-        device.size.to_human_string
+        cell(device.size.to_human_string, sort_key(device.size.to_i.to_s))
       end
 
       def format_value(device)

@@ -50,7 +50,7 @@ describe Y2Partitioner::Widgets::Pages::Disks do
       devices_name = disks_and_parts.map(&:name)
       items_name = table.items.map { |i| i[1] }
 
-      expect(items_name.sort).to eq(devices_name.sort)
+      expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
     end
 
     # This test is here to ensure we don't try to access the partitions within a
@@ -64,7 +64,7 @@ describe Y2Partitioner::Widgets::Pages::Disks do
         devices_name = devices.map(&:name)
         items_name = table.items.map { |i| i[1] }
 
-        expect(items_name.sort).to eq(devices_name.sort)
+        expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
       end
     end
   end

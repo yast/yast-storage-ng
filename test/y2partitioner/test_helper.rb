@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,3 +19,27 @@
 # find current contact information at www.suse.com
 
 require_relative "../spec_helper"
+
+# Removes the :sortKey term from a :cell term, possibly returning only
+# the single param of the term.
+#
+# Checking the sort-key in the testsuite would not be future-proof
+# since libstorage-ng is allowed to change the sort-key anytime.
+def remove_sort_key(term)
+  return term if term.value != :cell
+
+  term.params.delete_if { |param| param.is_a?(Yast::Term) && param.value == :sortKey }
+  return term if term.params.size > 1
+
+  term.params[0]
+end
+
+# Removes the :sortKey term from :cell terms somewhere inside (to the
+# extent needed so far) of value. Also see remove_sort_key.
+def remove_sort_keys(value)
+  return remove_sort_key(value) if value.is_a?(Yast::Term)
+
+  return value.map { |subvalue| remove_sort_keys(subvalue) } if value.is_a?(Array)
+
+  value
+end

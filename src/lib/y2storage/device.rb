@@ -197,6 +197,12 @@ module Y2Storage
     #       sorted list (less than)
     storage_class_forward :compare_by_name
 
+    # @!method name_sort_key
+    #   Return a sort key based of the device name.
+    #
+    #   @return [string] a sort key for the device name or empty string
+    storage_forward :name_sort_key
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Device>] all the devices in the given devicegraph
