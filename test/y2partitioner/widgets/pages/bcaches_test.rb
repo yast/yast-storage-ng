@@ -67,8 +67,8 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
 
         devices = table.items.map { |i| i[1] }
 
-        expect(devices).to contain_exactly("/dev/bcache0", "/dev/bcache1", "/dev/bcache2",
-          "/dev/bcache0p1", "/dev/bcache2p1")
+        expect(remove_sort_keys(devices)).to contain_exactly("/dev/bcache0", "/dev/bcache1",
+          "/dev/bcache2", "/dev/bcache0p1", "/dev/bcache2p1")
       end
     end
   end

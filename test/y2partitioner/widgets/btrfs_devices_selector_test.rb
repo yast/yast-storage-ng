@@ -63,11 +63,11 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
   context "right after initialization" do
     describe "#contents" do
       it "displays all the unselected devices in the corresponding table" do
-        expect(rows_match?(unselected_items, *expected_unselected_items)).to eq true
+        expect(rows_match?(remove_sort_keys(unselected_items), *expected_unselected_items)).to eq true
       end
 
       it "displays all the selected devices in the corresponding table" do
-        expect(rows_match?(selected_items, *expected_selected_items)).to eq true
+        expect(rows_match?(remove_sort_keys(selected_items), *expected_selected_items)).to eq true
       end
     end
   end
@@ -91,7 +91,7 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
 
     describe "#contents" do
       it "displays all the selected devices in the corresponding table" do
-        expect(rows_match?(selected_items, *expected_selected_items)).to eq true
+        expect(rows_match?(remove_sort_keys(selected_items), *expected_selected_items)).to eq true
       end
 
       it "displays none device as unselected" do
@@ -126,11 +126,11 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
         end
 
         it "displays all the selected devices in the corresponding table" do
-          expect(rows_match?(selected_items, *expected_selected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(selected_items), *expected_selected_items)).to eq true
         end
 
         it "displays all the available devices in the corresponding table" do
-          expect(rows_match?(unselected_items, *expected_unselected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(unselected_items), *expected_unselected_items)).to eq true
         end
       end
     end
@@ -159,7 +159,7 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
       end
 
       it "displays all the available devices as unselected" do
-        expect(rows_match?(unselected_items, *expected_unselected_items)).to eq true
+        expect(rows_match?(remove_sort_keys(unselected_items), *expected_unselected_items)).to eq true
       end
     end
   end
@@ -190,11 +190,11 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
         end
 
         it "displays all the selected devices in the corresponding table and order" do
-          expect(rows_match?(selected_items, *expected_selected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(selected_items), *expected_selected_items)).to eq true
         end
 
         it "displays all the available devices in the corresponding table and order" do
-          expect(rows_match?(unselected_items, *expected_unselected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(unselected_items), *expected_unselected_items)).to eq true
         end
       end
     end
@@ -222,13 +222,13 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
         it "displays all the selected devices in the corresponding table" do
           expected_items = expected_selected_items.reject { |item| item.include?(device_name) }
 
-          expect(rows_match?(selected_items, *expected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(selected_items), *expected_items)).to eq true
         end
 
         it "displays all the available devices in the corresponding" do
           expected_items = expected_unselected_items.append("#{device_name}$")
 
-          expect(rows_match?(unselected_items, *expected_items)).to eq true
+          expect(rows_match?(remove_sort_keys(unselected_items), *expected_items)).to eq true
         end
       end
     end

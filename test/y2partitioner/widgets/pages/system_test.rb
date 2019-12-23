@@ -92,7 +92,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "mixed_disks.yml" }
 
       it "contains all disks and their partitions" do
-        expect(items).to contain_exactly(
+        expect(remove_sort_keys(items)).to contain_exactly(
           "/dev/sda",
           "/dev/sda1",
           "/dev/sda2",
@@ -113,7 +113,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "dasd_50GiB.yml" }
 
       it "contains all DASDs and their partitions" do
-        expect(items).to contain_exactly(
+        expect(remove_sort_keys(items)).to contain_exactly(
           "/dev/dasda",
           "/dev/dasda1"
         )
@@ -124,21 +124,21 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "empty-dm_raids.xml" }
 
       it "contains all DM RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/mapper/isw_ddgdcbibhd_test1",
           "/dev/mapper/isw_ddgdcbibhd_test2"
         )
       end
 
       it "does not contain devices belonging to DM RAIDs" do
-        expect(items).to_not include(
+        expect(remove_sort_keys(items)).to_not include(
           "/dev/sdb",
           "/dev/sdc"
         )
       end
 
       it "contains devices that does not belong to DM RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/sda",
           "/dev/sda1",
           "/dev/sda2"
@@ -150,14 +150,14 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "md-imsm1-devicegraph.xml" }
 
       it "contains all BIOS MD RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/md/a",
           "/dev/md/b"
         )
       end
 
       it "does not contain devices belonging to BIOS DM RAIDs" do
-        expect(items).to_not include(
+        expect(remove_sort_keys(items)).to_not include(
           "/dev/sdb",
           "/dev/sdc",
           "/dev/sdd"
@@ -165,7 +165,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains devices that does not belong to BIOS DM RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/sda",
           "/dev/sda1",
           "/dev/sda2"
@@ -181,14 +181,14 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains all Software RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/md/md0",
           "/dev/md1"
         )
       end
 
       it "contains devices belonging to Software RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/sda"
         )
       end
@@ -203,7 +203,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains all Volume Groups and their logical volumes (including thin volumes)" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/vg0",
           "/dev/vg0/lv1",
           "/dev/vg0/lv2",
@@ -218,7 +218,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains devices belonging to Volume Groups" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/sda5",
           "/dev/sda7",
           "/dev/sda9"
@@ -238,7 +238,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "bcache1.xml" }
 
       it "contains all bcache devices" do
-        expect(items).to include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
+        expect(remove_sort_keys(items)).to include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
       end
     end
 
@@ -268,23 +268,23 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "caches the table content between calls" do
-        expect(rows).to eq ["/dev/sda"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
         Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
         # The new device is not included
-        expect(rows).to eq ["/dev/sda"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
       end
 
       it "refreshes the cached content if the NFS page was visited" do
-        expect(rows).to eq ["/dev/sda"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
         Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
-        expect(rows).to eq ["/dev/sda"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
         # Leave the NFS page
         nfs_page.store
         # Now the device is there
-        expect(rows).to eq ["/dev/sda", "new:/device"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda", "new:/device"]
         Y2Storage::Filesystems::Nfs.create(current_graph, "another", "/device")
         # Still cached
-        expect(rows).to eq ["/dev/sda", "new:/device"]
+        expect(remove_sort_keys(rows)).to eq ["/dev/sda", "new:/device"]
       end
     end
   end

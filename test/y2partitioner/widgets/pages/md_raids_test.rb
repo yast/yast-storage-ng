@@ -64,7 +64,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
       devices_name = (raids + parts).map(&:name)
       items_name = table.items.map { |i| i[1] }
 
-      expect(items_name.sort).to eq(devices_name.sort)
+      expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
     end
 
     it "associates the table and the set of buttons" do
@@ -81,7 +81,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
       end
 
       it "contains all Software RAIDs" do
-        expect(items).to include(
+        expect(remove_sort_keys(items)).to include(
           "/dev/md/md0",
           "/dev/md1"
         )
@@ -92,7 +92,8 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
       let(:scenario) { "nested_md_raids" }
 
       it "contains all software RAIDs and its partitions" do
-        expect(items).to include("/dev/md0", "/dev/md0p1", "/dev/md0p2", "/dev/md1", "/dev/md2")
+        expect(remove_sort_keys(items)).to include("/dev/md0", "/dev/md0p1", "/dev/md0p2", "/dev/md1",
+          "/dev/md2")
       end
     end
 

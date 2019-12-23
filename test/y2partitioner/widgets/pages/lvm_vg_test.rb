@@ -87,7 +87,7 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
       it "shows a table with the lvs of a vg (including thin volumes)" do
         expect(table).to_not be_nil
 
-        expect(items).to contain_exactly(
+        expect(remove_sort_keys(items)).to contain_exactly(
           "/dev/vg0/lv1",
           "/dev/vg0/lv2",
           "/dev/vg0/pool1",
