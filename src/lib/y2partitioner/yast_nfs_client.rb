@@ -213,6 +213,9 @@ module Y2Partitioner
 
     # Handler for the 'add' button
     #
+    # Note that UI will reflect the added entry immediately, even before test if it is reachable.
+    # Hence, an UI refresh is needed when the user decides to not keep a failed NFS entry.
+    #
     # @see #process_result
     def newbut_handler(legacy)
       log.info "Adding NFS to current graph: #{legacy.inspect}"
@@ -230,6 +233,7 @@ module Y2Partitioner
       log.info "Test mount failed, so removing NFS from current graph: #{nfs.inspect}"
       current_graph.remove_nfs(nfs)
       set_client_list
+      call_client("RefreshUI")
     end
 
     # Handler for the 'edit' button
