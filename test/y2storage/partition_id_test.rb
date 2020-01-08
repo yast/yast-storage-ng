@@ -105,20 +105,21 @@ describe Y2Storage::PartitionId do
   end
 
   describe "#to_human_string" do
-    it "returns translated string" do
-      Y2Storage::PartitionId.constants.each do |constant|
-        partition = Y2Storage::PartitionId.const_get(constant)
-        next unless partition.is_a?(Y2Storage::PartitionId)
+    context "when the partition id is known" do
+      let(:ids) { Y2Storage::PartitionId.all - [Y2Storage::PartitionId::UNKNOWN] }
 
-        expect(partition.to_human_string).to be_a(::String)
+      it "returns the partition id name" do
+        ids.each do |id|
+          expect(id.to_human_string).to eq(Storage.partition_id_name(id.to_i))
+        end
       end
     end
 
-    context "when it is an unhandled partition id" do
-      subject(:partition_id) { Y2Storage::PartitionId.new(9999) }
-
+    context "when the partition id is unknown" do
       it "returns the id formatted as an hexadecimal number" do
-        expect(partition_id.to_human_string).to eq("0x270f")
+        id = Y2Storage::PartitionId.new(9999)
+
+        expect(id.to_human_string).to eq("0x270f")
       end
     end
   end
