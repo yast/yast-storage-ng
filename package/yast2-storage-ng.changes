@@ -1,3 +1,10 @@
+------------------------------------------------------------------
+Wed Jan  8 23:55:39 UTC 2020 - David Diaz <dgonzalez@suse.com>
+
+- NFS Client: updates the UI after discarding a not reachable NFS
+  entry (bsc#1156446).
+- 4.1.91
+
 -------------------------------------------------------------------
 Wed Oct 23 11:51:58 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
