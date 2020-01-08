@@ -32,6 +32,8 @@ Requires:	libstorage-ng-ruby >= 4.1.89
 Requires:	rubygem(ruby-dbus)
 # Y2Packager::Repository
 Requires:	yast2-packager >= 3.3.7
+# NfsClient4partClient RefreshUI action
+Requires:	yast2-nfs-client >= 4.1.6
 # findutils for xargs
 Requires:	findutils
 
