@@ -45,10 +45,6 @@ module Y2Storage
       #   @return [Filesystems::Type]
       storage_forward :type, as: "Filesystems::Type"
 
-      # @!method supports_mount?
-      #   @return [Boolean]
-      storage_forward :supports_mount?
-
       # @!method detect_space_info
       #   Information about the free space on a device.
       #
