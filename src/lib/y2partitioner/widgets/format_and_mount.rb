@@ -192,7 +192,7 @@ module Y2Partitioner
         @mount_point_widget.refresh
         @btrfs_subvolumes_widget.refresh
 
-        if filesystem
+        if filesystem&.supports_mount?
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
 
           if filesystem.mount_point.nil?
