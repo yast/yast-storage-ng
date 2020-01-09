@@ -34,6 +34,10 @@ module Y2Storage
     #   @return [Array<Mountable>] all mountable devices in the devicegraph
     storage_class_forward :all, as: "Mountable"
 
+    # @!method supports_mount?
+    #   @return [Boolean]
+    storage_forward :supports_mount?
+
     storage_forward :storage_create_mount_point, to: :create_mount_point, as: "MountPoint"
     private :storage_create_mount_point
 

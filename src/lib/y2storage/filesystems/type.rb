@@ -70,71 +70,74 @@ module Y2Storage
       # Not all combinations of filesystem types and properties are represented,
       # default values are used for missing information.
       PROPERTIES = {
-        btrfs:    {
+        btrfs:     {
           fstab_options: COMMON_FSTAB_OPTIONS,
           name:          "BtrFS"
         },
-        ext2:     {
+        ext2:      {
           fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
           name:          "Ext2"
         },
-        ext3:     {
+        ext3:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
           default_fstab_options: JOURNAL_OPTIONS,
           name:                  "Ext3"
         },
-        ext4:     {
+        ext4:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
           default_fstab_options: JOURNAL_OPTIONS,
           name:                  "Ext4"
         },
-        hfs:      {
+        hfs:       {
           name: "MacHFS"
         },
-        hfsplus:  {
+        hfsplus:   {
           name: "MacHFS+"
         },
-        jfs:      {
+        jfs:       {
           name: "JFS"
         },
-        nfs:      {
+        nfs:       {
           name: "NFS"
         },
-        nfs4:     {
+        nfs4:      {
           name: "NFS4"
         },
-        nilfs2:   {
+        nilfs2:    {
           name: "NilFS"
         },
-        ntfs:     {
+        ntfs:      {
           default_fstab_options: ["fmask=133", "dmask=022"],
           name:                  "NTFS"
         },
-        reiserfs: {
+        reiserfs:  {
           name: "ReiserFS"
         },
-        swap:     {
+        swap:      {
           fstab_options:        ["pri="],
           default_partition_id: PartitionId::SWAP,
           name:                 "Swap"
         },
-        vfat:     {
+        vfat:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
           default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS,
           default_partition_id:  PartitionId::DOS32,
           name:                  "FAT"
         },
-        xfs:      {
+        xfs:       {
           fstab_options: COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
           name:          "XFS"
         },
-        iso9660:  {
+        iso9660:   {
           fstab_options: ["acl", "noacl"],
           name:          "ISO9660"
         },
-        udf:      {
+        udf:       {
           fstab_options: ["acl", "noacl"],
           name:          "UDF"
+        },
+        bitlocker: {
+          name: "BitLocker"
         }
       }
 
