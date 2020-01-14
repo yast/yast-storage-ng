@@ -15,7 +15,7 @@
 
 query_units()
 {
-    systemctl list-units --full --all --type mount,swap --no-legend | while read -r unit dummy ; do
+    /usr/bin/systemctl list-units --full --all --type mount,swap --no-legend | while read -r unit dummy ; do
 
 	# skip root and sysroot
 	if [[ $unit == -.mount || $unit == sysroot.mount ]] ; then
@@ -37,7 +37,7 @@ query_units()
 
 mask_units()
 {
-    query_units | xargs --verbose --no-run-if-empty --delimiter='\n' systemctl --runtime $1 --
+    query_units | /usr/bin/xargs --verbose --no-run-if-empty --delimiter='\n' /usr/bin/systemctl --runtime $1 --
 }
 
 usage()
