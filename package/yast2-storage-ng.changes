@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Jan 14 09:54:08 CET 2020 - aschnell@suse.com
+
+- do not allow block sizes bigger than the system page size when
+  creating xfs (bsc#1111668)
+- check inode size depending on block size when creating xfs
+- 4.2.70
+
+-------------------------------------------------------------------
 Thu Jan 09 12:45:00 CET 2020 - aschnell@suse.com
 
 - disallow to mount BitLocker (related to bsc#1159318)

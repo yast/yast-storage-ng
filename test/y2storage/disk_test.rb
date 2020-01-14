@@ -52,7 +52,7 @@ describe Y2Storage::Disk do
       end
     end
 
-    context "in a directly formated disk (filesystem but no partition table)" do
+    context "in a directly formatted disk (filesystem but no partition table)" do
       let(:disk_name) { "/dev/sdf" }
 
       it "returns an empty array" do

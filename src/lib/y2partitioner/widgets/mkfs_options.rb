@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,6 +21,7 @@ require "yast"
 require "cwm"
 require "y2storage"
 require "y2partitioner/widgets/mkfs_optiondata"
+require "y2partitioner/widgets/mkfs_optionvalidator"
 
 module Y2Partitioner
   # Partitioner widgets
@@ -78,6 +79,14 @@ module Y2Partitioner
           true
         end
       end
+
+      # An optional id for the option.
+      #
+      # @return [Symbol]
+      #
+      def option_id
+        @option.option_id
+      end
     end
 
     # Class for selecting mkfs and tune2fs options for {Y2Storage::Filesystems}.
@@ -122,6 +131,29 @@ module Y2Partitioner
             Left(Widgets.const_get(w.widget).new(@controller, w))
           end
         )
+      end
+
+      # All validators for the widget.
+      #
+      # @return [Arrar<MkfsOptionvalidator>]
+      #
+      def validators
+        MkfsOptionvalidator.validators_for(@controller.filesystem)
+      end
+
+      # @macro seeAbstractWidget
+      def validate
+        return true if !@contents
+
+        widgets = Yast::CWM.widgets_in_contents(@contents)
+        validators.each do |validator|
+          if !validator.validate?(widgets)
+            Yast::Popup.Error(format(validator.error))
+            return false
+          end
+        end
+
+        true
       end
     end
 

@@ -24,7 +24,7 @@ require "y2partitioner/widgets/mkfs_options"
 
 module Y2Partitioner
   module Dialogs
-    # CWM Dialog to set specific mkfs options for the blk_device being formated
+    # CWM Dialog to set specific mkfs options for the blk_device being formatted
     class MkfsOptions < Popup
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)

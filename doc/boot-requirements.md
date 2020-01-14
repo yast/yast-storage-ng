@@ -187,7 +187,7 @@
 - when proposing a /boot/zipl partition
 	- **requires /boot/zipl to be on the boot disk**
 	- **requires /boot/zipl to be a non-encrypted partition**
-	- **requires /boot/zipl to be formated as ext2**
+	- **requires /boot/zipl to be formatted as ext2**
 	- **requires /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)**
 	- when aiming for the recommended size (first proposal attempt)
 		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**

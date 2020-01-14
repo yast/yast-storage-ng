@@ -48,6 +48,10 @@ module Y2Storage
     #   @return [Boolean] whether it is a Power NV system
     storage_forward :ppc_power_nv?
 
+    # @!method page_size
+    #   @return [Integer] the system page size
+    storage_forward :page_size
+
     # Whether to resume from swap is supported by the current architecture
     #
     # @return [Boolean]

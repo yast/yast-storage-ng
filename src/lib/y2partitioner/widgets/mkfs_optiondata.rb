@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/storage_manager"
 
 module Y2Partitioner
   module Widgets
@@ -176,29 +177,39 @@ module Y2Partitioner
 
         {
           fs:          [:xfs],
+          option_id:   :block_size,
           widget:      :MkfsComboBox,
           label:       N_("Block &Size in Bytes"),
-          values:      %w[auto 512 1024 2048 4096 8192 16384],
+          values:      %w[auto 1024 2048 4096 8192 16384],
           default:     "auto",
+          validate:    lambda do |x|
+            (x.match?(/^\d+$/) && x.to_i <= page_size) || x == "auto"
+          end,
+          error:       N_(
+            "Block size bigger than page size."
+          ),
           mkfs_option: "-bsize=",
           # help text, richtext format
           help:        N_(
             "Specify the block size in bytes. " \
-            "If auto is selected, the standard block size of 4096 is used."
+            "If 'auto' is selected, the standard block size of 4096 is used. " \
+            "The block size must not exceed the system pagesize."
           )
         },
 
         {
           fs:          [:xfs],
+          option_id:   :inode_size,
           widget:      :MkfsComboBox,
           label:       N_("&Inode Size in Bytes"),
-          values:      %w[auto 256 512 1024 2048],
+          values:      %w[auto 512 1024 2048],
           default:     "auto",
           mkfs_option: "-isize=",
           # help text, richtext format
           help:        N_(
             "Specify the inode size in bytes. " \
-            "If 'auto' is selected the inode size will typically be 512."
+            "If 'auto' is selected, the inode size will typically be 512. " \
+            "The inode size must not exceed one half of the block size."
           )
         },
 
@@ -371,6 +382,14 @@ module Y2Partitioner
         _(@value[:label])
       end
 
+      # An optional id for the option.
+      #
+      # @return [Symbol]
+      #
+      def option_id
+        @value[:option_id]
+      end
+
       # Translated help text.
       #
       # The label string is prepended and formatted as title for the help text.
@@ -497,6 +516,14 @@ module Y2Partitioner
         #
         def all_options
           ALL_OPTIONS
+        end
+
+        # The page size of the system.
+        #
+        # @return [Integer]
+        #
+        def page_size
+          Y2Storage::StorageManager.instance.arch.page_size
         end
       end
     end
