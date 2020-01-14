@@ -148,7 +148,9 @@ module Y2Partitioner
           ALL_VALIDATORS
         end
 
-        # TODO
+        # Get the value of an option using the option_id.
+        #
+        # @return [Any]
         #
         def option_value(widgets, option_id)
           widgets.find { |widget| widget.option_id == option_id }.value
