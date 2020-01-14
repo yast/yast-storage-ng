@@ -322,7 +322,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
     # A device is unused when fulfill the previous tested conditions:
     # - has no partitions
-    # - formated but not mounted
+    # - formatted but not mounted
     # - not used as PV
     it "includes unused disks" do
       expect(controller.available_devices.map(&:name)).to include("/dev/sdb")

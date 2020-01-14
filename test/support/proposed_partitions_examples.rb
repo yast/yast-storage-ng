@@ -226,7 +226,7 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
     expect(zipl_part.encrypt?).to eq false
   end
 
-  it "requires /boot/zipl to be formated as ext2" do
+  it "requires /boot/zipl to be formatted as ext2" do
     expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
   end
 

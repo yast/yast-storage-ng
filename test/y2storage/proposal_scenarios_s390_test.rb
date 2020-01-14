@@ -110,7 +110,7 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "empty_dasd_50GiB" }
       let(:expected_scenario) { "s390_dasd_zipl" }
 
-      context "formated as LDL" do
+      context "formatted as LDL" do
         let(:format) { Y2Storage::DasdFormat::LDL }
 
         it "fails to make a proposal" do
@@ -118,7 +118,7 @@ describe Y2Storage::GuidedProposal do
         end
       end
 
-      context "formated as CDL" do
+      context "formatted as CDL" do
         let(:format) { Y2Storage::DasdFormat::CDL }
 
         context "not using LVM" do
