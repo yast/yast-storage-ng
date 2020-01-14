@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,10 +37,10 @@ describe Y2Partitioner::Widgets do
       end
     end
 
-    it "'fs' is a list of symbols" do
+    it "'fs' is a list of allowed filesystem symbols" do
       subject.each do |x|
         expect(x.fs).to be_a(Array)
-        expect(x.fs.find { |fs| fs.class != Symbol }).to be nil
+        expect(x.fs.find { |fs| ![:ext2, :ext3, :ext4, :btrfs, :xfs, :vfat].include? fs }).to be nil
       end
     end
 
