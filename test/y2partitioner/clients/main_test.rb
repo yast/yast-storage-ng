@@ -86,7 +86,7 @@ describe Y2Partitioner::Clients::Main do
           allow(partitioner_dialog).to receive(:run).and_return(partitioner_result)
 
           allow(Yast::Execute).to receive(:locally!)
-            .with("/sbin/udevadm", any_args)
+            .with("/usr/bin/udevadm", any_args)
           allow(Yast::Execute).to receive(:locally!)
             .with("/usr/lib/YaST2/bin/mask-systemd-units", any_args)
         end
@@ -116,13 +116,13 @@ describe Y2Partitioner::Clients::Main do
         it "runs the partitioner dialog" do
           expect(partitioner_dialog).to receive(:run)
 
-          expect(Yast::Execute).to receive(:locally!).with("/sbin/udevadm", "control",
+          expect(Yast::Execute).to receive(:locally!).with("/usr/bin/udevadm", "control",
             "--property=ANACONDA=yes").ordered
           expect(Yast::Execute).to receive(:locally!).with("/usr/lib/YaST2/bin/mask-systemd-units",
             "--mask").ordered
           expect(Yast::Execute).to receive(:locally!).with("/usr/lib/YaST2/bin/mask-systemd-units",
             "--unmask").ordered
-          expect(Yast::Execute).to receive(:locally!).with("/sbin/udevadm", "control",
+          expect(Yast::Execute).to receive(:locally!).with("/usr/bin/udevadm", "control",
             "--property=ANACONDA=").ordered
 
           subject.run
