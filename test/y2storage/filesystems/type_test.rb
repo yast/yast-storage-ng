@@ -260,7 +260,7 @@ describe Y2Storage::Filesystems::Type do
       expect(described_class.windows_filesystems).to be_a(Array)
     end
 
-    it "only includes ntfs and vfat" do
+    it "only includes ntfs, vfat and bitlocker" do
       expect(described_class.windows_filesystems.map(&:to_sym)).to contain_exactly(:ntfs, :vfat,
         :bitlocker)
     end
@@ -273,6 +273,10 @@ describe Y2Storage::Filesystems::Type do
 
     it "returns true for vfat" do
       expect(described_class::VFAT.windows_ok?).to eq(true)
+    end
+
+    it "returns true for bitlocker" do
+      expect(described_class::BITLOCKER.windows_ok?).to eq(true)
     end
 
     it "returns false otherwise" do
