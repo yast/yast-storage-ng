@@ -77,6 +77,18 @@ describe Y2Partitioner::UIState do
       it "returns nil" do
         expect(ui_state.find_tree_node(pages)).to be_nil
       end
+
+      context "and there is a selected row" do
+        let(:device_name) { "/dev/sdb" }
+
+        before { ui_state.select_row(device) }
+
+        it "does not clear the selected row" do
+          ui_state.find_tree_node(pages)
+
+          expect(ui_state.row_sid).to eq(device.sid)
+        end
+      end
     end
 
     context "when the user has opened a partition page" do
