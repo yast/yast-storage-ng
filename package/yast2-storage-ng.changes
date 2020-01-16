@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 16 11:48:39 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Improve integration with yast2-nfs-client.
+- Related bugs: bsc#1006815, bsc#1151426.
+- 4.1.91
+
+-------------------------------------------------------------------
 Wed Oct 23 11:51:58 UTC 2019 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: consider CT_DMMULTIPATH an alias of CT_DISK (related

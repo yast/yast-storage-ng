@@ -1,6 +1,4 @@
-# encoding: utf-8
-
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -216,6 +214,7 @@ module Y2Partitioner
     # @see #process_result
     def newbut_handler(legacy)
       log.info "Adding NFS to current graph: #{legacy.inspect}"
+
       nfs = legacy.create_nfs_device
       return if nfs.reachable?
 
@@ -234,6 +233,8 @@ module Y2Partitioner
 
     # Handler for the 'edit' button
     #
+    # Note that the Nfs share is re-created when either the server or the path changes.
+    #
     # @see #process_result
     def editbut_handler(legacy)
       if !legacy.share_changed?
@@ -242,11 +243,18 @@ module Y2Partitioner
         return
       end
 
+      nfs = legacy.find_nfs_device
+      probed_nfs = system_graph.find_device(nfs.sid)
+
+      # Due to this share is going to be re-created, the configuration of the probed share should be
+      # copied to apply it to the new share. Basically, this ensures to keep the probed mount point
+      # status (i.e., if the mount point is active and written in the fstab file).
+      legacy.configure_from(probed_nfs) if probed_nfs
+
       # The connection-related information has changed, so do the same the old
       # partitioner used to do - deleting the NFS and calling the handler for
       # adding a new one. Of course, if the new one cannot be saved (see
       # #newbut_handler) that means the original NFS share is lost.
-      nfs = legacy.find_nfs_device
       log.info "Removing NFS from current graph, it will be replaced: #{nfs.inspect}"
       current_graph.remove_nfs(nfs)
       newbut_handler(legacy)
@@ -261,8 +269,18 @@ module Y2Partitioner
       current_graph.remove_nfs(nfs)
     end
 
+    # Devicegraph representing the current status
+    #
+    # @return [Y2Storage::Devicegraph]
     def current_graph
       DeviceGraphs.instance.current
+    end
+
+    # Devicegraph representing the system status
+    #
+    # @return [Y2Storage::Devicegraph]
+    def system_graph
+      DeviceGraphs.instance.system
     end
   end
 end
