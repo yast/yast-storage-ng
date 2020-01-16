@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -260,8 +260,9 @@ describe Y2Storage::Filesystems::Type do
       expect(described_class.windows_filesystems).to be_a(Array)
     end
 
-    it "only includes ntfs and vfat" do
-      expect(described_class.windows_filesystems.map(&:to_sym)).to contain_exactly(:ntfs, :vfat)
+    it "only includes ntfs, vfat and bitlocker" do
+      expect(described_class.windows_filesystems.map(&:to_sym)).to contain_exactly(:ntfs, :vfat,
+        :bitlocker)
     end
   end
 
@@ -274,8 +275,12 @@ describe Y2Storage::Filesystems::Type do
       expect(described_class::VFAT.windows_ok?).to eq(true)
     end
 
+    it "returns true for bitlocker" do
+      expect(described_class::BITLOCKER.windows_ok?).to eq(true)
+    end
+
     it "returns false otherwise" do
-      types = described_class.all.reject { |t| t.is?(:ntfs, :vfat) }
+      types = described_class.all.reject { |t| t.is?(:ntfs, :vfat, :bitlocker) }
 
       expect(types.map(&:windows_ok?)).to all(be(false))
     end

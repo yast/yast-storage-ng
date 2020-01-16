@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -115,30 +115,30 @@ describe Y2Storage::Filesystems::Base do
       it "returns false" do
         expect(subject.windows_suitable?).to eq(false)
       end
+    end
 
-      context "when the type is suitable for Windows" do
-        let(:type_suitable) { true }
+    context "when the type is suitable for Windows" do
+      let(:type_suitable) { true }
 
-        before do
-          allow(subject).to receive(:blk_devices).and_return([blk_device])
+      before do
+        allow(subject).to receive(:blk_devices).and_return([blk_device])
 
-          allow(blk_device).to receive(:windows_suitable?).and_return(device_suitable)
+        allow(blk_device).to receive(:windows_suitable?).and_return(device_suitable)
+      end
+
+      context "but its device is not suitable for Windows" do
+        let(:device_suitable) { false }
+
+        it "returns false" do
+          expect(subject.windows_suitable?).to eq(false)
         end
+      end
 
-        context "but its device is not suitable for Windows" do
-          let(:device_suitable) { false }
+      context "and its device is suitable for Windows" do
+        let(:device_suitable) { true }
 
-          it "returns false" do
-            expect(subject.windows_suitable?).to eq(false)
-          end
-        end
-
-        context "and its device is suitable for Windows" do
-          let(:device_suitable) { true }
-
-          it "returns true" do
-            expect(subject.windows_suitable?).to eq(true)
-          end
+        it "returns true" do
+          expect(subject.windows_suitable?).to eq(true)
         end
       end
     end
@@ -194,6 +194,19 @@ describe Y2Storage::Filesystems::Base do
         it "returns true" do
           expect(subject.windows_system?).to eq(true)
         end
+      end
+    end
+
+    context "when the filesystem is BitLocker" do
+      before do
+        allow(subject).to receive(:type).and_return(type)
+      end
+
+      let(:suitable) { true }
+      let(:type) { instance_double(Y2Storage::Filesystems::Type, to_sym: :bitlocker) }
+
+      it "returns true" do
+        expect(subject.windows_system?).to eq(true)
       end
     end
   end

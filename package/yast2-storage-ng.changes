@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jan 15 22:07:30 CET 2020 - aschnell@suse.com
+
+- treat partitions with BitLocker as Windows (related to
+  bsc#1159318)
+- 4.2.72
+
+-------------------------------------------------------------------
 Tue Jan 14 20:52:30 CET 2020 - aschnell@suse.com
 
 - use udevadm in /usr/bin instead of /sbin (bsc#1160890)
