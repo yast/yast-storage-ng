@@ -1,6 +1,4 @@
-# encoding: utf-8
-
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -181,18 +179,24 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :in_etc_fstab?
 
-    # @!method active?
-    # 	Whether the mount point is mounted (probed devicegraph) or
-    # 	should be mounted (staging devicegraph)
+    # @!method in_etc_fstab=(value)
+    #   Whether the mount point will be present in /etc/fstab
     #
-    # 	@return [Boolean]
+    #   @param value [Boolean]
+    storage_forward :in_etc_fstab=
+
+    # @!method active?
+    #   Whether the mount point is mounted (probed devicegraph) or
+    #   should be mounted (staging devicegraph)
+    #
+    #   @return [Boolean]
     storage_forward :active?
 
     # @!method active=(value)
     #
-    # 	Sets the {#active?} flag
+    #   Sets the {#active?} flag
     #
-    # 	@param value [Boolean]
+    #   @param value [Boolean]
     storage_forward :active=
 
     # @!method immediate_deactivate
