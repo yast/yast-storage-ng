@@ -434,11 +434,8 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         end
 
         it "edits the NFS mount in the current devicegraph" do
-          expect(nfs_object.mount_point.path).to_not eq("/foo")
-
-          nfs_page.handle(event)
-
-          expect(nfs_object.mount_point.path).to eq("/foo")
+          expect { nfs_page.handle(event) }.to change(nfs_object.mount_point, :path)
+            .from("/test1").to("/foo")
         end
 
         it "keeps the mount status" do
@@ -469,13 +466,9 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         end
 
         it "creates a new NFS mount in the current devicegraph" do
-          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/b")
-          expect(nfs).to be_nil
-
-          nfs_page.handle(event)
-
-          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/b")
-          expect(nfs).to_not be_nil
+          expect { nfs_page.handle(event) }.to change {
+            Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/b")
+          }.from(be_nil).to(be_a(Y2Storage::Filesystems::Nfs))
         end
 
         it "keeps the previous mount status" do
