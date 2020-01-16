@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -161,6 +161,10 @@ module Y2Storage
       # @return [Boolean]
       def windows_system?
         return false unless windows_suitable?
+
+        # For BitLocker assume it is Windows without looking further
+        # at the file system (it cannot be mounted anyway).
+        return true if type.to_sym == :bitlocker
 
         !!fs_attribute(:windows)
       end

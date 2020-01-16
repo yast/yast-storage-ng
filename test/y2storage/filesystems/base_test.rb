@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -194,6 +194,19 @@ describe Y2Storage::Filesystems::Base do
         it "returns true" do
           expect(subject.windows_system?).to eq(true)
         end
+      end
+    end
+
+    context "when the filesystem is BitLocker" do
+      before do
+        allow(subject).to receive(:type).and_return(type)
+      end
+
+      let(:suitable) { true }
+      let(:type) { instance_double(Y2Storage::Filesystems::Type, to_sym: :bitlocker) }
+
+      it "returns true" do
+        expect(subject.windows_system?).to eq(true)
       end
     end
   end

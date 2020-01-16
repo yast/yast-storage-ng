@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -170,7 +170,7 @@ module Y2Storage
       # filesystems that can embed grub
       GRUB_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs]
 
-      WINDOWS_FILESYSTEMS = [:ntfs, :vfat]
+      WINDOWS_FILESYSTEMS = [:ntfs, :vfat, :bitlocker]
 
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
