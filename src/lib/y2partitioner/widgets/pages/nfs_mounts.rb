@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 
 require "cwm/tree_pager"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/help"
 require "y2partitioner/yast_nfs_client"
 
 module Y2Partitioner
@@ -30,6 +31,8 @@ module Y2Partitioner
       # @see YastNfsClient
       class NfsMounts < CWM::Page
         include Yast::I18n
+
+        include Help
 
         # Constructor
         #
@@ -64,13 +67,11 @@ module Y2Partitioner
         end
 
         def help
-          # Translators: Help text for the list of NFS mounts
-          _("<p><b>Server:</b> Host name or IP address of the NFS server.</p>" \
-            "<p><b>Remote Directory:</b> The directory on the NFS server.</p>" \
-            "<p><b>Mount Point:</b> The path in the local filesystem where " \
-            "the directory is mounted.</p>" \
-            "<p><b>NFS Type:</b> The filesystem type; typically \"nfs\".</p>" \
-            "<p><b>Options:</b> Mount options. See also \"man 5 nfs\".</p>")
+          columns = [:nfs_server, :nfs_directory, :nfs_mount_point, :nfs_type, :nfs_options]
+
+          help_text = columns.map { |c| helptext_for(c) }
+
+          help_text.join
         end
 
         # @macro seeAbstractWidget

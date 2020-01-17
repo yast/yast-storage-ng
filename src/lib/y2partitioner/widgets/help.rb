@@ -1,3 +1,22 @@
+# Copyright (c) [2017-2020] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 
 Yast.import "Mode"
@@ -133,19 +152,34 @@ module Y2Partitioner
         btrfs_metadata_raid_level: N_("<b>Metadata RAID Level</b> shows the RAID level for the Btrfs " \
                                       "metadata."),
 
-        btrfs_data_raid_level:     N_("<b>Data RAID Level</b> shows the RAID level for the Btrfs data.")
+        btrfs_data_raid_level:     N_("<b>Data RAID Level</b> shows the RAID level for the Btrfs data."),
+
+        nfs_server:                N_("<b>Server</b> host name or IP address of the NFS server."),
+
+        nfs_directory:             N_("<b>Remote Directory</b> the directory on the NFS server."),
+
+        nfs_mount_point:           N_("<b>Mount Point</b> shows path in the local filesystem where the" \
+                                      "\n directory is mounted."),
+
+        nfs_type:                  N_("<b>NFS Type</b> the filesystem type; typically \"nfs\"."),
+
+        nfs_options:               N_("<b>Options</b> Mount options. See also \"man 5 nfs\".")
       }.freeze
+
+      UNMOUNTED_TEXT = N_("An asterisk (*) after the mount point\n" \
+      "indicates a file system that is currently not mounted (for example, " \
+      "because it\nhas the <tt>noauto</tt> option set in <tt>/etc/fstab</tt>).")
 
       # help texts that are appended to the common help only in Mode.normal
       NORMAL_MODE_TEXTS = {
-        mount_by:    N_("A question mark (?) indicates that\n" \
-                  "the file system is not listed in <tt>/etc/fstab</tt>. It is either mounted\n" \
-                  "manually or by some automount system. When changing settings for this volume\n" \
-                  "YaST will not update <tt>/etc/fstab</tt>.\n"),
+        mount_by:        N_("A question mark (?) indicates that\n" \
+          "the file system is not listed in <tt>/etc/fstab</tt>. It is either mounted\n" \
+          "manually or by some automount system. When changing settings for this volume\n" \
+          "YaST will not update <tt>/etc/fstab</tt>.\n"),
 
-        mount_point: N_("An asterisk (*) after the mount point\n" \
-            "indicates a file system that is currently not mounted (for example, " \
-            "because it\nhas the <tt>noauto</tt> option set in <tt>/etc/fstab</tt>).")
+        mount_point:     UNMOUNTED_TEXT,
+
+        nfs_mount_point: UNMOUNTED_TEXT
       }.freeze
 
       # return translated text for given field in table or description

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -371,6 +372,16 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
     end
 
     context "when the event is triggered by the 'edit' button" do
+      before do
+        allow(Yast::WFM).to receive(:CallFunction).and_return client_result
+
+        allow_any_instance_of(Y2Storage::Filesystems::Nfs).to receive(:reachable?).and_return(true)
+      end
+
+      let(:client_result) { {} }
+
+      let(:nfs_object) { device_graph.nfs_mounts.find { |nfs| nfs.path == "/home/a" } }
+
       let(:event) do
         { "EventType" => "WidgetEvent", "EventReason" => "Activated", "ID" => :editbut }
       end
@@ -383,12 +394,9 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
       context "and the legacy NFSv4 options are modified" do
         before do
-          allow(Yast::WFM).to receive(:CallFunction).and_return client_result
           # Simulate a legacy nfs4 entry
           nfs_object.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS4
         end
-
-        let(:nfs_object) { device_graph.nfs_mounts.find { |nfs| nfs.path == "/home/a" } }
 
         let(:client_result) do
           {
@@ -405,6 +413,74 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
           expect(nfs_object.mount_point.mount_type.to_sym).to eq :nfs
           expect(nfs_object.mount_point.mount_options).to eq ["nfsvers=4"]
+        end
+      end
+
+      context "and neither the server nor the directory are modified" do
+        let(:client_result) do
+          {
+            "device" => "srv:/home/a", "fstopt" => "", "mount" => "/foo", "vfstype" => "nfs"
+          }
+        end
+
+        it "does no re-create the NFS mount" do
+          previous_sid = nfs_object.sid
+
+          nfs_page.handle(event)
+
+          sid = Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/a").sid
+
+          expect(previous_sid).to eq(sid)
+        end
+
+        it "edits the NFS mount in the current devicegraph" do
+          expect { nfs_page.handle(event) }.to change(nfs_object.mount_point, :path)
+            .from("/test1").to("/foo")
+        end
+
+        it "keeps the mount status" do
+          active = nfs_object.mount_point.active?
+          in_etc_fstab = nfs_object.mount_point.in_etc_fstab?
+
+          nfs_page.handle(event)
+
+          expect(nfs_object.mount_point.active?).to eq(active)
+          expect(nfs_object.mount_point.in_etc_fstab?).to eq(in_etc_fstab)
+        end
+      end
+
+      context "and either the server or the directory are modified" do
+        let(:client_result) do
+          {
+            "device" => "srv:/home/b", "fstopt" => "", "mount" => "/test1", "vfstype" => "nfs",
+            "old_device" => "srv:/home/a"
+          }
+        end
+
+        it "deletes the NFS mount" do
+          nfs_page.handle(event)
+
+          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/a")
+
+          expect(nfs).to be_nil
+        end
+
+        it "creates a new NFS mount in the current devicegraph" do
+          expect { nfs_page.handle(event) }.to change {
+            Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/b")
+          }.from(be_nil).to(be_a(Y2Storage::Filesystems::Nfs))
+        end
+
+        it "keeps the previous mount status" do
+          active = nfs_object.mount_point.active?
+          in_etc_fstab = nfs_object.mount_point.in_etc_fstab?
+
+          nfs_page.handle(event)
+
+          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(device_graph, "srv", "/home/b")
+
+          expect(nfs.mount_point.active?).to eq(active)
+          expect(nfs.mount_point.in_etc_fstab?).to eq(in_etc_fstab)
         end
       end
     end
