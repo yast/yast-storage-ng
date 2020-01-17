@@ -154,7 +154,7 @@ module Y2Storage
         return nfs if mountpoint.nil? || mountpoint.empty?
 
         nfs.mount_path = mountpoint
-        nfs.mount_point.mount_options = fstopt == "defaults" ? [] : fstopt.split(/[\s,]+/)
+        nfs.mount_point.mount_options = (fstopt == "defaults") ? [] : fstopt.split(/[\s,]+/)
         nfs.mount_point.active = active?
         nfs.mount_point.in_etc_fstab = in_etc_fstab?
 
