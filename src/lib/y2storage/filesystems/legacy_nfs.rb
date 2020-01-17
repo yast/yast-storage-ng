@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -70,6 +70,16 @@ module Y2Storage
       # @return [Type] possible values are Type::NFS and Type::NFS4
       attr_reader :fs_type
 
+      # Indicates whether the share should be mounted
+      #
+      # @return [Boolean]
+      attr_writer :active
+
+      # Indicates whether the share should be written in the fstab
+      #
+      # @return [Boolean]
+      attr_writer :in_etc_fstab
+
       # Creates a new object from a hash with the legacy fields used in
       # TargetMap-based code.
       #
@@ -87,6 +97,28 @@ module Y2Storage
         legacy = new
         legacy.initialize_from_nfs(nfs)
         legacy
+      end
+
+      # Constructor
+      #
+      # By default, the new share should be mounted and written to fstab
+      def initialize
+        @active = true
+        @in_etc_fstab = true
+      end
+
+      # Whether the share should be mounted
+      #
+      # @return [Boolean]
+      def active?
+        !!@active
+      end
+
+      # Whether the share should be written to the fstab
+      #
+      # @return [Boolean]
+      def in_etc_fstab?
+        !!@in_etc_fstab
       end
 
       # Hash representation of the object, with the fields used in
@@ -112,27 +144,44 @@ module Y2Storage
       # @raise [ArgumentError] if no devicegraph is given and no default
       #   devicegraph has been previously defined
       #
-      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph
-      #   will be used
+      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
       # @return [Nfs] the new device
       def create_nfs_device(devicegraph = nil)
         graph = check_devicegraph_argument(devicegraph)
 
-        dev = Nfs.create(graph, server, path)
-        if mountpoint && !mountpoint.empty?
-          dev.mount_path = mountpoint
-          dev.mount_point.mount_options = (fstopt == "defaults") ? [] : fstopt.split(/[\s,]+/)
-        end
-        dev
+        nfs = Nfs.create(graph, server, path)
+
+        return nfs if mountpoint.nil? || mountpoint.empty?
+
+        nfs.mount_path = mountpoint
+        nfs.mount_point.mount_options = (fstopt == "defaults") ? [] : fstopt.split(/[\s,]+/)
+        nfs.mount_point.active = active?
+        nfs.mount_point.in_etc_fstab = in_etc_fstab?
+
+        nfs
       end
 
-      # Updates the equivalent {Nfs} object in the devicegraph
+      # Copies properties from a Nfs share
       #
-      # @raise [ArgumentError] if no devicegraph is given and no default
-      #   devicegraph has been previously defined
+      # Right now, this method only copies the required properties to keep the same mount point status
+      # as the given Nfs share.
       #
-      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph
-      #   will be used
+      # @param nfs [Nfs]
+      def configure_from(nfs)
+        return if mountpoint.nil? || mountpoint.empty?
+
+        return unless nfs.mount_point
+
+        self.active = nfs.mount_point.active?
+        self.in_etc_fstab = nfs.mount_point.in_etc_fstab?
+      end
+
+      # Updates the equivalent {Nfs} object in the given devicegraph
+      #
+      # @raise [ArgumentError] if no devicegraph is given and no default devicegraph has been previously
+      #   defined.
+      #
+      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
       def update_nfs_device(devicegraph = nil)
         graph = check_devicegraph_argument(devicegraph)
 
