@@ -137,7 +137,7 @@ module Y2Partitioner
     # and selected row are cleared. See #tab=
     #
     # @param pages [Array<CWM::Page>] all the pages in the tree
-    # @return [CWM::Page, nil]
+    # @return [CWM::Page, nil] the page to be opened; the initial one when nil
     def find_tree_node(pages)
       # candidate_nodes can be empty if the user has not left the overview page yet. So, do nothing
       return nil if candidate_nodes.empty?
@@ -177,8 +177,9 @@ module Y2Partitioner
 
     protected
 
-    # A sort of breadcrumbs useful to know where to place the user within the general tree in the
-    # next redraw. It could hold both, devices id (sid, Integer) or pages labels (Sring)
+    # Useful to know where to place the user within the general tree in the next redraw
+    #
+    # It could hold both, devices id (sid, Integer) or pages labels (String).
     #
     # @see #find_tree_node
     #
