@@ -60,7 +60,7 @@ module Y2Partitioner
             Left(header),
             table,
             Left(device_buttons),
-            HBox(*buttons)
+            Right(HBox(*buttons))
           )
         end
 
@@ -116,7 +116,6 @@ module Y2Partitioner
         def buttons
           buttons = [rescan_devices_button]
           buttons << import_mount_points_button if Yast::Mode.installation
-          buttons << HStretch()
           buttons << Configure.new
           buttons
         end
