@@ -133,19 +133,28 @@ module Y2Partitioner
 
     # Select the page to open in the general tree after a redraw
     #
+    # If the first candidate page/node (the "current" one) is not available anymore, the tab name
+    # and selected row are cleared. See #tab=
+    #
     # @param pages [Array<CWM::Page>] all the pages in the tree
-    # @return [CWM::Page, nil]
+    # @return [CWM::Page, nil] the page to be opened; the initial one when nil
     def find_tree_node(pages)
+      # candidate_nodes can be empty if the user has not left the overview page yet. So, do nothing
+      return nil if candidate_nodes.empty?
+
       candidate_nodes.each.with_index do |candidate, idx|
         result = pages.find { |page| matches?(page, candidate) }
         if result
-          # If we had to use one of the fallbacks, the tab name is not longer
-          # trustworthy
+          # If the first candidate is not available anymore (likely, it was deleted),
+          # we had to use one of the fallbacks and the tab name is not longer trustworthy
           self.tab = nil unless idx.zero?
           return result
         end
       end
+
+      # For some reason none candidate is available. Let's reset the tab name.
       self.tab = nil
+
       nil
     end
 
@@ -168,7 +177,12 @@ module Y2Partitioner
 
     protected
 
-    # Where to place the user within the general tree in next redraw
+    # Useful to know where to place the user within the general tree in the next redraw
+    #
+    # It could hold both, devices id (sid, Integer) or pages labels (String).
+    #
+    # @see #find_tree_node
+    #
     # @return [Array<Integer, String>]
     attr_accessor :candidate_nodes
 
@@ -182,8 +196,7 @@ module Y2Partitioner
     # @see #tab
     def tab=(tab)
       @tab = tab
-      # If the user switched to a new tab, invalidate details about the inner
-      # table
+      # If the user switched to a new tab, invalidate details about the inner table
       self.row_sid = nil
     end
 

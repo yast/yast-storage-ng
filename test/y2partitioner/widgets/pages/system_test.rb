@@ -61,6 +61,11 @@ describe Y2Partitioner::Widgets::Pages::System do
       expect(button).to_not be_nil
     end
 
+    it "contains a device buttons set" do
+      device_buttons = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::DeviceButtonsSet) }
+      expect(device_buttons).to_not be_nil
+    end
+
     it "contains a widget for configuring storage technologies" do
       button = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::Configure) }
       expect(button).to_not be_nil

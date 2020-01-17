@@ -24,6 +24,7 @@ require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
 require "y2partitioner/widgets/configure"
+require "y2partitioner/widgets/device_buttons_set"
 
 Yast.import "Mode"
 
@@ -58,7 +59,8 @@ module Y2Partitioner
           @contents = VBox(
             Left(header),
             table,
-            HBox(*buttons)
+            Left(device_buttons),
+            Right(HBox(*buttons))
           )
         end
 
@@ -96,9 +98,16 @@ module Y2Partitioner
         def table
           return @table unless @table.nil?
 
-          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
+          @table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
           @table.remove_columns(:start, :end)
           @table
+        end
+
+        # Widget with the dynamic set of buttons for the selected row
+        #
+        # @return [DeviceButtonsSet]
+        def device_buttons
+          @device_buttons ||= DeviceButtonsSet.new(pager)
         end
 
         # Page buttons
@@ -107,7 +116,6 @@ module Y2Partitioner
         def buttons
           buttons = [rescan_devices_button]
           buttons << import_mount_points_button if Yast::Mode.installation
-          buttons << HStretch()
           buttons << Configure.new
           buttons
         end
