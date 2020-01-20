@@ -68,13 +68,13 @@ This package contains the files for YaST2 that handle access to disk
 devices during installation and on an installed system.
 This YaST2 module uses libstorage-ng.
 
-%package -n yast2-partitioner-ng
-Summary:        YaST2 - Storage Configuration
+%package -n yast2-partitioner
+Summary:        YaST2 - Partitioning Client
 Group:          System/YaST
 
 Obsoletes:      yast2-partitioner
 
-%description -n yast2-partitioner-ng
+%description -n yast2-partitioner
 This module provides partitioner for yast2-storage-ng
 
 %prep
@@ -109,7 +109,7 @@ rake test:unit
 %doc README.md
 %doc CONTRIBUTING.md
 
-%files -n yast2-partitioner-ng
+%files -n yast2-partitioner
 %{yast_desktopdir}
 
 %changelog
