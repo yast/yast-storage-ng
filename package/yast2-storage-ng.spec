@@ -72,8 +72,6 @@ This YaST2 module uses libstorage-ng.
 Summary:        YaST2 - Partitioning Client
 Group:          System/YaST
 
-Obsoletes:      yast2-partitioner
-
 %description -n yast2-partitioner
 This module provides partitioner for yast2-storage-ng
 
