@@ -130,13 +130,13 @@ module Y2Storage
             Left(
               HBox(
                 HSpacing(2),
-                Password(Id(:password), _("Password"))
+                Password(Id(:password), Opt(:hstretch), _("Password"))
               )
             ),
             Left(
               HBox(
                 HSpacing(2),
-                Password(Id(:repeat_password), _("Verify Password"))
+                Password(Id(:repeat_password), Opt(:hstretch), _("Verify Password"))
               )
             )
           )

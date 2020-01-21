@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 21 11:34:31 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Guided Setup: enforced a consistent width for both password
+  fields (bsc#1161202)
+- 4.2.75
+
+-------------------------------------------------------------------
 Fri Jan 17 14:54:37 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: make it possible to directly work with devices
