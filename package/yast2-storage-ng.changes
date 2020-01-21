@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Tue Jan 21 12:11:46 CET 2020 - aschnell@suse.com
+Tue Jan 21 12:11:46 UTC 2020 - aschnell@suse.com
 
 - added warning before resizing block devices which were probed
   empty (related to bsc#1159318)
