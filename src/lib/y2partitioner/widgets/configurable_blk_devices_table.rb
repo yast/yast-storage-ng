@@ -76,7 +76,12 @@ module Y2Partitioner
       # to reflect the currently selected device.
       def handle_selected
         dev = selected_device
-        buttons_set.device = dev if buttons_set && dev
+
+        return nil unless dev
+
+        UIState.instance.select_row(dev)
+        buttons_set.device = dev if buttons_set
+
         nil
       end
 
