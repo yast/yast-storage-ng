@@ -20,6 +20,7 @@
 require "yast"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
@@ -44,6 +45,10 @@ module Y2Partitioner
 
           @pager = pager
           @hostname = hostname
+        end
+
+        def init
+          UIState.instance.current_node = self
         end
 
         # @macro seeAbstractWidget
