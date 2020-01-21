@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -272,6 +272,17 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
         include_examples "partition_holds_lvm"
 
         include_examples "partition_holds_md"
+      end
+    end
+
+    context "when executed on an 'empty' partition" do
+      let(:scenario) { "mixed_disks.yml" }
+
+      let(:device_name) { "/dev/sdb7" }
+
+      it "shows a warning popup" do
+        expect(Yast2::Popup).to receive(:show)
+        action.run
       end
     end
 

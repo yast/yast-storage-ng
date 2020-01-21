@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -48,12 +48,15 @@ module Y2Partitioner
 
       # Checks whether it is possible to resize the device, and if so, the action is performed.
       # It also checks whether the device needs to be unmounted before resizing (e.g., NTFS).
-      # When unmounted device is required, it offers the option for unmounting it.
+      # When unmounted device is required, it offers the option for unmounting it. If the
+      # device seems to be empty (see confirm_empty) the user may cancel the action after
+      # a warning.
       #
-      # @note An error popup is shown when the device cannot be resized.
+      # @note An error popup is shown when the device cannot be resized or seems empty.
       #
       # @return [Symbol, nil]
       def run
+        return :back unless confirm_empty
         return :back unless try_unmount && validate
 
         resize
@@ -74,6 +77,37 @@ module Y2Partitioner
         result = Dialogs::BlkDeviceResize.run(controller)
 
         (result == :next) ? :finish : result
+      end
+
+      # If the device seems to be empty the user has to confirm a warning stating
+      # the high risk of data loss.
+      #
+      # @return [Boolean] true iff there is no high risk or user accepted high risk
+      def confirm_empty
+        # If the device has descendants now resizing is ok even if
+        # nothing was probed on the device since the user already made
+        # an operation that overrides the device.
+        return true if @device.descendants.any?
+
+        # If the device does not exist in probed there cannot be an
+        # undetected file system or storage system on it.
+        return true if !@device.exists_in_probed?
+
+        # If the device in the probed deviceraph has descendants
+        # something was probed on it. Note: In the staging deviceraph
+        # this something might have been removed so this check must
+        # not be done on the staging deviceraph.
+        probed = Y2Storage::StorageManager.instance.raw_probed
+        return true if probed.find_device(@device.sid).descendants.any?
+
+        message = _(
+          "No file system nor any storage system was detected on the\n" \
+          "device. In case the device does contain a file system or a\n" \
+          "storage system that is not supported by YaST, resizing will\n" \
+          "most likely cause data loss. Really continue?"
+        )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end
 
       # Checks whether the resize action can be performed

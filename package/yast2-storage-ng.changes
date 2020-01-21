@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 21 12:11:46 CET 2020 - aschnell@suse.com
+
+- added warning before resizing block devices which were probed
+  empty (related to bsc#1159318)
+- 4.2.76
+
+-------------------------------------------------------------------
 Tue Jan 21 11:34:31 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Guided Setup: enforced a consistent width for both password
