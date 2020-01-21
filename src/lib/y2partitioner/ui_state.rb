@@ -107,9 +107,6 @@ module Y2Partitioner
         else
           [page.label]
         end
-      # Landing in a new node, so invalidate previous details about position
-      # within a node, they no longer apply
-      self.tab = nil
     end
 
     # Method to be called when the user switches to a tab within a tree node.
@@ -133,27 +130,16 @@ module Y2Partitioner
 
     # Select the page to open in the general tree after a redraw
     #
-    # If the first candidate page/node (the "current" one) is not available anymore, the tab name
-    # and selected row are cleared. See #tab=
-    #
     # @param pages [Array<CWM::Page>] all the pages in the tree
     # @return [CWM::Page, nil] the page to be opened; the initial one when nil
     def find_tree_node(pages)
       # candidate_nodes can be empty if the user has not left the overview page yet. So, do nothing
       return nil if candidate_nodes.empty?
 
-      candidate_nodes.each.with_index do |candidate, idx|
+      candidate_nodes.each do |candidate|
         result = pages.find { |page| matches?(page, candidate) }
-        if result
-          # If the first candidate is not available anymore (likely, it was deleted),
-          # we had to use one of the fallbacks and the tab name is not longer trustworthy
-          self.tab = nil unless idx.zero?
-          return result
-        end
+        return result if result
       end
-
-      # For some reason none candidate is available. Let's reset the tab name.
-      self.tab = nil
 
       nil
     end
