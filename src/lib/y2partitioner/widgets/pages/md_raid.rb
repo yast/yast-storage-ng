@@ -59,17 +59,21 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(Icons::RAID, ""),
-                Heading(format(_("RAID: %s"), @md.name))
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::RAID, ""),
+                  Heading(format(_("RAID: %s"), @md.name))
+                )
+              ),
+              Left(
+                Tabs.new(
+                  MdTab.new(@md, initial: true),
+                  MdDevicesTab.new(@md, @pager),
+                  PartitionsTab.new(@md, @pager)
+                )
               )
-            ),
-            Tabs.new(
-              MdTab.new(@md, initial: true),
-              MdDevicesTab.new(@md, @pager),
-              PartitionsTab.new(@md, @pager)
             )
           )
         end

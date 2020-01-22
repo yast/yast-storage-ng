@@ -60,17 +60,21 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(Icons::LVM, ""),
-                Heading(format(_("Volume Group: %s"), "/dev/" + @lvm_vg.vg_name))
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::LVM, ""),
+                  Heading(format(_("Volume Group: %s"), "/dev/" + @lvm_vg.vg_name))
+                )
+              ),
+              Left(
+                Tabs.new(
+                  LvmVgTab.new(@lvm_vg),
+                  LvmLvTab.new(@lvm_vg, @pager),
+                  LvmPvTab.new(@lvm_vg, @pager)
+                )
               )
-            ),
-            Tabs.new(
-              LvmVgTab.new(@lvm_vg),
-              LvmLvTab.new(@lvm_vg, @pager),
-              LvmPvTab.new(@lvm_vg, @pager)
             )
           )
         end

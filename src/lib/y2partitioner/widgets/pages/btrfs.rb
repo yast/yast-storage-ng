@@ -59,14 +59,16 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                Heading(title)
-              )
-            ),
-            tabs
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(icon, ""),
+                  Heading(title)
+                )
+              ),
+              Left(tabs)
+            )
           )
         end
 

@@ -54,17 +54,21 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(Icons::BCACHE, ""),
-                # TRANSLATORS: Heading. String followed a device name like /dev/bcache0
-                Heading(format(_("Bcache: %s"), device.name))
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::BCACHE, ""),
+                  # TRANSLATORS: Heading. String followed a device name like /dev/bcache0
+                  Heading(format(_("Bcache: %s"), device.name))
+                )
+              ),
+              Left(
+                Tabs.new(
+                  BcacheTab.new(device),
+                  PartitionsTab.new(device, @pager)
+                )
               )
-            ),
-            Tabs.new(
-              BcacheTab.new(device),
-              PartitionsTab.new(device, @pager)
             )
           )
         end

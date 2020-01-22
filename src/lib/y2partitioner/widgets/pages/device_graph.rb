@@ -53,15 +53,17 @@ module Y2Partitioner
           return @contents if @contents
 
           @tabs = Tabs.new(current_tab, system_tab)
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::GRAPH, ""),
-                # TRANSLATORS: Heading for the expert partitioner page
-                Heading(_("Device Graphs"))
-              )
-            ),
-            @tabs
+          @contents = Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::GRAPH, ""),
+                  # TRANSLATORS: Heading for the expert partitioner page
+                  Heading(_("Device Graphs"))
+                )
+              ),
+              Left(@tabs)
+            )
           )
         end
 
