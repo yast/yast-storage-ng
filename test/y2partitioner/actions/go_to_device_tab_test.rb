@@ -26,7 +26,7 @@ require "y2partitioner/actions/go_to_device_tab"
 describe Y2Partitioner::Actions::GoToDeviceTab do
   subject(:action) { described_class.new(device, pager, "&Partitions") }
   let(:device) { double("Device") }
-  let(:pager) { double("Pager", device_page: page) }
+  let(:pager) { double("Pager", device_page: page, widget_id: "pager") }
 
   describe "#run" do
     context "for a device that doesn't have its own page" do
@@ -38,7 +38,7 @@ describe Y2Partitioner::Actions::GoToDeviceTab do
     end
 
     context "for a device with its own page" do
-      let(:page) { double("Page", label: "Device page") }
+      let(:page) { double("Page", label: "Device page", widget_id: "page") }
 
       it "returns :finish" do
         expect(action.run).to eq :finish

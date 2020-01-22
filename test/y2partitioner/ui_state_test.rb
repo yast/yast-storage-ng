@@ -287,6 +287,12 @@ describe Y2Partitioner::UIState do
 
     let(:tabs) { [vg_tab, lvs_tab, pvs_tab] }
 
+    let(:node) { double("Page", label: "A section", widget_id: "node_page") }
+
+    before do
+      ui_state.go_to_tree_node(node)
+    end
+
     context "if the user has still not clicked in any tab" do
       before { described_class.create_instance }
 
@@ -295,30 +301,52 @@ describe Y2Partitioner::UIState do
       end
     end
 
-    context "if the user has switched to a tab in the current tree node" do
+    context "when the user has switched to a tab in the current tree node" do
       before { ui_state.switch_to_tab(lvs_tab) }
 
       it "selects the corresponding page" do
         expect(ui_state.find_tab(tabs)).to eq lvs_tab
       end
-    end
 
-    context "if the switched to a tab but then moved to a different tree node" do
-      let(:another_node) { double("Page", label: "A section") }
+      context "but then moves to a different tree node" do
+        let(:another_node) { double("Page", label: "A section", widget_id: "another_node_page") }
 
-      before do
-        ui_state.switch_to_tab(lvs_tab)
-        ui_state.go_to_tree_node(another_node)
-      end
+        before do
+          ui_state.switch_to_tab(lvs_tab)
+          ui_state.go_to_tree_node(another_node)
+        end
 
-      it "returns nil even if there is another tab with the same label" do
-        expect(ui_state.find_tab(tabs)).to be_nil
+        it "returns nil even if there is another tab with the same label" do
+          expect(ui_state.find_tab(tabs)).to be_nil
+        end
+
+        context "and comes back to the previous node" do
+          before do
+            ui_state.go_to_tree_node(node)
+          end
+
+          it "selects the last active tab in the node" do
+            expect(ui_state.find_tab(tabs)).to eq lvs_tab
+          end
+        end
       end
     end
   end
 
   describe "#row_sid" do
     let(:device_name) { "/dev/sda2" }
+
+    let(:node) { double("Page", label: "A section", widget_id: "a_page") }
+    let(:another_node) { double("Page", label: "Another section", widget_id: "another_page") }
+
+    let(:overview_tab) { double("Tab", label: "Overview") }
+    let(:partitions_tab) { double("Tab", label: "Partitions") }
+
+    before do
+      described_class.create_instance
+      ui_state.go_to_tree_node(node)
+      ui_state.switch_to_tab(partitions_tab)
+    end
 
     context "if the user has still not selected any row" do
       before { described_class.create_instance }
@@ -351,16 +379,26 @@ describe Y2Partitioner::UIState do
 
       before do
         ui_state.select_row(device)
-        ui_state.switch_to_tab(another_tab)
+        ui_state.switch_to_tab(overview_tab)
       end
 
       it "returns nil" do
         expect(ui_state.row_sid).to be_nil
       end
+
+      context "and comes back to the previous tab" do
+        before do
+          ui_state.switch_to_tab(partitions_tab)
+        end
+
+        it "returns the last selected device row sid in this tab" do
+          expect(ui_state.row_sid).to eq(device.sid)
+        end
+      end
     end
 
     context "if the user had selected a row but then moved to a different tree node" do
-      let(:another_node) { double("Page", label: "Somewhere") }
+      let(:another_node) { double("Page", label: "Somewhere", widget_id: "another_node_page") }
 
       before do
         ui_state.select_row(device)
@@ -369,6 +407,16 @@ describe Y2Partitioner::UIState do
 
       it "returns nil" do
         expect(ui_state.row_sid).to be_nil
+      end
+
+      context "and comes back to the previous node" do
+        before do
+          ui_state.go_to_tree_node(node)
+        end
+
+        it "returns the last selected device row sid in the node" do
+          expect(ui_state.row_sid).to eq(device.sid)
+        end
       end
     end
   end

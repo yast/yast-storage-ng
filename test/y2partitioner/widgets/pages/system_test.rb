@@ -39,6 +39,14 @@ describe Y2Partitioner::Widgets::Pages::System do
 
   include_examples "CWM::Page"
 
+  describe "#init" do
+    it "sets itself as a current node" do
+      expect(Y2Partitioner::UIState.instance).to receive(:current_node=).with(subject)
+
+      subject.init
+    end
+  end
+
   describe "#contents" do
     # Widget with the list of devices
     def find_table(widgets)
