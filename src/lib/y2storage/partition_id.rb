@@ -69,7 +69,10 @@ module Y2Storage
     end
 
     def to_human_string
-      id_name = Storage.partition_id_name(to_i)
+      # Normally, strings coming from libstorage-ng are enforced to UTF-8 by
+      # StorageClassWrapper. Here we are accessing the libstorage-ng value
+      # directly, so we need to perform the same force_encoding operation.
+      id_name = Storage.partition_id_name(to_i).force_encoding("UTF-8")
 
       if id_name.empty?
         log.warn "Unhandled Partition ID '#{inspect}'"
