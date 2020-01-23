@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 23 15:56:36 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Avoided crash when libstorage-ng provides a non-UTF string as
+  partition id (bsc#1161442).
+- 4.2.77
+
+-------------------------------------------------------------------
 Tue Jan 21 12:11:46 UTC 2020 - aschnell@suse.com
 
 - added warning before resizing block devices which were probed
