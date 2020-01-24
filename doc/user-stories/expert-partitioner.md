@@ -357,7 +357,6 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path
     * Volume label:
     * Mount Read-only: false
-    * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * *(pending) Arbitrary option value: subvol=@*
@@ -366,32 +365,25 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
     * Volume label:
     * Mount Read-only: false
-    * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Enable quota support: false
-    * Access control lists (ACL): true
-    * Extended user attributes: true
     * Arbitrary option value:
 * and 'File system' is EXT3 or EXT4
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
     * Volume label:
     * Mount Read-only: false
-    * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Enable quota support: false
     * Data journaling mode: journal, ordered (default), writeback
-    * Access control lists (ACL): true
-    * Extended user attributes: true
     * Arbitrary option value:
 * and 'File system' is FAT
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
     * Volume label:
     * Mount Read-only: false
-    * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * *(pending) Charset for file names: iso, utf8, etc (default blank)*
@@ -402,7 +394,6 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
     * Volume label:
     * Mount Read-only: false
-    * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Enable quota support: false

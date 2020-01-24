@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -212,7 +212,6 @@ module Y2Partitioner
             VSpacing(1),
             Left(GeneralOptions.new(@controller)),
             Left(FilesystemsOptions.new(@controller)),
-            Left(AclOptions.new(@controller)),
             * ui_term_with_vspace(JournalOptions.new(@controller)),
             Left(ArbitraryOptions.new(@controller, self))
           )
@@ -370,9 +369,9 @@ module Y2Partitioner
       end
     end
 
-    # Group of radio buttons to select the type of identifier to be used for
-    # mouth the specific device (UUID, Label, Path...)
-    class MountBy < CWM::CustomWidget
+    # A combobox to select the type of identifier to be used for mount
+    # the specific device (UUID, Label, Path...)
+    class MountBy < CWM::ComboBox
       include FstabCommon
 
       # @macro seeAbstractWidget
@@ -381,59 +380,41 @@ module Y2Partitioner
       end
 
       # @macro seeAbstractWidget
+      def init
+        select_default_mount_by
+      end
+
+      # @macro seeAbstractWidget
       def store
         mount_point.mount_by = selected_mount_by
       end
 
-      # @macro seeAbstractWidget
-      def init
-        select_default_mount_by
-        disable_not_suitable_mount_bys
-      end
-
       # @macro seeCustomWidget
-      def contents
-        RadioButtonGroup(
-          Id(:mt_group),
-          VBox(
-            Left(Label(label)),
-            HBox(
-              VBox(
-                Left(RadioButton(Id(:device), _("&Device Name"))),
-                Left(RadioButton(Id(:label), _("Volume &Label"))),
-                Left(RadioButton(Id(:uuid), _("&UUID")))
-              ),
-              Top(
-                VBox(
-                  Left(RadioButton(Id(:id), _("Device &ID"))),
-                  Left(RadioButton(Id(:path), _("Device &Path")))
-                )
-              )
-            )
-          )
-        )
-      end
+      def items
+        # CWM does not support symbols for entries in ComboBoxes
+        # contrary to libyui. Otherwise a few conversations between
+        # string and symbol below could be avoided.
 
-      def selected_mount_by
-        Y2Storage::Filesystems::MountByType.find(value)
-      end
+        suitable = mount_point.suitable_mount_bys(label: true, encryption:
+          @controller.encrypt).map { |mount_by| mount_by.to_sym.to_s }
 
-      def value
-        Yast::UI.QueryWidget(Id(:mt_group), :Value)
+        [
+          ["device", _("Device Name")],
+          ["id", _("Device ID")],
+          ["path", _("Device Path")],
+          ["uuid", _("UUID")],
+          ["label", _("Volume Label")]
+        ].select { |item| suitable.include? item[0] }
       end
 
       private
 
-      def select_default_mount_by
-        Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
+      def selected_mount_by
+        Y2Storage::Filesystems::MountByType.find(value.to_sym)
       end
 
-      # Disables the corresponding widget for all the mount_by types that should
-      # not be offered
-      def disable_not_suitable_mount_bys
-        suitable = mount_point.suitable_mount_bys(label: true, encryption: @controller.encrypt)
-        invalid = Y2Storage::Filesystems::MountByType.all - suitable
-        invalid.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
+      def select_default_mount_by
+        self.value = mount_point.mount_by.to_s
       end
     end
 
@@ -451,7 +432,6 @@ module Y2Partitioner
       def widgets
         [
           ReadOnly.new(@controller),
-          Noatime.new(@controller),
           MountUser.new(@controller),
           Noauto.new(@controller),
           Quota.new(@controller)
@@ -518,23 +498,6 @@ module Y2Partitioner
       end
     end
 
-    # CheckBox to enable the noatime option
-    class Noatime < FstabCheckBox
-      # Possible values of the widget
-      VALUES = ["noatime", "atime"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("No &Access Time")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>No Access Time:</b>\nAccess times are not " \
-        "updated when a file is read. Default is false.</p>\n")
-      end
-    end
-
     # CheckBox to enable the user option which means allow to mount the
     # filesystem by an ordinary user
     class MountUser < FstabCheckBox
@@ -581,65 +544,6 @@ module Y2Partitioner
       def store
         delete_fstab_option!(Regexp.union(VALUES))
         add_fstab_options("usrquota", "grpquota") if value
-      end
-    end
-
-    # A group of options related to ACLs (access control lists)
-    class AclOptions < CWM::CustomWidget
-      include FstabCommon
-
-      # @macro seeCustomWidget
-      def contents
-        return Empty() unless widgets.any?(&:supported_by_filesystem?)
-
-        VBox(* widgets.map { |w| to_ui_term(w) }, VSpacing(1))
-      end
-
-      def widgets
-        [
-          Acl.new(@controller),
-          UserXattr.new(@controller)
-        ]
-      end
-    end
-
-    # CheckBox to enable access control lists (acl)
-    class Acl < FstabCheckBox
-      include FstabCommon
-
-      # Possible values of the widget
-      VALUES = ["acl", "noacl"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("&Access Control Lists (ACL)")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>Access Control Lists (acl):</b>\n" \
-          "Enable POSIX access control lists and thus more fine-grained " \
-          "user permissions on the file system. See also man 5 acl.\n")
-      end
-    end
-
-    # CheckBox to enable extended user attributes (user_xattr)
-    class UserXattr < FstabCheckBox
-      include FstabCommon
-
-      # Possible values of the widget
-      VALUES = ["user_xattr", "nouser_xattr"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("&Extended User Attributes")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>Extended User Attributes (user_xattr):</b>\n" \
-          "Enable extended attributes (name:value pairs) on files and directories.\n" \
-          "This is an extension to ACLs. See also man 7 xattr.\n")
       end
     end
 

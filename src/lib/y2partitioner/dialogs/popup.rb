@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,13 +37,10 @@ module Y2Partitioner
 
       def layout
         VBox(
-          HSpacing(50),
           Left(Heading(Id(:title), title)),
-          VStretch(),
           VSpacing(1),
-          MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty())),
-          VSpacing(1),
-          VStretch(),
+          VCenter(MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty()))),
+          VSpacing(0.45),
           ButtonBox(*buttons)
         )
       end
@@ -61,7 +58,7 @@ module Y2Partitioner
       #
       # @return [Integer]
       def min_height
-        18
+        14
       end
 
       def ok_button_label

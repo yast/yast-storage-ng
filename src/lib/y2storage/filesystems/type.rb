@@ -35,10 +35,8 @@ module Y2Storage
       # See "man mount" for all those options.
       COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
                               "auto", "noauto", "ro", "rw", "defaults"].freeze
-      EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
-                           "noacl", "user_xattr", "nouser_xattr"].freeze
+      EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota"].freeze
       JOURNAL_OPTIONS = ["data=ordered"].freeze
-      ACL_OPTIONS = ["acl", "user_xattr"].freeze
 
       # For "iocharset" and "codepage" the value will be added on demand.
       #
@@ -129,12 +127,10 @@ module Y2Storage
           name:          "XFS"
         },
         iso9660:   {
-          fstab_options: ["acl", "noacl"],
-          name:          "ISO9660"
+          name: "ISO9660"
         },
         udf:       {
-          fstab_options: ["acl", "noacl"],
-          name:          "UDF"
+          name: "UDF"
         },
         bitlocker: {
           name: "BitLocker"
@@ -175,7 +171,7 @@ module Y2Storage
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
         :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS, :JOURNAL_OPTIONS,
-        :ACL_OPTIONS, :IOCHARSET_OPTIONS, :CODEPAGE_OPTIONS, :LANG_ENCODINGS
+        :IOCHARSET_OPTIONS, :CODEPAGE_OPTIONS, :LANG_ENCODINGS
 
       # Allowed filesystems for root
       #
