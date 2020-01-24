@@ -369,9 +369,9 @@ module Y2Partitioner
       end
     end
 
-    # Group of radio buttons to select the type of identifier to be used for
-    # mouth the specific device (UUID, Label, Path...)
-    class MountBy < CWM::CustomWidget
+    # A combobox to select the type of identifier to be used for mount
+    # the specific device (UUID, Label, Path...)
+    class MountBy < CWM::ComboBox
       include FstabCommon
 
       # @macro seeAbstractWidget
@@ -380,59 +380,41 @@ module Y2Partitioner
       end
 
       # @macro seeAbstractWidget
+      def init
+        select_default_mount_by
+      end
+
+      # @macro seeAbstractWidget
       def store
         mount_point.mount_by = selected_mount_by
       end
 
-      # @macro seeAbstractWidget
-      def init
-        select_default_mount_by
-        disable_not_suitable_mount_bys
-      end
-
       # @macro seeCustomWidget
-      def contents
-        RadioButtonGroup(
-          Id(:mt_group),
-          VBox(
-            Left(Label(label)),
-            HBox(
-              VBox(
-                Left(RadioButton(Id(:device), _("&Device Name"))),
-                Left(RadioButton(Id(:label), _("Volume &Label"))),
-                Left(RadioButton(Id(:uuid), _("&UUID")))
-              ),
-              Top(
-                VBox(
-                  Left(RadioButton(Id(:id), _("Device &ID"))),
-                  Left(RadioButton(Id(:path), _("Device &Path")))
-                )
-              )
-            )
-          )
-        )
-      end
+      def items
+        # CWM does not support symbols for entries in ComboBoxes
+        # contrary to libyui. Otherwise a few conversations between
+        # string and symbol below could be avoided.
 
-      def selected_mount_by
-        Y2Storage::Filesystems::MountByType.find(value)
-      end
+        suitable = mount_point.suitable_mount_bys(label: true, encryption:
+          @controller.encrypt).map { |mount_by| mount_by.to_sym.to_s }
 
-      def value
-        Yast::UI.QueryWidget(Id(:mt_group), :Value)
+        [
+          ["device", _("Device Name")],
+          ["id", _("Device ID")],
+          ["path", _("Device Path")],
+          ["uuid", _("UUID")],
+          ["label", _("Volume Label")]
+        ].select { |item| suitable.include? item[0] }
       end
 
       private
 
-      def select_default_mount_by
-        Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
+      def selected_mount_by
+        Y2Storage::Filesystems::MountByType.find(value.to_sym)
       end
 
-      # Disables the corresponding widget for all the mount_by types that should
-      # not be offered
-      def disable_not_suitable_mount_bys
-        suitable = mount_point.suitable_mount_bys(label: true, encryption: @controller.encrypt)
-        invalid = Y2Storage::Filesystems::MountByType.all - suitable
-        invalid.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
+      def select_default_mount_by
+        self.value = mount_point.mount_by.to_s
       end
     end
 

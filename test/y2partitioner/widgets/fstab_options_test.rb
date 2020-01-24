@@ -162,12 +162,11 @@ describe Y2Partitioner::Widgets do
       allow(subject).to receive(:value).and_return(:uuid)
     end
 
-    include_examples "CWM::CustomWidget"
+    include_examples "CWM::ComboBox"
     include_examples "CWM::AbstractWidget#init#store"
 
-    describe "#init" do
+    describe "#items" do
       before do
-        allow(Yast::UI).to receive(:ChangeWidget).and_call_original
         allow(controller).to receive(:mount_point).and_return(mount_point)
         allow(mount_point).to receive(:suitable_mount_bys).and_return(possible_mount_bys)
       end
@@ -185,10 +184,12 @@ describe Y2Partitioner::Widgets do
         ]
       end
 
-      it "disables not suitable mount bys" do
-        expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:label), :Enabled, false)
-        expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:id), :Enabled, false)
-        subject.init
+      it "only includes the allowed mount bys" do
+        expect(subject.items).to eq [
+          ["device", "Device Name"],
+          ["path", "Device Path"],
+          ["uuid", "UUID"]
+        ]
       end
     end
   end
