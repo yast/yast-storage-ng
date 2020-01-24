@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jan 24 14:08:28 CET 2020 - aschnell@suse.com
+
+- reduce min height of dialogs (bsc#1161651)
+- 4.2.78
+
+-------------------------------------------------------------------
 Thu Jan 23 15:56:36 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Avoided crash when libstorage-ng provides a non-UTF string as
