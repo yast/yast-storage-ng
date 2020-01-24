@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -212,7 +212,6 @@ module Y2Partitioner
             VSpacing(1),
             Left(GeneralOptions.new(@controller)),
             Left(FilesystemsOptions.new(@controller)),
-            Left(AclOptions.new(@controller)),
             * ui_term_with_vspace(JournalOptions.new(@controller)),
             Left(ArbitraryOptions.new(@controller, self))
           )
@@ -451,7 +450,6 @@ module Y2Partitioner
       def widgets
         [
           ReadOnly.new(@controller),
-          Noatime.new(@controller),
           MountUser.new(@controller),
           Noauto.new(@controller),
           Quota.new(@controller)
@@ -518,23 +516,6 @@ module Y2Partitioner
       end
     end
 
-    # CheckBox to enable the noatime option
-    class Noatime < FstabCheckBox
-      # Possible values of the widget
-      VALUES = ["noatime", "atime"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("No &Access Time")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>No Access Time:</b>\nAccess times are not " \
-        "updated when a file is read. Default is false.</p>\n")
-      end
-    end
-
     # CheckBox to enable the user option which means allow to mount the
     # filesystem by an ordinary user
     class MountUser < FstabCheckBox
@@ -581,65 +562,6 @@ module Y2Partitioner
       def store
         delete_fstab_option!(Regexp.union(VALUES))
         add_fstab_options("usrquota", "grpquota") if value
-      end
-    end
-
-    # A group of options related to ACLs (access control lists)
-    class AclOptions < CWM::CustomWidget
-      include FstabCommon
-
-      # @macro seeCustomWidget
-      def contents
-        return Empty() unless widgets.any?(&:supported_by_filesystem?)
-
-        VBox(* widgets.map { |w| to_ui_term(w) }, VSpacing(1))
-      end
-
-      def widgets
-        [
-          Acl.new(@controller),
-          UserXattr.new(@controller)
-        ]
-      end
-    end
-
-    # CheckBox to enable access control lists (acl)
-    class Acl < FstabCheckBox
-      include FstabCommon
-
-      # Possible values of the widget
-      VALUES = ["acl", "noacl"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("&Access Control Lists (ACL)")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>Access Control Lists (acl):</b>\n" \
-          "Enable POSIX access control lists and thus more fine-grained " \
-          "user permissions on the file system. See also man 5 acl.\n")
-      end
-    end
-
-    # CheckBox to enable extended user attributes (user_xattr)
-    class UserXattr < FstabCheckBox
-      include FstabCommon
-
-      # Possible values of the widget
-      VALUES = ["user_xattr", "nouser_xattr"].freeze
-
-      # @macro seeAbstractWidget
-      def label
-        _("&Extended User Attributes")
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        _("<p><b>Extended User Attributes (user_xattr):</b>\n" \
-          "Enable extended attributes (name:value pairs) on files and directories.\n" \
-          "This is an extension to ACLs. See also man 7 xattr.\n")
       end
     end
 

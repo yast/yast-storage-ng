@@ -2,6 +2,8 @@
 Fri Jan 24 14:08:28 CET 2020 - aschnell@suse.com
 
 - reduce min height of dialogs (bsc#1161651)
+- drop noatime, acl and xattr options in "Fstab Options" dialog
+  (bsc#1135723)
 - 4.2.78
 
 -------------------------------------------------------------------

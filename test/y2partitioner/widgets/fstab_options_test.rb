@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -205,10 +205,6 @@ describe Y2Partitioner::Widgets do
     include_examples "FstabCheckBox"
   end
 
-  describe Y2Partitioner::Widgets::Noatime do
-    include_examples "FstabCheckBox"
-  end
-
   describe Y2Partitioner::Widgets::MountUser do
     include_examples "FstabCheckBox"
   end
@@ -220,10 +216,6 @@ describe Y2Partitioner::Widgets do
   describe Y2Partitioner::Widgets::JournalOptions do
     include_examples "CWM::ComboBox"
     include_examples "CWM::AbstractWidget#init#store"
-  end
-
-  describe Y2Partitioner::Widgets::AclOptions do
-    include_examples "CWM::CustomWidget"
   end
 
   describe Y2Partitioner::Widgets::ArbitraryOptions do
