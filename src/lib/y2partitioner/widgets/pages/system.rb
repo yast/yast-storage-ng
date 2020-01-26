@@ -48,7 +48,8 @@ module Y2Partitioner
         end
 
         def init
-          UIState.instance.current_node = self
+          # Register itself in the UIState
+          UIState.instance.go_to_tree_node(self)
         end
 
         # @macro seeAbstractWidget
