@@ -25,7 +25,10 @@ require "y2partitioner/widgets/pages"
 describe Y2Partitioner::UIState do
   subject(:ui_state) { described_class.instance }
 
-  before { devicegraph_stub(scenario) }
+  before do
+    described_class.create_instance
+    devicegraph_stub(scenario)
+  end
 
   let(:scenario) { "complex-lvm-encrypt.yml" }
 
@@ -448,6 +451,66 @@ describe Y2Partitioner::UIState do
 
       # To ensure this does not interfere with other tests
       after { ui_state.overview_tree_pager = nil }
+    end
+  end
+
+  describe "#clear_statuses_for" do
+    let(:device_name) { "/dev/sda" }
+    let(:sda1) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
+    let(:sda2) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda2") }
+    let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
+    let(:lv1) { vg.lvm_lvs.first }
+    let(:lv2) { vg.lvm_lvs.last }
+
+    let(:pager) { double("TreePager") }
+
+    let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
+    let(:sda_page) { Y2Partitioner::Widgets::Pages::Disk.new(device, pager) }
+    let(:sda1_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda1) }
+    let(:sda2_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda2) }
+
+    let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
+    let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
+    let(:lv1_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv1) }
+    let(:lv2_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv2) }
+
+    before do
+      ui_state.go_to_tree_node(disks_page)
+      ui_state.go_to_tree_node(sda_page)
+      ui_state.go_to_tree_node(sda1_page)
+      ui_state.go_to_tree_node(sda2_page)
+      ui_state.go_to_tree_node(lvm_page)
+      ui_state.go_to_tree_node(vg_page)
+      ui_state.go_to_tree_node(lv1_page)
+      ui_state.go_to_tree_node(lv2_page)
+    end
+
+    context "when a 'parent' device is deleted" do
+      it "clears all related status nodes" do
+        expect(ui_state.nodes.keys)
+          .to include(vg_page.widget_id, lv1_page.widget_id, lv2_page.widget_id)
+
+        ui_state.clear_statuses_for(vg.sid)
+
+        expect(ui_state.nodes.keys)
+          .to_not include(vg_page.widget_id, lv1_page.widget_id, lv2_page.widget_id)
+      end
+    end
+
+    context "when a 'child' device is deleted" do
+      it "clears its related status node" do
+        expect(ui_state.nodes.keys).to include(sda1_page.widget_id)
+
+        ui_state.clear_statuses_for(sda1.sid)
+
+        expect(ui_state.nodes.keys).to_not include(sda1_page.widget_id)
+      end
+
+      it "does not clear either, parent or siblings status nodes" do
+        ui_state.clear_statuses_for(sda1.sid)
+
+        expect(ui_state.nodes.keys).to include(sda_page.widget_id, sda2_page.widget_id)
+      end
     end
   end
 end

@@ -24,45 +24,19 @@ module Y2Partitioner
   class UIState
     include Yast::I18n
 
-    # Constructor
+    # A collection holding the Node status for each CWM::Page visited by the user
     #
-    # Called through {.create_instance}, starts with a blank situation (which
-    # means default for each widget will be honored).
-    def initialize
-      textdomain "storage"
-
-      @candidate_nodes = []
-      @open_items = {}
-      @overview_tree_pager = nil
-      @node_statuses = {}
-      @current_node_status = nil
-    end
-
-    # Set the current node status based on the given node
+    # The CWM::Page#widget_id is used as index
+    # @see #node_for
     #
-    # @param node [CWM::Page, CWM::PageTreeItem]
-    def current_node=(node)
-      @current_node_status = node_status_for(node.widget_id)
-    end
-
-    # Get the current node status with given id, creating it if needed
-    #
-    # @param id [String] the id of the related CWM::PageTreeItem
-    # @return [NodeStatus] the current node status when it already exists; a new one when not.
-    def node_status_for(id)
-      node_statuses[id] ||= NodeStatus.new(id)
-    end
+    # @return [Hash{String => Node}]
+    attr_reader :nodes
 
     # A reference to the overview tree pager, which is a new instance every dialog redraw. See note
     # in {Dialogs::Main#contents}
     #
     # @return [Widgets::OverviewTreePager]
     attr_accessor :overview_tree_pager
-
-    # A NodeStatus for the selected CWM::PageTreeItem
-    #
-    # @return [NodeStatus]
-    attr_reader :current_node_status
 
     # Hash listing all the items with children of the tree and specifying whether
     # such item should be expanded (true) or collapsed (false) in the next redraw.
@@ -73,11 +47,25 @@ module Y2Partitioner
     # @return [Hash{String => Boolean}]
     attr_reader :open_items
 
+    # Constructor
+    #
+    # Called through {.create_instance}, starts with a blank situation (which
+    # means default for each widget will be honored).
+    def initialize
+      textdomain "storage"
+
+      @nodes = {}
+      @current_node = nil
+      @open_items = {}
+      @overview_tree_pager = nil
+    end
+
     # Title of the section listing the MD RAIDs
     #
-    # @note This is defined in this class as the simplest way to avoid
-    #   dependency cycles in the Ruby requires. We might reconsider a more clean
-    #   approach in the future.
+    # @note This is defined in this class as the simplest way to avoid dependency cycles in the Ruby
+    # requires. For example, CWM::Pages::Bcaches ends requiring Y2Partitioner::Actions::DeleteDevice
+    # which also requires Y2Partitioner::UIState. We might reconsider a more clean approach in the
+    # future.
     #
     # @return [String]
     def md_raids_label
@@ -118,14 +106,14 @@ module Y2Partitioner
     def select_row(device)
       sid = device.respond_to?(:sid) ? device.sid : device
 
-      current_node_status&.selected_device = sid
+      current_node&.selected_device = sid
     end
 
     # The sid of the associated device when a row must be selected in a table with devices
     #
     # @return [Integer, nil]
     def row_sid
-      current_node_status&.selected_device
+      current_node&.selected_device
     end
 
     # Method to be called when the user decides to visit a given page by
@@ -136,14 +124,7 @@ module Y2Partitioner
     #
     # @param [CWM::Page] page associated to the tree node
     def go_to_tree_node(page)
-      self.current_node = page
-
-      self.candidate_nodes =
-        if page.respond_to?(:device)
-          device_page_candidates(page)
-        else
-          [page.label]
-        end
+      self.current_node = node_for(page)
     end
 
     # Method to be called when the user switches to a tab within a tree node.
@@ -152,7 +133,7 @@ module Y2Partitioner
     #
     # @param [CWM::Page, String] page associated to the tab (or just its label)
     def switch_to_tab(page)
-      current_node_status&.active_tab = page.respond_to?(:label) ? page.label : page
+      current_node&.active_tab = page.respond_to?(:label) ? page.label : page
     end
 
     # Select the page to open in the general tree after a redraw
@@ -161,9 +142,9 @@ module Y2Partitioner
     # @return [CWM::Page, nil] the page to be opened; the initial one when nil
     def find_tree_node(pages)
       # candidate_nodes can be empty if the user has not left the overview page yet. So, do nothing
-      return nil if candidate_nodes.empty?
+      return nil unless current_node
 
-      candidate_nodes.each do |candidate|
+      current_node.candidate_nodes.each do |candidate|
         result = pages.find { |page| matches?(page, candidate) }
         return result if result
       end
@@ -176,14 +157,30 @@ module Y2Partitioner
     # @param pages [Array<CWM::Page>] pages for all the possible tabs
     # @return [CWM::Page, nil]
     def find_tab(pages)
-      tab = current_node_status&.active_tab
+      tab = current_node&.active_tab
 
       return nil unless tab
 
       pages.find { |page| page.label == tab }
     end
 
+    # Method to be called when the user deletes a device to properly clear dead statuses
+    #
+    # Taking advantage of the path to the device provided by Node#candidate_nodes, it can discard
+    # all no longer relevant statuses after deleting a device.
+    #
+    # @param sid [Integer] the sid of the deleted device
+    def clear_statuses_for(sid)
+      # All statuses containing the given sid as candidate must be discarded
+      nodes.reject! { |_, v| v.candidate_nodes.include?(sid) }
+    end
+
     # Stores the ids of the tree items that are open
+    #
+    # @note It has been decided to keep that logic here instead of moving it as part of each Node
+    # status since it complicates things more than desired: UIState only tracks the status for each
+    # visited item. Anyway, if it is being improved please bear in mind the default behavior to this
+    # regard for items without children *yet*.
     def save_open_items
       return unless overview_tree_pager
 
@@ -192,55 +189,17 @@ module Y2Partitioner
 
     protected
 
-    # Useful to know where to place the user within the general tree in the next redraw
+    # A Node for the selected CWM::PageTreeItem
     #
-    # It could hold both, devices id (sid, Integer) or pages labels (String).
-    #
-    # @see #find_tree_node
-    #
-    # @return [Array<Integer, String>]
-    attr_accessor :candidate_nodes
+    # @return [Node]
+    attr_accessor :current_node
 
-    # A collection holding all the NodeStatus for each CWM::PagerTreeItem visited by the user
+    # Returns the status representation for given page
     #
-    # @return [Hash{String => NodeStatus}]
-    attr_reader :node_statuses
-
-    # List of candidate nodes to go back after opening a device view in the tree
-    #
-    # @return [Array<Integer, String>]
-    def device_page_candidates(page)
-      device = page.device
-      [device.sid, device_page_parent(device)].compact
-    end
-
-    # @see #device_page_candidates
-    #
-    # @return [Integer, String, nil] nil if there is no parent tree entry
-    def device_page_parent(device)
-      if device.is?(:partition)
-        device.partitionable.sid
-      elsif device.is?(:lvm_lv)
-        device.lvm_vg.sid
-      else
-        device_page_section(device)
-      end
-    end
-
-    # @see #device_page_candidates
-    # @see #device_page_parent
-    #
-    # @return [Integer, String, nil] nil if there is no parent tree entry
-    def device_page_section(device)
-      if device.is?(:md)
-        md_raids_label
-      elsif device.is?(:lvm_vg)
-        lvm_label
-      elsif device.is?(:bcache)
-        bcache_label
-      elsif device.is?(:btrfs)
-        btrfs_filesystems_label
-      end
+    # @param page [CWM::Page]
+    # @return [Node] the current node status if it already exists; a new one when not.
+    def node_for(page)
+      nodes[page.widget_id] ||= Node.new(page)
     end
 
     # Whether the given page matches with the candidate tree node
@@ -272,67 +231,122 @@ module Y2Partitioner
       # create objects
       private :new, :allocate
     end
-  end
 
-  # Represent the UI status of a CWM::PagerTreeItem and its CWM::Page
-  #
-  # TODO: moves here the logic related to open_items
-  class NodeStatus
-    # The key to reference the selected device for a table not wrapped in a tab
-    FALLBACK_TAB = "root".freeze
-    private_constant :FALLBACK_TAB
+    # Represent the UI status of a CWM::PagerTreeItem and its CWM::Page
+    class Node
+      # The key to reference the selected device for a table not wrapped in a tab
+      FALLBACK_TAB = "root".freeze
+      private_constant :FALLBACK_TAB
 
-    # Constructor
-    #
-    # @param id [String] the tree node id
-    def initialize(id)
-      @id = id
-      @selected_devices = { FALLBACK_TAB => nil }
+      # A reference to the active tab
+      #
+      # Useful to restore it when the user comes back after going to another node.
+      #
+      # @return [String]
+      attr_accessor :active_tab
+
+      # The path to the node, useful to correctly place the user within the tree after redrawing the
+      # UI and also to remove useless statuses after deleting a device.
+      #
+      # @see UIState#find_tree_node
+      # @see UIState#clear_status_for
+      #
+      # It could hold both, a device id (sid, Integer) or a page label (String).
+      #
+      # @return [Array<Integer, String>]
+      attr_reader :candidate_nodes
+
+      # Constructor
+      #
+      # @param page [CWM:Page] the related CWM::Page
+      def initialize(page)
+        @candidate_nodes = build_candidate_nodes(page)
+        @selected_devices = { FALLBACK_TAB => nil }
+      end
+
+      # Returns the last selected device for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_devices
+      #
+      # @return [Integer, nil]
+      def selected_device
+        selected_devices[tab]
+      end
+
+      # Stores selected device for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_devices
+      #
+      # @param sid [Integer] the device sid
+      def selected_device=(sid)
+        selected_devices[tab] = sid
+      end
+
+      private
+
+      # A collection to keep the selected devices per tab
+      #
+      # The FALLBACK_TAB key will be used to reference the selected device of a CWM::Page with a
+      # devices table not wrapped within a tab (e.g, Widgets::Pages::System, Widgets:Pages::Disks,
+      # etc)
+      #
+      # @return [Hash{String => Integer}]
+      attr_reader :selected_devices
+
+      # Build the list of candidate nodes to go back after opening a device view in the tree
+      #
+      # @return [Array<Integer, String>]
+      def build_candidate_nodes(page)
+        if page.respond_to?(:device)
+          device_page_candidates(page)
+        else
+          [page.label]
+        end
+      end
+
+      # List of candidate nodes to go back after opening a device view in the tree
+      #
+      # @return [Array<Integer, String>]
+      def device_page_candidates(page)
+        device = page.device
+        [device.sid, device_page_parent(device)].compact
+      end
+
+      # @see #device_page_candidates
+      #
+      # @return [Integer, String, nil] nil if there is no parent tree entry
+      def device_page_parent(device)
+        if device.is?(:partition)
+          device.partitionable.sid
+        elsif device.is?(:lvm_lv)
+          device.lvm_vg.sid
+        else
+          device_page_section(device)
+        end
+      end
+
+      # @see #device_page_candidates
+      # @see #device_page_parent
+      #
+      # @return [Integer, String, nil] nil if there is no parent tree entry
+      def device_page_section(device)
+        if device.is?(:md)
+          UIState.instance.md_raids_label
+        elsif device.is?(:lvm_vg)
+          UIState.instance.lvm_label
+        elsif device.is?(:bcache)
+          UIState.instance.bcache_label
+        elsif device.is?(:btrfs)
+          UIState.instance.btrfs_filesystems_label
+        end
+      end
+
+      # Returns the active tab or the fallback when none
+      #
+      # @return [String]
+      def tab
+        active_tab || FALLBACK_TAB
+      end
     end
-
-    attr_reader :id
-
-    # A reference to the active tab
-    #
-    # Useful to restore it when the user comes back after going to another node.
-    #
-    # @return [String]
-    attr_accessor :active_tab
-
-    # Returns the last selected device for the active tab
-    #
-    # If the node has no tabs a fallback reference will be used. See #selected_devices
-    #
-    # @return [Integer, nil]
-    def selected_device
-      selected_devices[tab]
-    end
-
-    # Stores selected device for the active tab
-    #
-    # If the node has no tabs a fallback reference will be used. See #selected_devices
-    #
-    # @param sid [Integer] the device sid
-    def selected_device=(sid)
-      selected_devices[tab] = sid
-    end
-
-    private
-
-    # Returns the active tab or the fallback when none
-    #
-    # @return [String]
-    def tab
-      active_tab || FALLBACK_TAB
-    end
-
-    # A collection to keep the selected devices per tab
-    #
-    # The FALLBACK_TAB key will be used to reference the selected device of a CWM::Page with a
-    # devices table not wrapped within a tab (e.g, Widgets::Pages::System, Widgets:Pages::Disks,
-    # etc)
-    #
-    # @return [Hash{String => Integer}]
-    attr_reader :selected_devices
   end
 end
