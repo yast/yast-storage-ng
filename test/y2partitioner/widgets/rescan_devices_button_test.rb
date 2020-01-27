@@ -55,6 +55,12 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
     context "when rescanning is canceled" do
       let(:accepted) { false }
 
+      it "does not create a new UIState instance" do
+        expect(Y2Partitioner::UIState).to_not receive(:create_instance)
+
+        subject.handle
+      end
+
       it "returns nil" do
         expect(subject.handle).to be_nil
       end
@@ -69,6 +75,12 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
         before { allow(manager).to receive(:activate).and_return true }
 
         include_examples "reprobing"
+
+        it "creates a new UIState instance" do
+          expect(Y2Partitioner::UIState).to receive(:create_instance)
+
+          subject.handle
+        end
 
         it "runs activation again" do
           expect(manager).to receive(:activate).and_return true
@@ -85,6 +97,12 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
         let(:install) { false }
 
         include_examples "reprobing"
+
+        it "creates a new UIState instance" do
+          expect(Y2Partitioner::UIState).to receive(:create_instance)
+
+          subject.handle
+        end
 
         it "does not re-run activation" do
           expect(manager).to_not receive(:activate)
