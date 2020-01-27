@@ -19,7 +19,6 @@
 
 require "cwm/widget"
 require "y2partitioner/icons"
-require "y2partitioner/ui_state"
 require "y2partitioner/widgets/bcache_add_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/configurable_blk_devices_table"
@@ -32,6 +31,19 @@ module Y2Partitioner
       # It contains two tabs: one tab with a list of bcache devices and another
       # tab with the list of caching sets.
       class Bcaches < CWM::Page
+        extend Yast::I18n
+
+        textdomain "storage"
+
+        # Label for all the instances
+        #
+        # @see #label
+        #
+        # @return [String]
+        def self.label
+          _("Bcache")
+        end
+
         # Constructor
         #
         # @param bcaches [Array<Y2Storage::Bcache>]
@@ -45,7 +57,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          UIState.instance.bcache_label
+          self.class.label
         end
 
         # @macro seeCustomWidget

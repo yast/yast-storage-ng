@@ -19,7 +19,6 @@
 
 require "yast"
 require "y2partitioner/icons"
-require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/btrfs_add_button"
@@ -31,13 +30,24 @@ module Y2Partitioner
     module Pages
       # Page for BTRFS filesystems
       class BtrfsFilesystems < DevicesTable
+        extend Yast::I18n
+
+        textdomain "storage"
+
+        # Label for all the instances
+        #
+        # @see #label
+        #
+        # @return [String]
+        def self.label
+          _("Btrfs")
+        end
+
         # Constructor
         #
         # @param filesystems [Array<Y2Storage::Filesystems::Btrfs>]
         # @param pager [CWM::TreePager]
         def initialize(filesystems, pager)
-          textdomain "storage"
-
           super(pager)
 
           @filesystems = filesystems
@@ -45,7 +55,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          UIState.instance.btrfs_filesystems_label
+          self.class.label
         end
 
         private

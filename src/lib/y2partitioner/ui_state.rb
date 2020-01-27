@@ -17,13 +17,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2partitioner/widgets/pages/bcaches"
+require "y2partitioner/widgets/pages/btrfs_filesystems"
+require "y2partitioner/widgets/pages/lvm"
+require "y2partitioner/widgets/pages/md_raids"
+
 module Y2Partitioner
   # Singleton class to keep the position of the user in the UI and other similar
   # information that needs to be remembered across UI redraws to give the user a
   # sense of continuity.
   class UIState
-    include Yast::I18n
-
     # A collection holding the Node status for each CWM::Page visited by the user
     #
     # The CWM::Page#widget_id is used as index
@@ -52,51 +55,10 @@ module Y2Partitioner
     # Called through {.create_instance}, starts with a blank situation (which
     # means default for each widget will be honored).
     def initialize
-      textdomain "storage"
-
       @nodes = {}
       @current_node = nil
       @open_items = {}
       @overview_tree_pager = nil
-    end
-
-    # Title of the section listing the MD RAIDs
-    #
-    # @note This is defined in this class as the simplest way to avoid dependency cycles in the Ruby
-    # requires. For example, CWM::Pages::Bcaches ends requiring Y2Partitioner::Actions::DeleteDevice
-    # which also requires Y2Partitioner::UIState. We might reconsider a more clean approach in the
-    # future.
-    #
-    # @return [String]
-    def md_raids_label
-      _("RAID")
-    end
-
-    # Title of the LVM section
-    #
-    # @note See note on {.md_raids_label} about why this looks misplaced.
-    #
-    # @return [String]
-    def lvm_label
-      _("Volume Management")
-    end
-
-    # Title of the bcache section
-    #
-    # @note See note on {.md_raids_label} about why this looks misplaced.
-    #
-    # @return [String]
-    def bcache_label
-      _("Bcache")
-    end
-
-    # Title of the Btrfs section
-    #
-    # @note See note on {.md_raids_label} about why this looks misplaced.
-    #
-    # @return [String]
-    def btrfs_filesystems_label
-      _("Btrfs")
     end
 
     # Method to be called when the user operates in a row of a table of devices
@@ -331,13 +293,13 @@ module Y2Partitioner
       # @return [Integer, String, nil] nil if there is no parent tree entry
       def device_page_section(device)
         if device.is?(:md)
-          UIState.instance.md_raids_label
+          Widgets::Pages::MdRaids.label
         elsif device.is?(:lvm_vg)
-          UIState.instance.lvm_label
+          Widgets::Pages::Lvm.label
         elsif device.is?(:bcache)
-          UIState.instance.bcache_label
+          Widgets::Pages::Bcaches.label
         elsif device.is?(:btrfs)
-          UIState.instance.btrfs_filesystems_label
+          Widgets::Pages::BtrfsFilesystems.label
         end
       end
 

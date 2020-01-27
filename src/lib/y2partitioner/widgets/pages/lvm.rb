@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
-require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_add_button"
@@ -28,17 +27,27 @@ module Y2Partitioner
     module Pages
       # A Page for LVM devices
       class Lvm < DevicesTable
-        include Yast::I18n
+        extend Yast::I18n
+
+        textdomain "storage"
+
+        # Label for all the instances
+        #
+        # @see #label
+        #
+        # @return [String]
+        def self.label
+          _("Volume Management")
+        end
 
         # Constructor
         def initialize(*args)
-          textdomain "storage"
           super
         end
 
         # @macro seeAbstractWidget
         def label
-          UIState.instance.lvm_label
+          self.class.label
         end
 
         private
