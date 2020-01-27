@@ -19,6 +19,7 @@
 
 require "yast"
 require "yast2/popup"
+require "y2partitioner/ui_state"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
 require "y2partitioner/immediate_unmount"
@@ -71,6 +72,7 @@ module Y2Partitioner
       #
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
       def perform_action
+        UIState.instance.clear_statuses_for(device.sid)
         delete
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
