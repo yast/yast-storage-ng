@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 29 10:00:18 UTC 2020 - Christopher Hofmann <cwh@suse.com>
+
+- Added package requirement for UF_PLAIN_ENCRYPTION (bsc#1160773)
+- 4.2.80
+
+-------------------------------------------------------------------
 Tue Jan 28 20:20:50 CET 2020 - aschnell@suse.com
 
 - also mask swap units in mask-systemd-units (bsc#1152545)

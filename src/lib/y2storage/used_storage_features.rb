@@ -52,39 +52,39 @@ module Y2Storage
     FEATURE_PACKAGES =
       {
         # SUSE standard technologies
-        UF_LVM:           "lvm2",
+        UF_LVM:              "lvm2",
         # Btrfs needs e2fsprogs for 'lsattr' and 'chattr' to check for CoW
-        UF_BTRFS:         ["btrfsprogs", "e2fsprogs"],
-        UF_SNAPSHOTS:     "snapper",
+        UF_BTRFS:            ["btrfsprogs", "e2fsprogs"],
+        UF_SNAPSHOTS:        "snapper",
 
         # RAID technologies and related
-        UF_DM:            "device-mapper",
-        UF_MULTIPATH:     ["device-mapper", "multipath-tools"],
-        UF_DMRAID:        ["device-mapper", "dmraid"],
-        UF_MDRAID:        "mdadm",
+        UF_DM:               "device-mapper",
+        UF_MULTIPATH:        ["device-mapper", "multipath-tools"],
+        UF_DMRAID:           ["device-mapper", "dmraid"],
+        UF_MDRAID:           "mdadm",
 
         # Other filesystems
-        UF_EXT2:          "e2fsprogs",
-        UF_EXT3:          "e2fsprogs",
-        UF_EXT4:          "e2fsprogs",
-        UF_XFS:           "xfsprogs",
-        UF_REISERFS:      "reiserfs",
-        UF_NFS:           "nfs-client",
-        UF_NTFS:          ["ntfs-3g", "ntfsprogs"],
-        UF_VFAT:          "dosfstools",
+        UF_EXT2:             "e2fsprogs",
+        UF_EXT3:             "e2fsprogs",
+        UF_EXT4:             "e2fsprogs",
+        UF_XFS:              "xfsprogs",
+        UF_REISERFS:         "reiserfs",
+        UF_NFS:              "nfs-client",
+        UF_NTFS:             ["ntfs-3g", "ntfsprogs"],
+        UF_VFAT:             "dosfstools",
 
         # Crypto technologies
-        UF_LUKS:          "cryptsetup",
-        UF_CRYPT_TWOFISH: "cryptsetup",
+        UF_LUKS:             "cryptsetup",
+        UF_PLAIN_ENCRYPTION: "cryptsetup",
 
         # Data transport methods
-        UF_ISCSI:         "open-iscsi",
-        UF_FCOE:          "fcoe-utils",
-        UF_FC:            [],
+        UF_ISCSI:            "open-iscsi",
+        UF_FCOE:             "fcoe-utils",
+        UF_FC:               [],
 
         # Other
-        UF_QUOTA:         "quota",
-        UF_BCACHE:        "bcache-tools",
+        UF_QUOTA:            "quota",
+        UF_BCACHE:           "bcache-tools",
 
         # FIXME: This is not related to the devicegraph, so libstorage doesn't
         # return it yet. The "efibootmgr" package is available in the inst-sys
@@ -92,8 +92,8 @@ module Y2Storage
         # system: Only if the user wishes to delete a partition (e.g. his
         # Windows partition) the EFI bootloader could boot from. Adding a
         # partition to it is handled by yast-bootloader in the inst-sys.
-        UF_EFIBOOT:       "efibootmgr",
-        UF_UDF:           "udftools"
+        UF_EFIBOOT:          "efibootmgr",
+        UF_UDF:              "udftools"
       }
 
     # Storage-related packages that are nice to have, but not absolutely
