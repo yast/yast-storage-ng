@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 28 20:20:50 CET 2020 - aschnell@suse.com
+
+- also mask swap units in mask-systemd-units (bsc#1152545)
+- 4.2.79
+
+-------------------------------------------------------------------
 Fri Jan 24 14:08:28 CET 2020 - aschnell@suse.com
 
 - reduce min height of dialogs (bsc#1161651)

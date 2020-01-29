@@ -23,9 +23,10 @@ query_units()
 	fi
 
 	# skip mount points below /dev, /run, /proc and /sys since these are
-	# usually not on block devices and masking them could maybe lead to
-	# problems
-	if [[ $unit == dev-* || $unit == run-* || $unit == proc-* || $unit == sys-* ]] ; then
+	# usually not on block devices (e.g. dev-hugepages.mount) and masking
+	# them could maybe lead to problems
+	if [[ $unit == dev-*.mount || $unit == run-*.mount || $unit == proc-*.mount ||
+	      $unit == sys-*.mount ]] ; then
 	   continue
 	fi
 
@@ -39,6 +40,7 @@ mask_units()
 {
     query_units | /usr/bin/xargs --verbose --no-run-if-empty --delimiter='\n' /usr/bin/systemctl --runtime $1 --
 }
+
 
 usage()
 {
