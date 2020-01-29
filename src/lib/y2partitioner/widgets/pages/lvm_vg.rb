@@ -17,10 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
-require "cwm/tree_pager"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/lvm"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
@@ -35,7 +35,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a LVM Volume Group. It contains several tabs.
-      class LvmVg < CWM::Page
+      class LvmVg < Base
         # Constructor
         #
         # @param lvm_vg [Y2Storage::Lvm_vg]
@@ -77,6 +77,13 @@ module Y2Partitioner
               )
             )
           )
+        end
+
+        private
+
+        # @return [String]
+        def section
+          Lvm.label
         end
       end
 

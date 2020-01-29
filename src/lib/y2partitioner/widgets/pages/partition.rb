@@ -17,8 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/pager"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/partition_move_button"
 require "y2partitioner/widgets/device_resize_button"
@@ -30,7 +30,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a partition
-      class Partition < CWM::Page
+      class Partition < Base
         # Constructor
         #
         # @param [Y2Storage::Partition] partition

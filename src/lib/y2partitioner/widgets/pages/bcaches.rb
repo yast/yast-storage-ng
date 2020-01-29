@@ -17,8 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/bcache_add_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/configurable_blk_devices_table"
@@ -30,7 +30,7 @@ module Y2Partitioner
       #
       # It contains two tabs: one tab with a list of bcache devices and another
       # tab with the list of caching sets.
-      class Bcaches < CWM::Page
+      class Bcaches < Base
         extend Yast::I18n
 
         textdomain "storage"

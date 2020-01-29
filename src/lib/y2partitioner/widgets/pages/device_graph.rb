@@ -19,6 +19,7 @@
 
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/device_graph_with_buttons"
 
 module Y2Partitioner
@@ -26,7 +27,7 @@ module Y2Partitioner
     module Pages
       # A page for displaying the device graphs (both current and system) in
       # interfaces supporting the Graph widget (Qt). Don't use in NCurses.
-      class DeviceGraph < CWM::Page
+      class DeviceGraph < Base
         include Yast::I18n
 
         # Constructor

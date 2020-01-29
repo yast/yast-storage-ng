@@ -17,8 +17,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/bcaches"
 require "y2partitioner/widgets/bcache_description"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/bcache_edit_button"
@@ -30,7 +31,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a bcache device
-      class Bcache < CWM::Page
+      class Bcache < Base
         # @return [Y2Storage::Bcache] Device this page is about
         attr_reader :bcache
         alias_method :device, :bcache
@@ -71,6 +72,13 @@ module Y2Partitioner
               )
             )
           )
+        end
+
+        private
+
+        # @return [String]
+        def section
+          Bcaches.label
         end
       end
 

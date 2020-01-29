@@ -17,9 +17,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/device_buttons_set"
 
 module Y2Partitioner
@@ -29,7 +29,7 @@ module Y2Partitioner
       # Partitioner consisting on a table that display all the devices of a
       # certain kind, like the page displaying all the disks, the one with all
       # the MD devices and so on.
-      class DevicesTable < CWM::Page
+      class DevicesTable < Base
         include Yast::I18n
 
         # Constructor

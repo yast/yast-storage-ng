@@ -40,8 +40,8 @@ describe Y2Partitioner::Widgets::Pages::System do
   include_examples "CWM::Page"
 
   describe "#init" do
-    it "notifies to UIState" do
-      expect(Y2Partitioner::UIState.instance).to receive(:go_to_tree_node).with(subject)
+    it "registers itself in UIState" do
+      expect(Y2Partitioner::UIState.instance).to receive(:select_page).with(["hostname"])
 
       subject.init
     end

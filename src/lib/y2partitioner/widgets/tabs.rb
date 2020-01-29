@@ -11,14 +11,18 @@ module Y2Partitioner
       # Overrides default behavior of tabs to register the new state before
       # doing the real switch
       def switch_page(page)
-        UIState.instance.switch_to_tab(page)
+        UIState.instance.switch_to_tab(page.label)
         super
       end
 
       # Ensures tabs are properly initialized after a redraw according to
       # {UIState}.
       def initial_page
-        UIState.instance.find_tab(@pages) || super
+        find_initial_page || super
+      end
+
+      def find_initial_page
+        @pages.find { |page| page.label == UIState.instance.active_tab }
       end
     end
 

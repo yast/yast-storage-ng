@@ -90,14 +90,16 @@ module Y2Partitioner
       # Overrides default behavior of TreePager to register the new state with
       # {UIState} before jumping to the tree node
       def switch_page(page)
-        UIState.instance.go_to_tree_node(page)
+        UIState.instance.select_page(page.parents)
         super
       end
 
       # Ensures the tree is properly initialized according to {UIState} after
       # a redraw.
+      #
+      # @see @find_initial_page
       def initial_page
-        UIState.instance.find_tree_node(@pages) || super
+        find_initial_page || super
       end
 
       # Status of open/expanded items in the UI
@@ -134,6 +136,17 @@ module Y2Partitioner
       private
 
       attr_reader :tree
+
+      # Select the initial based in {UIState::PageStatus#candidate_pages}
+      #
+      # @return [Page, nil]
+      def find_initial_page
+        candidate = UIState.instance.find_page(@pages.map(&:id))
+
+        return nil unless candidate
+
+        @pages.find { |page| page.id == candidate }
+      end
 
       # Checks whether the current setup is valid, that is, it contains necessary
       # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).

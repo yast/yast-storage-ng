@@ -46,7 +46,7 @@ module Y2Partitioner
 
         # First, pretend the user visited the device and then the tab...
         state = UIState.instance
-        state.go_to_tree_node(target_page)
+        state.select_page([device.sid])
         state.switch_to_tab(tab_label)
 
         # ...then trigger a redraw
