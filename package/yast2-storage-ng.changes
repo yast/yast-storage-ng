@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jan 31 16:49:28 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: the button to delete all partitions does no longer
+  fail for devices containing logical partitions (bsc#1162290).
+- 4.2.81
+
+-------------------------------------------------------------------
 Tue Jan 29 10:00:18 UTC 2020 - Christopher Hofmann <cwh@suse.com>
 
 - Added package requirement for UF_PLAIN_ENCRYPTION (bsc#1160773)
