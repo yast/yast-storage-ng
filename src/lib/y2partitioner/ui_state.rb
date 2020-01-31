@@ -27,7 +27,7 @@ module Y2Partitioner
     # The Widgets::Pages::Base#id is used as index
     # @see #status_for
     #
-    # @return [Hash{String => PageStatus}]
+    # @return [Array<PageStatus>]
     attr_reader :statuses
 
     # A reference to the overview tree pager, which is a new instance every dialog redraw. See note
@@ -50,7 +50,7 @@ module Y2Partitioner
     # Called through {.create_instance}, starts with a blank situation (which
     # means default for each widget will be honored).
     def initialize
-      @statuses = {}
+      @statuses = []
       @current_status = nil
       @open_items = {}
       @overview_tree_pager = nil
@@ -120,7 +120,7 @@ module Y2Partitioner
     # @param sid [Integer] the sid of the deleted device
     def clear_statuses_for(sid)
       # All statuses containing the given sid as candidate must be discarded
-      statuses.reject! { |_, v| v.candidate_pages.include?(sid) }
+      statuses.reject! { |v| v.candidate_pages.include?(sid) }
     end
 
     # Stores the ids of the tree items that are open
@@ -146,7 +146,14 @@ module Y2Partitioner
     # @return [PageStatus] the current status if it already exists; a new one when not.
     def status_for(pages_ids)
       id = pages_ids.last
-      statuses[id] ||= PageStatus.new(id, pages_ids)
+      status = statuses.find { |s| s.page_id == id }
+
+      if status.nil?
+        status = PageStatus.new(id, pages_ids)
+        statuses << status
+      end
+
+      status
     end
 
     class << self
@@ -184,6 +191,11 @@ module Y2Partitioner
       #
       # @return [String]
       attr_accessor :active_tab
+
+      # The Page#id
+      #
+      # @return [String, Integet>]
+      attr_reader :page_id
 
       # The path to a page, useful to correctly place the user within the tree after redrawing the
       # UI and also to remove useless statuses after deleting a device.

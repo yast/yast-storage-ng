@@ -473,29 +473,29 @@ describe Y2Partitioner::UIState do
 
     context "when a 'parent' device is deleted" do
       it "clears all related page statuses" do
-        expect(ui_state.statuses.keys)
+        expect(ui_state.statuses.map(&:page_id))
           .to include(vg_page.id, lv1_page.id, lv2_page.id)
 
         ui_state.clear_statuses_for(vg.sid)
 
-        expect(ui_state.statuses.keys)
+        expect(ui_state.statuses.map(&:page_id))
           .to_not include(vg_page.id, lv1_page.id, lv2_page.id)
       end
     end
 
     context "when a 'child' device is deleted" do
       it "clears its page status" do
-        expect(ui_state.statuses.keys).to include(sda1_page.id)
+        expect(ui_state.statuses.map(&:page_id)).to include(sda1_page.id)
 
         ui_state.clear_statuses_for(sda1.sid)
 
-        expect(ui_state.statuses.keys).to_not include(sda1_page.id)
+        expect(ui_state.statuses.map(&:page_id)).to_not include(sda1_page.id)
       end
 
       it "does not clear either, parent or siblings page statuses" do
         ui_state.clear_statuses_for(sda1.sid)
 
-        expect(ui_state.statuses.keys).to include(sda_page.id, sda2_page.id)
+        expect(ui_state.statuses.map(&:page_id)).to include(sda_page.id, sda2_page.id)
       end
     end
   end
