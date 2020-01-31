@@ -22,9 +22,9 @@ module Y2Partitioner
   # information that needs to be remembered across UI redraws to give the user a
   # sense of continuity.
   class UIState
-    # A collection holding a PageStatus for each CWM::Page visited by the user
+    # A collection holding a PageStatus for each Page visited by the user
     #
-    # The CWM::Page#widget_id is used as index
+    # The Widgets::Pages::Base#id is used as index
     # @see #status_for
     #
     # @return [Hash{String => PageStatus}]
@@ -77,9 +77,9 @@ module Y2Partitioner
       self.current_status = status_for(pages_ids)
     end
 
-    # Method to be called when the user switches to a tab within a tree node
+    # Method to be called when the user switches to a tab within a page
     #
-    # It remembers the decision so the same tab is showed when the same node will be redraw.
+    # It records the decision, so the last active tab is displayed when the page will be redraw.
     #
     # @param label [String]
     def switch_to_tab(label)
@@ -96,7 +96,7 @@ module Y2Partitioner
     # Select the page to open in the general tree after a redraw
     #
     # @param pages_ids [Array<String, Integer>] all pages ids in the tree
-    # @return [CWM::Page, nil] the page to be opened; the initial one when nil
+    # @return [page_id, nil] the page to be opened; the initial one when nil
     def find_page(pages_ids)
       return nil unless current_status
 
@@ -185,13 +185,13 @@ module Y2Partitioner
       # @return [String]
       attr_accessor :active_tab
 
-      # The path to a node, useful to correctly place the user within the tree after redrawing the
+      # The path to a page, useful to correctly place the user within the tree after redrawing the
       # UI and also to remove useless statuses after deleting a device.
       #
       # @see UIState#find_page
       # @see UIState#clear_statuses_for
       #
-      # It could hold both, a device id (sid, Integer) or a page label (String).
+      # It stores page ids, see Pages::Base#id
       #
       # @return [Array<Integer, String>]
       attr_reader :candidate_pages
