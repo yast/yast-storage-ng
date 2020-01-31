@@ -39,7 +39,7 @@ module Y2Partitioner
       def delete
         log.info "deleting partitions from #{device}"
 
-        device.partitions.each { |p| device.partition_table.delete_partition(p) }
+        device.partition_table.delete_all_partitions
         UIState.instance.select_row(device)
       end
 

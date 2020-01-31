@@ -123,19 +123,29 @@ describe Y2Partitioner::Actions::DeletePartitions do
       context "and the confirm message is accepted" do
         let(:accept) { true }
 
-        it "deletes the partitions" do
-          subject.run
+        RSpec.shared_examples "delete all partitions" do
+          it "deletes the partitions" do
+            subject.run
 
-          expect(device.partitions).to be_empty
+            expect(device.partitions).to be_empty
+          end
+
+          it "refreshes btrfs subvolumes shadowing" do
+            expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
+            subject.run
+          end
+
+          it "returns :finish" do
+            expect(subject.run).to eq(:finish)
+          end
         end
 
-        it "refreshes btrfs subvolumes shadowing" do
-          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-          subject.run
-        end
+        include_examples "delete all partitions"
 
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
+        context "if there are some logical partitions" do
+          let(:scenario) { "spaces_4_4" }
+
+          include_examples "delete all partitions"
         end
       end
     end
