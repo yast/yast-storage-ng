@@ -101,7 +101,7 @@ module Y2Partitioner
         return true if probed.find_device(@device.sid).descendants.any?
 
         message = _(
-          "No file system nor any storage system was detected on the\n" \
+          "Neither a file system nor a storage system was detected on the\n" \
           "device. In case the device does contain a file system or a\n" \
           "storage system that is not supported by YaST, resizing will\n" \
           "most likely cause data loss. Really continue?"
