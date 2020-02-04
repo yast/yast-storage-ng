@@ -35,24 +35,24 @@ module Y2Partitioner
       end
 
       def title
-        _("Performing Installation")
+        _("Applying Changes to the System")
       end
 
       def contents
         @contents ||= VBox(commit_actions_widget)
       end
 
-      # Do not show a back button
+      # Does not show a back button
       def back_button
         ""
       end
 
-      # Do not show an abort button
+      # Does not show an abort button
       def abort_button
         ""
       end
 
-      # Shows nex button with "Finish" label
+      # Shows next button with "Finish" label
       def next_button
         Yast::Label.FinishButton
       end
