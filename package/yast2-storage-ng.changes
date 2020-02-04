@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Feb  4 12:09:51 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: add a new progress dialog instead of simply closing
+  when applying the changes in a running system (bsc#1135366).
+- 4.2.82
+
+-------------------------------------------------------------------
 Fri Jan 31 16:49:28 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: the button to delete all partitions does no longer
