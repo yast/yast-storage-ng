@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,31 +19,23 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../spec_helper"
-require_relative "callbacks_examples"
-require "y2storage/callbacks/commit"
+require_relative "../test_helper"
 
-describe Y2Storage::Callbacks::Commit do
-  subject(:callbacks) { described_class.new }
+require "cwm/rspec"
+require "y2partitioner/dialogs/commit"
 
-  describe "#error" do
-    include_examples "general #error examples"
-    include_examples "default #error false examples"
-  end
+describe Y2Partitioner::Dialogs::Commit do
+  subject { described_class.new }
 
-  describe "#message" do
-    context "when a widget is given" do
-      subject { described_class.new(widget: widget) }
+  include_examples "CWM::Dialog"
 
-      let(:widget) { double("Actions", add_action: nil) }
-
-      let(:message) { "a message" }
-
-      it "calls #add_action over the widget" do
-        expect(widget).to receive(:add_action).with(message)
-
-        subject.message(message)
+  describe "#contents" do
+    it "contains a widget with the commit actions" do
+      widget = subject.contents.nested_find do |i|
+        i.is_a?(Y2Partitioner::Widgets::CommitActions)
       end
+
+      expect(widget).to_not be_nil
     end
   end
 end

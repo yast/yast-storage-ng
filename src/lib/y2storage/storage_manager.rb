@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2019] SUSE LLC
+# Copyright (c) [2015-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -278,20 +278,21 @@ module Y2Storage
       @committed
     end
 
-    # Performs in the system all the necessary operations to make it match the
-    # staging devicegraph.
+    # Performs in the system all the necessary operations to make it match the staging devicegraph.
     #
     # Beware: this method can cause data loss
     #
-    # The user is asked whether to continue on each error reported by
-    # libstorage-ng.
+    # The user is asked whether to continue on each error reported by libstorage-ng.
     #
-    # @return [Boolean] whether commit was successfull, false if libstorage-ng
-    #   found a problem and it was decided to abort due to that
-    def commit(force_rw: false)
+    # @param force_rw [Boolean] if mount points should be forced to have read/write permissions.
+    # @param callbacks [Y2Storage::Callbacks::Commit]
+    #
+    # @return [Boolean] whether commit was successful, false if libstorage-ng found a problem and it was
+    #   decided to abort.
+    def commit(force_rw: false, callbacks: nil)
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
-      callbacks = Callbacks::Commit.new
+      callbacks ||= Callbacks::Commit.new
 
       staging.pre_commit
 

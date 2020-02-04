@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -133,17 +134,20 @@ describe Y2Partitioner::Clients::Main do
 
           before do
             allow(partitioner_dialog).to receive(:device_graph).and_return(device_graph)
+
+            allow(Y2Partitioner::Dialogs::Commit).to receive(:new).and_return(commit_dialog)
           end
 
           let(:device_graph) { instance_double(Y2Storage::Devicegraph) }
 
+          let(:commit_dialog) { instance_double(Y2Partitioner::Dialogs::Commit, run: :next) }
+
           context "and it is allowed to commit" do
             let(:allow_commit) { true }
 
-            it "commits the changes" do
+            it "shows the commit dialog" do
               expect(storage_manager).to receive(:"staging=").with(device_graph)
-              # this also blocks the real #commit call
-              expect(storage_manager).to receive(:commit)
+              expect(commit_dialog).to receive(:run)
 
               subject.run(allow_commit: allow_commit)
             end
@@ -158,10 +162,10 @@ describe Y2Partitioner::Clients::Main do
               subject.run(allow_commit: allow_commit)
             end
 
-            it "does not commit" do
+            it "does not show the commit dialog" do
               allow(Yast2::Popup).to receive(:show)
 
-              expect(storage_manager).to_not receive(:commit)
+              expect(commit_dialog).to_not receive(:run)
 
               subject.run(allow_commit: allow_commit)
             end
