@@ -28,8 +28,8 @@ Source:         %{name}-%{version}.tar.bz2
 # Fix mount/unmount
 BuildRequires:	libstorage-ng-ruby >= 4.2.54
 BuildRequires:  update-desktop-files
-# for CWM sort_key helper
-BuildRequires:  yast2 >= 4.2.48
+# CWM::DynamicProgressBar
+BuildRequires:  yast2 >= 4.2.63
 BuildRequires:  yast2-devtools >= 4.2.2
 # for AbortException and handle direct abort
 BuildRequires:  yast2-ruby-bindings >= 4.0.6
@@ -49,8 +49,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 Requires:       findutils
 # Fix mount/unmount
 Requires:       libstorage-ng-ruby >= 4.2.54
-# for CWM sort_key helper
-Requires:       yast2 >= 4.2.48
+# CWM::DynamicProgressBar
+Requires:       yast2 >= 4.2.63
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
