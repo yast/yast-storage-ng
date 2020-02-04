@@ -17,8 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
-require "cwm/pager"
+require "cwm/page"
 require "cwm/tree_pager"
 
 module Y2Partitioner
@@ -43,22 +42,25 @@ module Y2Partitioner
           end
         end
 
-        # The full path to reach the page within the tree
+        # The path to reach the page within the tree
+        #
+        # When the page is related to a device, the path will contain its parent page id (which can
+        # be another device page or a section one).
         #
         # Useful to know where to place the user after redrawing the UI. See
         # {Y2Partitioner::UIState::PageStatus#candidate_pages}
         #
         # @return [Array<String, Integer>]
-        def parents
-          [device_page_parents, id].compact
+        def tree_path
+          [parent, id].compact
         end
 
         private
 
-        # The path to the device, if any
+        # The parent page i
         #
         # @return [String, Integer, nil]
-        def device_page_parents
+        def parent
           return nil unless respond_to?(:device)
 
           if device.is?(:partition)

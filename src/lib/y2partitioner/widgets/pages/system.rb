@@ -49,7 +49,7 @@ module Y2Partitioner
 
         def init
           # Register itself in the UIState
-          UIState.instance.select_page(parents)
+          UIState.instance.select_page(tree_path)
         end
 
         # @macro seeAbstractWidget

@@ -90,7 +90,7 @@ module Y2Partitioner
       # Overrides default behavior of TreePager to register the new state with
       # {UIState} before jumping to the tree node
       def switch_page(page)
-        UIState.instance.select_page(page.parents)
+        UIState.instance.select_page(page.tree_path)
         super
       end
 
@@ -137,7 +137,7 @@ module Y2Partitioner
 
       attr_reader :tree
 
-      # Select the initial based in {UIState::PageStatus#candidate_pages}
+      # Select the initial page
       #
       # @return [Page, nil]
       def find_initial_page

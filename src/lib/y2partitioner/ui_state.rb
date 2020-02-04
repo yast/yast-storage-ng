@@ -24,9 +24,6 @@ module Y2Partitioner
   class UIState
     # A collection holding a PageStatus for each Page visited by the user
     #
-    # The Widgets::Pages::Base#id is used as index
-    # @see #status_for
-    #
     # @return [Array<PageStatus>]
     attr_reader :statuses
 
@@ -59,7 +56,7 @@ module Y2Partitioner
     # Method to be called when the user operates in a row of a table of devices
     # or creates a new device.
     #
-    # @param device [Y2Storage::Device, Integer] sid or device object
+    # @param device [Y2Storage::Device, Integer] a device or its sid
     def select_row(device)
       sid = device.respond_to?(:sid) ? device.sid : device
 
@@ -72,7 +69,7 @@ module Y2Partitioner
     # It remembers the decision so the user is taken back to a sensible point of
     # the tree (very often the last he decided to visit) after redrawing.
     #
-    # @param pages_ids [Array<String, Integer>] a list of Page#id identifying the path to the page
+    # @param pages_ids [Array<String, Integer>] the path to the selected page
     def select_page(pages_ids)
       self.current_status = status_for(pages_ids)
     end
@@ -96,10 +93,12 @@ module Y2Partitioner
     # Select the page to open in the general tree after a redraw
     #
     # @param pages_ids [Array<String, Integer>] all pages ids in the tree
-    # @return [page_id, nil] the page to be opened; the initial one when nil
+    # @return [String, Integer, nil] the page id to be opened or nil
     def find_page(pages_ids)
       return nil unless current_status
 
+      # Let's pick the more accurate, which means that it is present in both the tree and the
+      # candidates. See PageStatus#candidate_pages.
       (current_status.candidate_pages & pages_ids).last
     end
 
@@ -142,18 +141,16 @@ module Y2Partitioner
 
     # Returns the status representation for a page
     #
-    # @param pages_ids [Array<String, Integer>] a list of Page#id identifying the path to the page
+    # @param pages_ids [Array<String, Integer>] the path to the page. See PageStatus#candidate_pages
     # @return [PageStatus] the current status if it already exists; a new one when not.
     def status_for(pages_ids)
       id = pages_ids.last
       status = statuses.find { |s| s.page_id == id }
 
-      if status.nil?
-        status = PageStatus.new(id, pages_ids)
-        statuses << status
-      end
+      return status unless status.nil?
 
-      status
+      statuses << PageStatus.new(id, pages_ids)
+      statuses.last
     end
 
     class << self
@@ -173,7 +170,7 @@ module Y2Partitioner
       private :new, :allocate
     end
 
-    # Represent the UI status for a CWM::Page
+    # Represents the UI status for a CWM::Page
     #
     # For the time being, it is able to keep
     #
@@ -192,26 +189,29 @@ module Y2Partitioner
       # @return [String]
       attr_accessor :active_tab
 
-      # The Page#id
+      # The Widgets::Pages::Base#id
       #
-      # @return [String, Integet>]
+      # @return [String, Integer]
       attr_reader :page_id
 
-      # The path to a page, useful to correctly place the user within the tree after redrawing the
-      # UI and also to remove useless statuses after deleting a device.
+      # A partial path to a page, useful to correctly place the user within the tree after
+      # redrawing the UI and also to remove useless statuses after deleting a device.
+      #
+      # This path always contains the page parent id and the page id itself. So, taking a partition
+      # as an example, it will be [disk_page_id, partition_page_id]
       #
       # @see UIState#find_page
       # @see UIState#clear_statuses_for
       #
       # It stores page ids, see Pages::Base#id
       #
-      # @return [Array<Integer, String>]
+      # @return [Array<String, Integer>]
       attr_reader :candidate_pages
 
       # Constructor
       #
-      # @param page_id [String, Integer] the Page#id identifying the page
-      # @param candidate_pages_ids [Array<String, Integer>] a list of Page#id for candidate pages
+      # @param page_id [String, Integer] the Widgets::Pages::Base#id identifying the page
+      # @param candidate_pages_ids [Array<String, Integer>] a list of Widgets::Pages::Base#id
       def initialize(page_id, candidate_pages_ids)
         @page_id = page_id
         @candidate_pages = candidate_pages_ids

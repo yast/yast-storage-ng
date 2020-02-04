@@ -65,7 +65,7 @@ module Y2Partitioner
               Left(
                 HBox(
                   Image(Icons::LVM, ""),
-                  Heading(format(_("Volume Group: %s"), "/dev/" + @lvm_vg.vg_name))
+                  Heading(format(_("Volume Group: %s"), @lvm_vg.name))
                 )
               ),
               Left(

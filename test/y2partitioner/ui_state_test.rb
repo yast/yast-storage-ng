@@ -91,7 +91,7 @@ describe Y2Partitioner::UIState do
       let(:another_disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb") }
       let(:another_disk_page) { Y2Partitioner::Widgets::Pages::Disk.new(another_disk, pager) }
 
-      before { ui_state.select_page(partition_page.parents) }
+      before { ui_state.select_page(partition_page.tree_path) }
 
       context "if the partition is still there after redrawing" do
         before { pages.concat [partition_page, another_disk_page, disk_page] }
@@ -125,7 +125,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::Disk.new(device, pager) }
       let(:another_disk_page) { Y2Partitioner::Widgets::Pages::Disk.new(another_disk, pager) }
 
-      before { ui_state.select_page(page.parents) }
+      before { ui_state.select_page(page.tree_path) }
 
       context "if the disk is still there after redrawing" do
         before { pages.concat [page, another_disk_page] }
@@ -152,7 +152,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::MdRaid.new(device, pager) }
 
       before do
-        ui_state.select_page(page.parents)
+        ui_state.select_page(page.tree_path)
       end
 
       context "if the RAID is still there after redrawing" do
@@ -176,7 +176,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::LvmLv.new(device) }
       let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(device.lvm_vg, pager) }
 
-      before { ui_state.select_page(page.parents) }
+      before { ui_state.select_page(page.tree_path) }
 
       context "if the LV is still there after redrawing" do
         before { pages.concat [page, vg_page] }
@@ -208,7 +208,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::LvmVg.new(device, pager) }
       let(:another_vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(another_vg, pager) }
 
-      before { ui_state.select_page(page.parents) }
+      before { ui_state.select_page(page.tree_path) }
 
       context "if the VG is still there after redrawing" do
         before { pages.concat [page, another_vg_page] }
@@ -235,7 +235,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::Bcache.new(device, pager) }
       let(:another_bcache_page) { Y2Partitioner::Widgets::Pages::Bcache.new(another_bcache, pager) }
 
-      before { ui_state.select_page(page.parents) }
+      before { ui_state.select_page(page.tree_path) }
 
       context "if the bcache is still there after redrawing" do
         before { pages.concat [page, another_bcache_page] }
@@ -262,7 +262,7 @@ describe Y2Partitioner::UIState do
       let(:page) { Y2Partitioner::Widgets::Pages::Btrfs.new(device, pager) }
       let(:another_btrfs_page) { Y2Partitioner::Widgets::Pages::Btrfs.new(another_btrfs, pager) }
 
-      before { ui_state.select_page(page.parents) }
+      before { ui_state.select_page(page.tree_path) }
 
       context "if the filesystem is still there after redrawing" do
         before { pages.concat [page, another_btrfs_page] }
@@ -293,7 +293,7 @@ describe Y2Partitioner::UIState do
     let(:tabs) { [vg_tab, lvs_tab, pvs_tab] }
 
     before do
-      ui_state.select_page(vg_page.parents)
+      ui_state.select_page(vg_page.tree_path)
     end
 
     context "if the user has still not clicked in any tab" do
@@ -314,7 +314,7 @@ describe Y2Partitioner::UIState do
       context "but then moves to a different page" do
         before do
           ui_state.switch_to_tab(lvs_tab.label)
-          ui_state.select_page(system_page.parents)
+          ui_state.select_page(system_page.tree_path)
         end
 
         it "returns nil even if there is another tab with the same label" do
@@ -323,7 +323,7 @@ describe Y2Partitioner::UIState do
 
         context "and comes back to the previous page" do
           before do
-            ui_state.select_page(vg_page.parents)
+            ui_state.select_page(vg_page.tree_path)
           end
 
           it "selects the last active tab in the page" do
@@ -342,7 +342,7 @@ describe Y2Partitioner::UIState do
 
     before do
       described_class.create_instance
-      ui_state.select_page(disk_page.parents)
+      ui_state.select_page(disk_page.tree_path)
       ui_state.switch_to_tab(partitions_tab)
     end
 
@@ -396,7 +396,7 @@ describe Y2Partitioner::UIState do
     context "if the user had selected a row but then moved to a different page" do
       before do
         ui_state.select_row(device)
-        ui_state.select_page(system_page.parents)
+        ui_state.select_page(system_page.tree_path)
       end
 
       it "returns nil" do
@@ -405,7 +405,7 @@ describe Y2Partitioner::UIState do
 
       context "and comes back to the previous page" do
         before do
-          ui_state.select_page(disk_page.parents)
+          ui_state.select_page(disk_page.tree_path)
         end
 
         it "returns the sid of last selected device in the page" do
@@ -461,14 +461,14 @@ describe Y2Partitioner::UIState do
     let(:lv2_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv2) }
 
     before do
-      ui_state.select_page(disks_page.parents)
-      ui_state.select_page(sda_page.parents)
-      ui_state.select_page(sda1_page.parents)
-      ui_state.select_page(sda2_page.parents)
-      ui_state.select_page(lvm_page.parents)
-      ui_state.select_page(vg_page.parents)
-      ui_state.select_page(lv1_page.parents)
-      ui_state.select_page(lv2_page.parents)
+      ui_state.select_page(disks_page.tree_path)
+      ui_state.select_page(sda_page.tree_path)
+      ui_state.select_page(sda1_page.tree_path)
+      ui_state.select_page(sda2_page.tree_path)
+      ui_state.select_page(lvm_page.tree_path)
+      ui_state.select_page(vg_page.tree_path)
+      ui_state.select_page(lv1_page.tree_path)
+      ui_state.select_page(lv2_page.tree_path)
     end
 
     context "when a 'parent' device is deleted" do

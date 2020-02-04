@@ -60,7 +60,7 @@ module Y2Partitioner
               Left(
                 HBox(
                   Image(Icons::BCACHE, ""),
-                  # TRANSLATORS: Heading. String followed a device name like /dev/bcache0
+                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
                   Heading(format(_("Bcache: %s"), device.name))
                 )
               ),
