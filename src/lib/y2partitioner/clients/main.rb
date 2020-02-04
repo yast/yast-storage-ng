@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@ require "yast/i18n"
 require "yast2/popup"
 require "cwm/tree_pager"
 require "y2partitioner/dialogs/main"
+require "y2partitioner/dialogs/commit"
 require "y2storage/inhibitors"
 require "y2storage"
 
@@ -85,9 +86,11 @@ module Y2Partitioner
       end
 
       # Saves on disk all changes performed by the user
+      #
+      # A dialog is opened to show the progress, see {#commit_dialog}.
       def commit
         storage_manager.staging = partitioner_dialog.device_graph
-        storage_manager.commit
+        commit_dialog.run
       end
 
       # Partitioner dialog is initalized with the probed and staging devicegraphs
@@ -126,6 +129,13 @@ module Y2Partitioner
         message = _("Nothing gets written because commit is not allowed.")
 
         Yast2::Popup.show(message)
+      end
+
+      # Dialog to show the progress while the changes are being applied.
+      #
+      # @return [Dialogs::Commit]
+      def commit_dialog
+        @commit_dialog ||= Dialogs::Commit.new
       end
     end
   end

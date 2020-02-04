@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,12 +25,30 @@ module Y2Storage
     class Commit < Storage::CommitCallbacks
       include LibstorageCallback
 
+      # Constructor
+      #
+      # @param widget [#add_action]
+      def initialize(widget: nil)
+        super()
+
+        @widget = widget
+      end
+
+      # Updates the widget (if any) with the given message
+      def message(message)
+        widget&.add_action(message)
+      end
+
       # @see LibstorageCallback#error
       #
       # @return [Boolean]
       def default_answer_to_error
         false
       end
+
+      private
+
+      attr_reader :widget
     end
   end
 end

@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,15 +20,14 @@
 require "yast"
 require "yast/i18n"
 require "cwm/dialog"
-require "y2partitioner/widgets/summary_text"
-require "y2partitioner/actions/quit_partitioner"
+require "y2partitioner/widgets/commit_actions"
 
 Yast.import "Label"
 
 module Y2Partitioner
   module Dialogs
-    # Dialog to show the summary of changes performed by the user
-    class Summary < CWM::Dialog
+    # Dialog to show the progress of the storage changes while they are being applied
+    class Commit < CWM::Dialog
       include Yast::I18n
 
       def initialize
@@ -36,18 +35,35 @@ module Y2Partitioner
       end
 
       def title
-        _("Expert Partitioner: Summary")
+        _("Performing Installation")
       end
 
       def contents
-        @contents ||= VBox(Widgets::SummaryText.new)
+        @contents ||= VBox(commit_actions_widget)
       end
 
-      # @see Actions::QuitPartitioner#quit?
+      # Do not show a back button
+      def back_button
+        ""
+      end
+
+      # Do not show an abort button
+      def abort_button
+        ""
+      end
+
+      # Shows nex button with "Finish" label
+      def next_button
+        Yast::Label.FinishButton
+      end
+
+      private
+
+      # Widget to show commit actions and progress bar
       #
-      # @return [Boolean] it aborts if returns true
-      def abort_handler
-        Actions::QuitPartitioner.new.quit?
+      # @return [Widgets::CommitActions]
+      def commit_actions_widget
+        @commit_actions_widget ||= Widgets::CommitActions.new
       end
     end
   end
