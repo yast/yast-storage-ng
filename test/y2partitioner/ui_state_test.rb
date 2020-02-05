@@ -334,7 +334,7 @@ describe Y2Partitioner::UIState do
     end
   end
 
-  describe "#row_sid" do
+  describe "#row_id" do
     let(:device_name) { "/dev/sda2" }
 
     let(:overview_tab) { double("Tab", label: "Overview") }
@@ -350,7 +350,7 @@ describe Y2Partitioner::UIState do
       before { described_class.create_instance }
 
       it "returns nil" do
-        expect(ui_state.row_sid).to be_nil
+        expect(ui_state.row_id).to be_nil
       end
     end
 
@@ -359,7 +359,7 @@ describe Y2Partitioner::UIState do
         before { ui_state.select_row(device.sid) }
 
         it "returns the sid of the device" do
-          expect(ui_state.row_sid).to eq device.sid
+          expect(ui_state.row_id).to eq device.sid
         end
       end
 
@@ -367,7 +367,7 @@ describe Y2Partitioner::UIState do
         before { ui_state.select_row(device.sid) }
 
         it "returns the sid of the device" do
-          expect(ui_state.row_sid).to eq device.sid
+          expect(ui_state.row_id).to eq device.sid
         end
       end
     end
@@ -379,7 +379,7 @@ describe Y2Partitioner::UIState do
       end
 
       it "returns nil" do
-        expect(ui_state.row_sid).to be_nil
+        expect(ui_state.row_id).to be_nil
       end
 
       context "and comes back to the previous tab" do
@@ -388,7 +388,7 @@ describe Y2Partitioner::UIState do
         end
 
         it "returns the last selected device row sid in this tab" do
-          expect(ui_state.row_sid).to eq(device.sid)
+          expect(ui_state.row_id).to eq(device.sid)
         end
       end
     end
@@ -400,7 +400,7 @@ describe Y2Partitioner::UIState do
       end
 
       it "returns nil" do
-        expect(ui_state.row_sid).to be_nil
+        expect(ui_state.row_id).to be_nil
       end
 
       context "and comes back to the previous page" do
@@ -409,7 +409,7 @@ describe Y2Partitioner::UIState do
         end
 
         it "returns the sid of last selected device in the page" do
-          expect(ui_state.row_sid).to eq(device.sid)
+          expect(ui_state.row_id).to eq(device.sid)
         end
       end
     end

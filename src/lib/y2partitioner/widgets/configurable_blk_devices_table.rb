@@ -52,7 +52,7 @@ module Y2Partitioner
       def init
         return if devices.empty? # do nothing if there is nothing in table
 
-        initial_sid = UIState.instance.row_sid
+        initial_sid = UIState.instance.row_id
 
         # if we do not have valid sid, then pick first available device.
         # Reason is to allow e.g. chain of delete like described in bsc#1076318

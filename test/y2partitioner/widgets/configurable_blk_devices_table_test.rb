@@ -83,7 +83,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
     context "when the table contains devices" do
       before do
-        allow(Y2Partitioner::UIState.instance).to receive(:row_sid).and_return(row_sid)
+        allow(Y2Partitioner::UIState.instance).to receive(:row_id).and_return(row_id)
       end
 
       let(:device) { devices.first }
@@ -98,20 +98,20 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       end
 
       context "and UIState does not return an sid" do
-        let(:row_sid) { nil }
+        let(:row_id) { nil }
 
         include_examples "selects the first device in the table"
       end
 
       context "and UIState returns an sid for a device that is not in the table" do
-        let(:row_sid) { "999999999" }
+        let(:row_id) { "999999999" }
 
         include_examples "selects the first device in the table"
       end
 
       context "and UIState returns an sid of a device in table" do
         let(:device) { devices.last }
-        let(:row_sid) { device.sid }
+        let(:row_id) { device.sid }
 
         it "sets value to row with the device" do
           expect(subject).to receive(:value=).with(selected_row)

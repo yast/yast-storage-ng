@@ -81,10 +81,10 @@ module Y2Partitioner
       current_status&.active_tab = label
     end
 
-    # Returns the sid of the last selected row in the active tab of current page
+    # Returns the id of the last selected row in the active tab of current page
     #
     # @return [Integer, nil]
-    def row_sid
+    def row_id
       current_status&.selected_row
     end
 
