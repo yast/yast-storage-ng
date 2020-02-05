@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/summary_text"
 
 Yast.import "Mode"
@@ -27,7 +28,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A page for displaying the Installation Summary
-      class Summary < CWM::Page
+      class Summary < Base
         include Yast::I18n
 
         # Constructor

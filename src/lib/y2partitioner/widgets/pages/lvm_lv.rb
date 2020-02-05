@@ -17,9 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/pager"
-
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/lvm_lv_description"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/device_resize_button"
@@ -29,7 +28,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a LVM Logical Volume
-      class LvmLv < CWM::Page
+      class LvmLv < Base
         # @param lvm_lv [Y2Storage::LvmLv]
         def initialize(lvm_lv)
           textdomain "storage"

@@ -17,8 +17,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/bcaches"
 require "y2partitioner/widgets/bcache_description"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/bcache_edit_button"
@@ -30,7 +31,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a bcache device
-      class Bcache < CWM::Page
+      class Bcache < Base
         # @return [Y2Storage::Bcache] Device this page is about
         attr_reader :bcache
         alias_method :device, :bcache
@@ -54,19 +55,30 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(Icons::BCACHE, ""),
-                # TRANSLATORS: Heading. String followed a device name like /dev/bcache0
-                Heading(format(_("Bcache: %s"), device.name))
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::BCACHE, ""),
+                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
+                  Heading(format(_("Bcache: %s"), device.name))
+                )
+              ),
+              Left(
+                Tabs.new(
+                  BcacheTab.new(device),
+                  PartitionsTab.new(device, @pager)
+                )
               )
-            ),
-            Tabs.new(
-              BcacheTab.new(device),
-              PartitionsTab.new(device, @pager)
             )
           )
+        end
+
+        private
+
+        # @return [String]
+        def section
+          Bcaches.label
         end
       end
 

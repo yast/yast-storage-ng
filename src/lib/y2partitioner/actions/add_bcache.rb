@@ -70,7 +70,7 @@ module Y2Partitioner
         return unless dialog.run == :next
 
         controller.create_bcache(dialog.backing_device, dialog.caching_device, dialog.options)
-        UIState.instance.select_row(controller.bcache)
+        UIState.instance.select_row(controller.bcache.sid)
       end
 
       # Whether there is suitable backing devices

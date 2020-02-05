@@ -57,7 +57,7 @@ module Y2Partitioner
         return result if result != :ok
 
         clone_partition_table
-        UIState.instance.select_row(controller.device)
+        UIState.instance.select_row(controller.device.sid)
         :finish
       end
 

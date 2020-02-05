@@ -36,7 +36,7 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = Controllers::Bcache.new(bcache)
-        UIState.instance.select_row(bcache)
+        UIState.instance.select_row(bcache.sid)
       end
 
       private

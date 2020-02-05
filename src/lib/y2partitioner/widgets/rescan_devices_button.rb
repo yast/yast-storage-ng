@@ -19,6 +19,7 @@
 
 require "yast"
 require "cwm/widget"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/reprobe"
 require "y2partitioner/widgets/execute_and_redraw"
 
@@ -48,6 +49,7 @@ module Y2Partitioner
       def handle
         return nil unless continue?
 
+        UIState.create_instance
         execute_and_redraw do
           reprobe
           :finish

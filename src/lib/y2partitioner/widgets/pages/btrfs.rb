@@ -17,8 +17,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/btrfs_filesystems"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/filesystem_description"
 require "y2partitioner/widgets/btrfs_edit_button"
@@ -32,7 +33,7 @@ module Y2Partitioner
       # Page for a BTRFS filesystem
       #
       # This page contains a {FilesystemTab} and a {UsedDevicesTab}.
-      class Btrfs < CWM::Page
+      class Btrfs < Base
         # @return [Y2Storage::Filesystems::Btrfs]
         attr_reader :filesystem
 
@@ -59,14 +60,16 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                Heading(title)
-              )
-            ),
-            tabs
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(icon, ""),
+                  Heading(title)
+                )
+              ),
+              Left(tabs)
+            )
           )
         end
 
@@ -104,6 +107,11 @@ module Y2Partitioner
           ]
 
           Tabs.new(*tabs)
+        end
+
+        # @return [String]
+        def section
+          BtrfsFilesystems.label
         end
       end
 

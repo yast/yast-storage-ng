@@ -47,6 +47,20 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
   include_examples "CWM::Pager"
 
+  describe "#init" do
+    it "asks to UIState for a statuses cleaning" do
+      expect(Y2Partitioner::UIState.instance).to receive(:prune)
+
+      subject.init
+    end
+
+    it "notifies the current page to UIState" do
+      expect(Y2Partitioner::UIState.instance).to receive(:select_page)
+
+      subject.init
+    end
+  end
+
   describe "#device_page" do
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 

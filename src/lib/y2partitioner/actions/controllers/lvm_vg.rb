@@ -224,7 +224,7 @@ module Y2Partitioner
             initialize_for_resize(current_vg)
           end
 
-          UIState.instance.select_row(vg) unless vg.nil?
+          UIState.instance.select_row(vg.sid) unless vg.nil?
         end
 
         # Detects current action

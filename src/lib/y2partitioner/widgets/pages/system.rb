@@ -18,8 +18,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/tree_pager"
 require "y2partitioner/icons"
+require "y2partitioner/ui_state"
+require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
@@ -32,7 +33,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for all storage devices in the system
-      class System < CWM::Page
+      class System < Base
         include Yast::I18n
 
         # Constructor

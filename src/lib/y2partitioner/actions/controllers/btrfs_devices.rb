@@ -56,7 +56,7 @@ module Y2Partitioner
           @metadata_raid_level = Y2Storage::BtrfsRaidLevel::DEFAULT
           @data_raid_level = Y2Storage::BtrfsRaidLevel::DEFAULT
 
-          UIState.instance.select_row(filesystem) if filesystem
+          UIState.instance.select_row(filesystem.sid) if filesystem
         end
 
         # Metadata RAID level for the filesystem
@@ -225,7 +225,7 @@ module Y2Partitioner
           filesystem.metadata_raid_level = @metadata_raid_level
           filesystem.data_raid_level = @data_raid_level
 
-          UIState.instance.select_row(filesystem)
+          UIState.instance.select_row(filesystem.sid)
 
           @filesystem = filesystem
         end

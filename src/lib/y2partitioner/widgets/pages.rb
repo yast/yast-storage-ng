@@ -26,6 +26,7 @@ module Y2Partitioner
   end
 end
 
+require "y2partitioner/widgets/pages/base.rb"
 require "y2partitioner/widgets/pages/system.rb"
 require "y2partitioner/widgets/pages/disks.rb"
 require "y2partitioner/widgets/pages/disk.rb"

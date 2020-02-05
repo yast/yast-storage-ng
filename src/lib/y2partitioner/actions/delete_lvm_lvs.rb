@@ -40,7 +40,7 @@ module Y2Partitioner
         log.info "deleting logical volumes from #{device}"
 
         device.lvm_lvs.each { |lv| device.delete_lvm_lv(lv) }
-        UIState.instance.select_row(device)
+        UIState.instance.select_row(device.sid)
       end
 
       # @see DeleteDevice#errors

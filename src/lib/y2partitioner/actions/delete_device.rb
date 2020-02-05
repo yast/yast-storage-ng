@@ -19,6 +19,7 @@
 
 require "yast"
 require "yast2/popup"
+require "y2partitioner/ui_state"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
 require "y2partitioner/immediate_unmount"

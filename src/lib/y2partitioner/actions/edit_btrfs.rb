@@ -36,7 +36,7 @@ module Y2Partitioner
         textdomain "storage"
 
         @device_sid = filesystem.sid
-        UIState.instance.select_row(filesystem)
+        UIState.instance.select_row(filesystem.sid)
       end
 
       private

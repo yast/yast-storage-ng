@@ -71,47 +71,62 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       allow(Yast::UI).to receive(:QueryWidget).with(anything, :SelectedItems).and_return []
     end
 
-    context "if UIState contains the sid of a device in table" do
-      let(:device) { devices.last }
-
-      before { Y2Partitioner::UIState.instance.select_row(device.sid) }
-
-      it "sets value to row with the device" do
-        expect(subject).to receive(:value=).with(subject.send(:row_id, device.sid))
-        subject.init
-      end
-
-      context "if the table is associated to a buttons set" do
-        subject { described_class.new(devices, pager, buttons_set) }
-
-        it "initializes the buttons set according to the device" do
-          expect(subject).to receive(:selected_device).and_return(device)
-          expect(buttons_set).to receive(:device=).with device
-          subject.init
-        end
-      end
-    end
-
-    context "if UIState contains a sid that is not in the table" do
-      it "selects any valid device in table" do
-        Y2Partitioner::UIState.instance.select_row("999999999")
-
-        expect(subject).to receive(:value=) do |value|
-          sid = value[/.*:(.*)/, 1].to_i # c&p from code
-          expect(devices.map(&:sid)).to include(sid)
-        end
-
-        subject.init
-      end
-    end
-
-    context "table does not contain any device" do
+    context "when table does not contain any device" do
       let(:devices) { [] }
 
       it "do nothing" do
         expect(subject).to_not receive(:value=)
 
         subject.init
+      end
+    end
+
+    context "when the table contains devices" do
+      before do
+        allow(Y2Partitioner::UIState.instance).to receive(:row_id).and_return(row_id)
+      end
+
+      let(:device) { devices.first }
+      let(:selected_row) { subject.send(:row_id, device.sid) }
+
+      shared_examples "selects the first device in the table" do
+        it "selects the first device in the table" do
+          expect(subject).to receive(:value=).with(selected_row)
+
+          subject.init
+        end
+      end
+
+      context "and UIState does not return an sid" do
+        let(:row_id) { nil }
+
+        include_examples "selects the first device in the table"
+      end
+
+      context "and UIState returns an sid for a device that is not in the table" do
+        let(:row_id) { "999999999" }
+
+        include_examples "selects the first device in the table"
+      end
+
+      context "and UIState returns an sid of a device in table" do
+        let(:device) { devices.last }
+        let(:row_id) { device.sid }
+
+        it "sets value to row with the device" do
+          expect(subject).to receive(:value=).with(selected_row)
+          subject.init
+        end
+
+        context "if the table is associated to a buttons set" do
+          subject { described_class.new(devices, pager, buttons_set) }
+
+          it "initializes the buttons set according to the device" do
+            expect(subject).to receive(:selected_device).and_return(device)
+            expect(buttons_set).to receive(:device=).with device
+            subject.init
+          end
+        end
       end
     end
   end
@@ -165,8 +180,17 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       context "when there is a buttons set associated to the table" do
         let(:set) { buttons_set }
 
+        before do
+          allow(buttons_set).to receive(:device=).with(device)
+        end
+
         context "and there is no selected device" do
           let(:device) { nil }
+
+          it "does not try to notify the change to the UIState" do
+            expect(Y2Partitioner::UIState.instance).to_not receive(:select_row)
+            subject.handle(event)
+          end
 
           it "does not try to update the buttons set" do
             expect(buttons_set).to_not receive(:device=)
@@ -180,6 +204,11 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
         context "and some device is selected" do
           let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+          it "notifies the selected device to the UIState" do
+            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
+            subject.handle(event)
+          end
 
           it "updates the buttons set according to the device" do
             expect(buttons_set).to receive(:device=).with(device)
@@ -197,6 +226,11 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
         context "and there is no selected device" do
           let(:device) { nil }
 
+          it "does not try to notify the change to the UIState" do
+            expect(Y2Partitioner::UIState.instance).to_not receive(:select_row)
+            subject.handle(event)
+          end
+
           it "does not try to update the buttons set" do
             expect(buttons_set).to_not receive(:device=)
             subject.handle(event)
@@ -209,6 +243,11 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
         context "and some device is selected" do
           let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+          it "notifies the selected device to the UIState" do
+            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
+            subject.handle(event)
+          end
 
           it "does not try to update the buttons set" do
             expect(buttons_set).to_not receive(:device=)

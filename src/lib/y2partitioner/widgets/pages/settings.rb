@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/base"
 require "y2storage/filesystems/mount_by_type"
 require "y2storage/storage_manager"
 require "y2storage/sysconfig_storage"
@@ -27,7 +28,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A page for displaying the Partitioner settings
-      class Settings < CWM::Page
+      class Settings < Base
         include Yast::I18n
 
         # Constructor

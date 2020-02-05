@@ -56,6 +56,16 @@ module Y2Partitioner
     #
     # It has replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
+      # Pages whose cached content should be considered outdated
+      #
+      # This is a hack introduced because the NFS page works in a completely
+      # different way in which triggering a full redraw every time something
+      # changes is not an option. This way, the NFS page can invalidate the
+      # cached contents of other pages supporting this mechanism.
+      #
+      # @return [Array<Symbol>] only :system supported so far
+      attr_accessor :invalidated_pages
+
       # Constructor
       #
       # @param [String] hostname of the system
@@ -67,15 +77,25 @@ module Y2Partitioner
         super(OverviewTree.new(items))
       end
 
-      # Pages whose cached content should be considered outdated
+      # Ensures that UIState clears obsolete statuses and it is aware of current page
       #
-      # This is a hack introduced because the NFS page works in a completely
-      # different way in which triggering a full redraw every time something
-      # changes is not an option. This way, the NFS page can invalidate the
-      # cached contents of other pages supporting this mechanism.
+      # That's especially needed when initial page is a candidate of a no longer existing one
       #
-      # @return [Array<Symbol>] only :system supported so far
-      attr_accessor :invalidated_pages
+      # @see #initial_page
+      def init
+        super
+
+        UIState.instance.prune(keep: @pages.map(&:id))
+        UIState.instance.select_page(@current_page.tree_path)
+      end
+
+      # Ensures the tree is properly initialized according to {UIState} after
+      # a redraw.
+      #
+      # @see #find_initial_page
+      def initial_page
+        find_initial_page || super
+      end
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
@@ -90,14 +110,8 @@ module Y2Partitioner
       # Overrides default behavior of TreePager to register the new state with
       # {UIState} before jumping to the tree node
       def switch_page(page)
-        UIState.instance.go_to_tree_node(page)
+        UIState.instance.select_page(page.tree_path)
         super
-      end
-
-      # Ensures the tree is properly initialized according to {UIState} after
-      # a redraw.
-      def initial_page
-        UIState.instance.find_tree_node(@pages) || super
       end
 
       # Status of open/expanded items in the UI
@@ -134,6 +148,17 @@ module Y2Partitioner
       private
 
       attr_reader :tree
+
+      # Select the initial page
+      #
+      # @return [Page, nil]
+      def find_initial_page
+        candidate = UIState.instance.find_page(@pages.map(&:id))
+
+        return nil unless candidate
+
+        @pages.find { |page| page.id == candidate }
+      end
 
       # Checks whether the current setup is valid, that is, it contains necessary
       # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).

@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,38 +18,38 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages/partition"
-require "y2partitioner/actions/go_to_device_tab"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Actions::GoToDeviceTab do
-  subject(:action) { described_class.new(device, pager, "&Partitions") }
-
+describe Y2Partitioner::Widgets::Pages::Base do
   let(:scenario) { "empty_disks.yml" }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:pager) { double("Pager", device_page: page, widget_id: "pager") }
-  let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
+  let(:disks) { current_graph.disks }
+  let(:disk) { disks.first }
 
   before do
     devicegraph_stub(scenario)
   end
 
-  describe "#run" do
-    context "for a device that doesn't have its own page" do
-      let(:page) { nil }
+  describe "#id" do
+    let(:pager) { double("Pager") }
 
-      it "returns nil" do
-        expect(action.run).to be_nil
+    context "when it's a device page" do
+      let(:page) { Y2Partitioner::Widgets::Pages::Disk.new(disk, pager) }
+
+      it "returns the device sid" do
+        expect(page.id).to eq(disk.sid)
       end
     end
 
-    context "for a device with its own page" do
-      let(:page) { Y2Partitioner::Widgets::Pages::Partition.new(device) }
+    context "when it isn't a device page" do
+      let(:page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
 
-      it "returns :finish" do
-        expect(action.run).to eq :finish
+      it "returns the page label" do
+        expect(page.id).to eq(page.label)
       end
     end
   end

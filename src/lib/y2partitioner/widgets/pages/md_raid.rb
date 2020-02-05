@@ -17,10 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/widget"
-require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/md_raids"
 require "y2partitioner/widgets/md_description"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/blk_device_edit_button"
@@ -34,7 +34,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdDevicesTab}
-      class MdRaid < CWM::Page
+      class MdRaid < Base
         # Constructor
         #
         # @param md [Y2Storage::Md]
@@ -59,19 +59,30 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          VBox(
-            Left(
-              HBox(
-                Image(Icons::RAID, ""),
-                Heading(format(_("RAID: %s"), @md.name))
+          Top(
+            VBox(
+              Left(
+                HBox(
+                  Image(Icons::RAID, ""),
+                  Heading(format(_("RAID: %s"), @md.name))
+                )
+              ),
+              Left(
+                Tabs.new(
+                  MdTab.new(@md, initial: true),
+                  MdDevicesTab.new(@md, @pager),
+                  PartitionsTab.new(@md, @pager)
+                )
               )
-            ),
-            Tabs.new(
-              MdTab.new(@md, initial: true),
-              MdDevicesTab.new(@md, @pager),
-              PartitionsTab.new(@md, @pager)
             )
           )
+        end
+
+        private
+
+        # @return [String]
+        def section
+          MdRaids.label
         end
       end
 
