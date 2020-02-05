@@ -94,10 +94,17 @@ module Y2Partitioner
         super
       end
 
+      # Ensures that UIState prune obsolete statuses
+      def init
+        super
+
+        UIState.instance.clear_dead_statuses(@pages.map(&:id))
+      end
+
       # Ensures the tree is properly initialized according to {UIState} after
       # a redraw.
       #
-      # @see @find_initial_page
+      # @see #find_initial_page
       def initial_page
         find_initial_page || super
       end

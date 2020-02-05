@@ -111,15 +111,13 @@ module Y2Partitioner
       current_status&.active_tab
     end
 
-    # Method to be called when the user deletes a device to properly clear dead statuses
+    # Method to be called when redrawing the UI to keep tracking only valid statuses
     #
-    # Taking advantage of the path to the device provided by PageStatus#candidate_pages, it can
-    # discard all no longer relevant statuses after deleting a device.
+    # Usually, the UI is redrawn after certain user actions like deleting a device.
     #
-    # @param sid [Integer] the sid of the deleted device
-    def clear_statuses_for(sid)
-      # All statuses containing the given sid as candidate must be discarded
-      statuses.reject! { |v| v.candidate_pages.include?(sid) }
+    # @param pages_ids [Array<String, Integer>] pages ids of statuses to keep
+    def clear_dead_statuses(pages_ids)
+      statuses.select! { |s| pages_ids.include?(s.page_id) }
     end
 
     # Stores the ids of the tree items that are open

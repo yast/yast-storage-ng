@@ -72,7 +72,6 @@ module Y2Partitioner
       #
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
       def perform_action
-        UIState.instance.clear_statuses_for(device.sid)
         delete
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end

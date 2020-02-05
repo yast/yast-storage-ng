@@ -443,60 +443,33 @@ describe Y2Partitioner::UIState do
     end
   end
 
-  describe "#clear_statuses_for" do
+  describe "#clear_dead_statuses" do
     let(:device_name) { "/dev/sda" }
     let(:sda1) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
-    let(:sda2) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda2") }
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
     let(:lv1) { vg.lvm_lvs.first }
-    let(:lv2) { vg.lvm_lvs.last }
 
     let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
     let(:sda_page) { Y2Partitioner::Widgets::Pages::Disk.new(device, pager) }
     let(:sda1_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda1) }
-    let(:sda2_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda2) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
     let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
     let(:lv1_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv1) }
-    let(:lv2_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv2) }
+
+    let(:initial_pages) { [disks_page, sda_page, sda1_page, lvm_page, vg_page, lv1_page] }
+    let(:final_pages) { [lvm_page, vg_page, lv1_page] }
 
     before do
-      ui_state.select_page(disks_page.tree_path)
-      ui_state.select_page(sda_page.tree_path)
-      ui_state.select_page(sda1_page.tree_path)
-      ui_state.select_page(sda2_page.tree_path)
-      ui_state.select_page(lvm_page.tree_path)
-      ui_state.select_page(vg_page.tree_path)
-      ui_state.select_page(lv1_page.tree_path)
-      ui_state.select_page(lv2_page.tree_path)
+      # generates statuses for all pages by selecting them
+      initial_pages.each { |page| ui_state.select_page(page.tree_path) }
     end
 
-    context "when a 'parent' device is deleted" do
-      it "clears all related page statuses" do
-        expect(ui_state.statuses.map(&:page_id))
-          .to include(vg_page.id, lv1_page.id, lv2_page.id)
+    it "discards no longer relevant statuses" do
+      expect(ui_state.statuses.map(&:page_id)).to include(*initial_pages.map(&:id))
 
-        ui_state.clear_statuses_for(vg.sid)
+      ui_state.clear_dead_statuses(final_pages.map(&:id))
 
-        expect(ui_state.statuses.map(&:page_id))
-          .to_not include(vg_page.id, lv1_page.id, lv2_page.id)
-      end
-    end
-
-    context "when a 'child' device is deleted" do
-      it "clears its page status" do
-        expect(ui_state.statuses.map(&:page_id)).to include(sda1_page.id)
-
-        ui_state.clear_statuses_for(sda1.sid)
-
-        expect(ui_state.statuses.map(&:page_id)).to_not include(sda1_page.id)
-      end
-
-      it "does not clear either, parent or siblings page statuses" do
-        ui_state.clear_statuses_for(sda1.sid)
-
-        expect(ui_state.statuses.map(&:page_id)).to include(sda_page.id, sda2_page.id)
-      end
+      expect(ui_state.statuses.map(&:page_id)).to include(*final_pages.map(&:id))
     end
   end
 end
