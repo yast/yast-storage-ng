@@ -79,7 +79,7 @@ module Y2Partitioner
 
         return nil unless dev
 
-        UIState.instance.select_row(dev)
+        UIState.instance.select_row(dev.sid)
         buttons_set.device = dev if buttons_set
 
         nil

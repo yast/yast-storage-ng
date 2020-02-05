@@ -206,7 +206,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
           let(:device) { Y2Storage::Disk.all(device_graph).first }
 
           it "notifies the selected device to the UIState" do
-            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device)
+            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
             subject.handle(event)
           end
 
@@ -245,7 +245,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
           let(:device) { Y2Storage::Disk.all(device_graph).first }
 
           it "notifies the selected device to the UIState" do
-            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device)
+            expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
             subject.handle(event)
           end
 

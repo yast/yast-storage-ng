@@ -97,7 +97,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
     it "select the table row corresponding to the new lv" do
       expect(Y2Partitioner::UIState.instance).to receive(:select_row) do |lv|
-        expect(lv).to eq(controller.lv)
+        expect(lv).to eq(controller.lv.sid)
       end
 
       controller.create_lv

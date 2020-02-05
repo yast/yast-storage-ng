@@ -125,7 +125,7 @@ module Y2Partitioner
           slot = slot_for(region)
           aligned = align(region, slot, ptable)
           @partition = ptable.create_partition(slot.name, aligned, type)
-          UIState.instance.select_row(@partition)
+          UIState.instance.select_row(@partition.sid)
         end
 
         # Removes the previously created partition from the device

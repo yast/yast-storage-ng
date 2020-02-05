@@ -356,7 +356,7 @@ describe Y2Partitioner::UIState do
 
     context "if the user had selected a row in the current page and tab" do
       context "selecting the row by device" do
-        before { ui_state.select_row(device) }
+        before { ui_state.select_row(device.sid) }
 
         it "returns the sid of the device" do
           expect(ui_state.row_sid).to eq device.sid
@@ -364,7 +364,7 @@ describe Y2Partitioner::UIState do
       end
 
       context "selecting the row by sid" do
-        before { ui_state.select_row(device) }
+        before { ui_state.select_row(device.sid) }
 
         it "returns the sid of the device" do
           expect(ui_state.row_sid).to eq device.sid
@@ -374,7 +374,7 @@ describe Y2Partitioner::UIState do
 
     context "if the user had selected a row but then moved to a different tab" do
       before do
-        ui_state.select_row(device)
+        ui_state.select_row(device.sid)
         ui_state.switch_to_tab(overview_tab)
       end
 
@@ -395,7 +395,7 @@ describe Y2Partitioner::UIState do
 
     context "if the user had selected a row but then moved to a different page" do
       before do
-        ui_state.select_row(device)
+        ui_state.select_row(device.sid)
         ui_state.select_page(system_page.tree_path)
       end
 

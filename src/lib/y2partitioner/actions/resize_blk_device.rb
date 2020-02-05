@@ -43,7 +43,7 @@ module Y2Partitioner
         @device = device
         @controller = Controllers::BlkDevice.new(device)
 
-        UIState.instance.select_row(device)
+        UIState.instance.select_row(device.sid)
       end
 
       # Checks whether it is possible to resize the device, and if so, the action is performed.

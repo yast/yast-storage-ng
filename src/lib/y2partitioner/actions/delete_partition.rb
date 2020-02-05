@@ -39,7 +39,7 @@ module Y2Partitioner
         log.info "deleting partition #{device}"
         parent_device = device.partitionable
         parent_device.partition_table.delete_partition(device)
-        UIState.instance.select_row(parent_device)
+        UIState.instance.select_row(parent_device.sid)
       end
 
       # @see DeleteDevice#errors

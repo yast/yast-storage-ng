@@ -56,11 +56,9 @@ module Y2Partitioner
     # Method to be called when the user operates in a row of a table of devices
     # or creates a new device.
     #
-    # @param device [Y2Storage::Device, Integer] a device or its sid
-    def select_row(device)
-      sid = device.respond_to?(:sid) ? device.sid : device
-
-      current_status&.selected_device = sid
+    # @param row_id [Integer] the id of selected row
+    def select_row(row_id)
+      current_status&.selected_row = row_id
     end
 
     # Method to be called when the user decides to visit a page by clicking in one node of the
@@ -83,11 +81,11 @@ module Y2Partitioner
       current_status&.active_tab = label
     end
 
-    # Returns the sid of the last selected device in the active tab of current page
+    # Returns the sid of the last selected row in the active tab of current page
     #
     # @return [Integer, nil]
     def row_sid
-      current_status&.selected_device
+      current_status&.selected_row
     end
 
     # Select the page to open in the general tree after a redraw
@@ -176,7 +174,7 @@ module Y2Partitioner
     #   * selected row
     #   * candidates pages
     class PageStatus
-      # The key to reference the selected device for a table not wrapped in a tab
+      # The key to reference the selected row for a table not wrapped in a tab
       FALLBACK_TAB = "root".freeze
       private_constant :FALLBACK_TAB
 
@@ -213,37 +211,37 @@ module Y2Partitioner
       def initialize(page_id, candidate_pages_ids)
         @page_id = page_id
         @candidate_pages = candidate_pages_ids
-        @selected_devices = { FALLBACK_TAB => nil }
+        @selected_rows = { FALLBACK_TAB => nil }
       end
 
-      # Returns the last selected device for the active tab
+      # Returns the last selected row for the active tab
       #
-      # If the node has no tabs a fallback reference will be used. See #selected_devices
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
       #
       # @return [Integer, nil]
-      def selected_device
-        selected_devices[tab]
+      def selected_row
+        selected_rows[tab]
       end
 
-      # Stores selected device for the active tab
+      # Stores selected row for the active tab
       #
-      # If the node has no tabs a fallback reference will be used. See #selected_devices
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
       #
       # @param sid [Integer] the device sid
-      def selected_device=(sid)
-        selected_devices[tab] = sid
+      def selected_row=(sid)
+        selected_rows[tab] = sid
       end
 
       private
 
-      # A collection to keep the selected devices per tab
+      # A collection to keep the selected rows per tab
       #
-      # The FALLBACK_TAB key will be used to reference the selected device of a CWM::Page with a
-      # devices table not wrapped within a tab (e.g, Widgets::Pages::System, Widgets:Pages::Disks,
+      # The FALLBACK_TAB key will be used to reference the selected row of a CWM::Page with a
+      # table not wrapped within a tab (e.g, Widgets::Pages::System, Widgets:Pages::Disks,
       # etc)
       #
       # @return [Hash{String => Integer}]
-      attr_reader :selected_devices
+      attr_reader :selected_rows
 
       # Returns the active tab or the fallback when none
       #

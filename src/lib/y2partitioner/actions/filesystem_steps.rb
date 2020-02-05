@@ -78,7 +78,7 @@ module Y2Partitioner
 
       def filesystem_commit
         encrypt_controller.finish
-        UIState.instance.select_row(fs_controller.blk_device)
+        UIState.instance.select_row(fs_controller.blk_device.sid)
         :finish
       end
 

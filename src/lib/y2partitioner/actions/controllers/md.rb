@@ -57,7 +57,7 @@ module Y2Partitioner
 
           @md_sid = md.sid
           @initial_name = md.name
-          UIState.instance.select_row(md)
+          UIState.instance.select_row(md.sid)
         end
 
         # MD RAID being modified
