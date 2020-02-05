@@ -39,14 +39,6 @@ describe Y2Partitioner::Widgets::Pages::System do
 
   include_examples "CWM::Page"
 
-  describe "#init" do
-    it "registers itself in UIState" do
-      expect(Y2Partitioner::UIState.instance).to receive(:select_page).with(["hostname"])
-
-      subject.init
-    end
-  end
-
   describe "#contents" do
     # Widget with the list of devices
     def find_table(widgets)

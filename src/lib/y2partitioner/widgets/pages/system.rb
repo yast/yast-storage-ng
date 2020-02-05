@@ -47,11 +47,6 @@ module Y2Partitioner
           @hostname = hostname
         end
 
-        def init
-          # Register itself in the UIState
-          UIState.instance.select_page(tree_path)
-        end
-
         # @macro seeAbstractWidget
         def label
           hostname

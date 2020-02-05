@@ -53,6 +53,12 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
       subject.init
     end
+
+    it "notifies the current page to UIState" do
+      expect(Y2Partitioner::UIState.instance).to receive(:select_page)
+
+      subject.init
+    end
   end
 
   describe "#device_page" do
