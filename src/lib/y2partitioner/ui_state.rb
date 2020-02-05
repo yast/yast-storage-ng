@@ -113,9 +113,9 @@ module Y2Partitioner
     #
     # Usually, the UI is redrawn after certain user actions like deleting a device.
     #
-    # @param pages_ids [Array<String, Integer>] pages ids of statuses to keep
-    def clear_dead_statuses(pages_ids)
-      statuses.select! { |s| pages_ids.include?(s.page_id) }
+    # @param keep [Array<String, Integer>] pages ids of statuses to keep
+    def prune(keep: [])
+      statuses.select! { |s| keep.include?(s.page_id) }
     end
 
     # Stores the ids of the tree items that are open

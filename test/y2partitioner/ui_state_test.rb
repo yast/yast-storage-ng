@@ -443,7 +443,7 @@ describe Y2Partitioner::UIState do
     end
   end
 
-  describe "#clear_dead_statuses" do
+  describe "#prune" do
     let(:device_name) { "/dev/sda" }
     let(:sda1) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
@@ -464,12 +464,24 @@ describe Y2Partitioner::UIState do
       initial_pages.each { |page| ui_state.select_page(page.tree_path) }
     end
 
-    it "discards no longer relevant statuses" do
-      expect(ui_state.statuses.map(&:page_id)).to include(*initial_pages.map(&:id))
+    context "when keep: parameter is not given" do
+      it "discards all statuses" do
+        expect(ui_state.statuses).to_not be_empty
 
-      ui_state.clear_dead_statuses(final_pages.map(&:id))
+        ui_state.prune
 
-      expect(ui_state.statuses.map(&:page_id)).to include(*final_pages.map(&:id))
+        expect(ui_state.statuses).to be_empty
+      end
+    end
+
+    context "when keep: parameter is given" do
+      it "discards statuses which page_id is not present on it" do
+        expect(ui_state.statuses.map(&:page_id)).to eq(initial_pages.map(&:id))
+
+        ui_state.prune(keep: final_pages.map(&:id))
+
+        expect(ui_state.statuses.map(&:page_id)).to eq(final_pages.map(&:id))
+      end
     end
   end
 end

@@ -49,7 +49,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
   describe "#init" do
     it "asks to UIState for a statuses cleaning" do
-      expect(Y2Partitioner::UIState.instance).to receive(:clear_dead_statuses)
+      expect(Y2Partitioner::UIState.instance).to receive(:prune)
 
       subject.init
     end

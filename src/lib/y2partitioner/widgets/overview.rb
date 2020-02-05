@@ -77,15 +77,15 @@ module Y2Partitioner
         super(OverviewTree.new(items))
       end
 
-      # Ensures that UIState clears obsolte statuses and is aware of current page
+      # Ensures that UIState clears obsolete statuses and it is aware of current page
       #
-      # That's especially needed when initial page is a candidate of a no longer exist one
+      # That's especially needed when initial page is a candidate of a no longer existing one
       #
       # @see #initial_page
       def init
         super
 
-        UIState.instance.clear_dead_statuses(@pages.map(&:id))
+        UIState.instance.prune(keep: @pages.map(&:id))
         UIState.instance.select_page(@current_page.tree_path)
       end
 

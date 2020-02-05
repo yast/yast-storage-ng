@@ -57,7 +57,7 @@ module Y2Partitioner
 
         private
 
-        # The parent page i
+        # The parent page
         #
         # @return [String, Integer, nil]
         def parent
