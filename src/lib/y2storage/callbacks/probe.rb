@@ -35,7 +35,7 @@ module Y2Storage
       #   (in the ASCII-8BIT encoding! see https://sourceforge.net/p/swig/feature-requests/89/)
       # @param what [String] details coming from libstorage-ng (in the ASCII-8BIT encoding!)
       # @param command [String] missing command coming from libstorage-ng (in the ASCII-8BIT encoding!)
-      # @param used_features used features bit field coming from libstorage-ng
+      # @param used_features [Integer] used features bit field as integer coming from libstorage-ng
       #
       # @return [Boolean] true will make libstorage-ng ignore the error, false
       #   will result in a libstorage-ng exception
