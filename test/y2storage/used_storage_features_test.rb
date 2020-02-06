@@ -105,7 +105,7 @@ describe Y2Storage::UsedStorageFeatures do
     end
   end
 
-  context "Created from integer representing UF_BTRFS" do
+  context "Created from integer representing used features" do
     subject { described_class.new(8) }
 
     it "has exactly the expected storage features" do
