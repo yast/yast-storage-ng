@@ -38,7 +38,7 @@ describe Y2Storage::Callbacks::Probe do
   end
 
   describe "#again?" do
-    it "is unset after calling begin" do
+    it "returns false after calling begin" do
       subject.begin
       expect(subject.again?).to be false
     end
