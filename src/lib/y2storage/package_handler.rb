@@ -68,7 +68,7 @@ module Y2Storage
     # Add the packages for the storage features to the list of
     # packages to be installed
     #
-    # @param [Integer or ::Storage::Devicegraph] used features or devicegraph
+    # @param arg [Integer or ::Storage::Devicegraph] used features or devicegraph
     #   to obtain the features from
     # @return [Array<String>] new package list (may contain duplicates)
     #
