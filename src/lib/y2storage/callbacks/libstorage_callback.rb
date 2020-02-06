@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018,2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -68,6 +68,7 @@ module Y2Storage
       #   will result in a libstorage-ng exception
       def error(message, what)
         textdomain "storage"
+
         # force the UTF-8 encoding to avoid Encoding::CompatibilityError exception (bsc#1096758)
         message.force_encoding("UTF-8")
         what.force_encoding("UTF-8")
@@ -75,21 +76,15 @@ module Y2Storage
         log.info "libstorage-ng reported an error, asking the user whether to continue"
         log.info "Error details. Message: #{message}. What: #{what}."
 
-        desc = error_description(what)
-        hint = _("Click below to see more details (English only).")
+        description = error_description(what)
         question = _("Continue despite the error?")
-
-        msg = if what.empty?
-          "#{message}\n\n#{desc}\n\n#{question}"
-        else
-          "#{message}\n\n#{desc}\n\n#{hint}\n\n#{question}"
-        end
 
         buttons = { yes: Yast::Label.ContinueButton, no: abort_button_label }
         focus = default_answer_to_error ? :yes : :no
 
         result = Yast::Report.yesno_popup(
-          msg, details: wrap_text(what), focus: focus, buttons: buttons
+          full_message(message, description, question, what), details: wrap_text(what),
+          focus: focus, buttons: buttons
         )
 
         log.info "User answer: #{result}"
@@ -169,6 +164,22 @@ module Y2Storage
       # @return [Boolean]
       def forced_multipath?
         StorageEnv.instance.forced_multipath?
+      end
+
+      private
+
+      # Generate the full message for the error popup.
+      #
+      # @return [String] Full message.
+      #
+      def full_message(message, description, question, what)
+        hint = _("Click below to see more details (English only).")
+
+        if what.empty?
+          "#{message}\n\n#{description}\n\n#{question}"
+        else
+          "#{message}\n\n#{description}\n\n#{hint}\n\n#{question}"
+        end
       end
     end
   end

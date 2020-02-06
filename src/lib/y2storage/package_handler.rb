@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017,2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -65,14 +65,15 @@ module Y2Storage
       @pkg_list.concat(pkg_list)
     end
 
-    # Add the packages for the storage features in 'devicegraph' to the list of
+    # Add the packages for the storage features to the list of
     # packages to be installed
     #
-    # @param [::Storage::devicegraph] devicegraph to obtain the features from
+    # @param [Integer or ::Storage::Devicegraph] used features or devicegraph
+    #   to obtain the features from
     # @return [Array<String>] new package list (may contain duplicates)
     #
-    def add_feature_packages(devicegraph)
-      used_features = UsedStorageFeatures.new(devicegraph)
+    def add_feature_packages(arg)
+      used_features = UsedStorageFeatures.new(arg)
       packages = used_features.feature_packages
       packages.delete_if do |pkg|
         if unavailable_optional_package?(pkg)

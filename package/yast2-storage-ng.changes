@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 06 15:09:57 CET 2020 - aschnell@suse.com
+
+- allow to install packages needed for probing
+- 4.2.84
+
+-------------------------------------------------------------------
 Wed Feb  5 12:38:51 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: usability improved by remembering the last active
