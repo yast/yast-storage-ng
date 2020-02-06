@@ -3,7 +3,7 @@ Wed Feb  5 12:38:51 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: usability improved by remembering the last active
   tab and selected device per page (bsc#1159883).
-- 4.1.83
+- 4.2.83
 
 -------------------------------------------------------------------
 Tue Feb  4 12:09:51 UTC 2020 - José Iván López González <jlopez@suse.com>
