@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Feb 12 09:53:44 CET 2020 - aschnell@suse.com
+
+- added texts for RAID1C3 and RAID1C4
+- 4.2.84
+
+-------------------------------------------------------------------
 Wed Feb  5 12:38:51 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: usability improved by remembering the last active

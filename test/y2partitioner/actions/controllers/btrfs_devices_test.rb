@@ -133,6 +133,8 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
       let(:dup_level) { Y2Storage::BtrfsRaidLevel::DUP }
       let(:raid0) { Y2Storage::BtrfsRaidLevel::RAID0 }
       let(:raid1) { Y2Storage::BtrfsRaidLevel::RAID1 }
+      let(:raid1c3) { Y2Storage::BtrfsRaidLevel::RAID1C3 }
+      let(:raid1c4) { Y2Storage::BtrfsRaidLevel::RAID1C4 }
       let(:raid5) { Y2Storage::BtrfsRaidLevel::RAID5 }
       let(:raid6) { Y2Storage::BtrfsRaidLevel::RAID6 }
       let(:raid10) { Y2Storage::BtrfsRaidLevel::RAID10 }
@@ -161,11 +163,11 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
             filesystem.add_device(sdb2)
           end
 
-          it "contains DEFAULT, SINGLE, RAID0 and RAID1" do
+          it "contains DEFAULT, SINGLE, RAID0, RAID1 and RAID1C3" do
             expect(subject.filesystem.blk_devices.size).to eq(3)
 
             expect(subject.allowed_raid_levels(data))
-              .to contain_exactly(default_level, single_level, raid0, raid1)
+              .to contain_exactly(default_level, single_level, raid0, raid1, raid1c3)
           end
         end
 
@@ -184,11 +186,11 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
             filesystem.add_device(sdb3)
           end
 
-          it "contains DEFAULT, SINGLE, RAID0, RAID1 and RAID10" do
+          it "contains DEFAULT, SINGLE, RAID0, RAID1, RAID1C3, RAID1C4 and RAID10" do
             expect(subject.filesystem.blk_devices.size).to eq(4)
 
             expect(subject.allowed_raid_levels(data))
-              .to contain_exactly(default_level, single_level, raid0, raid1, raid10)
+              .to contain_exactly(default_level, single_level, raid0, raid1, raid1c3, raid1c4, raid10)
           end
         end
       end

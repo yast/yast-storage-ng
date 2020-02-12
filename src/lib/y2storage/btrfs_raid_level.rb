@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -42,6 +42,8 @@ module Y2Storage
       dup:     N_("DUP"),
       raid0:   N_("RAID0"),
       raid1:   N_("RAID1"),
+      raid1c3: N_("RAID1C3"),
+      raid1c4: N_("RAID1C4"),
       raid5:   N_("RAID5"),
       raid6:   N_("RAID6"),
       raid10:  N_("RAID10")

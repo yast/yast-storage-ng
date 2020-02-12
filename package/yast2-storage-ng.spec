@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        4.2.83
+Version:        4.2.84
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# Fix mount/unmount
-BuildRequires:	libstorage-ng-ruby >= 4.2.54
+# RAID1C{3,4}
+BuildRequires:	libstorage-ng-ruby >= 4.2.61
 BuildRequires:  update-desktop-files
 # CWM::DynamicProgressBar
 BuildRequires:  yast2 >= 4.2.63
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# Fix mount/unmount
-Requires:       libstorage-ng-ruby >= 4.2.54
+# RAID1C{3,4}
+Requires:       libstorage-ng-ruby >= 4.2.61
 # CWM::DynamicProgressBar
 Requires:       yast2 >= 4.2.63
 # Y2Packager::Repository
