@@ -1,7 +1,8 @@
 -------------------------------------------------------------------
 Wed Feb 12 09:53:44 CET 2020 - aschnell@suse.com
 
-- added texts for RAID1C3 and RAID1C4
+- added texts for RAID1C3 and RAID1C4 as required by
+  gh#openSUSE/libstorage-ng#706 (related to jsc#SLE-3877)
 - 4.2.84
 
 -------------------------------------------------------------------
