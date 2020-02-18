@@ -205,7 +205,7 @@ module Y2Partitioner
         _("An extended partition cannot be edited")
       end
 
-      # Error message is trying to edit an LVM thin pool
+      # Error message if trying to edit an LVM thin pool
       #
       # @return [String, nil] nil if the device is not a thin pool.
       def lvm_thin_pool_error
