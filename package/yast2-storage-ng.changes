@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Feb 18 10:26:02 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: do not allow to edit a device when the device cannot
+  be used as block device (bsc#1163597).
+- 4.2.85
+
+-------------------------------------------------------------------
 Wed Feb 12 09:53:44 CET 2020 - aschnell@suse.com
 
 - added texts for RAID1C3 and RAID1C4 as required by
