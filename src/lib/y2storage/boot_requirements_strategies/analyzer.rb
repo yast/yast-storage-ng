@@ -78,11 +78,13 @@ module Y2Storage
       #   all boot disks but this will also mean error messages like "BIOS
       #   Boot on sda and (or?) MBR-GAP on sdb are missing".
       #
-      # @return [Disk]
+      # @return [BlkDevice] usually a disk device (disk, hardware RAID, multipath, etc.).
+      #   Since this honors #boot_disk_name, such attribute can be used to make this
+      #   return a software RAID or other kind of block device.
       def boot_disk
         return @boot_disk if @boot_disk
 
-        @boot_disk = devicegraph.disk_devices.find { |d| d.name == boot_disk_name } if boot_disk_name
+        @boot_disk = devicegraph.find_by_name(boot_disk_name) if boot_disk_name
 
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph

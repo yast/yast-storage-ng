@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Feb 18 11:59:05 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Initial Guided Proposal: place the boot-related partitions in
+  the device choosen for root, even if it's a software RAID
+  (bsc#1161331, bsc#1161678).
+- 4.2.86
+
+-------------------------------------------------------------------
 Tue Feb 18 10:26:02 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: do not allow to edit a device when the device cannot
