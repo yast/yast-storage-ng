@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Feb 18 15:04:21 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: do no show button for editing devices when the
+  device cannot be used as block device (bsc#1163597).
+- Revert changes from 4.2.85.
+- 4.2.87
+
+-------------------------------------------------------------------
 Tue Feb 18 11:59:05 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Initial Guided Proposal: place the boot-related partitions in
