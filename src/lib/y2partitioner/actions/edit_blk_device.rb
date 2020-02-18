@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -116,7 +116,8 @@ module Y2Partitioner
           used_device_error,
           partitions_error,
           extended_partition_error,
-          lvm_thin_pool_error
+          lvm_thin_pool_error,
+          no_usable_as_blk_device_error
         ].compact
       end
 
@@ -205,7 +206,7 @@ module Y2Partitioner
         _("An extended partition cannot be edited")
       end
 
-      # Error message is trying to edit an LVM thin pool
+      # Error message if trying to edit an LVM thin pool
       #
       # @return [String, nil] nil if the device is not a thin pool.
       def lvm_thin_pool_error
@@ -214,6 +215,20 @@ module Y2Partitioner
         # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
         format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: device.name)
+      end
+
+      # Error message if trying to edit a block device that cannot be used as block device (e.g., a DASD)
+      #
+      # @return [String, nil] nil if the device can be used as block device
+      def no_usable_as_blk_device_error
+        return nil if device.usable_as_blk_device?
+
+        # TRANSLATORS: Error message where %{name} is replaced by a device name (e.g., /dev/dasda).
+        format(
+          _("The device %{name} is not usable as block device.\n" \
+            "It cannot be edited."),
+          name: device.name
+        )
       end
 
       # Whether the device is an extended partition
