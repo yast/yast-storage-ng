@@ -1,6 +1,5 @@
 #!/usr/bin/env rspec
-
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -146,27 +145,6 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       let(:dev_name) { "/dev/vg1/pool1" }
 
       include_examples "edit_error"
-    end
-
-    context "if called on a device that cannot be used as block device" do
-      let(:scenario) { "dasd_50GiB.yml" }
-
-      let(:dev_name) { "/dev/dasda" }
-
-      before do
-        device.delete_partition_table
-      end
-
-      it "shows a not editable error popup" do
-        expect(Yast2::Popup).to receive(:show)
-          .with(/not usable as block device/, hash_including(headline: :error))
-
-        sequence.run
-      end
-
-      it "quits returning :back" do
-        expect(sequence.run).to eq :back
-      end
     end
 
     context "if called on a device that can be edited" do

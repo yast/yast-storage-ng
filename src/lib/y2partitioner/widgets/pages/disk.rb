@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -137,12 +137,26 @@ module Y2Partitioner
           @contents ||= VBox(
             DiskDeviceDescription.new(@disk),
             Left(
-              HBox(
-                BlkDeviceEditButton.new(device: @disk),
-                PartitionTableButton.new(@disk)
-              )
+              HBox(*buttons)
             )
           )
+        end
+
+        private
+
+        # Buttons for the device
+        #
+        # Note that some block devices cannot be edited because they cannot be used as block devices,
+        # (e.g., DASD devices).
+        #
+        # @return [Array<CWM::AbstractWidget>]
+        def buttons
+          buttons = []
+
+          buttons << BlkDeviceEditButton.new(device: @disk) if @disk.usable_as_blk_device?
+          buttons << PartitionTableButton.new(@disk)
+
+          buttons
         end
       end
     end

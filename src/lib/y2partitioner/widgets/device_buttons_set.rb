@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,6 +30,7 @@ require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/btrfs_modify_button"
+require "y2partitioner/widgets/partition_table_add_button"
 
 module Y2Partitioner
   module Widgets
@@ -139,7 +140,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a disk device
       def disk_device_buttons
         [
-          DiskModifyButton.new(device),
+          modify_disk_button,
           PartitionsButton.new(device, pager)
         ]
       end
@@ -173,6 +174,18 @@ module Y2Partitioner
           BtrfsModifyButton.new(device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
+      end
+
+      # Button to modify a disk device
+      #
+      # Note that some block devices cannot be edited because they cannot be used as block devices,
+      # (e.g., DASD devices).
+      #
+      # @return [CWM::AbstractWidget]
+      def modify_disk_button
+        return DiskModifyButton.new(device) if device.usable_as_blk_device?
+
+        PartitionTableAddButton.new(device: device)
       end
 
       # Simple widget to represent an HBox with a CWM API

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018-2019] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -80,19 +81,40 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
     end
 
     context "when targeting a disk device" do
-      let(:device) { device_graph.disks.first }
+      context "and the device can be used as a block device" do
+        let(:device) { device_graph.disks.first }
 
-      it "replaces the content with buttons to modify and to manage partitions" do
-        expect(widget).to receive(:replace) do |content|
-          widgets = Yast::CWM.widgets_in_contents([content])
-          expect(widgets.map(&:class)).to contain_exactly(
-            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::DiskModifyButton,
-            Y2Partitioner::Widgets::PartitionsButton
-          )
+        it "replaces the content with buttons to modify and to manage partitions" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to contain_exactly(
+              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+              Y2Partitioner::Widgets::DiskModifyButton,
+              Y2Partitioner::Widgets::PartitionsButton
+            )
+          end
+
+          widget.device = device
         end
+      end
 
-        widget.device = device
+      context "and the device cannot be used as a block device" do
+        let(:scenario) { "dasd_50GiB" }
+
+        let(:device) { device_graph.dasds.first }
+
+        it "replaces the content with buttons to create a partiton table and to manage partitions" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to contain_exactly(
+              Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+              Y2Partitioner::Widgets::PartitionTableAddButton,
+              Y2Partitioner::Widgets::PartitionsButton
+            )
+          end
+
+          widget.device = device
+        end
       end
     end
 

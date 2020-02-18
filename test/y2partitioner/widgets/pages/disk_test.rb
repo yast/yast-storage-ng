@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -116,14 +117,38 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(description).to_not be_nil
       end
 
-      it "shows a button for editing the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-        expect(button).to_not be_nil
+      context "and the device can be used as a block device" do
+        let(:disk) { current_graph.disks.first }
+
+        it "shows a button for editing the device" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+
+          expect(button).to_not be_nil
+        end
+
+        it "shows a menu-button for expert options on the partition table" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
+
+          expect(button).to_not be_nil
+        end
       end
 
-      it "shows a menu-button for expert options on the partition table" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
-        expect(button).to_not be_nil
+      context "and the device cannot be used as a block device" do
+        let(:scenario) { "dasd_50GiB" }
+
+        let(:disk) { current_graph.dasds.first }
+
+        it "does not show a button for editing the device" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+
+          expect(button).to be_nil
+        end
+
+        it "shows a menu-button for expert options on the partition table" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
+
+          expect(button).to_not be_nil
+        end
       end
     end
   end
