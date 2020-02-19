@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Feb 19 10:49:56 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Proposal: fixed the infinite loop when trying to create a new
+  partition out of the candidate devices (related to bsc#1161331
+  and bsc#1161678).
+- 4.2.88
+
+-------------------------------------------------------------------
 Tue Feb 18 15:04:21 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: do no show button for editing devices when the
