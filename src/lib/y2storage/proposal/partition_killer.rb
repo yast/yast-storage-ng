@@ -138,43 +138,53 @@ module Y2Storage
         logical_parts.size == 1
       end
 
-      # Deletes the given partition and all other partitions in the
-      # candidate disks that form some common multidevice storage object
-      # (volume group, raid, or multidevice file system).
+      # Deletes the given partition and, in addition, all other partitions
+      # that belong to the candidate disks and that form some common multidevice
+      # storage object (volume group, raid, or multidevice file system).
       #
       # Rationale: when deleting such a partition it makes no sense to leave
       # the other partitions alive. So let's reclaim all the space.
       #
-      # @param partition [Partition] A partition that is part of a multidevice storage object
+      # @param [Partition] partition that may be part of a multidevice storage object
       # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_with_related_partitions(partition)
-        if lvm_vg?(partition)
-          log.info "Deleting #{partition.name}, which is part of an LVM volume group"
-          vg = partition.lvm_pv.lvm_vg
-          devices_to_delete = vg.lvm_pvs.map(&:plain_blk_device)
-        elsif multidevice_filesystem?(partition)
-          log.info "Deleting #{partition.name}, which is part of a multidevice file system"
-          devices_to_delete = partition.filesystem.plain_blk_devices
-        elsif raid?(partition)
-          log.info "Deleting #{partition.name}, which is part of a raid"
-          devices_to_delete = partition.md.plain_devices
-        else
-          log.info "Deleting #{partition.name}, which is not related to other partitions"
-          devices_to_delete = [partition]
-        end
+        related = related_partitions(partition)
+        related.select! { |p| disks.include?(p.partitionable.name) } if disks
 
-        delete_partitions(devices_to_delete)
+        delete_partitions([partition] + related)
       end
 
-      # Deletes all partitions in the given device list.
+      # Partitions that are part of the same multidevice storage object than
+      # the given partition
       #
-      # @param devices [Array<BlkDevice>] A list of devices to delete
-      # @return [Array<Integer>] device sids of all deleted partitions
-      def delete_partitions(devices)
-        partitions = devices.select { |dev| dev.is?(:partition) }
-        partitions.select! { |p| disks.include?(p.partitionable.name) } if disks
-        target_partitions = partitions.map { |p| find_partition(p.sid) }.compact
+      # @param [Partition] partition that may be part of a multidevice object
+      # @return [Array<Partition>] never includes the given partition itself
+      def related_partitions(partition)
+        devices =
+          if lvm_vg?(partition)
+            log.info "Deleting #{partition.name}, which is part of an LVM volume group"
+            vg = partition.lvm_pv.lvm_vg
+            vg.lvm_pvs.map(&:plain_blk_device)
+          elsif multidevice_filesystem?(partition)
+            log.info "Deleting #{partition.name}, which is part of a multidevice file system"
+            partition.filesystem.plain_blk_devices
+          elsif raid?(partition)
+            log.info "Deleting #{partition.name}, which is part of a raid"
+            partition.md.plain_devices
+          else
+            log.info "Deleting #{partition.name}, which is not related to other partitions"
+            []
+          end
+        devices.delete(partition)
+        devices.select { |dev| dev.is?(:partition) }
+      end
 
+      # Deletes all partitions in the given list.
+      #
+      # @param partitions [Array<Partition>] A list of partitions to delete
+      # @return [Array<Integer>] device sids of all deleted partitions
+      def delete_partitions(partitions)
+        target_partitions = partitions.map { |p| find_partition(p.sid) }.compact
         log.info "These partitions will be deleted: #{target_partitions.map(&:name)}"
         target_partitions.map { |p| delete_partition(p) }.flatten
       end
