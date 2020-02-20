@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 20 16:02:54 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Add API methods to get preferred mount by option and the
+  associated device path.
+- 4.2.90
+
+-------------------------------------------------------------------
 Thu Feb 20 14:37:41 CET 2020 - aschnell@suse.com
 
 - allow to install packages needed for probing
