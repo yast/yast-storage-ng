@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -311,6 +312,27 @@ describe Y2Storage::MountPoint do
       it "returns an array containing only DEVICE" do
         expect(mount_point.suitable_mount_bys).to eq [Y2Storage::Filesystems::MountByType::DEVICE]
       end
+    end
+  end
+
+  describe "#preferred_mount_by" do
+    before do
+      allow(subject).to receive(:suitable_mount_bys).and_return(all_suitable)
+
+      allow(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+        .with(anything, all_suitable).and_return(uuid)
+    end
+
+    let(:uuid) { Y2Storage::Filesystems::MountByType::UUID }
+
+    let(:label) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    let(:path) { Y2Storage::Filesystems::MountByType::PATH }
+
+    let(:all_suitable) { [uuid, label, path] }
+
+    it "returns the best mount by from all the suitable ones" do
+      expect(subject.preferred_mount_by).to eq(uuid)
     end
   end
 
