@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017,2019] SUSE LLC
+# Copyright (c) [2017,2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -102,6 +102,18 @@ describe Y2Storage::UsedStorageFeatures do
     it "requires exactly the expected storage-related packages" do
       expect(subject.feature_packages)
         .to contain_exactly("device-mapper", "multipath-tools", "fcoe-utils")
+    end
+  end
+
+  context "Created from integer representing used features" do
+    subject { described_class.new(8) }
+
+    it "has exactly the expected storage features" do
+      expect(subject.collect_features).to eq [:UF_BTRFS]
+    end
+
+    it "requires exactly the expect storage-related packages" do
+      expect(subject.feature_packages).to contain_exactly("btrfsprogs", "e2fsprogs")
     end
   end
 end

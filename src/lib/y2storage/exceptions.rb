@@ -1,4 +1,4 @@
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016,2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -38,5 +38,8 @@ module Y2Storage
   end
   # Requested access mode is incompatible with current mode
   class AccessModeError < Error
+  end
+  # Operation was aborted
+  class Aborted < Error
   end
 end
