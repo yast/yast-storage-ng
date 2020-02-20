@@ -124,7 +124,7 @@ module Y2Storage
     # the user is asked whether to continue on errors reported by libstorage-ng.
     #
     # @param callbacks [Callbacks::Activate]
-    # @return [Boolean] whether activation was successfull, false if
+    # @return [Boolean] whether activation was successful, false if
     #   libstorage-ng found a problem and the corresponding callback returned
     #   false (i.e. it was decided to abort due to the error)
     def activate(callbacks = nil)
@@ -162,13 +162,20 @@ module Y2Storage
     #
     # @param probe_callbacks [Callbacks::Activate]
     # @param sanitize_callbacks [Callbacks::Sanitize]
-    # @return [Boolean] whether probing was successfull, false if libstorage-ng
+    # @return [Boolean] whether probing was successful, false if libstorage-ng
     #   found a problem and the corresponding callback returned false (i.e. it
     #   was decided to abort due to the error)
     def probe(probe_callbacks: nil, sanitize_callbacks: nil)
       probe_callbacks ||= Callbacks::Probe.new
 
-      @storage.probe(probe_callbacks)
+      begin
+        @storage.probe(probe_callbacks)
+      rescue Storage::Aborted
+        retry if probe_callbacks.again?
+
+        raise
+      end
+
       probed_performed
       sanitize_probed(sanitize_callbacks)
       DumpManager.dump(@probed_graph)

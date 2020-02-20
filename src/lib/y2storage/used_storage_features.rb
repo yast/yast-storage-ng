@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2017,2019] SUSE LLC
+# Copyright (c) [2016-2017,2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -112,8 +112,29 @@ module Y2Storage
     #----------------------------------------------------------------------
     #
 
-    def initialize(devicegraph)
-      @devicegraph = devicegraph
+    # Initialize object.
+    #
+    # @param arg [Integer, ::Storage::Devicegraph] Either an integer with the feature
+    #   bits or a devicegraph from which to get the feature bits.
+    #
+    def initialize(arg)
+      @devicegraph = nil
+      @used_features = nil
+      if arg.is_a?(Integer)
+        @used_features = arg
+      else
+        @devicegraph = arg
+      end
+    end
+
+    # Calculate the feature bits.
+    #
+    # @return [Integer] Feature bits.
+    #
+    def calculate_feature_bits
+      return 0 if @used_features.nil? && @devicegraph.nil?
+
+      @devicegraph.nil? ? @used_features : @devicegraph.used_features
     end
 
     # Collect storage features and return a feature list
@@ -122,9 +143,9 @@ module Y2Storage
     # @return [Array<Symbol>] feature list
     #
     def collect_features
-      return [] if @devicegraph.nil?
+      feature_bits = calculate_feature_bits
+      return [] if feature_bits == 0
 
-      feature_bits = @devicegraph.used_features
       features_dumped = false
       features = []
 

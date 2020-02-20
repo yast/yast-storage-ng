@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 20 14:37:41 CET 2020 - aschnell@suse.com
+
+- allow to install packages needed for probing
+- 4.2.89
+
+-------------------------------------------------------------------
 Wed Feb 19 10:49:56 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: fixed the infinite loop when trying to create a new
