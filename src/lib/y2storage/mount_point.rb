@@ -325,6 +325,15 @@ module Y2Storage
       assign_mount_by(Filesystems::MountByType.best_for(filesystem, suitable))
     end
 
+    # Most suitable mount by option
+    #
+    # Note that this method does not take into account the currently assigned mount by value
+    #
+    # @return [Filesystems::MountByType]
+    def preferred_mount_by
+      Filesystems::MountByType.best_for(filesystem, suitable_mount_bys)
+    end
+
     # Whether {#mount_by} was explicitly set by the user
     #
     # @note This relies on the userdata mechanism, see {#userdata_value}.

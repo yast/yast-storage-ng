@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -78,6 +78,15 @@ module Y2Storage
       return nil if mount_point.nil?
 
       mount_point.mount_by
+    end
+
+    # Most suitable mount by option
+    #
+    # @see MountPoint#preferred_mount_by
+    #
+    # @return [Filesystems::MountByType]
+    def preferred_mount_by
+      with_mount_point(&:preferred_mount_by)
     end
 
     # Mount options
@@ -164,6 +173,28 @@ module Y2Storage
     # @return [Array<String>]
     def extra_default_mount_options
       []
+    end
+
+    private
+
+    # Ensures a mount point before executing the given block
+    #
+    # A temporary mount point is created and removed when there is no mount point.
+    #
+    # @return [Object] block result
+    def with_mount_point(&block)
+      tmp_mount_point = false
+
+      if !mount_point
+        storage_create_mount_point("__fake_path__")
+        tmp_mount_point = true
+      end
+
+      result = block.call(mount_point)
+
+      storage_remove_mount_point if tmp_mount_point
+
+      result
     end
   end
 end

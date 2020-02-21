@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,7 @@ require "y2storage/hwinfo_reader"
 require "y2storage/comparable_by_name"
 require "y2storage/match_volume_spec"
 require "y2storage/encryption_method"
+require "y2storage/filesystems/mount_by_type"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -465,6 +466,24 @@ module Y2Storage
     # @return [Array<String>]
     def component_of_names
       component_of.map(&:display_name).compact
+    end
+
+    # Device path to use depending on the mount by option
+    #
+    # @return [String, nil] nil if the path cannot be determined for the given mount by option
+    def path_for_mount_by(mount_by)
+      case mount_by
+      when Filesystems::MountByType::DEVICE
+        name
+      when Filesystems::MountByType::UUID
+        udev_full_uuid
+      when Filesystems::MountByType::LABEL
+        udev_full_label
+      when Filesystems::MountByType::ID
+        udev_full_ids.first
+      when Filesystems::MountByType::PATH
+        udev_full_paths.first
+      end
     end
 
     # Label of the filesystem, if any
