@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -82,6 +82,36 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
         end
       end
     end
+
+    context "when the device is encrypted with pervasive encryption" do
+      let(:scenario) { "several-dasds" }
+
+      let(:dev_name) { "/dev/dasdb1" }
+
+      before do
+        device.encrypt(method: Y2Storage::EncryptionMethod::PERVASIVE_LUKS2, apqns: apqns)
+      end
+
+      context "and the secure key was created for some specific APQNs" do
+        let(:apqn1) { Y2Storage::EncryptionProcesses::Apqn.new("01.0001", "", "", "online") }
+
+        let(:apqn2) { Y2Storage::EncryptionProcesses::Apqn.new("01.0002", "", "", "online") }
+
+        let(:apqns) { [apqn1, apqn2] }
+
+        it "assigns the APQNs" do
+          expect(subject.apqns.map(&:name)).to contain_exactly(*apqns.map(&:name))
+        end
+      end
+
+      context "and the secure key was not created for some specific APQNs" do
+        let(:apqns) { [] }
+
+        it "does not assign APNQs" do
+          expect(subject.apqns).to be_empty
+        end
+      end
+    end
   end
 
   describe "#show_dialog?" do
@@ -117,7 +147,10 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
         context "and the device is currently encrypted" do
           let(:encrypted) { true }
           let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
-          let(:encryption) { double("Encryption", method: method, password: "123456", active?: true) }
+          let(:encryption) do
+            double("Encryption",
+              method: method, password: "123456", active?: true, encryption_process: nil)
+          end
 
           before do
             allow(encryption).to receive(:exists_in_devicegraph?).and_return in_system
@@ -578,6 +611,109 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
             expect(fs_controller.blk_device.lvm_pv).to be_nil
           end
         end
+      end
+    end
+  end
+
+  describe "#secure_key" do
+    before do
+      allow(Y2Storage::EncryptionProcesses::SecureKey).to receive(:for_device).with(device)
+        .and_return(secure_key)
+    end
+
+    context "when there is a secure key associated to the device" do
+      let(:secure_key) { instance_double(Y2Storage::EncryptionProcesses::SecureKey) }
+
+      it "returns the secure key" do
+        expect(subject.secure_key).to eq(secure_key)
+      end
+    end
+
+    context "when there is no secure key associated to the device" do
+      let(:secure_key) { nil }
+
+      it "returns nil" do
+        expect(subject.secure_key).to be_nil
+      end
+    end
+  end
+
+  shared_context "apqns" do
+    before do
+      allow(Y2Storage::EncryptionProcesses::Apqn).to receive(:all).and_return([apqn1, apqn2, apqn3])
+    end
+
+    let(:apqn1) { Y2Storage::EncryptionProcesses::Apqn.new("01.0001", "", "", "online") }
+
+    let(:apqn2) { Y2Storage::EncryptionProcesses::Apqn.new("01.0002", "", "", "online") }
+
+    let(:apqn3) { Y2Storage::EncryptionProcesses::Apqn.new("01.0003", "", "", "offline") }
+  end
+
+  describe "#online_apqns" do
+    include_context "apqns"
+
+    it "returns all online APQNs" do
+      expect(subject.online_apqns).to contain_exactly(apqn1, apqn2)
+    end
+  end
+
+  describe "#find_apqn" do
+    include_context "apqns"
+
+    context "when the given name corresponds to an online APQN" do
+      let(:name) { "01.0002" }
+
+      it "returns the APQN" do
+        expect(subject.find_apqn(name)).to eq(apqn2)
+      end
+    end
+
+    context "when the given name corresponds to an offline APQN" do
+      let(:name) { "01.0003" }
+
+      it "returns nil" do
+        expect(subject.find_apqn(name)).to be_nil
+      end
+    end
+
+    context "when there is no APQN with the given name" do
+      let(:name) { "01.0004" }
+
+      it "returns nil" do
+        expect(subject.find_apqn(name)).to be_nil
+      end
+    end
+  end
+
+  describe "#test_secure_key_generation" do
+    context "when the secure key can be correctly generated" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate!).and_return(key)
+      end
+
+      let(:key) { instance_double(Y2Storage::EncryptionProcesses::SecureKey, remove: nil) }
+
+      it "returns nil" do
+        expect(subject.test_secure_key_generation).to be_nil
+      end
+
+      it "removes the temporary key" do
+        expect(key).to receive(:remove)
+
+        subject.test_secure_key_generation
+      end
+    end
+
+    context "when the key cannot be generated" do
+      before do
+        allow(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate!).and_raise(error)
+      end
+
+      let(:error) { Cheetah::ExecutionFailed.new("", "", "", "", "error") }
+
+      it "returns the error message" do
+        expect(subject.test_secure_key_generation).to eq("error")
       end
     end
   end

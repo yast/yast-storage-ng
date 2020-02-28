@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,8 @@
 require "y2storage"
 require "y2partitioner/actions/controllers/base"
 require "y2storage/encryption_type"
+require "y2storage/encryption_processes/secure_key"
+require "y2storage/encryption_processes/apqn"
 
 module Y2Partitioner
   module Actions
@@ -48,6 +50,11 @@ module Y2Partitioner
         # @return [String] Password for the encryption device
         attr_accessor :password
 
+        # Selected APQNs to generate a new secure key for pervasive encryption
+        #
+        # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
+        attr_accessor :apqns
+
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
@@ -59,6 +66,7 @@ module Y2Partitioner
           @action = actions.first
           @password = encryption&.password || ""
           @method = initial_method
+          @apqns = initial_apqns
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -123,6 +131,52 @@ module Y2Partitioner
           blk_device.encryption
         end
 
+        # Existing secure key for the encrypted device
+        #
+        # @return [Y2Storage::EncryptionProcesses::SecureKey, nil] nil if no secure key is associated to
+        #   the device.
+        def secure_key
+          Y2Storage::EncryptionProcesses::SecureKey.for_device(blk_device)
+        end
+
+        # Currently available APQNs for generating a new secure key
+        #
+        # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+        def online_apqns
+          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online
+        end
+
+        # Finds an online APQN by its name
+        #
+        # @param name [String] APQN name (e.g., "01.0001")
+        # @return [Y2Storage::EncryptionProcesses::Apqn, nil]
+        def find_apqn(name)
+          online_apqns.find { |a| a.name == name }
+        end
+
+        # Tests the generation of a secure key
+        #
+        # Note that the command for generating a secure key might fail when the APQNs are not correctly
+        # configured. An APQN without a master key makes the command to tail. Theoretically, all the
+        # APQNs used for generating the secure key must have the same master key, but for some reason
+        # the command is not failing when different master keys are used.
+        #
+        # @param apqns [Array<Y2Storage::EncryptionProcesses::Apqn>]
+        # @return [String, nil] error message or nil if the secure key can be generated
+        def test_secure_key_generation(apqns: [])
+          key_name = "yast2_tmp_secure_key_test"
+
+          begin
+            key = Y2Storage::EncryptionProcesses::SecureKey.generate!(key_name, apqns: apqns)
+          rescue Cheetah::ExecutionFailed => e
+            return e.message
+          end
+
+          key.remove
+
+          nil
+        end
+
         # Title to display in the dialog during the process
         #
         # @return [String]
@@ -156,6 +210,17 @@ module Y2Partitioner
           else
             Y2Storage::EncryptionMethod::LUKS1
           end
+        end
+
+        # Currently used APQNs when the device is encrypted with pervasive encryption
+        #
+        # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+        def initial_apqns
+          process = encryption&.encryption_process
+
+          return [] unless process&.respond_to?(:apqns)
+
+          process.apqns
         end
 
         # Calculate actions that make sense for the block device
@@ -274,7 +339,7 @@ module Y2Partitioner
         # @see #finish
         def finish_encrypt
           blk_device.remove_encryption if blk_device.encrypted?
-          blk_device.encrypt(method: method, password: password)
+          blk_device.encrypt(method: method, password: password, apqns: apqns)
         end
 
         # Whether the block device is associated to an encryption device that
