@@ -1,4 +1,6 @@
-# Copyright (c) [2019] SUSE LLC
+#!/usr/bin/env rspec
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -16,6 +18,7 @@
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
+
 require_relative "../spec_helper"
 require "y2storage"
 
@@ -24,69 +27,161 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
     File.read(File.join(DATA_PATH, "zkey", "#{file}.txt"))
   end
 
-  subject(:key) { described_class.new("cr", sector_size: 2048) }
+  before do
+    fake_scenario("several-dasds")
+
+    allow(Yast::Execute).to receive(:locally).with(/zkey/, "list", anything).and_return(zkey_list)
+  end
+
+  let(:zkey_list) { zkey_output("list-no-dasdc1") }
+
+  let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
   describe ".for_device" do
-    before do
-      fake_scenario("several-dasds")
-
-      allow(Yast::Execute).to receive(:locally).with(/zkey/, "list", any_args)
-        .and_return(zkey_list)
-    end
-
-    let(:manager) { Y2Storage::StorageManager.instance }
-    let(:zkey_list) { zkey_output("list-no-dasdc1") }
-    let(:blk_device) { manager.staging.find_by_name("/dev/dasdb1") }
+    let(:device) { devicegraph.find_by_name("/dev/dasdb1") }
 
     it "returns the secure key for the given device" do
-      key = described_class.for_device(blk_device)
-      expect(key).to be_for_device(blk_device)
+      key = described_class.for_device(device)
+
+      expect(key).to be_for_device(device)
       expect(key.sector_size).to eq(4096)
     end
   end
 
   describe ".new_from_zkey" do
-    let(:zkey_list) { zkey_output("list-no-dasdc1") }
-
     it "returns a secure key using the values from the string" do
       key = described_class.new_from_zkey(zkey_list)
+
       expect(key.sector_size).to eq(4096)
     end
 
     context "when the sector size is not defined" do
       let(:zkey_list) { zkey_output("list-no-sector-size") }
+
       it "sets the sector size to nil" do
         key = described_class.new_from_zkey(zkey_list)
+
         expect(key.sector_size).to be_nil
       end
     end
   end
 
-  describe "#generate" do
-    it "runs zkey to create the LUKS2 key with the given name and sector size" do
-      expect(Yast::Execute).to receive(:locally).with(
-        "/usr/bin/zkey", "generate", "--name", key.name, "--xts", "--keybits", "256",
-        "--volume-type", "LUKS2", "--sector-size", key.sector_size.to_s
+  shared_examples "zkey_generate" do |testing_method, execute_method|
+    it "runs zkey to create the LUKS2" do
+      expect(Yast::Execute).to receive(execute_method).with(
+        "/usr/bin/zkey", "generate", "-V", "--name", "YaST_cr", "--xts", "--keybits", "256",
+        "--volume-type", "LUKS2"
       )
-      key.generate
+
+      described_class.send(testing_method, "YaST_cr")
     end
 
-    context "when sector size is not set" do
-      subject(:key) { described_class.new("cr") }
+    context "when the given secure key name already exists" do
+      let(:name) { "YaST_cr_dasdc1" }
 
-      it "does not specify any sector size value" do
-        expect(Yast::Execute).to receive(:locally) do |*args|
-          expect(args).to_not include("--sector-size")
-        end
+      it "ensures uniq name by adding a suffix number" do
+        expect(Yast::Execute).to receive(execute_method).with(
+          "/usr/bin/zkey", "generate", "-V", "--name", "YaST_cr_dasdc1_1", "--xts", "--keybits", "256",
+          "--volume-type", "LUKS2"
+        )
 
-        key.generate
+        described_class.send(testing_method, name)
+      end
+    end
+
+    context "when a sector size is given" do
+      let(:params) { { sector_size: 2048 } }
+
+      it "runs zkey with the given sector size" do
+        expect(Yast::Execute).to receive(execute_method).with(
+          "/usr/bin/zkey", "generate", "-V", "--name", "YaST_cr", "--xts", "--keybits", "256",
+          "--volume-type", "LUKS2", "--sector-size", "2048"
+        )
+
+        described_class.send(testing_method, "YaST_cr", params)
+      end
+    end
+
+    context "when volumes are given" do
+      let(:params) { { volumes: volumes } }
+
+      before do
+        device = devicegraph.find_by_name("/dev/dasdc1")
+        device.create_encryption("cr_test")
+      end
+
+      let(:encryption) { devicegraph.find_by_name("/dev/mapper/cr_test") }
+
+      let(:volumes) { [encryption] }
+
+      it "runs zkey with the given volumnes" do
+        expect(Yast::Execute).to receive(execute_method).with(
+          "/usr/bin/zkey", "generate", "-V", "--name", "YaST_cr", "--xts", "--keybits", "256",
+          "--volume-type", "LUKS2", "--volumes", "/dev/dasdc1:cr_test"
+        )
+
+        described_class.send(testing_method, "YaST_cr", params)
+      end
+    end
+
+    context "when APQNs are given" do
+      let(:params) { { apqns: [apqn1, apqn2] } }
+
+      let(:apqn1) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
+      let(:apqn2) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0002") }
+
+      it "runs zkey with the given APQNs" do
+        expect(Yast::Execute).to receive(execute_method).with(
+          "/usr/bin/zkey", "generate", "-V", "--name", "YaST_cr", "--xts", "--keybits", "256",
+          "--volume-type", "LUKS2", "--apqns", "01.0001,01.0002"
+        )
+
+        described_class.send(testing_method, "YaST_cr", params)
       end
     end
   end
 
+  describe ".generate" do
+    it "returns a secure key" do
+      allow(Yast::Execute).to receive(:locally)
+
+      expect(described_class.generate("YaST_cr")).to be_a(Y2Storage::EncryptionProcesses::SecureKey)
+    end
+
+    include_examples "zkey_generate", :generate, :locally
+  end
+
+  describe ".generate!" do
+    context "when the key can be generated" do
+      before do
+        allow(Yast::Execute).to receive(:locally!).with(/zkey/, "generate", any_args)
+      end
+
+      it "returns a secure key" do
+        expect(described_class.generate!("YaST_cr")).to be_a(Y2Storage::EncryptionProcesses::SecureKey)
+      end
+    end
+
+    context "when the key cannot be generated" do
+      before do
+        allow(Yast::Execute).to receive(:locally!).with(/zkey/, "generate", any_args).and_raise(an_error)
+      end
+
+      let(:an_error) { RuntimeError }
+
+      it "raises an error" do
+        expect { described_class.generate!("YaST_cr") }.to raise_error(an_error)
+      end
+    end
+
+    include_examples "zkey_generate", :generate!, :locally!
+  end
+
   describe "#filename" do
+    subject { described_class.new("cr", sector_size: 2048) }
+
     it "returns the correct filename" do
-      expect(key.filename).to eq("/etc/zkey/repository/cr.skey")
+      expect(subject.filename).to eq("/etc/zkey/repository/cr.skey")
     end
   end
 
@@ -99,11 +194,23 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
       instance_double(Y2Storage::Encryption, blk_device: blk_device, dm_table_name: "cr_1")
     end
 
+    subject { described_class.new("cr", sector_size: 2048) }
+
     it "calls zkey to add the volume" do
       expect(Yast::Execute).to receive(:locally).with(/zkey/, "change", "--name", "cr",
         "--volumes", "+/dev/dasdc1:cr_1", any_args)
 
-      key.add_device_and_write(device)
+      subject.add_device_and_write(device)
+    end
+  end
+
+  describe "#remove" do
+    subject { described_class.new("cr_YaST") }
+
+    it "runs zkey remove" do
+      expect(Yast::Execute).to receive(:locally!).with(/zkey/, "remove", "--force", "--name", "cr_YaST")
+
+      subject.remove
     end
   end
 end

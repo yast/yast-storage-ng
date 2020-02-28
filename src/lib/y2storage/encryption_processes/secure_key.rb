@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 
 require "fileutils"
 require "yast2/execute"
+require "y2storage/encryption_processes/apqn"
 require "y2storage/encryption_processes/secure_key_volume"
 require "yast"
 
@@ -34,9 +35,7 @@ module Y2Storage
 
       # Location of the zkey command
       ZKEY = "/usr/bin/zkey".freeze
-      # Location of the lszcrypt command
-      LSZCRYPT = "/sbin/lszcrypt".freeze
-      private_constant :ZKEY, :LSZCRYPT
+      private_constant :ZKEY
 
       # Default location of the zkey repository
       DEFAULT_REPO_DIR = File.join("/", "etc", "zkey", "repository")
@@ -55,10 +54,12 @@ module Y2Storage
       #
       # @param name [String] see {#name}
       # @param sector_size [Integer, nil] see {#sector_size}
-      def initialize(name, sector_size: nil)
+      # @param apqns [Array<Apqn>] APQNs to use for generating the secure key
+      def initialize(name, sector_size: nil, apqns: [])
         @name = name
         @volume_entries = []
         @sector_size = sector_size
+        @apqns = apqns
       end
 
       # Whether the key contains an entry in its list of volumes referencing the
@@ -122,18 +123,25 @@ module Y2Storage
       #
       # The generated key will have the name and the list of volumes from this
       # object. The rest of attributes will be set at the convenient values for
-      # pervasive LUKS2 encryption.
+      # pervasive LUKS2 encryption, see {#generate_args}.
       def generate
-        args = [
-          "--name", name,
-          "--xts",
-          "--keybits", "256",
-          "--volume-type", "LUKS2"
-        ]
-        args += ["--sector-size", sector_size.to_s] if sector_size
-        args += ["--volumes", volume_entries.map(&:to_s).join(",")] if volume_entries.any?
+        Yast::Execute.locally(ZKEY, "generate", *generate_args)
+      end
 
-        Yast::Execute.locally(ZKEY, "generate", *args)
+      # Registers the key in the keys database by invoking "zkey generate"
+      #
+      # @see #generate
+      #
+      # @raise [Cheetah::ExecutionFailed] when the generation fails
+      def generate!
+        Yast::Execute.locally!(ZKEY, "generate", *generate_args)
+      end
+
+      # Removes a key from the keys database by invoking "zkey remove"
+      def remove
+        Yast::Execute.locally!(ZKEY, "remove", "--force", "--name", name)
+      rescue Cheetah::ExecutionFailed => e
+        log.error("Error removing the key - #{e.message}")
       end
 
       # Parses the representation of a secure key, in the format used by
@@ -189,6 +197,9 @@ module Y2Storage
       #   this key
       attr_accessor :volume_entries
 
+      # @return [Array<Apqn>]
+      attr_reader :apqns
+
       # Volume entry associated to the given device
       #
       # @param device [BlkDevice, Encryption] it can be the plain device being
@@ -216,15 +227,33 @@ module Y2Storage
         ENV["ZKEY_REPOSITORY"] || DEFAULT_REPO_DIR
       end
 
+      # Arguments to be used with the "zkey generate" command
+      #
+      # @return [Array<String>]
+      def generate_args
+        args = [
+          "-V",
+          "--name", name,
+          "--xts",
+          "--keybits", "256",
+          "--volume-type", "LUKS2"
+        ]
+
+        args += ["--sector-size", sector_size.to_s] if sector_size
+
+        args += ["--volumes", volume_entries.map(&:to_s).join(",")] if volume_entries.any?
+
+        args += ["--apqns", apqns.map(&:name).join(",")] if apqns.any?
+
+        args
+      end
+
       class << self
         # Whether it's possible to use secure AES keys in this system
         #
         # @return [Boolean]
         def available?
-          device_list = Yast::Execute.locally!(LSZCRYPT, "--verbose", stdout: :capture)
-          device_list&.match?(/\sonline\s/) || false
-        rescue StandardError
-          false
+          Apqn.online.any?
         end
 
         # Registers a new secure key in the system's key database
@@ -232,17 +261,32 @@ module Y2Storage
         # The name of the resulting key may be different (a numbered suffix is
         # added) if the given name is already taken.
         #
-        # @param name [String] temptative name for the new key
-        # @param volumes [Array<Encryption>] encryption devices to register in
-        #   the "volumes" section of the new key
+        # @param name [String] tentative name for the new key
         # @param sector_size [Integer,nil] sector size to set in the register.
         #   Use the nil to use the system's default.
+        # @param volumes [Array<Encryption>] encryption devices to register in
+        #   the "volumes" section of the new key
+        # @param apqns [Array<Apqn>] APQNs to use
+        #
         # @return [SecureKey] an object representing the new key
-        def generate(name, sector_size: nil, volumes: [])
-          name = exclusive_name(name)
-          key = new(name, sector_size: sector_size)
-          volumes.each { |vol| key.add_device(vol) }
+        def generate(name, sector_size: nil, volumes: [], apqns: [])
+          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+
           key.generate
+
+          key
+        end
+
+        # Registers a new secure key in the system's key database
+        #
+        # @see #generate
+        #
+        # @raise [Cheetah::ExecutionFailed] when the generation fails
+        def generate!(name, sector_size: nil, volumes: [], apqns: [])
+          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+
+          key.generate!
+
           key
         end
 
@@ -284,6 +328,18 @@ module Y2Storage
 
           entries = output&.split("\n\n") || []
           entries.map { |entry| new_from_zkey(entry) }
+        end
+
+        # Creates a new secure key ready to be generated in the system (i.e., with an exclusive name and
+        # with the associated volumes).
+        #
+        # @return [SecureKey]
+        def new_for_generate(name, sector_size: nil, volumes: [], apqns: [])
+          name = exclusive_name(name)
+          key = new(name, sector_size: sector_size, apqns: apqns)
+          volumes.each { |v| key.add_device(v) }
+
+          key
         end
 
         # Returns the name that is available for a new key taking original_name

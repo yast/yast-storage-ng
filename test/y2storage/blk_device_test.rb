@@ -1307,6 +1307,19 @@ describe Y2Storage::BlkDevice do
       let(:enc) { device.encrypt(dm_name: "cr_manual", method: method) }
 
       include_examples "given method"
+
+      context "and the method is pervasive encryption" do
+        let(:method) { Y2Storage::EncryptionMethod::PERVASIVE_LUKS2 }
+
+        let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
+
+        it "creates the encryption with the given APQNs" do
+          enc = device.encrypt(dm_name: "cr_manual", method: method, apqns: [apqn])
+
+          expect(enc).to be_a Y2Storage::Encryption
+          expect(enc.encryption_process.apqns).to contain_exactly(apqn)
+        end
+      end
     end
 
     context "when a name is provided with no password" do
