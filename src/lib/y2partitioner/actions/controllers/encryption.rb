@@ -157,9 +157,8 @@ module Y2Partitioner
         # Tests the generation of a secure key
         #
         # Note that the command for generating a secure key might fail when the APQNs are not correctly
-        # configured. An APQN without a master key makes the command to tail. Theoretically, all the
-        # APQNs used for generating the secure key must have the same master key, but for some reason
-        # the command is not failing when different master keys are used.
+        # configured. An APQN without a master key makes the command to tail. All the APQNs used for
+        # generating the secure key must have the same master key.
         #
         # @param apqns [Array<Y2Storage::EncryptionProcesses::Apqn>]
         # @return [String, nil] error message or nil if the secure key can be generated

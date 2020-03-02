@@ -35,7 +35,7 @@ module Y2Storage
         #
         # @return [Array<Apqn>]
         def all
-          create_apqns
+          read_apqns
         end
 
         # All online APQNs found in the system
@@ -47,11 +47,15 @@ module Y2Storage
 
         private
 
-        # Creates APQNs from the data read in the system
+        # Reads APQNs data from the system and creates APQNs objects
         #
         # @return [Array<Apqn>]
-        def create_apqns
-          apqns_data.map { |d| new(*d) }
+        def read_apqns
+          apqns_data.map do |data|
+            name, type, mode, status, = data
+
+            new(name, type, mode, status)
+          end
         end
 
         # Data of the APQNs found in the system
@@ -68,7 +72,7 @@ module Y2Storage
           data.shift(2)
 
           # select card.domain entries
-          data.select { |d| d.first.match?(/.*\..*/) }
+          data.select { |d| d.first.match?(/.+\..+/) }
         end
 
         # Executes lszcrypt command

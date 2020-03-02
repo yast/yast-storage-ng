@@ -73,7 +73,7 @@ module Y2Partitioner
 
       private
 
-      # @return [Actions::Controllers::ClonePartitionTable]
+      # @return [Actions::Controllers::Encryption]
       attr_reader :controller
 
       # @return [Boolean]
