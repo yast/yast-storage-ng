@@ -165,7 +165,7 @@ describe "pervasive encryption" do
 
       it "tries to generate a new secure key with the appropriate name and arguments" do
         expect(Yast::Execute).to receive(:locally).with(
-          /zkey/, "generate", "--name", "YaST_cr_dasdc1_1", "--xts", "--keybits", "256",
+          /zkey/, "generate", "-V", "--name", "YaST_cr_dasdc1_1", "--xts", "--keybits", "256",
           "--volume-type", "LUKS2", "--sector-size", "4096"
         )
 

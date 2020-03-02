@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -55,11 +55,10 @@ describe Y2Storage::EncryptionMethod do
     end
 
     before do
-      allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, "--verbose", stdout: :capture)
-        .and_return lszcrypt
+      allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything).and_return(lszcrypt)
     end
 
-    let(:lszcrypt) { nil }
+    let(:lszcrypt) { "" }
 
     context "if there are online Crypto Express CCA coprocessors" do
       let(:lszcrypt) { lszcrypt_output("ok") }
@@ -80,7 +79,7 @@ describe Y2Storage::EncryptionMethod do
     end
 
     context "if secure AES keys are not supported" do
-      let(:lszcrypt) { nil }
+      let(:lszcrypt) { "" }
 
       it "returns methods for LUKS1 and random swap" do
         expect(described_class.available.map(&:to_sym))
@@ -89,11 +88,9 @@ describe Y2Storage::EncryptionMethod do
     end
 
     context "if the lszcrypt tool is not available" do
-      let(:lszcrypt) { nil }
-
       before do
-        allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, "--verbose", stdout: :capture)
-          .and_raise Cheetah::ExecutionFailed
+        allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything)
+          .and_raise Cheetah::ExecutionFailed.new("", "", "", "")
       end
 
       it "returns methods for LUKS1 and random swap" do

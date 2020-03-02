@@ -44,6 +44,8 @@ module Y2Storage
       #
       # @param blk_device [Y2Storage::BlkDevice]
       # @param dm_name [String]
+      #
+      # @return [Encryption]
       def create_device(blk_device, dm_name)
         enc = blk_device.create_encryption(dm_name || "", encryption_type)
         enc.open_options = open_command_options(blk_device)

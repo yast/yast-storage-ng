@@ -305,10 +305,19 @@ module Y2Storage
     # @param method [EncryptionMethod, Symbol] encryption method to create the new device
     # @param dm_name [String, nil] DeviceMapper table name of the new device
     # @param password [String, nil] password of the new device
+    # @param apqns [Array<EncryptionProcesses::Apqn>] APQNs to use when generating a secure key for
+    #   pervasive encryption.
+    #
     # @return [Encryption]
-    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil)
+    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, apqns: [])
       method = EncryptionMethod.find(method) if method.is_a?(Symbol)
-      enc = method.create_device(self, dm_name)
+
+      enc = if method.is_a?(EncryptionMethod::PervasiveLuks2)
+        method.create_device(self, dm_name, apqns: apqns)
+      else
+        method.create_device(self, dm_name)
+      end
+
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
       enc.ensure_suitable_mount_by

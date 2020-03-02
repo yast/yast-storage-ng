@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,6 +33,7 @@ module Y2Storage
 
       def initialize
         textdomain "storage"
+
         super(:pervasive_luks2, _("Pervasive Volume Encryption"))
       end
 
@@ -44,6 +45,17 @@ module Y2Storage
       # @see Base#available?
       def available?
         EncryptionProcesses::SecureKey.available?
+      end
+
+      # Creates an encryption device for the given block device
+      #
+      # @param blk_device [Y2Storage::BlkDevice]
+      # @param dm_name [String]
+      # @param apqns [Array<EncryptionProcesses::Apqn>] APQNs to use when generating a secure key.
+      #
+      # @return [Y2Storage::Encryption]
+      def create_device(blk_device, dm_name, apqns: [])
+        encryption_process.create_device(blk_device, dm_name, apqns: apqns)
       end
 
       private

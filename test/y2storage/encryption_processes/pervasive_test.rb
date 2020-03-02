@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -84,9 +85,11 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
   end
 
   describe "#pre_commit" do
-    let(:encryption) { subject.create_device(blk_device, dm_name) }
+    let(:encryption) { subject.create_device(blk_device, dm_name, apqns: [apqn]) }
 
     let(:secure_key) { nil }
+
+    let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
 
     let(:generated_key) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKey,
@@ -102,7 +105,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "generates a new secure key for the device" do
       expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-        .with("YaST_cr_sda", sector_size: 4096).and_return(generated_key)
+        .with("YaST_cr_sda", sector_size: 4096, apqns: [apqn]).and_return(generated_key)
       subject.pre_commit(encryption)
     end
 

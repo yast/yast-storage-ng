@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,9 +35,19 @@ module Y2Storage
       ZKEY = "/usr/bin/zkey".freeze
       private_constant :ZKEY
 
-      # @see Base#create_device
-      def create_device(blk_device, dm_name)
+      attr_reader :apqns
+
+      # Creates an encryption layer over the given block device
+      #
+      # @param blk_device [Y2Storage::BlkDevice]
+      # @param dm_name [String]
+      # @param apqns [Array<Apqn>] APQNs to use for generating the secure key
+      #
+      # @return [Encryption]
+      def create_device(blk_device, dm_name, apqns: [])
         @secure_key = SecureKey.for_device(blk_device)
+        @apqns = apqns
+
         if @secure_key
           # Should we discard the key if it's not a LUKS2 one?
           # Or maybe we should modify the secure key in that case?
@@ -140,7 +150,8 @@ module Y2Storage
         key_name = "YaST_#{device.dm_table_name}"
         key = SecureKey.generate(
           key_name,
-          sector_size: sector_size_for(device.blk_device)
+          sector_size: sector_size_for(device.blk_device),
+          apqns:       apqns
         )
         log.info "Generated secure key #{key.name}"
 

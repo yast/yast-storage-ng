@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -185,7 +185,8 @@ module Y2Partitioner
            "<p>If the cryptographic system already contains a secure key associated to this " \
            "volume, that key will be used. Otherwise, a new secure key will be generated and " \
            "registered in the system. You need to provide an encryption password that will be " \
-           "used to protect the access to that master key.</p>"),
+           "used to protect the access to that master key. Moreover, when there are several APQNs " \
+           "in the system, you can select which ones to use.</p>"),
           label: encrypt_method.to_human_string
         )
       end

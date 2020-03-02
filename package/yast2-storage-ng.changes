@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Feb 28 17:05:15 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: allow to select APQNs when encrypting with pervasive
+  encryption (jsc#SLE-7376).
+- 4.2.91
+-------------------------------------------------------------------
 Thu Feb 20 16:02:54 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - Add API methods to get preferred mount by option and the

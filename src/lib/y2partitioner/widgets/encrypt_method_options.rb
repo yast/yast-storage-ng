@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,7 +19,9 @@
 
 require "yast"
 require "cwm"
+require "yast2/popup"
 require "y2partitioner/widgets/encrypt_password"
+require "y2partitioner/widgets/apqn_selector"
 
 module Y2Partitioner
   module Widgets
@@ -76,8 +78,10 @@ module Y2Partitioner
         case encrypt_method.to_sym
         when :random_swap, :protected_swap, :secure_swap
           SwapOptions.new(controller)
-        when :luks1, :pervasive_luks2
+        when :luks1
           LuksOptions.new(controller, enable: enabled?)
+        when :pervasive_luks2
+          PervasiveOptions.new(controller, enable: enabled?)
         end
       end
     end
@@ -121,45 +125,132 @@ module Y2Partitioner
       # @param enable [Boolean] whether the widget should be enabled on init
       def initialize(controller, enable: true)
         textdomain "storage"
+
         @controller = controller
         @enable_on_init = enable
       end
 
       # @macro seeCustomWidget
       def contents
-        VBox(password_widget)
+        VBox(*widgets)
       end
 
       # @macro seeAbstractWidget
       #
-      # Note its internal widget needs to be enabled.
+      # Note its internal widgets need to be enabled.
       def enable
         super
 
-        password_widget.enable
+        widgets.map(&:enable)
       end
 
       # @macro seeAbstractWidget
       #
-      # Note its internal widget needs to be disabled.
+      # Note its internal widgets need to be disabled.
       def disable
         super
 
-        password_widget.disable
+        widgets.map(&:disable)
       end
 
       private
+
+      # @return [Actions::Controllers::Encryption]
+      attr_reader :controller
 
       # Whether the widget is enabled on init
       #
       # @return [Boolean]
       attr_reader :enable_on_init
 
+      # Widgets to show
+      #
+      # @return [Array<CWM::AbstractWidget>]
+      def widgets
+        [password_widget]
+      end
+
       # Widget to enter the password
       #
       # @return [Widgets::EncryptPassword]
       def password_widget
         @password_widget ||= Widgets::EncryptPassword.new(@controller, enable: enable_on_init)
+      end
+    end
+
+    # Internal widget to display the pervasive encryption options
+    class PervasiveOptions < LuksOptions
+      # @return [Boolean]
+      def validate
+        validate_secure_key_generation
+      end
+
+      private
+
+      # @see LuksOptions#widgets
+      def widgets
+        widgets = super
+        widgets << apqn_widget if select_apqns?
+
+        widgets
+      end
+
+      # Widget to allow the APQNs selection
+      #
+      # @return [Widgets::ApqnSelector]
+      def apqn_widget
+        @apqn_widget ||= Widgets::ApqnSelector.new(@controller, enable: enable_on_init)
+      end
+
+      # Whether it is possible to select APQNs
+      #
+      # APQNs can be selected when there are more than one APQN available and the device has not have an
+      # associated secure key yet.
+      #
+      # @return [Boolean]
+      def select_apqns?
+        !exist_secure_key? && several_apqns?
+      end
+
+      # Whether there is an secure key for the device
+      #
+      # @return [Boolean]
+      def exist_secure_key?
+        !controller.secure_key.nil?
+      end
+
+      # Whether there are several available APQNs
+      #
+      # @return [Boolean]
+      def several_apqns?
+        controller.online_apqns.size > 1
+      end
+
+      # Checks whether the secure key can be generated
+      #
+      # An error is reported to the user when the secure key cannot be generated.
+      #
+      # @return [Boolean]
+      def validate_secure_key_generation
+        apqns = select_apqns? ? apqn_widget.value : []
+
+        command_error_message = controller.test_secure_key_generation(apqns: apqns)
+
+        return true unless command_error_message
+
+        error = _("The secure key cannot be generated.\n")
+
+        error += if apqns.size > 1
+          _("Make sure that all selected APQNs are configured with the same master key.")
+        elsif apqns.size == 1
+          _("Make sure that the selected APQN is configured with a master key.")
+        else
+          _("Make sure that all available APQNs are configured with the same master key.")
+        end
+
+        Yast2::Popup.show(error, headline: :error, details: command_error_message)
+
+        false
       end
     end
   end

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -268,6 +268,19 @@ module Y2Storage
       encryption_process ? encryption_process.method : EncryptionMethod.for_device(self)
     end
 
+    # Returns the process used to perform the encryption
+    #
+    # @note The EncryptionProcess object is persisted using the userdata mechanism,
+    #   but it's also cached in an instance variable because, otherwise, every call
+    #   to #encryption_process would be accessing the object that was stored in the
+    #   devicegraph, with its former state. Thus, all the modifications would be lost.
+    #   See {#encryption_process=} and {#save_encryption_process}.
+    #
+    # @return [EncryptionProcess::Base, nil]
+    def encryption_process
+      @encryption_process ||= userdata_value(:encryption_process)
+    end
+
     # Saves the given encryption process
     #
     # @note Keeping the state of this object is important, so see {#encryption_process}
@@ -351,19 +364,6 @@ module Y2Storage
     # @see Device#update_etc_attributes
     def assign_etc_attribute(value)
       self.storage_in_etc_crypttab = value
-    end
-
-    # Returns the process used to perform the encryption
-    #
-    # @note The EncryptionProcess object is persisted using the userdata mechanism,
-    #   but it's also cached in an instance variable because, otherwise, every call
-    #   to #encryption_process would be accessing the object that was stored in the
-    #   devicegraph, with its former state. Thus, all the modifications would be lost.
-    #   See {#encryption_process=} and {#save_encryption_process}.
-    #
-    # @return [EncryptionProcess::Base, nil]
-    def encryption_process
-      @encryption_process ||= userdata_value(:encryption_process)
     end
 
     # Updates the userdata with an up-to-date version of the encryption process
