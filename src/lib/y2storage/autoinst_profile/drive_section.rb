@@ -353,8 +353,9 @@ module Y2Storage
       def init_from_md(md)
         @type = :CT_MD
         @device = md.name
+        @disklabel = disklabel_from_disk(md)
         collection =
-          if md.filesystem
+          if md.filesystem || md.component_of.any?
             [md]
           else
             md.partitions
