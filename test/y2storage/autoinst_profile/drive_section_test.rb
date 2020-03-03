@@ -399,6 +399,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       context "when the RAID is partitioned" do
         before { fake_scenario("root_partitioned_md_raid") }
 
+        it "initializes #disklabel to 'none'" do
+          expect(described_class.new_from_storage(device("md0")).disklabel).to eq("gpt")
+        end
+
         context "and snapshots are enabled for the root (/) partition" do
           it "initializes enable_snapshots setting to true" do
             expect(described_class.new_from_storage(device("md0")).enable_snapshots).to eq(true)
@@ -427,6 +431,41 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       context "when the RAID is not partitioned" do
+        before { fake_scenario("md_raid") }
+
+        it "initializes #disklabel to 'none'" do
+          expect(described_class.new_from_storage(device("md/md0")).disklabel).to eq("none")
+        end
+
+        it "includes a #partitions section containing the filesystem information" do
+          partitions = described_class.new_from_storage(device("md/md0")).partitions
+          expect(partitions).to contain_exactly(
+            an_object_having_attributes(filesystem: :xfs)
+          )
+        end
+
+        context "and it is not used" do
+          before do
+            device("md/md0").remove_descendants
+          end
+
+          it "does not include a #partitions section" do
+            partitions = described_class.new_from_storage(device("md/md0")).partitions
+            expect(partitions).to be_empty
+          end
+        end
+
+        context "and it is used as a component of an LVM" do
+          before { fake_scenario("md_raid_lvm.xml") }
+
+          it "includes a #partition section with LVM and encryption information" do
+            partitions = described_class.new_from_storage(device("md0")).partitions
+            expect(partitions).to contain_exactly(
+              an_object_having_attributes(lvm_group: "vg0", crypt_method: :luks1)
+            )
+          end
+        end
+
         context "and it is mounted at /" do
           before { fake_scenario("root_md_raid") }
 
