@@ -27,7 +27,7 @@ require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
 require "y2storage/setup_checker"
-require "y2storage/used_storage_features"
+require "y2storage/package_handler"
 require "y2storage/bcache"
 
 Yast.import "UI"
@@ -197,9 +197,8 @@ module Y2Partitioner
       def packages_installed?
         return true if Yast::Mode.installation
 
-        used_features = Y2Storage::UsedStorageFeatures.new(device_graph)
-        used_features.collect_features
-        Yast::PackageSystem.CheckAndInstallPackages(used_features.feature_packages)
+        pkgs = device_graph.used_features.pkg_list
+        Y2Storage::PackageHandler.new(pkgs).install
       end
 
       # @return [String]

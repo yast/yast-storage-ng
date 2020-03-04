@@ -25,6 +25,7 @@ require "yast"
 require "y2storage/used_storage_features"
 
 Yast.import "Package"
+Yast.import "PackageSystem"
 Yast.import "PackagesProposal"
 Yast.import "Mode"
 Yast.import "Report"
@@ -42,48 +43,19 @@ module Y2Storage
     include Yast::Logger
     include Yast::I18n
 
+    # @return [Array<String>] list of packages to be installed (or marked for
+    #   installation), it never includes duplicates or packages that are already
+    #   installed
     attr_reader :pkg_list
 
     PROPOSAL_ID = "storage_proposal"
 
-    def initialize
+    # Constructor
+    #
+    # @param packages [Array<String>] packages to be added to {#pkg_list}
+    def initialize(packages)
       textdomain("storage")
-      reset
-    end
-
-    # Clear the package list
-    #
-    def reset
       @pkg_list = []
-    end
-
-    # Add a number of packages to the list of packages to be installed
-    #
-    # @param  pkg_list [Array<String>] package names
-    # @return [Array<String>] new package list (may contain duplicates)
-    def add_packages(pkg_list)
-      @pkg_list.concat(pkg_list)
-      compact
-    end
-
-    # Add the packages for the storage features to the list of
-    # packages to be installed
-    #
-    # @param arg [Integer or ::Storage::Devicegraph] used features or devicegraph
-    #   to obtain the features from
-    # @return [Array<String>] new package list (may contain duplicates)
-    #
-    def add_feature_packages(arg)
-      used_features = UsedStorageFeatures.new(arg)
-      packages = used_features.feature_packages
-      packages.delete_if do |pkg|
-        if unavailable_optional_package?(pkg)
-          log.warn("WARNING: Skipping unavailable filesystem support package #{pkg}")
-          true
-        else
-          false
-        end
-      end
       add_packages(packages)
     end
 
@@ -95,7 +67,7 @@ module Y2Storage
       if installation?
         set_proposal_packages
       else
-        install
+        install(ask: false)
       end
     end
 
@@ -103,13 +75,21 @@ module Y2Storage
     # immediately, so it is not advisable to do this during the OS
     # installation. In the latter case, use 'set_proposal_packages' instead.
     #
+    # @param ask [Boolean] whether a dialog asking for confirmation should be
+    #   shown to the user
     # @return true on success, false on error
     #
-    def install
-      return if @pkg_list.empty?
+    def install(ask: true)
+      return true if @pkg_list.empty?
 
-      log.info("Installing #{pkg_list}")
-      success = Yast::Package.DoInstall(@pkg_list)
+      log.info("Installing #{pkg_list} (ask: #{ask}")
+      success =
+        if ask
+          Yast::PackageSystem.CheckAndInstallPackages(@pkg_list)
+        else
+          Yast::Package.DoInstall(@pkg_list)
+        end
+
       if !success
         log.error("ERROR: Some packages could not be installed")
         install_error_popup
@@ -121,18 +101,29 @@ module Y2Storage
     # installation; it does not install them yet.
     #
     def set_proposal_packages
-      return if @pkg_list.empty?
+      return true if @pkg_list.empty?
 
       log.info("Marking #{pkg_list} for installation")
-      if !Yast::PackagesProposal.SetResolvables(PROPOSAL_ID, :package, @pkg_list)
+      success = Yast::PackagesProposal.SetResolvables(PROPOSAL_ID, :package, @pkg_list)
+      if !success
         log.error("PackagesProposal::SetResolvables() for #{pkg_list} failed")
         set_resolvables_error_popup
       end
       solve
-      nil
+
+      success
     end
 
     private
+
+    # Add a number of packages to the list of packages to be installed
+    #
+    # @param  pkg_list [Array<String>] package names
+    # @return [Array<String>] new package list
+    def add_packages(pkg_list)
+      @pkg_list.concat(pkg_list)
+      compact
+    end
 
     # Remove duplicates from the package list and those packages that are
     # already installed.
@@ -143,18 +134,6 @@ module Y2Storage
       @pkg_list.uniq!
       @pkg_list.reject! { |pkg| Yast::Package.Installed(pkg) } unless installation?
       @pkg_list
-    end
-
-    # Check if a package is an optional package that is unavailable.
-    # See also bsc#1039830
-    #
-    # @param package [String] package name
-    # @return [Boolean] true if package is optional and unavailable,
-    #                   false if not optional or if available.
-    def unavailable_optional_package?(package)
-      return false unless UsedStorageFeatures.optional_package?(package)
-
-      !Yast::Package.Available(package)
     end
 
     # Start a package dependency resolver run

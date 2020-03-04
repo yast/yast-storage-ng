@@ -18,6 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/callbacks/libstorage_callback"
+require "y2storage/storage_features_list"
+require "y2storage/package_handler"
 
 Yast.import "Mode"
 Yast.import "Label"
@@ -55,18 +57,17 @@ module Y2Storage
         # Redirect to error callback if no packages can be installed.
         return error(message, what) if used_features == 0 || Yast::Mode.installation
 
-        package_handler = Y2Storage::PackageHandler.new
-        package_handler.add_feature_packages(used_features)
+        packages = StorageFeaturesList.new(used_features).pkg_list
 
         # Redirect to error callback if no packages can be installed.
-        return error(message, what) if package_handler.pkg_list.empty?
+        return error(message, what) if packages.empty?
 
         description = _("An external command required for probing is missing. When\n"\
                         "continuing despite the error, the presented system information\n"\
                         "will be incomplete. You may also install the required packages\n"\
                         "and restart probing.")
 
-        what += "\n\n" + missing_command_handle_packages_text(package_handler)
+        what += "\n\n" + missing_command_handle_packages_text(packages)
 
         question = _("Continue despite the error, install required packages or abort?")
         buttons = { continue: Yast::Label.ContinueButton, install: _("Install Packages"),
@@ -76,7 +77,7 @@ module Y2Storage
           details: wrap_text(what), buttons: buttons, focus: :install)
         log.info "User answer: #{result}"
 
-        missing_command_handle_user_decision(result, package_handler)
+        missing_command_handle_user_decision(result, packages)
       end
 
       # Initialization.
@@ -97,11 +98,10 @@ module Y2Storage
 
       # Generates the text for the packages that must be installed.
       #
+      # @param packages [Array<String>] names of the packages to be installed
       # @return [String] The text.
       #
-      def missing_command_handle_packages_text(package_handler)
-        packages = package_handler.pkg_list
-
+      def missing_command_handle_packages_text(packages)
         n_("The following package needs to be installed:",
           "The following packages need to be installed:", packages.size) + "\n" +
           packages.sort.join(", ")
@@ -111,11 +111,11 @@ module Y2Storage
       #
       # @return [Boolean] Whether probing should continue.
       #
-      def missing_command_handle_user_decision(result, package_handler)
+      def missing_command_handle_user_decision(result, packages)
         case result
 
         when :install
-          package_handler.commit
+          PackageHandler.new(packages).commit
           @again = true
           false
 

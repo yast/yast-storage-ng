@@ -66,8 +66,7 @@ module Y2Storage
       # Checks whether multipath will be used in the target system
       # @return [Boolean]
       def multipath?
-        features = UsedStorageFeatures.new(staging).collect_features
-        features.include?(:UF_MULTIPATH)
+        staging.used_features.map(&:id).include?(:UF_MULTIPATH)
       end
 
       # Executes the finish installation actions for all devices

@@ -100,9 +100,7 @@ module Y2Partitioner
 
       # Updates the value of {#packages}
       def calculate_packages
-        handler = Y2Storage::PackageHandler.new
-        handler.add_feature_packages(current_graph)
-        @packages = handler.pkg_list.uniq
+        @packages = current_graph.used_features.pkg_list
       end
 
       # @return [Y2Storage::Devicegraph]

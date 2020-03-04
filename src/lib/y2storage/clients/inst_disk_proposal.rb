@@ -154,8 +154,8 @@ module Y2Storage
       # Add storage-related software packages (filesystem tools etc.) to the
       # set of packages to be installed.
       def add_storage_packages
-        pkg_handler = Y2Storage::PackageHandler.new
-        pkg_handler.add_feature_packages(storage_manager.staging)
+        features = storage_manager.staging.used_features
+        pkg_handler = Y2Storage::PackageHandler.new(features.pkg_list)
         pkg_handler.set_proposal_packages
       end
 

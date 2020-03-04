@@ -36,6 +36,7 @@ require "y2storage/md_member"
 require "y2storage/partition"
 require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
+require "y2storage/storage_features_list"
 
 module Y2Storage
   # The master container of libstorage.
@@ -78,9 +79,10 @@ module Y2Storage
     #     (like, for example, a duplicated id)
     storage_forward :check
 
-    # @!method used_features
+    # @!method storage_used_features
     #   @return [Integer] bit-field with the used features of the devicegraph
-    storage_forward :used_features
+    storage_forward :storage_used_features, to: :used_features
+    private :storage_used_features
 
     # @!method copy(dest)
     #   Copies content to another devicegraph
@@ -528,6 +530,13 @@ module Y2Storage
     # Executes the finish_installation method in all the devices
     def finish_installation
       devices_action(:finish_installation)
+    end
+
+    # List of storage features used by the devicegraph
+    #
+    # @return [StorageFeaturesList]
+    def used_features
+      StorageFeaturesList.new(storage_used_features)
     end
 
     private
