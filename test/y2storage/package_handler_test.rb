@@ -36,7 +36,7 @@ describe Y2Storage::PackageHandler do
   context("using a devicegraph with Btrfs and LVM") do
     let(:dg_features) { ::Storage::UF_BTRFS | ::Storage::UF_LVM }
     let(:devicegraph) { instance_double("::Storage::Devicegraph", used_features: dg_features) }
-    let(:feature_pkg) { ["btrfsprogs", "e2fsprogs", "lvm2"] }
+    let(:feature_pkg) { ["lvm2", "btrfsprogs", "e2fsprogs"] }
     before do
       allow(Yast::Package).to receive(:Installed).and_return(false)
       allow(Yast::Package).to receive(:Installed).with("util-linux").and_return(true)
@@ -54,13 +54,11 @@ describe Y2Storage::PackageHandler do
 
     it "removes duplicate packages" do
       subject.add_packages(["lvm2", "btrfsprogs"])
-      subject.compact
       expect(subject.pkg_list).to contain_exactly("btrfsprogs", "e2fsprogs", "lvm2")
     end
 
     it "removes packages that are already installed" do
       subject.add_packages(["util-linux"])
-      subject.compact
       expect(subject.pkg_list).to contain_exactly("btrfsprogs", "e2fsprogs", "lvm2")
     end
 
@@ -104,11 +102,10 @@ describe Y2Storage::PackageHandler do
         end
 
         it "does not install packages that are already installed" do
-          list = subject.pkg_list
           # Let's simulate the first package is already installed
-          allow(Yast::Package).to receive(:Installed).with(list[0]).and_return true
+          allow(Yast::Package).to receive(:Installed).with(feature_pkg[0]).and_return true
 
-          expect(Yast::Package).to receive(:DoInstall).with(list[1..-1])
+          expect(Yast::Package).to receive(:DoInstall).with(feature_pkg[1..-1])
           subject.commit
         end
 

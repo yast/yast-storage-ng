@@ -59,7 +59,7 @@ describe Y2Storage::Callbacks::Probe do
     let(:packages) { ["btrfsprogs", "e2fsprogs"] }
 
     let(:package_handler) do
-      double("PackageHandler", add_feature_packages: packages, compact: packages)
+      double("PackageHandler", add_feature_packages: packages, pkg_list: packages)
     end
 
     before do

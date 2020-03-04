@@ -59,7 +59,7 @@ module Y2Storage
         package_handler.add_feature_packages(used_features)
 
         # Redirect to error callback if no packages can be installed.
-        return error(message, what) if package_handler.compact.empty?
+        return error(message, what) if package_handler.pkg_list.empty?
 
         description = _("An external command required for probing is missing. When\n"\
                         "continuing despite the error, the presented system information\n"\
@@ -100,7 +100,7 @@ module Y2Storage
       # @return [String] The text.
       #
       def missing_command_handle_packages_text(package_handler)
-        packages = package_handler.compact
+        packages = package_handler.pkg_list
 
         n_("The following package needs to be installed:",
           "The following packages need to be installed:", packages.size) + "\n" +
