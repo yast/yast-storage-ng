@@ -424,7 +424,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
 
         context "and it is used as a component of an LVM" do
-          before { fake_scenario("md_raid_lvm.xml") }
+          before { fake_scenario("md_raid_lvm") }
 
           it "includes a #partition section with LVM and encryption information" do
             partitions = described_class.new_from_storage(device("md0")).partitions
