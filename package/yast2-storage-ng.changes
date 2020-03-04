@@ -3,8 +3,8 @@ Tue Mar  3 12:56:34 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: export the 'disklabel' attribute for software RAID
   devices.
-- AutoYaST: includes a 'partitions' section when exporting an
-  unpartitioned software RAID which is not used as as filesystem
+- AutoYaST: include a 'partitions' section when exporting an
+  unpartitioned software RAID which is not used as a filesystem
   (bsc#1159201).
 - 4.1.92
 
