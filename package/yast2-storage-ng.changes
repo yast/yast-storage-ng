@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar  5 10:23:24 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Fix unit tests for the progress dialog added in version 4.2.82
+  (related to bsc#1135366).
+- 4.2.93
+
+-------------------------------------------------------------------
 Tue Mar  3 12:56:34 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: export the 'disklabel' attribute for software RAID
