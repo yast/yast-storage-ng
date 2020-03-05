@@ -26,7 +26,8 @@ require "y2partitioner/widgets/commit_actions"
 
 describe Y2Partitioner::Widgets::CommitActions do
   before do
-    Y2Storage::StorageManager.create_test_instance
+    storage = Y2Storage::StorageManager.create_test_instance
+    Y2Partitioner::DeviceGraphs.create_instance(storage.probed, storage.staging)
   end
 
   subject { described_class.new }
