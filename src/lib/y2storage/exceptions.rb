@@ -39,7 +39,4 @@ module Y2Storage
   # Requested access mode is incompatible with current mode
   class AccessModeError < Error
   end
-  # Operation was aborted
-  class Aborted < Error
-  end
 end
