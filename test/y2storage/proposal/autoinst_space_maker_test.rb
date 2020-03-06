@@ -143,6 +143,29 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
           )
         end
       end
+
+      context "and a full disk is used as component of a device to be reused" do
+        let(:partitioning_array) do
+          [{ "device" => "/dev/vda", "use" => "all" }, { "device" => "/dev/vdb", "use" => "all" }]
+        end
+        let(:scenario) { "partitioned_btrfs_bcache.xml" }
+        let(:planned_devices) { [planned_bcache] }
+
+        it "does not initialize the disk" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          vdb = devicegraph.find_by_name("/dev/vdb")
+          expect(vdb.children).to_not be_empty
+        end
+
+        it "keeps the Bcache device" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          bcache = devicegraph.bcaches.first
+          expect(bcache.name).to eq("/dev/bcache0")
+          expect(bcache.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/bcache0p1")
+          )
+        end
+      end
     end
 
     context "when 'use' key is set to 'linux'" do

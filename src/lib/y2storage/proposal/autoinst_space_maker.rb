@@ -83,9 +83,11 @@ module Y2Storage
           return
         end
 
-        # TODO: resizing of partitions
-
-        delete_by_use(devicegraph, disk, drive_spec, reused_parts)
+        if partition_table?(disk)
+          delete_by_use(devicegraph, disk, drive_spec, reused_parts)
+        else
+          clean_up_disk_by_use(disk, drive_spec, reused_parts)
+        end
       end
 
       # Deletes unwanted partition according to the "use" element
@@ -106,6 +108,17 @@ module Y2Storage
         else
           register_invalid_use_value(drive_spec)
         end
+      end
+
+      # Cleans up the disk according to the "use" element
+      #
+      # @param disk         [Disk]
+      # @param drive_spec   [AutoinstProfile::DriveSection]
+      # @param reused_parts [Array<String>] Reused partitions names
+      def clean_up_disk_by_use(disk, drive_spec, reused_parts)
+        return if drive_spec.use != "all" || reused_parts.include?(disk.name)
+
+        disk.remove_descendants
       end
 
       # Search a partition by its sid
@@ -169,7 +182,7 @@ module Y2Storage
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
       def reused_partitions_by_disk(devicegraph, planned_devices)
         find_reused_partitions(devicegraph, planned_devices).each_with_object({}) do |part, map|
-          disk_name = part.partitionable.name
+          disk_name = part.is?(:disk_device) ? part.name : part.partitionable.name
           map[disk_name] ||= []
           map[disk_name] << part.name
         end
@@ -197,7 +210,7 @@ module Y2Storage
         end
 
         ancestors = reused_devices.map(&:ancestors).flatten
-        (reused_devices + ancestors).select { |p| p.is_a?(Y2Storage::Partition) }
+        (reused_devices + ancestors).select { |p| p.is?(:disk_device, :partition) }
       end
 
       # Build a device name to sid map
