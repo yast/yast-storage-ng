@@ -53,13 +53,14 @@ module Y2Storage
       def cleaned_devicegraph(original_devicegraph, drives_map, planned_devices)
         devicegraph = original_devicegraph.dup
 
-        reused_partitions = reused_partitions_by_disk(devicegraph, planned_devices)
+        reused_devices = reused_devices_by_disk(devicegraph, planned_devices)
         sid_map = partitions_sid_map(devicegraph)
 
         drives_map.each_pair do |disk_name, drive_spec|
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
           next unless disk
-          delete_stuff(devicegraph, disk, drive_spec, reused_partitions[disk.name])
+
+          delete_stuff(devicegraph, disk, drive_spec, reused_devices[disk.name])
         end
 
         adjust_reuse_values(devicegraph, planned_devices, sid_map)
@@ -72,39 +73,39 @@ module Y2Storage
 
       # Deletes unwanted partitions for the given disk
       #
-      # @param devicegraph  [Devicegraph]
-      # @param disk         [Disk]
-      # @param drive_spec   [AutoinstProfile::DriveSection]
-      # @param reused_parts [Array<String>] Reused partitions names
-      def delete_stuff(devicegraph, disk, drive_spec, reused_parts)
-        reused_parts ||= []
-        if drive_spec.initialize_attr && reused_parts.empty?
+      # @param devicegraph    [Devicegraph]
+      # @param disk           [Disk]
+      # @param drive_spec     [AutoinstProfile::DriveSection]
+      # @param reused_devices [Array<String>] Reused disks and partitions names
+      def delete_stuff(devicegraph, disk, drive_spec, reused_devices)
+        reused_devices ||= []
+        if drive_spec.initialize_attr && reused_devices.empty?
           disk.remove_descendants
           return
         end
 
         if partition_table?(disk)
-          delete_by_use(devicegraph, disk, drive_spec, reused_parts)
+          delete_by_use(devicegraph, disk, drive_spec, reused_devices)
         else
-          clean_up_disk_by_use(disk, drive_spec, reused_parts)
+          clean_up_disk_by_use(disk, drive_spec, reused_devices)
         end
       end
 
       # Deletes unwanted partition according to the "use" element
       #
-      # @param devicegraph  [Devicegraph]
-      # @param disk         [Disk]
-      # @param drive_spec   [AutoinstProfile::DriveSection]
-      # @param reused_parts [Array<String>] Reused partitions names
-      def delete_by_use(devicegraph, disk, drive_spec, reused_parts)
+      # @param devicegraph    [Devicegraph]
+      # @param disk           [Disk]
+      # @param drive_spec     [AutoinstProfile::DriveSection]
+      # @param reused_devices [Array<String>] Reused disks and partitions names
+      def delete_by_use(devicegraph, disk, drive_spec, reused_devices)
         return if drive_spec.use == "free" || !partition_table?(disk)
         case drive_spec.use
         when "all"
-          delete_partitions(devicegraph, disk.partitions, reused_parts)
+          delete_partitions(devicegraph, disk.partitions, reused_devices)
         when "linux"
-          delete_linux_partitions(devicegraph, disk, reused_parts)
+          delete_linux_partitions(devicegraph, disk, reused_devices)
         when Array
-          delete_partitions_by_number(devicegraph, disk, drive_spec.use, reused_parts)
+          delete_partitions_by_number(devicegraph, disk, drive_spec.use, reused_devices)
         else
           register_invalid_use_value(drive_spec)
         end
@@ -112,11 +113,11 @@ module Y2Storage
 
       # Cleans up the disk according to the "use" element
       #
-      # @param disk         [Disk]
-      # @param drive_spec   [AutoinstProfile::DriveSection]
-      # @param reused_parts [Array<String>] Reused partitions names
-      def clean_up_disk_by_use(disk, drive_spec, reused_parts)
-        return if drive_spec.use != "all" || reused_parts.include?(disk.name)
+      # @param disk           [Disk]
+      # @param drive_spec     [AutoinstProfile::DriveSection]
+      # @param reused_devices [Array<String>] Reused disks and partitions names
+      def clean_up_disk_by_use(disk, drive_spec, reused_devices)
+        return if drive_spec.use != "all" || reused_devices.include?(disk.name)
 
         disk.remove_descendants
       end
@@ -130,12 +131,12 @@ module Y2Storage
 
       # Deletes Linux partitions from a disk in the given devicegraph
       #
-      # @param devicegraph  [Devicegraph] Working devicegraph
-      # @param disk         [Disk]        Disk to remove partitions from
-      # @param reused_parts [Array<String>] Reused partitions names
-      def delete_linux_partitions(devicegraph, disk, reused_parts)
+      # @param devicegraph    [Devicegraph] Working devicegraph
+      # @param disk           [Disk]        Disk to remove partitions from
+      # @param reused_devices [Array<String>] Reused disks and partitions names
+      def delete_linux_partitions(devicegraph, disk, reused_devices)
         parts = disk_analyzer.linux_partitions(disk)
-        delete_partitions(devicegraph, parts, reused_parts)
+        delete_partitions(devicegraph, parts, reused_devices)
       end
 
       # Deletes Linux partitions which number is included in a list
@@ -143,17 +144,17 @@ module Y2Storage
       # @param devicegraph [Devicegraph]    Working devicegraph
       # @param disk        [Disk]           Disk to remove partitions from
       # @param partition_nrs [Array<Integer>] List of partition numbers
-      def delete_partitions_by_number(devicegraph, disk, partition_nrs, reused_partitions)
+      def delete_partitions_by_number(devicegraph, disk, partition_nrs, reused_devices)
         parts = disk.partitions.select { |n| partition_nrs.include?(n.number) }
-        delete_partitions(devicegraph, parts, reused_partitions)
+        delete_partitions(devicegraph, parts, reused_devices)
       end
 
       # @param devicegraph     [Devicegraph]               devicegraph
       # @param parts           [Array<Planned::Partition>] parts to delete
-      # @param reused_parts    [Array<String>]             reused partitions names
-      def delete_partitions(devicegraph, parts, reused_parts)
+      # @param reused_devices  [Array<String>]             reused disks and partitions names
+      def delete_partitions(devicegraph, parts, reused_devices)
         partition_killer = Proposal::PartitionKiller.new(devicegraph)
-        parts_to_delete = parts.reject { |p| reused_parts.include?(p.name) }
+        parts_to_delete = parts.reject { |p| reused_devices.include?(p.name) }
         parts_to_delete.map(&:sid).each do |sid|
           partition = partition_by_sid(devicegraph, sid)
           next unless partition
@@ -180,20 +181,20 @@ module Y2Storage
       # @param devicegraph     [Devicegraph]               devicegraph
       # @param planned_devices [Array<Planned::Partition>] set of partitions
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
-      def reused_partitions_by_disk(devicegraph, planned_devices)
-        find_reused_partitions(devicegraph, planned_devices).each_with_object({}) do |part, map|
+      def reused_devices_by_disk(devicegraph, planned_devices)
+        find_reused_devices(devicegraph, planned_devices).each_with_object({}) do |part, map|
           disk_name = part.is?(:disk_device) ? part.name : part.partitionable.name
           map[disk_name] ||= []
           map[disk_name] << part.name
         end
       end
 
-      # Determine which partitions will be reused
+      # Determine which disks and partitions will be reused
       #
       # @param devicegraph     [Devicegraph]               devicegraph
       # @param planned_devices [Array<Planned::Partition>] set of partitions
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
-      def find_reused_partitions(devicegraph, planned_devices)
+      def find_reused_devices(devicegraph, planned_devices)
         reused_devices = planned_devices.select(&:reuse_name).each_with_object([]) do |device, all|
           case device
           when Y2Storage::Planned::Partition
