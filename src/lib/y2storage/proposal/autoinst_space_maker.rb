@@ -195,23 +195,31 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Partition>] set of partitions
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
       def find_reused_devices(devicegraph, planned_devices)
-        reused_devices = planned_devices.select(&:reuse_name).each_with_object([]) do |device, all|
-          case device
-          when Y2Storage::Planned::Partition
-            all << devicegraph.partitions.find { |p| device.reuse_name == p.name }
-          when Y2Storage::Planned::LvmVg
-            vg = devicegraph.lvm_vgs.find { |v| File.join("/dev", device.reuse_name) == v.name }
-            all.concat(vg.lvm_pvs)
-          when Y2Storage::Planned::Md
-            all << devicegraph.md_raids.find { |r| device.reuse_name == r.name }
-          when Y2Storage::Planned::Bcache
-            bcache = devicegraph.bcaches.find { |b| device.reuse_name == b.name }
-            all << bcache
-          end
+        reused_devices = planned_devices.select(&:reuse_name).each_with_object([]) do |planned, all|
+          real_devices = real_reused_devices_for(devicegraph, planned)
+          all.concat(real_devices) if real_devices
         end
 
         ancestors = reused_devices.map(&:ancestors).flatten
         (reused_devices + ancestors).select { |p| p.is?(:disk_device, :partition) }
+      end
+
+      # Real devices from the devicegraph that will be reused for the given planned device
+      #
+      # @param devicegraph    [Devicegraph]     devicegraph
+      # @param planned_device [Planned::Device] planned_device
+      def real_reused_devices_for(devicegraph, planned_device)
+        case planned_device
+        when Y2Storage::Planned::Partition
+          [devicegraph.partitions.find { |p| planned_device.reuse_name == p.name }]
+        when Y2Storage::Planned::LvmVg
+          vg = devicegraph.lvm_vgs.find { |v| File.join("/dev", planned_device.reuse_name) == v.name }
+          [vg] + vg.lvm_pvs
+        when Y2Storage::Planned::Md
+          [devicegraph.md_raids.find { |r| planned_device.reuse_name == r.name }]
+        when Y2Storage::Planned::Bcache
+          [devicegraph.bcaches.find { |b| planned_device.reuse_name == b.name }]
+        end
       end
 
       # Build a device name to sid map
