@@ -48,6 +48,9 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
   let(:planned_md) do
     Y2Storage::Planned::Md.new(name: "/dev/md/md0").tap { |m| m.reuse_name = m.name }
   end
+  let(:planned_bcache) do
+    Y2Storage::Planned::Bcache.new.tap { |b| b.reuse_name = "/dev/bcache0" }
+  end
   let(:issues_list) do
     Y2Storage::AutoinstIssues::List
   end
@@ -116,6 +119,28 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
           devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
           md = devicegraph.md_raids.first
           expect(md.name).to eq("/dev/md/md0")
+        end
+      end
+
+      context "and a Bcache device will be reused" do
+        let(:partitioning_array) { [{ "device" => "/dev/vda", "use" => "all" }] }
+        let(:scenario) { "partitioned_btrfs_bcache.xml" }
+        let(:planned_devices) { [planned_bcache] }
+
+        it "keeps the physical partition" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          expect(devicegraph.partitions).to include(
+            an_object_having_attributes("name" => "/dev/vda3")
+          )
+        end
+
+        it "keeps the Bcache device" do
+          devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
+          bcache = devicegraph.bcaches.first
+          expect(bcache.name).to eq("/dev/bcache0")
+          expect(bcache.partitions).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/bcache0p1")
+          )
         end
       end
     end

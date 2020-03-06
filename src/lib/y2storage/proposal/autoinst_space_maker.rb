@@ -190,6 +190,9 @@ module Y2Storage
             all.concat(vg.lvm_pvs)
           when Y2Storage::Planned::Md
             all << devicegraph.md_raids.find { |r| device.reuse_name == r.name }
+          when Y2Storage::Planned::Bcache
+            bcache = devicegraph.bcaches.find { |b| device.reuse_name == b.name }
+            all << bcache
           end
         end
 
