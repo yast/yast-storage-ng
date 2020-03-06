@@ -62,11 +62,16 @@ module Y2Storage
     class AutoinstDevicesCreator
       include Yast::Logger
 
+      # @return [AutoinstIssues::List] List of found AutoYaST issues
+      attr_reader :issues_list
+
       # Constructor
       #
       # @param original_graph [Devicegraph] Devicegraph to be used as starting point
-      def initialize(original_graph)
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
+      def initialize(original_graph, issues_list)
         @original_graph = original_graph
+        @issues_list = issues_list
       end
 
       # Devicegraph including all the specified planned devices
@@ -358,6 +363,11 @@ module Y2Storage
         vgs.reduce(creator_result) do |result, vg|
           pvs = creator_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
           pvs += devs_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
+          if pvs.empty?
+            issues_list.add(:no_pvs, vg)
+            next result
+          end
+
           result.merge(create_logical_volumes(result.devicegraph, vg, pvs))
         end
       end

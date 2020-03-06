@@ -50,10 +50,12 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
   let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk]) }
 
+  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+
   before { fake_scenario(scenario) }
 
   subject(:creator) do
-    described_class.new(Y2Storage::StorageManager.instance.probed)
+    described_class.new(Y2Storage::StorageManager.instance.probed, issues_list)
   end
 
   describe "#populated_devicegraph" do
@@ -243,6 +245,16 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
           lvm_vgs = result.devicegraph.lvm_vgs
           expect(lvm_vgs.size).to eq(2)
+        end
+      end
+
+      context "when no suitable pvs are found" do
+        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, vg]) }
+        let(:vg) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add).with(:no_pvs, vg)
+          creator.populated_devicegraph(planned_devices, ["/dev/sda"])
         end
       end
     end
