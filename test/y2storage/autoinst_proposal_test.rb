@@ -889,7 +889,7 @@ describe Y2Storage::AutoinstProposal do
 
         let(:lvs) { [root_spec] }
 
-        it "does not crash" do
+        it "registers an issue" do
           proposal.propose
           issues = issues_list.select do |i|
             i.is_a?(Y2Storage::AutoinstIssues::NoPvs)
