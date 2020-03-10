@@ -264,7 +264,7 @@ module Y2Storage
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
       boot_parts = boot_devices(devicegraph, @planned_devices)
-      devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
+      devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph, issues_list)
       begin
         planned_with_boot = planned_devices.prepend(boot_parts)
         result = devices_creator.populated_devicegraph(planned_with_boot, disk_names)
