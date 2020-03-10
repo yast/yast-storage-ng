@@ -33,7 +33,7 @@ module Y2Storage
 
       # Fatal problem
       #
-      # @return [Symbol] :warn
+      # @return [Symbol] :fatal
       # @see Issue#severity
       def severity
         :fatal
@@ -45,7 +45,7 @@ module Y2Storage
       # @see Issue#message
       def message
         format(
-          _("Could not find a suitable physical volume for\nvolume group '%{vg_name}'."),
+          _("Could not find a suitable physical volume for volume group '%{vg_name}'."),
           vg_name: planned_vg.volume_group_name
         )
       end
