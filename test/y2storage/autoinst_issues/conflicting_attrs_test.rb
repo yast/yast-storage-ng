@@ -24,7 +24,9 @@ describe Y2Storage::AutoinstIssues::ConflictingAttrs do
   subject(:issue) { described_class.new(section, :raid_name, [:lvm_group]) }
 
   let(:section) do
-    instance_double(Y2Storage::AutoinstProfile::PartitionSection, lvm_group: "vg0", raid_name: "/dev/md0")
+    instance_double(
+      Y2Storage::AutoinstProfile::PartitionSection, lvm_group: "vg0", raid_name: "/dev/md0"
+    )
   end
 
   describe "#message" do

@@ -70,7 +70,6 @@ module Y2Storage
         md = Planned::Md.new(name: drive.name_for_md)
         part_section = drive.partitions.first
         device_config(md, part_section, drive)
-        md.lvm_volume_group_name = part_section.lvm_group
         add_md_reuse(md, part_section) if part_section.create == false
         add_raid_options(md, drive.raid_options || part_section.raid_options)
         md
@@ -103,7 +102,6 @@ module Y2Storage
 
         md = Planned::Md.new(name: part_section.name_for_md)
         device_config(md, part_section, drive)
-        md.lvm_volume_group_name = part_section.lvm_group
         add_md_reuse(md, part_section) if part_section.create == false
         add_raid_options(md, part_section.raid_options)
         md

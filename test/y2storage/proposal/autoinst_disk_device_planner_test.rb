@@ -50,6 +50,112 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
     include_examples "handles bcache configuration"
 
+    context "when conflicting attributes specify different usages for the device" do
+      let(:root_spec) do
+        {
+          "mount" => "/", "raid_name" => "/dev/md0", "lvm_group" => "vg0",
+          "btrfs_name" => "root", "bcache_backing_for" => "/dev/bcache0",
+          "bcache_caching_for" => "/dev/bcache1"
+        }
+      end
+      let(:missing_attrs) { [] }
+
+      before do
+        root_spec.delete_if { |k, _v| missing_attrs.include?(k) }
+      end
+
+      it "prefers the filesystem" do
+        disk = planner.planned_devices(drive).first
+        part = disk.partitions.first
+        expect(part.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+      end
+
+      it "registers an issue" do
+        expect(issues_list).to receive(:add)
+          .with(:conflicting_attrs, drive.partitions.first, :mount, Array)
+        planner.planned_devices(drive)
+      end
+
+      context "and the 'mount' attribute is missing" do
+        let(:missing_attrs) { ["mount"] }
+
+        it "prefers the raid_name" do
+          disk = planner.planned_devices(drive).first
+          part = disk.partitions.first
+          expect(part.raid_name).to eq("/dev/md0")
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add)
+            .with(:conflicting_attrs, drive.partitions.first, :raid_name, Array)
+          planner.planned_devices(drive)
+        end
+      end
+
+      context "and 'mount' and 'raid_name' attributes are missing" do
+        let(:missing_attrs) { ["mount", "raid_name"] }
+
+        it "prefers the lvm_group" do
+          disk = planner.planned_devices(drive).first
+          part = disk.partitions.first
+          expect(part.lvm_volume_group_name).to eq("vg0")
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add)
+            .with(:conflicting_attrs, drive.partitions.first, :lvm_group, Array)
+          planner.planned_devices(drive)
+        end
+      end
+
+      context "and 'mount', 'raid_name' and 'lvm_group' attributes are missing" do
+        let(:missing_attrs) { ["mount", "raid_name", "lvm_group"] }
+
+        it "prefers the btrfs_name" do
+          disk = planner.planned_devices(drive).first
+          part = disk.partitions.first
+          expect(part.btrfs_name).to eq("root")
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add)
+            .with(:conflicting_attrs, drive.partitions.first, :btrfs_name, Array)
+          planner.planned_devices(drive)
+        end
+      end
+
+      context "and 'mount', 'raid_name' and 'lvm_group' and 'btrfs_name' attributes are missing" do
+        let(:missing_attrs) { ["mount", "raid_name", "lvm_group", "btrfs_name"] }
+
+        it "prefers the bcache_backing_for" do
+          disk = planner.planned_devices(drive).first
+          part = disk.partitions.first
+          expect(part.bcache_backing_for).to eq("/dev/bcache0")
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add)
+            .with(:conflicting_attrs, drive.partitions.first, :bcache_backing_for, Array)
+          planner.planned_devices(drive)
+        end
+      end
+
+      context "only 'bcache_caching_for' is present" do
+        let(:missing_attrs) { ["mount", "raid_name", "lvm_group", "btrfs_name", "bcache_backing_for"] }
+
+        it "prefers the bcache_caching_for" do
+          disk = planner.planned_devices(drive).first
+          part = disk.partitions.first
+          expect(part.bcache_caching_for).to eq("/dev/bcache1")
+        end
+
+        it "does not register an issue" do
+          expect(issues_list).to_not receive(:add)
+          planner.planned_devices(drive)
+        end
+      end
+    end
+
     context "specifying partition type" do
       context "when partition_type is set to 'primary'" do
         let(:root_spec) { { "mount" => "/", "size" => "max", "partition_type" => "primary" } }
