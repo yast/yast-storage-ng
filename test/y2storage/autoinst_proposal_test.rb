@@ -965,6 +965,22 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
+      context "when the volume group name does not match" do
+        let(:lvm_pv) do
+          { "create" => true, "lvm_group" => "another", "size" => "max" }
+        end
+
+        let(:lvs) { [root_spec] }
+
+        it "registers an issue" do
+          proposal.propose
+          issues = issues_list.select do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::NoPvs)
+          end
+          expect(issues.size).to eq(1)
+        end
+      end
+
       context "when using a thin pool" do
         let(:root_spec) do
           {

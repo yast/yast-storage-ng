@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Mar  9 09:53:50 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: show an error when no suitable physical volumes are
+  found for a given volume group (bsc#1162043).
+- 4.2.94
+
+-------------------------------------------------------------------
 Thu Mar  5 10:23:24 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - Fix unit tests for the progress dialog added in version 4.2.82
