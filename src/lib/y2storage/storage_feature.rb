@@ -124,11 +124,21 @@ module Y2Storage
 
     # Constructor
     #
+    # This looks up a constant in the ::Storage namespace to make sure the id
+    # is known to libstorage-ng.
+    #
+    # @raise [NameError] if no constant for this feature is defined in libstorage-ng
+    #
     # @param id [Symbol] see {#id}
     # @param packages [Array<Package>] see {#all_packages}
     def initialize(id, packages)
       @id = id
       @all_packages = packages
+
+      # Raising a NameError exception as soon as possible (i.e. in the constructor)
+      # is a good way to make sure we are in sync with libstorage-ng regarding
+      # the definition of possible features
+      @bitmask = ::Storage.const_get(id)
     end
 
     # Symbol representation of the feature
@@ -166,12 +176,8 @@ module Y2Storage
     # This looks up a constant in the ::Storage (libstorage-ng) namespace with
     # the id of the feature (one of the enum values in UsedFeatures.h).
     #
-    # @raise [NameError] if no constant for this feature is defined in
-    #   libstorage-ng (i.e. the feature is unknown to libstorage-ng)
-    # @return [Integer] bitmask for that feature
-    def bitmask
-      @bitmask ||= ::Storage.const_get(id)
-    end
+    # @return [Integer]
+    attr_reader :bitmask
 
     # List of packages associated to the feature
     #

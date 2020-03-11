@@ -33,39 +33,24 @@ describe Y2Storage::StorageFeaturesList do
     end
 
     context "if the bit-field is zero" do
-      let(:bits) { 0 }
-
       it "returns an empty list" do
-        expect(described_class.new(bits)).to be_empty
-      end
-
-      # The combination of this test and the corresponding unit test for
-      # StorageFeature#in_bitfield? ensures yast-storage-ng does not contain any
-      # feature that is not defined in libstorage-ng (a NameError exception
-      # would be raised).
-      it "calls #in_bitfield? for all registered features" do
-        Y2Storage::StorageFeature.all do |feature|
-          expect(feature).to receive(:in_bitfield?).with(bits).and_call_original
-        end
-
-        described_class.new(bits)
+        expect(described_class.new(0)).to be_empty
       end
     end
 
     context "with a non-zero bit-field" do
-      let(:bits) { Storage::UF_BTRFS | Storage::UF_LVM }
-
       it "returns the corresponding list of features" do
-        expect(described_class.new(bits).map(&:id)).to contain_exactly(:UF_BTRFS, :UF_LVM)
-      end
+        bits = Storage::UF_BTRFS | Storage::UF_LVM
+        list = described_class.new(bits)
+        expect(list).to all be_a(Y2Storage::StorageFeature)
+        expect(list.map(&:id)).to contain_exactly(:UF_BTRFS, :UF_LVM)
 
-      # See note above about the importance of this test
-      it "calls #in_bitfield? for all registered features" do
-        Y2Storage::StorageFeature.all do |feature|
-          expect(feature).to receive(:in_bitfield?).with(bits).and_call_original
-        end
-
-        described_class.new(bits)
+        bits = Storage::UF_EXT2
+        list = described_class.new(bits)
+        expect(list.size).to eq 1
+        feature = list.first
+        expect(feature).to be_a Y2Storage::StorageFeature
+        expect(feature.to_sym).to eq :UF_EXT2
       end
     end
   end

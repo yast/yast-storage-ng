@@ -32,17 +32,20 @@ describe Y2Storage::StorageFeature do
       constants = ::Storage.constants.select { |c| c.to_s.start_with?("UF_") }
       expect(described_class.all.map(&:to_sym)).to contain_exactly(*constants)
     end
+
+    it "does not contain entries without a libstorage-ng equivalent" do
+      # If the id of any of the features cannot be found in libstorage-ng, this
+      # would raise a NameError exception, see test for StorageFeature.new below
+      expect { described_class.all }.to_not raise_error
+    end
   end
 
-  describe "#in_bitfield?" do
-    subject(:feature) { described_class.new(id, []) }
-
+  describe ".new" do
     context "when the feature exists in libstorage-ng" do
       let(:id) { :UF_EXT2 }
 
-      it "returns a boolean" do
-        expect(feature.in_bitfield?(0)).to eq false
-        expect(feature.in_bitfield?(0xFFFFFFFFFFFFFFFF)).to eq true
+      it "returns a new StorageFeature object" do
+        expect(described_class.new(id, [])).to be_a Y2Storage::StorageFeature
       end
     end
 
@@ -53,7 +56,7 @@ describe Y2Storage::StorageFeature do
       # libstorage-ng. If the behavior is changed, make sure to provide another
       # mechanism (and an automated test) to detect the situation
       it "raises an NameError exception" do
-        expect { feature.in_bitfield?(0) }.to raise_error NameError
+        expect { described_class.new(id, []) }.to raise_error NameError
       end
     end
   end
