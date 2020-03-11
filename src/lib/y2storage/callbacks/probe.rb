@@ -54,7 +54,7 @@ module Y2Storage
         log.info "Error details. message: #{message}. what: #{what}. command: #{command}. "\
                  "used_features: #{used_features}."
 
-        packages = StorageFeaturesList.new(used_features).pkg_list
+        packages = StorageFeaturesList.from_bitfield(used_features).pkg_list
 
         # Redirect to error callback if no packages can be installed.
         return error(message, what) unless can_install?(packages)

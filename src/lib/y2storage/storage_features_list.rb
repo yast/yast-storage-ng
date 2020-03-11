@@ -24,12 +24,8 @@ require "y2storage/storage_feature"
 module Y2Storage
   # List of storage features
   #
-  # In libstorage-ng a set of features is representend by an integer
-  # bit-field that must be processed to get the list of features, each one
-  # represented by a bit-mask referenced by a constant.
-  #
-  # This class turns one of those bit-fields into an object-oriented collection
-  # of {StorageFeature} objects.
+  # This class provides an object-oriented collection of {StorageFeature}
+  # objects (as opposed to the bit-mask based approach of libstorage-ng).
   class StorageFeaturesList
     include Yast::Logger
     include Enumerable
@@ -38,13 +34,22 @@ module Y2Storage
     def_delegators :@features, :each, :empty?, :size, :length
 
     # Constructor
+    def initialize(*features)
+      @features = [*features].flatten
+    end
+
+    # Constructs a list of features from a libstorage-ng bit-field
+    #
+    # In libstorage-ng a set of features is representend by an integer
+    # bit-field that must be processed to get the list of features, each one
+    # represented by a bit-mask referenced by a constant.
     #
     # @param bits [Integer, nil] bit-field representing all the features that
-    #   must be part of the list. If nil, the list will contain all the known
-    #   storage features.
-    def initialize(bits = nil)
-      @features = StorageFeature.all.dup
-      @features.select! { |f| f.in_bitfield?(bits) } if bits
+    #   must be part of the list
+    #
+    # @return [StorageFeaturesList]
+    def self.from_bitfield(bits)
+      new(*StorageFeature.all.select { |f| f.in_bitfield?(bits) })
     end
 
     # Return a list of all software packages required for the storage features

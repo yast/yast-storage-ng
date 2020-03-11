@@ -300,7 +300,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(presenter).to receive(:to_html).and_return("html representation")
 
       allow(Yast2::Popup).to receive(:show).and_return(user_input)
-      allow(Y2Storage::StorageFeaturesList).to receive(:new).and_return(used_features)
+      allow(Y2Storage::StorageFeaturesList).to receive(:from_bitfield).and_return(used_features)
       allow(used_features).to receive(:pkg_list).and_return(["xfsprogs"])
       allow(Yast::Package).to receive(:Installed).and_return false
       allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages)

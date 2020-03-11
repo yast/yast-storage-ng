@@ -26,27 +26,39 @@ require "y2storage/storage_features_list"
 
 describe Y2Storage::StorageFeaturesList do
   describe ".new" do
-    context "if no bit-field is specified" do
-      it "returns all possible features" do
-        expect(described_class.new).to contain_exactly(*Y2Storage::StorageFeature.all)
-      end
+    let(:features) do
+      [Y2Storage::StorageFeature.new(:UF_BTRFS, []), Y2Storage::StorageFeature.new(:UF_EXT2, [])]
     end
 
+    it "returns an empty list when called with no arguments" do
+      expect(described_class.new).to be_empty
+    end
+
+    it "returns a list of features when called with several features" do
+      expect(described_class.new(*features)).to contain_exactly(*features)
+    end
+
+    it "returns a list of features when called with an array of features" do
+      expect(described_class.new(features)).to contain_exactly(*features)
+    end
+  end
+
+  describe ".from_bitfield" do
     context "if the bit-field is zero" do
       it "returns an empty list" do
-        expect(described_class.new(0)).to be_empty
+        expect(described_class.from_bitfield(0)).to be_empty
       end
     end
 
     context "with a non-zero bit-field" do
       it "returns the corresponding list of features" do
         bits = Storage::UF_BTRFS | Storage::UF_LVM
-        list = described_class.new(bits)
+        list = described_class.from_bitfield(bits)
         expect(list).to all be_a(Y2Storage::StorageFeature)
         expect(list.map(&:id)).to contain_exactly(:UF_BTRFS, :UF_LVM)
 
         bits = Storage::UF_EXT2
-        list = described_class.new(bits)
+        list = described_class.from_bitfield(bits)
         expect(list.size).to eq 1
         feature = list.first
         expect(feature).to be_a Y2Storage::StorageFeature
@@ -56,7 +68,7 @@ describe Y2Storage::StorageFeaturesList do
   end
 
   describe "#pkg_list" do
-    subject(:list) { described_class.new(bits) }
+    subject(:list) { described_class.from_bitfield(bits) }
 
     context "if several features require the same package" do
       let(:bits) do

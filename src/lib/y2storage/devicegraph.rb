@@ -536,7 +536,7 @@ module Y2Storage
     #
     # @return [StorageFeaturesList]
     def used_features
-      StorageFeaturesList.new(storage_used_features)
+      StorageFeaturesList.from_bitfield(storage_used_features)
     end
 
     private
