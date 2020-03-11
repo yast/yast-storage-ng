@@ -89,11 +89,11 @@ module Y2Storage
       # only used in normal mode, not in (auto)installation.
       def show_popup(packages)
         text = n_(
-          "The following package needs to be installed to fully analyze the system\n" \
+          "The following package needs to be installed to fully analyze the system:\n" \
           "%s\n\n" \
           "If you ignore this and continue without installing it, the system\n" \
           "information presented by YaST will be incomplete.",
-          "The following packages need to be installed to fully analyze the system\n" \
+          "The following packages need to be installed to fully analyze the system:\n" \
           "%s\n\n" \
           "If you ignore this and continue without installing them, the system\n" \
           "information presented by YaST will be incomplete.",

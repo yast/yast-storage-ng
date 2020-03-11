@@ -108,11 +108,6 @@ module Y2Partitioner
         DeviceGraphs.instance.current
       end
 
-      # @return [Y2Storage::Devicegraph]
-      def system_graph
-        DeviceGraphs.instance.system
-      end
-
       # Updated HTML content to display
       #
       # @return [String]

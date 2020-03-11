@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2017,2019-2020] SUSE LLC
+# Copyright (c) [2016-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,7 +31,7 @@ module Y2Storage
   # Thus, one of those bit-fields is used to specify which features are
   # used in the current target machine's storage setup. Additionally, a similar
   # bit-field is used to report features that have been detected in the system
-  # but that cannot be probed because some command in missing.
+  # but that cannot be probed because some command is missing.
   #
   # This class adds object orientation of top of that, each instance of
   # StorageFeature represents a concrete feature and offers methods to know
