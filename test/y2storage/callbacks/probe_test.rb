@@ -48,84 +48,110 @@ describe Y2Storage::Callbacks::Probe do
   end
 
   describe "#missing_command" do
-    it "just displays the error and the details if used_features is 0" do
-      expect(Yast::Report).to receive(:yesno_popup) do |message, options|
-        expect(message).to include "the message"
-        expect(options[:details]).to eq "the what"
-      end
-      subject.missing_command("the message", "the what", "the command", 0)
-    end
-
-    let(:packages) { ["btrfsprogs", "e2fsprogs"] }
-
-    let(:package_handler) do
-      double("PackageHandler", add_feature_packages: packages, compact: packages)
-    end
-
     before do
-      allow(Yast::Mode).to receive(:installation).and_return false
-      allow(Y2Storage::PackageHandler).to receive(:new).and_return package_handler
+      allow(Yast::Mode).to receive(:normal).and_return normal_mode
     end
 
-    it "displays the error and the details including missing packages if used_features is not 0" do
-      expect(Yast2::Popup).to receive(:show) do |message, options|
-        expect(message).to include "the message"
-        expect(options[:details]).to include "the what"
-        expect(options[:details]).to include "btrfsprogs, e2fsprogs"
-      end
-      subject.missing_command("the message", "the what", "the command", 8)
-    end
-  end
+    let(:msg) { "the message" }
+    let(:what) { "the what" }
+    let(:cmd) { "the command" }
 
-  describe "#missing_command_handle_user_decision" do
-    before do
-      allow(Y2Storage::PackageHandler).to receive(:new).and_return package_handler
-    end
-
-    let(:package_handler) do
-      double("PackageHandler")
-    end
-
-    context "when user selected install" do
-      it "returns false" do
-        allow(package_handler).to receive(:commit)
-        expect(subject.send(:missing_command_handle_user_decision,
-          :install, package_handler)).to be false
-      end
-
-      it "sets again flag" do
-        allow(package_handler).to receive(:commit)
-        subject.send(:missing_command_handle_user_decision, :install, package_handler)
-        expect(subject.again?).to be true
-      end
-
-      it "installs packages" do
-        expect(package_handler).to receive(:commit)
-        subject.send(:missing_command_handle_user_decision, :install, package_handler)
+    RSpec.shared_examples "generic error" do
+      it "just displays the error and the details" do
+        expect(Yast::Report).to receive(:yesno_popup) do |message, options|
+          expect(message).to include msg
+          expect(options[:details]).to eq what
+        end
+        subject.missing_command(msg, what, cmd, features)
       end
     end
 
-    context "when user selected continue" do
-      it "returns true" do
-        expect(subject.send(:missing_command_handle_user_decision,
-          :continue, package_handler)).to be true
+    context "during (auto)installation" do
+      let(:normal_mode) { false }
+
+      context "if features is 0" do
+        let(:features) { 0 }
+
+        include_examples "generic error"
       end
 
-      it "clears again flag" do
-        subject.send(:missing_command_handle_user_decision, :continue, package_handler)
-        expect(subject.again?).to be false
+      context "if features is not 0" do
+        let(:features) { Storage::UF_BTRFS }
+
+        include_examples "generic error"
       end
     end
 
-    context "when user selected abort" do
-      it "returns false" do
-        expect(subject.send(:missing_command_handle_user_decision,
-          :abort, package_handler)).to be false
+    context "during normal execution" do
+      let(:normal_mode) { true }
+
+      context "if features is 0" do
+        let(:features) { 0 }
+
+        include_examples "generic error"
       end
 
-      it "clears again flag" do
-        subject.send(:missing_command_handle_user_decision, :abort, package_handler)
-        expect(subject.again?).to be false
+      context "if features is not 0" do
+        let(:features) { Storage::UF_BTRFS }
+
+        it "displays a pop-up with the list of packages to install" do
+          expect(Yast2::Popup).to receive(:show) do |message, options|
+            expect(message).to include "btrfsprogs, e2fsprogs"
+            expect(options[:buttons].keys).to contain_exactly(:ignore, :install)
+            :ignore
+          end
+
+          subject.missing_command(msg, what, cmd, features)
+        end
+
+        context "if the user clicks on :install" do
+          before do
+            allow(Yast2::Popup).to receive(:show).and_return :install
+            allow(Y2Storage::PackageHandler).to receive(:new).and_return pkg_handler
+          end
+
+          let(:pkg_handler) { double("PackageHandler", commit: true) }
+
+          it "returns false" do
+            expect(subject.missing_command(msg, what, cmd, features)).to eq false
+          end
+
+          it "installs the packages" do
+            expect(Y2Storage::PackageHandler).to receive(:new).with(["btrfsprogs", "e2fsprogs"])
+            expect(pkg_handler).to receive(:commit)
+
+            subject.missing_command(msg, what, cmd, features)
+          end
+
+          it "sets #again? to true" do
+            subject.begin
+            expect(subject.again?).to eq false
+
+            subject.missing_command(msg, what, cmd, features)
+            expect(subject.again?).to eq true
+          end
+        end
+
+        context "if the user clicks on :ignore" do
+          before { allow(Yast2::Popup).to receive(:show).and_return :ignore }
+
+          it "returns true" do
+            expect(subject.missing_command(msg, what, cmd, features)).to eq true
+          end
+
+          it "does not install the packages" do
+            expect(Y2Storage::PackageHandler).to_not receive(:new)
+            subject.missing_command(msg, what, cmd, features)
+          end
+
+          it "does not set #again?" do
+            subject.begin
+            expect(subject.again?).to eq false
+
+            subject.missing_command(msg, what, cmd, features)
+            expect(subject.again?).to eq false
+          end
+        end
       end
     end
   end

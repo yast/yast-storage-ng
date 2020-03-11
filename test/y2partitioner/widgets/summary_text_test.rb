@@ -37,28 +37,24 @@ describe Y2Partitioner::Widgets::SummaryText do
   describe "#init" do
     before do
       allow(Yast::Mode).to receive(:installation).and_return install
-      allow(Y2Storage::PackageHandler).to receive(:new).and_return handler
+      allow(current_graph).to receive(:used_features).and_return features_list
     end
 
-    let(:handler) do
-      double("PackageHandler", add_feature_packages: packages, pkg_list: packages)
+    let(:features_list) do
+      double("StorageFeaturesList", pkg_list: packages)
     end
     let(:packages) { [] }
 
     context "during installation" do
       let(:install) { true }
 
-      before do
-        allow(Y2Storage::PackageHandler).to receive(:new).and_return handler
-      end
-
-      let(:handler) do
-        double("PackageHandler", add_feature_packages: packages, pkg_list: packages)
+      let(:features_list) do
+        double("StorageFeaturesList", pkg_list: packages)
       end
       let(:packages) { [] }
 
       it "checks the packages to install" do
-        expect(handler).to receive(:add_feature_packages).with current_graph
+        expect(current_graph).to receive(:used_features)
         widget.init
       end
 

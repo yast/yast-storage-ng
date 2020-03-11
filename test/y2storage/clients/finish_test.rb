@@ -22,6 +22,8 @@ require_relative "../spec_helper"
 require "y2storage/clients/finish"
 require "fileutils"
 
+Yast.import "Service"
+
 describe Y2Storage::Clients::Finish do
   subject(:client) { described_class.new }
 

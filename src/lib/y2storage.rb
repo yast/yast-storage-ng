@@ -60,6 +60,7 @@ require "y2storage/resize_info"
 require "y2storage/space_info"
 require "y2storage/mount_point"
 require "y2storage/btrfs_raid_level"
+require "y2storage/storage_features_list"
 
 require "y2storage/exceptions"
 require "y2storage/boot_requirements_checker"

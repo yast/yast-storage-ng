@@ -1078,4 +1078,29 @@ describe Y2Storage::Devicegraph do
       end
     end
   end
+
+  describe "#used_features" do
+    before { fake_scenario(scenario) }
+
+    context "with local devices combining several filesystem types" do
+      let(:scenario) { "mixed_disks" }
+
+      it "returns the expected set of storage features" do
+        features = fake_devicegraph.used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id))
+          .to contain_exactly(:UF_BTRFS, :UF_EXT4, :UF_NTFS, :UF_XFS, :UF_SWAP)
+      end
+    end
+
+    context "with unformatted DASD and FC devices" do
+      let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+      it "returns the expected set of storage features" do
+        features = fake_devicegraph.used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id)).to contain_exactly(:UF_DASD, :UF_FC, :UF_FCOE, :UF_MULTIPATH)
+      end
+    end
+  end
 end

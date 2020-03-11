@@ -18,10 +18,12 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/callbacks/libstorage_callback"
+require "y2storage/storage_features_list"
+require "y2storage/package_handler"
+require "yast2/popup"
 
 Yast.import "Mode"
 Yast.import "Label"
-Yast.import "Popup"
 
 module Y2Storage
   module Callbacks
@@ -52,31 +54,19 @@ module Y2Storage
         log.info "Error details. message: #{message}. what: #{what}. command: #{command}. "\
                  "used_features: #{used_features}."
 
-        # Redirect to error callback if no packages can be installed.
-        return error(message, what) if used_features == 0 || Yast::Mode.installation
-
-        package_handler = Y2Storage::PackageHandler.new
-        package_handler.add_feature_packages(used_features)
+        packages = StorageFeaturesList.from_bitfield(used_features).pkg_list
 
         # Redirect to error callback if no packages can be installed.
-        return error(message, what) if package_handler.compact.empty?
+        return error(message, what) unless can_install?(packages)
 
-        description = _("An external command required for probing is missing. When\n"\
-                        "continuing despite the error, the presented system information\n"\
-                        "will be incomplete. You may also install the required packages\n"\
-                        "and restart probing.")
+        answer = show_popup(packages)
+        log.info "User answer: #{answer} (packages #{packages})"
 
-        what += "\n\n" + missing_command_handle_packages_text(package_handler)
+        return true if answer == :ignore
 
-        question = _("Continue despite the error, install required packages or abort?")
-        buttons = { continue: Yast::Label.ContinueButton, install: _("Install Packages"),
-                    abort: Yast::Label.AbortButton }
-
-        result = Yast2::Popup.show(full_message(message, description, question, what),
-          details: wrap_text(what), buttons: buttons, focus: :install)
-        log.info "User answer: #{result}"
-
-        missing_command_handle_user_decision(result, package_handler)
+        PackageHandler.new(packages).commit
+        @again = true
+        false
       end
 
       # Initialization.
@@ -95,39 +85,38 @@ module Y2Storage
 
       private
 
-      # Generates the text for the packages that must be installed.
-      #
-      # @return [String] The text.
-      #
-      def missing_command_handle_packages_text(package_handler)
-        packages = package_handler.compact
+      # Interactive pop-up, AutoYaST is not taken into account because this is
+      # only used in normal mode, not in (auto)installation.
+      def show_popup(packages)
+        text = n_(
+          "The following package needs to be installed to fully analyze the system:\n" \
+          "%s\n\n" \
+          "If you ignore this and continue without installing it, the system\n" \
+          "information presented by YaST will be incomplete.",
+          "The following packages need to be installed to fully analyze the system:\n" \
+          "%s\n\n" \
+          "If you ignore this and continue without installing them, the system\n" \
+          "information presented by YaST will be incomplete.",
+          packages.size
+        ) % packages.sort.join(", ")
 
-        n_("The following package needs to be installed:",
-          "The following packages need to be installed:", packages.size) + "\n" +
-          packages.sort.join(", ")
+        buttons = { ignore: Yast::Label.IgnoreButton, install: Yast::Label.InstallButton }
+
+        Yast2::Popup.show(text, buttons: buttons, focus: :install)
       end
 
-      # Handles the result from the popup.
-      #
-      # @return [Boolean] Whether probing should continue.
-      #
-      def missing_command_handle_user_decision(result, package_handler)
-        case result
-
-        when :install
-          package_handler.commit
-          @again = true
-          false
-
-        when :continue
-          @again = false
-          true
-
-        when :abort
-          @again = false
-          false
-
+      def can_install?(packages)
+        if packages.empty?
+          log.info "No packages to install"
+          return false
         end
+
+        if !Yast::Mode.normal
+          log.info "Packages can only be installed in normal mode"
+          return false
+        end
+
+        true
       end
     end
   end
