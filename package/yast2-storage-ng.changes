@@ -7,7 +7,7 @@ Wed Mar 11 12:53:13 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 - More libstorage-ng "storage features" now recognized and handled
   if needed: UF_DASD, UF_BITLOCKER, UF_JFS, UF_F2FS, UF_EXFAT.
 - Partitioner: better error reporting when the installation of
-  a needed packages fails.
+  needed packages fails.
 - 4.2.95
 
 -------------------------------------------------------------------
