@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Wed Mar 11 12:53:13 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Usability improvements when asking the user to install packages
+  during the probing phase (related to bsc#1140040).
+- More flexible API for PackageHandler and related classes
+- More libstorage-ng "storage features" now recognized and handled
+  if needed: UF_DASD, UF_BITLOCKER, UF_JFS, UF_F2FS, UF_EXFAT.
+- Partitioner: better error reporting when the installation of
+  a needed packages fails.
+- 4.2.95
+
+-------------------------------------------------------------------
 Mon Mar  9 09:53:50 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: show an error when no suitable physical volumes are
