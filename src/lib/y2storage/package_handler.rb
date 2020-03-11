@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/used_storage_features"
 
 Yast.import "Package"
 Yast.import "PackageSystem"
