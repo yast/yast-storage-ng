@@ -35,7 +35,7 @@ module Y2Storage
     include Enumerable
     extend Forwardable
 
-    def_delegators :@features, :each, :empty?
+    def_delegators :@features, :each, :empty?, :size, :length
 
     # Constructor
     #
