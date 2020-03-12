@@ -88,6 +88,15 @@ module Y2Storage
     #   @param delta [Integer]
     storage_forward :adjust_length
 
+    # @!method adjust_block_size(block_size)
+    #   Sets new block size without changing the region size
+    #
+    #   @raise [storage::InvalidBlockSize] if region start or region end are not
+    #   aligned to block_size
+    #
+    #   @param block_size [DiskSize]
+    storage_forward :adjust_block_size
+
     # @!method <(other)
     #   Checks whether the region starts before the other
     #
