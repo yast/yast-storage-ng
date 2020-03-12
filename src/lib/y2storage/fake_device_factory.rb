@@ -74,7 +74,9 @@ module Y2Storage
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
         ].concat(FILE_SYSTEM_PARAM),
         "md"              => [
-          "name", "md_level", "md_parity", "chunk_size", "md_uuid", "in_etc_mdadm", "metadata"
+          "name", "md_level", "md_parity", "chunk_size", "md_uuid", "in_etc_mdadm", "metadata",
+           # size and block_size are ignored
+          "size", "block_size"
         ].concat(FILE_SYSTEM_PARAM),
         "md_device"       => ["blk_device"],
         "partition_table" => [],

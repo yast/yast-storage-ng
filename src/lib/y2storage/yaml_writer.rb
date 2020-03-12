@@ -189,6 +189,8 @@ module Y2Storage
     def basic_md_attributes(md)
       {
         "name"         => md.name,
+        "size"         => md.size.to_s,
+        "block_size"   => md.region.block_size.to_s,
         "md_level"     => md.md_level.to_s,
         "md_parity"    => md.md_parity.to_s,
         "chunk_size"   => md.chunk_size.to_s,
