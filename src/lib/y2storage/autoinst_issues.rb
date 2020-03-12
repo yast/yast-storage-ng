@@ -34,6 +34,7 @@ end
 
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_issues/issue"
+require "y2storage/autoinst_issues/conflicting_attrs"
 require "y2storage/autoinst_issues/could_not_calculate_boot"
 require "y2storage/autoinst_issues/could_not_create_boot"
 require "y2storage/autoinst_issues/exception"
