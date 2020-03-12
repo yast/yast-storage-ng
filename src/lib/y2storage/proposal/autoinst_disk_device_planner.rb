@@ -92,10 +92,6 @@ module Y2Storage
         issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
         planned_disk = Y2Storage::Planned::Disk.new
         device_config(planned_disk, part, drive)
-        planned_disk.lvm_volume_group_name = part.lvm_group
-        planned_disk.raid_name = part.raid_name
-        planned_disk.btrfs_name = part.btrfs_name
-        add_bcache_attrs(planned_disk, part)
         add_device_reuse(planned_disk, disk, part)
 
         [planned_disk]
@@ -129,9 +125,6 @@ module Y2Storage
         issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
         master_partition = drive.partitions.first
         planned_stray_device = Y2Storage::Planned::StrayBlkDevice.new
-        planned_stray_device.lvm_volume_group_name = master_partition.lvm_group
-        planned_stray_device.raid_name = master_partition.raid_name
-        planned_stray_device.btrfs_name = master_partition.btrfs_name
         device_config(planned_stray_device, master_partition, drive)
         add_device_reuse(planned_stray_device, stray_blk_device, master_partition)
         [planned_stray_device]

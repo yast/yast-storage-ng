@@ -64,10 +64,59 @@ module Y2Storage
       #   section containing the partition one
       def configure_device(device, partition_section, drive_section)
         configure_filesystem(device, partition_section, drive_section)
+        configure_usage(device, partition_section)
         add_encryption_attrs(device, partition_section)
       end
 
       alias_method :device_config, :configure_device
+
+      # Sets those attributes that determine how the device will be used (file system, RAID member, etc.)
+      #
+      # A device can be used as file system, a RAID member, an LVM PV, a Bcache backing/caching device
+      # or as part of a Btrfs multi-device. And in the future, the list might grow.
+      #
+      # The logic to determine which device to honor is quite simple and it could be improved
+      # in the future if needed.
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST
+      #   specification of the concrete device
+      def configure_usage(device, partition_section)
+        usage_attr, *ignored_attrs = usage_attrs_in(partition_section)
+        return if usage_attr.nil?
+
+        meth = USAGE_ATTRS_MAP[usage_attr] || usage_attr
+        meth = "#{meth}="
+        device.public_send(meth, partition_section.public_send(usage_attr)) if device.respond_to?(meth)
+        return if ignored_attrs.empty?
+
+        issues_list.add(:conflicting_attrs, partition_section, usage_attr, ignored_attrs)
+      end
+
+      # @return [Array<Symbol>] List of 'usage' attributes. The list is ordered by precedence.
+      USAGE_ATTRS = [
+        :mount, :raid_name, :lvm_group, :btrfs_name, :bcache_backing_for, :bcache_caching_for
+      ]
+      private_constant :USAGE_ATTRS
+
+      # @return [Array<Symbol>] Map of 'usage' attributes to planned device methods. The map
+      #   only contains those attributes which names does not match.
+      USAGE_ATTRS_MAP = {
+        lvm_group: :lvm_volume_group_name,
+        mount:     :mount_point
+      }
+      private_constant :USAGE_ATTRS_MAP
+
+      # Returns the attributes which determines how the device will be used
+      #
+      # @param partition_section [AutoinstProfile::PartitionSection] Partition specification
+      # @return [Array<Symbol>] List of usage related attributes which are defined
+      def usage_attrs_in(partition_section)
+        USAGE_ATTRS.reject do |e|
+          value = partition_section.public_send(e)
+          value.nil? || (value.is_a?(Array) && value.empty?)
+        end
+      end
 
       # Sets all common filesystem attributes (e.g., label, uuid, mount point, etc)
       #
@@ -330,12 +379,7 @@ module Y2Storage
 
         partition.disk = container.name
         partition.partition_id = section.id_for_partition
-        partition.lvm_volume_group_name = section.lvm_group
-        partition.raid_name = section.raid_name unless container.is_a?(Planned::Md)
-        partition.btrfs_name = section.btrfs_name
         partition.primary = section.partition_type == "primary" if section.partition_type
-        add_bcache_attrs(partition, section)
-
         device_config(partition, section, drive)
         add_partition_reuse(partition, section) if section.create == false
         partition
@@ -358,15 +402,6 @@ module Y2Storage
         partition.max_size = size_info.max
         partition.weight = 1 if size_info.unlimited?
         true
-      end
-
-      # Adds bcache specific attributes
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_bcache_attrs(device, section)
-        device.bcache_backing_for = section.bcache_backing_for if section.bcache_backing_for
-        device.bcache_caching_for = section.bcache_caching_for if section.bcache_caching_for
       end
     end
   end

@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Mar 12 11:51:13 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: report the user when conflicting attributes are set
+  in a partition section (i.e., mount, raid_name, lvm_group,
+  btrfs_name, bcache_backing_for and bcache_caching_for)
+  (bsc#1165907).
+- 4.2.96
+
+-------------------------------------------------------------------
 Wed Mar 11 12:53:13 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Usability improvements when asking the user to install packages

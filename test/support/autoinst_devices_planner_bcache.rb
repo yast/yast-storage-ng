@@ -33,7 +33,7 @@ RSpec.shared_examples "handles bcache configuration" do
 
     before do
       device_from_profile.bcache_backing_for = "/dev/bcache0"
-      device_from_profile.filesystem = nil
+      device_from_profile.mount = nil
     end
 
     it "sets the device to be used as backing device for the given bcache" do
@@ -44,6 +44,7 @@ RSpec.shared_examples "handles bcache configuration" do
   context "when a bcache is specified (as caching)" do
     before do
       device_from_profile.bcache_caching_for = ["/dev/bcache0"]
+      device_from_profile.mount = nil
     end
 
     it "sets the device to be used as caching device for the given bcache" do
