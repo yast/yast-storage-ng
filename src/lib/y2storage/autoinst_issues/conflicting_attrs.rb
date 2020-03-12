@@ -33,7 +33,7 @@ module Y2Storage
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       # @param selected_attr [Symbol] Name of the attribute that will be used
       # @param ignored_attrs [Array<Symbol>] List of attributes to be ignored
-      def initialize(section, selected_attr, ignored_attrs = [])
+      def initialize(section, selected_attr, ignored_attrs)
         textdomain "storage"
 
         @section = section
@@ -41,7 +41,7 @@ module Y2Storage
         @ignored_attrs = ignored_attrs
       end
 
-      # Fatal problem
+      # Returns problem severity
       #
       # @return [Symbol] :warn
       # @see Issue#severity

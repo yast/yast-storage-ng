@@ -26,6 +26,10 @@ RSpec.shared_examples "handles conflicts" do
     end
   end
 
+  def added_issue
+    issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::ConflictingAttrs) }
+  end
+
   context "when conflicting attributes specify different usages for the device" do
     let(:root_spec) do
       {
@@ -46,9 +50,8 @@ RSpec.shared_examples "handles conflicts" do
     end
 
     it "registers an issue" do
-      expect(issues_list).to receive(:add)
-        .with(:conflicting_attrs, drive.partitions.first, :mount, Array)
       planner.planned_devices(drive)
+      expect(added_issue.selected_attr).to eq(:mount)
     end
 
     context "and the 'mount' attribute is missing" do
@@ -60,9 +63,8 @@ RSpec.shared_examples "handles conflicts" do
       end
 
       it "registers an issue" do
-        expect(issues_list).to receive(:add)
-          .with(:conflicting_attrs, drive.partitions.first, :raid_name, Array)
         planner.planned_devices(drive)
+        expect(added_issue.selected_attr).to eq(:raid_name)
       end
     end
 
@@ -75,9 +77,8 @@ RSpec.shared_examples "handles conflicts" do
       end
 
       it "registers an issue" do
-        expect(issues_list).to receive(:add)
-          .with(:conflicting_attrs, drive.partitions.first, :lvm_group, Array)
         planner.planned_devices(drive)
+        expect(added_issue.selected_attr).to eq(:lvm_group)
       end
     end
 
@@ -90,9 +91,8 @@ RSpec.shared_examples "handles conflicts" do
       end
 
       it "registers an issue" do
-        expect(issues_list).to receive(:add)
-          .with(:conflicting_attrs, drive.partitions.first, :btrfs_name, Array)
         planner.planned_devices(drive)
+        expect(added_issue.selected_attr).to eq(:btrfs_name)
       end
     end
 
@@ -105,9 +105,8 @@ RSpec.shared_examples "handles conflicts" do
       end
 
       it "registers an issue" do
-        expect(issues_list).to receive(:add)
-          .with(:conflicting_attrs, drive.partitions.first, :bcache_backing_for, Array)
         planner.planned_devices(drive)
+        expect(added_issue.selected_attr).to eq(:bcache_backing_for)
       end
     end
 
@@ -120,8 +119,8 @@ RSpec.shared_examples "handles conflicts" do
       end
 
       it "does not register an issue" do
-        expect(issues_list).to_not receive(:add)
         planner.planned_devices(drive)
+        expect(added_issue).to be_nil
       end
     end
   end
