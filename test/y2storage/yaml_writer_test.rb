@@ -687,5 +687,39 @@ describe Y2Storage::YamlWriter do
         expect(plain_content(io.string)).to eq(plain_content(expected_result))
       end
     end
+
+    context "when the devicegraph contains a btrfs with a nocow subvolume" do
+      before do
+        sda = Y2Storage::Disk.create(staging, "/dev/sda")
+        sda.size = 1 * Storage.GiB
+
+        btrfs = sda.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        btrfs.create_mount_point("/")
+        btrfs.create_btrfs_subvolume("/bar", true)
+      end
+
+      let(:expected_result) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 1 GiB
+              block_size: 0.5 KiB
+              io_size: 0 B
+              min_grain: 1 MiB
+              align_ofs: 0 B
+              file_system: btrfs
+              mount_point: "/"
+              btrfs:
+                subvolumes:
+                - subvolume:
+                    path: bar
+                    nocow: true)
+      end
+
+      it "generates the expected yaml content" do
+        described_class.write(staging, io)
+        expect(plain_content(io.string)).to eq(plain_content(expected_result))
+      end
+    end
   end
 end
