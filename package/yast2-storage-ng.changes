@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar 13 14:02:15 UTC 2020 - Steffen Winterfeldt <snwint@suse.com>
+
+- write nocow attribute correctly into YAML
+- 4.2.97
+
+-------------------------------------------------------------------
 Thu Mar 12 11:51:13 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: report the user when conflicting attributes are set
