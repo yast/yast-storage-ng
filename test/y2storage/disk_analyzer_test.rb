@@ -286,6 +286,8 @@ describe Y2Storage::DiskAnalyzer do
     let(:scenario) { "empty_disks" }
 
     let(:devicegraph) { Y2Storage::StorageManager.instance.probed }
+    let(:arch) { instance_double("Y2Storage::Arch", efiboot?: efi) }
+    let(:efi) { true }
 
     let(:sda) { find_device("/dev/sda") }
     let(:sda1) { find_device("/dev/sda1") }
@@ -296,6 +298,7 @@ describe Y2Storage::DiskAnalyzer do
 
     before do
       allow(Y2Packager::Repository).to receive(:all).and_return(repositories)
+      allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return arch
     end
 
     let(:repositories) { [] }
@@ -445,7 +448,7 @@ describe Y2Storage::DiskAnalyzer do
         end
       end
 
-      context "but the MD RAID is not a valid candidate" do
+      context "but the MD RAID is not a valid candidate because it is formatted" do
         before do
           format_device(md)
 
@@ -467,6 +470,18 @@ describe Y2Storage::DiskAnalyzer do
           it "includes the disk devices used by the MD RAID" do
             expect(candidate_disks).to include("/dev/sda", "/dev/sdb")
           end
+        end
+      end
+
+      context "but the MD RAID is not a valid candidate because EFI is not being used" do
+        let(:efi) { false }
+
+        it "includes the disk devices used by the MD RAID" do
+          expect(candidate_disks).to include("/dev/sda", "/dev/sdb")
+        end
+
+        it "does not include the MD RAID" do
+          expect(candidate_disks).to_not include("/dev/md0")
         end
       end
     end
