@@ -129,7 +129,9 @@ module Y2Storage
     # Finds devices (disk devices and software RAIDs) that are suitable for installing Linux
     #
     # From fate#326573 on, software RAIDs with partition table or without children are also
-    # considered as valid candidates.
+    # considered as valid candidates. But since that's a controversial behavior that has
+    # caused collateral problems (e.g. bsc#1166258), those software RAIDs are only taken
+    # into account when booting in EFI mode.
     #
     # @return [Array<BlkDevice>] candidate
     def candidate_disks
@@ -242,11 +244,16 @@ module Y2Storage
 
     # Finds software RAIDs that are considered valid candidates for a Linux installation
     #
-    # Apart from matches conditions of #candidate_disk?, a valid software RAID candidate must
+    # Apart from matching conditions of #candidate_disk?, a valid software RAID candidate must
     # either, have a partition table or do not have children.
+    #
+    # See {#candidate_disks} for extra explanations (e.g. the relevance of EFI) and for
+    # Fate/Bugzilla references.
     #
     # @return [Array<Md>]
     def candidate_software_raids
+      return [] unless arch.efiboot?
+
       devicegraph.software_raids.select do |md|
         (md.partition_table? || md.children.empty?) && candidate_disk?(md)
       end
@@ -381,6 +388,13 @@ module Y2Storage
     # @return [Array<Y2Packager::Repository>]
     def local_repositories
       Y2Packager::Repository.all.select(&:local?)
+    end
+
+    # Current architecture
+    #
+    # @return [Y2Storage::Arch]
+    def arch
+      @arch ||= StorageManager.instance.arch
     end
   end
 end
