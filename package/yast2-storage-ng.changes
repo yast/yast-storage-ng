@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Mar 18 16:37:28 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Restricted the scenarios in which software-defined RAIDs are
+  eligible as target devices for the proposal. Do it only in systems
+  with EFI (bsc#1166258).
+- 4.2.98
+
+-------------------------------------------------------------------
 Fri Mar 13 14:02:15 UTC 2020 - Steffen Winterfeldt <snwint@suse.com>
 
 - write nocow attribute correctly into YAML
