@@ -159,7 +159,10 @@ module Y2Partitioner
         # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
         def same_topology?(target_device)
-          target_device.topology == device.topology
+          # Checking the topology object is not enough, block sizes also need to
+          # match (bsc#1166363)
+          target_device.topology == device.topology &&
+            target_device.block_size == device.block_size
         end
 
         # Whether the target device holds mount points
