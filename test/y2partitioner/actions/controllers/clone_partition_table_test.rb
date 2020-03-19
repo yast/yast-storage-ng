@@ -124,6 +124,10 @@ describe Y2Partitioner::Actions::Controllers::ClonePartitionTable do
         expect(subject.suitable_devices_for_cloning.map(&:name)).to_not include("/dev/dasda")
       end
 
+      it "does not include devices with a different block size" do
+        expect(subject.suitable_devices_for_cloning.map(&:name)).to_not include("/dev/sdf")
+      end
+
       context "when some devices do not support the partition table type" do
         let(:device_name) { "/dev/dasda" }
 

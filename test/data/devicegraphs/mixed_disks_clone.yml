@@ -71,6 +71,11 @@
     name: /dev/sde
     size: 100 GiB
 
+- disk:
+    name:       /dev/sdf
+    size:       200 GiB
+    block_size: 4 KiB
+
 - dasd:
     name:            /dev/dasda
     type:            eckd
