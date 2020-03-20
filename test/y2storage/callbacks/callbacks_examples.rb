@@ -19,6 +19,8 @@
 # find current contact information at www.suse.com.
 
 RSpec.shared_examples "general #error examples" do
+  ERROR_EXAMPLES_MAX_LENGTH = 80
+
   it "displays the error and the details to the user" do
     expect(Yast::Report).to receive(:yesno_popup) do |message, options|
       expect(message).to include "the message"
@@ -65,10 +67,9 @@ RSpec.shared_examples "general #error examples" do
     end
 
     it "wraps properly error message" do
-      MAX_LENGTH = 80
       expect(Yast::Report).to receive(:yesno_popup) do |_message, options|
         max_line = options[:details].lines.max_by(&:size)
-        expect(max_line.size < MAX_LENGTH).to eq(true), "Line '#{max_line}' is too long"
+        expect(max_line.size < ERROR_EXAMPLES_MAX_LENGTH).to eq(true), "Line '#{max_line}' is too long"
       end
 
       subject.error("message", what)
