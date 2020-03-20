@@ -351,7 +351,7 @@ module Y2Storage
           devs = devs_to_reuse.select { |d| d.respond_to?(:pv_for?) && d.pv_for?(vg.volume_group_name) }
           pvs += devs.map(&:reuse_name)
           if pvs.empty?
-            issues_list.add(:no_pvs, vg)
+            issues_list.add(:no_components, vg)
             next result
           end
 

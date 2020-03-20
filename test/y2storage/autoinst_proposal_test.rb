@@ -975,7 +975,7 @@ describe Y2Storage::AutoinstProposal do
         it "registers an issue" do
           proposal.propose
           issues = issues_list.select do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::NoPvs)
+            i.is_a?(Y2Storage::AutoinstIssues::NoComponents)
           end
           expect(issues.size).to eq(1)
         end

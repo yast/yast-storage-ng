@@ -251,7 +251,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:vg) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
 
         it "registers an issue" do
-          expect(issues_list).to receive(:add).with(:no_pvs, vg)
+          expect(issues_list).to receive(:add).with(:no_components, vg)
           creator.populated_devicegraph(planned_devices, ["/dev/sda"])
         end
       end
@@ -314,7 +314,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
 
       context "when no suitable members are found" do
-        let(:part1) { planned_partition(disk: "/dev/sda",  reuse_name: "/dev/sda3") }
+        let(:part1) { planned_partition(disk: "/dev/sda", reuse_name: "/dev/sda3") }
 
         let(:md0) do
           planned_md(name: "/dev/md0", mount_point: "/")
