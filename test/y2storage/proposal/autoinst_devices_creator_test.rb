@@ -251,13 +251,16 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:vg) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
 
         it "registers an issue" do
-          expect(issues_list).to receive(:add).with(:no_pvs, vg)
           creator.populated_devicegraph(planned_devices, ["/dev/sda"])
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
     end
 
     describe "using RAID" do
+      let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, md0]) }
+
       context "reusing a partition as a RAID member" do
         let(:part1) do
           planned_partition(disk: "/dev/sda", raid_name: "/dev/md0", reuse_name: "/dev/sda3")
@@ -274,8 +277,6 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         end
 
         let(:partitions) { [part1, part2] }
-
-        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, md0]) }
 
         it "adds the partition as a RAID member" do
           result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
@@ -300,8 +301,6 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           planned_partition(filesystem_type: filesystem_type, mount_point: "/", min_size: 250.GiB)
         end
 
-        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, md0]) }
-
         it "shrinks the partition to make it fit into the MD RAID" do
           result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
           devicegraph = result.devicegraph
@@ -312,6 +311,21 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         it "registers which devices were shrinked" do
           result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
           expect(result.shrinked_partitions.map(&:planned)).to eq([root])
+        end
+      end
+
+      context "when no suitable members are found" do
+        let(:part1) { planned_partition(disk: "/dev/sda", reuse_name: "/dev/sda3") }
+
+        let(:md0) do
+          planned_md(name: "/dev/md0", mount_point: "/")
+        end
+
+        let(:partitions) { [part1] }
+
+        it "registers an issue" do
+          creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+          expect(issues_list).to_not be_empty
         end
       end
     end
@@ -347,8 +361,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:partitions) { [caching_part] }
 
         it "raises an exception" do
-          expect { creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"]) }
-            .to raise_error(Y2Storage::DeviceNotFoundError)
+          creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
 
@@ -477,6 +492,17 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
           expect(filesystem.sid).to eq(sid_before)
           expect(filesystem.mount_path).to eq("/foo")
+        end
+      end
+
+      context "with no suitable members are found" do
+        let(:partition1) { planned_partition(reuse_name: "/dev/sda2") }
+        let(:planned_devices) { [partition1, btrfs] }
+
+        it "registers an issue" do
+          creator.populated_devicegraph(collection, ["/dev/sda"])
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
     end
