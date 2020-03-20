@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Mar 20 12:25:12 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: show an error when no suitable components are found
+  for Bcache, Btrfs multi-devices filesystems, and RAID devices
+  (bsc#1167053).
+- 4.2.100
+
+-------------------------------------------------------------------
 Thu Mar 19 11:16:31 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: do not allow to clone a partition table to another
