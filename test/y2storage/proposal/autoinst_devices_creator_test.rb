@@ -432,8 +432,6 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           expect(result.shrinked_partitions.map(&:planned)).to eq([root])
         end
       end
-
-      context "when "
     end
 
     describe "using multi-device Btrfs" do
