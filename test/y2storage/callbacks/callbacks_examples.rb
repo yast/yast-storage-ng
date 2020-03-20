@@ -19,8 +19,6 @@
 # find current contact information at www.suse.com.
 
 RSpec.shared_examples "general #error examples" do
-  ERROR_EXAMPLES_MAX_LENGTH = 80
-
   it "displays the error and the details to the user" do
     expect(Yast::Report).to receive(:yesno_popup) do |message, options|
       expect(message).to include "the message"
@@ -56,6 +54,7 @@ RSpec.shared_examples "general #error examples" do
 
   # see https://bugzilla.suse.com/show_bug.cgi?id=1085468
   context "with long error" do
+    let(:max_length) { 80 }
     let(:what) do
       "command '/usr/sbin/parted --script '/dev/sda' mklabel gpt' failed:\n\n\n" \
       "stderr:\n"\
@@ -69,7 +68,7 @@ RSpec.shared_examples "general #error examples" do
     it "wraps properly error message" do
       expect(Yast::Report).to receive(:yesno_popup) do |_message, options|
         max_line = options[:details].lines.max_by(&:size)
-        expect(max_line.size < ERROR_EXAMPLES_MAX_LENGTH).to eq(true), "Line '#{max_line}' is too long"
+        expect(max_line.size < max_length).to eq(true), "Line '#{max_line}' is too long"
       end
 
       subject.error("message", what)
