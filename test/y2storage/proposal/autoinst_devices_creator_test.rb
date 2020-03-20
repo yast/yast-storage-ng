@@ -251,8 +251,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:vg) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
 
         it "registers an issue" do
-          expect(issues_list).to receive(:add).with(:no_components, vg)
           creator.populated_devicegraph(planned_devices, ["/dev/sda"])
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
     end
@@ -360,8 +361,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:partitions) { [caching_part] }
 
         it "raises an exception" do
-          expect { creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"]) }
-            .to raise_error(Y2Storage::DeviceNotFoundError)
+          creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
 
@@ -501,7 +503,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         it "registers an issue" do
           creator.populated_devicegraph(collection, ["/dev/sda"])
-          expect(issues_list).to_not be_empty
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          expect(issue).to_not be_nil
         end
       end
     end

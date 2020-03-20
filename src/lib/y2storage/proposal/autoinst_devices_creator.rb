@@ -314,6 +314,11 @@ module Y2Storage
           # is used in #raid_name
           devices = result.created_names { |d| d.respond_to?(:raid_name) && md.name?(d.raid_name) }
           devices += devs_to_reuse.select { |d| md.name?(d.raid_name) }.map(&:reuse_name)
+          if devices.empty?
+            issues_list.add(:no_components, md)
+            next result
+          end
+
           result.merge(create_md(result.devicegraph, md, devices))
         end
       end
@@ -329,6 +334,11 @@ module Y2Storage
         bcaches.reduce(creator_result) do |result, bcache|
           backing_devname = find_bcache_member(bcache.name, :backing, creator_result, devs_to_reuse)
           caching_devname = find_bcache_member(bcache.name, :caching, creator_result, devs_to_reuse)
+          if backing_devname.nil?
+            issues_list.add(:no_components, bcache)
+            next result
+          end
+
           new_result = create_bcache(result.devicegraph, bcache, backing_devname, caching_devname)
           result.merge(new_result)
         end
@@ -369,6 +379,11 @@ module Y2Storage
         filesystems_to_create.reduce(creator_result) do |result, planned_filesystem|
           devices = created_devices_for_btrfs(planned_filesystem, result)
           devices += reused_devices_for_btrfs(planned_filesystem, reusable_devices)
+          if devices.empty?
+            issues_list.add(:no_components, planned_filesystem)
+            next result
+          end
+
           result.merge(create_btrfs(result.devicegraph, planned_filesystem, devices))
         end
       end
