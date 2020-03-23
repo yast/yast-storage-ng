@@ -816,6 +816,22 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
         expect(analyzer.boot_in_bcache?).to eq true
       end
     end
+
+    # Regression test for bsc#1165903: recognizes that /boot is in a BCache also when placed
+    # explicitly or implicitly in a formatted BCache partition.
+    context "when /boot is placed in a formatted BCache partition" do
+      let(:scenario) { "partitioned_btrfs_bcache.xml" }
+      let(:device_name) { "/dev/bcache0p1" }
+      let(:boot_part) { fake_devicegraph.find_by_name("/dev/vda2") }
+
+      it "returns true" do
+        # Remove the /boot mount point, which means
+        # it will be on the root filesystem, i.e., /dev/bcache0p1
+        boot_part.filesystem.mount_path = ""
+
+        expect(analyzer.boot_in_bcache?).to eq true
+      end
+    end
   end
 
   describe "#boot_encryption_type" do

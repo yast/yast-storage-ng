@@ -570,7 +570,10 @@ module Y2Storage
           # If this is not a BlkFilesystem (e.g. NFS), it can't be in a BCache
           return false unless device.respond_to?(:plain_blk_devices)
 
-          device.plain_blk_devices.any? { |dev| dev.is?(:bcache) }
+          # Let's trust in the hierarchy to determine if the device belongs to a Bcache, although
+          # there may be some advanced configuration for which this is not totally true because the
+          # device is reachable from a not BCache ancestor.
+          device.ancestors.any? { |dev| dev.is?(:bcache) }
         end
       end
 
