@@ -795,39 +795,40 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
   describe "#boot_in_bcache?" do
     subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
-    let(:planned_devs) { [] }
-    let(:scenario) { "bcache-root-ext4.xml" }
-    let(:device_name) { "/dev/bcache0" }
-    let(:boot_part_name) { "/dev/sda2" }
-    let(:boot_part) { fake_devicegraph.find_by_name("/dev/sda2") }
 
-    context "with a separate /boot on a normal ext4 partition and root on /dev/bcache0" do
-      it "correctly recognizes that /boot is not on a BCache" do
+    let(:planned_devs) { [] }
+    let(:scenario) { "partitioned_btrfs_bcache.xml" }
+    let(:bcache_device_name) { "/dev/bcache0" }
+    let(:bcache_device) { fake_devicegraph.find_by_name(bcache_device_name) }
+    let(:boot_partition) { fake_devicegraph.find_by_name("/dev/vda2") }
+
+    context "when /boot mounted in neither, bcache device nor bcache partition" do
+      it "returns false" do
         expect(analyzer.boot_in_bcache?).to eq false
       end
     end
 
-    context "without a separate /boot, so /boot is on the root filesystem on /dev/bcache0" do
-      it "correctly recognizes that /boot is now on a BCache" do
-        # Remove the /boot mount point on the boot partition
-        boot_part.filesystem.mount_path = ""
+    context "when /boot mounted in a bcache device" do
+      before do
+        # Reassign the mount point from /dev/vda (Ext4 partition) to /dev/bcache0
+        boot_partition.filesystem.mount_path = ""
+        bcache_device.remove_descendants
+        bcache_device.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        bcache_device.filesystem.mount_path = "/boot"
+      end
 
-        # Now /boot is on the root filesystem, i.e. /dev/bcache0
+      it "returns true" do
         expect(analyzer.boot_in_bcache?).to eq true
       end
     end
 
-    # Regression test for bsc#1165903: recognizes that /boot is in a BCache also when placed
-    # explicitly or implicitly in a formatted BCache partition.
-    context "when /boot is placed in a formatted BCache partition" do
-      let(:scenario) { "partitioned_btrfs_bcache.xml" }
-      let(:device_name) { "/dev/bcache0p1" }
-      let(:boot_part) { fake_devicegraph.find_by_name("/dev/vda2") }
-
+    # Regression test for bsc#1165903: recognizes that /boot is in a bcache
+    # when placed explicitly or implicitly in a bcache partition.
+    context "when /boot mounted in a bcache partition" do
       it "returns true" do
         # Remove the /boot mount point, which means
         # it will be on the root filesystem, i.e., /dev/bcache0p1
-        boot_part.filesystem.mount_path = ""
+        boot_partition.filesystem.mount_path = ""
 
         expect(analyzer.boot_in_bcache?).to eq true
       end
