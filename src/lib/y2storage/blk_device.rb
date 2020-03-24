@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -286,6 +286,15 @@ module Y2Storage
     #
     #   @return [Encryption] nil if the device is not encrypted
     storage_forward :encryption, as: "Encryption", check_with: :has_encryption
+
+    # @!method possible_mount_bys
+    #   Possible mount-by methods to reference the block device itself, regardless of its content
+    #
+    #   @see #preferred_name
+    #
+    #   @return [Array<Filesystems::MountByType>]
+    storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
+    private :possible_mount_bys
 
     # Checks whether the device is encrypted
     #
@@ -677,6 +686,23 @@ module Y2Storage
       false
     end
 
+    # Most convenient file path to reference the block device itself,
+    # regardless of its content
+    #
+    # This method returns the same result if the device is formatted or if it's empty.
+    # To determine the name that must be used to reference a filesytem (e.g. in fstab),
+    # call {Filesystems::BlkFilesystem#preferred_name} on the filesystem object.
+    #
+    # This method always returns a valid full-path filename inferred from the
+    # information already available in the devicegraph. To choose from all the possible
+    # names, it relies on {Filesystems::MountByType.best_for}, which already takes
+    # {Configuration#default_mount_by} into account.
+    #
+    # @return [String]
+    def preferred_name
+      path_for_mount_by(preferred_mount_by)
+    end
+
     protected
 
     # Values for volume specification matching
@@ -691,6 +717,20 @@ module Y2Storage
       }
     end
 
+    # Most convenient mount_by option to reference the block device itself,
+    # regardless of its content
+    #
+    # @see #preferred_name
+    #
+    # This method always returns an option that can be safely used by
+    # {#path_for_mount_by} to construct a valid filename.
+    #
+    # @return [Filesystems::MountByType]
+    def preferred_mount_by
+      Filesystems::MountByType.best_for(self, possible_mount_bys)
+    end
+
+    # @see Device#is?
     def types_for_is
       super << :blk_device
     end

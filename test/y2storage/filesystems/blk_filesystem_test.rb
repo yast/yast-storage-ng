@@ -237,6 +237,57 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#preferred_name" do
+    let(:scenario) { "mixed_disks" }
+    let(:dev_name) { "/dev/sdb2" }
+
+    context "when the filesystem contains a mount point" do
+      context "but the path for the given mount_by cannot be calculated" do
+        before do
+          allow(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+            .with(subject, anything).and_return(Y2Storage::Filesystems::MountByType::LABEL)
+        end
+
+        it "returns the best udev name that can be calculated" do
+          subject.uuid = ""
+          subject.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+
+          expect(subject.preferred_name).to eq "/dev/disk/by-label/suse_root"
+        end
+      end
+
+      context "and it's possible to honor the specified mount_by" do
+        it "returns the udev name corresponding to the current mount_by" do
+          subject.uuid = "12345678-90ab-cdef-1234-567890abcdef"
+          subject.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+          expect(subject.preferred_name).to eq "/dev/disk/by-uuid/12345678-90ab-cdef-1234-567890abcdef"
+
+          subject.mount_point.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+          expect(subject.preferred_name).to eq "/dev/disk/by-label/suse_root"
+        end
+      end
+    end
+
+    context "when the filesystem is not mounted" do
+      before do
+        allow(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+          .with(subject, anything).and_return(
+            Y2Storage::Filesystems::MountByType::LABEL, Y2Storage::Filesystems::MountByType::UUID
+          )
+
+        subject.remove_mount_point
+        subject.uuid = "12345678-90ab-cdef-1234-567890abcdef"
+      end
+
+      it "returns the best udev name that can be calculated" do
+        # According to the mock, the first call to #best_for returns LABEL...
+        expect(subject.preferred_name).to eq "/dev/disk/by-label/suse_root"
+        # ...and the second call returns UUID
+        expect(subject.preferred_name).to eq "/dev/disk/by-uuid/12345678-90ab-cdef-1234-567890abcdef"
+      end
+    end
+  end
+
   describe "#mount_options" do
     context "when filesystem has no mount point" do
       let(:dev_name) { "/dev/sdb3" }

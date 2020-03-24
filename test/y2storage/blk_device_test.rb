@@ -1464,4 +1464,21 @@ describe Y2Storage::BlkDevice do
       expect(subject.windows_suitable?).to eq(false)
     end
   end
+
+  describe "#preferred_name" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+    let(:device_name) { "/dev/sda1" }
+
+    let(:by_device) { Y2Storage::Filesystems::MountByType::DEVICE }
+    let(:by_path) { Y2Storage::Filesystems::MountByType::PATH }
+    let(:by_id) { Y2Storage::Filesystems::MountByType::ID }
+    let(:all_suitable) { [by_device, by_path, by_id] }
+
+    it "returns the best name from all the suitable ones" do
+      expect(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+        .with(device, all_suitable).and_return(by_path)
+
+      expect(device.preferred_name).to eq "/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part1"
+    end
+  end
 end
