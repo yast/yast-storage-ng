@@ -256,6 +256,29 @@ module Y2Storage
         Y2Storage::VolumeSpecification.for(mount_point.path)
       end
 
+      # File path to reference the filesystem based on the current mount by option
+      #
+      # @see #mount_by
+      #
+      # @return [String, nil] nil if the name cannot be determined for the current mount by option
+      def mount_by_name
+        return nil unless mount_by
+
+        path_for_mount_by(mount_by)
+      end
+
+      # Name (full path) that can be used to reference the filesystem for the given mount by option
+      #
+      # @return [String, nil] nil if the name cannot be determined for the given mount by option
+      def path_for_mount_by(mount_by)
+        if mount_by.is?(:label, :uuid)
+          attr_value = public_send(mount_by.to_sym)
+          mount_by.udev_name(attr_value)
+        else
+          blk_devices.first.path_for_mount_by(mount_by)
+        end
+      end
+
       protected
 
       # @see Device#is?
