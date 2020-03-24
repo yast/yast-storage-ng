@@ -288,6 +288,15 @@ module Y2Storage
     #   @return [Encryption] nil if the device is not encrypted
     storage_forward :encryption, as: "Encryption", check_with: :has_encryption
 
+    # @!method possible_mount_bys
+    #   Possible mount-by methods to reference the block device itself, regardless of its content
+    #
+    #   @see #preferred_name
+    #
+    #   @return [Array<Filesystems::MountByType>]
+    storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
+    private :possible_mount_bys
+
     # Checks whether the device is encrypted
     #
     # @return [boolean]
@@ -658,6 +667,30 @@ module Y2Storage
     # @return [Boolean]
     def windows_suitable?
       false
+    end
+
+    # Most suitable mount by option to reference the block device itself,
+    # regardless of its content
+    #
+    # This would return the same result if the device is formatted or if it's
+    # empty. To determine the MountByType to reference a filesytem (e.g. in
+    # fstab), call {Mountable#preferred_mount_by} on the filesystem object.
+    #
+    # Only the options that are indeed available are considered, which means
+    # this method always returns an option that can be used safely.
+    #
+    # @return [Filesystems::MountByType]
+    def preferred_mount_by
+      Filesystems::MountByType.best_for(self, possible_mount_bys)
+    end
+
+    # Most suitable name to reference the block device
+    #
+    # @see #preferred_mount_by
+    #
+    # @return [String]
+    def preferred_name
+      path_for_mount_by(preferred_mount_by)
     end
 
     protected

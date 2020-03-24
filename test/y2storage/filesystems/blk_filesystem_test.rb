@@ -280,6 +280,23 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#preferred_name" do
+    let(:dev_name) { "/dev/sdb2" }
+
+    before do
+      allow(subject).to receive(:mount_point).and_return(mount_point)
+      allow(mount_point).to receive(:preferred_mount_by).and_return(preferred_mount_by)
+    end
+
+    let(:mount_point) { subject.mount_point }
+
+    let(:preferred_mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    it "returns the name corresponding to the preferred mount_by" do
+      expect(subject.preferred_name).to eq "/dev/disk/by-label/suse_root"
+    end
+  end
+
   describe "#mount_options" do
     context "when filesystem has no mount point" do
       let(:dev_name) { "/dev/sdb3" }
