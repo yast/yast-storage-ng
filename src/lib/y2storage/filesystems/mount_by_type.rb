@@ -77,6 +77,18 @@ module Y2Storage
         name.nil? ? to_s : _(name)
       end
 
+      # Full path of the udev by-* link for this type, given a value of the
+      # referenced attribute
+      #
+      # @param value [String, nil] label, uuid, path or id of the device to point to
+      # @return [String, nil] nil if it's not possible to build the path of an udev
+      #   link that points to the device
+      def udev_name(value)
+        return nil if value.nil? || value.empty? || is?(:device)
+
+        File.join("/dev", "disk", "by-#{to_sym}", value)
+      end
+
       class << self
         # Type corresponding to the given fstab spec
         #

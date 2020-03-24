@@ -182,7 +182,7 @@ module Y2Storage
     # @see #udev_paths
     # @return [Array<String>]
     def udev_full_paths
-      udev_paths.map { |path| File.join("/dev", "disk", "by-path", path) }
+      udev_paths.map { |path| Filesystems::MountByType::PATH.udev_name(path) }
     end
 
     # @!method udev_ids
@@ -207,7 +207,7 @@ module Y2Storage
     # @see #udev_ids
     # @return [Array<String>]
     def udev_full_ids
-      udev_ids.map { |id| File.join("/dev", "disk", "by-id", id) }
+      udev_ids.map { |id| Filesystems::MountByType::ID.udev_name(id) }
     end
 
     # @!attribute dm_table_name
@@ -482,6 +482,24 @@ module Y2Storage
       component_of.map(&:display_name).compact
     end
 
+    # Device name (full path) to use for the given mount by option
+    #
+    # This returns a file name that references the block device itself, regardless of its content.
+    # I.e. this would return the same result if the device is formatted or if it's empty.
+    # See also {Filesystems::BlkFilesystem#path_for_mount_by}.
+    #
+    # @return [String, nil] nil if the name cannot be determined for the given mount by option
+    def path_for_mount_by(mount_by)
+      case mount_by
+      when Filesystems::MountByType::DEVICE
+        name
+      when Filesystems::MountByType::ID
+        udev_full_ids.first
+      when Filesystems::MountByType::PATH
+        udev_full_paths.first
+      end
+    end
+
     # Label of the filesystem, if any
     # @return [String, nil]
     def filesystem_label
@@ -490,16 +508,18 @@ module Y2Storage
       blk_filesystem.label
     end
 
-    # full path of the udev by-label link or `nil` if it does not exist.
+    # Full path of the udev by-label link or `nil` if it does not exist.
     # e.g. "/dev/disk/by-label/DATA"
+    #
+    # Note this is based on the label of the filesystem contained in the block device,
+    # so the result of this method actually depends on the content of the device.
+    # That's different from {#path_for_mount_by} and other methods aimed to get the udev
+    # names of the block device, but it's kept that way for backwards compatibility.
+    #
     # @see #udev_paths
     # @return [String, nil]
     def udev_full_label
-      label = filesystem_label
-
-      return nil if label.nil? || label.empty?
-
-      File.join("/dev", "disk", "by-label", label)
+      Filesystems::MountByType::LABEL.udev_name(filesystem_label)
     end
 
     # UUID of the filesystem, if any
@@ -510,16 +530,18 @@ module Y2Storage
       blk_filesystem.uuid
     end
 
-    # full path of the udev by-uuid link or `nil` if it does not exist.
+    # Full path of the udev by-uuid link or `nil` if it does not exist.
     # e.g. "/dev/disk/by-uuid/a1dc747af-6ef7-44b9-b4f8-d200a5f933ec"
+    #
+    # Note this is based on the UUID of the filesystem contained in the block device,
+    # so the result of this method actually depends on the content of the device.
+    # That's different from {#path_for_mount_by} and other methods aimed to get the udev
+    # names of the block device, but it's kept that way for backwards compatibility.
+    #
     # @see #udev_paths
     # @return [String, nil]
     def udev_full_uuid
-      uuid = filesystem_uuid
-
-      return nil if uuid.nil? || uuid.empty?
-
-      File.join("/dev", "disk", "by-uuid", uuid)
+      Filesystems::MountByType::UUID.udev_name(filesystem_uuid)
     end
 
     # Type of the filesystem, if any
