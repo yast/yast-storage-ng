@@ -280,6 +280,23 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#preferred_name" do
+    let(:dev_name) { "/dev/sdb2" }
+
+    before do
+      allow(subject).to receive(:mount_point).and_return(mount_point)
+      allow(mount_point).to receive(:preferred_mount_by).and_return(preferred_mount_by)
+    end
+
+    let(:mount_point) { subject.mount_point }
+
+    let(:preferred_mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    it "returns the name corresponding to the preferred mount_by" do
+      expect(subject.preferred_name).to eq "/dev/disk/by-label/suse_root"
+    end
+  end
+
   describe "#mount_options" do
     context "when filesystem has no mount point" do
       let(:dev_name) { "/dev/sdb3" }
@@ -462,6 +479,105 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       it "returns false for any udev name of the plain device" do
         filesystem.plain_blk_devices.first.udev_full_all.each do |name|
           expect(filesystem.match_fstab_spec?(name)).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#mount_by_name" do
+    let(:dev_name) { "/dev/sda2" }
+    before { subject.mount_point.mount_by = mount_by }
+
+    context "when mounting by device" do
+      let(:mount_by) { Y2Storage::Filesystems::MountByType::DEVICE }
+
+      it "returns the kernel name of the block device" do
+        expect(subject.mount_by_name).to eq(dev_name)
+      end
+    end
+
+    context "when mounting by UUID" do
+      let(:mount_by) { Y2Storage::Filesystems::MountByType::UUID }
+
+      context "if the uuid of the filesystem is known already" do
+        before { subject.uuid = "111222333444" }
+
+        it "returns the by-uuid udev path" do
+          expect(subject.mount_by_name).to eq "/dev/disk/by-uuid/111222333444"
+        end
+      end
+
+      context "if the uuid is still not known" do
+        it "returns nil" do
+          expect(subject.mount_by_name).to be_nil
+        end
+      end
+    end
+
+    context "when mounting by label" do
+      let(:mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
+
+      context "if the filesystem has a label" do
+        it "returns the by-label udev path" do
+          expect(subject.mount_by_name).to eq "/dev/disk/by-label/root"
+        end
+      end
+
+      context "if the filesystem has no label" do
+        before { subject.label = "" }
+
+        it "returns nil" do
+          expect(subject.mount_by_name).to be_nil
+        end
+      end
+    end
+
+    context "when mounting by path" do
+      let(:mount_by) { Y2Storage::Filesystems::MountByType::PATH }
+
+      before do
+        allow(subject).to receive(:blk_devices).and_return [blk_device]
+        allow(blk_device).to receive(:udev_full_paths).and_return(paths)
+      end
+
+      context "if the block device has by-path udev paths" do
+        let(:paths) { ["/dev/disk/by-path/pci1111-part2"] }
+
+        it "returns the first by-path udev path" do
+          expect(subject.mount_by_name).to eq(paths.first)
+        end
+      end
+
+      context "if the block device has no by-path udev paths" do
+        let(:paths) { [] }
+
+        it "returns nil" do
+          expect(subject.mount_by_name).to be_nil
+        end
+      end
+    end
+
+    context "when mounting by id" do
+      let(:mount_by) { Y2Storage::Filesystems::MountByType::ID }
+
+      before do
+        allow(subject).to receive(:blk_devices).and_return [blk_device]
+        allow(blk_device).to receive(:udev_full_ids).and_return(ids)
+      end
+
+      context "if the block device has by-id udev paths" do
+        let(:ids) { ["/dev/disk/by-id/id:pci:00"] }
+
+        it "returns the first by-id udev path" do
+          expect(subject.mount_by_name).to eq(ids.first)
+        end
+      end
+
+      context "if the block device has no by-id udev paths" do
+        let(:ids) { [] }
+
+        it "returns nil" do
+          expect(subject.mount_by_name).to be_nil
         end
       end
     end

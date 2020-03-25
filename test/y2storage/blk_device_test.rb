@@ -445,23 +445,57 @@ describe Y2Storage::BlkDevice do
     context "when mounting by UUID" do
       let(:mount_by) { Y2Storage::Filesystems::MountByType::UUID }
 
-      before do
-        allow(subject).to receive(:udev_full_uuid).and_return(path_by_uuid)
-      end
-
-      context "and the device has by-uuid udev path" do
-        let(:path_by_uuid) { "/dev/disk/by-uuid/111222333444" }
-
-        it "returns the by-uuid udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_uuid)
-        end
-      end
-
-      context "and the device has no by-uuid udev path" do
-        let(:path_by_uuid) { nil }
+      context "and the device contains a filesystem with uuid" do
+        before { subject.filesystem.uuid = "111222333444" }
 
         it "returns nil" do
           expect(subject.path_for_mount_by(mount_by)).to be_nil
+        end
+      end
+
+      context "and the device contains no filesystem" do
+        before { subject.remove_descendants }
+
+        it "returns nil" do
+          expect(subject.path_for_mount_by(mount_by)).to be_nil
+        end
+      end
+
+      context "and the device is an MD" do
+        let(:scenario) { "md-imsm1-devicegraph.xml" }
+        let(:device_name) { "/dev/md/a" }
+
+        context "with uuid" do
+          it "returns the by-uuid udev path" do
+            expect(subject.path_for_mount_by(mount_by))
+              .to eq "/dev/disk/by-uuid/8f600ff3:ccc9872c:539cd6c8:91e3b4a1"
+          end
+        end
+
+        context "with not uuid defined yet" do
+          before { allow(subject).to receive(:uuid).and_return("") }
+
+          it "returns nil" do
+            expect(subject.path_for_mount_by(mount_by)).to be_nil
+          end
+        end
+      end
+
+      context "and the device is a LUKS" do
+        let(:device_name) { "/dev/mapper/cr_sda4" }
+
+        context "with uuid" do
+          before { allow(subject).to receive(:uuid).and_return("111222333444") }
+
+          it "returns the by-uuid udev path" do
+            expect(subject.path_for_mount_by(mount_by)).to eq "/dev/disk/by-uuid/111222333444"
+          end
+        end
+
+        context "with not uuid defined yet" do
+          it "returns nil" do
+            expect(subject.path_for_mount_by(mount_by)).to be_nil
+          end
         end
       end
     end
@@ -469,48 +503,23 @@ describe Y2Storage::BlkDevice do
     context "when mounting by label" do
       let(:mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
 
-      before do
-        allow(subject).to receive(:udev_full_label).and_return(path_by_label)
-      end
-
-      context "and the device has by-label udev path" do
-        let(:path_by_label) { "/dev/disk/by-label/fslabel" }
-
-        it "returns the by-label udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_label)
+      context "and the device contains a filesystem with a label" do
+        it "returns nil" do
+          expect(subject.filesystem.label).to_not be_empty
+          expect(subject.path_for_mount_by(mount_by)).to be_nil
         end
       end
 
-      context "and the device has no by-label udev path" do
-        let(:path_by_label) { nil }
+      context "and the device contains a filesystem with no label" do
+        before { subject.filesystem.label = "" }
 
         it "returns nil" do
           expect(subject.path_for_mount_by(mount_by)).to be_nil
         end
       end
-    end
 
-    context "when mounting by id" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::ID }
-
-      before do
-        allow(subject).to receive(:udev_full_ids).and_return(paths_by_id)
-      end
-
-      context "and the device has by-id udev paths" do
-        let(:paths_by_id) { [path_by_id1, path_by_id2] }
-
-        let(:path_by_id1) { "/dev/disk/by-id/1111" }
-
-        let(:path_by_id2) { "/dev/disk/by-id/2222" }
-
-        it "returns the first by-id udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_id1)
-        end
-      end
-
-      context "and the device has no by-id udev paths" do
-        let(:paths_by_id) { [] }
+      context "and the device contains no filesystem" do
+        before { subject.remove_descendants }
 
         it "returns nil" do
           expect(subject.path_for_mount_by(mount_by)).to be_nil
@@ -521,15 +530,12 @@ describe Y2Storage::BlkDevice do
     context "when mounting by path" do
       let(:mount_by) { Y2Storage::Filesystems::MountByType::PATH }
 
-      before do
-        allow(subject).to receive(:udev_full_paths).and_return(paths_by_path)
-      end
-
       context "and the device has by-path udev paths" do
-        let(:paths_by_path) { [path_by_path1, path_by_path2] }
+        before do
+          allow(subject).to receive(:udev_full_paths).and_return [path_by_path1, path_by_path2]
+        end
 
         let(:path_by_path1) { "/dev/disk/by-path/pci1111-part1" }
-
         let(:path_by_path2) { "/dev/disk/by-path/pci2222-part1" }
 
         it "returns the first by-path udev path" do
@@ -538,7 +544,26 @@ describe Y2Storage::BlkDevice do
       end
 
       context "and the device has no by-path udev paths" do
-        let(:paths_by_path) { [] }
+        before do
+          allow(subject).to receive(:udev_full_paths).and_return []
+        end
+
+        it "returns nil" do
+          expect(subject.path_for_mount_by(mount_by)).to be_nil
+        end
+      end
+
+      context "and the device is a LUKS" do
+        let(:device_name) { "/dev/mapper/cr_sda4" }
+
+        it "returns nil" do
+          expect(subject.path_for_mount_by(mount_by)).to be_nil
+        end
+      end
+
+      context "and the device is an MD" do
+        let(:scenario) { "md-imsm1-devicegraph.xml" }
+        let(:device_name) { "/dev/md/a" }
 
         it "returns nil" do
           expect(subject.path_for_mount_by(mount_by)).to be_nil
@@ -1424,6 +1449,40 @@ describe Y2Storage::BlkDevice do
 
     it "returns false" do
       expect(subject.windows_suitable?).to eq(false)
+    end
+  end
+
+  describe "#preferred_mount_by" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+    let(:device_name) { "/dev/sda1" }
+
+    let(:by_device) { Y2Storage::Filesystems::MountByType::DEVICE }
+    let(:by_path) { Y2Storage::Filesystems::MountByType::PATH }
+    let(:by_id) { Y2Storage::Filesystems::MountByType::ID }
+    let(:all_suitable) { [by_device, by_path, by_id] }
+
+    it "returns the best mount_by type from all the suitable ones" do
+      expect(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+        .with(device, all_suitable).and_return(by_path)
+
+      expect(device.preferred_mount_by).to eq(by_path)
+    end
+  end
+
+  describe "#preferred_name" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+    let(:device_name) { "/dev/sda1" }
+
+    let(:by_device) { Y2Storage::Filesystems::MountByType::DEVICE }
+    let(:by_path) { Y2Storage::Filesystems::MountByType::PATH }
+    let(:by_id) { Y2Storage::Filesystems::MountByType::ID }
+    let(:all_suitable) { [by_device, by_path, by_id] }
+
+    it "returns the best mount_by type from all the suitable ones" do
+      expect(Y2Storage::Filesystems::MountByType).to receive(:best_for)
+        .with(device, all_suitable).and_return(by_path)
+
+      expect(device.preferred_name).to eq "/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part1"
     end
   end
 end
