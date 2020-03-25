@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Mar 25 07:23:03 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Extend and improve the API to get udev names for a block device
+  (needed for bsc#1166096).
+- 4.2.102
+
+-------------------------------------------------------------------
 Mon Mar 23 17:36:02 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Prevents to put /boot in a bcache (bsc#1165903).
