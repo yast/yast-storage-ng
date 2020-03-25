@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Mar 23 17:36:02 UTC 2020 - David Diaz <dgonzalez@suse.com>
+
+- Prevents to put /boot in a bcache (bsc#1165903).
+- 4.2.101
+
+-------------------------------------------------------------------
 Fri Mar 20 12:25:12 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: show an error when no suitable components are found
