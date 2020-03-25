@@ -570,9 +570,9 @@ module Y2Storage
           # If this is not a BlkFilesystem (e.g. NFS), it can't be in a BCache
           return false unless device.respond_to?(:plain_blk_devices)
 
-          # Let's trust in the hierarchy to determine if the device belongs to a Bcache, although
-          # there may be some advanced configuration for which this is not totally true because the
-          # device is reachable from a not BCache ancestor.
+          # Strictly speaking, with very advanced storage configurations it may be possible to
+          # access a filesystem with bcache ancestors in the devicegraph without actually accessing
+          # the bcache. But that would be an extreme case and is not supported by YaST.
           device.ancestors.any? { |dev| dev.is?(:bcache) }
         end
       end
