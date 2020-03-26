@@ -21,6 +21,7 @@ require "cwm"
 
 require "y2storage/storage_manager"
 require "y2storage/callbacks/commit"
+require "y2storage/used_filesystems"
 require "y2partitioner/device_graphs"
 
 module Y2Partitioner
@@ -56,6 +57,7 @@ module Y2Partitioner
       # @see Y2Storage::Callbacks::Commit
       def init
         Y2Storage::StorageManager.instance.commit(callbacks: callbacks)
+        Y2Storage::UsedFilesystems.new(Y2Storage::StorageManager.instance.staging).write
       end
 
       # An event is auto-sent after initializing the widget, see {#init}. Here, the workflow is returned

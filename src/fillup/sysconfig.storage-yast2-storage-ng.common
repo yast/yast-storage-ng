@@ -1,0 +1,5 @@
+## Path: System/Yast2/Storage
+
+## Type: string
+# List of used filesystem types.
+USED_FS_LIST=""
