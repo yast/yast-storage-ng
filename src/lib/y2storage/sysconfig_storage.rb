@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,9 @@ require "y2storage/filesystems/mount_by_type"
 
 module Y2Storage
   # Class to read and write /etc/sysconfig/storage file
+  #
+  # The class is basically a simply wrapper for the SCR. The class does not
+  # remember any values.
   #
   # @example Read raw value for key DEVICE_NAMES
   #   sysconfig = SysconfigStorage.instance
@@ -81,11 +84,19 @@ module Y2Storage
       write(DEVICE_NAMES, value)
     end
 
+    # Writes the value for the USED_FS_LIST key
+    #
+    # @param value [String]
+    def used_fs_list=(value)
+      write(USED_FS_LIST, value)
+    end
+
     private
 
     SYSCONFIG_PATH = ".sysconfig.storage".freeze
 
     DEVICE_NAMES = "DEVICE_NAMES".freeze
+    USED_FS_LIST = "USED_FS_LIST".freeze
 
     MOUNT_BY_FALLBACK = :uuid
 

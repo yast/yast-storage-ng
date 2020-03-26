@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar 26 15:18:33 CET 2020 - aschnell@suse.com
+
+- Reanimate saving USED_FS_LIST (bsc#1161533).
+- 4.2.103
+
+-------------------------------------------------------------------
 Wed Mar 25 07:23:03 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Extend and improve the API to get udev names for a block device

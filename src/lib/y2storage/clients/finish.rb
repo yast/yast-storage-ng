@@ -19,6 +19,7 @@
 
 require "yast"
 require "installation/finish_client"
+require "y2storage/used_filesystems"
 
 module Y2Storage
   module Clients
@@ -56,11 +57,15 @@ module Y2Storage
       end
 
       # Updates sysconfig file (/etc/sysconfig/storage) with current values
-      # at StorageManager.
+      # at StorageManager and other locations.
+      #
+      # Since the sysconfig file is not copied from the inst-sys to the target
+      # each variable needs it own handling.
       #
       # @note This updates the sysconfig file in the target system.
       def update_sysconfig
         StorageManager.instance.configuration.update_sysconfig
+        Y2Storage::UsedFilesystems.new(Y2Storage::StorageManager.instance.staging).write
       end
 
       # Checks whether multipath will be used in the target system

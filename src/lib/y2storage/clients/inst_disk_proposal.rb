@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,6 +30,7 @@ require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
 require "y2partitioner/dialogs/main"
 require "y2storage/partitioning_features"
+require "y2storage/used_filesystems"
 
 module Y2Storage
   module Clients
@@ -109,6 +110,7 @@ module Y2Storage
           storage_manager.staging = @devicegraph
         end
         add_storage_packages
+        save_used_fs_list
       end
 
       def guided_setup
@@ -157,6 +159,11 @@ module Y2Storage
         features = storage_manager.staging.used_features
         pkg_handler = Y2Storage::PackageHandler.new(features.pkg_list)
         pkg_handler.set_proposal_packages
+      end
+
+      # Save the list of filesystem to /etc/sysconfig/storage.
+      def save_used_fs_list
+        Y2Storage::UsedFilesystems.new(storage_manager.staging).write
       end
 
       def new_settings
