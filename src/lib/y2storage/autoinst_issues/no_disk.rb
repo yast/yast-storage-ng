@@ -49,7 +49,7 @@ module Y2Storage
           # TRANSLATORS: kernel device name (eg. '/dev/sda1')
           _("Disk '%s' was not found") % section.device
         else
-          _("Not suitable disk was found")
+          _("No suitable disk was found")
         end
       end
     end
