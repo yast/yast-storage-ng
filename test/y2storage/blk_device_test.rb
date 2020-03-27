@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -428,122 +428,6 @@ describe Y2Storage::BlkDevice do
 
     it "returns the basename of the device's name" do
       expect(device.basename).to eq("sda1")
-    end
-  end
-
-  describe "#path_for_mount_by" do
-    let(:device_name) { "/dev/sda1" }
-
-    context "when mounting by device" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::DEVICE }
-
-      it "returns the kernel name" do
-        expect(subject.path_for_mount_by(mount_by)).to eq(device_name)
-      end
-    end
-
-    context "when mounting by UUID" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::UUID }
-
-      before do
-        allow(subject).to receive(:udev_full_uuid).and_return(path_by_uuid)
-      end
-
-      context "and the device has by-uuid udev path" do
-        let(:path_by_uuid) { "/dev/disk/by-uuid/111222333444" }
-
-        it "returns the by-uuid udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_uuid)
-        end
-      end
-
-      context "and the device has no by-uuid udev path" do
-        let(:path_by_uuid) { nil }
-
-        it "returns nil" do
-          expect(subject.path_for_mount_by(mount_by)).to be_nil
-        end
-      end
-    end
-
-    context "when mounting by label" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
-
-      before do
-        allow(subject).to receive(:udev_full_label).and_return(path_by_label)
-      end
-
-      context "and the device has by-label udev path" do
-        let(:path_by_label) { "/dev/disk/by-label/fslabel" }
-
-        it "returns the by-label udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_label)
-        end
-      end
-
-      context "and the device has no by-label udev path" do
-        let(:path_by_label) { nil }
-
-        it "returns nil" do
-          expect(subject.path_for_mount_by(mount_by)).to be_nil
-        end
-      end
-    end
-
-    context "when mounting by id" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::ID }
-
-      before do
-        allow(subject).to receive(:udev_full_ids).and_return(paths_by_id)
-      end
-
-      context "and the device has by-id udev paths" do
-        let(:paths_by_id) { [path_by_id1, path_by_id2] }
-
-        let(:path_by_id1) { "/dev/disk/by-id/1111" }
-
-        let(:path_by_id2) { "/dev/disk/by-id/2222" }
-
-        it "returns the first by-id udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_id1)
-        end
-      end
-
-      context "and the device has no by-id udev paths" do
-        let(:paths_by_id) { [] }
-
-        it "returns nil" do
-          expect(subject.path_for_mount_by(mount_by)).to be_nil
-        end
-      end
-    end
-
-    context "when mounting by path" do
-      let(:mount_by) { Y2Storage::Filesystems::MountByType::PATH }
-
-      before do
-        allow(subject).to receive(:udev_full_paths).and_return(paths_by_path)
-      end
-
-      context "and the device has by-path udev paths" do
-        let(:paths_by_path) { [path_by_path1, path_by_path2] }
-
-        let(:path_by_path1) { "/dev/disk/by-path/pci1111-part1" }
-
-        let(:path_by_path2) { "/dev/disk/by-path/pci2222-part1" }
-
-        it "returns the first by-path udev path" do
-          expect(subject.path_for_mount_by(mount_by)).to eq(path_by_path1)
-        end
-      end
-
-      context "and the device has no by-path udev paths" do
-        let(:paths_by_path) { [] }
-
-        it "returns nil" do
-          expect(subject.path_for_mount_by(mount_by)).to be_nil
-        end
-      end
     end
   end
 
