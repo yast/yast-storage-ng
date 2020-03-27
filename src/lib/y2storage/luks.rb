@@ -70,17 +70,6 @@ module Y2Storage
       super
     end
 
-    # @see BlkDevice#path_for_mount_by
-    def path_for_mount_by(mount_by)
-      # Unlike most block devices, LUKS devices have an UUID and can have a label
-      if mount_by.is?(:label, :uuid)
-        attr_value = public_send(mount_by.to_sym)
-        mount_by.udev_name(attr_value)
-      else
-        super
-      end
-    end
-
     protected
 
     # @see Device#is?
