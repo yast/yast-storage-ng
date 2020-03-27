@@ -256,15 +256,6 @@ module Y2Storage
         Y2Storage::VolumeSpecification.for(mount_point.path)
       end
 
-      # Most suitable file path to reference the filesystem
-      #
-      # @see Mountable#preferred_mount_by
-      #
-      # @return [String]
-      def preferred_name
-        path_for_mount_by(preferred_mount_by)
-      end
-
       # File path to reference the filesystem based on the current mount by option
       #
       # @see #mount_by

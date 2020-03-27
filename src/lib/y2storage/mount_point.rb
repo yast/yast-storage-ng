@@ -329,9 +329,6 @@ module Y2Storage
     #
     # Note that this method does not take into account the currently assigned mount by value
     #
-    # Only the options that are indeed available are considered (see {#suitable_mount_bys}),
-    # which means this method always returns an option that can be used safely.
-    #
     # @return [Filesystems::MountByType]
     def preferred_mount_by
       Filesystems::MountByType.best_for(filesystem, suitable_mount_bys)
