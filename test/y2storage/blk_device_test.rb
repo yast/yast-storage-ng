@@ -453,7 +453,7 @@ describe Y2Storage::BlkDevice do
         end
       end
 
-      context "and the device contains no filesystem" do
+      context "and the device constains no filesystem" do
         before { subject.remove_descendants }
 
         it "returns nil" do
@@ -503,7 +503,7 @@ describe Y2Storage::BlkDevice do
     context "when mounting by label" do
       let(:mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
 
-      context "and the device contains a filesystem with a label" do
+      context "and the device contains a filesystem a label" do
         it "returns nil" do
           expect(subject.filesystem.label).to_not be_empty
           expect(subject.path_for_mount_by(mount_by)).to be_nil
@@ -518,7 +518,7 @@ describe Y2Storage::BlkDevice do
         end
       end
 
-      context "and the device contains no filesystem" do
+      context "and the device constains no filesystem" do
         before { subject.remove_descendants }
 
         it "returns nil" do
@@ -1461,7 +1461,7 @@ describe Y2Storage::BlkDevice do
     let(:by_id) { Y2Storage::Filesystems::MountByType::ID }
     let(:all_suitable) { [by_device, by_path, by_id] }
 
-    it "returns the best mount_by type from all the suitable ones" do
+    it "returns the best mount by from all the suitable ones" do
       expect(Y2Storage::Filesystems::MountByType).to receive(:best_for)
         .with(device, all_suitable).and_return(by_path)
 
@@ -1478,7 +1478,7 @@ describe Y2Storage::BlkDevice do
     let(:by_id) { Y2Storage::Filesystems::MountByType::ID }
     let(:all_suitable) { [by_device, by_path, by_id] }
 
-    it "returns the best mount_by type from all the suitable ones" do
+    it "returns the best mount by from all the suitable ones" do
       expect(Y2Storage::Filesystems::MountByType).to receive(:best_for)
         .with(device, all_suitable).and_return(by_path)
 
