@@ -1,6 +1,5 @@
 #!/usr/bin/env rspec
-
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2019] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -233,49 +232,6 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
       it "returns the mount by of the mount point" do
         expect(filesystem.mount_by).to eq(Y2Storage::Filesystems::MountByType::ID)
-      end
-    end
-  end
-
-  describe "#preferred_mount_by" do
-    let(:scenario) { "mixed_disks" }
-
-    context "when the filesystem has no mount point" do
-      let(:dev_name) { "/dev/sda2" }
-
-      before do
-        allow_any_instance_of(Y2Storage::MountPoint).to receive(:preferred_mount_by)
-          .and_return(preferred_mount_by)
-      end
-
-      let(:preferred_mount_by) { Y2Storage::Filesystems::MountByType::UUID }
-
-      it "returns the preferred mount by option from a temporary mount point" do
-        expect(subject.preferred_mount_by).to eq(preferred_mount_by)
-      end
-
-      it "removes the temporary mount point" do
-        subject.preferred_mount_by
-
-        expect(subject.mount_point).to be_nil
-      end
-    end
-
-    context "when the filesystem has a mount point" do
-      let(:dev_name) { "/dev/sdb2" }
-
-      before do
-        allow(subject).to receive(:mount_point).and_return(mount_point)
-
-        allow(mount_point).to receive(:preferred_mount_by).and_return(preferred_mount_by)
-      end
-
-      let(:mount_point) { subject.mount_point }
-
-      let(:preferred_mount_by) { Y2Storage::Filesystems::MountByType::LABEL }
-
-      it "returns the preferred mount by option from the current mount point" do
-        expect(subject.preferred_mount_by).to eq(preferred_mount_by)
       end
     end
   end
