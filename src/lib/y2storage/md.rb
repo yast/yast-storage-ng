@@ -308,16 +308,6 @@ module Y2Storage
       in_etc_mdadm?
     end
 
-    # @see BlkDevice#path_for_mount_by
-    def path_for_mount_by(mount_by)
-      # Unlike most block devices, MD RAIDs have an UUID
-      if mount_by.is?(:uuid)
-        mount_by.udev_name(uuid)
-      else
-        super
-      end
-    end
-
     protected
 
     # Holders connecting the MD Raid to its component block devices in the
