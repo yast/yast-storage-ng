@@ -184,7 +184,7 @@ module Y2Storage
         #  - We don't specify extra options for Btrfs subvolumes because the current
         #    libstorage-ng implementation would ignore them (BtrfsSubvolume#mount_options
         #    is bypassed to only return subvol=$path).
-        if in_network?
+        if needs_network_mount_options?
           (super + [NETWORK_OPTION]).uniq
         else
           super
@@ -257,6 +257,16 @@ module Y2Storage
       end
 
       protected
+
+      # Whether the network-related mount options (e.g. _netdev) should be part
+      # of {#extra_default_mount_options}
+      #
+      # @return [Boolean]
+      def needs_network_mount_options?
+        # Adding "_netdev" and similar options in fstab for / should not be necessary
+        # and it confuses (or used to confuse) systemd. See bsc#1165937.
+        in_network? && !root?
+      end
 
       # @see Device#is?
       def types_for_is

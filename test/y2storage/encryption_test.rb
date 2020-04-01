@@ -226,7 +226,7 @@ describe Y2Storage::Encryption do
 
       def create_btrfs(blk_dev)
         fs = blk_dev.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
-        fs.create_mount_point("/")
+        fs.create_mount_point("/var")
         # To have full effect, this must be done after creating the mount point
         fs.add_btrfs_subvolumes(Y2Storage::SubvolSpecification.fallback_list)
         fs.mount_point.set_default_mount_options
