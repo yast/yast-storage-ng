@@ -516,33 +516,75 @@ describe Y2Storage::MountPoint do
         allow(disk.transport).to receive(:network?).and_return true
       end
 
-      context "for a Btrfs file-system" do
-        let(:dev_name) { "/dev/sda2" }
+      context "for the root filesystem" do
+        before do
+          mount_point.path = "/"
+        end
 
-        it "sets #mount_options to an array containing only '_netdev'" do
-          mount_point.set_default_mount_options
-          expect(mount_point.mount_options).to eq ["_netdev"]
+        context "for a Btrfs file-system" do
+          let(:dev_name) { "/dev/sda2" }
+
+          it "sets #mount_options to an empty array" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to eq []
+          end
+        end
+
+        context "for a Btrfs subvolume" do
+          let(:dev_name) { "/dev/sda2" }
+          let(:mountable) { blk_device.filesystem.btrfs_subvolumes.last }
+
+          it "sets #mount_options to an array containing only the subvol option" do
+            mount_point.set_default_mount_options
+            options = mount_point.mount_options
+            expect(options.size).to eq 1
+            expect(options.first).to match(/^subvol=/)
+          end
+        end
+
+        context "for an Ext3 file-system " do
+          let(:dev_name) { "/dev/sda3" }
+
+          it "sets #mount_options to an empty array" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to eq []
+          end
         end
       end
 
-      context "for a Btrfs subvolume" do
-        let(:dev_name) { "/dev/sda2" }
-        let(:mountable) { blk_device.filesystem.btrfs_subvolumes.last }
-
-        it "sets #mount_options to an array containing only the subvol option" do
-          mount_point.set_default_mount_options
-          options = mount_point.mount_options
-          expect(options.size).to eq 1
-          expect(options.first).to match(/^subvol=/)
+      context "for a non-root filesystem" do
+        before do
+          mount_point.path = "/home"
         end
-      end
 
-      context "for an Ext3 file-system " do
-        let(:dev_name) { "/dev/sda3" }
+        context "for a Btrfs file-system" do
+          let(:dev_name) { "/dev/sda2" }
 
-        it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
-          mount_point.set_default_mount_options
-          expect(mount_point.mount_options).to contain_exactly("data=ordered", "_netdev")
+          it "sets #mount_options to an array containing only '_netdev'" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to eq ["_netdev"]
+          end
+        end
+
+        context "for a Btrfs subvolume" do
+          let(:dev_name) { "/dev/sda2" }
+          let(:mountable) { blk_device.filesystem.btrfs_subvolumes.last }
+
+          it "sets #mount_options to an array containing only the subvol option" do
+            mount_point.set_default_mount_options
+            options = mount_point.mount_options
+            expect(options.size).to eq 1
+            expect(options.first).to match(/^subvol=/)
+          end
+        end
+
+        context "for an Ext3 file-system " do
+          let(:dev_name) { "/dev/sda3" }
+
+          it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to contain_exactly("data=ordered", "_netdev")
+          end
         end
       end
     end
