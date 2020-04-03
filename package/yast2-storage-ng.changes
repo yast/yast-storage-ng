@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Apr  3 14:18:30 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: fixed a crash when some devices are modified both
+  before and after reprobing the hardware (bsc#1168325).
+- 4.1.94
+
+-------------------------------------------------------------------
 Mon Mar  9 09:53:50 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: show an error when no suitable physical volumes are
