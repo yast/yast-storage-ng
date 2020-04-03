@@ -404,6 +404,7 @@ module Y2Storage
     def reset_probed
       @raw_probed = nil
       @probed_graph = nil
+      @system_graph = nil
       @probed_disk_analyzer = nil
       @committed = false
       Y2Storage::HWInfoReader.instance.reset
