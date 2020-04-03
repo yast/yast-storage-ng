@@ -402,8 +402,9 @@ module Y2Storage
 
     # Invalidates previous probed devicegraph and its related data
     def reset_probed
-      @raw_probed = nil
-      @probed_graph = nil
+      # Invalidate probed and its two derivative devicegraphs
+      @raw_probed = @probed_graph = @system = nil
+
       @probed_disk_analyzer = nil
       @committed = false
       Y2Storage::HWInfoReader.instance.reset

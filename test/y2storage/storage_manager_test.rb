@@ -628,16 +628,19 @@ describe Y2Storage::StorageManager do
       manager.probed
       manager.probed_disk_analyzer
       manager.staging
+      manager.system
       manager.proposal
 
       # And now mock subsequent Storage calls
       allow(manager.storage).to receive(:probe)
       allow(manager.storage).to receive(:probed).and_return st_probed
       allow(manager.storage).to receive(:staging).and_return st_staging
+      allow(manager.storage).to receive(:system).and_return st_system
     end
 
     let(:st_probed) { Storage::Devicegraph.new(manager.storage) }
     let(:st_staging) { Storage::Devicegraph.new(manager.storage) }
+    let(:st_system) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
 
@@ -663,6 +666,18 @@ describe Y2Storage::StorageManager do
 
       expect(manager.probed.disks.size).to eq 0
       expect(manager.probed.to_storage_value).to eq st_staging
+    end
+
+    it "refreshes #system" do
+      expect(manager.system.disks.size).to eq 6
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.system.disks.size).to eq 6
+      expect(manager.system.to_storage_value).to_not eq st_system
+
+      manager.probe
+
+      expect(manager.system.disks.size).to eq 0
+      expect(manager.system.to_storage_value).to eq st_probed
     end
 
     it "increments the staging revision" do
