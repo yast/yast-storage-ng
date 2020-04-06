@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@ require "yast2/popup"
 
 require "y2storage/dialogs/callbacks/activate_luks"
 require "y2storage/callbacks/libstorage_callback"
+require "y2storage/storage_env"
 
 module Y2Storage
   module Callbacks
@@ -68,6 +69,8 @@ module Y2Storage
       # @return [Storage::PairBoolString]
       def luks(info, attempt)
         log.info("Trying to open luks UUID: #{info.uuid} (#{attempt} attempts)")
+
+        return Storage::PairBoolString.new(false, "") if !StorageEnv.instance.activate_luks?
 
         luks_error(attempt) if attempt > 1
 
