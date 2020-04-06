@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,7 +32,9 @@ module Y2Storage
 
     ENV_BIOS_RAID = "LIBSTORAGE_MDPART".freeze
 
-    private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID
+    ENV_ACTIVATE_LUKS = "YAST_ACTIVATE_LUKS".freeze
+
+    private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS
 
     def initialize
       @active_cache = {}
@@ -59,13 +61,22 @@ module Y2Storage
       active?(ENV_BIOS_RAID)
     end
 
+    # Whether LUKSes could be activated
+    #
+    # See bsc#1162545 for why this is needed and was added.
+    #
+    def activate_luks?
+      active?(ENV_ACTIVATE_LUKS, true)
+    end
+
   private
 
     # Whether the env variable is active
     #
     # @param variable [String]
+    # @param fallback [Boolean] Fallback value if env variable is not set
     # @return [Boolean]
-    def active?(variable)
+    def active?(variable, fallback = false)
       return @active_cache[variable] if @active_cache.key?(variable)
 
       value = read(variable)
@@ -74,7 +85,7 @@ module Y2Storage
         # variable is used with no value or with "1"
         value.casecmp?("on") || value.empty? || value == "1"
       else
-        false
+        fallback
       end
       @active_cache[variable] = result
     end
@@ -90,8 +101,9 @@ module Y2Storage
       key = ENV.keys.sort.find { |k| k.match(/\A#{variable}\z/i) }
       return nil unless key
 
-      log.debug "Found ENV variable: #{key.inspect}"
-      ENV[key]
+      value = ENV[key]
+      log.debug "Found ENV variable key: #{key.inspect} value: #{value.inspect}"
+      value
     end
   end
 end

@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,6 +33,8 @@ describe Y2Storage::Callbacks::Activate do
   end
 
   describe "#luks" do
+    before { mock_env(env_vars) }
+
     let(:dialog) { instance_double(Y2Storage::Dialogs::Callbacks::ActivateLuks) }
 
     before do
@@ -45,6 +47,7 @@ describe Y2Storage::Callbacks::Activate do
     let(:attempts) { 1 }
     let(:action) { nil }
     let(:encryption_password) { "123456" }
+    let(:env_vars) { {} }
 
     it "opens a dialog to request the password" do
       expect(dialog).to receive(:run).once
@@ -72,6 +75,17 @@ describe Y2Storage::Callbacks::Activate do
         result = subject.luks(uuid, attempts)
         expect(result.first).to eq(false)
         expect(result.second).to eq("")
+      end
+    end
+
+    context "and YAST_ACTIVATE_LUKS was deactivated on boot" do
+      let(:env_vars) do
+        { "YAST_ACTIVATE_LUKS" => "0" }
+      end
+
+      it "does not ask the user" do
+        expect(dialog).to_not receive(:run)
+        subject.luks(uuid, attempts)
       end
     end
   end
