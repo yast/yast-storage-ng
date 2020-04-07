@@ -100,6 +100,5 @@ rake test:unit
 %{yast_icondir}
 %license COPYING
 %doc README.md
-%doc CONTRIBUTING.md
 
 %changelog
