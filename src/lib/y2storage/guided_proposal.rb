@@ -270,7 +270,8 @@ module Y2Storage
       settings.candidate_devices || fallback_candidates
     end
 
-    # Candidate devices to use when the current settings do not specify any
+    # Candidate devices to use when the current settings do not specify any, i.e. in the initial
+    # attempt, before the user has had any opportunity to select the candidate devices
     #
     # The possible candidate devices are sorted, placing USB devices at the end.
     #
@@ -282,7 +283,24 @@ module Y2Storage
       # in two groups and moving one of them to the end.
       candidates = disk_analyzer.candidate_disks
       candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
-      candidates.map(&:name)
+      candidates.first(fallback_candidates_size).map(&:name)
+    end
+
+    # Number of disks to be included in {#fallback_candidates}
+    #
+    # Without this limit, the process to find the optimal layout can be very slow
+    # specially if LVM is enabled by default for the product. See bsc#1154070.
+    #
+    # @return [Integer]
+    def fallback_candidates_size
+      # Reasonable value set after research in bsc#1154070. Anyways, users with more disks will
+      # very likely dismiss the initial proposal and use the Guided Setup or the Expert Partitioner.
+      # Trying with more combinations of disks is often just wasting time.
+      disks = 5
+
+      return disks unless settings.allocate_mode?(:device)
+
+      [disks, proposed_volumes_sets.size].max
     end
 
     # All proposed volumes sets from the settings
