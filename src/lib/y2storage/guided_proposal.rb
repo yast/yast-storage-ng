@@ -263,13 +263,19 @@ module Y2Storage
     # Candidate devices to make a proposal
     #
     # The candidate devices are calculated when current settings do not contain any
-    # candidate device. In that case, the possible candidate devices are sorted, placing
-    # USB devices at the end.
+    # candidate device. See {#fallback_candidates}
     #
     # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
     def candidate_devices
-      return settings.candidate_devices unless settings.candidate_devices.nil?
+      settings.candidate_devices || fallback_candidates
+    end
 
+    # Candidate devices to use when the current settings do not specify any
+    #
+    # The possible candidate devices are sorted, placing USB devices at the end.
+    #
+    # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
+    def fallback_candidates
       # NOTE: sort_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
@@ -277,6 +283,13 @@ module Y2Storage
       candidates = disk_analyzer.candidate_disks
       candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
       candidates.map(&:name)
+    end
+
+    # All proposed volumes sets from the settings
+    #
+    # @return [Array<VolumeSpecificationsSet>]
+    def proposed_volumes_sets
+      settings.volumes_sets.select(&:proposed?)
     end
   end
 end

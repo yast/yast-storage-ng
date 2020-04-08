@@ -255,9 +255,10 @@ module Y2Storage
 
     # Sorted list of disks to be tried as root device.
     #
-    # If the current settings already specify a root_device, the list will contain only that one.
+    # In the theoretical case in which the current settings already specify a root_device (in practice,
+    # the initial guided proposal never receives such settings), the list will contain only that device.
     #
-    # Otherwise, it will contain all the candidate devices, sorted from bigger to smaller disk size.
+    # Otherwise, it will contain all the candidate devices, sorted in the order they should be tried.
     #
     # @return [Array<String>]
     def candidate_roots
@@ -325,7 +326,7 @@ module Y2Storage
     #
     # @return [Array<VolumeSpecificationsSet>]
     def non_root_volumes_sets
-      settings.volumes_sets.select(&:proposed?).reject(&:root?)
+      proposed_volumes_sets.reject(&:root?)
     end
   end
 end
