@@ -265,23 +265,7 @@ module Y2Storage
       return [settings.root_device] if settings.explicit_root_device
 
       disk_names = settings.explicit_candidate_devices
-      candidates = disk_names.map { |n| initial_devicegraph.find_by_name(n) }.compact
-
-      # FIXME: the use of .reverse method changes the expected precedence
-      # (alphabetically) when the "contiguous" devices has the equal sizes. See
-      # the example:
-      #
-      #   Given the below `candidates`
-      #   [<Disk /dev/sdc 20 GiB>, <Disk /dev/sdd 20 GiB>, <Disk /dev/sdb 80 GiB>]
-      #
-      #   the `candidates.reverse` will return
-      #   [<Disk /dev/sdb 80 GiB>, <Disk /dev/sdd 20 GiB>, <Disk /dev/sdc 20 GiB>]
-      #
-      #   but the expected result actually would be
-      #   [<Disk /dev/sdb 80 GiB>, <Disk /dev/sdc 20 GiB>, <Disk /dev/sdd 20 GiB>]
-      candidates = candidates.sort_by(&:size).reverse
-
-      candidates.map(&:name)
+      disk_names.select { |n| initial_devicegraph.find_by_name(n) }
     end
 
     # All possible combinations of candidate devices to assign to the non-root
