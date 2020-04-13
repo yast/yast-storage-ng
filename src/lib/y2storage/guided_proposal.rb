@@ -171,6 +171,8 @@ module Y2Storage
         log.info "Trying to make a proposal with target size: #{target_size}\n" \
           "using the following settings:\n#{settings}"
 
+        raise Error if useless_volumes_sets?
+
         @planned_devices = planned_devices_list(target_size)
         @devices = devicegraph(@planned_devices)
         true
@@ -270,6 +272,16 @@ module Y2Storage
       settings.candidate_devices || fallback_candidates
     end
 
+    # Candidate devices to make a proposal, full version
+    #
+    # Unlike {#candidate_devices}, that only returns a list of device names, this method
+    # returns a list of proper full-featured objects representing those devices.
+    #
+    # @return [Array<BlkDevice>]
+    def candidate_objects
+      candidate_devices.map { |n| initial_devicegraph.find_by_name(n) }.compact
+    end
+
     # Candidate devices to use when the current settings do not specify any, i.e. in the initial
     # attempt, before the user has had any opportunity to select the candidate devices
     #
@@ -308,6 +320,27 @@ module Y2Storage
     # @return [Array<VolumeSpecificationsSet>]
     def proposed_volumes_sets
       settings.volumes_sets.select(&:proposed?)
+    end
+
+    # Checks whether the current distribution of volumes sets into disks make any sense
+    #
+    # NOTE: This method is only intended to make a quick evaluation to early discard
+    # a combination of disks. A false result doesn't imply the proposal will succeed.
+    #
+    # @return [Boolean] true if there is some disk that is supposed to allocate volumes
+    #   that are bigger than the size of the disk
+    def useless_volumes_sets?
+      return false unless settings.ng_format?
+
+      candidate_objects.any? do |disk|
+        total = DiskSize.sum(proposed_volumes_sets.select { |s| s.device == disk.name }.map(&:min_size))
+        # We use ">=" because the whole space of the disk can never be used to allocate
+        # the volumes (the partition table takes space)
+        if total >= disk.size
+          log.info "Discarded combination of volumes sets for #{disk.name} (#{total} >= #{disk.size})"
+          true
+        end
+      end
     end
   end
 end

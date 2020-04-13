@@ -165,6 +165,8 @@ module Y2Storage
     def try_with_each_permutation
       return try_with_each_target_size if settings.allocate_mode?(:auto)
 
+      raise Y2Storage::Error if useless_permutations?
+
       try_with_each(devices_permutations) do |permutation|
         non_root_volumes_sets.each_with_index do |set, idx|
           set.device = permutation[idx]
@@ -172,6 +174,55 @@ module Y2Storage
 
         try_with_each_target_size
       end
+    end
+
+    # Checks whether the current combination of root_device and candidate_devices has
+    # any chance to produce at least one valid permutation for allocate_mode :device
+    #
+    # NOTE: This method is only intended to make a quick evaluation to early discard
+    # sets of combinations. A false result doesn't imply there is actually a valid
+    # permutation.
+    #
+    # @return [Boolean] true if it's clearly impossible to find a valid permutation
+    def useless_permutations?
+      # This method is only useful when allocate_mode is :device
+      return false unless settings.allocate_mode?(:device)
+
+      useless_candidate_devices? || useless_root_set?
+    end
+
+    # @see #useless_permutations?
+    def useless_root_set?
+      # There should always be a root_volumes_set, but better safe than sorry
+      return false unless root_volumes_set
+
+      root_device = candidate_objects.find { |d| d.name == root_volumes_set.device }
+      return false if root_device.size > root_volumes_set.min_size
+
+      log.info "The root volumes set does not fit into #{root_device.name}"
+      true
+    end
+
+    # @see #useless_permutations?
+    def useless_candidate_devices?
+      devices = candidate_objects
+
+      min = DiskSize.sum(proposed_volumes_sets.map(&:min_size))
+      disks_size = DiskSize.sum(devices.map(&:size))
+      # We use ">=" because the whole space of the disks can never be used to allocate
+      # the volumes (the partition tables take space)
+      if min >= disks_size
+        log.info "The candidate devices are not big enough"
+        return true
+      end
+
+      biggest = devices.map(&:size).max
+      if proposed_volumes_sets.any? { |set| set.min_size > biggest }
+        log.info "Some volumes sets are too big to fit into any of the candidate devices"
+        return true
+      end
+
+      false
     end
 
     # Redefines this method from the base class to ensure the SpaceMaker object
@@ -264,6 +315,10 @@ module Y2Storage
     def candidate_roots
       return [settings.root_device] if settings.explicit_root_device
 
+      # We use #explicit_candidate_devices because it contains all the devices of the candidate_group.
+      # That's not always true for #candidate_devices. If there are fewer proposed_volumes_sets than
+      # devices in the group, using #candidate_devices could result in giving up before trying all the
+      # possibilities.
       disk_names = settings.explicit_candidate_devices
       disk_names.select { |n| initial_devicegraph.find_by_name(n) }
     end
@@ -311,6 +366,13 @@ module Y2Storage
     # @return [Array<VolumeSpecificationsSet>]
     def non_root_volumes_sets
       proposed_volumes_sets.reject(&:root?)
+    end
+
+    # Volumes set containing the root volume
+    #
+    # @return [VolumeSpecificationSet, nil]
+    def root_volumes_set
+      proposed_volumes_sets.find(&:root?)
     end
   end
 end
