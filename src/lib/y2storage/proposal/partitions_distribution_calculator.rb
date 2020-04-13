@@ -143,6 +143,9 @@ module Y2Storage
       def impossible?(planned_partitions, free_spaces)
         needed = DiskSize.sum(planned_partitions.map(&:min))
         log.info "#impossible? - initially needed: #{needed}"
+        # FIXME: This "if" only makes sense for partitions that are going to be added
+        # to planned_vg, not for partitions that are being created for a separate_vg
+        # In the current state, this is causing some valid combinations to be discarded
         if lvm?
           # Let's assume the best possible case - if we need to create a PV it
           # will be only one
