@@ -221,10 +221,10 @@ module Y2Storage
       # that made it possible.
       #
       # @return [Boolean]
-      def success?(planned_partitions)
+      def success?(planned_partitions, disk_name = nil)
         # Once a distribution has been found we don't have to look for another one.
         if !@distribution
-          spaces = free_spaces(new_graph)
+          spaces = free_spaces(new_graph, disk_name)
           @distribution = dist_calculator.best_distribution(planned_partitions, spaces)
         end
         !!@distribution
@@ -261,7 +261,7 @@ module Y2Storage
           prospects.add_prospects(disk, lvm_helper, keep)
         end
 
-        until success?(planned_partitions)
+        until success?(planned_partitions, disk_name)
           break unless execute_next_action(planned_partitions, prospects, disk_name)
         end
 
