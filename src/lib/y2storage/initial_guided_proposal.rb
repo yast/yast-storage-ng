@@ -165,6 +165,8 @@ module Y2Storage
     def try_with_each_permutation
       return try_with_each_target_size if settings.allocate_mode?(:auto)
 
+      raise Y2Storage::Error if hopeless_permutations?
+
       try_with_each(devices_permutations) do |permutation|
         non_root_volumes_sets.each_with_index do |set, idx|
           set.device = permutation[idx]
@@ -172,6 +174,31 @@ module Y2Storage
 
         try_with_each_target_size
       end
+    end
+
+    def hopeless_permutations?
+      devices = candidate_objects
+
+      root_device = candidate_objects.find { |d| d.name == root_volumes_set.device }
+      if root_device.size <= root_volumes_set.min_size 
+        log.info "Root does not fit"
+        return true
+      end
+
+      min = DiskSize.sum(proposed_volumes_sets.map(&:min_size))
+      available = DiskSize.sum(devices.map(&:size))
+      if available <= min
+        log.info "Not enough total"
+        return true
+      end
+
+      biggest = devices.map(&:size).max
+      if proposed_volumes_sets.any? { |set| set.min_size > biggest }
+        log.info "The biggest doesn't fit"
+        return true
+      end
+
+      false
     end
 
     # Redefines this method from the base class to ensure the SpaceMaker object
@@ -262,10 +289,16 @@ module Y2Storage
     #
     # @return [Array<String>]
     def candidate_roots
-      return [settings.root_device] if settings.explicit_root_device
+      if settings.explicit_root_device
+        [settings.root_device]
+      else
+        candidate_objects.map(&:name)
+      end
+    end
 
+    def candidate_objects
       disk_names = settings.explicit_candidate_devices
-      disk_names.select { |n| initial_devicegraph.find_by_name(n) }
+      disk_names.map { |n| initial_devicegraph.find_by_name(n) }.compact
     end
 
     # All possible combinations of candidate devices to assign to the non-root
@@ -311,6 +344,10 @@ module Y2Storage
     # @return [Array<VolumeSpecificationsSet>]
     def non_root_volumes_sets
       proposed_volumes_sets.reject(&:root?)
+    end
+
+    def root_volumes_set
+      proposed_volumes_sets.find(&:root?)
     end
   end
 end

@@ -171,6 +171,8 @@ module Y2Storage
         log.info "Trying to make a proposal with target size: #{target_size}\n" \
           "using the following settings:\n#{settings}"
 
+        raise Error if impossible_volumes_sets?
+
         @planned_devices = planned_devices_list(target_size)
         @devices = devicegraph(@planned_devices)
         true
@@ -199,6 +201,11 @@ module Y2Storage
     def complete_settings
       settings.candidate_devices ||= candidate_devices
       settings.root_device ||= candidate_devices.first
+    end
+
+    def candidate_objects
+      disk_names = settings.explicit_candidate_devices
+      disk_names.map { |n| initial_devicegraph.find_by_name(n) }.compact
     end
 
     # @return [Array<Planned::Device>]
@@ -308,6 +315,16 @@ module Y2Storage
     # @return [Array<VolumeSpecificationsSet>]
     def proposed_volumes_sets
       settings.volumes_sets.select(&:proposed?)
+    end
+
+    def impossible_volumes_sets?
+      candidate_objects.any? do |disk|
+        total = DiskSize.sum(proposed_volumes_sets.select { |set| set.device == disk.name }.map(&:min_size))
+        if disk.size <= total
+          log.info "Buff"
+          true
+        end
+      end
     end
   end
 end
