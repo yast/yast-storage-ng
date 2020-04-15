@@ -17,6 +17,8 @@
         type: primary
         id: esp
         file_system: vfat
+        fstab_options:
+          - utf8
         mount_point: /boot/efi
     - partition:
         size: 40 GiB

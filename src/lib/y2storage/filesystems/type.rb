@@ -44,6 +44,15 @@ module Y2Storage
       # if not needed because in many cases no such filesystem is used.
       IOCHARSET_OPTIONS = ["iocharset="].freeze
       CODEPAGE_OPTIONS = ["codepage="].freeze
+
+      # The default system values are in principle visible in
+      #
+      # /proc/config.gz::CONFIG_FAT_DEFAULT_IOCHARSET
+      # /proc/config.gz::CONFIG_FAT_DEFAULT_CODEPAGE
+      #
+      # but it's always iso8859-1 & 437 anyway.
+      #
+      DEFAULT_IOCHARSET = "iso8859-1".freeze
       DEFAULT_CODEPAGE = "437".freeze
 
       # Base for valid characters (as a string): "ABC...XYZabc...xyz012..89"
@@ -444,7 +453,7 @@ module Y2Storage
           next opt unless opt.start_with?("codepage")
 
           cp = codepage
-          if cp == "437" # Default according to "man mount"
+          if cp == DEFAULT_CODEPAGE # Default according to "man mount"
             nil
           else
             "codepage=" + cp
@@ -463,8 +472,20 @@ module Y2Storage
           next opt unless opt.start_with?("iocharset")
 
           iocharset = lang_typical_encoding
-          "iocharset=" + iocharset
-        end
+
+          case iocharset
+          when DEFAULT_IOCHARSET
+            nil
+          when "utf8"
+            # Avoid iocharset=utf8 since that makes the mount case-sensitve as a side effect.
+            # Instead, use the separate utf8 option.
+            #
+            # See doc/vfat-notes.md for some background.
+            iocharset
+          else
+            "iocharset=" + iocharset
+          end
+        end.compact
       end
 
       # Return the codepage for FAT filesystems. This is used to convert

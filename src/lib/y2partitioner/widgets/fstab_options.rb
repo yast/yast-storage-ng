@@ -722,10 +722,14 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def help
-        _("<p><b>Arbitrary Option Value:</b> " \
+        _(
+          "<p><b>Arbitrary Option Value:</b> " \
           "Enter any other mount options here, separated with commas. " \
-          "Notice that this does not do any checking, so be careful " \
-          "what you enter here!</p>")
+          "Notice that this does not do any checking, so be careful what you enter here!<br>" \
+          "If you want to have utf8 encoded filenames with limited case-insensitivity then " \
+          "add 'utf8' here and leave the Charset for File Names field empty." \
+          "</p>"
+        )
       end
 
       private
@@ -840,16 +844,18 @@ module Y2Partitioner
       end
 
       def default_value
-        iocharset = filesystem.type.iocharset
-        ITEMS.include?(iocharset) ? iocharset : ITEMS.first
+        ITEMS.first
       end
 
       def supported_by_mount_path?
         return false if mount_path.nil?
 
-        # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731).
-        # See also boot_fstab_options() in lib/y2storage/filesystems/type.rb
-        mount_path != "/boot" && !mount_path.start_with?("/boot/")
+        # We used to disable the iocharset dialog for filesystems used for booting since
+        # iocharset=utf8 breaks VFAT case insensitivity (bsc#1080731).
+        #
+        # That's taken care of now in {Filesystems::Type#patch_iocharset}
+        # when we create a new file system.
+        true
       end
 
       # @macro seeAbstractWidget
@@ -859,8 +865,15 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def help
-        _("<p><b>Charset for File Names:</b>\nSet the charset used for display " \
-        "of file names in Windows partitions.</p>\n")
+        _(
+          "<p><b>Charset for File Names:</b>\n" \
+          "Set the charset used for display of file names in Windows partitions.<br>\n" \
+          "Note that choosing 'utf8' here will implicitly make " \
+          "filename comparison case-sensitve.<br>\n" \
+          "To avoid this, leave this field empty and instead add 'utf8' " \
+          "to the Arbitrary Option Value field." \
+          "</p>\n"
+        )
       end
     end
 
@@ -872,8 +885,7 @@ module Y2Partitioner
       ITEMS = ["", "437", "852", "932", "936", "949", "950"].freeze
 
       def default_value
-        cp = filesystem.type.codepage
-        ITEMS.include?(cp) ? cp : ITEMS.first
+        ITEMS.first
       end
 
       # @macro seeAbstractWidget
