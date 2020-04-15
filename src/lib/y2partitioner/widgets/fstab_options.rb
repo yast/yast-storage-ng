@@ -869,7 +869,7 @@ module Y2Partitioner
           "<p><b>Charset for File Names:</b>\n" \
           "Set the charset used for display of file names in Windows partitions.<br>\n" \
           "Note that choosing 'utf8' here will implicitly make " \
-          "filename comparision case-sensitve.<br>\n" \
+          "filename comparison case-sensitve.<br>\n" \
           "To avoid this, leave this field empty and instead add 'utf8' " \
           "to the Arbitrary Option Value field." \
           "</p>\n"
