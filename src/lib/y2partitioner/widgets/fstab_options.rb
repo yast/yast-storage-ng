@@ -722,10 +722,14 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def help
-        _("<p><b>Arbitrary Option Value:</b> " \
+        _(
+          "<p><b>Arbitrary Option Value:</b> " \
           "Enter any other mount options here, separated with commas. " \
-          "Notice that this does not do any checking, so be careful " \
-          "what you enter here!</p>")
+          "Notice that this does not do any checking, so be careful what you enter here!<br>" \
+          "If you want to have utf8 encoded filenames with limited case-insensitivity then " \
+          "add 'utf8' here and leave the Charset for File Names field empty." \
+          "</p>"
+        )
       end
 
       private
@@ -861,8 +865,15 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def help
-        _("<p><b>Charset for File Names:</b>\nSet the charset used for display " \
-        "of file names in Windows partitions.</p>\n")
+        _(
+          "<p><b>Charset for File Names:</b>\n" \
+          "Set the charset used for display of file names in Windows partitions.<br>\n" \
+          "Note that choosing 'utf8' here will implicitly make " \
+          "filename comparision case-sensitve.<br>\n" \
+          "To avoid this, leave this field empty and instead add 'utf8' " \
+          "to the Arbitrary Option Value field." \
+          "</p>\n"
+        )
       end
     end
 
