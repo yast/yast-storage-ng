@@ -98,6 +98,12 @@ module Y2Storage
           res << SetupError.new(message: error_message)
         end
 
+        if boot_in_bcache?
+          error_message =
+            _("The device mounted at '/boot' should not be in a BCache.")
+          res << SetupError.new(message: error_message)
+        end
+
         res
       end
 
@@ -123,12 +129,6 @@ module Y2Storage
           res << SetupError.new(message: error_message)
         end
 
-
-        if boot_in_bcache?
-          error_message =
-            _("The device mounted at '/boot' cannot be in a BCache.")
-          res << SetupError.new(message: error_message)
-        end
         res
       end
 

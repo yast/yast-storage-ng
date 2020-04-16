@@ -158,18 +158,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    context "/boot is in a BCache" do
-      let(:use_bcache) { true }
-
-      it "contains an error that /boot cannot be in a BCache" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
-
-        message = checker.errors.first.message
-        expect(message).to match(/boot.*BCache/)
-      end
-    end
-
     context "in a x86 system not using UEFI (legacy PC)" do
       let(:architecture) { :x86 }
       let(:efiboot) { false }
@@ -233,6 +221,18 @@ describe Y2Storage::BootRequirementsChecker do
 
         message = checker.warnings.first.message
         expect(message).to match(/boot.*thin.*LVM/)
+      end
+    end
+
+    context "/boot is in a BCache" do
+      let(:use_bcache) { true }
+
+      it "contains a warning because /boot should not be in a BCache" do
+        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+        message = checker.warnings.first.message
+        expect(message).to match(/boot.*BCache/)
       end
     end
 
