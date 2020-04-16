@@ -92,6 +92,12 @@ module Y2Storage
           res << SetupError.new(message: error_message)
         end
 
+        if boot_in_thin_lvm?
+          error_message =
+            _("The device mounted at '/boot' should not be in a thinly provisioned LVM VG.")
+          res << SetupError.new(message: error_message)
+        end
+
         res
       end
 
@@ -105,6 +111,7 @@ module Y2Storage
       # @return [Array<SetupError>]
       def errors
         res = []
+
         if root_filesystem_missing?
           error_message = _("There is no device mounted at '/'")
           res << SetupError.new(message: error_message)
@@ -116,18 +123,12 @@ module Y2Storage
           res << SetupError.new(message: error_message)
         end
 
-        if boot_in_thin_lvm?
-          error_message =
-            _("The device mounted at '/boot' cannot be in a thinly provisioned LVM VG.")
-          res << SetupError.new(message: error_message)
-        end
 
         if boot_in_bcache?
           error_message =
             _("The device mounted at '/boot' cannot be in a BCache.")
           res << SetupError.new(message: error_message)
         end
-
         res
       end
 
