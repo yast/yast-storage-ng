@@ -90,5 +90,12 @@ module Y2Storage
     def root?
       volumes.any?(&:root?)
     end
+
+    # Total minimal size of all the volume specifications included in the set
+    #
+    # @return [DiskSize]
+    def min_size
+      DiskSize.sum(volumes.map(&:min_size))
+    end
   end
 end
