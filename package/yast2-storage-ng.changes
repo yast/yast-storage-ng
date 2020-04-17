@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr 17 15:08:48 UTC 2020 - David Diaz <dgonzalez@suse.com>
+
+- Fix the severity of some boot checks, making them warnings
+  instead of errors.
+
+-------------------------------------------------------------------
 Fri Apr 17 11:45:31 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: in the initial attempt, consider only a reasonable
