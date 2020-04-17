@@ -111,7 +111,7 @@ module Y2Storage
       # is missing
       #
       # @note errors must be raised only in those scenarios making the installation impossible.
-      #   For the rest circumstances please use {#warnings} instead.
+      #   For any other circumstance please use {#warnings} instead.
       #
       # @note This method can be overloaded for derived classes.
       #
