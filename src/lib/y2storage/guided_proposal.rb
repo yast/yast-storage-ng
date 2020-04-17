@@ -171,6 +171,8 @@ module Y2Storage
         log.info "Trying to make a proposal with target size: #{target_size}\n" \
           "using the following settings:\n#{settings}"
 
+        raise Error if useless_volumes_sets?
+
         @planned_devices = planned_devices_list(target_size)
         @devices = devicegraph(@planned_devices)
         true
@@ -263,20 +265,82 @@ module Y2Storage
     # Candidate devices to make a proposal
     #
     # The candidate devices are calculated when current settings do not contain any
-    # candidate device. In that case, the possible candidate devices are sorted, placing
-    # USB devices at the end.
+    # candidate device. See {#fallback_candidates}
     #
     # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
     def candidate_devices
-      return settings.candidate_devices unless settings.candidate_devices.nil?
+      settings.candidate_devices || fallback_candidates
+    end
 
+    # Candidate devices to make a proposal, full version
+    #
+    # Unlike {#candidate_devices}, that only returns a list of device names, this method
+    # returns a list of proper full-featured objects representing those devices.
+    #
+    # @return [Array<BlkDevice>]
+    def candidate_objects
+      candidate_devices.map { |n| initial_devicegraph.find_by_name(n) }.compact
+    end
+
+    # Candidate devices to use when the current settings do not specify any, i.e. in the initial
+    # attempt, before the user has had any opportunity to select the candidate devices
+    #
+    # The possible candidate devices are sorted, placing USB devices at the end.
+    #
+    # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
+    def fallback_candidates
       # NOTE: sort_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
       # in two groups and moving one of them to the end.
       candidates = disk_analyzer.candidate_disks
       candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
-      candidates.map(&:name)
+      candidates.first(fallback_candidates_size).map(&:name)
+    end
+
+    # Number of disks to be included in {#fallback_candidates}
+    #
+    # Without this limit, the process to find the optimal layout can be very slow
+    # specially if LVM is enabled by default for the product. See bsc#1154070.
+    #
+    # @return [Integer]
+    def fallback_candidates_size
+      # Reasonable value set after research in bsc#1154070. Anyways, users with more disks will
+      # very likely dismiss the initial proposal and use the Guided Setup or the Expert Partitioner.
+      # Trying with more combinations of disks is often just wasting time.
+      disks = 5
+
+      return disks unless settings.allocate_mode?(:device)
+
+      [disks, proposed_volumes_sets.size].max
+    end
+
+    # All proposed volumes sets from the settings
+    #
+    # @return [Array<VolumeSpecificationsSet>]
+    def proposed_volumes_sets
+      settings.volumes_sets.select(&:proposed?)
+    end
+
+    # Checks whether the current distribution of volumes sets into disks make any sense
+    #
+    # NOTE: This method is only intended to make a quick evaluation to early discard
+    # a combination of disks. A false result doesn't imply the proposal will succeed.
+    #
+    # @return [Boolean] true if there is some disk that is supposed to allocate volumes
+    #   that are bigger than the size of the disk
+    def useless_volumes_sets?
+      return false unless settings.ng_format?
+
+      candidate_objects.any? do |disk|
+        total = DiskSize.sum(proposed_volumes_sets.select { |s| s.device == disk.name }.map(&:min_size))
+        # We use ">=" because the whole space of the disk can never be used to allocate
+        # the volumes (the partition table takes space)
+        if total >= disk.size
+          log.info "Discarded combination of volumes sets for #{disk.name} (#{total} >= #{disk.size})"
+          true
+        end
+      end
     end
   end
 end

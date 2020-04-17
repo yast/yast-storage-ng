@@ -196,7 +196,7 @@ describe Y2Storage::InitialGuidedProposal do
         context "without separated volume groups" do
           let(:separate_vgs) { false }
 
-          # NOTE: when separated volumes are note required, the proposal will create only
+          # NOTE: when separated volumes are not required, the proposal will create only
           # the "system" LVM VG in a single device.
           context "and having some devices with enough space to hold the proposal" do
             let(:sda_size) { 20.GiB }
@@ -207,7 +207,8 @@ describe Y2Storage::InitialGuidedProposal do
             it "makes the proposal using only a single device" do
               proposal.propose
 
-              expect(used_devices).to contain_exactly("/dev/sdd")
+              # sda and sdb are too small to hold the proposal
+              expect(used_devices).to contain_exactly("/dev/sdc")
             end
 
             it "creates only the 'system' LVM VG" do
@@ -346,10 +347,10 @@ describe Y2Storage::InitialGuidedProposal do
               expect(created_vgs_names).to contain_exactly("system", "vg-home", "vg-foobar")
             end
 
-            it "creates the proposal using only one device" do
+            it "creates a proposal that uses the first devices as needed" do
               proposal.propose
 
-              expect(used_devices).to contain_exactly("/dev/sdb")
+              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
             end
           end
 
@@ -399,10 +400,10 @@ describe Y2Storage::InitialGuidedProposal do
               expect(mount_points).to contain_exactly("/", "/home", "/foo/bar")
             end
 
-            it "creates the proposal using only one device" do
+            it "creates a proposal that uses the first devices as needed" do
               proposal.propose
 
-              expect(used_devices).to contain_exactly("/dev/sdb")
+              expect(used_devices).to contain_exactly("/dev/sda", "/dev/sdb")
             end
           end
 
