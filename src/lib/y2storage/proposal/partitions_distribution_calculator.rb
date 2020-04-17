@@ -140,16 +140,30 @@ module Y2Storage
       # Checks whether there is any chance of producing a valid
       # PartitionsDistribution to accomodate the planned partitions and the
       # missing LVM part in the free spaces
+      #
+      # This check could be improved to detect more situations that make it impossible
+      # to get a distribution, but the goal is to keep it relatively simple and fast.
       def impossible?(planned_partitions, free_spaces)
-        needed = DiskSize.sum(planned_partitions.map(&:min))
-        log.info "#impossible? - initially needed: #{needed}"
         if lvm?
-          # Let's assume the best possible case - if we need to create a PV it
-          # will be only one
-          needed += planned_vg.single_pv_partition.min_size
-          log.info "#impossible? with LVM - needed: #{needed}"
+          # Let's assume the best possible case - if we need to create a PV it will be only one
+          planned_partitions += [planned_vg.single_pv_partition]
         end
-        needed > available_space(free_spaces)
+
+        # First, do the simplest calculation - checking total sizes
+        needed = DiskSize.sum(planned_partitions.map(&:min))
+        log.info "#impossible? - needed: #{needed}"
+        return true if needed > available_space(free_spaces)
+
+        # Now do the check for partitions that need to be in a specific disk.
+        # For simplicity, partitions with no pre-assigned disk are left out
+        planned_partitions.select(&:disk).group_by(&:disk).each do |disk, parts|
+          needed = DiskSize.sum(parts.map(&:min))
+          available = available_space(free_spaces.select { |s| s.disk_name == disk })
+          log.info "#impossible? (#{disk}) - needed: #{needed} - avail: #{available}"
+          return true if needed > available
+        end
+
+        false
       end
 
       # Returns the sum of available spaces
