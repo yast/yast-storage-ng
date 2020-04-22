@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -116,7 +116,9 @@ module Y2Partitioner
           used_device_error,
           partitions_error,
           extended_partition_error,
-          lvm_thin_pool_error
+          lvm_thin_pool_error,
+          lvm_cache_pool_error,
+          generic_unusable_error
         ].compact
       end
 
@@ -202,7 +204,7 @@ module Y2Partitioner
         return nil unless extended_partition?
 
         # TRANSLATORS: Error message when trying to edit an extented partition
-        _("An extended partition cannot be edited")
+        _("An extended partition cannot be edited.")
       end
 
       # Error message if trying to edit an LVM thin pool
@@ -214,6 +216,31 @@ module Y2Partitioner
         # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
         format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: device.name)
+      end
+
+      # Error message if trying to edit an LVM cache pool
+      #
+      # @return [String, nil] nil if the device is not a cache pool.
+      def lvm_cache_pool_error
+        return nil unless lvm_cache_pool?
+
+        # TRANSLATORS: Error message when trying to edit an LVM cache pool. %{name} is
+        # replaced by a logical volume name (e.g., /dev/system/lv1)
+        format(_("The volume %{name} is a cache pool.\nIt cannot be edited."), name: device.name)
+      end
+
+      # Error message if trying to edit an unusable block device, e.g. a LVM thin pool.
+      # Since those special cases are covered by the other tests this error is kind of
+      # a safety net.
+      #
+      # @return [String, nil] nil if the device is not an unusable block device.
+      def generic_unusable_error
+        return nil if device.usable_as_blk_device?
+
+        # TRANSLATORS: Error message when trying to edit an unusable block device. %{name} is
+        # replaced by a name (e.g., /dev/system/cache-pool)
+        format(_("The device %{name} is not a block device for common use.\nIt cannot be edited."),
+          name: device.name)
       end
 
       # Whether the device is an extended partition
@@ -228,6 +255,13 @@ module Y2Partitioner
       # @return [Boolean]
       def lvm_thin_pool?
         device.is?(:lvm_lv) && device.lv_type.is?(:thin_pool)
+      end
+
+      # Whether the device is an LVM cache pool
+      #
+      # @return [Boolean]
+      def lvm_cache_pool?
+        device.is?(:lvm_lv) && device.lv_type.is?(:cache_pool)
       end
     end
   end
