@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Wed Apr 22 13:29:05 CEST 2020 - aschnell@suse.com
 
-- disallow to edit LVM cache pools
+- disallow to edit LVM cache pools (related to bsc#1099744)
 - 4.3.1
 
 -------------------------------------------------------------------
