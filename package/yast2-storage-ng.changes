@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Apr 22 13:29:05 CEST 2020 - aschnell@suse.com
+
+- disallow to edit LVM cache pools (related to bsc#1099744)
+- 4.3.1
+
+-------------------------------------------------------------------
 Fri Apr 17 15:08:48 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Fix the severity of some boot checks, making them warnings

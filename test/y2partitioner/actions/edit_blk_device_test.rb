@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -143,6 +143,13 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       end
 
       let(:dev_name) { "/dev/vg1/pool1" }
+
+      include_examples "edit_error"
+    end
+
+    context "if called on an LVM cache pool" do
+      let(:scenario) { "lvm-cache.xml" }
+      let(:dev_name) { "/dev/test/cache3-pool" }
 
       include_examples "edit_error"
     end
