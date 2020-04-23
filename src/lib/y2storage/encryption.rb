@@ -354,16 +354,16 @@ module Y2Storage
       end
     end
 
+    # @see Device#update_etc_attributes
+    def assign_etc_attribute(value)
+      self.storage_in_etc_crypttab = value
+    end
+
     protected
 
     # @see Device#is?
     def types_for_is
       super << :encryption
-    end
-
-    # @see Device#update_etc_attributes
-    def assign_etc_attribute(value)
-      self.storage_in_etc_crypttab = value
     end
 
     # Updates the userdata with an up-to-date version of the encryption process
