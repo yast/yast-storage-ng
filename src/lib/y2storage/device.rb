@@ -482,7 +482,7 @@ module Y2Storage
       userdata_value(:in_etc_initial)
     end
 
-    # Stores the information for {#etc_status_autoset?}
+    # Stores the information for {#in_etc_initial}
     #
     # @param value [Boolean]
     def in_etc_initial=(value)
