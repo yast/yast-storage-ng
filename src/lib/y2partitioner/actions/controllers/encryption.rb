@@ -290,6 +290,7 @@ module Y2Partitioner
           end
 
           adjust_mount_point
+          encryption&.update_etc_status
         end
 
         # Sanitizes (removes) the encryption layer when needed

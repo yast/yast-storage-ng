@@ -459,15 +459,12 @@ module Y2Storage
       # Do something only for subclasses defining #assign_etc_attribute
       return unless respond_to?(:assign_etc_attribute, true)
 
-      if descendants.any?(&:in_etc?)
-        # Enable the autoset flag only if the attribute was false before our update
-        self.etc_status_autoset = !in_etc?
-        assign_etc_attribute(true)
-      # We only set the attribute to false if we did set it to true
-      elsif etc_status_autoset?
-        self.etc_status_autoset = false
-        assign_etc_attribute(false)
-      end
+      self.in_etc_initial = in_etc? if in_etc_initial.nil?
+
+      should_be_in_etc = descendants.any?(&:in_etc?)
+
+      # never set to false unless it was initially so
+      assign_etc_attribute(should_be_in_etc) if [true, in_etc_initial].include? should_be_in_etc
     end
 
     # Triggers recalculation of {#in_etc?} for all parent objects
@@ -475,20 +472,21 @@ module Y2Storage
       parents.each(&:update_etc_status)
     end
 
-    # Whether {#in_etc?} was set to true by {#update_etc_attributes}.
+    # The initial value of {#in_etc?}, before {#update_etc_attributes} changed it.
     #
     # @note This relies on the userdata mechanism, see {#userdata_value}.
     #
-    # @return [Boolean]
-    def etc_status_autoset?
-      userdata_value(:etc_status_autoset) || false
+    # @return [Boolean, nil] the initial {#in_etc?} value; nil if the initial value
+    #   hasn't been stored yet
+    def in_etc_initial
+      userdata_value(:in_etc_initial)
     end
 
-    # Stores the information for {#etc_status_autoset?}
+    # Stores the information for {#in_etc_initial}
     #
     # @param value [Boolean]
-    def etc_status_autoset=(value)
-      save_userdata(:etc_status_autoset, value)
+    def in_etc_initial=(value)
+      save_userdata(:in_etc_initial, value)
     end
 
     def types_for_is
