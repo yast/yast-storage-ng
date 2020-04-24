@@ -35,3 +35,12 @@ See also
 
   https://jira.suse.de/browse/SLE-4329?focusedCommentId=918311
 
+### FAQ
+
+A small set of questions about bcache, not necessarily related to what YaST supports.
+
+* Could backing devices be grouped in a set (i.e., /dev/bcacheX for several backing devices)? no
+* Could a caching (or set) be attached to several backing devices at the same time? yes
+* Could a caching device belong to several sets at the same time? sets not supported and not suggested to use.
+* Is a BCache device partitionable? yes, but only if the backing device is not a partition.
+* Could a BCache be used for LVM as physical volume or Software RAID creation? yes.
