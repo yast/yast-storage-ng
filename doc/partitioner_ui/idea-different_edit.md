@@ -10,7 +10,7 @@ account the possibility of having several mount points per filesystem.
 
 As an example of the inconsistencies this proposal tries to address, imagine a partition formatted
 as Btrfs, clicking "edit" for the partition and for its corresponding Btrfs filesystem in 15.2
-result in two different dialogs. The experience could be smoother and make more sense (at several
+results in two different dialogs. The experience could be smoother and make more sense (at several
 levels) with a better organization of the dialogs and workflows to format a device (or a set of
 devices, since multi-device filesystems are possible) and to modify existing filesystems.
 
@@ -36,13 +36,13 @@ distribution and labels may change.
 
 The last screen if a filesystem is going to be created will only contain options that are indeed
 applicable to the filesystem in any case, no matter if the filesystem sits on a disk, on a partition
-or it's a multi-device filesystem.  Once again, this is only a preliminary mockup.
+or if it's a multi-device filesystem. Once again, this is only a preliminary mockup.
 
 ![Partition creation step 4](img/new_part_4.png)
 
-Creating a new multi-device filesystem would consist in two steps. A first one to select the block
-devices (pretty similar to the first screen displayed when creating a RAID) and the mockup above
-this paragraph as the second and last screen.
+Creating a new multi-device filesystem would consist in two steps. The first step would allow to
+select the block devices with a screen similar to the one presented when creating a RAID. The second
+and last screen would be the mockup above this paragraph.
 
 This new approach with separate steps for the settings of the block device (like encryption or
 partition ID) and the configuration of the filesystem (formatting and mounting options) may have a

@@ -7,7 +7,7 @@ want to keep adding more and more storage-related functionality to YaST!
 ![System view](partitioner_ui/img/system.png)
 
 The goal of this document is to serve as a base to decide how to fix the usability problems in a way
-that makes possible to keep adding functionality.  That's a question we need to solve twice, once
+that makes it possible to keep adding functionality.  That's a question we need to solve twice, once
 for SLE-15-SP3 (Leap 15.3) and again for the next major release (ie. SLE-16 / Leap 16.0). Why twice?
 On one hand for the obvious time restrictions, if we design a completely new concept it could be not
 fully ready in time for 15.3, while targetting 16.0 gives us more room to be ambitious and creative.

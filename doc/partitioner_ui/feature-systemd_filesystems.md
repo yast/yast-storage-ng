@@ -3,7 +3,7 @@
 This is part of the [bigger document](../partitioner_ui.md) about rethinking the
 YaST Partitioner user interface.
 
-In the systemd world, some filesystems are not longer managed simply via `mount` and the
+In the systemd world, some filesystems are no longer managed simply via `mount` and the
 `/etc/fstab` file, like in traditional Unix/Linux systems. Examples of this new way of dynamically
 (un)mounting and creating/destroying filesystems:
 

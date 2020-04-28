@@ -13,8 +13,8 @@ POSIX filetree that are not a block device (and cannot be treated as one)_".
 Btrfs subvolumes can be nested inside each other. In fact, all Btrfs filesystems contain a top-level
 subvolume (with Btrfs id 5) containing all the files, directories and other subvolumes. Thus, each
 subvolume except the top-level one has a parent subvolume. In addition, many SUSE products define an
-extra subvolume named "@" as an extra top-level container. Last but not least, filesystems snapshots
-are also implemented as subvolumes nested into an special subvolume called ".snapshots". As a
+extra subvolume named "@" as an extra top-level container. Last but not least, filesystem snapshots
+are also implemented as subvolumes nested into a special subvolume called ".snapshots". As a
 result, the structure of subvolumes of a SUSE Btrfs filesystem can look like this.
 
 ```
@@ -35,7 +35,7 @@ Each subvolume can have its own configuration in many aspects. That includes its
 operation mode, its usage quotas and (in extreme cases) even its own RAID mode.
 
 Last but not least, a given set of subvolumes can become "shadowed" if a separate filesystem is
-mounted in a way that makes them not longer relevant. For example, imagine a root Btrfs filesystem
+mounted in a way that makes them no longer relevant. For example, imagine a root Btrfs filesystem
 with the subvolumes `/home`, `/var/lib` and `/var/cache`. If a separate partition is then formatted
 and mounted in `/var`, two of the subvolumes will become irrelevant because they cannot be accessed.
 
@@ -78,7 +78,7 @@ Handling" button when editing that filesystem.
 In such pop-up driven interface the "@" subvolume is not represented at all, since there is nothing
 like nesting in that UI (apart from the nesting that can be inferred by the subvolume paths).
 Instead of clearly representing such special subvolume, a "@" character is automatically added to
-each new subvolume, pretending it's just a prefix. The way that "prefix" is managed turns to be
+each new subvolume, pretending it's just a prefix. The way that "prefix" is managed turns out to be
 quite confusing (and usually bogus when editing a filesystem that does not contain such special
 subvolume).
 
@@ -97,7 +97,7 @@ that exist or that are going to be created in the filesystem. For each subvolume
 associated qgroup) it would be necessary to display the usage of _referenced_ and _exclusive_ space
 and the limit for both, allowing to modify those limits.
 
-Last but not least, the management of shadowed subvolumes is not exactly intuituve, with many things
-happening behind user's back. If a subvolume becomes shadowed, it will simply disappear from the
+Last but not least, the management of shadowed subvolumes is not exactly intuitive, with many things
+happening behind the user's back. If a subvolume becomes shadowed, it will simply disappear from the
 list with no trace and will re-appear as soon as the device that was shadowing it is modified or
 deleted.
