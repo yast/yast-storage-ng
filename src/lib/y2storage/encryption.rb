@@ -336,11 +336,23 @@ module Y2Storage
 
     # Options that must be propagated from the fstab entries of the mount points
     # to the crypttab entries of the corresponding device
-    OPTIONS_TO_PROPAGATE = ["_netdev", "noauto", "nofail"]
-    private_constant :OPTIONS_TO_PROPAGATE
+    OPTIONS_TO_PROPAGATE = {
+      "_netdev"        => "_netdev",
+      "noauto"         => "noauto",
+      "nofail"         => "nofail",
+      "x-initrd.mount" => "x-initrd.attach"
+    }
+
+    # Options that must be added to crypttab entries for specific mount points.
+    OPTIONS_TO_ADD = {
+      "/" => "x-initrd.attach"
+    }
+    private_constant :OPTIONS_TO_PROPAGATE, :OPTIONS_TO_ADD
 
     # Synchronizes {#crypt_options} with the {MountPoint#mount_options} of the
     # mount points associated to this encryption device
+    #
+    # This also adds crypttab options that are needed for specific mount points.
     #
     # This must be called after creating a new encryption device and after
     # modifying the options of any of the mount points associated to it.
@@ -349,8 +361,12 @@ module Y2Storage
       # Moreover, libstorage-ng currently enforces that behavior.
       mount_points = descendants.select { |d| d.is?(:filesystem) }.map(&:mount_point).compact
 
-      OPTIONS_TO_PROPAGATE.each do |opt|
-        propagate_mount_option(opt, mount_points)
+      OPTIONS_TO_PROPAGATE.each_pair do |fstab_opt, crypttab_opt|
+        propagate_mount_option(fstab_opt, crypttab_opt, mount_points)
+      end
+
+      OPTIONS_TO_ADD.each_pair do |mountpoint, crypttab_opt|
+        self.crypt_options |= [crypttab_opt] if mount_points.any? { |m| m.path == mountpoint }
       end
     end
 
@@ -402,17 +418,18 @@ module Y2Storage
 
     # @see #adjust_crypt_options
     #
-    # @param option [String] option from fstab and crypttab
+    # @param fstab_option [String] option from fstab
+    # @param crypttab_option [String] option for crypttab
     # @param mount_points [Array<MountPoint>] relevant mount points associated
     #   to the encryption device
-    def propagate_mount_option(option, mount_points)
-      in_mount_points = mount_points.all? { |mp| mp.mount_options.include?(option) }
-      in_encryption = crypt_options.include?(option)
+    def propagate_mount_option(fstab_option, crypttab_option, mount_points)
+      in_mount_points = mount_points.all? { |mp| mp.mount_options.include?(fstab_option) }
+      in_encryption = crypt_options.include?(crypttab_option)
 
       if in_mount_points && !in_encryption
-        self.crypt_options = crypt_options + [option]
+        self.crypt_options = crypt_options + [crypttab_option]
       elsif !in_mount_points && in_encryption
-        self.crypt_options = crypt_options - [option]
+        self.crypt_options = crypt_options - [crypttab_option]
       end
     end
 
