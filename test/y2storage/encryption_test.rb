@@ -186,11 +186,44 @@ describe Y2Storage::Encryption do
     let(:disk) { devicegraph.find_by_name("/dev/sda") }
     let(:partition) { devicegraph.find_by_name(partition_name) }
 
+    def create_btrfs(blk_dev)
+      fs = blk_dev.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+      fs.create_mount_point(mountpoint)
+      # To have full effect, this must be done after creating the mount point
+      fs.add_btrfs_subvolumes(Y2Storage::SubvolSpecification.fallback_list)
+      fs.mount_point.set_default_mount_options
+      fs
+    end
+
+    def prepare_existing_fs__mount
+      fs = encryption.filesystem
+      fs.create_mount_point(mountpoint)
+      fs.mount_point.set_default_mount_options
+      fs.mount_point.mount_options |= mount_options
+    end
+
+    def prepare_encrypt__create_fs__mount
+      partition.remove_descendants
+      fs = create_btrfs(partition.encrypt)
+      fs.mount_point.mount_options |= mount_options
+    end
+
+    def prepare_create_fs__encrypt__mount
+      partition.remove_descendants
+      fs = create_btrfs(partition)
+      partition.encrypt
+      fs.mount_point.mount_options |= mount_options
+    end
+
     before { allow(disk.transport).to receive(:network?).and_return network }
 
     RSpec.shared_examples "netdev for network device" do
       context "within a network disk" do
         let(:network) { true }
+        let(:mountpoint) { "/var" }
+        let(:mount_options) { [] }
+
+        before { prepare_fs.call }
 
         it "makes sure #crypt_options include _netdev" do
           expect(encryption.crypt_options).to include("_netdev")
@@ -199,53 +232,60 @@ describe Y2Storage::Encryption do
 
       context "within a local disk" do
         let(:network) { false }
+        let(:mountpoint) { "/var" }
+        let(:mount_options) { [] }
+
+        before { prepare_fs.call }
 
         it "makes no changes to #crypt_options" do
           expect(encryption.crypt_options).to be_empty
+        end
+      end
+
+      context "when mount option x-initrd.mount is set" do
+        let(:network) { false }
+        let(:mountpoint) { "/var" }
+        let(:mount_options) { ["x-initrd.mount"] }
+
+        before { prepare_fs.call }
+
+        it "adds x-initrd.attach to crypttab options" do
+          expect(encryption.crypt_options).to include "x-initrd.attach"
+        end
+      end
+
+      context "when the root filesystem is encrypted" do
+        let(:network) { false }
+        let(:mountpoint) { "/" }
+        let(:mount_options) { [] }
+
+        before { prepare_fs.call }
+
+        it "adds x-initrd.attach to crypttab options" do
+          expect(encryption.crypt_options).to include "x-initrd.attach"
         end
       end
     end
 
     context "when mounting an encryption device that already existed" do
       let(:partition_name) { "/dev/sda1" }
-      subject(:encryption) { partition.encryption }
+      let(:prepare_fs) { proc { prepare_existing_fs__mount } }
 
-      before do
-        fs = encryption.filesystem
-        fs.create_mount_point("/mnt")
-        fs.mount_point.set_default_mount_options
-      end
+      subject(:encryption) { partition.encryption }
 
       include_examples "netdev for network device"
     end
 
     context "when encrypting and mounting a device" do
       let(:partition_name) { "/dev/sda2" }
+      let(:prepare_fs) { proc { prepare_encrypt__create_fs__mount } }
 
       subject(:encryption) { partition.encryption }
-
-      def create_btrfs(blk_dev)
-        fs = blk_dev.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
-        fs.create_mount_point("/var")
-        # To have full effect, this must be done after creating the mount point
-        fs.add_btrfs_subvolumes(Y2Storage::SubvolSpecification.fallback_list)
-        fs.mount_point.set_default_mount_options
-        fs
-      end
-
-      before do
-        partition.remove_descendants
-        create_btrfs(partition.encrypt)
-      end
 
       include_examples "netdev for network device"
 
       context "if the mount point is created before the encryption (e.g. Partitioner)" do
-        before do
-          partition.remove_descendants
-          create_btrfs(partition)
-          partition.encrypt
-        end
+        let(:prepare_fs) { proc { prepare_create_fs__encrypt__mount } }
 
         include_examples "netdev for network device"
       end
