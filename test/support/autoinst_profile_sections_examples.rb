@@ -17,11 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_profile/section_with_attributes"
+require "installation/autoinst_profile/section_with_attributes"
 
 RSpec.shared_examples "autoinst section" do
   let(:parent) do
-    Y2Storage::AutoinstProfile::SectionWithAttributes.new
+    ::Installation::AutoinstProfile::SectionWithAttributes.new
   end
 
   describe ".new_from_hashes" do

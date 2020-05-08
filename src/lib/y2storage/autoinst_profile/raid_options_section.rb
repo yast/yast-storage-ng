@@ -17,11 +17,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "installation/autoinst_profile/section_with_attributes"
+
 module Y2Storage
   module AutoinstProfile
     # Thin object oriented layer on top of a <raid_options> section of the
     # AutoYaST profile.
-    class RaidOptionsSection < SectionWithAttributes
+    class RaidOptionsSection < ::Installation::AutoinstProfile::SectionWithAttributes
       def self.attributes
         [
           { name: :persistent_superblock },
