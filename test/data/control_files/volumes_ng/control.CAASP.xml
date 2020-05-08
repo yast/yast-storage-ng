@@ -137,7 +137,6 @@ textdomain="control"
 
         <proposal>
             <lvm config:type="boolean">false</lvm>
-            <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
         </proposal>
 
         <volumes config:type="list">
