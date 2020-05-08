@@ -27,7 +27,7 @@ module Y2Storage
   end
 end
 
-require "y2storage/autoinst_profile/section_with_attributes"
+require "installation/autoinst_profile/section_with_attributes"
 require "y2storage/autoinst_profile/skip_list_value"
 require "y2storage/autoinst_profile/skip_rule"
 
