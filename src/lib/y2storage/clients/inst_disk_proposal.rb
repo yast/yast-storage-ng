@@ -220,18 +220,7 @@ module Y2Storage
       #
       # @return [Array<Symbol>]
       def excluded_buttons
-        excluded = []
-        excluded << :guided unless show_guided_setup?
-        excluded
-      end
-
-      # Whether it is possible to show the Guided Setup
-      #
-      # @see Dialogs::GuidedSetup.can_be_shown?
-      #
-      # @return [Boolean]
-      def show_guided_setup?
-        Dialogs::GuidedSetup.can_be_shown?(probed_analyzer)
+        []
       end
 
       # Whether to run the Partitioner
