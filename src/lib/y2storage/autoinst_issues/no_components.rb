@@ -16,7 +16,7 @@
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 require "y2storage/planned/bcache"
 require "y2storage/planned/btrfs"
 require "y2storage/planned/lvm_vg"
@@ -28,7 +28,7 @@ module Y2Storage
     #
     # This issue indicates that there are no suitable components for a composed device.
     # A composed device could be a LVM VG, a RAID, a Btrfs multi-device or a Bcache device.
-    class NoComponents < Issue
+    class NoComponents < ::Installation::AutoinstIssues::Issue
       attr_reader :planned
 
       # @param planned [Planned::Bcache, Planned::Btrfs, Planned::LvmVg, Planned::RAID]

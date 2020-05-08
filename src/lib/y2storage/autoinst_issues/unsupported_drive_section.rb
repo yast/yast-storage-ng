@@ -17,14 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # The proposal contains a drive section which is not supported in the current architecture
     #
     # This is a fatal error.
-    class UnsupportedDriveSection < Issue
+    class UnsupportedDriveSection < ::Installation::AutoinstIssues::Issue
       def initialize(section)
         textdomain "storage"
 

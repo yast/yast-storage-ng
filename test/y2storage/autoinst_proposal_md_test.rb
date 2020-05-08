@@ -30,7 +30,7 @@ describe Y2Storage::AutoinstProposal do
     )
   end
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)

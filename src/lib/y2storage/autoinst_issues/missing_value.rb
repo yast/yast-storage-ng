@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -27,7 +27,7 @@ module Y2Storage
     #   section = AutoinstProfile::PartitionSection.new_from_hashes({})
     #   problem = MissingValue.new(section, :size)
     #   problem.attr #=> :size
-    class MissingValue < Issue
+    class MissingValue < ::Installation::AutoinstIssues::Issue
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
 

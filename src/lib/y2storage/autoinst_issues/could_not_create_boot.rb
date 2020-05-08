@@ -17,12 +17,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # It was not possible to allocate the extra partitions needed for booting
-    class CouldNotCreateBoot < Issue
+    class CouldNotCreateBoot < ::Installation::AutoinstIssues::Issue
       # @param devices [Array<Planned::Devices>] see {#devices}
       def initialize(devices)
         textdomain "storage"

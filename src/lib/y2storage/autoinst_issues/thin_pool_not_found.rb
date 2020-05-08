@@ -17,14 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # Represents an AutoYaST situation where a thin pool was not found.
     #
     # This is a fatal error.
-    class ThinPoolNotFound < Issue
+    class ThinPoolNotFound < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"

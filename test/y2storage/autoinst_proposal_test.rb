@@ -34,7 +34,7 @@ describe Y2Storage::AutoinstProposal do
   end
 
   let(:partitioning) { [] }
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
   let(:vg_name) { "system" }
   let(:proposal_settings) do
     Y2Storage::ProposalSettings.new_for_current_product
@@ -1537,7 +1537,7 @@ describe Y2Storage::AutoinstProposal do
       subject(:proposal) { described_class.new(partitioning: [], devicegraph: fake_devicegraph) }
 
       it "returns a new list" do
-        expect(proposal.issues_list).to be_a(Y2Storage::AutoinstIssues::List)
+        expect(proposal.issues_list).to be_a(::Installation::AutoinstIssues::List)
       end
     end
   end

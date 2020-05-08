@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -28,7 +28,7 @@ module Y2Storage
     #   problem = InvalidValue.new(section, :size)
     #   problem.value #=> "auto"
     #   problem.attr  #=> :size
-    class InvalidValue < Issue
+    class InvalidValue < ::Installation::AutoinstIssues::Issue
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
       # @return [Object] New value or :skip to skip the section.

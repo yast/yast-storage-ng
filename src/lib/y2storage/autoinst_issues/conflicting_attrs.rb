@@ -16,7 +16,7 @@
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -24,7 +24,7 @@ module Y2Storage
     #
     # The conflict is resolved and the 'selected_attr' is honored while the rest
     # is ignored.
-    class ConflictingAttrs < Issue
+    class ConflictingAttrs < ::Installation::AutoinstIssues::Issue
       # @return [Symbol] Selected attribute
       attr_reader :selected_attr
       # @return [Array<Symbol>] List of ignored attributes

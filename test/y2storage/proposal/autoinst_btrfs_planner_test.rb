@@ -21,7 +21,7 @@
 require_relative "../spec_helper"
 require_relative "../../support/autoinst_devices_planner_btrfs"
 require "y2storage/proposal/autoinst_btrfs_planner"
-require "y2storage/autoinst_issues/list"
+require "installation/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
 
 describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
@@ -33,7 +33,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
 
   let(:scenario) { "btrfs2-devicegraph.xml" }
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   describe "#planned_devices" do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(btrfs_spec) }

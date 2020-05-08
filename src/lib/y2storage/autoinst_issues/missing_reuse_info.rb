@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -27,7 +27,7 @@ module Y2Storage
     # @example
     #   section = AutoinstProfile::PartitionSection.new_from_hashes({})
     #   problem = MissingReuseInfo.new(section)
-    class MissingReuseInfo < Issue
+    class MissingReuseInfo < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"

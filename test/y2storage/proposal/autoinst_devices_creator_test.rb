@@ -48,7 +48,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
   let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk]) }
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   before { fake_scenario(scenario) }
 

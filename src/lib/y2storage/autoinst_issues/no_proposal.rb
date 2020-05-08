@@ -17,12 +17,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # Represents a problem that occurs when no proposal is possible
-    class NoProposal < Issue
+    class NoProposal < ::Installation::AutoinstIssues::Issue
       def initialize(*args)
         super
         textdomain "storage"

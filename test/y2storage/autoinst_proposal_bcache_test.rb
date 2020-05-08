@@ -32,7 +32,7 @@ describe Y2Storage::AutoinstProposal do
     )
   end
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
   let(:architecture) { :x86_64 }
 
   before do
