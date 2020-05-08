@@ -46,17 +46,13 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     let(:partitioning_section) { {} }
 
-    context "the proposal dialog" do
-      before do
-        allow(proposal_dialog).to receive(:run).and_return(:abort)
-      end
+    it "it does not exclude the Guided Setup button" do
+      allow(proposal_dialog).to receive(:run).and_return(:abort)
 
-      it "does not exclude the Guided Setup button" do
-        expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-          .with(anything, anything, excluded_buttons: []).and_return(proposal_dialog)
+      expect(Y2Storage::Dialogs::Proposal).to receive(:new)
+        .with(anything, anything, excluded_buttons: []).and_return(proposal_dialog)
 
-        client.run
-      end
+      client.run
     end
 
     context "when running the client for the first time" do

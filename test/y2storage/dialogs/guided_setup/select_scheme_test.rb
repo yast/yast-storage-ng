@@ -39,10 +39,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
   subject { described_class.new(guided_setup) }
 
   describe "skip?" do
-    context "since the Guided Setup is always allowed" do
-      it "returns false" do
-        expect(subject.skip?).to eq(false)
-      end
+    it "returns false" do
+      expect(subject.skip?).to eq(false)
     end
   end
 

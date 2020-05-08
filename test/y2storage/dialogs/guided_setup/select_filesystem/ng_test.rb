@@ -76,7 +76,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       end
     end
 
-    context "and none of the volumes are configurable" do
+    context "when none of the volumes are configurable" do
       let(:volumes) do
         [
           double("VolumeSpecification", configurable?: false),
@@ -89,7 +89,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       end
     end
 
-    context "and any volume is configurable" do
+    context "when any volume is configurable" do
       let(:volumes) do
         [
           double("VolumeSpecification", configurable?: false),
