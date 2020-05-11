@@ -39,7 +39,6 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
 
         <proposal>
             <lvm config:type="boolean">false</lvm>
-            <proposal_settings_editable config:type="boolean">true</proposal_settings_editable>
         </proposal>
 
         <volumes config:type="list">

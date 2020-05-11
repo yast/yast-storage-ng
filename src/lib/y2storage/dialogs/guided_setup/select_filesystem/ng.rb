@@ -35,14 +35,11 @@ module Y2Storage
             volume_widgets.each { |w| w.handle(event) }
           end
 
-          # This dialog is skipped when the settings are not editable or there is
-          # nothing to edit
-          #
-          # @see GuidedSetup#allowed?
+          # This dialog is skipped when there is nothing to edit
           #
           # @return [Boolean]
           def skip?
-            !guided_setup.allowed? || settings.volumes.none?(&:configurable?)
+            settings.volumes.none?(&:configurable?)
           end
 
           protected

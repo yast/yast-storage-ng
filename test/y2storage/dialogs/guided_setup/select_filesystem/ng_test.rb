@@ -68,55 +68,37 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
   end
 
   describe "skip?" do
-    before do
-      allow(Y2Storage::Dialogs::GuidedSetup).to receive(:allowed?).and_return(allowed)
-    end
-
-    context "when the Guided Setup is not allowed" do
-      let(:allowed) { false }
-
-      let(:volumes) { [double("VolumeSpecification", configurable?: true)] }
+    context "when the proposal settings contain no volumes" do
+      let(:volumes) { [] }
 
       it "returns true" do
-        expect(dialog.skip?).to eq(true)
+        expect(dialog.skip?).to eq true
       end
     end
 
-    context "when the Guided Setup is allowed" do
-      let(:allowed) { true }
-
-      context "and the proposal settings contain no volumes" do
-        let(:volumes) { [] }
-
-        it "returns true" do
-          expect(dialog.skip?).to eq true
-        end
+    context "when none of the volumes are configurable" do
+      let(:volumes) do
+        [
+          double("VolumeSpecification", configurable?: false),
+          double("VolumeSpecification", configurable?: false)
+        ]
       end
 
-      context "and none of the volumes are configurable" do
-        let(:volumes) do
-          [
-            double("VolumeSpecification", configurable?: false),
-            double("VolumeSpecification", configurable?: false)
-          ]
-        end
+      it "returns true" do
+        expect(dialog.skip?).to eq true
+      end
+    end
 
-        it "returns true" do
-          expect(dialog.skip?).to eq true
-        end
+    context "when any volume is configurable" do
+      let(:volumes) do
+        [
+          double("VolumeSpecification", configurable?: false),
+          double("VolumeSpecification", configurable?: true)
+        ]
       end
 
-      context "and any volume is configurable" do
-        let(:volumes) do
-          [
-            double("VolumeSpecification", configurable?: false),
-            double("VolumeSpecification", configurable?: true)
-          ]
-        end
-
-        it "returns false" do
-          expect(dialog.skip?).to eq false
-        end
+      it "returns false" do
+        expect(dialog.skip?).to eq false
       end
     end
   end
