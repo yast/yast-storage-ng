@@ -377,7 +377,11 @@ module Y2Storage
     # @return [LvmPv] nil if neither the raw device or its encrypted version
     #   are used as physical volume
     def lvm_pv
-      descendants.detect { |dev| dev.is?(:lvm_pv) && dev.plain_blk_device == plain_device }
+      descendants.find do |dev|
+        # dev.blk_device should never be nil for an LvmPV, but it can currently happen if
+        # the PV is in a multipath device that has not been activated. See bsc#1170216
+        dev.is?(:lvm_pv) && dev.blk_device && dev.plain_blk_device == plain_device
+      end
     end
 
     # LVM physical volume defined directly on top of the device (no encryption

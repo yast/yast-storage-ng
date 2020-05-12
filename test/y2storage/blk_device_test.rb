@@ -227,6 +227,19 @@ describe Y2Storage::BlkDevice do
         expect(device.lvm_pv).to be_nil
       end
     end
+
+    # Regression test for bsc#1170216: this used to crash because LvmPv#blk_device
+    # is never expected to return nil.
+    context "if the PV is associated to this and to other block devices (multipath not activated)" do
+      let(:scenario) { "inactive_multipath.xml" }
+      let(:device_name) { "/dev/sda" }
+
+      # Returning nil may not be precise, but it matches the current libstorage-ng behavior
+      # ...and it's better than a crash
+      it "returns nil" do
+        expect(device.lvm_pv).to be_nil
+      end
+    end
   end
 
   describe "#direct_lvm_pv" do
