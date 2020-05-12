@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # The proposal contains a drive section which is not supported in the current architecture
     #

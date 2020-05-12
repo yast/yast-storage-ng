@@ -22,7 +22,7 @@ require "y2storage/planned/btrfs"
 require "y2storage/planned/lvm_vg"
 require "y2storage/planned/md"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # No suitable components were found for this device
     #

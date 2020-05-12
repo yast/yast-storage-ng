@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # Represents a problem that occurs when an exception is raised.
     #
@@ -31,7 +31,7 @@ module Y2Storage
     #   begin
     #     do_stuff # some exception is raised
     #   rescue SomeException => e
-    #     new Y2Storage::AutoinstIssues::Exception.new(e)
+    #     new Installation::AutoinstIssues::Exception.new(e)
     #   end
     class Exception < ::Installation::AutoinstIssues::Issue
       # @return [StandardError]

@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # Represents an AutoYaST situation where an invalid value was given.
     #

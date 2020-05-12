@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # There is no enough disk space to build the storage proposal
     class NoDiskSpace < ::Installation::AutoinstIssues::Issue

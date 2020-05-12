@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # It was not possible to find a way to make the system bootable
     class CouldNotCalculateBoot < ::Installation::AutoinstIssues::Issue

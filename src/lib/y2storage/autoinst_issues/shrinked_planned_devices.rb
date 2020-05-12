@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Y2Storage
+module Installation
   module AutoinstIssues
     # Represent an AutoYaST situation where a set of planned devices were reduced
     # in order to fit in the available space.
