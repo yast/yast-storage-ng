@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue May 12 11:08:12 UTC 2020 - Ancor Gonzalez Sosa <ags@localhost>
+
+- Partitioner: fixed a crash when libstorage-ng fails to report
+  the block device of an LVM PV, which is a consequence of a wrong
+  multipath setup (bsc#1170216).
+- 4.2.109
+
+-------------------------------------------------------------------
 Fri Apr 17 11:45:31 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: in the initial attempt, consider only a reasonable
