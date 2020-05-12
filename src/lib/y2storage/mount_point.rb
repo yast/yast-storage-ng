@@ -319,10 +319,14 @@ module Y2Storage
     #
     # @see #suitable_mount_bys
     def ensure_suitable_mount_by
+      puts "XXX ensure_suitable_mount_by: #{self.class} #{self.path} -is- #{self.mount_by}"
+
       suitable = suitable_mount_bys
       return if suitable.include?(mount_by)
 
       assign_mount_by(Filesystems::MountByType.best_for(filesystem, suitable))
+
+      puts "XXX ensure_suitable_mount_by: #{self.class} #{self.path} -set- #{self.mount_by}"
     end
 
     # Whether {#mount_by} was explicitly set by the user

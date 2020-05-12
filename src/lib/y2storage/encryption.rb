@@ -324,9 +324,13 @@ module Y2Storage
     #
     # @see #suitable_mount_by?
     def ensure_suitable_mount_by
+      puts "XXX ensure_suitable_mount_by: #{self.class} -is- #{self.mount_by}"
+
       return if suitable_mount_by?(mount_by)
 
       self.mount_by = Filesystems::MountByType.best_for(blk_device, suitable_mount_bys)
+
+      puts "XXX ensure_suitable_mount_by: #{self.class} -set- #{self.mount_by}"
     end
 
     # @see BlkDevice#in_network?
