@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri May 15 09:17:09 UTC 2020 - Steffen Winterfeldt <snwint@suse.com>
+
+- ensure crypttab entries use correct mount_by variant (bsc#1165702)
+- 4.3.6
+
+-------------------------------------------------------------------
 Tue May 12 11:08:12 UTC 2020 - Ancor Gonzalez Sosa <ags@localhost>
 
 - Partitioner: fixed a crash when libstorage-ng fails to report
