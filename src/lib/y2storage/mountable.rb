@@ -124,6 +124,16 @@ module Y2Storage
       adjust_crypt_options
       # Ensure the mount_by makes sense
       mp.ensure_suitable_mount_by
+      # Adjust mount_by for encryption layer: try to use the same mount_by
+      # type as for the filesystem
+      if mp.filesystem.encrypted?
+        mp.filesystem.blk_devices.each do |dev|
+          next unless dev.respond_to?(:mount_by)
+
+          dev.mount_by = mp.mount_by
+          dev.ensure_suitable_mount_by
+        end
+      end
       mp
     end
 
