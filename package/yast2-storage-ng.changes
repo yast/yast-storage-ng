@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon May 18 15:15:02 CEST 2020 - aschnell@suse.com
+
+- added translation for new resize blocking reason
+- 4.3.7
+
+-------------------------------------------------------------------
 Fri May 15 09:17:09 UTC 2020 - Steffen Winterfeldt <snwint@suse.com>
 
 - ensure crypttab entries use correct mount_by variant (bsc#1165702)
