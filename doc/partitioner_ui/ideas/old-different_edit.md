@@ -1,6 +1,6 @@
 # Rethinking the dialogs to create/edit filesystems
 
-This is part of the [bigger document](../partitioner_ui.md) about rethinking the YaST Partitioner
+This is part of the [bigger document](../../partitioner_ui.md) about rethinking the YaST Partitioner
 user interface.
 
 This represents one of the ideas that was considered in the past to fix some inconsistencies present
@@ -21,24 +21,24 @@ filesystem-specific dialog(s) can be directly reused to create and edit multi-de
 
 The first two screens remain identical. One for defining the size of the partition.
 
-![Partition creation step 1](img/new_part_1.png)
+![Partition creation step 1](../img/new_part_1.png)
 
 And the role selection which allows to predefine some of the options for the following screen(s).
 
-![Partition creation step 2](img/new_part_2.png)
+![Partition creation step 2](../img/new_part_2.png)
 
 But the third screen changes radically and groups all the options that affect the partition itself
 and has nothing to do with the configuration of the filesystem to be created. If "Do not format" is
 choosen, this would be the last screen. Take into account this is a mockup and the final
 distribution and labels may change.
 
-![Partition creation step 3](img/new_part_3.png)
+![Partition creation step 3](../img/new_part_3.png)
 
 The last screen if a filesystem is going to be created will only contain options that are indeed
 applicable to the filesystem in any case, no matter if the filesystem sits on a disk, on a partition
 or if it's a multi-device filesystem. Once again, this is only a preliminary mockup.
 
-![Partition creation step 4](img/new_part_4.png)
+![Partition creation step 4](../img/new_part_4.png)
 
 Creating a new multi-device filesystem would consist in two steps. The first step would allow to
 select the block devices with a screen similar to the one presented when creating a RAID. The second
@@ -60,14 +60,14 @@ The first screen could already show some information and more adapted labels. Fo
 option "Do not Format" could be re-labeled as "Keep Current Filesystem" if the partition is not
 going to be encrypted. Note also the extra warning in the "Encrypt Device" checkbox.
 
-![Partition edit step 1](img/edit_btrfs_part_1.png)
+![Partition edit step 1](../img/edit_btrfs_part_1.png)
 
 And the formatting options could be disabled if the current filesystem is going to be kept.
 
-![Partition edit step 2 (option A)](img/edit_btrfs_part_2a.png)
+![Partition edit step 2 (option A)](../img/edit_btrfs_part_2a.png)
 
 Even more, such options could simply not be present at all. Once again, these are just mockups and
 the final layout should be enhanced.
 
-![Partition edit step 2 (option B)](img/edit_btrfs_part_2b.png)
+![Partition edit step 2 (option B)](../img/edit_btrfs_part_2b.png)
 

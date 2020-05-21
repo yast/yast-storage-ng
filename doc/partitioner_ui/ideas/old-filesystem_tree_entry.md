@@ -1,6 +1,6 @@
 ## The "File Systems" tree entry
 
-This is part of the [bigger document](../partitioner_ui.md) about rethinking the YaST Partitioner
+This is part of the [bigger document](../../partitioner_ui.md) about rethinking the YaST Partitioner
 user interface.
 
 During the development of 15.2, it was considered (but discarded) to replace the "Btrfs" entry in

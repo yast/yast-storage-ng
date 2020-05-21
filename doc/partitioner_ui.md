@@ -60,7 +60,7 @@ functional in a text console with 80 columns and 24 lines.
 
 Possible plans to overcome the mentioned challenges and problems:
 
- * [Idea 0: template](partitioner_ui/idea-template.md)
+ * [Idea 0: template](partitioner_ui/ideas/template.md)
 
 ## Old ideas
 
@@ -71,7 +71,7 @@ concrete topics in the traditional interface.
 Listed here for completeness and inspiration. The documents also contain small bits of information
 that are useful to understand why some things are implemented in a given way in 15.2.
 
- * [Merge 'hard disk' and 'RAID' sections](partitioner_ui/idea-merge_sections.md)
- * [Filesystem entry in the tree](partitioner_ui/idea-filesystem_tree_entry.md)
- * [More information when editing a device](partitioner_ui/idea-more_informative_edit.md)
- * [Rethink dialogs to create/edit filesystems](partitioner_ui/idea-different_edit.md)
+ * [Merge 'hard disk' and 'RAID' sections](partitioner_ui/ideas/old-merge_sections.md)
+ * [Filesystem entry in the tree](partitioner_ui/ideas/old-filesystem_tree_entry.md)
+ * [More information when editing a device](partitioner_ui/ideas/old-more_informative_edit.md)
+ * [Rethink dialogs to create/edit filesystems](partitioner_ui/ideas/old-different_edit.md)
