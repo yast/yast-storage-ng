@@ -61,6 +61,12 @@ functional in a text console with 80 columns and 24 lines.
 Possible plans to overcome the mentioned challenges and problems:
 
  * [Idea 0: template](partitioner_ui/ideas/template.md)
+ * [Idea 1: Small Adjustements](partitioner_ui/ideas/adjustments.md)
+ * [Idea 2: Descriptive Tree View](partitioner_ui/ideas/tree.md)
+ * [Idea 3: Diagram Driven UI](partitioner_ui/ideas/diagram.md)
+ * [Idea 4: All Final Elements in One View](partitioner_ui/ideas/leaf_nodes.md)
+ * [Idea 4bis: List of Actions per Device](partitioner_ui/ideas/device_actions.md)
+ * [Idea 5: Constrain-based definitions](partitioner_ui/ideas/inventor.md)
 
 ## Old ideas
 
