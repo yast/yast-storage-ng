@@ -593,7 +593,9 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem) }
+          issue = issues_list.find do |i|
+            i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem)
+          end
           expect(issue).to_not be_nil
         end
       end
@@ -732,7 +734,9 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem) }
+          issue = issues_list.find do |i|
+            i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem)
+          end
           expect(issue).to_not be_nil
         end
       end
