@@ -3,7 +3,7 @@
 This is part of the [bigger document](../../partitioner_ui.md) about rethinking the YaST Partitioner
 user interface.
 
-When clicking in a device, the Partitioner has traditionally presented a tabbed interface in which
+When clicking on a device, the Partitioner has traditionally presented a tabbed interface in which
 the first tab is always the so-called "Overview" that presents all kind of technical details about
 the device. The relationship with other devices is then presented in separate tabs like
 "Partitions", "Logical Volumes", "Physical Volumes", "Used Devices", etc. With all the possibilities
@@ -30,7 +30,7 @@ to perform actions.
    │Size: 500.00 GiB - Model: HGST HTS75000          │
    │The device is empty                              │
    │                                                 │
-   │ - Create a file system directly in the disk     │
+   │ - Create a file system directly on the disk     │
    │   [Format/mount]                                │
    │                                                 │
    │ - Partition the disk                            │
@@ -93,7 +93,7 @@ to perform actions.
    │Size: 500.00 GiB - Model: HGST HTS75000          │
    │The device is part of the LVM /dev/system        │
    │                                                 │
-   │No actions can be performed directly in          │
+   │No actions can be performed directly on          │
    │the disk                                         │
    │                                                 │
    │                                                 │
@@ -118,7 +118,7 @@ deleting the VG as a consequence of those actions (with a warning pop-up, of cou
    │Size: 500.00 GiB - RAID1 [Used Devices]          │
    │The device is empty                              │
    │                                                 │
-   │ - Create a file system directly in the RAID     │
+   │ - Create a file system directly on the RAID     │
    │   [Format/mount]                                │
    │                                                 │
    │ - Partition the RAID                            │
