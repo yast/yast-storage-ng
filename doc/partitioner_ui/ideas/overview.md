@@ -191,3 +191,12 @@ deleting the VG as a consequence of those actions (with a warning pop-up, of cou
    │ [Physical Volumes]  [Delete]                    │
    └─────────────────────────────────────────────────┘
 ```
+
+### Drawbacks
+
+Concentrating all the possible actions in the "Overview" tab may be too much. It's ok to offer
+different actions there; possibly simpler ones or ones that the user can make more sense of.
+But we may still need lower-level actions in the "Details" tab as well. If we don't, we will
+always need to present every least little detail in the "Overview" tab just so the user can make
+any possible changes, and having everything there would pretty much defeat the purpose of the
+overview.
