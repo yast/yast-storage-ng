@@ -61,7 +61,7 @@ module Y2Storage
     def initialize(partitioning: [], proposal_settings: nil, devicegraph: nil, disk_analyzer: nil,
       issues_list: nil)
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
-      @issues_list = issues_list || Y2Storage::AutoinstIssues::List.new
+      @issues_list = issues_list || ::Installation::AutoinstIssues::List.new
       @proposal_settings = proposal_settings
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
     end

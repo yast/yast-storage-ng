@@ -17,13 +17,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Y2Storage
-  # Y2Storage::AutoinstIssues offers an API to register and report storage
+module Installation
+  # Installation::AutoinstIssues offers an API to register and report storage
   # related AutoYaST problems.
   #
   # Basically, it works by registering found problems when creating the
   # partitioning proposal (based on AutoYaST profile) and displaying them to
-  # the user. Check {Y2Storage::AutoinstIssues::Issue} in order to
+  # the user. Check {Installation::AutoinstIssues::Issue} in order to
   # find out more details about the kind of problems.
   #
   # About registering errors, an instance of the
