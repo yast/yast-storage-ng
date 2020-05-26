@@ -72,8 +72,6 @@ The `partitioning` section of `control.xml` goes beyond the configuration of
 the proposal's behavior. It also contains some options to influence other
 aspect of YaST, mainly the installer.
 
-  * `proposal_settings_editable`
-    Whether the user can change the proposal settings in the UI.
   * `expert_partitioner_warning`
     Whether an extra warning pop-up should be
     displayed if the user enters the expert partitioner during installation.
@@ -208,7 +206,6 @@ Besides these, there is another element:
   * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * (**FIXME - `use_vg_size` is not done yet**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_available`)*
   * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
-  * `proposal_settings_editable` *(boolean, default: `true`)*
   * `separate_vgs` *(boolean, default: `false`)*
 
 #### Volume-specific settings in `volume` sections
@@ -558,15 +555,12 @@ proposal to:
     <windows_delete_mode config:type="symbol">all</windows_delete_mode>
     <linux_delete_mode config:type="symbol">all</linux_delete_mode>
     <other_delete_mode config:type="symbol">all</other_delete_mode>
-    <!-- Don't allow the user to use the Guided Setup -->
-    <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
   </proposal>
 
   <volumes config:type="list">
     <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <desired_size config:type="disksize">15 GiB</desired_size>
       <min_size config:type="disksize">10 GiB</min_size>
@@ -595,7 +589,6 @@ proposal to:
     <!-- Use /var/lib/docker as separate partition if 10+ GiB available -->
     <volume>
       <mount_point>/var/lib/docker</mount_point>
-      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <snapshots config:type="boolean">false</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
@@ -699,8 +692,6 @@ following options.
       The VG will have exactly the size specified in `lvm_vg_size`.
   * `lvm_vg_size`
     Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
-  * `proposal_settings_editable`
-    If `false`, the user is not allowed to change the proposal settings.
 
 ### The `volumes` subsection
 

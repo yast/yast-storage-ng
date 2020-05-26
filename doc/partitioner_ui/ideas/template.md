@@ -1,6 +1,6 @@
 ## Template idea
 
-This is part of the [bigger document](../partitioner_ui.md) about rethinking the YaST Partitioner
+This is part of the [bigger document](../../partitioner_ui.md) about rethinking the YaST Partitioner
 user interface.
 
 For clarity, it likely makes sense to keep each idea under discussion in its own separate Markdown

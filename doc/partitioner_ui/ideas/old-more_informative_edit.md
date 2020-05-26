@@ -1,6 +1,6 @@
 ## More information about the device while editing it
 
-This is part of the [bigger document](../partitioner_ui.md) about rethinking the YaST Partitioner
+This is part of the [bigger document](../../partitioner_ui.md) about rethinking the YaST Partitioner
 user interface.
 
 The initial plan when introducing support for multi-device Btrfs during the development of 15.2 was
@@ -22,7 +22,7 @@ The edit screen could look like the following screenshot.  Apart from the extra 
 the status (at the top), note how the traditional option "Do not Format" has been re-labeled as
 "Keep Current Filesystem".
 
-![Improved dialog to edit block device](img/edit_btrfs_part.png)
+![Improved dialog to edit block device](../img/edit_btrfs_part.png)
 
 This is a summary of all the changes that would be needed, depending on the real current content of
 the block device in the disks.
@@ -76,7 +76,7 @@ regarding deletion and regarding usage of its individual devices. The UI must co
 button to delete multi-device filesystems and editing the individual block devices must be prevented
 with a warning similar to this.
 
-![Prevent editing Btrfs block devices](img/no_edit_warning.png)
+![Prevent editing Btrfs block devices](../img/no_edit_warning.png)
 
 Of course, that warning only applies to Btrfs filesystems that spread over several block devices.
 
