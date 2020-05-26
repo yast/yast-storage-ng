@@ -37,7 +37,7 @@ module Y2Storage
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
       def initialize(disk_analyzer, issues_list = nil)
         @disk_analyzer = disk_analyzer
-        @issues_list = issues_list || AutoinstIssues::List.new
+        @issues_list = issues_list || ::Installation::AutoinstIssues::List.new
       end
 
       # Performs all the delete operations specified in the AutoYaST profile
