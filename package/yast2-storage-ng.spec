@@ -47,17 +47,10 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-<<<<<<< HEAD
-# lvm cache support
-Requires:       libstorage-ng-ruby >= 4.3.0
-# AutoYaST issue handling
-Requires:       yast2 >= 4.2.84
-=======
 # RB_RESIZE_NOT_SUPPORTED_DUE_TO_SNAPSHOTS
 Requires:       libstorage-ng-ruby >= 4.3.21
 # CWM::DynamicProgressBar
 Requires:       yast2 >= 4.2.63
->>>>>>> master
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
