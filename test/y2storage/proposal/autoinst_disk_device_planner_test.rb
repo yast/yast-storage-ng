@@ -169,7 +169,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
           expect(issue.attr).to eq(:size)
           expect(issue.new_value).to eq(:skip)
@@ -229,7 +229,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           it "registers an issue" do
             expect(issues_list).to be_empty
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::InvalidValue) }
             expect(issue.value).to eq("auto")
             expect(issue.attr).to eq(:size)
           end
@@ -391,7 +391,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           it "registers an issue" do
             planner.planned_devices(drive)
             issue = subject.issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+              i.is_a?(::Installation::AutoinstIssues::InvalidEncryption)
             end
             expect(issue.reason).to eq(:unavailable)
           end
@@ -410,7 +410,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           it "registers an issue" do
             planner.planned_devices(drive)
             issue = subject.issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+              i.is_a?(::Installation::AutoinstIssues::InvalidEncryption)
             end
             expect(issue.reason).to eq(:unknown)
           end
@@ -429,7 +429,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           it "registers an issue" do
             planner.planned_devices(drive)
             issue = subject.issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::InvalidEncryption)
+              i.is_a?(::Installation::AutoinstIssues::InvalidEncryption)
             end
             expect(issue.reason).to eq(:unsuitable)
           end
@@ -501,7 +501,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableDevice) }
           expect(issue).to_not be_nil
         end
       end
@@ -547,7 +547,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReuseInfo) }
           expect(issue).to_not be_nil
         end
 
@@ -593,7 +593,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableFilesystem) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem) }
           expect(issue).to_not be_nil
         end
       end
@@ -732,7 +732,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         it "registers an issue" do
           expect(issues_list).to be_empty
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableFilesystem) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableFilesystem) }
           expect(issue).to_not be_nil
         end
       end

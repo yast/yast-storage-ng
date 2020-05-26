@@ -27,7 +27,7 @@ RSpec.shared_examples "handles conflicts" do
   end
 
   def added_issue
-    issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::ConflictingAttrs) }
+    issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::ConflictingAttrs) }
   end
 
   context "when conflicting attributes specify different usages for the device" do

@@ -315,7 +315,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
       it "registers an issue" do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
 
-        issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+        issue = subject.issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::InvalidValue) }
         expect(issue.attr).to eq(:use)
         expect(issue.value).to eq("wrong-value")
       end
@@ -332,7 +332,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
       it "registers an issue" do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
 
-        issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+        issue = subject.issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
         expect(issue.attr).to eq(:use)
       end
     end

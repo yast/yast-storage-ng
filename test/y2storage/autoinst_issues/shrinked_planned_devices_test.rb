@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/shrinked_planned_devices"
 
-describe Y2Storage::AutoinstIssues::ShrinkedPlannedDevices do
+describe ::Installation::AutoinstIssues::ShrinkedPlannedDevices do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:issue) { described_class.new(device_shrinkages) }

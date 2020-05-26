@@ -220,7 +220,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
         subject.planned_devices(drive)
 
         issue = subject.issues_list.find do |i|
-          i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice)
+          i.is_a?(::Installation::AutoinstIssues::MissingReusableDevice)
         end
 
         expect(issue).to_not be_nil
@@ -256,7 +256,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
             subject.planned_devices(drive)
 
             issue = subject.issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice)
+              i.is_a?(::Installation::AutoinstIssues::MissingReusableDevice)
             end
 
             expect(issue).to be_nil
@@ -274,7 +274,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
         subject.planned_devices(drive)
 
         issue = subject.issues_list.find do |i|
-          i.is_a?(Y2Storage::AutoinstIssues::SurplusPartitions)
+          i.is_a?(::Installation::AutoinstIssues::SurplusPartitions)
         end
 
         expect(issue).to_not be_nil
@@ -290,7 +290,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
         subject.planned_devices(drive)
 
         issue = subject.issues_list.find do |i|
-          i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable)
+          i.is_a?(::Installation::AutoinstIssues::NoPartitionable)
         end
 
         expect(issue).to_not be_nil

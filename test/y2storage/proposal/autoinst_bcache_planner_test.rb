@@ -68,7 +68,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
 
       it "registers an issue" do
         planner.planned_devices(drive).first
-        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::UnsupportedDriveSection) }
+        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::UnsupportedDriveSection) }
         expect(issue).to_not be_nil
       end
     end
@@ -103,7 +103,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
 
       it "registers an issue" do
         planner.planned_devices(drive).first
-        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::InvalidValue) }
         expect(issue.section).to eq(drive.bcache_options)
         expect(issue.value).to eq("RANDOM")
         expect(issue.new_value).to eq(:skip)

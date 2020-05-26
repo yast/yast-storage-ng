@@ -20,7 +20,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues"
 
-describe Y2Storage::AutoinstIssues::ConflictingAttrs do
+describe ::Installation::AutoinstIssues::ConflictingAttrs do
   subject(:issue) { described_class.new(section, :raid_name, [:lvm_group]) }
 
   let(:section) do

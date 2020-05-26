@@ -22,7 +22,7 @@ require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/missing_value"
 require "y2storage/autoinst_profile/partition_section"
 
-describe Y2Storage::AutoinstIssues::MissingValue do
+describe ::Installation::AutoinstIssues::MissingValue do
   subject(:issue) { described_class.new(section, :size) }
 
   let(:section) do

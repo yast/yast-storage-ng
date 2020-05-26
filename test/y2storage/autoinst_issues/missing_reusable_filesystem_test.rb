@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_profile/partition_section"
 
-describe Y2Storage::AutoinstIssues::MissingReusableFilesystem do
+describe ::Installation::AutoinstIssues::MissingReusableFilesystem do
   subject(:issue) { described_class.new(section) }
 
   let(:section) do

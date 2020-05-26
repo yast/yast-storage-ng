@@ -39,7 +39,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
       it "does not register a 'missing value' issue" do
         planner.planned_devices(drive)
 
-        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
         expect(issue).to be_nil
       end
 
@@ -125,7 +125,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
         it "registers a 'missing value' issue" do
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
 
           expect(issue).to_not be_nil
           expect(issue.attr).to eq(:device)
@@ -145,7 +145,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
         it "registers a 'missing value' issue" do
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
 
           expect(issue).to_not be_nil
           expect(issue.attr).to eq(:mount)
@@ -176,7 +176,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "does not register a 'no partitionable' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoPartitionable) }
 
             expect(issue).to be_nil
           end
@@ -187,7 +187,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "registers a 'no partitionable' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoPartitionable) }
 
             expect(issue).to_not be_nil
           end
@@ -209,7 +209,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
         it "registers a 'missing value' issue" do
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
 
           expect(issue).to_not be_nil
           expect(issue.attr).to eq(:device)
@@ -229,7 +229,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
         it "registers a 'missing value' issue" do
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
 
           expect(issue).to_not be_nil
           expect(issue.attr).to eq(:mount)
@@ -264,7 +264,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "does not register a 'no partitionable' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoPartitionable) }
 
             expect(issue).to be_nil
           end
@@ -275,7 +275,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "registers a 'no partitionable' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoPartitionable) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoPartitionable) }
 
             expect(issue).to_not be_nil
           end
@@ -286,7 +286,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "does not register a 'surplus partitions' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::SurplusPartitions) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::SurplusPartitions) }
 
             expect(issue).to be_nil
           end
@@ -299,7 +299,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
           it "registers a 'surplus partitions' issue" do
             planner.planned_devices(drive)
-            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::SurplusPartitions) }
+            issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::SurplusPartitions) }
 
             expect(issue).to_not be_nil
           end

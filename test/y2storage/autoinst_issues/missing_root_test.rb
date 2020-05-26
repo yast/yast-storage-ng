@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/missing_root"
 
-describe Y2Storage::AutoinstIssues::MissingRoot do
+describe ::Installation::AutoinstIssues::MissingRoot do
   subject(:issue) { described_class.new }
 
   describe "#message" do

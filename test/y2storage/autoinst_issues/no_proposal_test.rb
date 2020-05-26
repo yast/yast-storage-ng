@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/no_proposal"
 
-describe Y2Storage::AutoinstIssues::NoProposal do
+describe ::Installation::AutoinstIssues::NoProposal do
   subject(:issue) { described_class.new }
 
   describe "#message" do

@@ -252,7 +252,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         it "registers an issue" do
           creator.populated_devicegraph(planned_devices, ["/dev/sda"])
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoComponents) }
           expect(issue).to_not be_nil
         end
       end
@@ -362,7 +362,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         it "raises an exception" do
           creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoComponents) }
           expect(issue).to_not be_nil
         end
       end
@@ -501,7 +501,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         it "registers an issue" do
           creator.populated_devicegraph(collection, ["/dev/sda"])
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoComponents) }
+          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoComponents) }
           expect(issue).to_not be_nil
         end
       end

@@ -103,7 +103,7 @@ describe Y2Storage::AutoinstProposal do
           ).and_raise(::Y2Storage::BootRequirementsStrategies::Error)
           proposal.propose
           issue = proposal.issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::CouldNotCalculateBoot)
+            i.is_a?(::Installation::AutoinstIssues::CouldNotCalculateBoot)
           end
           expect(issue).to_not be_nil
         end
@@ -159,7 +159,7 @@ describe Y2Storage::AutoinstProposal do
         it "registers an issue" do
           proposal.propose
           issue = issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+            i.is_a?(::Installation::AutoinstIssues::MissingRoot)
           end
           expect(issue).to_not be_nil
         end
@@ -188,7 +188,7 @@ describe Y2Storage::AutoinstProposal do
           expect(proposal.issues_list).to be_empty
           proposal.propose
           issue = proposal.issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::CouldNotCreateBoot)
+            i.is_a?(::Installation::AutoinstIssues::CouldNotCreateBoot)
           end
           expect(issue).to_not be_nil
         end
@@ -726,7 +726,7 @@ describe Y2Storage::AutoinstProposal do
           expect(proposal.issues_list).to be_empty
           proposal.propose
           issue = proposal.issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::NoDisk)
+            i.is_a?(::Installation::AutoinstIssues::NoDisk)
           end
           expect(issue).to_not be_nil
         end
@@ -930,7 +930,7 @@ describe Y2Storage::AutoinstProposal do
         it "registers an issue" do
           proposal.propose
           issue = issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+            i.is_a?(::Installation::AutoinstIssues::MissingRoot)
           end
           expect(issue).to_not be_nil
         end
@@ -959,7 +959,7 @@ describe Y2Storage::AutoinstProposal do
         it "adds an issue for each reduced logical volume" do
           proposal.propose
           issues = issues_list.select do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
+            i.is_a?(::Installation::AutoinstIssues::ShrinkedPlannedDevices)
           end
           expect(issues.size).to eq(1)
         end
@@ -975,7 +975,7 @@ describe Y2Storage::AutoinstProposal do
         it "registers an issue" do
           proposal.propose
           issues = issues_list.select do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::NoComponents)
+            i.is_a?(::Installation::AutoinstIssues::NoComponents)
           end
           expect(issues.size).to eq(1)
         end
@@ -1010,7 +1010,7 @@ describe Y2Storage::AutoinstProposal do
         it "does not register an issue about missing root partition" do
           proposal.propose
           issue = issues_list.find do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+            i.is_a?(::Installation::AutoinstIssues::MissingRoot)
           end
           expect(issue).to be_nil
         end
@@ -1091,7 +1091,7 @@ describe Y2Storage::AutoinstProposal do
           it "registers an issue" do
             proposal.propose
             issue = issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::ThinPoolNotFound)
+              i.is_a?(::Installation::AutoinstIssues::ThinPoolNotFound)
             end
             expect(issue).to_not be_nil
           end
@@ -1513,7 +1513,7 @@ describe Y2Storage::AutoinstProposal do
       it "adds an issue for each reduced partition" do
         proposal.propose
         issues = issues_list.select do |i|
-          i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
+          i.is_a?(::Installation::AutoinstIssues::ShrinkedPlannedDevices)
         end
         expect(issues.size).to eq(1)
       end

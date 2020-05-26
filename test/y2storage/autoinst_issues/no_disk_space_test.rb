@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/invalid_value"
 
-describe Y2Storage::AutoinstIssues::NoDiskSpace do
+describe ::Installation::AutoinstIssues::NoDiskSpace do
   subject(:issue) { described_class.new }
 
   describe "#message" do

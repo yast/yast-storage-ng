@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/multiple_bcache_members"
 
-describe Y2Storage::AutoinstIssues::MultipleBcacheMembers do
+describe ::Installation::AutoinstIssues::MultipleBcacheMembers do
   subject(:issue) { described_class.new(:caching, "/dev/bcache0") }
 
   describe "#message" do
