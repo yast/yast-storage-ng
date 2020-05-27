@@ -217,10 +217,10 @@ It is possible that, given a profile, AutoYaST finds issues when trying to
 figure out the partitioning layout. Some of those issues might be severe
 enough to stop the installation; in other cases, it just displays a warning.
 
-The {Y2Storage::AutoinstIssues} module features a
-{Y2Storage::AutoinstIssues::List} class where issues are
-registered. {Y2Storage::AutoinstIssues} contains a set of possible issues -- all
-of them are classes which inherit from {Y2Storage::AutoinstIssues::Issue} --.
+The {::Installation::AutoinstIssues} module features a
+{::Installation::AutoinstIssues::List} class where issues are
+registered. {::Installation::AutoinstIssues} contains a set of possible issues -- all
+of them are classes which inherit from {::Installation::AutoinstIssues::Issue} --.
 
 [1]: https://doc.opensuse.org/projects/autoyast/#CreateProfile.General.storage "General section documentation"
 [2]: https://doc.opensuse.org/projects/autoyast/#CreateProfile.Partitioning "Partitioning documentation"

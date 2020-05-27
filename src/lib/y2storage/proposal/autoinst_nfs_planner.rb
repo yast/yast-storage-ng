@@ -190,7 +190,7 @@ module Y2Storage
       # Note: finding the first missing value is faster, but all values are checked to
       # register all possible issues.
       #
-      # @param section [AutoinstProfile::SectionWithAttributes]
+      # @param section [::Installation::AutoinstProfile::SectionWithAttributes]
       # @param values [Array<Symbol>]
       #
       # @return [Boolean]
@@ -202,7 +202,7 @@ module Y2Storage
       #
       # An error is registered when the value is missing.
       #
-      # @param section [AutoinstProfile::SectionWithAttributes]
+      # @param section [::Installation::AutoinstProfile::SectionWithAttributes]
       # @param value [Symbol]
       #
       # @return [Boolean]
