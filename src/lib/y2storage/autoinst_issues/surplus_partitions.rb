@@ -25,7 +25,8 @@ module Installation
     # one partition subsection (e.g. disklabel is 'none') but it contained
     # several (all but the first will be ignored).
     class SurplusPartitions < ::Installation::AutoinstIssues::Issue
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {Y2Storage::AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

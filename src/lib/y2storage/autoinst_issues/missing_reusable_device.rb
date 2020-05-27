@@ -27,7 +27,8 @@ module Installation
     #   section = AutoinstProfile::PartitionSection.new_from_hashes({})
     #   problem = MissingReusableDevice.new(section)
     class MissingReusableDevice < ::Installation::AutoinstIssues::Issue
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {Y2Storage::AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

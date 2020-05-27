@@ -34,7 +34,8 @@ module Installation
       # @return [Object] New value or :skip to skip the section.
       attr_reader :new_value
 
-      # @param section   [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section   [#parent,#section_name] Section where it was detected
+      #                  (see {Y2Storage::AutoinstProfile})
       # @param attr      [Symbol] Name of the invalid attribute
       # @param new_value [Integer,String,Symbol] New value or :skip to skip the section
       def initialize(section, attr, new_value = :skip)

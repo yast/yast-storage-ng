@@ -30,7 +30,8 @@ module Installation
       # @return [Array<Symbol>] List of ignored attributes
       attr_reader :ignored_attrs
 
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {Y2Storage::AutoinstProfile})
       # @param selected_attr [Symbol] Name of the attribute that will be used
       # @param ignored_attrs [Array<Symbol>] List of attributes to be ignored
       def initialize(section, selected_attr, ignored_attrs)

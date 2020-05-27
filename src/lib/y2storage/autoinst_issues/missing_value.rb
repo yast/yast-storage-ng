@@ -31,7 +31,8 @@ module Installation
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
 
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {Y2Storage::AutoinstProfile})
       # @param attr    [Symbol] Name of the missing attribute
       def initialize(section, attr)
         textdomain "storage"
