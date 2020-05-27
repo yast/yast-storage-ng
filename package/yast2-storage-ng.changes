@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Mon May 18 15:15:02 CEST 2020 - aschnell@suse.com
 
-- added translation for new resize blocking reason
+- added translation for new resize blocking reason (bsc#1172164)
 - 4.3.7
 
 -------------------------------------------------------------------
