@@ -26,7 +26,8 @@ module Installation
     # This is a fatal error because AutoYaST needs to determine which disks will be used
     # during installation.
     class NoDisk < ::Installation::AutoinstIssues::Issue
-      # @param section [#parent,#section_name] Section where it was detected (see {Y2Storage::AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {Y2Storage::AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 
