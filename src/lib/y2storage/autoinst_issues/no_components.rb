@@ -53,22 +53,22 @@ module Y2Storage
       # @see Issue#message
       def message
         case planned
-        when Y2Storage::Planned::Btrfs
+        when Planned::Btrfs
           format(
             _("Could not find a suitable device for Btrfs filesystem '%{name}'."),
             name: planned.name
           )
-        when Y2Storage::Planned::LvmVg
+        when Planned::LvmVg
           format(
             _("Could not find a suitable physical volume for volume group '%{name}'."),
             name: planned.volume_group_name
           )
-        when Y2Storage::Planned::Md
+        when Planned::Md
           format(
             _("Could not find a suitable member for RAID '%{name}'."),
             name: planned.name
           )
-        when Y2Storage::Planned::Bcache
+        when Planned::Bcache
           format(
             _("Could not find a backing device for Bcache '%{name}'."),
             name: planned.name

@@ -49,9 +49,9 @@ module Y2Storage
 
       # Size difference between planned and real devices
       #
-      # @return [Y2Storage::DiskSize] Size difference
+      # @return [DiskSize] Size difference
       def diff
-        Y2Storage::DiskSize.sum(device_shrinkages.map(&:diff))
+        DiskSize.sum(device_shrinkages.map(&:diff))
       end
 
       # Return the error message to be displayed

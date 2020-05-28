@@ -29,7 +29,7 @@ module Y2Storage
     #   problem = MissingReuseInfo.new(section)
     class MissingReuseInfo < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

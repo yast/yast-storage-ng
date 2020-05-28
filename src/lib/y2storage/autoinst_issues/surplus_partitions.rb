@@ -26,7 +26,7 @@ module Y2Storage
     # several (all but the first will be ignored).
     class SurplusPartitions < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

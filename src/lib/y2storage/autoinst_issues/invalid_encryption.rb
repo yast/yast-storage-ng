@@ -45,7 +45,7 @@ module Y2Storage
       attr_reader :reason
 
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       # @param reason  [Symbol] Reason which casues the encryption to be invalid
       #   (:unknown when the method is unknown; :unavailable when the method is not available,
       #   :unsuitable when the method is not suitable for the device)

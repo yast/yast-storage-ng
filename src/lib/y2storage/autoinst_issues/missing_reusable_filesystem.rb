@@ -28,7 +28,7 @@ module Y2Storage
     #   problem = MissingReusableDevice.new(section)
     class MissingReusableFilesystem < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

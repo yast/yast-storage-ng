@@ -31,7 +31,7 @@ module Y2Storage
     #   begin
     #     do_stuff # some exception is raised
     #   rescue SomeException => e
-    #     new Installation::AutoinstIssues::Exception.new(e)
+    #     new Y2Storage::AutoinstIssues::Exception.new(e)
     #   end
     class Exception < ::Installation::AutoinstIssues::Issue
       # @return [StandardError]

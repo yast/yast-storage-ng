@@ -31,7 +31,7 @@ module Y2Storage
       attr_reader :ignored_attrs
 
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       # @param selected_attr [Symbol] Name of the attribute that will be used
       # @param ignored_attrs [Array<Symbol>] List of attributes to be ignored
       def initialize(section, selected_attr, ignored_attrs)

@@ -28,7 +28,7 @@ module Y2Storage
     # This is a fatal error because it surely implies a mismatch in the devices.
     class NoPartitionable < ::Installation::AutoinstIssues::Issue
       # @param section [#parent,#section_name] Section where it was detected
-      #                (see {Y2Storage::AutoinstProfile})
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 
