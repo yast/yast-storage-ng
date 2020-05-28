@@ -114,7 +114,7 @@ module Y2Storage
       def valid_part_section?(part_section)
         return true if part_section.partition_nr
 
-        issues_list.add(:missing_value, part_section, :partition_nr)
+        issues_list.add(Y2Storage::AutoinstIssues::MissingValue, part_section, :partition_nr)
 
         false
       end
@@ -141,7 +141,7 @@ module Y2Storage
       def add_md_reuse(md, section)
         md_to_reuse = find_md_to_reuse(md)
         if md_to_reuse.nil?
-          issues_list.add(:missing_reusable_device, section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, section)
           return
         end
         md.reuse_name = md_to_reuse.name
@@ -166,7 +166,7 @@ module Y2Storage
 
         MdLevel.find(raid_options.raid_type)
       rescue NameError
-        issues_list.add(:invalid_value, raid_options.raid_type, :raid_type, "raid1")
+        issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, raid_options.raid_type, :raid_type, "raid1")
         Y2Storage::MdLevel::RAID1
       end
 

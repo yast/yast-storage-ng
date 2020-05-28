@@ -90,7 +90,7 @@ module Y2Storage
         device.public_send(meth, partition_section.public_send(usage_attr)) if device.respond_to?(meth)
         return if ignored_attrs.empty?
 
-        issues_list.add(:conflicting_attrs, partition_section, usage_attr, ignored_attrs)
+        issues_list.add(Y2Storage::AutoinstIssues::DonflictingAttrs, partition_section, usage_attr, ignored_attrs)
       end
 
       # @return [Array<Symbol>] List of 'usage' attributes. The list is ordered by precedence.
@@ -168,7 +168,7 @@ module Y2Storage
           end
 
         if error
-          issues_list.add(:invalid_encryption, partition_section, error)
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidEncryption, partition_section, error)
           return
         end
 
@@ -182,7 +182,7 @@ module Y2Storage
       # @return [String,nil]
       def find_encryption_password(partition_section)
         if partition_section.crypt_key.nil? || partition_section.crypt_key.empty?
-          issues_list.add(:missing_value, partition_section, :crypt_key)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingValue, partition_section, :crypt_key)
           return
         end
         partition_section.crypt_key
@@ -306,7 +306,7 @@ module Y2Storage
         # really needed, e.g. reusing a bios_boot partition (bsc#1134330)
         return if planned_device.mount_point.nil? && planned_device.filesystem_type.nil?
 
-        issues_list.add(:missing_reusable_filesystem, section)
+        issues_list.add(Y2Storage::AutoinstIssues::MissingReusableFilesystem, section)
       end
 
       # Parse the 'size' element
@@ -357,11 +357,11 @@ module Y2Storage
           elsif part_section.label
             disk.partitions.find { |i| i.filesystem_label == part_section.label }
           else
-            issues_list.add(:missing_reuse_info, part_section)
+            issues_list.add(Y2Storage::AutoinstIssues::MissingReuseInfo, part_section)
             nil
           end
 
-        issues_list.add(:missing_reusable_device, part_section) unless device
+        issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, part_section) unless device
         device
       end
 
@@ -393,7 +393,7 @@ module Y2Storage
         size_info = parse_size(part_section, PARTITION_MIN_SIZE, DiskSize.unlimited)
 
         if size_info.nil?
-          issues_list.add(:invalid_value, part_section, :size)
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, part_section, :size)
           return false
         end
 

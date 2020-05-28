@@ -315,7 +315,7 @@ module Y2Storage
           devices = result.created_names { |d| d.respond_to?(:raid_name) && md.name?(d.raid_name) }
           devices += devs_to_reuse.select { |d| md.name?(d.raid_name) }.map(&:reuse_name)
           if devices.empty?
-            issues_list.add(:no_components, md)
+            issues_list.add(Y2Storage::AutoinstIssues::NoComponents, md)
             next result
           end
 
@@ -335,7 +335,7 @@ module Y2Storage
           backing_devname = find_bcache_member(bcache.name, :backing, creator_result, devs_to_reuse)
           caching_devname = find_bcache_member(bcache.name, :caching, creator_result, devs_to_reuse)
           if backing_devname.nil?
-            issues_list.add(:no_components, bcache)
+            issues_list.add(Y2Storage::AutoinstIssues::NoComponents, bcache)
             next result
           end
 
@@ -361,7 +361,7 @@ module Y2Storage
           devs = devs_to_reuse.select { |d| d.respond_to?(:pv_for?) && d.pv_for?(vg.volume_group_name) }
           pvs += devs.map(&:reuse_name)
           if pvs.empty?
-            issues_list.add(:no_components, vg)
+            issues_list.add(Y2Storage::AutoinstIssues::NoComponents, vg)
             next result
           end
 
@@ -380,7 +380,7 @@ module Y2Storage
           devices = created_devices_for_btrfs(planned_filesystem, result)
           devices += reused_devices_for_btrfs(planned_filesystem, reusable_devices)
           if devices.empty?
-            issues_list.add(:no_components, planned_filesystem)
+            issues_list.add(Y2Storage::AutoinstIssues::NoComponents, planned_filesystem)
             next result
           end
 

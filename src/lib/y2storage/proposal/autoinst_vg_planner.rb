@@ -132,10 +132,10 @@ module Y2Storage
         when Y2Storage::LvmLv
           [device, parent]
         when :missing_reuse_info
-          issues_list.add(:missing_reuse_info, part_section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReuseInfo, part_section)
           nil
         else
-          issues_list.add(:missing_reusable_device, part_section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, part_section)
           nil
         end
       end
@@ -163,7 +163,7 @@ module Y2Storage
       def find_lv_parent(vg_name, part_section)
         vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
         if vg.nil?
-          issues_list.add(:missing_reusable_device, part_section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, part_section)
           return
         end
 
@@ -176,7 +176,7 @@ module Y2Storage
         return nil unless planned_vg.volume_group_name
 
         device = devicegraph.lvm_vgs.find { |v| v.vg_name == planned_vg.volume_group_name }
-        issues_list.add(:missing_reusable_device, drive) unless device
+        issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, drive) unless device
         device
       end
 
@@ -186,7 +186,7 @@ module Y2Storage
         lv = vg.lvm_lvs.find { |v| v.lv_name == part_section.used_pool }
         return lv if lv
 
-        issues_list.add(:thin_pool_not_found, part_section)
+        issues_list.add(Y2Storage::AutoinstIssues::ThinPoolNotFound, part_section)
         nil
       end
 
@@ -200,7 +200,7 @@ module Y2Storage
         size_info = parse_size(lv_section, planned_vg.extent_size, DiskSize.unlimited)
 
         if size_info.nil?
-          issues_list.add(:invalid_value, lv_section, :size)
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, lv_section, :size)
           return false
         end
 
@@ -238,7 +238,7 @@ module Y2Storage
       def add_to_thin_pool(planned_lv, planned_vg, section)
         thin_pool = planned_vg.thin_pool_lvs.find { |v| v.logical_volume_name == section.used_pool }
         if thin_pool.nil?
-          issues_list.add(:thin_pool_not_found, section)
+          issues_list.add(Y2Storage::AutoinstIssues::ThinPoolNotFound, section)
           return false
         end
         thin_pool.add_thin_lv(planned_lv)

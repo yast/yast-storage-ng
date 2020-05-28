@@ -57,7 +57,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
   describe "#to_html" do
     context "when a fatal issue was found" do
       before do
-        list.add(:missing_root)
+        list.add(Y2Storage::AutoinstIssues::MissingRoot)
       end
 
       it "includes issues messages" do
@@ -72,7 +72,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
 
     context "when a non fatal issue was found" do
       before do
-        list.add(:invalid_value, raid_options_section, :raid_type)
+        list.add(Y2Storage::AutoinstIssues::InvalidValue, raid_options_section, :raid_type)
       end
 
       it "includes issues messages" do
@@ -93,7 +93,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
 
     context "when a non located issue was found" do
       before do
-        list.add(:missing_root)
+        list.add(Y2Storage::AutoinstIssues::MissingRoot)
       end
 
       it "includes issues messages" do
@@ -106,7 +106,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
   describe "#to_plain" do
     context "when a fatal issue was found" do
       before do
-        list.add(:missing_root)
+        list.add(Y2Storage::AutoinstIssues::MissingRoot)
       end
 
       it "includes issues messages" do
@@ -121,7 +121,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
 
     context "when a non fatal issue was found" do
       before do
-        list.add(:invalid_value, raid_options_section, :raid_type)
+        list.add(Y2Storage::AutoinstIssues::InvalidValue, raid_options_section, :raid_type)
       end
 
       it "includes issues messages" do
@@ -142,7 +142,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
 
     context "when a non located issue was found" do
       before do
-        list.add(:missing_root)
+        list.add(Y2Storage::AutoinstIssues::MissingRoot)
       end
 
       it "includes issues messages" do

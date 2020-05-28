@@ -89,7 +89,7 @@ module Y2Storage
       # @note The part argument is used when we emulate the sle12 behavior to
       #   have partition 0 mean the full disk.
       def planned_for_full_disk(disk, drive, part)
-        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
+        issues_list.add(Y2Storage::AutoinstIssues::SurplusPartitions, drive) if drive.partitions.size > 1
         planned_disk = Y2Storage::Planned::Disk.new
         device_config(planned_disk, part, drive)
         add_device_reuse(planned_disk, disk, part)
@@ -121,8 +121,8 @@ module Y2Storage
       #   the stray block device
       # @return [Planned::Disk] List of planned block devices
       def planned_for_stray_device(stray_blk_device, drive)
-        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
-        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
+        issues_list.add(Y2Storage::AutoinstIssues::NoPartitionable, drive) if drive.wanted_partitions?
+        issues_list.add(Y2Storage::AutoinstIssues::SurplusPartitions, drive) if drive.partitions.size > 1
         master_partition = drive.partitions.first
         planned_stray_device = Y2Storage::Planned::StrayBlkDevice.new
         device_config(planned_stray_device, master_partition, drive)

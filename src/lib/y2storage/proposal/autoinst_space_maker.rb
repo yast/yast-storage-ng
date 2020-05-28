@@ -172,9 +172,9 @@ module Y2Storage
       # @param drive_spec  [AutoinstProfile::DriveSection]
       def register_invalid_use_value(drive_spec)
         if drive_spec.use
-          issues_list.add(:invalid_value, drive_spec, :use)
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, drive_spec, :use)
         else
-          issues_list.add(:missing_value, drive_spec, :use)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingValue, drive_spec, :use)
         end
       end
 

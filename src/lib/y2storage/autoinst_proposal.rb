@@ -173,7 +173,7 @@ module Y2Storage
       begin
         result = checker.needed_partitions
       rescue BootRequirementsChecker::Error => e
-        issues_list.add(:could_not_calculate_boot)
+        issues_list.add(Y2Storage::AutoinstIssues::CouldNotCalculateBoot)
         log.error e.message
         result = []
       end
@@ -187,7 +187,7 @@ module Y2Storage
     def root?(devices)
       return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
 
-      issues_list.add(:missing_root)
+      issues_list.add(Y2Storage::AutoinstIssues::MisssingRoot)
     end
 
     # Finds a suitable devicegraph using the guided proposal approach
@@ -273,7 +273,7 @@ module Y2Storage
         raise if boot_parts.empty?
 
         result = devices_creator.populated_devicegraph(planned_devices, disk_names)
-        issues_list.add(:could_not_create_boot, boot_parts)
+        issues_list.add(Y2Storage::AutoinstIssues::CouldNotCreateBoot, boot_parts)
       end
       result
     end
@@ -283,9 +283,9 @@ module Y2Storage
     # @param result [Proposal::CreatorResult] Result after creating the planned devices
     def add_reduced_devices_issues(result)
       if !result.shrinked_partitions.empty?
-        issues_list.add(:shrinked_planned_devices, result.shrinked_partitions)
+        issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices, result.shrinked_partitions)
       end
-      issues_list.add(:shrinked_planned_devices, result.shrinked_lvs) if !result.shrinked_lvs.empty?
+      issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices, result.shrinked_lvs) if !result.shrinked_lvs.empty?
     end
 
     # Returns the product's proposal settings for a given set of disks
