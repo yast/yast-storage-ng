@@ -90,7 +90,7 @@ module Y2Storage
         device.public_send(meth, partition_section.public_send(usage_attr)) if device.respond_to?(meth)
         return if ignored_attrs.empty?
 
-        issues_list.add(Y2Storage::AutoinstIssues::DonflictingAttrs, partition_section, usage_attr, ignored_attrs)
+        issues_list.add(Y2Storage::AutoinstIssues::ConflictingAttrs, partition_section, usage_attr, ignored_attrs)
       end
 
       # @return [Array<Symbol>] List of 'usage' attributes. The list is ordered by precedence.
