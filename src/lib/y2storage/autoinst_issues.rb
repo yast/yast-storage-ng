@@ -17,8 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Installation
-  # Installation::AutoinstIssues offers an API to register and report storage
+module Y2Storage
+  # Y2Storage::AutoinstIssues offers an API to register and report storage
   # related AutoYaST problems.
   #
   # Basically, it works by registering found problems when creating the

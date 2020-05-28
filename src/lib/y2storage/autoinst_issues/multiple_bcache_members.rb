@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Installation
+module Y2Storage
   module AutoinstIssues
     # The proposal contains several backing or caching devices for the same bcache
     #

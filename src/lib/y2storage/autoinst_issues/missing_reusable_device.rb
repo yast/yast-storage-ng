@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Installation
+module Y2Storage
   module AutoinstIssues
     # Represents a situation where a suitable device to be reused was not found.
     #

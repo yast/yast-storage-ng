@@ -18,7 +18,7 @@
 # find current contact information at www.suse.com.
 require "installation/autoinst_issues/issue"
 
-module Installation
+module Y2Storage
   module AutoinstIssues
     # Conflicting attributes where specified for the given section.
     #

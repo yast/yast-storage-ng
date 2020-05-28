@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Installation
+module Y2Storage
   module AutoinstIssues
     # Represents an AutoYaST situation where a partition table was specified for
     # a device not supporting partitions, like a so-called Xen virtual partition

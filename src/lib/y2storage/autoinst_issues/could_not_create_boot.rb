@@ -19,7 +19,7 @@
 
 require "installation/autoinst_issues/issue"
 
-module Installation
+module Y2Storage
   module AutoinstIssues
     # It was not possible to allocate the extra partitions needed for booting
     class CouldNotCreateBoot < ::Installation::AutoinstIssues::Issue
