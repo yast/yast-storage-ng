@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/no_disk"
 
-describe ::Installation::AutoinstIssues::NoDisk do
+describe Y2Storage::AutoinstIssues::NoDisk do
   subject(:issue) { described_class.new(section) }
 
   let(:section) do

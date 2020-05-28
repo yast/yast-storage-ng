@@ -147,7 +147,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
 
       it "registers an issue" do
         planner.planned_devices(drive).first
-        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::InvalidValue) }
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
         expect(issue).to_not be_nil
       end
     end
@@ -212,7 +212,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
 
         it "registers an issue" do
           planner.planned_devices(drive)
-          issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::MissingValue) }
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
           expect(issue).to_not be_nil
         end
       end

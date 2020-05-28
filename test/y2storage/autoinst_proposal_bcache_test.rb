@@ -137,7 +137,7 @@ describe Y2Storage::AutoinstProposal do
       it "registers an issue" do
         proposal.propose
         issue = issues_list.to_a.find do |i|
-          i.is_a?(::Installation::AutoinstIssues::MultipleBcacheMembers)
+          i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers)
         end
         expect(issue.bcache_name).to eq(drive_device)
         expect(issue.role).to eq(:caching)
@@ -156,7 +156,7 @@ describe Y2Storage::AutoinstProposal do
       it "registers an issue" do
         proposal.propose
         issue = issues_list.to_a.find do |i|
-          i.is_a?(::Installation::AutoinstIssues::MultipleBcacheMembers)
+          i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers)
         end
         expect(issue.bcache_name).to eq(drive_device)
         expect(issue.role).to eq(:backing)

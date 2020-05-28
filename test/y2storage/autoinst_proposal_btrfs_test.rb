@@ -139,7 +139,7 @@ describe Y2Storage::AutoinstProposal do
           proposal.propose
           issues = issues_list.to_a
 
-          expect(issues.any? { |i| i.is_a?(::Installation::AutoinstIssues::MissingReusableDevice) })
+          expect(issues.any? { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) })
             .to eq(true)
         end
       end

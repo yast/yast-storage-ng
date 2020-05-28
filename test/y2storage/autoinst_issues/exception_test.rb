@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/exception"
 
-describe ::Installation::AutoinstIssues::Exception do
+describe Y2Storage::AutoinstIssues::Exception do
   subject(:issue) { described_class.new(error) }
   let(:error) { double("Error", message: "error message") }
 

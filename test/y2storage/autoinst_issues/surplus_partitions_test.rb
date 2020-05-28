@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/surplus_partitions"
 
-describe ::Installation::AutoinstIssues::SurplusPartitions do
+describe Y2Storage::AutoinstIssues::SurplusPartitions do
   subject(:issue) { described_class.new(section) }
 
   let(:section) do

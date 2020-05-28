@@ -19,7 +19,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues"
 
-describe ::Installation::AutoinstIssues::NoComponents do
+describe Y2Storage::AutoinstIssues::NoComponents do
   subject(:issue) { described_class.new(device) }
 
   let(:device) { planned_vg(volume_group_name: "vg0") }

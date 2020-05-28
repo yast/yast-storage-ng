@@ -134,7 +134,7 @@ describe Y2Storage::AutoinstProposal do
         issues = issues_list.to_a
 
         expect(issues.size).to eq 1
-        expect(issues.first).to be_a(::Installation::AutoinstIssues::MissingReusableDevice)
+        expect(issues.first).to be_a(Y2Storage::AutoinstIssues::MissingReusableDevice)
       end
     end
 

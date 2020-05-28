@@ -54,7 +54,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       it "registers an issue" do
         expect(issues_list).to be_empty
         described_class.new(fake_devicegraph, partitioning, issues_list)
-        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoDisk) }
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
         expect(issue).to_not be_nil
       end
     end
@@ -74,7 +74,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       it "registers an issue" do
         expect(issues_list).to be_empty
         described_class.new(fake_devicegraph, partitioning, issues_list)
-        issue = issues_list.find { |i| i.is_a?(::Installation::AutoinstIssues::NoDisk) }
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
         expect(issue).to_not be_nil
       end
     end

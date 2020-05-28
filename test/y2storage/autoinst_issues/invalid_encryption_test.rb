@@ -21,7 +21,7 @@ require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/invalid_encryption"
 require "y2storage/autoinst_profile/partition_section"
 
-describe ::Installation::AutoinstIssues::InvalidEncryption do
+describe Y2Storage::AutoinstIssues::InvalidEncryption do
   subject(:issue) { described_class.new(section, reason) }
 
   let(:crypt_method) { :luks1 }

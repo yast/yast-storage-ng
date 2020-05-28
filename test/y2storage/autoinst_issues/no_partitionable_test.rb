@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/no_partitionable"
 
-describe ::Installation::AutoinstIssues::NoPartitionable do
+describe Y2Storage::AutoinstIssues::NoPartitionable do
   subject(:issue) { described_class.new(section) }
 
   let(:section) do

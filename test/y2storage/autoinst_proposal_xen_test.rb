@@ -199,7 +199,7 @@ describe Y2Storage::AutoinstProposal do
         proposal.propose
         expect(issues_list).to_not be_empty
         issue = issues_list.first
-        expect(issue.class).to eq ::Installation::AutoinstIssues::SurplusPartitions
+        expect(issue.class).to eq Y2Storage::AutoinstIssues::SurplusPartitions
       end
     end
 
@@ -208,7 +208,7 @@ describe Y2Storage::AutoinstProposal do
         proposal.propose
         expect(issues_list).to_not be_empty
         issue = issues_list.first
-        expect(issue.class).to eq ::Installation::AutoinstIssues::NoPartitionable
+        expect(issue.class).to eq Y2Storage::AutoinstIssues::NoPartitionable
       end
     end
 

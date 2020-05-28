@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues"
 
-describe ::Installation::AutoinstIssues::CouldNotCalculateBoot do
+describe Y2Storage::AutoinstIssues::CouldNotCalculateBoot do
   subject(:issue) { described_class.new }
 
   describe "#message" do

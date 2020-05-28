@@ -21,7 +21,7 @@
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/no_disk"
 
-describe ::Installation::AutoinstIssues::ThinPoolNotFound do
+describe Y2Storage::AutoinstIssues::ThinPoolNotFound do
   subject(:issue) { described_class.new(section) }
 
   let(:section) do
