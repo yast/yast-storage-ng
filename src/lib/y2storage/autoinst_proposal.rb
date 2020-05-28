@@ -187,7 +187,7 @@ module Y2Storage
     def root?(devices)
       return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
 
-      issues_list.add(Y2Storage::AutoinstIssues::MisssingRoot)
+      issues_list.add(Y2Storage::AutoinstIssues::MissingRoot)
     end
 
     # Finds a suitable devicegraph using the guided proposal approach
