@@ -282,10 +282,10 @@ module Y2Storage
     #
     # @param result [Proposal::CreatorResult] Result after creating the planned devices
     def add_reduced_devices_issues(result)
-      if !result.shrinked_partitions.empty?
-        issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices, result.shrinked_partitions)
-      end
-      issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices, result.shrinked_lvs) if !result.shrinked_lvs.empty?
+      issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices,
+          result.shrinked_partitions) if !result.shrinked_partitions.empty?
+      issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices,
+          result.shrinked_lvs) if !result.shrinked_lvs.empty?
     end
 
     # Returns the product's proposal settings for a given set of disks

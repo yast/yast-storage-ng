@@ -195,7 +195,8 @@ module Y2Storage
         devs = collection.to_a.select do |dev|
           dev.respond_to?(method) && dev.send(method, bcache_name)
         end
-        issues_list.add(Y2Storage::AutoinstIssues::MultipleBcacheMembers, role, bcache_name) if devs.size > 1
+        issues_list.add(Y2Storage::AutoinstIssues::MultipleBcacheMembers,
+          role, bcache_name) if devs.size > 1
       end
     end
   end

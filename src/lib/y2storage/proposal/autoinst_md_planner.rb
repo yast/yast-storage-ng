@@ -166,7 +166,8 @@ module Y2Storage
 
         MdLevel.find(raid_options.raid_type)
       rescue NameError
-        issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, raid_options.raid_type, :raid_type, "raid1")
+        issues_list.add(Y2Storage::AutoinstIssues::InvalidValue,
+          raid_options.raid_type, :raid_type, "raid1")
         Y2Storage::MdLevel::RAID1
       end
 

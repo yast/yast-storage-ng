@@ -34,7 +34,10 @@ module Y2Storage
       # @param drive [AutoinstProfile::DriveSection] drive section describing the bcache set up
       # @return [Array<Planned::Bcache>] Planned bcache device
       def planned_devices(drive)
-        issues_list.add(Y2Storage::AutoinstIssues::UnsupportedDriveSection, drive) unless Yast::Arch.x86_64
+        unless Yast::Arch.x86_64
+          issues_list.add(Y2Storage::AutoinstIssues::UnsupportedDriveSection,
+            drive)
+        end
         bcaches =
           if drive.unwanted_partitions?
             non_partitioned_bcache(drive)
