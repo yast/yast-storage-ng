@@ -111,6 +111,7 @@ module Y2Storage
           issues_list.add(Y2Storage::AutoinstIssues::SurplusPartitions,
             drive_section)
         end
+        nil
       end
 
       # Whether an existing filesystem has to be reused (no new one will be created)

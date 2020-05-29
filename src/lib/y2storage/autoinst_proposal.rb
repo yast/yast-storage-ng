@@ -290,6 +290,7 @@ module Y2Storage
         issues_list.add(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices,
           result.shrinked_lvs)
       end
+      nil
     end
 
     # Returns the product's proposal settings for a given set of disks

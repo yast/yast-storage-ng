@@ -199,6 +199,7 @@ module Y2Storage
           issues_list.add(Y2Storage::AutoinstIssues::MultipleBcacheMembers,
             role, bcache_name)
         end
+        nil
       end
     end
   end
