@@ -38,7 +38,7 @@ module Y2Storage
       # Returns the parent section
       #
       # This method only exist to conform to other sections API (like classes
-      # derived from {SectionWithAttributes}).
+      # derived from Installation::AutoinstProfile::SectionWithAttributes).
       #
       # @return [nil]
       def parent
