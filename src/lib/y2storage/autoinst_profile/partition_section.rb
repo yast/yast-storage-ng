@@ -18,7 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/autoinst_profile/section_with_attributes"
+require "installation/autoinst_profile/section_with_attributes"
 require "y2storage/subvol_specification"
 
 module Y2Storage
@@ -30,7 +30,7 @@ module Y2Storage
     # Configuration' subsection) of the AutoYaST documentation:
     # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#ay.partition_configuration
     # Check that document for details about the semantic of every attribute.
-    class PartitionSection < SectionWithAttributes
+    class PartitionSection < ::Installation::AutoinstProfile::SectionWithAttributes
       # Literal historically used at AutoinstPartPlan
       CRYPT_KEY_VALUE = "ENTER KEY HERE"
       private_constant :CRYPT_KEY_VALUE

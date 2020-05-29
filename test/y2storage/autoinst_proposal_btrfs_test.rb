@@ -47,7 +47,7 @@ describe Y2Storage::AutoinstProposal do
 
     let(:scenario) { "btrfs2-devicegraph.xml" }
 
-    let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+    let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
     let(:partitioning) do
       [

@@ -18,7 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/autoinst_profile/section_with_attributes"
+require "installation/autoinst_profile/section_with_attributes"
 require "y2storage/autoinst_profile/skip_list_section"
 require "y2storage/autoinst_profile/partition_section"
 require "y2storage/autoinst_profile/raid_options_section"
@@ -38,7 +38,7 @@ module Y2Storage
     # More information can be found in the 'Partitioning' section of the AutoYaST documentation:
     # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#CreateProfile.Partitioning
     # Check that document for details about the semantic of every attribute.
-    class DriveSection < SectionWithAttributes
+    class DriveSection < ::Installation::AutoinstProfile::SectionWithAttributes
       def self.attributes
         [
           { name: :device },

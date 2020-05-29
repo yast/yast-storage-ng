@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -40,11 +40,12 @@ module Y2Storage
     #   hash = { "mount" => "/", "crypt_method" => :random_swap }
     #   section = AutoinstProfile::PartitionSection.new_from_hashes(hash)
     #   issue = InvalidEncryption.new(section, :unsuitable)
-    class InvalidEncryption < Issue
+    class InvalidEncryption < ::Installation::AutoinstIssues::Issue
       # @return [Symbol] Reason which causes the encryption to be invalid
       attr_reader :reason
 
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {AutoinstProfile})
       # @param reason  [Symbol] Reason which casues the encryption to be invalid
       #   (:unknown when the method is unknown; :unavailable when the method is not available,
       #   :unsuitable when the method is not suitable for the device)

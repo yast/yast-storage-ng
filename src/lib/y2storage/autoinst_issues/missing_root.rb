@@ -17,14 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # The proposal was successful but there is not root partition (/) defined.
     #
     # This is a fatal error because the installation is not possible.
-    class MissingRoot < Issue
+    class MissingRoot < ::Installation::AutoinstIssues::Issue
       def initialize(*args)
         super
         textdomain "storage"

@@ -148,7 +148,7 @@ module Y2Storage
           elsif stray_devices_group?(drive, devicegraph)
             @drives[drive.device] = drive
           else
-            issues_list.add(:no_disk, drive)
+            issues_list.add(Y2Storage::AutoinstIssues::NoDisk, drive)
           end
         end
 
@@ -156,7 +156,7 @@ module Y2Storage
           disk = first_usable_disk(drive, devicegraph)
 
           if disk.nil?
-            issues_list.add(:no_disk, drive)
+            issues_list.add(Y2Storage::AutoinstIssues::NoDisk, drive)
             next
           end
 

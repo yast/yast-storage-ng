@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -25,8 +25,9 @@ module Y2Storage
     #
     # This is a fatal error because AutoYaST needs to determine which disks will be used
     # during installation.
-    class NoDisk < Issue
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+    class NoDisk < ::Installation::AutoinstIssues::Issue
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

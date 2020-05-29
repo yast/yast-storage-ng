@@ -21,7 +21,7 @@
 
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_space_maker"
-require "y2storage/autoinst_issues/list"
+require "installation/autoinst_issues/list"
 
 describe Y2Storage::Proposal::AutoinstSpaceMaker do
   subject(:space_maker) { described_class.new(analyzer) }
@@ -50,7 +50,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     Y2Storage::Planned::Bcache.new.tap { |b| b.reuse_name = "/dev/bcache0" }
   end
   let(:issues_list) do
-    Y2Storage::AutoinstIssues::List
+    ::Installation::AutoinstIssues::List
   end
 
   before do

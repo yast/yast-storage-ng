@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        4.3.7
+Version:        4.3.8
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
@@ -28,8 +28,8 @@ Source:         %{name}-%{version}.tar.bz2
 # RB_RESIZE_NOT_SUPPORTED_DUE_TO_SNAPSHOTS
 BuildRequires:	libstorage-ng-ruby >= 4.3.21
 BuildRequires:  update-desktop-files
-# CWM::DynamicProgressBar
-BuildRequires:  yast2 >= 4.2.63
+# AutoYaST issue handling
+BuildRequires:  yast2 >= 4.3.2
 BuildRequires:  yast2-devtools >= 4.2.2
 # for AbortException and handle direct abort
 BuildRequires:  yast2-ruby-bindings >= 4.0.6
@@ -49,8 +49,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 Requires:       findutils
 # RB_RESIZE_NOT_SUPPORTED_DUE_TO_SNAPSHOTS
 Requires:       libstorage-ng-ruby >= 4.3.21
-# CWM::DynamicProgressBar
-Requires:       yast2 >= 4.2.63
+# AutoYaST issue handling
+Requires:       yast2 >= 4.3.2
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort

@@ -20,7 +20,7 @@
 
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_nfs_planner"
-require "y2storage/autoinst_issues/list"
+require "installation/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
 
 describe Y2Storage::Proposal::AutoinstNfsPlanner do
@@ -32,7 +32,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   describe "#planned_devices" do
     shared_examples "create planned NFS" do

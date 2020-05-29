@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu May 19 15:22:56 CEST 2020 - schubi@suse.de
+
+- AutoYaST: Cleanup/improve issue handling (bsc#1171335).
+- 4.3.8
+
+-------------------------------------------------------------------
 Mon May 18 15:15:02 CEST 2020 - aschnell@suse.com
 
 - added translation for new resize blocking reason (bsc#1172164)

@@ -17,14 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
     # The proposal contains several backing or caching devices for the same bcache
     #
     # This is a fatal error.
-    class MultipleBcacheMembers < Issue
+    class MultipleBcacheMembers < ::Installation::AutoinstIssues::Issue
       extend Yast::I18n
       include Yast::I18n
 

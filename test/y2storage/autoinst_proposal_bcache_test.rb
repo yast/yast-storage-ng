@@ -32,7 +32,7 @@ describe Y2Storage::AutoinstProposal do
     )
   end
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
   let(:architecture) { :x86_64 }
 
   before do
@@ -136,7 +136,9 @@ describe Y2Storage::AutoinstProposal do
 
       it "registers an issue" do
         proposal.propose
-        issue = issues_list.to_a.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers) }
+        issue = issues_list.to_a.find do |i|
+          i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers)
+        end
         expect(issue.bcache_name).to eq(drive_device)
         expect(issue.role).to eq(:caching)
       end
@@ -153,7 +155,9 @@ describe Y2Storage::AutoinstProposal do
 
       it "registers an issue" do
         proposal.propose
-        issue = issues_list.to_a.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers) }
+        issue = issues_list.to_a.find do |i|
+          i.is_a?(Y2Storage::AutoinstIssues::MultipleBcacheMembers)
+        end
         expect(issue.bcache_name).to eq(drive_device)
         expect(issue.role).to eq(:backing)
       end

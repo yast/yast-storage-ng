@@ -21,7 +21,7 @@
 require_relative "../spec_helper"
 require_relative "../../support/autoinst_devices_planner_btrfs"
 require "y2storage/proposal/autoinst_bcache_planner"
-require "y2storage/autoinst_issues/list"
+require "installation/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
 
 describe Y2Storage::Proposal::AutoinstBcachePlanner do
@@ -29,7 +29,7 @@ describe Y2Storage::Proposal::AutoinstBcachePlanner do
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
   let(:scenario) { "bcache1.xml" }
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   before do
     fake_scenario(scenario)

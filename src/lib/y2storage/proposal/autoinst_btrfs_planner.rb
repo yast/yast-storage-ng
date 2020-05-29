@@ -103,8 +103,15 @@ module Y2Storage
       #
       # @param drive_section [AutoinstProfile::DriveSection]
       def add_issues(drive_section)
-        issues_list.add(:no_partitionable, drive_section) if drive_section.wanted_partitions?
-        issues_list.add(:surplus_partitions, drive_section) if drive_section.partitions.size > 1
+        if drive_section.wanted_partitions?
+          issues_list.add(Y2Storage::AutoinstIssues::NoPartitionable,
+            drive_section)
+        end
+        if drive_section.partitions.size > 1
+          issues_list.add(Y2Storage::AutoinstIssues::SurplusPartitions,
+            drive_section)
+        end
+        nil
       end
 
       # Whether an existing filesystem has to be reused (no new one will be created)
@@ -126,7 +133,7 @@ module Y2Storage
         reused_btrfs = reused_btrfs(partition_section)
 
         if !reused_btrfs
-          issues_list.add(:missing_reusable_device, partition_section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, partition_section)
           return
         end
 

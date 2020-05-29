@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -26,8 +26,9 @@ module Y2Storage
     # (StrayBlkDevice in libstorage-ng).
     #
     # This is a fatal error because it surely implies a mismatch in the devices.
-    class NoPartitionable < Issue
-      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+    class NoPartitionable < ::Installation::AutoinstIssues::Issue
+      # @param section [#parent,#section_name] Section where it was detected
+      #                (see {AutoinstProfile})
       def initialize(section)
         textdomain "storage"
 

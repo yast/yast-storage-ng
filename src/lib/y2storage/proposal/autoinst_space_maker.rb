@@ -37,7 +37,7 @@ module Y2Storage
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
       def initialize(disk_analyzer, issues_list = nil)
         @disk_analyzer = disk_analyzer
-        @issues_list = issues_list || AutoinstIssues::List.new
+        @issues_list = issues_list || ::Installation::AutoinstIssues::List.new
       end
 
       # Performs all the delete operations specified in the AutoYaST profile
@@ -172,9 +172,9 @@ module Y2Storage
       # @param drive_spec  [AutoinstProfile::DriveSection]
       def register_invalid_use_value(drive_spec)
         if drive_spec.use
-          issues_list.add(:invalid_value, drive_spec, :use)
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, drive_spec, :use)
         else
-          issues_list.add(:missing_value, drive_spec, :use)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingValue, drive_spec, :use)
         end
       end
 

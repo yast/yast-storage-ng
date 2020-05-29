@@ -23,17 +23,17 @@ module Y2Storage
   #
   # Basically, it works by registering found problems when creating the
   # partitioning proposal (based on AutoYaST profile) and displaying them to
-  # the user. Check {Y2Storage::AutoinstIssues::Issue} in order to
+  # the user. Check {Y2Storage::AutoinstIssues} in order to
   # find out more details about the kind of problems.
   #
   # About registering errors, an instance of the
-  # {Y2Storage::AutoinstIssues::List} will be used.
+  # Installation::AutoinstIssues::List (defined in yast2 package) will be used.
   module AutoinstIssues
   end
 end
 
-require "y2storage/autoinst_issues/list"
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/list"
+require "installation/autoinst_issues/issue"
 require "y2storage/autoinst_issues/conflicting_attrs"
 require "y2storage/autoinst_issues/could_not_calculate_boot"
 require "y2storage/autoinst_issues/could_not_create_boot"

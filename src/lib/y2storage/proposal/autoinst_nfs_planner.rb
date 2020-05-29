@@ -98,7 +98,7 @@ module Y2Storage
       def planned_device_old_format(drive, partition_section)
         return nil unless valid_drive?(drive, partition: partition_section, profile_format: :old)
 
-        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
+        issues_list.add(Y2Storage::AutoinstIssues::NoPartitionable, drive) if drive.wanted_partitions?
 
         share = partition_section.device
 
@@ -120,8 +120,8 @@ module Y2Storage
       def planned_device_new_format(drive)
         return nil unless valid_drive?(drive, profile_format: :new)
 
-        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
-        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
+        issues_list.add(Y2Storage::AutoinstIssues::NoPartitionable, drive) if drive.wanted_partitions?
+        issues_list.add(Y2Storage::AutoinstIssues::SurplusPartitions, drive) if drive.partitions.size > 1
 
         share = drive.device
         master_partition = drive.partitions.first
@@ -190,7 +190,7 @@ module Y2Storage
       # Note: finding the first missing value is faster, but all values are checked to
       # register all possible issues.
       #
-      # @param section [AutoinstProfile::SectionWithAttributes]
+      # @param section [::Installation::AutoinstProfile::SectionWithAttributes]
       # @param values [Array<Symbol>]
       #
       # @return [Boolean]
@@ -202,14 +202,14 @@ module Y2Storage
       #
       # An error is registered when the value is missing.
       #
-      # @param section [AutoinstProfile::SectionWithAttributes]
+      # @param section [::Installation::AutoinstProfile::SectionWithAttributes]
       # @param value [Symbol]
       #
       # @return [Boolean]
       def missing_value?(section, value)
         return false if section.send(value)
 
-        issues_list.add(:missing_value, section, value)
+        issues_list.add(Y2Storage::AutoinstIssues::MissingValue, section, value)
 
         true
       end

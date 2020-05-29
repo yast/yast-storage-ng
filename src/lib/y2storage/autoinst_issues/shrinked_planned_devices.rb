@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_issues/issue"
+require "installation/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
@@ -25,7 +25,7 @@ module Y2Storage
     # in order to fit in the available space.
     #
     # This is just a warning although the user should adjust the profile accordingly.
-    class ShrinkedPlannedDevices < Issue
+    class ShrinkedPlannedDevices < ::Installation::AutoinstIssues::Issue
       extend Yast::I18n
 
       # @return [Array<Proposal::DeviceShrinkage>] List of objects containing

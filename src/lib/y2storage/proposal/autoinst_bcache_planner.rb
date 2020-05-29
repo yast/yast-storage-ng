@@ -34,7 +34,10 @@ module Y2Storage
       # @param drive [AutoinstProfile::DriveSection] drive section describing the bcache set up
       # @return [Array<Planned::Bcache>] Planned bcache device
       def planned_devices(drive)
-        issues_list.add(:unsupported_drive_section, drive) unless Yast::Arch.x86_64
+        unless Yast::Arch.x86_64
+          issues_list.add(Y2Storage::AutoinstIssues::UnsupportedDriveSection,
+            drive)
+        end
         bcaches =
           if drive.unwanted_partitions?
             non_partitioned_bcache(drive)
@@ -91,7 +94,7 @@ module Y2Storage
       def add_bcache_reuse(bcache, section)
         bcache_to_reuse = find_bcache_to_reuse(bcache)
         if bcache_to_reuse.nil?
-          issues_list.add(:missing_reusable_device, section)
+          issues_list.add(Y2Storage::AutoinstIssues::MissingReusableDevice, section)
           return
         end
         bcache.reuse_name = bcache_to_reuse.name
@@ -118,7 +121,7 @@ module Y2Storage
 
         Y2Storage::CacheMode.find(bcache_options.cache_mode)
       rescue NameError
-        issues_list.add(:invalid_value, bcache_options, :cache_mode, :skip)
+        issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, bcache_options, :cache_mode, :skip)
         nil
       end
     end

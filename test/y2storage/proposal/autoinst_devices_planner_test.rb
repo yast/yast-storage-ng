@@ -21,7 +21,7 @@
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_planner"
 require "y2storage/volume_specification"
-require "y2storage/autoinst_issues/list"
+require "installation/autoinst_issues/list"
 Yast.import "Arch"
 
 describe Y2Storage::Proposal::AutoinstDevicesPlanner do
@@ -35,7 +35,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
   let(:architecture) { :x86_64 }
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   let(:partitioning) do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)

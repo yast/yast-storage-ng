@@ -40,7 +40,7 @@ describe Y2Storage::AutoinstProposal do
     )
   end
 
-  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
 
   describe "#propose" do
     shared_examples "NFS proposal" do
