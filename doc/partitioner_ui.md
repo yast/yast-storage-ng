@@ -68,6 +68,7 @@ Possible plans to overcome the mentioned challenges and problems:
  * [Idea 5: All Final Elements in One View](partitioner_ui/ideas/leaf_nodes.md)
  * [Idea 5bis: List of Actions per Device](partitioner_ui/ideas/device_actions.md)
  * [Idea 6: Constrain-based definitions](partitioner_ui/ideas/inventor.md)
+ * [Idea 7: Simple Techs Menu and Global Menu Bar](partitioner_ui/ideas/grouped_techs.md)
 
 ## Old ideas
 
