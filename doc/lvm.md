@@ -4,7 +4,7 @@ The basic LVM functionality has been supported by YaST for ages. But LVM has a l
 like RAID, snapshots, thin provisioning and whatsnot that often result in special types of logical
 volumes being present in the system.
 
-This document summarizes how well can YaST deal with systems that contain such advanced LVM setups.
+This document summarizes how well YaST deals with systems that contain such advanced LVM setups.
 
 ## The Partitioner
 
@@ -18,7 +18,10 @@ stripped.
 ### Normal LVM
 
 This is somehow the base case. Normal LVs are visualized in the standard way and all operations
-are supported.
+are generally supported.
+
+The most noticeable exception is that YaST prevents resizing a logical volume that has snapshots and
+is active. It shows "_Resizing not supported since the logical volume has snapshots_".
 
 ### Thin Pool and Thin LV
 
@@ -43,9 +46,9 @@ are supported.
 - For thin LVs
   - Create: it works. The **widgets for defining stripping are disabled and set to the default values**.
     Maybe it would be better to show them disabled but with the pool values. Or to not show them at all.
-  - Edit (format/mount): not allowed ("_Is a thin pool. It cannot be edited_").
+  - Edit (format/mount): just as a normal LV.
   - Resize: it works.
-  - Delete: it works. Not it deletes the thin volume and all the associated hidden LVs.
+  - Delete: it works. Note it deletes the thin volume and all the associated hidden LVs.
 
 ### Cache LV with a Cache Pool
 
@@ -78,6 +81,8 @@ are supported.
 - Resize: not allowed ("_Resizing of this type of LVM logical volumes is not supported_").
 - Delete: it works. It only deletes the cache LV, the LV used as cache survives (it becomes a
   normal LV) **but is not visible immediately**. A reprobing after the commit phase is needed.
+  The root cause is an inconsistent behavior of `lvremove` compared to other cases, reported
+  as [bsc#1171907](https://bugzilla.suse.com/show_bug.cgi?id=1171907).
 
 ### Unused Cache Pool
 
