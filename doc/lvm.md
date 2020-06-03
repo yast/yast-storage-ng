@@ -20,8 +20,8 @@ stripped.
 This is somehow the base case. Normal LVs are visualized in the standard way and all operations
 are generally supported.
 
-The most noticeable exception is that YaST prevents resizing a logical volume that has snapshots and
-is active. It shows "_Resizing not supported since the logical volume has snapshots_".
+The most noticeable exception is that YaST prevents resizing a logical volume that has snapshots.
+It shows "_Resizing not supported since the logical volume has snapshots_".
 
 ### Thin Pool and Thin LV
 
