@@ -375,6 +375,16 @@ describe Y2Storage::BootRequirementsChecker do
                 match(/partition of type BIOS Boot/)
               )
             end
+
+            context "but it is running in a XEN guest" do
+              before do
+                allow(Yast::Arch).to receive(:is_xenU).and_return(true)
+              end
+
+              it "does not contain warnings" do
+                expect(checker.warnings).to be_empty
+              end
+            end
           end
 
           context "and there is a grub partition in the system" do
