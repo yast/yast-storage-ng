@@ -35,7 +35,7 @@ describe Y2Storage::AutoinstIssues::NoDisk do
       let(:device_name) { nil }
 
       it "returns a general description of the issue" do
-        expect(issue.message).to include "Not suitable disk"
+        expect(issue.message).to include "No suitable disk"
       end
     end
 
