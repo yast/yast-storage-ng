@@ -1,22 +1,16 @@
 # Booting a XEN guest
 
 According to the [guest boot
-process](https://wiki.xen.org/wiki/Booting_Overview), it is not needed a BIOS
-Boot Partition to boot a `XEN domU` (_the guest_) unless using Grub2 for booting
-its own kernel instead of the one provided by the `XEN dom0` (_the host_).
+process](https://wiki.xen.org/wiki/Booting_Overview), a BIOS Boot Partition is
+not needed to boot a XEN domU (the guest) unless using Grub2 for booting its own
+kernel instead of the one provided by the XEN dom0 (the host).
 
-However, taking into account that
+Since the boot process for a XEN domU is defined in its configuration file, it's
+not possible to know it during the installation. For that reason, although the
+partitioner still proposing the BIOS Boot partition when possible, it will not
+warn the user when it is missing in a XEN guest.
 
-* it is not possible to know in advance which kind of boot the guest will use,
-  and
-* the boot process is defined in the XEN domU configuration file, which could be
-  changed at any time
-
-the partitioner still proposing, if possible, the BIOS Boot partition even when
-running a XEN installation. On the other hand, it does not warn the user about a
-missing partition if it is not present.
-
-For its part, AutoYaST [keep trying on adding a boot
-device](https://github.com/yast/yast-storage-ng/blob/af944283d0fd2220973c8d51452365c040d684ba/doc/autoyast.md#phase-six-adding-boot-devices-if-needed).
-Fortunately, this is not a problem because that attempt is just complementary
-and the installation will continue regardless of whether it succeeds.
+For its part, AutoYaST will [keep trying to add a boot
+device](https://github.com/yast/yast-storage-ng/blob/af944283d0fd2220973c8d51452365c040d684ba/doc/autoyast.md#phase-six-adding-boot-devices-if-needed).,
+which is not a problem because such attempt is just complementary and the
+installation will continue regardless of whether it succeeds or not.
