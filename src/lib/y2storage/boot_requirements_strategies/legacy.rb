@@ -17,8 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/boot_requirements_strategies/base"
 require "y2storage/partition_id"
+
+Yast.import "Arch"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -176,7 +179,7 @@ module Y2Storage
       def errors_on_gpt
         errors = []
 
-        if grub_part_needed_in_gpt? && missing_partition_for?(grub_volume)
+        if include_bios_boot_warning?
           errors << bios_boot_missing_error
           errors << grub_embedding_error
         end
@@ -278,6 +281,15 @@ module Y2Storage
           "It will not be possible to install the bootloader."
         )
         SetupError.new(message: message)
+      end
+
+      # Whether the warning about missing BIOS Boot partition should be included
+      #
+      # return [Boolean] true when a needed Grub partition is missing, unless running in a XEN domU
+      def include_bios_boot_warning?
+        return false if Yast::Arch.is_xenU
+
+        grub_part_needed_in_gpt? && missing_partition_for?(grub_volume)
       end
     end
   end
