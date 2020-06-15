@@ -56,9 +56,66 @@ functional in a text console with 80 columns and 24 lines.
 
 ![System view in text mode](partitioner_ui/img/system-ncurses.png)
 
-## Ideas
+## Agreed plan (so far)
 
-Possible plans to overcome the mentioned challenges and problems:
+This is the main plan to overcome the mentioned challenges and problems. Readers interested in the
+result can simply check this section.
+
+To make navigation more understandable we plan to introduce three big changes in the layout used
+by the Partitioner to present the full picture:
+
+- Use a menu to allocate global actions that do not really fit in other parts of the UI (like
+  rescanning devices) and also for some contextual options that are not common enough to justify a
+  button.
+- Turn the left tree into a plain list of possible "views" with some numbers indicating the number
+  of elements presented in each view.
+- Use nesting (with the possibility of expanding/collapsing) in the tables to better represent the
+  relationship of disks vs partitions, volume groups vs logical volumes, filesystems vs subvolumes,
+  etc.
+
+With all that, the previous screenshot will turn into something similar to this:
+
+```
+[Configure↓][View↓][Settings↓]
+
+   ┌View ──────────────┐Available Storage on guanche
+   │─System Overview   │┌──────────────────────────────────────────────────┐   
+   │─Hard Disks (3)    ││Device           │      Size│F│Enc│Type           │   
+   │─RAID (2)          ││┬─/dev/sda       │  8.00 GiB│ │   │HGST-HGST HTS72│   
+   │─Volume Manager (1)││├──/dev/sda1     │500.00 MiB│ │   │Part of EFI    │   
+   │─Bcache (0)        ││└──/dev/sda2     │  7.51 GiB│ │   │Part of OS     │   
+   │─NFS (0)           ││+─/dev/sdb       │468.00 GiB│ │   │Disk           │   
+   │─Btrfs (1)         ││┬─/dev/sdc       │  2.00 TiB│ │   │Disk           │ 
+   │                   ││└──/dev/sdc1     │ 12.00 GiB│ │   │FAT Partition  │
+   │                   ││──/dev/md/EFI    │499.94 MiB│ │   │FAT RAID       │   
+   │                   ││──/dev/md/OS     │  7.51 GiB│ │   │PV of system   │   
+   │                   ││┬─/dev/system    │  7.50 GiB│ │   │LVM            │   
+   │                   ││└──/dev/system/ro│  6.00 GiB│ │   │Btrfs LV       │   
+   │                   │└├───────────────────────────────┤─────────────────┘   
+   │                   │[Modify↓][Partitions↓]
+   └───────────────────┘                                                       
+ [ Help ]                                      [Abort]               [Finish] 
+
+```
+
+Of course, the look and feel of the table with nested elements may not be exactly as represented
+above. That widget still must be developed and could end up looking similar to the typical list of
+mails from a mail client (in which nesting is used to manage threads) or to the widgets currently
+used to display a hierarchy of directories in QDirStat.
+
+![Nested list in Thunderbird](partitioner_ui/img/list-thunderbird.png)
+
+![Nested list in QDirStat](partitioner_ui/img/list-qdirstat.png)
+
+## Other ideas
+
+Section with ideas and concepts that were important during the development of the current plan.
+Kept for completeness and for future reference, since we still plan to incorporate parts of them to
+the final implementation.
+
+### Initial ideas
+
+Initial ideas that were originally discussed and leaded to the current plan.
 
  * [Idea 0: template](partitioner_ui/ideas/template.md)
  * [Idea 1: Small Adjustements](partitioner_ui/ideas/adjustments.md)
@@ -70,7 +127,7 @@ Possible plans to overcome the mentioned challenges and problems:
  * [Idea 6: Constrain-based definitions](partitioner_ui/ideas/inventor.md)
  * [Idea 7: Simple Techs Menu and Global Menu Bar](partitioner_ui/ideas/grouped_techs.md)
 
-## Old ideas
+### Old ideas
 
 This section collects old partial ideas that were discarded or postponed during the development of
 the Partitioner in 15.1 or 15.2. Instead of proposing a whole revamp of the interface, they address
