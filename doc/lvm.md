@@ -12,8 +12,8 @@ This section describes how the Expert Partitioner represent the different LVM te
 operations it allows for each type of logical volume. At the current stage, some operations show an
 unexpected behavior and, in most cases, would need to be adjusted. That is represented in bold text.
 
-Note that, unlike RAID0, stripped LVs are not really a separate type. Many types of LVs can be
-stripped.
+Note that, unlike RAID0, striped LVs are not really a separate type. Many types of LVs can be
+striped.
 
 ### Normal LVM
 
@@ -32,7 +32,7 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 - Due to a bug, **nothing in the UI identifies the displayed LVs as being special**. They basically
   look like normal LVs, although `BlkDevicesTable::DEVICE_LABELS` contains entries for both thin
   pools and thin LVs.
-- In LVM is not possible to define stripping for thin LVs, they use the stripping defined for their thin
+- In LVM is not possible to define striping for thin LVs, they use the striping defined for their thin
   pools. The partitioner UI **reports 0 stripes for all thin LVs**.
 
 #### What can be done?
@@ -44,7 +44,7 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
   - Delete: it works. Note it deletes the pool, all its thin volumes and the associated hidden LVs.
 
 - For thin LVs
-  - Create: it works. The **widgets for defining stripping are disabled and set to the default values**.
+  - Create: it works. The **widgets for defining striping are disabled and set to the default values**.
     Maybe it would be better to show them disabled but with the pool values. Or to not show them at all.
   - Edit (format/mount): just as a normal LV.
   - Resize: it works.
@@ -108,7 +108,7 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 
 #### What can be done?
 
-- Create: not possible (not to be confused with the possibility of creating stripped LVs).
+- Create: not possible (not to be confused with the possibility of creating striped LVs).
 - Edit (format/mount): just as a normal LV.
 - Resize: not allowed ("_Resizing of this type of LVM logical volumes is not supported_").
 - Delete: it works. Note it deletes also the corresponding subLVs.
