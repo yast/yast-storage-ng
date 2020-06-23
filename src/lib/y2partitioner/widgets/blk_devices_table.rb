@@ -31,6 +31,8 @@ module Y2Partitioner
     #
     #   * #columns returning an array of symbols
     #   * #devices returning a collection of {Y2Storage::BlkDevice}
+    #
+    # # rubocop:disable Metrics/ClassLength
     class BlkDevicesTable < CWM::Table
       include Help
       extend Yast::I18n
@@ -269,10 +271,16 @@ module Y2Partitioner
         software_raid: N_("RAID"),
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
+        thin_lv:       N_("Thin LV"),
+        thin_pool_lv:  N_("Thin Pool"),
+        raid_lv:       N_("RAID LV"),
+        cache_lv:      N_("Cache LV"),
+        cache_pool_lv: N_("Cache Pool"),
+        writecache_lv: N_("Writecache LV"),
+        snapshot_lv:   N_("Snapshot LV"),
+        mirror_lv:     N_("Mirror LV"), # Mirror LVM? LVM Mirror?
         lvm_lv:        N_("LV"),
         stray:         N_("Xen"),
-        thin_pool:     N_("Thin Pool"),
-        thin:          N_("Thin LV"),
         partition:     N_("Partition")
       }
 
@@ -459,5 +467,6 @@ module Y2Partitioner
         fs.multidevice?
       end
     end
+    # rubocop:enable all
   end
 end
