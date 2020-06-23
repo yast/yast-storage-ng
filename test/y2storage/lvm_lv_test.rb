@@ -30,6 +30,85 @@ describe Y2Storage::LvmLv do
 
   subject(:lv) { fake_devicegraph.find_by_name(device_name) }
 
+  describe "#is?" do
+    before do
+      fake_scenario("lvm-types.xml")
+      vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0")
+      vg.create_lvm_lv("writecache", Y2Storage::LvType::WRITECACHE, 1.GiB)
+      vg.create_lvm_lv("mirror", Y2Storage::LvType::MIRROR, 1.GiB)
+    end
+
+    let(:device_name) { "/dev/vg0/normal1" }
+
+    it "returns true for values whose symbol is :lvm_lv" do
+      expect(subject.is?(:lvm_lv)).to eq true
+      expect(subject.is?("lvm_lv")).to eq true
+    end
+
+    context "if the volume is a cache pool" do
+      let(:device_name) { "/dev/vg0/unused_cache_pool" }
+
+      it "returns true for values whose symbol is :cache_pool_lv" do
+        expect(subject.is?(:cache_pool_lv)).to eq true
+        expect(subject.is?("cache_pool_lv")).to eq true
+      end
+    end
+
+    context "if the volume is a cache LV" do
+      let(:device_name) { "/dev/vg0/cached1" }
+
+      it "returns true for values whose symbol is :cache_lv" do
+        expect(subject.is?(:cache_lv)).to eq true
+        expect(subject.is?("cache_lv")).to eq true
+      end
+    end
+
+    context "if the volume is a thin logical volume" do
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns true for values whose symbol is :thin_lv" do
+        expect(subject.is?(:thin_lv)).to eq true
+        expect(subject.is?("thin_lv")).to eq true
+      end
+    end
+
+    context "if the volume is a thin pool" do
+      let(:device_name) { "/dev/vg0/thinpool0" }
+
+      it "returns true for values whose symbol is :thin_pool_lv" do
+        expect(subject.is?(:thin_pool_lv)).to eq true
+        expect(subject.is?("thin_pool_lv")).to eq true
+      end
+    end
+
+    context "if the volume is an snapshot" do
+      let(:device_name) { "/dev/vg0/snap_normal1" }
+
+      it "returns true for values whose symbol is :snapshot_lv" do
+        expect(subject.is?(:snapshot_lv)).to eq true
+        expect(subject.is?("snapshot_lv")).to eq true
+      end
+    end
+
+    context "if the volume is a writecache" do
+      let(:device_name) { "/dev/vg0/writecache" }
+
+      it "returns true for values whose symbol is :writecache_lv" do
+        expect(subject.is?(:writecache_lv)).to eq true
+        expect(subject.is?("writecache_lv")).to eq true
+      end
+    end
+
+    context "if the volume is a mirror" do
+      let(:device_name) { "/dev/vg0/mirror" }
+
+      it "returns true for values whose symbol is :mirror_lv" do
+        expect(subject.is?(:mirror_lv)).to eq true
+        expect(subject.is?("mirror_lv")).to eq true
+      end
+    end
+  end
+
   describe "#overcommitted?" do
     before do
       vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")

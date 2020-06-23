@@ -162,7 +162,10 @@ module Y2Storage
     protected
 
     def types_for_is
-      super << :lvm_lv
+      types = super
+      types << :lvm_lv
+      types << "#{lv_type}_lv".to_sym unless lv_type.is?(:unknown, :normal)
+      types
     end
   end
 end
