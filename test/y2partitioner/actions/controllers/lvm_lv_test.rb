@@ -212,22 +212,14 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       controller.stripes_size = 16.KiB
     end
 
-    it "sets stripes number to nil" do
-      expect(controller.stripes_number).to_not be_nil
-      controller.reset_size_and_stripes
-      expect(controller.stripes_number).to be_nil
-    end
-
-    it "sets stripes size to nil" do
-      expect(controller.stripes_size).to_not be_nil
-      controller.reset_size_and_stripes
-      expect(controller.stripes_size).to be_nil
-    end
-
     context "if the lv type is set to thin" do
       before do
         controller.lv_type = Y2Storage::LvType::THIN
+        create_thin_provisioning(vg)
+        allow(controller).to receive(:thin_pool).and_return(thin_pool)
       end
+
+      let(:thin_pool) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vg0/pool1") }
 
       it "sets size to 2 GiB" do
         controller.reset_size_and_stripes
@@ -237,6 +229,18 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       it "sets size choice to custom size" do
         controller.reset_size_and_stripes
         expect(controller.size_choice).to eq(:custom_size)
+      end
+
+      it "sets stripes number to its thin pool stripes" do
+        expect(controller.stripes_number).to_not eq(thin_pool.stripes)
+        controller.reset_size_and_stripes
+        expect(controller.stripes_number).to eq(thin_pool.stripes)
+      end
+
+      it "sets stripes size to nil" do
+        expect(controller.stripes_size).to_not eq(thin_pool.stripe_size)
+        controller.reset_size_and_stripes
+        expect(controller.stripes_size).to eq(thin_pool.stripe_size)
       end
     end
 
@@ -253,6 +257,18 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       it "sets size choice to max size" do
         controller.reset_size_and_stripes
         expect(controller.size_choice).to eq(:max_size)
+      end
+
+      it "sets stripes number to nil" do
+        expect(controller.stripes_number).to_not be_nil
+        controller.reset_size_and_stripes
+        expect(controller.stripes_number).to be_nil
+      end
+
+      it "sets stripes size to nil" do
+        expect(controller.stripes_size).to_not be_nil
+        controller.reset_size_and_stripes
+        expect(controller.stripes_size).to be_nil
       end
     end
   end
