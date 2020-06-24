@@ -291,21 +291,9 @@ module Y2Partitioner
       def type_label(device)
         return device.type.to_human_string if device.is?(:filesystem)
         return device_label_for(device) if device.is?(:lvm_vg)
+        return snapshot_type_label(device) if device.is?(:snapshot_lv)
 
-        fs = filesystem(device)
-
-        if device.journal?
-          journal_type_label(fs)
-        elsif show_multidevice_type_label?(fs)
-          multidevice_type_label(fs)
-        elsif device.is?(:snapshot_lv)
-          # TRANSLATORS: %s is the original logical volume name. E.g., "user-data"
-          format(_("Snapshot LV of %s"), device.origin.lv_name)
-        elsif fs
-          formatted_device_type_label(device, fs)
-        else
-          unformatted_device_type_label(device)
-        end
+        formatted_device_type_label(device) || unformatted_device_type_label(device)
       end
 
       # Whether the "Part of *fs.type*" label should be displayed
@@ -327,16 +315,25 @@ module Y2Partitioner
       # Label for formatted device (e.g., Ext4 LVM, XFS RAID, Swap Partition, etc)
       #
       # @param device [Y2Storage::BlkDevice]
-      # @param filesystem [Y2Storage::Filesystems::Base]
-      # @return [String]
-      def formatted_device_type_label(device, filesystem)
-        # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
-        #              %{device_label} is the device label. I.e., Partition, Disk, etc
-        format(
-          _("%{fs_type} %{device_label}"),
-          fs_type:      fs_type_for(device, filesystem),
-          device_label: device_label_for(device)
-        )
+      # @return [String, nil] label if there is a filesystem for given device; nil otherwise
+      def formatted_device_type_label(device)
+        fs = filesystem(device)
+
+        return nil unless fs
+
+        if device.journal?
+          journal_type_label(fs)
+        elsif show_multidevice_type_label?(fs)
+          multidevice_type_label(fs)
+        else
+          # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
+          #              %{device_label} is the device label. I.e., Partition, Disk, etc
+          format(
+            _("%{fs_type} %{device_label}"),
+            fs_type:      fs_type_for(device, fs),
+            device_label: device_label_for(device)
+          )
+        end
       end
 
       # Filesystem representation for given device and filesystem
@@ -382,6 +379,15 @@ module Y2Partitioner
 
         # TRANSLATORS: %s is the volume group name. E.g., "vg0"
         format(_("PV of %s"), vg.basename)
+      end
+
+      # Type label when the device is a snapshot LV
+      #
+      # @param device [Y2Storage::LvmLv]
+      # @return [String]
+      def snapshot_type_label(device)
+        # TRANSLATORS: %s is the original logical volume name. E.g., "user-data"
+        format(_("Snapshot LV of %s"), device.origin.lv_name)
       end
 
       # Type label when the device holds a journal
