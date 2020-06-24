@@ -53,10 +53,8 @@ module Y2Storage
     #   @return [LvType] type of the logical volume
     storage_forward :lv_type, as: "LvType"
 
-    # @!method stripes
-    #   Number of stripes. 0 if the LV is not striped
-    #   @return [Integer]
-    storage_forward :stripes
+    # @see #stripes
+    storage_forward :storage_stripes, to: :stripes
 
     # @!method stripes=(num_stripes)
     #   Sets the number of stripes. The size of the LV must be a multiple of
@@ -115,6 +113,16 @@ module Y2Storage
     # @return [LvmLv] the thin pool when dealing with a thin LV; nil otherwise
     def thin_pool
       lv_type.is?(:thin) ? storage_thin_pool : nil
+    end
+
+    # Number of stripes
+    #
+    # @note it returns the value of Storage::LvmLv#stripes, except for thin volumes that are going
+    #   to report the striping defined for their thin pools.
+    #
+    # @return [Integer] 0 when the LV is not striped; Storage::LvmLv#stripes otherwise
+    def stripes
+      thin_pool ? thin_pool.storage_stripes : storage_stripes
     end
 
     # Whether the thin pool is overcommitted

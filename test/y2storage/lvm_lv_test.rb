@@ -132,6 +132,29 @@ describe Y2Storage::LvmLv do
     end
   end
 
+  describe "#stripes" do
+    before do
+      fake_scenario("lvm-types.xml")
+    end
+
+    context "when volume is a thin LV" do
+      let(:thin_pool) { fake_devicegraph.find_by_name("/dev/vg0/thinpool0") }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns the stripes defined by its thin pool" do
+        expect(subject.stripes).to eq(thin_pool.stripes)
+      end
+    end
+
+    context "when volume is not a thin LV" do
+      let(:device_name) { "/dev/vg0/striped1" }
+
+      it "returns its stripping value" do
+        expect(subject.stripes).to eq(2)
+      end
+    end
+  end
+
   describe "#overcommitted?" do
     before do
       vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")
