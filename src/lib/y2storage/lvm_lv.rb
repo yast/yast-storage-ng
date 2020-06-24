@@ -83,7 +83,7 @@ module Y2Storage
     storage_forward :max_size_for_lvm_lv, as: "DiskSize"
 
     # @!method lvm_lvs
-    #   Returs the thin volumes over a thin pool, so it only makes sense to be
+    #   Returns the thin volumes over a thin pool, so it only makes sense to be
     #   called over a thin pool volume. For thin and normal logical volumes it
     #   returns an empty list.
     #
