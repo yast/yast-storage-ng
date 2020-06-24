@@ -46,6 +46,9 @@ module Y2Storage
     #   @return [LvmVg] volume group the LV belongs to
     storage_forward :lvm_vg, as: "LvmVg"
 
+    # @see #thin_pool
+    storage_forward :storage_thin_pool, to: :thin_pool, as: "LvmLv"
+
     # @!method lv_type
     #   @return [LvType] type of the logical volume
     storage_forward :lv_type, as: "LvType"
@@ -106,6 +109,13 @@ module Y2Storage
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Disk>] all the logical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmLv"
+
+    # Returns the thin pool holding a thin volume
+    #
+    # @return [LvmLv] the thin pool when dealing with a thin LV; nil otherwise
+    def thin_pool
+      lv_type.is?(:thin) ? storage_thin_pool : nil
+    end
 
     # Whether the thin pool is overcommitted
     #

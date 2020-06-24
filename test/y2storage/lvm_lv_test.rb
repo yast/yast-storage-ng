@@ -109,6 +109,29 @@ describe Y2Storage::LvmLv do
     end
   end
 
+  describe "#thin_pool" do
+    before do
+      fake_scenario("lvm-types.xml")
+    end
+
+    context "when volume is a thin LV" do
+      let(:thin_pool) { fake_devicegraph.find_by_name("/dev/vg0/thinpool0") }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns the thin pool the volume belongs to" do
+        expect(subject.thin_pool).to eq(thin_pool)
+      end
+    end
+
+    context "when volume is not a thin LV" do
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "returns nil" do
+        expect(subject.thin_pool).to be_nil
+      end
+    end
+  end
+
   describe "#overcommitted?" do
     before do
       vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")
