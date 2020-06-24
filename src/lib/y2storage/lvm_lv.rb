@@ -90,6 +90,12 @@ module Y2Storage
     #   @return [Array<LvmLv>] logical volumes in the thin pool, in no particular order
     storage_forward :lvm_lvs, as: "LvmLv"
 
+    # @!method origin
+    #   Returns the original volume of an snapshot.
+    #
+    #   @return [LvmLv] the original logical volume
+    storage_forward :origin, check_with: :has_origin, as: "LvmLv"
+
     # @!method create_lvm_lv(lv_name, lv_type, size)
     #   Creates a logical volume with name lv_name and type lv_type in the thin pool.
     #   Only supported lv_type is THIN.
