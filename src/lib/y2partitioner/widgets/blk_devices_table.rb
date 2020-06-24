@@ -298,6 +298,9 @@ module Y2Partitioner
           journal_type_label(fs)
         elsif show_multidevice_type_label?(fs)
           multidevice_type_label(fs)
+        elsif device.is?(:snapshot_lv)
+          # TRANSLATORS: %s is the original logical volume name. E.g., "user-data"
+          format(_("Snapshot LV of %s"), device.origin.lv_name)
         elsif fs
           formatted_device_type_label(device, fs)
         else
