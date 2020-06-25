@@ -291,7 +291,7 @@ module Y2Partitioner
       def type_label(device)
         return device.type.to_human_string if device.is?(:filesystem)
         return device_label_for(device) if device.is?(:lvm_vg)
-        return snapshot_type_label(device) if device.is?(:snapshot_lv)
+        return snapshot_type_label(device) if device.is?(:lvm_lv) && device.origin
 
         formatted_device_type_label(device) || unformatted_device_type_label(device)
       end
@@ -386,8 +386,17 @@ module Y2Partitioner
       # @param device [Y2Storage::LvmLv]
       # @return [String]
       def snapshot_type_label(device)
-        # TRANSLATORS: %s is the original logical volume name. E.g., "user-data"
-        format(_("Snapshot LV of %s"), device.origin.lv_name)
+        snapshot_type = device.lv_type.is?(:thin) ? "Thin" : ""
+
+        # TRANSLATORS: %{snapshot_type} is the snapshot type, "Thin" or empty.
+        #              %{snapshot_origin} is the original volume name, e.g. "user-data".
+        label = format(
+          _("%{snapshot_type} Snapshot LV of %{snapshot_origin}"),
+          snapshot_type:   snapshot_type,
+          snapshot_origin: device.origin.lv_name
+        )
+
+        label.strip
       end
 
       # Type label when the device holds a journal
