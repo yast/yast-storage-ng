@@ -56,6 +56,18 @@ module Y2Partitioner
           )
         end
       end
+
+      # Information about snapshots of the logical volume
+      #
+      # @return [String]
+      def device_snapshots
+        # TRANSLATORS: the logical volume snapshots information, where %s is replaces by
+        # the list of snapshots
+        format(
+          _("Snapshots: %s"),
+          Yast::HTML.List(lvm_lv.snapshots.map(&:name))
+        )
+      end
     end
   end
 end

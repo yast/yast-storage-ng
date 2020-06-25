@@ -49,7 +49,7 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          [:stripes]
+          [:stripes, :snapshots]
         end
 
         # Entry data about the stripes
@@ -59,6 +59,15 @@ module Y2Partitioner
         # @return [String]
         def stripes_value
           device_stripes
+        end
+
+        # Entry data about snapshots
+        #
+        # @see LvmLvAttributes
+        #
+        # @return [String]
+        def snapshots_value
+          device_snapshots
         end
       end
     end
