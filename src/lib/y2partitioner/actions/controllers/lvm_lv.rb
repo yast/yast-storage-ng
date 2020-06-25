@@ -67,7 +67,7 @@ module Y2Partitioner
 
         # New logical volume created by the controller.
         #
-        # Nil if #create_lv has not beeing called or if the volume was
+        # Nil if #create_lv has not being called or if the volume was
         # removed with #delete_lv.
         #
         # @return [Y2Storage::LvmLv, nil]
