@@ -184,6 +184,25 @@ describe Y2Storage::LvmLv do
     end
   end
 
+  describe "#snapshots" do
+    context "when called over a logical volume with snapshots" do
+      let(:snapshot) { fake_devicegraph.find_by_name("/dev/vg0/snap_normal1") }
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "returns a collection holding the snapshots volumes" do
+        expect(subject.snapshots).to eq([snapshot])
+      end
+    end
+
+    context "when called over a logical volume without snapshots" do
+      let(:device_name) { "/dev/vg0/normal3" }
+
+      it "returns an empty collection" do
+        expect(subject.snapshots).to eq([])
+      end
+    end
+  end
+
   describe "#overcommitted?" do
     before do
       fake_scenario("complex-lvm-encrypt")

@@ -90,6 +90,12 @@ module Y2Storage
     #   @return [Array<LvmLv>] logical volumes in the thin pool, in no particular order
     storage_forward :lvm_lvs, as: "LvmLv"
 
+    # @!method snapshots
+    #   Returns the snapshots of a logical volume, if any.
+    #
+    #   @return [Array<LvmLv>] a collection of snapshots volumes
+    storage_forward :snapshots, as: "LvmLv"
+
     # @!method origin
     #   Returns the original volume of an snapshot.
     #
