@@ -98,12 +98,28 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
+        return false unless ignore_warnings?
         return true if errors.empty?
 
         # Only first error is shown
         Yast2::Popup.show(errors.first, headline: :error)
 
         false
+      end
+
+      # Whether the action should continue despite shown warning
+      #
+      # Sometimes, editing a device is not strictly wrong but weird. Let's warn about it leaving up
+      # to the user the decision to continue with the action.
+      #
+      # @see #warnings
+      #
+      # @return [Boolean] true if the user wants to continue with the edit action; false otherwise.
+      def ignore_warnings?
+        return true if warnings.empty?
+
+        # Only first warning is shown
+        Yast2::Popup.show(warnings.first, headline: :warning, buttons: :yes_no) == :yes
       end
 
       # Errors when trying to edit a device
@@ -119,6 +135,15 @@ module Y2Partitioner
           lvm_thin_pool_error,
           lvm_cache_pool_error,
           generic_unusable_error
+        ].compact
+      end
+
+      # Warnings when trying to edit a device
+      #
+      # @return [Array<Strings>]
+      def warnings
+        [
+          lvm_lv_snapshot_warning
         ].compact
       end
 
@@ -243,6 +268,20 @@ module Y2Partitioner
           name: device.name)
       end
 
+      # Warning message if trying to edit an LVM Snapshot, which is not wrong but weird.
+      #
+      # @return [String, nil] nil if the device is not a LVM snapshot
+      def lvm_lv_snapshot_warning
+        return nil unless lvm_snapshot?
+
+        # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} is
+        # replaced by a logical volume name (e.g., /dev/system/user-data-snapshot)
+        format(
+          _("The device %{name} is a LV snapshot volume.\n Do you really want to edit it?"),
+          name: device.name
+        )
+      end
+
       # Whether the device is an extended partition
       #
       # @return [Boolean]
@@ -262,6 +301,13 @@ module Y2Partitioner
       # @return [Boolean]
       def lvm_cache_pool?
         device.is?(:lvm_lv) && device.lv_type.is?(:cache_pool)
+      end
+
+      # Whether the device is an LVM snapshot
+      #
+      # @return [Boolean]
+      def lvm_snapshot?
+        device.is?(:lvm_lv) && device.origin
       end
     end
   end
