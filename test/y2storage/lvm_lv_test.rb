@@ -44,66 +44,95 @@ describe Y2Storage::LvmLv do
       expect(subject.is?("lvm_lv")).to eq true
     end
 
-    context "if the volume is a cache pool" do
+    context "if it is a cache pool volume" do
       let(:device_name) { "/dev/vg0/unused_cache_pool" }
 
-      it "returns true for values whose symbol is :cache_pool_lv" do
-        expect(subject.is?(:cache_pool_lv)).to eq true
-        expect(subject.is?("cache_pool_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_cache_pool" do
+        expect(subject.is?(:lvm_cache_pool)).to eq true
+        expect(subject.is?("lvm_cache_pool")).to eq true
       end
     end
 
-    context "if the volume is a cache LV" do
+    context "if it is a cache volume" do
       let(:device_name) { "/dev/vg0/cached1" }
 
-      it "returns true for values whose symbol is :cache_lv" do
-        expect(subject.is?(:cache_lv)).to eq true
-        expect(subject.is?("cache_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_cache" do
+        expect(subject.is?(:lvm_cache)).to eq true
+        expect(subject.is?("lvm_cache")).to eq true
       end
     end
 
-    context "if the volume is a thin logical volume" do
-      let(:device_name) { "/dev/vg0/thinvol1" }
-
-      it "returns true for values whose symbol is :thin_lv" do
-        expect(subject.is?(:thin_lv)).to eq true
-        expect(subject.is?("thin_lv")).to eq true
-      end
-    end
-
-    context "if the volume is a thin pool" do
+    context "if it is a thin pool volume" do
       let(:device_name) { "/dev/vg0/thinpool0" }
 
-      it "returns true for values whose symbol is :thin_pool_lv" do
-        expect(subject.is?(:thin_pool_lv)).to eq true
-        expect(subject.is?("thin_pool_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_thin_pool" do
+        expect(subject.is?(:lvm_thin_pool)).to eq true
+        expect(subject.is?("lvm_thin_pool")).to eq true
       end
     end
 
-    context "if the volume is an snapshot" do
+    context "if it is a thin volume" do
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns true for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq true
+        expect(subject.is?("lvm_thin")).to eq true
+      end
+    end
+
+    context "if it is an non-thin snapshot volume" do
       let(:device_name) { "/dev/vg0/snap_normal1" }
 
-      it "returns true for values whose symbol is :snapshot_lv" do
-        expect(subject.is?(:snapshot_lv)).to eq true
-        expect(subject.is?("snapshot_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_snapshot" do
+        expect(subject.is?(:lvm_snapshot)).to eq true
+        expect(subject.is?("lvm_snapshot")).to eq true
+      end
+
+      it "returns false for values whose symbol is :lvm_thin_snapshot" do
+        expect(subject.is?(:lvm_thin_snapshot)).to eq false
+        expect(subject.is?("lvm_thin_snapshot")).to eq false
+      end
+
+      it "returns false for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq false
+        expect(subject.is?("lvm_thin")).to eq false
       end
     end
 
-    context "if the volume is a writecache" do
+    context "if it is an thin snapshot volume" do
+      let(:device_name) { "/dev/vg0/thin_snap_normal2" }
+
+      it "returns true for values whose symbol is :lvm_snapshot" do
+        expect(subject.is?(:lvm_snapshot)).to eq true
+        expect(subject.is?("lvm_snapshot")).to eq true
+      end
+
+      it "returns true for values whose symbol is :lvm_thin_snapshot" do
+        expect(subject.is?(:lvm_thin_snapshot)).to eq true
+        expect(subject.is?("lvm_thin_snapshot")).to eq true
+      end
+
+      it "returns true for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq true
+        expect(subject.is?("lvm_thin")).to eq true
+      end
+    end
+
+    context "if it is a writecache volume" do
       let(:device_name) { "/dev/vg0/writecache" }
 
-      it "returns true for values whose symbol is :writecache_lv" do
-        expect(subject.is?(:writecache_lv)).to eq true
-        expect(subject.is?("writecache_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_writecache" do
+        expect(subject.is?(:lvm_writecache)).to eq true
+        expect(subject.is?("lvm_writecache")).to eq true
       end
     end
 
-    context "if the volume is a mirror" do
+    context "if it is a mirror volume" do
       let(:device_name) { "/dev/vg0/mirror" }
 
-      it "returns true for values whose symbol is :mirror_lv" do
-        expect(subject.is?(:mirror_lv)).to eq true
-        expect(subject.is?("mirror_lv")).to eq true
+      it "returns true for values whose symbol is :lvm_mirror" do
+        expect(subject.is?(:lvm_mirror)).to eq true
+        expect(subject.is?("lvm_mirror")).to eq true
       end
     end
   end

@@ -216,7 +216,7 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not a thin pool.
       def lvm_thin_pool_error
-        return nil unless lvm_thin_pool?
+        return nil unless device.is?(:lvm_thin_pool)
 
         # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
@@ -227,7 +227,7 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not a cache pool.
       def lvm_cache_pool_error
-        return nil unless lvm_cache_pool?
+        return nil unless device.is?(:lvm_cache_pool)
 
         # TRANSLATORS: Error message when trying to edit an LVM cache pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
@@ -252,7 +252,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if device is not an LVM snapshot or the user confirms to continue
       def confirm_editing_lvm_snapahot
-        return true unless lvm_snapshot?
+        return true unless device.is?(:lvm_snapshot)
 
         # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/user-data-snapshot)
@@ -269,27 +269,6 @@ module Y2Partitioner
       # @return [Boolean]
       def extended_partition?
         device.is?(:partition) && device.type.is?(:extended)
-      end
-
-      # Whether the device is an LVM thin pool
-      #
-      # @return [Boolean]
-      def lvm_thin_pool?
-        device.is?(:lvm_lv) && device.lv_type.is?(:thin_pool)
-      end
-
-      # Whether the device is an LVM cache pool
-      #
-      # @return [Boolean]
-      def lvm_cache_pool?
-        device.is?(:lvm_lv) && device.lv_type.is?(:cache_pool)
-      end
-
-      # Whether the device is an LVM snapshot
-      #
-      # @return [Boolean]
-      def lvm_snapshot?
-        device.is?(:lvm_lv) && device.origin
       end
     end
   end

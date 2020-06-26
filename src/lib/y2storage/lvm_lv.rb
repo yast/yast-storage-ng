@@ -196,7 +196,9 @@ module Y2Storage
     def types_for_is
       types = super
       types << :lvm_lv
-      types << "#{lv_type}_lv".to_sym unless lv_type.is?(:unknown, :normal)
+      types << :lvm_snapshot if origin
+      types << :lvm_thin_snapshot if lv_type.is?(:thin) && origin
+      types << "lvm_#{lv_type}".to_sym unless lv_type.is?(:unknown, :normal, :snapshot)
       types
     end
   end

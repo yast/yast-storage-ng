@@ -132,7 +132,7 @@ module Y2Partitioner
         def lv_can_be_formatted?
           return false if lv.nil?
 
-          !lv.lv_type.is?(:thin_pool)
+          !lv.is?(:lvm_thin_pool)
         end
 
         # Whether a new logical volume (normal or pool) can be added to the volume group

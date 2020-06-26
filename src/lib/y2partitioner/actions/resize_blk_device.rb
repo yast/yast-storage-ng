@@ -119,18 +119,11 @@ module Y2Partitioner
       #
       # @return [Boolean] true if device is not a thin snapshot or user decided go ahead
       def confirm_thin_snapshot_resize
-        return true unless thin_snaptshot?
+        return true unless @device.is?(:lvm_thin_snapshot)
 
         message = _("Selected device is a Thin Snapshot LV. Do you really want to resize it?")
 
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
-      end
-
-      # Whether the device is a thin snapshot
-      #
-      # @return [Boolean] true if device is a thin snapshot; false otherwise
-      def thin_snaptshot?
-        @device.is?(:thin_lv) && @device.origin
       end
 
       # Checks whether the resize action can be performed

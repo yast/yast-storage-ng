@@ -262,26 +262,26 @@ module Y2Partitioner
       end
 
       DEVICE_LABELS = {
-        bcache:        N_("Bcache"),
-        disk:          N_("Disk"),
-        dasd:          N_("Disk"),
-        multipath:     N_("Multipath"),
-        nfs:           N_("NFS"),
-        bios_raid:     N_("BIOS RAID"),
-        software_raid: N_("RAID"),
-        lvm_pv:        N_("PV"),
-        lvm_vg:        N_("LVM"),
-        thin_lv:       N_("Thin LV"),
-        thin_pool_lv:  N_("Thin Pool"),
-        raid_lv:       N_("RAID LV"),
-        cache_lv:      N_("Cache LV"),
-        cache_pool_lv: N_("Cache Pool"),
-        writecache_lv: N_("Writecache LV"),
-        snapshot_lv:   N_("Snapshot LV"),
-        mirror_lv:     N_("Mirror LV"), # Mirror LVM? LVM Mirror?
-        lvm_lv:        N_("LV"),
-        stray:         N_("Xen"),
-        partition:     N_("Partition")
+        bcache:         N_("Bcache"),
+        disk:           N_("Disk"),
+        dasd:           N_("Disk"),
+        multipath:      N_("Multipath"),
+        nfs:            N_("NFS"),
+        bios_raid:      N_("BIOS RAID"),
+        software_raid:  N_("RAID"),
+        lvm_pv:         N_("PV"),
+        lvm_vg:         N_("LVM"),
+        lvm_thin:       N_("Thin LV"),
+        lvm_thin_pool:  N_("Thin Pool"),
+        lvm_raid:       N_("RAID LV"),
+        lvm_cache:      N_("Cache LV"),
+        lvm_cache_pool: N_("Cache Pool"),
+        lvm_writecache: N_("Writecache LV"),
+        lvm_snapshot:   N_("Snapshot LV"),
+        lvm_mirror:     N_("Mirror LV"),
+        lvm_lv:         N_("LV"),
+        stray:          N_("Xen"),
+        partition:      N_("Partition")
       }
 
       # Label for device and filesystem types (e.g., PV of vg1, Ext4 RAID, Part of Btrfs sda1..., etc)
@@ -291,7 +291,7 @@ module Y2Partitioner
       def type_label(device)
         return device.type.to_human_string if device.is?(:filesystem)
         return device_label_for(device) if device.is?(:lvm_vg)
-        return snapshot_type_label(device) if device.is?(:lvm_lv) && device.origin
+        return snapshot_type_label(device) if device.is?(:lvm_snapshot)
 
         formatted_device_type_label(device) || unformatted_device_type_label(device)
       end
@@ -386,7 +386,7 @@ module Y2Partitioner
       # @param device [Y2Storage::LvmLv]
       # @return [String]
       def snapshot_type_label(device)
-        snapshot_type = device.lv_type.is?(:thin) ? "Thin" : ""
+        snapshot_type = device.is?(:lvm_thin_snapshot) ? "Thin" : ""
 
         # TRANSLATORS: %{snapshot_type} is the snapshot type, "Thin" or empty.
         #              %{snapshot_origin} is the original volume name, e.g. "user-data".

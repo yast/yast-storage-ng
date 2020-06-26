@@ -197,7 +197,7 @@ module Y2Storage
     #
     # @return [Array<LvmLv>]
     def thin_pool_lvm_lvs
-      lvm_lvs.select { |l| l.lv_type.is?(:thin_pool) }
+      lvm_lvs.select { |lv| lv.is?(:lvm_thin_pool) }
     end
 
     # Returns all thin volumes in the volume group

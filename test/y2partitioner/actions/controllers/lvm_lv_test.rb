@@ -34,8 +34,10 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
   let(:vg_name) { "vg0" }
 
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
+
+  let(:scenario) { "lvm-two-vgs.yml" }
 
   describe "#vg" do
     it "returns a Y2Storage::LvmVg" do
@@ -278,8 +280,11 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       allow(controller).to receive(:lv).and_return(lv)
     end
 
+    let(:scenario) { "lvm-types.xml" }
+    let(:lv) { Y2Storage::LvmLv.find_by_name(current_graph, lv_name) }
+
     context "if there is no lv" do
-      let(:lv) { nil }
+      let(:lv_name) { "unknnown" }
 
       it "returns false" do
         expect(controller.lv).to be_nil
@@ -288,7 +293,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a normal volume" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::NORMAL) }
+      let(:lv_name) { "/dev/vg0/normal1" }
 
       it "returns true" do
         expect(controller.lv_can_be_formatted?).to eq(true)
@@ -296,7 +301,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a thin pool" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN_POOL) }
+      let(:lv_name) { "/dev/vg0/thinpool0" }
 
       it "returns false" do
         expect(controller.lv_can_be_formatted?).to eq(false)
@@ -304,7 +309,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a thin volume" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN) }
+      let(:lv_name) { "/dev/vg0/thinvol1" }
 
       it "returns true" do
         expect(controller.lv_can_be_formatted?).to eq(true)
