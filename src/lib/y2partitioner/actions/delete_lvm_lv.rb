@@ -47,36 +47,44 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def confirm
-        used_pool? ? confirm_for_used_pool : super
+        affected_volumes? ? confirm_for_used_volume : super
       end
 
-      # Whether the device is a LVM thin pool and it contains any thin volume
+      # Whether deleting the device would result in other logical volumes also
+      # been deleted
       #
-      # @return [Boolean] true if it is an used pool; false otherwise.
-      def used_pool?
-        device.lv_type.is?(:thin_pool) && !device.lvm_lvs.empty?
+      # @return [Boolean] true if it is an used volume; false otherwise.
+      def affected_volumes?
+        device.descendants(Y2Storage::View::REMOVE).any? { |dev| dev.is?(:lvm_lv) }
       end
 
-      # Confirmation when the device is a LVM thin pool and there is any thin volume over it
+      # Confirmation when deleting the device affects other volumes
       #
       # @see ConfirmRecursiveDelete#confirm_recursive_delete
       #
       # @return [Boolean]
-      def confirm_for_used_pool
+      def confirm_for_used_volume
+        title =
+          if device.lv_type.is?(:thin_pool)
+            _("Confirm Deleting of LVM Thin Pool")
+          else
+            _("Confirm Deleting of LVM Logical Volume")
+          end
+
         confirm_recursive_delete(
           device,
-          _("Confirm Deleting of LVM Thin Pool"),
-          # TRANSLATORS: Confirmation message when a LVM thin pool is going to be deleted,
-          # where %{name} is replaced by the name of the thin pool (e.g., /dev/system/pool)
+          title,
+          # TRANSLATORS: Confirmation message when a LVM logical volume is going to be deleted,
+          # where %{name} is replaced by the name of the volume (e.g., /dev/system/pool)
           format(
-            _("The thin pool %{name} is used by at least one thin volume.\n" \
-              "If you proceed, the following thin volumes will be unmounted (if mounted)\n" \
+            _("The volume %{name} is used by at least one another volume.\n" \
+              "If you proceed, the following volumes will be unmounted (if mounted)\n" \
               "and deleted:"),
             name: device.name
           ),
-          # TRANSLATORS: %{name} is replaced by the name of the thin pool (e.g., /dev/system/pool)
+          # TRANSLATORS: %{name} is replaced by the name of the logical volume (e.g., /dev/system/pool)
           format(
-            _("Really delete the thin pool \"%{name}\" and all related thin volumes?"),
+            _("Really delete \"%{name}\" and all related volumes?"),
             name: device.name
           )
         )

@@ -242,10 +242,11 @@ module Y2Storage
     #   requires an argument to decide if the device itself should be included in
     #   the result.
     #
+    # @param view [View] filter used to determine the descendants
     # @return [Array<Device>]
-    def descendants
+    def descendants(view = View::CLASSIC)
       itself = false
-      storage_descendants(itself)
+      storage_descendants(itself, view)
     end
 
     # Siblings in the devicegraph in no particular order, not including the

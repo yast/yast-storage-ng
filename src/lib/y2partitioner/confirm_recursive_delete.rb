@@ -117,7 +117,7 @@ module Y2Partitioner
     # @param device [Y2Storage::Device] device to delete
     # @return [Array<String>] name of dependent devices
     def dependent_devices(device)
-      device.descendants.map(&:display_name).compact
+      device.descendants(Y2Storage::View::REMOVE).map(&:display_name).compact
     end
   end
 end
