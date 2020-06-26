@@ -394,9 +394,15 @@ module Y2Storage
       update_parents_etc_status
     end
 
-    # Removes device descendants in the devicegraph
-    def remove_descendants
-      storage_remove_descendants
+    # Removes all devices that are descendants of this one in the devicegraph,
+    # according to the specified (optional) view
+    #
+    # The view should likely always be REMOVE, since it's the only one that
+    # ensures a behavior that is consistent with the system tools.
+    #
+    # @param view [View] filter used to determine the descendants
+    def remove_descendants(view = View::REMOVE)
+      storage_remove_descendants(view)
       update_etc_status
     end
 

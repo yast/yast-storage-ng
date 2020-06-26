@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/view"
 require "y2storage/devicegraph"
 require "y2storage/actiongraph"
 require "y2storage/compound_action"

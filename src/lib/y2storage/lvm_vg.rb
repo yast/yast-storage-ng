@@ -114,12 +114,19 @@ module Y2Storage
     #   @return [LvmLv]
     storage_forward :create_lvm_lv, as: "LvmLv"
 
-    # @!method delete_lvm_lv(lvm_lv)
-    #   Deletes a logical volume in the volume group. Also deletes all
-    #   descendants of the logical volume.
+    storage_forward :storage_delete_lvm_lv, to: :delete_lvm_lv
+    private :storage_delete_lvm_lv
+
+    # Deletes a logical volume in the volume group. Also deletes all
+    # descendants of the logical volume.
     #
-    #   @param lvm_lv [LvmLv] volume to delete
-    storage_forward :delete_lvm_lv
+    # @param lv [LvmLv] volume to delete
+    def delete_lvm_lv(lv)
+      # Needed to enforce the REMOVE view when deleting descendants
+      lv.remove_descendants
+
+      storage_delete_lvm_lv(lv)
+    end
 
     # @!method max_size_for_lvm_lv(lv_type)
     #   Returns the max size for a new logical volume of type lv_type. The size may
