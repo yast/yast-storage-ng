@@ -184,6 +184,22 @@ describe Y2Storage::Proposal::LvmCreator do
           expect(lv_names).to include "lv1"
         end
 
+        context "if there are LVs with snapshots" do
+          let(:scenario) { "lvm-types1.xml" }
+          let(:pv_partitions) { [] }
+
+          # Ensure we have to delete some volumes, but not all
+          before { volumes.last.min = 7.GiB }
+
+          it "deletes the snapshots of the removed LVs " do
+            devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+            reused_vg = devicegraph.lvm_vgs.first
+            lv_names = reused_vg.lvm_lvs.map(&:lv_name)
+            expect(lv_names).to_not include "normal1"
+            expect(lv_names).to_not include "snap_normal1"
+          end
+        end
+
         context "and make policy is set to :keep" do
           before { vg.make_space_policy = :keep }
 
