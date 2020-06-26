@@ -92,34 +92,23 @@ module Y2Partitioner
         end
       end
 
-      # Extended partitions and LVM thin pools cannot be edited
+      # Checks whether it is possible to edit the device
       #
-      # @note An error popup is shown when the edit action cannot be performed.
+      # It also warns the user when the action is possible but it does not make sense, like editing
+      # an LVM snapshot (see #confirm_editing_lvm_snapahot).
+      #
+      # When the action cannot be performed, like editing extended partitions and LVM thin pools, an
+      # error popup is shown.
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
-        return false unless ignore_warnings?
+        return false unless confirm_editing_lvm_snapahot
         return true if errors.empty?
 
         # Only first error is shown
         Yast2::Popup.show(errors.first, headline: :error)
 
         false
-      end
-
-      # Whether the action should continue despite shown warning
-      #
-      # Sometimes, editing a device is not strictly wrong but weird. Let's warn about it leaving up
-      # to the user the decision to continue with the action.
-      #
-      # @see #warnings
-      #
-      # @return [Boolean] true if the user wants to continue with the edit action; false otherwise.
-      def ignore_warnings?
-        return true if warnings.empty?
-
-        # Only first warning is shown
-        Yast2::Popup.show(warnings.first, headline: :warning, buttons: :yes_no) == :yes
       end
 
       # Errors when trying to edit a device
@@ -135,15 +124,6 @@ module Y2Partitioner
           lvm_thin_pool_error,
           lvm_cache_pool_error,
           generic_unusable_error
-        ].compact
-      end
-
-      # Warnings when trying to edit a device
-      #
-      # @return [Array<Strings>]
-      def warnings
-        [
-          lvm_lv_snapshot_warning
         ].compact
       end
 
@@ -270,16 +250,18 @@ module Y2Partitioner
 
       # Warning message if trying to edit an LVM Snapshot, which is not wrong but weird.
       #
-      # @return [String, nil] nil if the device is not a LVM snapshot
-      def lvm_lv_snapshot_warning
-        return nil unless lvm_snapshot?
+      # @return [Boolean] true if device is not an LVM snapshot or the user confirms to continue
+      def confirm_editing_lvm_snapahot
+        return true unless lvm_snapshot?
 
         # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/user-data-snapshot)
-        format(
+        message = format(
           _("The device %{name} is a LV snapshot volume.\n Do you really want to edit it?"),
           name: device.name
         )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end
 
       # Whether the device is an extended partition
