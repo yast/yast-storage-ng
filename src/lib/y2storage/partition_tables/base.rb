@@ -66,8 +66,18 @@ module Y2Storage
       # Deletes the given partition in the partition table and all its
       # descendants.
       #
-      # @param partition [Partition]
+      # @param partition [Partition, String] device or device name
       def delete_partition(partition, *extra_args)
+        part_obj =
+          if partition.is_a?(String)
+            partitions.find { |part| part.name == partition }
+          else
+            partition
+          end
+
+        # Needed to enforce the REMOVE view when deleting descendants
+        part_obj&.remove_descendants
+
         storage_delete_partition(partition, *extra_args)
         Encryption.update_dm_names(devicegraph)
       end

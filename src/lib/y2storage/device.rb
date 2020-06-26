@@ -242,10 +242,11 @@ module Y2Storage
     #   requires an argument to decide if the device itself should be included in
     #   the result.
     #
+    # @param view [View] filter used to determine the descendants
     # @return [Array<Device>]
-    def descendants
+    def descendants(view = View::CLASSIC)
       itself = false
-      storage_descendants(itself)
+      storage_descendants(itself, view)
     end
 
     # Siblings in the devicegraph in no particular order, not including the
@@ -394,9 +395,15 @@ module Y2Storage
       update_parents_etc_status
     end
 
-    # Removes device descendants in the devicegraph
-    def remove_descendants
-      storage_remove_descendants
+    # Removes all devices that are descendants of this one in the devicegraph,
+    # according to the specified (optional) view
+    #
+    # The view should likely always be REMOVE, since it's the only one that
+    # ensures a behavior that is consistent with the system tools.
+    #
+    # @param view [View] filter used to determine the descendants
+    def remove_descendants(view = View::REMOVE)
+      storage_remove_descendants(view)
       update_etc_status
     end
 

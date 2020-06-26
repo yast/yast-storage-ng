@@ -25,8 +25,9 @@ describe Y2Storage::LvmVg do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("complex-lvm-encrypt")
+    fake_scenario(scenario)
   end
+  let(:scenario) { "complex-lvm-encrypt" }
 
   subject(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, vg_name) }
 
@@ -116,6 +117,21 @@ describe Y2Storage::LvmVg do
 
     it "does not include thin pools" do
       expect(vg.thin_lvm_lvs.map(&:lv_name)).to_not include("pool1", "pool2")
+    end
+  end
+
+  describe "#delete_lvm_lv" do
+    context "in a VG with snapshots" do
+      let(:scenario) { "lvm-types1.xml" }
+
+      it "deletes the snapshots of the removed LV" do
+        normal1 = vg.lvm_lvs.find { |lv| lv.lv_name == "normal1" }
+
+        expect(vg.lvm_lvs.map(&:lv_name)).to include("normal1", "snap_normal1")
+        vg.delete_lvm_lv(normal1)
+        expect(vg.lvm_lvs.map(&:lv_name)).to_not include "normal1"
+        expect(vg.lvm_lvs.map(&:lv_name)).to_not include "snap_normal1"
+      end
     end
   end
 end
