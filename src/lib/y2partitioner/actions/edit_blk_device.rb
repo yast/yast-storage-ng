@@ -95,14 +95,14 @@ module Y2Partitioner
       # Checks whether it is possible to edit the device
       #
       # It also warns the user when the action is possible but it does not make sense, like editing
-      # an LVM snapshot (see #confirm_editing_lvm_snapahot).
+      # an LVM snapshot (see #confirm_editing_lvm_snapshot).
       #
       # When the action cannot be performed, like editing extended partitions and LVM thin pools, an
       # error popup is shown.
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
-        return false unless confirm_editing_lvm_snapahot
+        return false unless confirm_editing_lvm_snapshot
         return true if errors.empty?
 
         # Only first error is shown
@@ -251,7 +251,7 @@ module Y2Partitioner
       # Warning message if trying to edit an LVM Snapshot, which is not wrong but weird.
       #
       # @return [Boolean] true if device is not an LVM snapshot or the user confirms to continue
-      def confirm_editing_lvm_snapahot
+      def confirm_editing_lvm_snapshot
         return true unless device.is?(:lvm_snapshot)
 
         # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} is
