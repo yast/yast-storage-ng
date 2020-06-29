@@ -94,8 +94,7 @@ module Y2Partitioner
 
       # Checks whether it is possible to edit the device
       #
-      # It also warns the user when the action is possible but it does not make sense, like editing
-      # an LVM snapshot (see #confirm_editing_lvm_snapshot).
+      # It also warns the user when editing an LVM snapshot (see #confirm_editing_lvm_snapshot).
       #
       # When the action cannot be performed, like editing extended partitions and LVM thin pools, an
       # error popup is shown.
@@ -254,11 +253,14 @@ module Y2Partitioner
       def confirm_editing_lvm_snapshot
         return true unless device.is?(:lvm_snapshot)
 
-        # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} is
-        # replaced by a logical volume name (e.g., /dev/system/user-data-snapshot)
+        # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} and %{origin}
+        # are replaced by a logical volume names (e.g., /dev/system/user-data-snapshot and
+        # /dev/system/user-data)
         message = format(
-          _("The device %{name} is a LV snapshot volume.\n Do you really want to edit it?"),
-          name: device.name
+          _("The device %{name} is an LVM snapshot volume of %{origin}.\n" \
+            "Do you really want to edit it?"),
+          name:   device.name,
+          origin: device.origin.name
         )
 
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes

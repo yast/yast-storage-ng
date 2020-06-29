@@ -386,17 +386,18 @@ module Y2Partitioner
       # @param device [Y2Storage::LvmLv]
       # @return [String]
       def snapshot_type_label(device)
-        snapshot_type = device.is?(:lvm_thin_snapshot) ? "Thin" : ""
+        label =
+          if device.is?(:lvm_thin_snapshot)
+            # TRANSLATORS: %{origin} is replaced by an LVM logical volumme name
+            # (e.g., /dev/vg0/user-data)
+            _("Thin snapshot of %{origin}")
+          else
+            # TRANSLATORS: %{origin} is replaced by an LVM logical volumme name
+            # (e.g., /dev/vg0/user-data)
+            _("Snapshot of %{origin}")
+          end
 
-        # TRANSLATORS: %{snapshot_type} is the snapshot type, "Thin" or empty.
-        #              %{snapshot_origin} is the original volume name, e.g. "user-data".
-        label = format(
-          _("%{snapshot_type} Snapshot LV of %{snapshot_origin}"),
-          snapshot_type:   snapshot_type,
-          snapshot_origin: device.origin.lv_name
-        )
-
-        label.strip
+        format(label, origin: device.origin.lv_name)
       end
 
       # Type label when the device holds a journal

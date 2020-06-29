@@ -121,7 +121,7 @@ module Y2Partitioner
       def confirm_thin_snapshot_resize
         return true unless @device.is?(:lvm_thin_snapshot)
 
-        message = _("Selected device is a Thin Snapshot LV. Do you really want to resize it?")
+        message = _("Selected device is an LVM Thin Snapshot. Do you really want to resize it?")
 
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end

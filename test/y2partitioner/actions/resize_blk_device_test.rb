@@ -340,7 +340,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
       it "shows a warning popup" do
         expect(Yast2::Popup).to receive(:show)
-          .with(/Thin Snapshot LV/, hash_including(headline: :warning))
+          .with(/device is an LVM Thin Snapshot/, hash_including(headline: :warning))
 
         action.run
       end

@@ -61,7 +61,7 @@ module Y2Partitioner
       #
       # @return [String]
       def device_snapshots
-        # TRANSLATORS: the logical volume snapshots information, where %s is replaces by
+        # TRANSLATORS: the logical volume snapshots information, where %s is replaced by
         # the list of snapshots
         format(
           _("Snapshots: %s"),
