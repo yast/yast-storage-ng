@@ -30,6 +30,7 @@ require "y2partitioner/widgets/lvm_lvs_delete_button"
 require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/device_buttons_set"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -161,7 +162,7 @@ module Y2Partitioner
         # @return [LvmDevicesTable]
         def table(buttons_set)
           table = LvmDevicesTable.new(devices, @pager, buttons_set)
-          table.remove_columns(:pe_size)
+          table.remove_columns(Columns::PeSize)
           table
         end
 
@@ -212,8 +213,18 @@ module Y2Partitioner
           return @table unless @table.nil?
 
           @table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          @table.show_columns(:device, :size, :format, :encrypted, :type)
+          @table.show_columns(*columns)
           @table
+        end
+
+        def columns
+          [
+            Columns::Device,
+            Columns::Size,
+            Columns::Format,
+            Columns::Encrypted,
+            Columns::Type
+          ]
         end
 
         def devices

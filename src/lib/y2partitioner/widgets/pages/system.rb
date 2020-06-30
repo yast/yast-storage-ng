@@ -26,6 +26,7 @@ require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
 require "y2partitioner/widgets/configure"
 require "y2partitioner/widgets/device_buttons_set"
+require "y2partitioner/widgets/columns"
 
 Yast.import "Mode"
 
@@ -100,7 +101,7 @@ module Y2Partitioner
           return @table unless @table.nil?
 
           @table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
-          @table.remove_columns(:start, :end)
+          @table.remove_columns(Columns::RegionStart, Columns::RegionEnd)
           @table
         end
 

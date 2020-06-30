@@ -19,6 +19,7 @@
 
 require "cwm/widget"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -54,8 +55,17 @@ module Y2Partitioner
         return @table unless @table.nil?
 
         @table = ConfigurableBlkDevicesTable.new(@devices, @pager)
-        @table.show_columns(:device, :size, :format, :encrypted, :type)
+        @table.show_columns(*columns)
         @table
+      end
+
+      def columns
+        [
+          Columns::Device,
+          Columns::Size,
+          Columns::Format,
+          Columns::Type
+        ]
       end
     end
   end

@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,24 +18,27 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/columns"
+require "y2partitioner/widgets/columns/base"
 
 module Y2Partitioner
   module Widgets
-    # Table widget to represent a given list of Y2Storage::Mds together.
-    class MdRaidsTable < ConfigurableBlkDevicesTable
-      # Constructor
+    module Columns
+      # Widget for displaying the `Id` column in a filesystems table
       #
-      # @param devices [Array<Y2Storage::Md>] devices to display
-      # @param pager [CWM::Pager] table have feature, that double click change content of pager
-      #   if someone do not need this feature, make it only optional
-      def initialize(devices, pager, buttons_set = nil)
-        textdomain "storage"
+      # @see Y2Storage::Filesystem::BlkFilesystem#blk_device_basename
+      class FilesystemId < Base
+        # @see Columns::Base#title
+        def title
+          # TRANSLATORS: label of a table column
+          _("Id")
+        end
 
-        super
-        add_columns(Columns::RaidType, Columns::ChunkSize)
-        remove_columns(Columns::RegionStart, Columns::RegionEnd)
+        # @see Columns::Base#value_for
+        def value_for(device)
+          return "" unless device&.is?(:filesystem)
+
+          device.blk_device_basename
+        end
       end
     end
   end

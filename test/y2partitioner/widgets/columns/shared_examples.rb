@@ -1,5 +1,4 @@
-#!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -16,18 +15,14 @@
 # with this program; if not, contact SUSE LLC.
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
-# find current contact information at www.suse.com
+# find current contact information at www.suse.com.
 
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
-require "cwm/rspec"
-require "y2partitioner/widgets/used_devices_tab"
-
-describe Y2Partitioner::Widgets::UsedDevicesTab do
-  subject { described_class.new(devices, pager) }
-
-  let(:devices) { [double("Disk")] }
-  let(:pager) { double("Pager") }
-
-  include_examples "CWM::Tab"
+RSpec.shared_examples "Y2Partitioner::Widgets::Column" do
+  describe "#title" do
+    it "returns either, an string or a Yast::Term" do
+      expect(subject.title).to be_an(String).or be_a(Yast::Term)
+    end
+  end
 end

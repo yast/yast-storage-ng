@@ -20,8 +20,9 @@
 require "yast"
 require "cwm/widget"
 require "yast2/popup"
-require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -242,7 +243,13 @@ module Y2Partitioner
         attr_reader :fstab
 
         def columns
-          [:device, :size, :type, :filesystem_label, :mount_point]
+          [
+            Columns::Device,
+            Columns::Size,
+            Columns::Type,
+            Columns::FilesystemLabel,
+            Columns::MountPoint
+          ]
         end
 
         # For each row, the device is a fstab entry
@@ -267,55 +274,6 @@ module Y2Partitioner
         # to #sid method.
         def row_id(entry)
           "table:device:#{entry.object_id}"
-        end
-
-        # Value for the device column
-        #
-        # It shows the value of the fstab entry when the device is not found in the system.
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def device_value(entry)
-          device = entry.device(system_graph)
-          device ? super(device) : entry.fstab_device
-        end
-
-        # Value for the size column
-        #
-        # It shows an empty string when the device is not found in the system.
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def size_value(entry)
-          device = entry.device(system_graph)
-          device ? super(device) : ""
-        end
-
-        # Value for the device type column
-        #
-        # It shows an empty string when the device is not found in the system.
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def type_value(entry)
-          device = entry.device(system_graph)
-          device ? super(device) : ""
-        end
-
-        # Value for the filesystem label column
-        #
-        # It shows an empty string when the device is not found in the system.
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def filesystem_label_value(entry)
-          device = entry.device(system_graph)
-          device ? super(device) : ""
-        end
-
-        # Value for the mount point column
-        #
-        # It shows the mount point indicated in the fstab entry.
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def mount_point_value(entry)
-          entry.mount_point
         end
       end
     end
