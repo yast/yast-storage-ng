@@ -1,5 +1,5 @@
 container:
-  image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
+  image: registry.opensuse.org/yast/sle-15/sp2/containers/yast-ruby
 
 task:
   name: Rubocop
