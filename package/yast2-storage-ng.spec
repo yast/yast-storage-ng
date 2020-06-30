@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# RAID1C{3,4}
-BuildRequires:	libstorage-ng-ruby >= 4.2.61
+# UF_NVME
+BuildRequires:	libstorage-ng-ruby >= 4.2.76
 BuildRequires:  update-desktop-files
 # CWM::DynamicProgressBar
 BuildRequires:  yast2 >= 4.2.63
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# RAID1C{3,4}
-Requires:       libstorage-ng-ruby >= 4.2.61
+# UF_NVME
+Requires:       libstorage-ng-ruby >= 4.2.76
 # CWM::DynamicProgressBar
 Requires:       yast2 >= 4.2.63
 # Y2Packager::Repository
