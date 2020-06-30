@@ -91,6 +91,8 @@ module Y2Storage
         UF_FCOE:             "fcoe-utils",
         UF_FC:               [],
         UF_DASD:             [],
+        UF_PMEM:             [],
+        UF_NVME:             "nvme-cli",
 
         # Other
         UF_QUOTA:            "quota",
