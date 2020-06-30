@@ -299,13 +299,6 @@ module Y2Partitioner
           device ? super(device) : ""
         end
 
-        # Value for the filesystem type column
-        #
-        # @param entry [Y2Storage::SimpleEtcFstabEntry]
-        def filesystem_type_value(entry)
-          entry.fs_type.to_human
-        end
-
         # Value for the filesystem label column
         #
         # It shows an empty string when the device is not found in the system.
