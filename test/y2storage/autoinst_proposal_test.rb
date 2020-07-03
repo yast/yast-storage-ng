@@ -815,17 +815,52 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
-      context "when snapshots are disabled in the profile" do
-        it "does not configure snapshots for root"
+      def root_filesystem(disk)
+        disk.partitions.map(&:filesystem).compact.find(&:root?)
       end
 
-      context "when snapshots are enabled in the profile" do
+      context "when snapshots are disabled in the AutoYaST profile" do
+        let(:enable_snapshots) { false }
+
+        it "does not configure snapshots for root" do
+          proposal.propose
+
+          sdb = proposal.devices.find_by_name("/dev/sdb")
+          root = root_filesystem(sdb)
+
+          expect(root.snapshots?).to eq(false)
+        end
+      end
+
+      context "when snapshots are enabled in the AutoYaST profile" do
+        let(:enable_snapshots) { true }
+
+        # Note that the required size for snapshots was set to 100 GiB and the size of the target disk
+        # (/dev/sdb) is 500 GiB.
+
         context "and there is enough space for snapshots" do
-          it "configures snapshots for root"
+          let(:min_root_size) { "100GiB" }
+          let(:max_root_size) { "450GiB" }
+
+          it "configures snapshots for root" do
+            proposal.propose
+
+            sdb = proposal.devices.find_by_name("/dev/sdb")
+            root = root_filesystem(sdb)
+
+            expect(root.snapshots?).to eq(true)
+          end
         end
 
         context "and there is no enough space for snapshots" do
-          it "does not configure snapshots for root"
+          let(:min_root_size) { "450GiB" }
+          let(:max_root_size) { "450GiB" }
+
+          it "does not make a valid proposal" do
+            proposal.propose
+
+            expect(proposal.failed?).to eq(true)
+          end
         end
       end
     end

@@ -283,7 +283,7 @@ module Y2Storage
     # @see Y2Storage::BlkDevice#name
     def proposal_settings_for_disks(drives)
       settings = @proposal_settings || ProposalSettings.new_for_current_product
-      settings.use_snapshots = drives.use_snapshots?
+      drives.use_snapshots? ? settings.force_enable_snapshots : settings.force_disable_snapshots
       settings.candidate_devices = drives.disk_names
       settings
     end

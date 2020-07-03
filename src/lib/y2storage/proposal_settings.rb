@@ -406,6 +406,30 @@ module Y2Storage
       ng_format? ? ng_check_root_snapshots : legacy_check_root_snapshots
     end
 
+    # Forces to enable snapshots for the root subvolume
+    #
+    # After calling this method, snapshots will not be configurable.
+    #
+    # @note This method only applies to the ng format.
+    def force_enable_snapshots
+      return unless root_volume
+
+      root_volume.snapshots = true
+      root_volume.snapshots_configurable = false
+    end
+
+    # Forces to disable snapshots for the root subvolume
+    #
+    # After calling this method, snapshots will not be configurable.
+    #
+    # @note This method only applies to the ng format.
+    def force_disable_snapshots
+      return unless root_volume
+
+      root_volume.snapshots = false
+      root_volume.snapshots_configurable = false
+    end
+
     def ng_format?
       format == NG_FORMAT
     end
