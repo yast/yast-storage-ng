@@ -734,77 +734,98 @@ describe Y2Storage::AutoinstProposal do
     end
 
     describe "automatic partitioning" do
-      let(:partitioning) do
-        [{ "device" => "/dev/sda", "use" => use }]
-      end
-
-      let(:proposal_settings) do
-        Y2Storage::ProposalSettings.new_for_current_product.tap do |settings|
-          settings.use_lvm = false
-          settings.use_separate_home = true
-        end
-      end
-
-      let(:planned_root) do
-        planned_partition(
-          mount_point: "/",
-          type:        :ext4,
-          size:        5.GiB,
-          min_size:    5.GiB
-        )
-      end
-
-      let(:planner) do
-        instance_double(Y2Storage::Proposal::DevicesPlanner, planned_devices: [planned_root])
-      end
-
-      let(:use) { "all" }
-
       before do
-        allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
-          .with(proposal_settings, Y2Storage::Devicegraph)
-          .and_return(planner)
+        allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(arch)
+
+        Yast.import "ProductFeatures"
+
+        Yast::ProductFeatures.Import(product_features)
       end
 
-      it "falls back to the product's proposal with given disks" do
+      let(:arch) do
+        instance_double(Y2Storage::Arch,
+          efiboot?: false,
+          x86?:     true,
+          ppc?:     false,
+          s390?:    false)
+      end
+
+      let(:product_features) do
+        {
+          "partitioning" => {
+            "proposal" => proposal_section,
+            "volumes"  => volumes_section
+          }
+        }
+      end
+
+      let(:proposal_section) { {} }
+
+      let(:volumes_section) do
+        [
+          {
+            "mount_point"    => "/",
+            "fs_type"        => "btrfs",
+            "desired_size"   => min_root_size,
+            "min_size"       => min_root_size,
+            "max_size"       => max_root_size,
+            "snapshots_size" => "100GiB"
+          }
+        ]
+      end
+
+      let(:min_root_size) { "50GiB" }
+
+      let(:max_root_size) { "50GiB" }
+
+      let(:partitioning) do
+        [
+          {
+            "device"           => "/dev/sdb",
+            "disklabel"        => "gpt",
+            "use"              => "all",
+            "enable_snapshots" => enable_snapshots
+          }
+        ]
+      end
+
+      let(:enable_snapshots) { true }
+
+      it "falls back to the initial guided proposal with the given disks" do
         proposal.propose
-        devicegraph = proposal.devices
-        sda = devicegraph.disks.find { |d| d.name == "/dev/sda" }
-        expect(sda.partitions).to contain_exactly(
-          an_object_having_attributes("filesystem_mountpoint" => "/")
-        )
+
+        partitions = proposal.devices.find_by_name("/dev/sdb").partitions.sort_by(&:number)
+
+        expect(partitions.size).to eq(2)
+        expect(partitions[0].id.is?(:bios_boot)).to eq(true)
+        expect(partitions[1].filesystem.root?).to eq(true)
       end
 
       context "when a subset of partitions should be used" do
-        let(:use) { "1" }
+        let(:partitioning) do
+          [{ "device" => "/dev/sda", "use" => "1" }]
+        end
 
         it "keeps partitions that should not be removed" do
           proposal.propose
-          devicegraph = proposal.devices
-          sda = devicegraph.disks.find { |d| d.name == "/dev/sda" }
-          expect(sda.partitions.size).to eq(3)
+
+          partitions = proposal.devices.find_by_name("/dev/sda").partitions
+
+          expect(partitions.size).to eq(3)
         end
       end
 
       context "when snapshots are disabled in the profile" do
-        let(:partitioning) do
-          [{ "device" => "/dev/sda", "use" => use, "enable_snapshots" => false }]
-        end
-
-        it "disables use_snapshots setting" do
-          expect(proposal_settings).to receive(:use_snapshots=).with(false)
-          proposal.propose
-        end
+        it "does not configure snapshots for root"
       end
 
       context "when snapshots are enabled in the profile" do
-        let(:partitioning) do
-          [{ "device" => "/dev/sda", "use" => use, "enable_snapshots" => true }]
+        context "and there is enough space for snapshots" do
+          it "configures snapshots for root"
         end
 
-        it "enables use_snapshots setting" do
-          expect(proposal_settings).to receive(:use_snapshots=).with(true)
-          proposal.propose
+        context "and there is no enough space for snapshots" do
+          it "does not configure snapshots for root"
         end
       end
     end
