@@ -90,7 +90,7 @@ module Y2Partitioner
         #
         # @see DEVICE_ICONS
         #
-        # @param [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
+        # @param device [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
         # @return [String]
         def device_icon(device)
           return fstab_device_icon(device) if fstab_entry?(device)
@@ -121,7 +121,7 @@ module Y2Partitioner
         #
         # @see DEVICE_ICONS
         #
-        # @param [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
+        # @param device [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
         # @return [String]
         def device_label(device)
           return fstab_device_label(device) if fstab_entry?(device)

@@ -64,10 +64,10 @@ module Y2Partitioner
 
         # Returns the label for the given fstab entry, when possible
         #
-        # @param device [Y2Storage::SimpleEtcFstabEntry]
         # @see #filesystem_label
-        def fstab_filesystem_label(entry)
-          device = entry.device(system_graph)
+        # @param fstab_entry [Y2Storage::SimpleEtcFstabEntry]
+        def fstab_filesystem_label(fstab_entry)
+          device = fstab_entry.device(system_graph)
 
           filesystem_label(device)
         end
