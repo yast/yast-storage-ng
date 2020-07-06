@@ -1041,6 +1041,74 @@ describe Y2Storage::ProposalSettings do
     end
   end
 
+  describe "#force_enable_snapshots" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    let(:initial_partitioning_features) { { "proposal" => [], "volumes" => volumes } }
+
+    context "when there is no root volume" do
+      let(:volumes) { [] }
+
+      it "does not fail" do
+        expect { subject.force_enable_snapshots }.to_not raise_error
+      end
+    end
+
+    context "when there is a root volume" do
+      let(:volumes) { [{ "mount_point" => "/" }] }
+
+      it "enables snapshots for the root volume" do
+        subject.force_enable_snapshots
+
+        root = subject.volumes.find(&:root?)
+
+        expect(root.snapshots?).to eq(true)
+      end
+
+      it "set snapshots as not configurable for the root volume" do
+        subject.force_enable_snapshots
+
+        root = subject.volumes.find(&:root?)
+
+        expect(root.snapshots_configurable?).to eq(false)
+      end
+    end
+  end
+
+  describe "#force_disable_snapshots" do
+    subject(:settings) { described_class.new_for_current_product }
+
+    let(:initial_partitioning_features) { { "proposal" => [], "volumes" => volumes } }
+
+    context "when there is no root volume" do
+      let(:volumes) { [] }
+
+      it "does not fail" do
+        expect { subject.force_disable_snapshots }.to_not raise_error
+      end
+    end
+
+    context "when there is a root volume" do
+      let(:volumes) { [{ "mount_point" => "/" }] }
+
+      it "disables snapshots for the root volume" do
+        subject.force_disable_snapshots
+
+        root = subject.volumes.find(&:root?)
+
+        expect(root.snapshots?).to eq(false)
+      end
+
+      it "set snapshots as not configurable for the root volume" do
+        subject.force_disable_snapshots
+
+        root = subject.volumes.find(&:root?)
+
+        expect(root.snapshots_configurable?).to eq(false)
+      end
+    end
+  end
+
   describe "#to_s" do
     subject(:settings) { described_class.new_for_current_product }
 
