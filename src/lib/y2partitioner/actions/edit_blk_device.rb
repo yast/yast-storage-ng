@@ -254,7 +254,7 @@ module Y2Partitioner
         return true unless device.is?(:lvm_snapshot)
 
         # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} and %{origin}
-        # are replaced by a logical volume names (e.g., /dev/system/user-data-snapshot and
+        # are replaced by logical volume names (e.g., /dev/system/user-data-snapshot and
         # /dev/system/user-data)
         message = format(
           _("The device %{name} is an LVM snapshot volume of %{origin}.\n" \

@@ -24,7 +24,47 @@ require "y2partitioner/device_graphs"
 module Y2Partitioner
   module Widgets
     module Columns
-      # Base class for all widgets representing a column in a table displaying a list of devices
+      # Base class for all widgets representing a column of a table displaying a collection of
+      # devices
+      #
+      # Each subclasses must define the following methods:
+      #
+      #   * #title returning the column title.
+      #   * #value_for(device) returning the content to display for the given device.
+      #
+      # @example
+      #   class StorageId < Base
+      #     def title
+      #       _("SID")
+      #     end
+      #
+      #     def value_for(device)
+      #       device.respond_to?(:storage_id) ? device.storage_id : "N/A"
+      #     end
+      #   end
+      #
+      #   class DeviceName < Base
+      #     def title
+      #       _("SID")
+      #     end
+      #
+      #     def value_for(device)
+      #       device.respond_to?(:name) ? device.name : "N/A"
+      #     end
+      #   end
+      #
+      #   class Widgets::SimpleDevicesTable < Widgets::BlkDevicesTable
+      #     def devices
+      #       @devices ||= Y2Storage::Device.all
+      #     end
+      #
+      #     def columns
+      #       [
+      #         Columns::StorageId,
+      #         Columns::DeviceName
+      #       ]
+      #     end
+      #   end
       class Base
         extend Yast::I18n
         include Yast::I18n

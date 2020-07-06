@@ -52,7 +52,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       expect(icon).to_not be_nil
     end
 
-    context "when device is a filesystem" do
+    context "when the device is a filesystem" do
       let(:scenario) { "mixed_disks_btrfs" }
       let(:device_name) { "/dev/sdd1" }
       let(:device) { blk_filesystem }
@@ -62,7 +62,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
-    context "when device is an LVM volume group" do
+    context "when the device is an LVM volume group" do
       let(:device_name) { "/dev/vg0" }
 
       it "returns 'LVM'" do
@@ -70,7 +70,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
-    context "when device is an LVM non-thin snapshot" do
+    context "when the device is an LVM non-thin snapshot" do
       let(:device_name) { "/dev/vg0/snap_normal1" }
 
       it "includes the 'Snapshot of'" do
@@ -82,7 +82,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
-    context "when device is an LVM thin snapshot" do
+    context "when the device is an LVM thin snapshot" do
       let(:device_name) { "/dev/vg0/snap_thinvol1" }
 
       it "includes the 'Thin Snapshot of'" do
@@ -94,7 +94,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
-    context "when device is formatted" do
+    context "when the device is formatted" do
       let(:device_name) { "/dev/vg0/cached1" }
 
       it "includes the human readable filesystem type" do
@@ -140,7 +140,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
-    context "when device is not formatted" do
+    context "when the device is not formatted" do
       context "and it is an used LVM physical volume" do
         let(:device_name) { "/dev/sdb1" }
         let(:vg) { device.lvm_pv.lvm_vg }

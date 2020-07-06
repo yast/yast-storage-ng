@@ -31,7 +31,7 @@ describe Y2Partitioner::Widgets::Columns::RegionStart do
   let(:device) { double(Y2Storage::Device) }
 
   describe "#value_for" do
-    context "when device responds to #region" do
+    context "when the device responds to #region" do
       before do
         allow(device).to receive(:respond_to?).with(:region).and_return(true)
         allow(device).to receive(:region).and_return(region)
@@ -57,7 +57,7 @@ describe Y2Partitioner::Widgets::Columns::RegionStart do
       end
     end
 
-    context "when device does not respond to #region" do
+    context "when the device does not respond to #region" do
       before do
         allow(device).to receive(:respond_to?).with(:region).and_return(false)
       end

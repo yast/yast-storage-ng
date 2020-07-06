@@ -23,7 +23,8 @@ require "y2partitioner/widgets/columns/base"
 module Y2Partitioner
   module Widgets
     module Columns
-      # Widget for displaying the `Used by` column, usually the physical name of a block device
+      # Widget for displaying the `Used by` column in Bcache Cset table, usually the physical name
+      # of a block device
       class UsedBy < Base
         # @see Columns::Base#title
         def title
@@ -32,6 +33,7 @@ module Y2Partitioner
         end
 
         # @see Columns::Base#value_foor
+        # @param device [Y2Storage::BcacheCset]
         def value_for(device)
           device.bcaches.map(&:name).join(", ")
         end

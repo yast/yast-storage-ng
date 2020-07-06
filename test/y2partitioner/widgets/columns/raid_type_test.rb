@@ -37,7 +37,7 @@ describe Y2Partitioner::Widgets::Columns::RaidType do
   end
 
   describe "#value_for" do
-    context "when device responds to #md_level" do
+    context "when the device responds to #md_level" do
       let(:device_name) { "/dev/md/Bar" }
 
       it "returns the human readable MD level" do
@@ -45,7 +45,7 @@ describe Y2Partitioner::Widgets::Columns::RaidType do
       end
     end
 
-    context "when device does not respond to #md_level" do
+    context "when the device does not respond to #md_level" do
       let(:device_name) { "/dev/sda" }
 
       it "returns an empty string" do

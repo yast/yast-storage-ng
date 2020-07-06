@@ -44,7 +44,7 @@ describe Y2Partitioner::Widgets::Columns::Device do
       sk.params[0] unless sk.nil?
     end
 
-    context "when device is not a filesystem" do
+    context "when the device is not a filesystem" do
       let(:dev_name) { "/dev/sdb1" }
       let(:device) { blk_device }
 
@@ -57,7 +57,7 @@ describe Y2Partitioner::Widgets::Columns::Device do
       end
     end
 
-    context "when device is a single-device filesystem" do
+    context "when the device is a single-device filesystem" do
       let(:dev_name) { "/dev/sda2" }
       let(:device) { blk_device.filesystem }
 
@@ -70,7 +70,7 @@ describe Y2Partitioner::Widgets::Columns::Device do
       end
     end
 
-    context "when device is a multi-device filesystem" do
+    context "when the device is a multi-device filesystem" do
       let(:scenario) { "btrfs2-devicegraph.xml" }
       let(:dev_name) { "/dev/sdb1" }
       let(:device) { blk_device.filesystem }

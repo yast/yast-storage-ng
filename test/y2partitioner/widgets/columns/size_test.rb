@@ -75,11 +75,11 @@ describe Y2Partitioner::Widgets::Columns::Size do
       end
     end
 
-    context "when device responds to #size method" do
+    context "when the device responds to #size method" do
       include_examples "value for size"
     end
 
-    context "when device does not respond to #size method" do
+    context "when the device does not respond to #size method" do
       before do
         allow(device).to receive(:respond_to?).with(:size).and_return(false)
       end

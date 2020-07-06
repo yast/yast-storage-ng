@@ -32,7 +32,7 @@ describe Y2Partitioner::Widgets::Columns::ChunkSize do
   let(:device) { double(Y2Storage::Device) }
 
   describe "#value_for" do
-    context "when device responds to #chunk_size" do
+    context "when the device responds to #chunk_size" do
       before do
         allow(device).to receive(:respond_to?).with(:chunk_size).and_return(true)
         allow(device).to receive(:chunk_size).and_return(Y2Storage::DiskSize.new(chunk_size))
@@ -53,7 +53,7 @@ describe Y2Partitioner::Widgets::Columns::ChunkSize do
       end
     end
 
-    context "when device does not respond to #chunk_size" do
+    context "when the device does not respond to #chunk_size" do
       before do
         allow(device).to receive(:respond_to?).with(:chunk_size).and_return(false)
       end

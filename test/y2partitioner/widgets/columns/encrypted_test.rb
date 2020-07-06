@@ -32,7 +32,7 @@ describe Y2Partitioner::Widgets::Columns::Encrypted do
   let(:device) { double(Y2Storage::Device) }
 
   describe "#value_for" do
-    context "when device does not respond to #encrypted?" do
+    context "when the device does not respond to #encrypted?" do
       before do
         allow(device).to receive(:respond_to?).with(:encrypted?).and_return(false)
       end
@@ -42,7 +42,7 @@ describe Y2Partitioner::Widgets::Columns::Encrypted do
       end
     end
 
-    context "when device is encrypted" do
+    context "when the device is encrypted" do
       before do
         allow(device).to receive(:encrypted?).and_return(true)
         allow(Yast::UI).to receive(:GetDisplayInfo).and_return("HasIconSupport" => icon_support)
@@ -65,7 +65,7 @@ describe Y2Partitioner::Widgets::Columns::Encrypted do
       context "but running without icon support" do
         let(:icon_support) { false }
 
-        it "returns string" do
+        it "returns a string" do
           expect(subject.value_for(device)).to be_an(String)
         end
       end

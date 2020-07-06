@@ -31,7 +31,7 @@ describe Y2Partitioner::Widgets::Columns::Uuid do
   let(:device) { double(Y2Storage::Device) }
 
   describe "#value_for" do
-    context "when device does not respond to #uuid"
+    context "when the device does not respond to #uuid"
     before do
       allow(device).to receive(:respond_to?).with(:uuid).and_return(false)
     end
@@ -41,7 +41,7 @@ describe Y2Partitioner::Widgets::Columns::Uuid do
     end
   end
 
-  context "when device responds to #uuid" do
+  context "when the device responds to #uuid" do
     before do
       allow(device).to receive(:respond_to?).with(:uuid).and_return(true)
       allow(device).to receive(:uuid).and_return(uuid)

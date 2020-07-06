@@ -56,7 +56,7 @@ module Y2Partitioner
 
           return "" unless filesystem
           return "" if part_of_multidevice?(device, filesystem)
-          # fs may not supporting labels, like NFS
+          # fs may not support labels, like NFS
           return "" unless filesystem.respond_to?(:label)
 
           filesystem.label

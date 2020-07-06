@@ -37,7 +37,7 @@ describe Y2Partitioner::Widgets::Columns::Format do
   end
 
   describe "#value_for" do
-    context "when device responds to #to_be_formatted?" do
+    context "when the device responds to #to_be_formatted?" do
       before do
         allow(device).to receive(:respond_to?).with(:to_be_formatted?).and_return(true)
         allow(device).to receive(:to_be_formatted?).and_return(to_be_formatted)
@@ -60,7 +60,7 @@ describe Y2Partitioner::Widgets::Columns::Format do
       end
     end
 
-    context "when device does not respond to #to_be_formatted?" do
+    context "when the device does not respond to #to_be_formatted?" do
       before do
         allow(device).to receive(:respond_to?).with(:to_be_formatted?).and_return(false)
       end

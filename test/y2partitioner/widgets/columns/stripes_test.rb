@@ -38,7 +38,7 @@ describe Y2Partitioner::Widgets::Columns::Stripes do
       devicegraph_stub(scenario)
     end
 
-    context "when device responds to #stripes" do
+    context "when the device responds to #stripes" do
       let(:device_name) { "/dev/vg0/striped1" }
 
       it "includes the stripes number" do
@@ -50,7 +50,7 @@ describe Y2Partitioner::Widgets::Columns::Stripes do
       end
     end
 
-    context "when device does not respond to #stripes" do
+    context "when the device does not respond to #stripes" do
       let(:device_name) { "/dev/sda" }
 
       it "returns an empty string" do

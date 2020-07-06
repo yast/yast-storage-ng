@@ -86,7 +86,8 @@ module Y2Partitioner
       # If the device seems to be empty the user has to confirm a warning stating
       # the high risk of data loss.
       #
-      # @return [Boolean] true if there is no high risk or user accepted high risk
+      # @return [Boolean] true if there is no high risk or the user has accepted it
+      #
       def confirm_empty
         # If the device has descendants now resizing is ok even if
         # nothing was probed on the device since the user already made

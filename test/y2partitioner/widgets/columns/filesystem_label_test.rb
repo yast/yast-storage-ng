@@ -69,7 +69,7 @@ describe Y2Partitioner::Widgets::Columns::FilesystemLabel do
     end
   end
 
-  context "when device is part of a multi-device filesystem" do
+  context "when the device is part of a multi-device filesystem" do
     let(:scenario) { "btrfs2-devicegraph.xml" }
     let(:device_name) { "/dev/sdb1" }
 
