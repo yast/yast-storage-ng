@@ -117,7 +117,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if called on a device that holds an LVM snapshot" do
-      let(:scenario) { "lvm-types.xml" }
+      let(:scenario) { "lvm-types1.xml" }
       let(:dev_name) { "/dev/vg0/snap_thinvol1" }
 
       include_examples "edit_warning"

@@ -331,7 +331,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
     end
 
     context "when executed on an LVM thin snapashot volume" do
-      let(:scenario) { "lvm-types.xml" }
+      let(:scenario) { "lvm-types1.xml" }
       let(:device_name) { "/dev/vg0/thin_snap_normal2" }
 
       before do

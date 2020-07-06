@@ -25,7 +25,7 @@ describe Y2Storage::LvmLv do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("lvm-types.xml")
+    fake_scenario("lvm-types1.xml")
   end
 
   subject(:lv) { fake_devicegraph.find_by_name(device_name) }

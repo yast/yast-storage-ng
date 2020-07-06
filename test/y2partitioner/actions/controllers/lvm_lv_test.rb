@@ -280,7 +280,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       allow(controller).to receive(:lv).and_return(lv)
     end
 
-    let(:scenario) { "lvm-types.xml" }
+    let(:scenario) { "lvm-types1.xml" }
     let(:lv) { Y2Storage::LvmLv.find_by_name(current_graph, lv_name) }
 
     context "if there is no lv" do
