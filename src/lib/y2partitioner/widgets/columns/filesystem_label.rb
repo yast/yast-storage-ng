@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Label` column
       class FilesystemLabel < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, disk or partition label. Can be empty.

@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the LVM volume group `extent size` column
       class PeSize < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, type of metadata

@@ -26,6 +26,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Encrypted` column
       class Encrypted < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, flag if device is encrypted. Keep it short,

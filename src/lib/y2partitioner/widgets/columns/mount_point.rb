@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Mount Point` column
       class MountPoint < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, where is device mounted. Can be empty. E.g. "/" or "/home"

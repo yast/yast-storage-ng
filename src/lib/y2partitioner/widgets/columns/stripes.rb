@@ -28,6 +28,11 @@ module Y2Partitioner
       class Stripes < Base
         include LvmLvAttributes
 
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, number and size of LVM LV stripes

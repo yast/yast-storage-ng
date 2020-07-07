@@ -26,6 +26,11 @@ module Y2Partitioner
       # Widget for displaying the `Used by` column in Bcache Cset table, usually the physical name
       # of a block device
       class UsedBy < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table column label.

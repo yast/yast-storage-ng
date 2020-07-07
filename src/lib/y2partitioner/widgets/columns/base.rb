@@ -70,11 +70,6 @@ module Y2Partitioner
         include Yast::I18n
         include Yast::UIShortcuts
 
-        # Constructor
-        def initialize
-          textdomain "storage"
-        end
-
         # @!method title
         #   Title of the column
         #

@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Size` column
       class Size < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, size of block device e.g. "8.00 GiB"

@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Device` column, usually the physical name of a block device
       class Device < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, Device is physical name of block device, e.g. "/dev/sda1"

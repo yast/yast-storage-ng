@@ -27,6 +27,11 @@ module Y2Partitioner
       #
       # @see Y2Storage::Filesystem::BlkFilesystem#blk_device_basename
       class FilesystemId < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: label of a table column

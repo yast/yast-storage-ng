@@ -25,9 +25,16 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Format` column
       class Format < Base
+        textdomain "storage"
+
         # TRANSLATORS: "F" stands for Format flag. Keep it short, ideally a single letter.
         FORMAT_FLAG = N_("F")
         private_constant :FORMAT_FLAG
+
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
 
         # @see Columns::Base#title
         def title

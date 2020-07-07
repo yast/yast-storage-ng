@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the column holding the `Devices` used by a filesystem
       class FilesystemDevices < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: label of a table column

@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `End` column
       class RegionEnd < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, which sector is the last for device. E.g. "126"

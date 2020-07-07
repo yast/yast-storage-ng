@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `chunk size`of an MD Raid
       class ChunkSize < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, chunk size of md raid

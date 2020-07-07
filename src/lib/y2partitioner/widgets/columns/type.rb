@@ -70,6 +70,11 @@ module Y2Partitioner
         }
         private_constant :DEVICE_LABELS
 
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table header, type of disk or partition. Can be longer. E.g. "Linux swap"

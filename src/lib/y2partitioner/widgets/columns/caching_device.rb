@@ -25,6 +25,11 @@ module Y2Partitioner
     module Columns
       # Widget for displaying the `Caching Device` column
       class CachingDevice < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Columns::Base#title
         def title
           # TRANSLATORS: table column label.
