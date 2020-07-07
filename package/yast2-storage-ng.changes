@@ -6,7 +6,7 @@ Tue Jul  7 10:57:59 UTC 2020 - David Diaz <dgonzalez@suse.com>
 - Partitioner: makes visible the relationship between an LVM
   snapshot and its original logical volume (related to
   bsc#1120410).
-- Partitioner: warn to the user before performing certain actions
+- Partitioner: warn the user before performing certain actions
   on an LVM snapshot.
 - 4.3.12
 
