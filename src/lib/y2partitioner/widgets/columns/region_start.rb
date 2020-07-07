@@ -44,8 +44,8 @@ module Y2Partitioner
           device.region.start.to_s
         end
 
-        # @see Columns::Base#symbol
-        def symbol
+        # @see Columns::Base#id
+        def id
           :start
         end
       end

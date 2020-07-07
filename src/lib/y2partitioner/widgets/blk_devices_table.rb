@@ -69,7 +69,7 @@ module Y2Partitioner
 
       # @see #helptext_for
       def columns_help
-        cols.map { |column| helptext_for(column.symbol) }.join("\n")
+        cols.map { |column| helptext_for(column.id) }.join("\n")
       end
 
       def row_for(device)

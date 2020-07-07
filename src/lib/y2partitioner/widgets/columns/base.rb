@@ -90,7 +90,7 @@ module Y2Partitioner
         #   being shared with the device overview (see {Y2Partitioner:: Widgets::DeviceDescription}.
         #
         # @return [Symbol] usually, the column type
-        def symbol
+        def id
           self.class.name
             .gsub(/^.*::/, "") # demodulize
             .gsub(/(.)([A-Z])/, "\1_\2") # underscore

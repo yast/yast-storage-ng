@@ -43,8 +43,8 @@ module Y2Partitioner
           filesystem_label(device)
         end
 
-        # @see Columns::Base#symbol
-        def symbol
+        # @see Columns::Base#id
+        def id
           :label
         end
 
