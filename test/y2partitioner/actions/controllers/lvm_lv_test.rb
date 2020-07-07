@@ -34,8 +34,10 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
   let(:vg_name) { "vg0" }
 
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
+
+  let(:scenario) { "lvm-two-vgs.yml" }
 
   describe "#vg" do
     it "returns a Y2Storage::LvmVg" do
@@ -212,22 +214,14 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       controller.stripes_size = 16.KiB
     end
 
-    it "sets stripes number to nil" do
-      expect(controller.stripes_number).to_not be_nil
-      controller.reset_size_and_stripes
-      expect(controller.stripes_number).to be_nil
-    end
-
-    it "sets stripes size to nil" do
-      expect(controller.stripes_size).to_not be_nil
-      controller.reset_size_and_stripes
-      expect(controller.stripes_size).to be_nil
-    end
-
     context "if the lv type is set to thin" do
       before do
         controller.lv_type = Y2Storage::LvType::THIN
+        create_thin_provisioning(vg)
+        allow(controller).to receive(:thin_pool).and_return(thin_pool)
       end
+
+      let(:thin_pool) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vg0/pool1") }
 
       it "sets size to 2 GiB" do
         controller.reset_size_and_stripes
@@ -237,6 +231,18 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       it "sets size choice to custom size" do
         controller.reset_size_and_stripes
         expect(controller.size_choice).to eq(:custom_size)
+      end
+
+      it "sets stripes number to its thin pool stripes" do
+        expect(controller.stripes_number).to_not eq(thin_pool.stripes)
+        controller.reset_size_and_stripes
+        expect(controller.stripes_number).to eq(thin_pool.stripes)
+      end
+
+      it "sets stripes size to nil" do
+        expect(controller.stripes_size).to_not eq(thin_pool.stripe_size)
+        controller.reset_size_and_stripes
+        expect(controller.stripes_size).to eq(thin_pool.stripe_size)
       end
     end
 
@@ -254,6 +260,18 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
         controller.reset_size_and_stripes
         expect(controller.size_choice).to eq(:max_size)
       end
+
+      it "sets stripes number to nil" do
+        expect(controller.stripes_number).to_not be_nil
+        controller.reset_size_and_stripes
+        expect(controller.stripes_number).to be_nil
+      end
+
+      it "sets stripes size to nil" do
+        expect(controller.stripes_size).to_not be_nil
+        controller.reset_size_and_stripes
+        expect(controller.stripes_size).to be_nil
+      end
     end
   end
 
@@ -262,8 +280,11 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       allow(controller).to receive(:lv).and_return(lv)
     end
 
+    let(:scenario) { "lvm-types1.xml" }
+    let(:lv) { Y2Storage::LvmLv.find_by_name(current_graph, lv_name) }
+
     context "if there is no lv" do
-      let(:lv) { nil }
+      let(:lv_name) { "unknnown" }
 
       it "returns false" do
         expect(controller.lv).to be_nil
@@ -272,7 +293,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a normal volume" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::NORMAL) }
+      let(:lv_name) { "/dev/vg0/normal1" }
 
       it "returns true" do
         expect(controller.lv_can_be_formatted?).to eq(true)
@@ -280,7 +301,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a thin pool" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN_POOL) }
+      let(:lv_name) { "/dev/vg0/thinpool0" }
 
       it "returns false" do
         expect(controller.lv_can_be_formatted?).to eq(false)
@@ -288,7 +309,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "if the lv is a thin volume" do
-      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN) }
+      let(:lv_name) { "/dev/vg0/thinvol1" }
 
       it "returns true" do
         expect(controller.lv_can_be_formatted?).to eq(true)

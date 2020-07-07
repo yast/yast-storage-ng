@@ -47,7 +47,7 @@ describe Y2Partitioner::Widgets::Pages::System do
 
     # Names from the devices in the list
     def row_names(table)
-      table.items.map { |i| i[1] }
+      table.items.map { |i| i[1].params.first }
     end
 
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }

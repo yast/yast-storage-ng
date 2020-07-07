@@ -21,6 +21,7 @@ require "yast"
 require "cwm/widget"
 require "cwm/table"
 require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 Yast.import "UI"
 
@@ -256,8 +257,8 @@ module Y2Partitioner
 
         def initialize(devices, widget_id)
           textdomain "storage"
-          @devices = devices
           @widget_id = widget_id.to_s
+          @devices = devices
         end
 
         # @macro seeAbstractWidget
@@ -267,7 +268,12 @@ module Y2Partitioner
 
         # @see BlkDevicesTable
         def columns
-          [:device, :size, :encrypted, :type]
+          [
+            Columns::Device,
+            Columns::Size,
+            Columns::Encrypted,
+            Columns::Type
+          ]
         end
 
         # @see BlkDevicesTable

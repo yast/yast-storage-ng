@@ -24,10 +24,9 @@ require "cwm/rspec"
 require "y2partitioner/widgets/used_devices_tab"
 
 describe Y2Partitioner::Widgets::UsedDevicesTab do
-  subject { described_class.new(disk, pager) }
+  subject { described_class.new(devices, pager) }
 
-  let(:disk) { double("Disk") }
-
+  let(:devices) { [double("Disk")] }
   let(:pager) { double("Pager") }
 
   include_examples "CWM::Tab"

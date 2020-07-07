@@ -44,6 +44,10 @@ describe Y2Partitioner::Widgets::DescriptionSection::LvmLv do
     it "includes an entry about the stripes" do
       expect(subject.value).to match(/Stripes:/)
     end
+
+    it "includes an entry about snapshots" do
+      expect(subject.value).to match(/Snapshots:/)
+    end
   end
 
   describe "#help_fields" do

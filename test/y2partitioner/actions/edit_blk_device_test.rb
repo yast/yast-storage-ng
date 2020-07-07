@@ -49,6 +49,41 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       end
     end
 
+    RSpec.shared_examples "edit_warning" do
+      let(:ignore_warnings) { :yes }
+
+      before do
+        allow(Yast2::Popup).to receive(:show)
+          .with(anything, hash_including(headline: :warning))
+          .and_return(ignore_warnings)
+
+        # only to finish
+        allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+        allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
+      end
+
+      it "shows a warning popup" do
+        expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :warning))
+        sequence.run
+      end
+
+      context "but the user wants to proceed anyway" do
+        let(:ignore_warnings) { :yes }
+
+        it "continues editing" do
+          expect(sequence.run).to eq(:finish)
+        end
+      end
+
+      context "and the user decides to cancel" do
+        let(:ignore_warnings) { :no }
+
+        it "quits returning :back" do
+          expect(sequence.run).to eq :back
+        end
+      end
+    end
+
     subject(:sequence) { described_class.new(device) }
 
     let(:scenario) { "complex-lvm-encrypt.yml" }
@@ -79,6 +114,13 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       let(:dev_name) { "/dev/sda7" }
 
       include_examples "edit_error"
+    end
+
+    context "if called on a device that holds an LVM snapshot" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:dev_name) { "/dev/vg0/snap_thinvol1" }
+
+      include_examples "edit_warning"
     end
 
     context "if called on a device that holds a MD RAID" do

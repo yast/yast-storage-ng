@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -42,73 +43,13 @@ module Y2Partitioner
       #
       # @return [Array<Symbol>]
       def fs_columns
-        [:btrfs_id, :mount_point, :label, :btrfs_devices, :uuid]
-      end
-
-      # Column label
-      #
-      # @return [String]
-      def btrfs_id_title
-        # TRANSLATORS: label of a table column
-        _("Id")
-      end
-
-      # Column label
-      #
-      # @return [String]
-      def label_title
-        # TRANSLATORS: label of a table column
-        _("Label")
-      end
-
-      # Column label
-      #
-      # @return [String]
-      def btrfs_devices_title
-        # TRANSLATORS: label of a table column
-        _("Devices")
-      end
-
-      # Column label
-      #
-      # @return [String]
-      def uuid_title
-        # TRANSLATORS: label of a table column
-        _("UUID")
-      end
-
-      # Column value
-      #
-      # @param filesystem [Y2Storage::Filesystems::Btrfs]
-      # @return [String] e.g., "sda1" or "(sda1...)"
-      def btrfs_id_value(filesystem)
-        filesystem.blk_device_basename
-      end
-
-      # Column value
-      #
-      # @param filesystem [Y2Storage::Filesystems::Btrfs]
-      # @return [String] e.g., "data"
-      def label_value(filesystem)
-        filesystem.label
-      end
-
-      # Column value
-      #
-      # BTRFS devices names
-      #
-      # @param filesystem [Y2Storage::Filesystems::Btrfs]
-      # @return [String] e.g., "/dev/sda1, /dev/sda2"
-      def btrfs_devices_value(filesystem)
-        filesystem.plain_blk_devices.map(&:name).sort.join(", ")
-      end
-
-      # Column value
-      #
-      # @param filesystem [Y2Storage::Filesystems::Btrfs]
-      # @return [String] e.g., "111222333-444-55"
-      def uuid_value(filesystem)
-        filesystem.uuid
+        [
+          Columns::FilesystemId,
+          Columns::MountPoint,
+          Columns::FilesystemLabel,
+          Columns::FilesystemDevices,
+          Columns::Uuid
+        ]
       end
     end
   end

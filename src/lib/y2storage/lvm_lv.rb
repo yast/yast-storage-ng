@@ -46,14 +46,17 @@ module Y2Storage
     #   @return [LvmVg] volume group the LV belongs to
     storage_forward :lvm_vg, as: "LvmVg"
 
+    # @see #thin_pool
+    storage_forward :storage_thin_pool, to: :thin_pool, as: "LvmLv"
+    private :storage_thin_pool
+
     # @!method lv_type
     #   @return [LvType] type of the logical volume
     storage_forward :lv_type, as: "LvType"
 
-    # @!method stripes
-    #   Number of stripes. 0 if the LV is not striped
-    #   @return [Integer]
-    storage_forward :stripes
+    # @see #stripes
+    storage_forward :storage_stripes, to: :stripes
+    private :storage_stripes
 
     # @!method stripes=(num_stripes)
     #   Sets the number of stripes. The size of the LV must be a multiple of
@@ -82,12 +85,24 @@ module Y2Storage
     storage_forward :max_size_for_lvm_lv, as: "DiskSize"
 
     # @!method lvm_lvs
-    #   Returs the thin volumes over a thin pool, so it only makes sense to be
+    #   Returns the thin volumes over a thin pool, so it only makes sense to be
     #   called over a thin pool volume. For thin and normal logical volumes it
     #   returns an empty list.
     #
     #   @return [Array<LvmLv>] logical volumes in the thin pool, in no particular order
     storage_forward :lvm_lvs, as: "LvmLv"
+
+    # @!method snapshots
+    #   Returns the snapshots of a logical volume, if any.
+    #
+    #   @return [Array<LvmLv>] a collection of snapshots volumes
+    storage_forward :snapshots, as: "LvmLv"
+
+    # @!method origin
+    #   Returns the original volume of an snapshot.
+    #
+    #   @return [LvmLv] the original logical volume
+    storage_forward :origin, check_with: :has_origin, as: "LvmLv"
 
     # @!method create_lvm_lv(lv_name, lv_type, size)
     #   Creates a logical volume with name lv_name and type lv_type in the thin pool.
@@ -106,6 +121,23 @@ module Y2Storage
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Disk>] all the logical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmLv"
+
+    # Returns the thin pool holding a thin volume
+    #
+    # @return [LvmLv] the thin pool when dealing with a thin LV; nil otherwise
+    def thin_pool
+      lv_type.is?(:thin) ? storage_thin_pool : nil
+    end
+
+    # Number of stripes
+    #
+    # @note it returns the value of Storage::LvmLv#stripes, except for thin volumes that are going
+    #   to report the striping defined for their thin pools.
+    #
+    # @return [Integer] 0 when the LV is not striped; Storage::LvmLv#stripes otherwise
+    def stripes
+      thin_pool ? thin_pool.stripes : storage_stripes
+    end
 
     # Whether the thin pool is overcommitted
     #
@@ -162,7 +194,12 @@ module Y2Storage
     protected
 
     def types_for_is
-      super << :lvm_lv
+      types = super
+      types << :lvm_lv
+      types << :lvm_snapshot if origin
+      types << :lvm_thin_snapshot if lv_type.is?(:thin) && origin
+      types << "lvm_#{lv_type}".to_sym unless lv_type.is?(:unknown, :normal, :snapshot)
+      types
     end
   end
 end

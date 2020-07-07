@@ -67,7 +67,7 @@ module Y2Partitioner
 
         # New logical volume created by the controller.
         #
-        # Nil if #create_lv has not beeing called or if the volume was
+        # Nil if #create_lv has not being called or if the volume was
         # removed with #delete_lv.
         #
         # @return [Y2Storage::LvmLv, nil]
@@ -120,8 +120,8 @@ module Y2Partitioner
         def reset_size_and_stripes
           @size = default_size
           @size_choice = default_size_choice
-          @stripes_number = nil
-          @stripes_size = nil
+          @stripes_number = default_stripes_number
+          @stripes_size = default_stripes_size
         end
 
         # Whether the new logical volume can be formatted
@@ -132,7 +132,7 @@ module Y2Partitioner
         def lv_can_be_formatted?
           return false if lv.nil?
 
-          !lv.lv_type.is?(:thin_pool)
+          !lv.is?(:lvm_thin_pool)
         end
 
         # Whether a new logical volume (normal or pool) can be added to the volume group
@@ -269,6 +269,28 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize, nil]
         def default_size
           lv_type.is?(:thin) ? Y2Storage::DiskSize.GiB(2) : nil
+        end
+
+        # The initial value for Y2Partitioner::Dialogs::LvmLvSize::StripesNumberSelector
+        #
+        # @note Since in LVM is not possible to define striping for thin LVs, this is a convenient
+        # method to display the value of their thin pools in the UI.
+        #
+        # @return [Integer, nil] the thin pool stripes number when selected type is a
+        #   thin volume; nil otherwise
+        def default_stripes_number
+          lv_type.is?(:thin) ? thin_pool.stripes : nil
+        end
+
+        # The initial value for Y2Partitioner::Dialogs::LvmLvSize::StripesSizeSelector
+        #
+        # @note Since in LVM is not possible to define striping for thin LVs, this is a convenient
+        # method to display the value of their thin pools in the UI.
+        #
+        # @return [Y2Storage::DiskSize, nil] the thin pool stripes size when selected type is a
+        #   thin volume; nil otherwise
+        def default_stripes_size
+          lv_type.is?(:thin) ? thin_pool.stripe_size : nil
         end
 
         # Creates a new thin logical volume with the stored values

@@ -92,12 +92,16 @@ module Y2Partitioner
         end
       end
 
-      # Extended partitions and LVM thin pools cannot be edited
+      # Checks whether it is possible to edit the device
       #
-      # @note An error popup is shown when the edit action cannot be performed.
+      # It also warns the user when editing an LVM snapshot (see #confirm_editing_lvm_snapshot).
+      #
+      # When the action cannot be performed, like editing extended partitions and LVM thin pools, an
+      # error popup is shown.
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
+        return false unless confirm_editing_lvm_snapshot
         return true if errors.empty?
 
         # Only first error is shown
@@ -211,7 +215,7 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not a thin pool.
       def lvm_thin_pool_error
-        return nil unless lvm_thin_pool?
+        return nil unless device.is?(:lvm_thin_pool)
 
         # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
@@ -222,7 +226,7 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not a cache pool.
       def lvm_cache_pool_error
-        return nil unless lvm_cache_pool?
+        return nil unless device.is?(:lvm_cache_pool)
 
         # TRANSLATORS: Error message when trying to edit an LVM cache pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
@@ -243,25 +247,30 @@ module Y2Partitioner
           name: device.name)
       end
 
+      # Warning message if trying to edit an LVM Snapshot, which is not wrong but weird.
+      #
+      # @return [Boolean] true if device is not an LVM snapshot or the user confirms to continue
+      def confirm_editing_lvm_snapshot
+        return true unless device.is?(:lvm_snapshot)
+
+        # TRANSLATORS: Error message when trying to edit an LVM LV snapshot. %{name} and %{origin}
+        # are replaced by logical volume names (e.g., /dev/system/user-data-snapshot and
+        # /dev/system/user-data)
+        message = format(
+          _("The device %{name} is an LVM snapshot volume of %{origin}.\n" \
+            "Do you really want to edit it?"),
+          name:   device.name,
+          origin: device.origin.name
+        )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
+      end
+
       # Whether the device is an extended partition
       #
       # @return [Boolean]
       def extended_partition?
         device.is?(:partition) && device.type.is?(:extended)
-      end
-
-      # Whether the device is an LVM thin pool
-      #
-      # @return [Boolean]
-      def lvm_thin_pool?
-        device.is?(:lvm_lv) && device.lv_type.is?(:thin_pool)
-      end
-
-      # Whether the device is an LVM cache pool
-      #
-      # @return [Boolean]
-      def lvm_cache_pool?
-        device.is?(:lvm_lv) && device.lv_type.is?(:cache_pool)
       end
     end
   end

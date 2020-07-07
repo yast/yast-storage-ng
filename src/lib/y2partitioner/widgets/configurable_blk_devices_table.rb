@@ -22,6 +22,7 @@ require "cwm/table"
 
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -154,19 +155,19 @@ module Y2Partitioner
       #   partitioner
       attr_reader :pager
 
-      # @return [Array<Y2Storage::Device>] list of devices to display
+      # @return [Array<Y2Partitioner::DevicePresenter>] list of devices to display
       attr_reader :devices
 
       DEFAULT_COLUMNS = [
-        :device,
-        :size,
-        :format,
-        :encrypted,
-        :type,
-        :filesystem_label,
-        :mount_point,
-        :start,
-        :end
+        Columns::Device,
+        Columns::Size,
+        Columns::Format,
+        Columns::Encrypted,
+        Columns::Type,
+        Columns::FilesystemLabel,
+        Columns::MountPoint,
+        Columns::RegionStart,
+        Columns::RegionEnd
       ].freeze
 
       def device_graph

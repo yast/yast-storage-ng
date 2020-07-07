@@ -22,7 +22,6 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/device_resize_button"
-require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/device_graphs"
 
 describe Y2Partitioner::Widgets::DeviceResizeButton do

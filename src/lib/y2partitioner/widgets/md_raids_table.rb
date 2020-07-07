@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -33,41 +34,8 @@ module Y2Partitioner
         textdomain "storage"
 
         super
-        add_columns(:raid_type, :chunk_size)
-        remove_columns(:start, :end)
-      end
-
-      private
-
-      def raid_type_title
-        # TRANSLATORS: table header, type of md raid.
-        _("RAID Type")
-      end
-
-      def chunk_size_title
-        # TRANSLATORS: table header, chunk size of md raid
-        _("Chunk Size")
-      end
-
-      # Content of the "RAID Type" cell in the table for the given device
-      #
-      # @param device [Y2Storage::Device]
-      # @return [String]
-      def raid_type_value(device)
-        device.respond_to?(:md_level) ? device.md_level.to_human_string : ""
-      end
-
-      # Content of the "Chunk Size" cell in the table for the given device
-      #
-      # According to mdadm(8): chunk size "is only meaningful for RAID0, RAID4,
-      # RAID5, RAID6, and RAID10".
-      #
-      # @param device [Y2Storage::Device]
-      # @return [String]
-      def chunk_size_value(device)
-        return "" if !device.respond_to?(:chunk_size) || device.chunk_size.zero?
-
-        device.chunk_size.to_human_string
+        add_columns(Columns::RaidType, Columns::ChunkSize)
+        remove_columns(Columns::RegionStart, Columns::RegionEnd)
       end
     end
   end

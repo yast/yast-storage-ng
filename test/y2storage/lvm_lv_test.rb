@@ -25,13 +25,217 @@ describe Y2Storage::LvmLv do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("complex-lvm-encrypt")
+    fake_scenario("lvm-types1.xml")
   end
 
   subject(:lv) { fake_devicegraph.find_by_name(device_name) }
 
+  describe "#is?" do
+    before do
+      vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0")
+      vg.create_lvm_lv("writecache", Y2Storage::LvType::WRITECACHE, 1.GiB)
+      vg.create_lvm_lv("mirror", Y2Storage::LvType::MIRROR, 1.GiB)
+    end
+
+    let(:device_name) { "/dev/vg0/normal1" }
+
+    it "returns true for values whose symbol is :lvm_lv" do
+      expect(subject.is?(:lvm_lv)).to eq true
+      expect(subject.is?("lvm_lv")).to eq true
+    end
+
+    context "if it is a cache pool volume" do
+      let(:device_name) { "/dev/vg0/unused_cache_pool" }
+
+      it "returns true for values whose symbol is :lvm_cache_pool" do
+        expect(subject.is?(:lvm_cache_pool)).to eq true
+        expect(subject.is?("lvm_cache_pool")).to eq true
+      end
+    end
+
+    context "if it is a cache volume" do
+      let(:device_name) { "/dev/vg0/cached1" }
+
+      it "returns true for values whose symbol is :lvm_cache" do
+        expect(subject.is?(:lvm_cache)).to eq true
+        expect(subject.is?("lvm_cache")).to eq true
+      end
+    end
+
+    context "if it is a thin pool volume" do
+      let(:device_name) { "/dev/vg0/thinpool0" }
+
+      it "returns true for values whose symbol is :lvm_thin_pool" do
+        expect(subject.is?(:lvm_thin_pool)).to eq true
+        expect(subject.is?("lvm_thin_pool")).to eq true
+      end
+    end
+
+    context "if it is a thin volume" do
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns true for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq true
+        expect(subject.is?("lvm_thin")).to eq true
+      end
+    end
+
+    context "if it is an non-thin snapshot volume" do
+      let(:device_name) { "/dev/vg0/snap_normal1" }
+
+      it "returns true for values whose symbol is :lvm_snapshot" do
+        expect(subject.is?(:lvm_snapshot)).to eq true
+        expect(subject.is?("lvm_snapshot")).to eq true
+      end
+
+      it "returns false for values whose symbol is :lvm_thin_snapshot" do
+        expect(subject.is?(:lvm_thin_snapshot)).to eq false
+        expect(subject.is?("lvm_thin_snapshot")).to eq false
+      end
+
+      it "returns false for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq false
+        expect(subject.is?("lvm_thin")).to eq false
+      end
+    end
+
+    context "if it is an thin snapshot volume" do
+      let(:device_name) { "/dev/vg0/thin_snap_normal2" }
+
+      it "returns true for values whose symbol is :lvm_snapshot" do
+        expect(subject.is?(:lvm_snapshot)).to eq true
+        expect(subject.is?("lvm_snapshot")).to eq true
+      end
+
+      it "returns true for values whose symbol is :lvm_thin_snapshot" do
+        expect(subject.is?(:lvm_thin_snapshot)).to eq true
+        expect(subject.is?("lvm_thin_snapshot")).to eq true
+      end
+
+      it "returns true for values whose symbol is :lvm_thin" do
+        expect(subject.is?(:lvm_thin)).to eq true
+        expect(subject.is?("lvm_thin")).to eq true
+      end
+    end
+
+    context "if it is a writecache volume" do
+      let(:device_name) { "/dev/vg0/writecache" }
+
+      it "returns true for values whose symbol is :lvm_writecache" do
+        expect(subject.is?(:lvm_writecache)).to eq true
+        expect(subject.is?("lvm_writecache")).to eq true
+      end
+    end
+
+    context "if it is a mirror volume" do
+      let(:device_name) { "/dev/vg0/mirror" }
+
+      it "returns true for values whose symbol is :lvm_mirror" do
+        expect(subject.is?(:lvm_mirror)).to eq true
+        expect(subject.is?("lvm_mirror")).to eq true
+      end
+    end
+  end
+
+  describe "#thin_pool" do
+    context "when volume is a thin LV" do
+      let(:thin_pool) { fake_devicegraph.find_by_name("/dev/vg0/thinpool0") }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns the thin pool the volume belongs to" do
+        expect(subject.thin_pool).to eq(thin_pool)
+      end
+    end
+
+    context "when volume is not a thin LV" do
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "returns nil" do
+        expect(subject.thin_pool).to be_nil
+      end
+    end
+  end
+
+  describe "#stripes" do
+    context "when volume is a thin LV" do
+      let(:thin_pool) { fake_devicegraph.find_by_name("/dev/vg0/thinpool0") }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns the stripes defined by its thin pool" do
+        expect(subject.stripes).to eq(thin_pool.stripes)
+      end
+    end
+
+    context "when volume is not a thin LV" do
+      let(:device_name) { "/dev/vg0/striped1" }
+
+      it "returns its stripping value" do
+        expect(subject.stripes).to eq(2)
+      end
+    end
+  end
+
+  describe "#origin" do
+    context "when called over a snapshot volume" do
+      let(:original_volume) { fake_devicegraph.find_by_name("/dev/vg0/normal1") }
+      let(:device_name) { "/dev/vg0/snap_normal1" }
+
+      it "returns the original volume" do
+        expect(subject.origin).to eq(original_volume)
+      end
+    end
+
+    context "when called over a thin volume" do
+      context "which is being used as an snapshot" do
+        let(:original_volume) { fake_devicegraph.find_by_name("/dev/vg0/normal2") }
+        let(:device_name) { "/dev/vg0/thin_snap_normal2" }
+
+        it "returns the original volume" do
+          expect(subject.origin).to eq(original_volume)
+        end
+      end
+
+      context "which is not being used as an snapshot" do
+        let(:device_name) { "/dev/vg0/thinvol1" }
+
+        it "returns nil" do
+          expect(subject.origin).to be_nil
+        end
+      end
+    end
+
+    context "when called over a not snapshot volume" do
+      let(:device_name) { "/dev/vg0/striped2" }
+
+      it "returns nil" do
+        expect(subject.origin).to be_nil
+      end
+    end
+  end
+
+  describe "#snapshots" do
+    context "when called over a logical volume with snapshots" do
+      let(:snapshot) { fake_devicegraph.find_by_name("/dev/vg0/snap_normal1") }
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "returns a collection holding the snapshots volumes" do
+        expect(subject.snapshots).to eq([snapshot])
+      end
+    end
+
+    context "when called over a logical volume without snapshots" do
+      let(:device_name) { "/dev/vg0/normal3" }
+
+      it "returns an empty collection" do
+        expect(subject.snapshots).to eq([])
+      end
+    end
+  end
+
   describe "#overcommitted?" do
     before do
+      fake_scenario("complex-lvm-encrypt")
+
       vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")
       pool = vg.create_lvm_lv("pool", Y2Storage::LvType::THIN_POOL, pool_size)
       pool.create_lvm_lv("thin", Y2Storage::LvType::THIN, thin_size)
@@ -82,7 +286,11 @@ describe Y2Storage::LvmLv do
   end
 
   describe "#resize" do
-    before { allow(lv).to receive(:detect_resize_info).and_return resize_info }
+    before do
+      fake_scenario("complex-lvm-encrypt")
+
+      allow(lv).to receive(:detect_resize_info).and_return resize_info
+    end
 
     let(:resize_info) do
       double(Y2Storage::ResizeInfo, resize_ok?: ok,

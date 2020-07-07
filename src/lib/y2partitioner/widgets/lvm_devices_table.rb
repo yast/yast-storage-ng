@@ -19,14 +19,12 @@
 
 require "yast"
 require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/lvm_lv_attributes"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
     # Table widget to represent a given list of LVM devices.
     class LvmDevicesTable < ConfigurableBlkDevicesTable
-      include LvmLvAttributes
-
       # Constructor
       #
       # @param devices [Array<Y2Storage::Lvm_vg, Y2Storage::Lvm_lv>] see {#devices}
@@ -36,32 +34,8 @@ module Y2Partitioner
         textdomain "storage"
 
         super
-        add_columns(:pe_size, :stripes)
-        remove_columns(:start, :end)
-      end
-
-      private
-
-      def pe_size_title
-        # TRANSLATORS: table header, type of metadata
-        _("PE Size")
-      end
-
-      def stripes_title
-        # TRANSLATORS: table header, number of LVM LV stripes
-        _("Stripes")
-      end
-
-      def pe_size_value(device)
-        return "" unless device.respond_to?(:extent_size)
-
-        device.extent_size.to_human_string
-      end
-
-      def stripes_value(device)
-        return "" unless devices.respond_to?(:stripes)
-
-        stripes_info(device)
+        add_columns(Columns::PeSize, Columns::Stripes)
+        remove_columns(Columns::RegionStart, Columns::RegionEnd)
       end
     end
   end

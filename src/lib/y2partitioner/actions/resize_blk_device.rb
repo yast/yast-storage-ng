@@ -46,11 +46,14 @@ module Y2Partitioner
         UIState.instance.select_row(device.sid)
       end
 
-      # Checks whether it is possible to resize the device, and if so, the action is performed.
-      # It also checks whether the device needs to be unmounted before resizing (e.g., NTFS).
-      # When unmounted device is required, it offers the option for unmounting it. If the
-      # device seems to be empty (see confirm_empty) the user may cancel the action after
-      # a warning.
+      # Checks whether it is possible to resize the device, and if so, the action is performed
+      #
+      # It also warns the user before continue when
+      #
+      #   * the device seems to be empty (see #confirm_empty)
+      #   * the device is an LVM thin snapshot (see #confirm_thin_snapshot_resize)
+      #   * the device needs to be unmounted before resizing (e.g., NTFS), offering the option for
+      #     unmounting it.
       #
       # @note An error popup is shown when the device cannot be resized or seems empty.
       #
@@ -58,6 +61,7 @@ module Y2Partitioner
       def run
         return :back unless confirm_empty
         return :back unless try_unmount && validate
+        return :back unless confirm_thin_snapshot_resize
 
         resize
       end
@@ -82,7 +86,8 @@ module Y2Partitioner
       # If the device seems to be empty the user has to confirm a warning stating
       # the high risk of data loss.
       #
-      # @return [Boolean] true iff there is no high risk or user accepted high risk
+      # @return [Boolean] true if there is no high risk or the user has accepted it
+      #
       def confirm_empty
         # If the device has descendants now resizing is ok even if
         # nothing was probed on the device since the user already made
@@ -106,6 +111,18 @@ module Y2Partitioner
           "storage system that is not supported by YaST, resizing will\n" \
           "most likely cause data loss. Really continue?"
         )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
+      end
+
+      # Resizing a thin snapshot does not make too much sense. The user has to confirm a warning
+      # before continue.
+      #
+      # @return [Boolean] true if device is not a thin snapshot or user decided go ahead
+      def confirm_thin_snapshot_resize
+        return true unless @device.is?(:lvm_thin_snapshot)
+
+        message = _("Selected device is an LVM Thin Snapshot. Do you really want to resize it?")
 
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end

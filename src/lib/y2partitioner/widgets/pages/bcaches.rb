@@ -22,6 +22,7 @@ require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/bcache_add_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -215,63 +216,12 @@ module Y2Partitioner
           textdomain "storage"
 
           super
-          show_columns(:caching_device, :size, :uuid, :used_by)
-        end
-
-        # Column label
-        #
-        # @return [String]
-        def caching_device_title
-          # TRANSLATORS: table column label.
-          _("Caching Device")
-        end
-
-        # Column label
-        #
-        # @return [String]
-        def uuid_title
-          # TRANSLATORS: table column label.
-          _("UUID")
-        end
-
-        # Column label
-        #
-        # @return [String]
-        def used_by_title
-          # TRANSLATORS: table column label.
-          _("Used By")
-        end
-
-        # Column value
-        #
-        # @param device [Y2Storage::BcacheCset]
-        # @return [String] e.g., "/dev/sda1"
-        def caching_device_value(device)
-          device.blk_devices.first.name
-        end
-
-        # Column value
-        #
-        # @param device [Y2Storage::BcacheCset]
-        # @return [String] e.g., "2.00 GiB"
-        def size_value(device)
-          device.blk_devices.first.size.to_human_string
-        end
-
-        # Column value
-        #
-        # @param device [Y2Storage::BcacheCset]
-        # @return [String] e.g., "111222333-444-55"
-        def uuid_value(device)
-          device.uuid
-        end
-
-        # Column value
-        #
-        # @param device [Y2Storage::BcacheCset]
-        # @return [String] e.g., "/dev/bcache0, /dev/bcache1"
-        def used_by_value(device)
-          device.bcaches.map(&:name).join(", ")
+          show_columns(
+            Columns::CachingDevice,
+            Columns::Size,
+            Columns::Uuid,
+            Columns::UsedBy
+          )
         end
       end
     end

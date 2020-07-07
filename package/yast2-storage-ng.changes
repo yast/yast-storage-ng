@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Tue Jul  7 10:57:59 UTC 2020 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: fix and improve the information shown for each
+  type of LVM logical volumes.
+- Partitioner: makes visible the relationship between an LVM
+  snapshot and its original logical volume (related to
+  bsc#1120410).
+- Partitioner: warn the user before performing certain actions
+  on an LVM snapshot.
+- 4.3.12
+
+-------------------------------------------------------------------
 Fri Jul  3 12:31:39 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - AutoYaST: delegate to initial guided proposal when no partitions

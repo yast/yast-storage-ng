@@ -329,5 +329,21 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
         end
       end
     end
+
+    context "when executed on an LVM thin snapashot volume" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:device_name) { "/dev/vg0/thin_snap_normal2" }
+
+      before do
+        allow(device).to receive(:detect_resize_info).and_return(resize_info)
+      end
+
+      it "shows a warning popup" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(/device is an LVM Thin Snapshot/, hash_including(headline: :warning))
+
+        action.run
+      end
+    end
   end
 end

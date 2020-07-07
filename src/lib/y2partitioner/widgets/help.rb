@@ -114,6 +114,9 @@ module Y2Partitioner
                                       "logical volumes and, if greater than one, the stripe size " \
                                       "in parenthesis."),
 
+        snapshots:                 N_("<b>Snapshots</b> shows the snapshots, if any, for an LVM " \
+                                      "logical volume."),
+
         type:                      N_("<b>Type</b> gives a general overview about the\ndevice type."),
 
         udev_id:                   N_("<b>Device ID</b> shows the persistent device\n" \
