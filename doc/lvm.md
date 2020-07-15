@@ -4,13 +4,33 @@ The basic LVM functionality has been supported by YaST for ages. But LVM has a l
 like RAID, snapshots, thin provisioning and whatsnot that often result in special types of logical
 volumes being present in the system.
 
-This document summarizes how well YaST deals with systems that contain such advanced LVM setups.
+This document summarizes how the very last version of YaST (that is, the one available in openSUSE
+Tumbleweed) deals with systems that contain such advanced LVM setups.
+
+## The Proposal (Guided Setup)
+
+The partitioning proposal will never create logical volumes of any special type beyond normal ones.
+
+In some cases, the proposal may decide to reuse an existing volume group but, even in that case, the
+existence of logical volumes of special types will have no negative impact in the proposal since:
+
+- The proposal never reuses existing logical volumes, as proven by [these unit
+tests](https://github.com/yast/yast-storage-ng/blob/2315bb6998/test/y2storage/proposal/devices_planner_strategies/ng_test.rb).
+- If the proposal decides to delete existing logical volumes, the dependencies between them will
+  be honored (see [pull request#1106](https://github.com/yast/yast-storage-ng/pull/1106)).
+- When calculating the space available in an existing volume group after each tentative operation,
+  the proposal relies on libstorage-ng, which should be able to deal with all kind of LVs.
+
+## The Offline Upgrade Process
+
+Since YaST is able to recognize filesystems on top of any kind of logical volume, it allows to
+upgrade any system installed over LVM, including RAID, cache, thin-provisioned volumes, etc.
+It even allows to select a snapshot as the system to be upgraded.
 
 ## The Partitioner
 
 This section describes how the Expert Partitioner represent the different LVM technologies and what
-operations it allows for each type of logical volume. At the current stage, some operations show an
-unexpected behavior and, in most cases, would need to be adjusted. That is represented in bold text.
+operations it allows for each type of logical volume.
 
 Note that, unlike RAID0, striped LVs are not really a separate type. Many types of LVs can be
 striped.
