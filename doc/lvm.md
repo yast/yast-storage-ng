@@ -4,13 +4,33 @@ The basic LVM functionality has been supported by YaST for ages. But LVM has a l
 like RAID, snapshots, thin provisioning and whatsnot that often result in special types of logical
 volumes being present in the system.
 
-This document summarizes how well YaST deals with systems that contain such advanced LVM setups.
+This document summarizes how the very last version of YaST (that is, the one available in openSUSE
+Tumbleweed) deals with systems that contain such advanced LVM setups.
+
+## The Proposal (Guided Setup)
+
+The partitioning proposal will never create logical volumes of any special type beyond normal ones.
+
+In some cases, the proposal may decide to reuse an existing volume group but, even in that case, the
+existence of logical volumes of special types will have no negative impact in the proposal since:
+
+- The proposal never reuses existing logical volumes, as proven by [these unit
+tests](https://github.com/yast/yast-storage-ng/blob/2315bb6998/test/y2storage/proposal/devices_planner_strategies/ng_test.rb).
+- If the proposal decides to delete existing logical volumes, the dependencies between them will
+  be honored (see [pull request#1106](https://github.com/yast/yast-storage-ng/pull/1106)).
+- When calculating the space available in an existing volume group after each tentative operation,
+  the proposal relies on libstorage-ng, which should be able to deal with all kind of LVs.
+
+## The Offline Upgrade Process
+
+Since YaST is able to recognize filesystems on top of any kind of logical volume, it allows to
+upgrade any system installed over LVM, including RAID, cache, thin-provisioned volumes, etc.
+It even allows to select a snapshot as the system to be upgraded.
 
 ## The Partitioner
 
 This section describes how the Expert Partitioner represent the different LVM technologies and what
-operations it allows for each type of logical volume. At the current stage, some operations show an
-unexpected behavior and, in most cases, would need to be adjusted. That is represented in bold text.
+operations it allows for each type of logical volume.
 
 Note that, unlike RAID0, striped LVs are not really a separate type. Many types of LVs can be
 striped.
@@ -29,11 +49,11 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 
 - Only the thin pool and its thin LVs are displayed. No trace of the hidden LVs used to store the
   data and the metadata of each thin LV or to store the spare metadata of the VG.
-- Due to a bug, **nothing in the UI identifies the displayed LVs as being special**. They basically
-  look like normal LVs, although `BlkDevicesTable::DEVICE_LABELS` contains entries for both thin
-  pools and thin LVs.
+- Thin pools and thin LVs are identified as such in the tables. On the other hand, the description
+  page of a thin pool or a thin LV looks just like the one of a normal LV.
 - In LVM is not possible to define striping for thin LVs, they use the striping defined for their thin
-  pools. The partitioner UI **reports 0 stripes for all thin LVs**.
+  pools. The partitioner UI reports correctly the number of stripes, **but reports 0.00B for the
+  stripes size**.
 
 #### What can be done?
 
@@ -44,8 +64,8 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
   - Delete: it works. Note it deletes the pool, all its thin volumes and the associated hidden LVs.
 
 - For thin LVs
-  - Create: it works. The **widgets for defining striping are disabled and set to the default values**.
-    Maybe it would be better to show them disabled but with the pool values. Or to not show them at all.
+  - Create: it works. The widgets for defining striping are disabled and set to the values of the
+    corresponding thin pool.
   - Edit (format/mount): just as a normal LV.
   - Resize: it works.
   - Delete: it works. Note it deletes the thin volume and all the associated hidden LVs.
@@ -56,8 +76,8 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 
 - Only the cache LV is displayed. No trace of the hidden LVs (origin LV, cache pool, cache data LV
   nor cache metadata LV).
-- **Nothing in the UI identifies the cache LV as being so**, it basically looks like a normal LV
-  (eg. there is no entry for cache LV at `BlkDevicesTable::DEVICE_LABELS`)
+- The cache LVs are identified as such in the tables. On the other hand, the description page of a
+  cache LV looks just like the one of a normal LV.
 
 #### What can be done?
 
@@ -72,24 +92,25 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 #### How is it displayed?
 
 - Only the cache LV is displayed. No trace of the hidden cache volume.
-- **Nothing in the UI identifies the cache LV as being so**, just like the previous case.
+- The cache LV is identified as such in the tables but not in its description page, just like the
+  previous case.
 
 #### What can be done?
 
 - Create: not possible.
 - Edit (format/mount): just as a normal LV.
 - Resize: not allowed ("_Resizing of this type of LVM logical volumes is not supported_").
-- Delete: it works. It only deletes the cache LV, the LV used as cache survives (it becomes a
-  normal LV) **but is not visible immediately**. A reprobing after the commit phase is needed.
-  The root cause is an inconsistent behavior of `lvremove` compared to other cases, reported
-  as [bsc#1171907](https://bugzilla.suse.com/show_bug.cgi?id=1171907).
+- Delete: it works. Note it deletes the cache LV and also its cache volume, as long as the `lvm2`
+  package includes the fix for [bsc#1171907](https://bugzilla.suse.com/show_bug.cgi?id=1171907)
+  (which is the case for Tumbleweed and for a fully up-to-date SLE 15-SP2).
 
 ### Unused Cache Pool
 
 #### How is it displayed?
 
 - Only the cache pool is displayed. No trace of the hidden LVs (cache data LV and cache metadata LV).
-- **Nothing in the UI identifies the cache pool as being so**, just like the previous cases.
+- The cache pool is identified as such in the tables but not in its description page, just like the
+  previous case.
 
 #### What can be done?
 
@@ -103,8 +124,8 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 #### How is it displayed?
 
 - Only the RAID LV is displayed. No trace of the so-called subLVs.
-- **Nothing in the UI identifies the RAID LV as being so**, it basically looks like a normal LV
-  (eg. there is no entry for the RAID types at `BlkDevicesTable::DEVICE_LABELS`)
+- The RAID LVs are identified as such in the tables. On the other hand, the description page of a
+  RAID LV looks just like the one of a normal LV.
 
 #### What can be done?
 
@@ -118,8 +139,8 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 #### How is it displayed?
 
 - Only the mirror LV is displayed. No trace of the hidden mirrors used for its images and metadata.
-- **Nothing in the UI identifies the mirror LV as being so**, it basically looks like a normal LV
-  (eg. there is no entry for the RAID types at `BlkDevicesTable::DEVICE_LABELS`)
+- The mirror LVs are identified as such in the tables. On the other hand, the description page of a
+  mirror LV looks just like the one of a normal LV.
 
 #### What can be done?
 
@@ -132,33 +153,38 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 
 #### How is it displayed?
 
-- The snapshot LV is displayed as a normal LV. **Nothing in the UI says its type is `snapshot`**
-  (eg. there is no entry for snapshots at `BlkDevicesTable::DEVICE_LABELS`).
-- There is **no information in the UI about the relationship with its origin** LV.
+- The snapshot LV is identified as such in the tables, including the name of its origin LV.
+- The description page of any LV that serves as origin contains a list of all its snapshots.
+  On the other hand, the description pages of the snapshots look like normal LVs, with no
+  reference to the origin LVs.
 
 #### What can be done?
 
 - Create: not possible.
-- Edit (format/mount): **just as a normal LV**. May not be strictly wrong but is weird at least.
+- Edit (format/mount): It's allowed but a warning is displayed beforehand ("_The device is an
+  LVM snapshot volume of x. Do you really want to edit it?_").
 - Resize: not allowed ("_Resizing of this type of LVM logical volumes is not supported_").
 - Delete: it works.
-- Delete the origin LV: the corresponding snapshots are deleted during the commit phase, but
-  **not immediately in the devicegraph in memory**. Moreover, the Partitioner **does not warn**
-  about the snapshots that are going to be deleted.
+- Delete the origin LV: the corresponding snapshots are deleted right away, since they cannot
+  survive their origin. The Partitioner warns beforehand about the snapshots that are going to
+  be deleted.
 
 ### Thin LVM Snapshots
 
 #### How is it displayed?
 
-- The snapshot LV **is displayed in the UI as a normal LV**, although it's type in the devicegraph
-  is `thin-pool`. That's due to a bug already commented in the section about thin provisioning.
-- There is **no information in the UI about the relationship with its origin** LV.
+- The thin snapshot is identified as such in the tables, including the name of its origin LV.
+- The description page of any LV that serves as origin contains a list of all its snapshots,
+  including the thin ones. On the other hand, the description pages of the thin snapshots look
+  like normal LVs, with no reference to the origin LVs.
 
 #### What can be done?
 
 - Create: not possible.
-- Edit (format/mount): **just as a normal LV**. May not be strictly wrong but is weird at least.
-- Resize: **it works** since this is just a thin LV. Again, maybe not wrong but weird.
+- Edit (format/mount): It's allowed but a warning is displayed beforehand ("_The device is an
+  LVM snapshot volume of x. Do you really want to edit it?_").
+- Resize: It works but a warning is displayed beforehand ("_Selected device is an LVM Thin Snapshot.
+  Do you really want to resize it?_").
 - Delete: it works.
 - Delete the origin LV: it works. The snapshots are not affected.
 
