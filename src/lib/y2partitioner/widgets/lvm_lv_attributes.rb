@@ -44,7 +44,7 @@ module Y2Partitioner
 
       # @return [String]
       def stripes_info(lvm_lv)
-        if lvm_lv.stripes <= 1
+        if lvm_lv.stripe_size.zero?
           lvm_lv.stripes.to_i
         else
           format(
