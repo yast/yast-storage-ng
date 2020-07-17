@@ -52,8 +52,7 @@ It shows "_Resizing not supported since the logical volume has snapshots_".
 - Thin pools and thin LVs are identified as such in the tables. On the other hand, the description
   page of a thin pool or a thin LV looks just like the one of a normal LV.
 - In LVM is not possible to define striping for thin LVs, they use the striping defined for their thin
-  pools. The partitioner UI reports correctly the number of stripes, **but reports 0.00B for the
-  stripes size**.
+  pools.
 
 #### What can be done?
 

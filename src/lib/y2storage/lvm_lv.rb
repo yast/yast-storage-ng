@@ -67,10 +67,14 @@ module Y2Storage
     #     (i.e., bigger than 128)
     storage_forward :stripes=
 
-    # @!attribute stripe_size
-    #   Size of a stripe. DiskSize.zero if the LV is not striped.
-    #   @return [DiskSize]
-    storage_forward :stripe_size, as: "DiskSize"
+    # @see #stripe_size
+    storage_forward :storage_stripe_size, to: :stripe_size, as: "DiskSize"
+    private :storage_stripe_size
+
+    # @!method stripe_size=(stripe_size)
+    #   Sets the size of a stripe
+    #
+    #   @param stripe_size [DiskSize, Integer]
     storage_forward :stripe_size=
 
     # @!method max_size_for_lvm_lv(lv_type)
@@ -137,6 +141,16 @@ module Y2Storage
     # @return [Integer] 0 when the LV is not striped; Storage::LvmLv#stripes otherwise
     def stripes
       thin_pool ? thin_pool.stripes : storage_stripes
+    end
+
+    # Size of a stripe
+    #
+    # @note it returns the value of Storage::LvmLv#stripe_size, except for thin volumes that are
+    #   going to report the striping size defined for their thin pools.
+    #
+    # @return [DiskSize]
+    def stripe_size
+      thin_pool ? thin_pool.stripe_size : storage_stripe_size
     end
 
     # Whether the thin pool is overcommitted
