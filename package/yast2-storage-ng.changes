@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jul 17 11:44:48 UTC 2020 - David Diaz <dgonzalez@suse.com>
+
+- Partitioner: fix stripes size reported for thin LVs.
+- Partitioner: do not show stripes size when its value is zero.
+
+-------------------------------------------------------------------
 Tue Jul  7 10:57:59 UTC 2020 - David Diaz <dgonzalez@suse.com>
 
 - Partitioner: fix and improve the information shown for each
