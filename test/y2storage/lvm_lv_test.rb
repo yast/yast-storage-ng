@@ -175,6 +175,25 @@ describe Y2Storage::LvmLv do
     end
   end
 
+  describe "#stripe_size" do
+    context "when volume is a thin LV" do
+      let(:thin_pool) { fake_devicegraph.find_by_name("/dev/vg0/thinpool0") }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "returns the stripe size defined by its thin pool" do
+        expect(subject.stripe_size).to eq(thin_pool.stripe_size)
+      end
+    end
+
+    context "when volume is not a thin LV" do
+      let(:device_name) { "/dev/vg0/striped1" }
+
+      it "returns its stripping value" do
+        expect(subject.stripe_size).to eq(4.KiB)
+      end
+    end
+  end
+
   describe "#origin" do
     context "when called over a snapshot volume" do
       let(:original_volume) { fake_devicegraph.find_by_name("/dev/vg0/normal1") }
