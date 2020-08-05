@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug  5 15:06:26 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Proposal: fixed detection of shadowed subvolumes for roles using
+  separate LVM volume groups for each filesystem (bsc#1174475).
+- 4.2.112
+
+-------------------------------------------------------------------
 Fri Jul  3 12:31:39 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - AutoYaST: delegate to initial guided proposal when no partitions

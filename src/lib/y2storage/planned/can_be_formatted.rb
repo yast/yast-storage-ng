@@ -137,7 +137,7 @@ module Y2Storage
         return [] if subvolumes.nil?
 
         other_devices = all_devices - [self]
-        other_mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
+        other_mount_points = other_devices.flat_map { |dev| mount_points_for(dev) }
         subvolumes.select { |s| s.shadowed?(mount_point, other_mount_points) }
       end
 
@@ -252,6 +252,18 @@ module Y2Storage
 
         filesystem.mount_path = mount_point
         filesystem.mount_point.mount_by = mount_by if mount_by
+      end
+
+      # @param device [Planned::Device]
+      def mount_points_for(device)
+        points =
+          if device.is_a?(LvmVg)
+            device.lvs.map { |lv| mount_point_for(lv) }
+          else
+            [mount_point_for(device)]
+          end
+
+        points.compact
       end
 
       # @param device [Planned::Device]
