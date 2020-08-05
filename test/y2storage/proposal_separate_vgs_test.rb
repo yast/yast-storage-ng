@@ -33,10 +33,46 @@ describe Y2Storage::GuidedProposal do
     let(:settings_format) { :ng }
     let(:control_file) { "separate_vgs.xml" }
     let(:scenario) { "empty_disks" }
-    before { settings.separate_vgs = separate_vgs }
+    before do
+      settings.separate_vgs = separate_vgs
+
+      root_vol = settings.volumes.find { |vol| vol.mount_point == "/" }
+      root_vol.fs_type = Y2Storage::Filesystems::Type::BTRFS
+      root_vol.subvolumes = [
+        Y2Storage::SubvolSpecification.new("home"), Y2Storage::SubvolSpecification.new("srv")
+      ]
+    end
 
     let(:mounted_devices) do
-      Y2Storage::MountPoint.all(proposal.devices).map { |i| i.filesystem.blk_devices.first }
+      Y2Storage::MountPoint.all(proposal.devices).map { |i| i.filesystem.blk_devices.first }.uniq
+    end
+
+    let(:root_fs) do
+      Y2Storage::MountPoint.find_by_path(proposal.devices, "/").first.filesystem
+    end
+
+    let(:subvol_specs) { proposal.settings.volumes.flat_map(&:subvolumes) }
+    let(:subvols) { root_fs.btrfs_subvolumes.reject { |s| s.path.empty? } }
+
+    RSpec.shared_examples "duplicated mount paths" do
+      it "does not duplicate mount points" do
+        proposal.propose
+
+        mount_paths = Y2Storage::MountPoint.all(proposal.devices).map(&:path)
+        expect(mount_paths.size).to eq mount_paths.uniq.size
+      end
+    end
+
+    RSpec.shared_examples "shadowed subvolumes" do
+      it "does not create subvolumes that are shadowed" do
+        proposal.propose
+
+        expect(subvols.size).to be < subvol_specs.size
+        expect(subvol_specs.map(&:path)).to include "srv"
+        expect(subvols.map(&:path)).to_not include "srv"
+      end
+
+      include_examples "duplicated mount paths"
     end
 
     context "when ProposalSettings#lvm is set to true" do
@@ -53,6 +89,24 @@ describe Y2Storage::GuidedProposal do
           is_lv = mounted_devices.map { |i| i.is?(:lvm_lv) }
           expect(is_lv).to all(eq(true))
         end
+
+        # Regression tests for bug#1174475, the /srv subvol was created despite
+        # being shadowed by the volume created in a separate LVM VG
+        include_examples "shadowed subvolumes"
+
+        # Just to make sure subvolumes are not considered as shadowed when they are not
+        context "but the separate volumes are disabled" do
+          before do
+            settings.volumes.each { |vol| vol.proposed = !vol.separate_vg? }
+          end
+
+          it "creates all the subvolumes" do
+            proposal.propose
+            expect(subvols.size).to eq subvol_specs.size
+          end
+
+          include_examples "duplicated mount paths"
+        end
       end
 
       context "but ProposalSettings#separate_vgs is set to false" do
@@ -67,6 +121,8 @@ describe Y2Storage::GuidedProposal do
           is_lv = mounted_devices.map { |i| i.is?(:lvm_lv) }
           expect(is_lv).to all(eq(true))
         end
+
+        include_examples "shadowed subvolumes"
       end
     end
 
@@ -86,6 +142,8 @@ describe Y2Storage::GuidedProposal do
           expect(lvs.size).to eq 2
           expect(partitions.size).to eq 2
         end
+
+        include_examples "shadowed subvolumes"
       end
 
       context "and ProposalSettings#separate_vgs is set to false" do
@@ -99,6 +157,8 @@ describe Y2Storage::GuidedProposal do
           is_partition = mounted_devices.map { |i| i.is?(:partition) }
           expect(is_partition).to all(eq(true))
         end
+
+        include_examples "shadowed subvolumes"
       end
     end
   end
