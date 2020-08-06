@@ -75,7 +75,7 @@ module Y2Storage
     def calculate_proposal
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning, issues_list)
       if issues_list.fatal?
-        @devices = []
+        @devices = nil
         return @devices
       end
 

@@ -730,6 +730,11 @@ describe Y2Storage::AutoinstProposal do
           end
           expect(issue).to_not be_nil
         end
+
+        it "marks the proposal as failed" do
+          proposal.propose
+          expect(proposal.failed?).to eq true
+        end
       end
     end
 
