@@ -39,7 +39,9 @@ module Y2Storage
       attr_reader :planned_devices
 
       # Proposed layout of devices, nil if the proposal has not been calculated yet
-      # @return [Devicegraph]
+      # or if it was impossible to calculate one
+      #
+      # @return [Devicegraph, nil]
       attr_reader :devices
 
       # If this proposal was generated via {GuidedProposal.initial}, this

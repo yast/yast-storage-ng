@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Aug  6 12:00:08 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- AutoinstProposal now properly reports the proposal as failed when
+  it fails to find the disks (bsc#1174469)
+- 4.3.14
+
+-------------------------------------------------------------------
 Wed Aug  5 15:06:26 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: fixed detection of shadowed subvolumes for roles using
