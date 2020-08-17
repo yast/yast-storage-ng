@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug 17 12:37:24 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Do not append a suffix to LVM Volume Group names unless it
+  is needed (bsc#1115749).
+- 4.1.96
+
+-------------------------------------------------------------------
 Mon Apr 06 09:14:25 CEST 2020 - aschnell@suse.com
 
 - allow to disable LUKS activation (bsc#1162545)
