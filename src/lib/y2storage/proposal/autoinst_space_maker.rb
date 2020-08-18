@@ -72,7 +72,7 @@ module Y2Storage
       # @param devicegraph    [Devicegraph]
       # @param disk           [Disk]
       # @param drive_spec     [AutoinstProfile::DriveSection]
-      # @param reused_devices [Array<String>] Reused disks and partitions names
+      # @param reused_devices [Array<String>,nil] Reused disks and partitions names
       def delete_stuff(devicegraph, disk, drive_spec, reused_devices)
         reused_devices ||= []
         if drive_spec.initialize_attr && reused_devices.empty?
