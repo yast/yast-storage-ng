@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,6 +24,7 @@ require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
+require "y2partitioner/dialogs/main_menus"
 require "y2partitioner/actions/quit_partitioner"
 
 Yast.import "Label"
@@ -35,6 +36,7 @@ module Y2Partitioner
   module Dialogs
     # Main entry point to Partitioner showing tree pager with all content
     class Main < CWM::Dialog
+      include MainMenus
       # @return [Y2Storage::Devicegraph] device graph with all changes done in dialog
       attr_reader :device_graph
 
@@ -62,10 +64,13 @@ module Y2Partitioner
         overview_tree_pager = Widgets::OverviewTreePager.new(hostname)
         UIState.instance.overview_tree_pager = overview_tree_pager
 
-        MarginBox(
-          0.5,
-          0.5,
-          overview_tree_pager
+        VBox(
+          MenuBar(Id(:menu_bar), main_menus),
+          MarginBox(
+            0.5,
+            0.5,
+            overview_tree_pager
+          )
         )
       end
 
