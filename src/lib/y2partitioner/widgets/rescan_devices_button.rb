@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,8 +19,7 @@
 
 require "yast"
 require "cwm/widget"
-require "y2partitioner/ui_state"
-require "y2partitioner/widgets/reprobe"
+require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/widgets/execute_and_redraw"
 
 Yast.import "Popup"
@@ -30,7 +29,6 @@ module Y2Partitioner
   module Widgets
     # Button for rescanning system devices
     class RescanDevicesButton < CWM::PushButton
-      include Reprobe
       include ExecuteAndRedraw
 
       def initialize
@@ -47,13 +45,7 @@ module Y2Partitioner
       #
       # @return [Symbol, nil]
       def handle
-        return nil unless continue?
-
-        UIState.create_instance
-        execute_and_redraw do
-          reprobe
-          :finish
-        end
+        execute_and_redraw { Actions::RescanDevices.new.run }
       end
 
       # @macro seeAbstractWidget
@@ -63,25 +55,6 @@ module Y2Partitioner
           "<p>The <b>Rescan Devices</b> button refreshes the information about storage " \
           "devices.</p>"
         )
-      end
-
-      private
-
-      def continue?
-        Yast::Popup.YesNo(rescan_message)
-      end
-
-      def rescan_message
-        if Yast::Mode.installation
-          _("Re-scanning the storage devices will invalidate all the configuration\n" \
-            "options set in the installer regarding storage, with no possibility\n" \
-            "to withdraw.\n" \
-            "That includes the result and settings of the guided setup as well as\n" \
-            "the manual changes performed in the expert partitioner.")
-        else
-          _("Re-scanning the storage devices will invalidate all the previous\n" \
-            "changes with no possibility to withdraw.")
-        end
       end
     end
   end

@@ -19,12 +19,15 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/actions/rescan_devices"
 
 module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
       include Yast::Logger
+      include ExecuteAndRedraw
 
       # Constructor
       def initialize
@@ -64,7 +67,7 @@ module Y2Partitioner
           log.info("Calling #{handler}()")
           send(handler)
         else
-          log.info("No #{handler} method defined")
+          log.info("No method #{handler}")
           nil
         end
       end
@@ -143,8 +146,7 @@ module Y2Partitioner
       #----------------------------------------------------------------------
 
       def handle_rescan_devices
-        log.info("Handling rescan_devices")
-        nil
+        execute_and_redraw { Actions::RescanDevices.new.run }
       end
 
       def handle_abort

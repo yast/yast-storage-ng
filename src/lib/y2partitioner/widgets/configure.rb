@@ -19,8 +19,8 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/widgets/reprobe"
 require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/reprobe"
 require "y2partitioner/icons"
 
 Yast.import "Stage"
