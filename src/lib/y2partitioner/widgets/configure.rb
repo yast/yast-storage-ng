@@ -113,7 +113,7 @@ module Y2Partitioner
       # @macro seeCustomWidget
       #
       # Redefined in this class because the base implementation at CWM::CustomWidget
-      # does not search for ids into the items of a MenuButton.
+      # does not search for ids in the items of a MenuButton.
       def ids_in_contents
         actions.map(&:id)
       end
