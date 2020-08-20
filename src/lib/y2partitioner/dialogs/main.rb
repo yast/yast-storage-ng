@@ -22,6 +22,7 @@ require "cwm/dialog"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
+require "y2partitioner/widgets/main_menu_bar"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
 require "y2partitioner/dialogs/main_menus"
@@ -65,7 +66,7 @@ module Y2Partitioner
         UIState.instance.overview_tree_pager = overview_tree_pager
 
         VBox(
-          MenuBar(Id(:menu_bar), main_menus),
+          Widgets::MainMenuBar.new,
           MarginBox(
             0.5,
             0.5,
