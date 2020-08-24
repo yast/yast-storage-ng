@@ -47,6 +47,7 @@ module Y2Partitioner
       #
       def handle(event)
         return nil unless menu_event?(event)
+
         call_menu_item_handler(event["ID"])
       end
 
@@ -61,6 +62,7 @@ module Y2Partitioner
       # is defined in this class.
       def call_menu_item_handler(id)
         return nil if id.nil?
+
         # log.info("Handling menu event: #{id}")
         handler = "handle_#{id}"
         if respond_to?(handler, true)
@@ -109,7 +111,7 @@ module Y2Partitioner
           Item(Id(:delete_all), _("Delete A&ll")),
           Item("---"),
           Item(Id(:resize), _("Resi&ze...")),
-          Item(Id(:move), _("&Move...")),
+          Item(Id(:move), _("&Move..."))
         ].freeze
       end
 

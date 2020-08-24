@@ -25,6 +25,7 @@ require "y2partitioner/reprobe"
 
 module Y2Partitioner
   module Actions
+    # Action class to rescan (reprobe) all devices
     class RescanDevices
       include Reprobe
       include Yast::I18n
