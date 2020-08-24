@@ -37,7 +37,6 @@ module Y2Partitioner
   module Dialogs
     # Main entry point to Partitioner showing tree pager with all content
     class Main < CWM::Dialog
-      include MainMenus
       # @return [Y2Storage::Devicegraph] device graph with all changes done in dialog
       attr_reader :device_graph
 
