@@ -19,8 +19,9 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/execute_and_redraw"
 require "y2partitioner/actions/rescan_devices"
+require "y2partitioner/actions/configure_actions"
 
 module Y2Partitioner
   module Widgets
@@ -33,6 +34,7 @@ module Y2Partitioner
       def initialize
         textdomain "storage"
         self.handle_all_events = true
+        @configure_actions = Actions::ConfigureActions.new
         super
       end
 
@@ -48,7 +50,12 @@ module Y2Partitioner
       def handle(event)
         return nil unless menu_event?(event)
 
-        call_menu_item_handler(event["ID"])
+        id = event["ID"]
+        if @configure_actions.contain?(id)
+          @configure_actions.run(id)
+        else
+          call_menu_item_handler(id)
+        end
       end
 
       private
@@ -124,12 +131,7 @@ module Y2Partitioner
       end
 
       def configure_menu
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:provide_crypt_passwords), _("Provide &Crypt Passwords...")),
-          Item(Id(:configure_iscsi), _("Configure &iSCSI...")),
-          Item(Id(:configure_fcoe), _("Configure &FCoE..."))
-        ].freeze
+        @configure_actions.menu_items
       end
 
       def options_menu

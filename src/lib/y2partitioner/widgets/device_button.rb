@@ -19,7 +19,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/execute_and_redraw"
 
 Yast.import "Popup"
 
