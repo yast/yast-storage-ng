@@ -25,7 +25,6 @@ require "y2partitioner/widgets/overview"
 require "y2partitioner/widgets/main_menu_bar"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
-require "y2partitioner/dialogs/main_menus"
 require "y2partitioner/actions/quit_partitioner"
 
 Yast.import "Label"
