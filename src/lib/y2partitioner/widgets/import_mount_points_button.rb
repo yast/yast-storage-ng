@@ -20,7 +20,7 @@
 require "yast"
 require "cwm/widget"
 require "y2partitioner/actions/import_mount_points"
-require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
