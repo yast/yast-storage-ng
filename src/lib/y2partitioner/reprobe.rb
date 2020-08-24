@@ -28,8 +28,6 @@ Yast.import "Popup"
 module Y2Partitioner
   # Mixin for widgets and actions that need to trigger a hardware reprobe
   module Reprobe
-  private
-
     # Reprobes and updates devicegraphs for the partitioner. During
     # installation, a reactivation is performed before reprobing.
     #
