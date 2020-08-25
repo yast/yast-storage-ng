@@ -21,14 +21,13 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/configure"
+require "y2partitioner/actions/configure_actions"
 require_relative "#{TEST_PATH}/support/partitioner_reprobe_examples"
 
-describe Y2Partitioner::Widgets::Configure do
-  subject(:widget) { described_class.new }
+describe Y2Partitioner::Actions::ConfigureActions do
+  subject(:actions) { described_class.new }
 
-  def menu_button_item_ids(button)
-    items = button.params.last
+  def menu_item_ids(items)
     items.map do |item|
       id = item.params.find { |param| param.is_a?(Yast::Term) && param.value == :id }
       id.params.first
@@ -41,7 +40,7 @@ describe Y2Partitioner::Widgets::Configure do
   end
   let(:install) { false }
 
-  describe "#contents" do
+  describe "#menu_items" do
     before do
       allow(Yast::WFM).to receive(:ClientExists) do |name|
         !missing_clients.include?(name)
@@ -60,10 +59,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if all the possible clients are available" do
           let(:missing_clients) { [] }
 
-          it "returns a menu button with buttons for crypt, iSCI, FCoE, DASD, zFCP and XPRAM" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)) .to contain_exactly(
+          it "returns menu items for crypt, iSCI, FCoE, DASD, zFCP and XPRAM" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
             )
           end
@@ -72,13 +70,12 @@ describe Y2Partitioner::Widgets::Configure do
         context "if some clients are not available" do
           let(:missing_clients) { ["iscsi-client", "dasd"] }
 
-          it "returns a menu button with buttons only for the available clients" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items only for the available clients" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_fcoe, :configure_zfcp, :configure_xpram
             )
-            expect(menu_button_item_ids(term)).to_not include(:configure_iscsi, :configure_dasd)
+            expect(menu_item_ids(items)).to_not include(:configure_iscsi, :configure_dasd)
           end
         end
 
@@ -86,9 +83,8 @@ describe Y2Partitioner::Widgets::Configure do
           let(:missing_clients) { all_clients }
 
           it "returns a menu button with 'Crypt Passwords' as the only option" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:provide_crypt_passwords]
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords]
           end
         end
       end
@@ -99,10 +95,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if all the possible clients are available" do
           let(:missing_clients) { [] }
 
-          it "returns a menu button with buttons for crypt, iSCI and FCoE" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items for crypt, iSCI and FCoE" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
             )
           end
@@ -111,11 +106,10 @@ describe Y2Partitioner::Widgets::Configure do
         context "if some clients are not available" do
           let(:missing_clients) { ["iscsi-client"] }
 
-          it "returns a menu button with buttons only for the available clients" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:provide_crypt_passwords, :configure_fcoe]
-            expect(menu_button_item_ids(term)).to_not include(:configure_iscsi)
+          it "returns menu items only for the available clients" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords, :configure_fcoe]
+            expect(menu_item_ids(items)).to_not include(:configure_iscsi)
           end
         end
 
@@ -123,9 +117,8 @@ describe Y2Partitioner::Widgets::Configure do
           let(:missing_clients) { all_clients }
 
           it "returns a menu button with 'Crypt Passwords' as the only option" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to eq [:provide_crypt_passwords]
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords]
           end
         end
       end
@@ -140,10 +133,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if all the possible clients are available" do
           let(:missing_clients) { [] }
 
-          it "returns a menu button with buttons for all actions" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items for all actions" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
             )
           end
@@ -152,10 +144,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if some clients are not available" do
           let(:missing_clients) { ["iscsi-client", "dasd"] }
 
-          it "returns a menu button with buttons for all actions" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items for all actions" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
             )
           end
@@ -168,10 +159,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if all the possible clients are available" do
           let(:missing_clients) { [] }
 
-          it "returns a menu button with buttons for all supported actions (crypt, iSCI and FCoE)" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items for all supported actions (crypt, iSCI and FCoE)" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
             )
           end
@@ -180,10 +170,9 @@ describe Y2Partitioner::Widgets::Configure do
         context "if some clients are not available" do
           let(:missing_clients) { ["iscsi-client"] }
 
-          it "returns a menu button with buttons for all supported actions (crypt, iSCI and FCoE)" do
-            term = widget.contents
-            expect(term.value).to eq :MenuButton
-            expect(menu_button_item_ids(term)).to contain_exactly(
+          it "returns menu items for all supported actions (crypt, iSCI and FCoE)" do
+            items = actions.menu_items
+            expect(menu_item_ids(items)).to contain_exactly(
               :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
             )
           end
@@ -192,39 +181,34 @@ describe Y2Partitioner::Widgets::Configure do
     end
   end
 
-  describe "#handle" do
-    def event_for(id)
-      { "ID" => id }
-    end
-
+  describe "#run" do
     before do
       allow(Yast::Popup).to receive(:YesNo).and_return accepted
       allow(manager).to receive(:probe).and_return true
     end
-    let(:accepted) { false }
 
-    let(:handle_args) { [event_for(:configure_fcoe)] }
+    let(:accepted) { false }
     let(:manager) { Y2Storage::StorageManager.instance }
-    let(:event) { event_for(:configure_iscsi) }
+    let(:id) { :configure_iscsi }
 
     RSpec.shared_examples "configure nothing" do
       it "returns nil" do
-        expect(widget.handle(event)).to be_nil
+        expect(actions.run(id)).to be_nil
       end
 
       it "does not call any other YaST client" do
         expect(Yast::WFM).to_not receive(:call)
-        widget.handle(event)
+        actions.run(id)
       end
 
       it "does not run activation again" do
         expect(manager).to_not receive(:activate)
-        widget.handle(event)
+        actions.run(id)
       end
 
       it "does not probe again" do
         expect(manager).to_not receive(:probe)
-        widget.handle(event)
+        actions.run(id)
       end
     end
 
@@ -232,8 +216,8 @@ describe Y2Partitioner::Widgets::Configure do
       it "displays the corresponding warning message" do
         expect(Yast::Popup).to receive(:YesNo).with(/FCoE/).ordered
         expect(Yast::Popup).to receive(:YesNo).with(/iSCSI/).ordered
-        widget.handle(event_for(:configure_fcoe))
-        widget.handle(event_for(:configure_iscsi))
+        actions.run(:configure_fcoe)
+        actions.run(:configure_iscsi)
       end
 
       context "if the user rejects the warning" do
@@ -253,34 +237,23 @@ describe Y2Partitioner::Widgets::Configure do
         let(:accepted) { true }
 
         context "for an action performed via a separate client" do
-          let(:event) { event_for(:configure_iscsi) }
-
           it "calls the corresponding YaST client" do
             expect(Yast::WFM).to receive(:call).with("iscsi-client")
-            widget.handle(event)
+            actions.run(:configure_iscsi)
           end
-
-          include_examples "reprobing"
-          include_examples "activation"
         end
 
         context "for activation of crypt devices" do
-          let(:event) { event_for(:provide_crypt_passwords) }
-
           it "does not call any additional YaST client" do
             expect(Yast::WFM).to_not receive(:call)
-            widget.handle(event)
+            actions.run(:provide_crypt_passwords)
           end
-
-          include_examples "reprobing"
-          include_examples "activation"
         end
       end
     end
 
     context "in an already installed system" do
       let(:install) { false }
-      let(:handle_args) { [event] }
       # Ensure all actions are available
       before { allow(Yast::Arch).to receive(:s390).and_return true }
 
@@ -301,8 +274,8 @@ describe Y2Partitioner::Widgets::Configure do
             .to receive(:CheckAndInstallPackages).with(["yast2-s390"]).ordered
           expect(Yast::PackageSystem)
             .to receive(:CheckAndInstallPackages).with(["yast2-fcoe-client"]).ordered
-          widget.handle(event_for(:configure_dasd))
-          widget.handle(event_for(:configure_fcoe))
+          actions.run(:configure_dasd)
+          actions.run(:configure_fcoe)
         end
 
         context "if the packages were not installed" do
@@ -315,32 +288,25 @@ describe Y2Partitioner::Widgets::Configure do
           let(:installed_pkgs) { true }
 
           context "for an action performed via a separate client" do
-            let(:event) { event_for(:configure_iscsi) }
 
             it "calls the corresponding YaST client" do
               expect(Yast::WFM).to receive(:call).with("iscsi-client")
-              widget.handle(event)
+              actions.run(:configure_iscsi)
             end
-
-            include_examples "reprobing"
 
             it "does not run activation" do
               expect(manager).to_not receive(:activate)
-              widget.handle(event)
+              actions.run(:configure_iscsi)
             end
           end
 
           context "for activation of crypt devices" do
-            let(:event) { event_for(:provide_crypt_passwords) }
             before { allow(manager).to receive(:activate).and_return true }
 
             it "does not call any additional YaST client" do
               expect(Yast::WFM).to_not receive(:call)
-              widget.handle(event)
+              actions.run(:provide_crypt_passwords)
             end
-
-            include_examples "reprobing"
-            include_examples "activation"
           end
         end
       end
