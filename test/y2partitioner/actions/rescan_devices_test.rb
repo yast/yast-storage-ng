@@ -22,10 +22,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/rescan_devices_button"
-require_relative "#{TEST_PATH}/support/partitioner_reprobe_examples"
+require "y2partitioner/actions/rescan_devices"
 
-describe Y2Partitioner::Widgets::RescanDevicesButton do
+describe Y2Partitioner::Actions::RescanDevices do
   before do
     Y2Storage::StorageManager.create_test_instance
     # Ensure old values have been queried at least once
@@ -37,9 +36,7 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
 
   subject { described_class.new }
 
-  include_examples "CWM::PushButton"
-
-  describe "#handle" do
+  describe "#run" do
     before do
       allow(Yast::Popup).to receive(:YesNo).and_return(accepted)
     end
@@ -49,20 +46,20 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
 
     it "shows a confirm popup" do
       expect(Yast::Popup).to receive(:YesNo)
-      subject.handle
+      subject.run
     end
 
-    context "when rescanning is canceled" do
+    context "when rescanning is cancelled" do
       let(:accepted) { false }
 
       it "does not create a new UIState instance" do
         expect(Y2Partitioner::UIState).to_not receive(:create_instance)
 
-        subject.handle
+        subject.run
       end
 
       it "returns nil" do
-        expect(subject.handle).to be_nil
+        expect(subject.run).to be_nil
       end
     end
 
@@ -74,39 +71,35 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
         let(:install) { true }
         before { allow(manager).to receive(:activate).and_return true }
 
-        include_examples "reprobing"
-
         it "creates a new UIState instance" do
           expect(Y2Partitioner::UIState).to receive(:create_instance)
 
-          subject.handle
+          subject.run
         end
 
         it "runs activation again" do
           expect(manager).to receive(:activate).and_return true
-          subject.handle
+          subject.run
         end
 
         it "raises an exception if activation fails" do
           allow(manager).to receive(:activate).and_return false
-          expect { subject.handle }.to raise_error(Y2Partitioner::ForcedAbortError)
+          expect { subject.run }.to raise_error(Y2Partitioner::ForcedAbortError)
         end
       end
 
       context "in an installed system" do
         let(:install) { false }
 
-        include_examples "reprobing"
-
         it "creates a new UIState instance" do
           expect(Y2Partitioner::UIState).to receive(:create_instance)
 
-          subject.handle
+          subject.run
         end
 
         it "does not re-run activation" do
           expect(manager).to_not receive(:activate)
-          subject.handle
+          subject.run
         end
       end
     end
