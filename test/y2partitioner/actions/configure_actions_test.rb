@@ -22,7 +22,6 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/actions/configure_actions"
-require_relative "#{TEST_PATH}/support/partitioner_reprobe_examples"
 
 describe Y2Partitioner::Actions::ConfigureActions do
   subject(:actions) { described_class.new }
