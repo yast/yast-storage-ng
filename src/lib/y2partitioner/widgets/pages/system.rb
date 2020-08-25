@@ -22,9 +22,7 @@ require "y2partitioner/icons"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
-require "y2partitioner/widgets/configure"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/columns"
 
@@ -61,8 +59,10 @@ module Y2Partitioner
           @contents = VBox(
             Left(header),
             table,
-            Left(device_buttons),
-            Right(HBox(*buttons))
+            HBox(
+              Left(device_buttons),
+              extra_button
+            )
           )
         end
 
@@ -112,21 +112,15 @@ module Y2Partitioner
           @device_buttons ||= DeviceButtonsSet.new(pager)
         end
 
-        # Page buttons
+        # Extra button during installation: "Import Mount Points"
         #
-        # @return [Array<Yast::UI::Term>]
-        def buttons
-          buttons = [rescan_devices_button]
-          buttons << import_mount_points_button if Yast::Mode.installation
-          buttons << Configure.new
-          buttons
-        end
-
-        # Button for rescanning devices
-        #
-        # @return [RescanDevicesButton]
-        def rescan_devices_button
-          RescanDevicesButton.new
+        # @return [<Yast::UI::Term>]
+        def extra_button
+          if Yast::Mode.installation
+            import_mount_points_button
+          else
+            Empty()
+          end
         end
 
         # Button for importing mount points
