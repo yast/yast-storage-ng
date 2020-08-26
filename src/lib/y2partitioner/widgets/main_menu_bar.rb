@@ -19,6 +19,7 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/icons"
 require "y2partitioner/execute_and_redraw"
 require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/actions/configure_actions"
@@ -36,11 +37,83 @@ module Y2Partitioner
       include Yast::Logger
       include ExecuteAndRedraw
 
+      # Class to represent each one of the entries in the 'Configure' menu
+      class ConfigureEntry
+        include Yast::I18n
+        extend Yast::I18n
+
+        # Constructor
+        def initialize(action_class_name, label, icon)
+          @action_class_name = action_class_name
+          @label = label
+          @icon = icon
+        end
+
+        # All possible entries
+        ALL = [
+          new(:ProvideCryptPasswords, N_("Provide Crypt &Passwords..."), Icons::LOCK),
+          new(:ConfigureIscsi,        N_("Configure &iSCSI..."),         Icons::ISCSI),
+          new(:ConfigureFcoe,         N_("Configure &FCoE..."),          Icons::FCOE),
+          new(:ConfigureDasd,         N_("Configure &DASD..."),          Icons::DASD),
+          new(:ConfigureZfcp,         N_("Configure &zFCP..."),          Icons::ZFCP),
+          new(:ConfigureXpram,        N_("Configure &XPRAM..."),         Icons::XPRAM)
+        ]
+        private_constant :ALL
+
+        # All possible entries
+        #
+        # @return [Array<ConfigureEntry>]
+        def self.all
+          ALL.dup
+        end
+
+        # Entries that should be displayed to the user
+        #
+        # @return [Array<ConfigureEntry>]
+        def self.visible
+          all.select(&:visible?)
+        end
+
+        # @return [String] name of the icon to display next to the label
+        attr_reader :icon
+
+        # @return [String] Internationalized label
+        def label
+          _(@label)
+        end
+
+        # @return [Symbol] identifier for the action to use in the UI
+        def id
+          @id ||= action_class_name.to_s.gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
+        end
+
+        # Action to execute when the entry is selected
+        #
+        # @return [Y2Partitioner::Actions::ConfigureAction]
+        def action
+          @action ||= Y2Partitioner::Actions.const_get(action_class_name).new
+        end
+
+        # Whether the entry should be displayed to the user
+        #
+        # @return [Boolean]
+        def visible?
+          action.available?
+        end
+
+        private
+
+        # Name of the class for #{action}
+        #
+        # @return [Symbol]
+        attr_reader :action_class_name
+      end
+
       # Constructor
       def initialize
         textdomain "storage"
         self.handle_all_events = true
-        @configure_actions = Actions::ConfigureActions.new
+        @configure_entries = ConfigureEntry.visible
         super
       end
 
@@ -66,8 +139,9 @@ module Y2Partitioner
         return nil unless menu_event?(event)
 
         id = event["ID"]
-        if @configure_actions.contain?(id)
-          @configure_actions.run(id)
+        entry = @configure_entries.find { |e| e.id == id }
+        if entry
+          execute_and_redraw { entry.action.run }
         else
           call_menu_item_handler(id)
         end
@@ -151,7 +225,14 @@ module Y2Partitioner
       end
 
       def configure_menu
-        @configure_actions.menu_items
+        @configure_entries.map do |entry|
+          Yast::Term.new(
+            :item,
+            Yast::Term.new(:id, entry.id),
+            Yast::Term.new(:icon, entry.icon),
+            entry.label
+          )
+        end
       end
 
       def options_menu
