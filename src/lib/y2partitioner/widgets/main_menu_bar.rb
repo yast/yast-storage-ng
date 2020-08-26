@@ -218,7 +218,7 @@ module Y2Partitioner
       end
 
       def handle_installation_summary
-        Dialogs::SummaryPopup.run
+        Dialogs::SummaryPopup.new.run
         nil
       end
 
