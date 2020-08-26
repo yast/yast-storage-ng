@@ -180,7 +180,7 @@ module Y2Partitioner
         disable_menu_items(:create_partition_table, :clone_partitions)
       end
 
-      # Disable a all items with the specified IDs
+      # Disable all items with the specified IDs
       def disable_menu_items(*ids)
         disabled_hash = ids.each_with_object({}) { |id, h| h[id] = false }
         Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
