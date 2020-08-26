@@ -102,7 +102,6 @@ module Y2Partitioner
         [
           system_items,
           *graph_items,
-          summary_item,
           settings_item
         ]
       end
@@ -336,12 +335,6 @@ module Y2Partitioner
         # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
         # [dev_item, mount_item]
         [dev_item]
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def summary_item
-        page = Pages::Summary.new
-        section_item(page, Icons::SUMMARY)
       end
 
       # @return [CWM::PagerTreeItem]

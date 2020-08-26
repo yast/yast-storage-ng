@@ -45,7 +45,7 @@ module Y2Partitioner
         )
       end
 
-      private
+      protected
 
       # Popup min width
       #
