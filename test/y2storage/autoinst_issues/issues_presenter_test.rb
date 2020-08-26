@@ -85,8 +85,9 @@ describe Installation::AutoinstIssues::IssuesPresenter do
       end
 
       it "includes the location information" do
+        section = list.first.section
         expect(presenter.to_html).to include(
-          "<li>partitioning > drives[1] > partitions[2] > raid_options:<ul>"
+          "<li>#{section.section_path}:<ul>"
         )
       end
     end
@@ -134,8 +135,9 @@ describe Installation::AutoinstIssues::IssuesPresenter do
       end
 
       it "includes the location information" do
+        section = list.first.section
         expect(presenter.to_plain).to include(
-          "* partitioning > drives[1] > partitions[2] > raid_options:"
+          "* #{section.section_path}:"
         )
       end
     end

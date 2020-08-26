@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "installation/autoinst_profile/section_with_attributes"
 require "y2storage/autoinst_profile/drive_section"
 
 module Y2Storage
@@ -27,7 +28,7 @@ module Y2Storage
     #
     # More information can be found in the 'Partitioning' section of the AutoYaST documentation:
     # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#CreateProfile.Partitioning
-    class PartitioningSection
+    class PartitioningSection < ::Installation::AutoinstProfile::SectionWithAttributes
       # @return [Array<DriveSection] drives whithin the <partitioning> section
       attr_accessor :drives
 
@@ -136,13 +137,6 @@ module Y2Storage
       # @return [Array<DriveSection>]
       def btrfs_drives
         drives.select { |d| d.type == :CT_BTRFS }
-      end
-
-      # Return section name
-      #
-      # @return [String] "partitioning"
-      def section_name
-        "partitioning"
       end
 
       # All drive sections generated from a given devicegraph
