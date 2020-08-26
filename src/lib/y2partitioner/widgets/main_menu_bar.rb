@@ -24,6 +24,7 @@ require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/actions/configure_actions"
 require "y2partitioner/actions/import_mount_points"
 require "y2partitioner/dialogs/summary_popup"
+require "y2partitioner/dialogs/settings"
 
 module Y2Partitioner
   module Widgets
@@ -196,7 +197,8 @@ module Y2Partitioner
       end
 
       def handle_settings
-        # FIXME: TODO
+        Dialogs::Settings.new.run
+        nil
       end
 
       def handle_abort
