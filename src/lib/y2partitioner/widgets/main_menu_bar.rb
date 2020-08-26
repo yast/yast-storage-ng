@@ -27,6 +27,7 @@ module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
+      Yast.import "UI"
       include Yast::Logger
       include ExecuteAndRedraw
 
@@ -38,9 +39,18 @@ module Y2Partitioner
         super
       end
 
+      # Called by CWM after the widgets are created
+      def init
+        enable_items
+      end
+
+      def id
+        :menu_bar
+      end
+
       # Widget contents
       def contents
-        @contents ||= MenuBar(Id(:menu_bar), main_menus)
+        @contents ||= MenuBar(Id(id), main_menus)
       end
 
       # Event handler for the main menu.
@@ -140,6 +150,28 @@ module Y2Partitioner
           Item(Id(:create_partition_table), _("Create New Partition &Table...")),
           Item(Id(:clone_partitions), _("&Clone Partitions to Other Devices..."))
         ].freeze
+      end
+
+      # Enable or disable menu items according to the current status
+      def enable_items
+        enable_edit_items
+        enable_options_items
+      end
+
+      def enable_edit_items
+        # Disable all items in the "Edit" menu for now: Right now they are only
+        # there to demonstrate what the final menu will look like.
+        disable_menu_items(:add, :edit, :delete, :delete_all, :resize, :move)
+      end
+
+      def enable_options_items
+        disable_menu_items(:create_partition_table, :clone_partitions)
+      end
+
+      # Disable a all items with the specified IDs
+      def disable_menu_items(*ids)
+        disabled_hash = ids.each_with_object({}) { |id, h| h[id] = false }
+        Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
       end
 
       #----------------------------------------------------------------------
