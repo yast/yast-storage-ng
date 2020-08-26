@@ -22,7 +22,6 @@ require "yast2/popup"
 require "cwm/widget"
 require "cwm/tree"
 require "y2partitioner/icons"
-require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
@@ -99,10 +98,7 @@ module Y2Partitioner
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
-        [
-          system_items,
-          *graph_items
-        ]
+        [system_items]
       end
 
       # Overrides default behavior of TreePager to register the new state with
@@ -322,18 +318,6 @@ module Y2Partitioner
       def btrfs_item(filesystem)
         page = Pages::Btrfs.new(filesystem, self)
         device_item(page)
-      end
-
-      # @return [Array<CWM::PagerTreeItem>]
-      def graph_items
-        return [] unless Yast::UI.HasSpecialWidget(:Graph)
-
-        page = Pages::DeviceGraph.new(self)
-        dev_item = section_item(page, Icons::GRAPH)
-        # TODO: Bring this back to life - disabled for now (bsc#1078849)
-        # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
-        # [dev_item, mount_item]
-        [dev_item]
       end
 
       # Generates a `section` tree item for given page
