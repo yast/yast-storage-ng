@@ -28,8 +28,8 @@ Source:         %{name}-%{version}.tar.bz2
 # UF_PMEM and UF_NVME
 BuildRequires:	libstorage-ng-ruby >= 4.3.30
 BuildRequires:  update-desktop-files
-# AutoYaST issue handling
-BuildRequires:  yast2 >= 4.3.2
+# AutoYaST ElementPath class
+BuildRequires:  yast2 >= 4.3.20
 BuildRequires:  yast2-devtools >= 4.2.2
 # for AbortException and handle direct abort
 BuildRequires:  yast2-ruby-bindings >= 4.0.6
@@ -49,8 +49,9 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 Requires:       findutils
 # UF_PMEM and UF_NVME
 Requires:       libstorage-ng-ruby >= 4.3.30
-# Updated Xen detection
-Requires:       yast2 >= 4.3.6
+# AutoYaST issue handling
+Requires:  yast2 >= 4.3.20
+
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
