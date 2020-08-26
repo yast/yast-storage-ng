@@ -46,9 +46,10 @@ module Y2Storage
       # Clones Btrfs options into an AutoYaST <btrfs_options> profile section
       #
       # @param filesystem [Filesystems::Btrfs]
+      # @param parent [SectionWithAttributes,nil]
       # @return [BtrfsOptionsSection] Btrfs options section
-      def self.new_from_storage(filesystem)
-        section = new
+      def self.new_from_storage(filesystem, parent = nil)
+        section = new(parent)
         section.init_from_btrfs(filesystem)
         section
       end

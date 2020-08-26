@@ -194,8 +194,8 @@ module Y2Storage
       # @param device [Device] a device that can be cloned into a <partition> section,
       #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
       # @return [PartitionSection]
-      def self.new_from_storage(device)
-        result = new
+      def self.new_from_storage(device, parent = nil)
+        result = new(parent)
         result.init_from_device(device)
         result
       end

@@ -75,9 +75,10 @@ module Y2Storage
       # Clones RAID device options into an AutoYaST <raid_options> profile section
       #
       # @param device [Md] RAID device
+      # @param parent [SectionWithAttributes,nil] Parent section
       # @return [RaidOptionsSection] RAID options section
-      def self.new_from_storage(device)
-        result = new
+      def self.new_from_storage(device, parent = nil)
+        result = new(parent)
         result.init_from_raid(device)
         result
       end

@@ -43,9 +43,10 @@ module Y2Storage
       # Clones Bcache device options into an AutoYaST <bcache_options> profile section
       #
       # @param device [Bcache] bcache device
+      # @param parent [SectionWithAttributes,nil] Parent section
       # @return [BcacheOptionsSection] bcache options section
-      def self.new_from_storage(device)
-        result = new
+      def self.new_from_storage(device, parent = nil)
+        result = new(parent)
         result.init_from_bcache(device)
         result
       end

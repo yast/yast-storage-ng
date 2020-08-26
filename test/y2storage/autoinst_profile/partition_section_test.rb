@@ -38,12 +38,19 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
   end
 
   describe ".new_from_storage" do
+    let(:parent) { double("Installation::AutoinstProfile::SectionWithAttributes") }
+
     def section_for(name)
       described_class.new_from_storage(device(name))
     end
 
     it "returns a PartitionSection object" do
       expect(section_for("dasdb1")).to be_a Y2Storage::AutoinstProfile::PartitionSection
+    end
+
+    it "sets the parent section" do
+      section = described_class.new_from_storage(device("dasdb1"), parent)
+      expect(section.parent).to eq(parent)
     end
 
     context "given a partition" do

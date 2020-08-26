@@ -179,6 +179,8 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   end
 
   describe ".new_from_storage" do
+    let(:parent) { double("Installation::AutoinstProfile::SectionWithAttributes") }
+
     it "returns nil for a disk or DASD with no partitions" do
       expect(described_class.new_from_storage(device("dasda"))).to eq nil
       expect(described_class.new_from_storage(device("sda"))).to eq nil
@@ -221,6 +223,11 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       btrfs.add_device(sdd1)
 
       expect(described_class.new_from_storage(btrfs)).to be_a described_class
+    end
+
+    it "sets the parent section" do
+      section = described_class.new_from_storage(device("sdc"), parent)
+      expect(section.parent).to eq(parent)
     end
 
     it "stores the exportable partitions as PartitionSection objects" do

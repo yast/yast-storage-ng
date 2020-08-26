@@ -71,6 +71,8 @@ describe Y2Storage::AutoinstProfile::BtrfsOptionsSection do
       )
     end
 
+    let(:parent) { double("Installation::AutoinstProfile::SectionWithAttributes") }
+
     it "initializes data_raid_level" do
       expect(section.data_raid_level).to eq("raid1")
     end

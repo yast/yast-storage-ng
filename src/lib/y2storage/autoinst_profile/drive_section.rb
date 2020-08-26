@@ -181,9 +181,10 @@ module Y2Storage
       #
       # @param device [BlkDevice] a block device that can be cloned into a
       #   <drive> section, like a disk, a DASD or an LVM volume group.
+      # @param parent [SectionWithAttributes,nil] Parent section
       # @return [DriveSection, nil] nil if the device cannot be exported
-      def self.new_from_storage(device)
-        result = new
+      def self.new_from_storage(device, parent = nil)
+        result = new(parent)
         # So far, only disks (and DASD) are supported
         initialized = result.init_from_device(device)
         initialized ? result : nil
@@ -430,7 +431,7 @@ module Y2Storage
         @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
         @use = "all"
         @disklabel = "none"
-        @partitions = [PartitionSection.new_from_storage(device)]
+        @partitions = [PartitionSection.new_from_storage(device, self)]
 
         true
       end
@@ -443,7 +444,7 @@ module Y2Storage
         @type = :CT_BTRFS
         @use = "all"
         @disklabel = "none"
-        @partitions = [PartitionSection.new_from_storage(filesystem)]
+        @partitions = [PartitionSection.new_from_storage(filesystem, self)]
         @device = @partitions.first.name_for_btrfs(filesystem)
         @enable_snapshots = enabled_snapshots?([filesystem])
         @btrfs_options = BtrfsOptionsSection.new_from_storage(filesystem)
@@ -460,7 +461,7 @@ module Y2Storage
         @device = device.share
         @use = "all"
         @disklabel = "none"
-        @partitions = [PartitionSection.new_from_storage(device)]
+        @partitions = [PartitionSection.new_from_storage(device, self)]
 
         true
       end
@@ -482,13 +483,13 @@ module Y2Storage
           collection = disk.partitions.reject { |p| skip_partition?(p) }
           partitions_from_collection(collection.sort_by(&:number))
         else
-          [PartitionSection.new_from_storage(disk)]
+          [PartitionSection.new_from_storage(disk, self)]
         end
       end
 
       def partitions_from_collection(collection)
         collection.each_with_object([]) do |storage_partition, result|
-          partition = PartitionSection.new_from_storage(storage_partition)
+          partition = PartitionSection.new_from_storage(storage_partition, self)
           next unless partition
 
           result << partition

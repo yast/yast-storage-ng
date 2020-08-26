@@ -100,6 +100,7 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
 
   describe ".new_from_storage" do
     let(:numeric?) { false }
+    let(:parent) { double("Installation::AutoinstProfile::SectionWithAttributes") }
 
     let(:sda1) do
       instance_double(
@@ -159,6 +160,11 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
       it "does not initialize raid_name" do
         expect(raid_options.raid_name).to be_nil
       end
+    end
+
+    it "sets the parent section" do
+      section = described_class.new_from_storage(md, parent)
+      expect(section.parent).to eq(parent)
     end
   end
 
