@@ -161,4 +161,20 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
       end
     end
   end
+
+  describe "#section_path" do
+    let(:partitioning) do
+      Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(
+        [{ "device" => "/dev/vda", "raid_options" => { "raid_name" => "/dev/md0" } }]
+      )
+    end
+
+    let(:drive) { partitioning.drives.first }
+
+    subject(:section) { drive.raid_options }
+
+    it "returns the section path" do
+      expect(section.section_path.to_s).to eq("partitioning,0,raid_options")
+    end
+  end
 end

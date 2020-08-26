@@ -922,12 +922,6 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
   end
 
-  describe "#section_name" do
-    it "returns 'drives'" do
-      expect(section.section_name).to eq("drives")
-    end
-  end
-
   describe "#name_for_md" do
     let(:part1) do
       instance_double(
@@ -1095,6 +1089,20 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           expect(section.master_partition).to eq(part0_spec)
         end
       end
+    end
+  end
+
+  describe "#section_path" do
+    let(:partitioning) do
+      Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(
+        [{ "device" => "/dev/vda", "partitions" => [{ "mount" => "/" }] }]
+      )
+    end
+
+    subject(:section) { partitioning.drives.first }
+
+    it "returns 'partitioning,index'" do
+      expect(section.section_path.to_s).to eq("partitioning,0")
     end
   end
 end

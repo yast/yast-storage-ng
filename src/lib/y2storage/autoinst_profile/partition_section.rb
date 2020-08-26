@@ -307,7 +307,7 @@ module Y2Storage
       # Return section name
       #
       # @return [String] "partitions"
-      def section_name
+      def collection_name
         "partitions"
       end
 

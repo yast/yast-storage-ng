@@ -19,6 +19,7 @@
 
 require "yast"
 require "installation/autoinst_profile/section_with_attributes"
+require "installation/autoinst_profile/element_path"
 require "y2storage/autoinst_profile/skip_list_section"
 require "y2storage/autoinst_profile/partition_section"
 require "y2storage/autoinst_profile/raid_options_section"
@@ -241,11 +242,18 @@ module Y2Storage
         hash
       end
 
-      # Return section name
+      # Returns the section path
       #
-      # @return [String] "drives"
-      def section_name
-        "drives"
+      # The <drive> section is an special case of a collection, so
+      # we need to redefine the #section_path method completely.
+      #
+      # @return [Installation::AutoinstProfile::ElementPath] Section path or
+      #   nil if the parent is not set
+      def section_path
+        return nil unless parent
+
+        idx = parent.drives.index(self)
+        parent.section_path.join(idx)
       end
 
       # @return [String] disklabel value which indicates that no partition table is wanted.

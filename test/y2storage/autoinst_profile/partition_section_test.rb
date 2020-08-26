@@ -1170,9 +1170,19 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
   end
 
-  describe "#section_name" do
-    it "returns 'partitions'" do
-      expect(section.section_name).to eq("partitions")
+  describe "#section_path" do
+    let(:partitioning) do
+      Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(
+        [{ "device" => "/dev/vda", "partitions" => [{ "mount" => "/" }] }]
+      )
+    end
+
+    let(:drive) { partitioning.drives.first }
+
+    subject(:section) { drive.partitions.first }
+
+    it "returns the section path" do
+      expect(section.section_path.to_s).to eq("partitioning,0,partitions,0")
     end
   end
 end

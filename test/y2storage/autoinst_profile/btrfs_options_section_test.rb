@@ -78,5 +78,26 @@ describe Y2Storage::AutoinstProfile::BtrfsOptionsSection do
     it "initializes metadata_raid_level" do
       expect(section.metadata_raid_level).to eq("single")
     end
+
+    it "sets the parent section" do
+      section = described_class.new_from_storage(filesystem, parent)
+      expect(section.parent).to eq(parent)
+    end
+  end
+
+  describe "#section_path" do
+    let(:partitioning) do
+      Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(
+        [{ "device" => "/dev/vda", "btrfs_options" => { "data_raid_level" => "SINGLE" } }]
+      )
+    end
+
+    let(:drive) { partitioning.drives.first }
+
+    subject(:section) { drive.btrfs_options }
+
+    it "returns the section path" do
+      expect(section.section_path.to_s).to eq("partitioning,0,btrfs_options")
+    end
   end
 end
