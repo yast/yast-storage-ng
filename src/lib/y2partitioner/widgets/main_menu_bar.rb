@@ -22,12 +22,14 @@ require "cwm"
 require "y2partitioner/execute_and_redraw"
 require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/actions/configure_actions"
+require "y2partitioner/actions/import_mount_points"
 
 module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
       Yast.import "UI"
+      Yast.import "Stage"
       include Yast::Logger
       include ExecuteAndRedraw
 
@@ -91,6 +93,11 @@ module Y2Partitioner
         end
       end
 
+      # Check if we are running in the initial stage of an installation
+      def installation?
+        Yast::Stage.initial
+      end
+
       #----------------------------------------------------------------------
       # Menu Definitions
       #----------------------------------------------------------------------
@@ -145,11 +152,12 @@ module Y2Partitioner
       end
 
       def options_menu
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:create_partition_table), _("Create New Partition &Table...")),
-          Item(Id(:clone_partitions), _("&Clone Partitions to Other Devices..."))
-        ].freeze
+        items = []
+        # TRANSLATORS: Menu items in the partitioner
+        items << Item(Id(:create_partition_table), _("Create New Partition &Table..."))
+        items << Item(Id(:clone_partitions), _("&Clone Partitions to Other Devices..."))
+        items << Item(Id(:import_mount_points), _("&Import Mount Points...")) if installation?
+        items
       end
 
       # Enable or disable menu items according to the current status
@@ -165,6 +173,7 @@ module Y2Partitioner
       end
 
       def enable_options_items
+        # Not yet implemented on the menu level (:import_mount_points is!)
         disable_menu_items(:create_partition_table, :clone_partitions)
       end
 
@@ -193,6 +202,10 @@ module Y2Partitioner
       def handle_next
         # This is handled by the CWM base classes as the "Next" wizard button.
         nil
+      end
+
+      def handle_import_mount_points
+        execute_and_redraw { Actions::ImportMountPoints.new.run }
       end
     end
   end
