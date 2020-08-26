@@ -25,6 +25,7 @@ require "y2partitioner/actions/configure_actions"
 require "y2partitioner/actions/import_mount_points"
 require "y2partitioner/dialogs/summary_popup"
 require "y2partitioner/dialogs/settings"
+require "y2partitioner/dialogs/device_graph"
 
 module Y2Partitioner
   module Widgets
@@ -212,7 +213,8 @@ module Y2Partitioner
       end
 
       def handle_device_graphs
-        # FIXME: TODO
+        Dialogs::DeviceGraph.new.run
+        nil
       end
 
       def handle_installation_summary

@@ -39,11 +39,10 @@ module Y2Partitioner
       private_constant :LABEL_FLAGS, :TOOLTIP_FLAGS
 
       # Constructor
-      def initialize(device_graph, pager)
+      def initialize(device_graph)
         textdomain "storage"
 
         @device_graph = device_graph
-        @pager = pager
         @widget_id = "#{widget_id}_#{device_graph.object_id}"
       end
 
@@ -65,26 +64,19 @@ module Y2Partitioner
         tmp.close!
       end
 
-      # @macro seeAbstractWidget
-      def handle
-        node = Yast::UI.QueryWidget(graph_id, :Item)
-        device = device_graph.find_device(node.to_i)
-        return nil unless device
-
-        page = find_target_page(device)
-        return nil unless page
-
-        pager.switch_page(page)
-      end
+      # # @macro seeAbstractWidget
+      # def handle
+      #   node = Yast::UI.QueryWidget(graph_id, :Item)
+      #   device = device_graph.find_device(node.to_i)
+      #   return nil unless device
+      # 
+      #   return nil unless page
+      # end
 
       private
 
       # @return [Devicegraph] graph to display
       attr_reader :device_graph
-
-      # @return [CWM::TreePager] main pager used to jump to the different
-      #   partitioner sections
-      attr_reader :pager
 
       # Id used for the main widget which is replaced with updated content on
       # every render (see {#init})
@@ -95,35 +87,6 @@ module Y2Partitioner
       # Id used for the Graph widget and its original empty placeholder
       def graph_id
         Id(:"#{widget_id}_graph")
-      end
-
-      # Find the closest partitioner page for the given device
-      #
-      # If there is a page for that device, it returns that page. Otherwise, it
-      # returns the page of the closest ancestor having such page.
-      #
-      # @return [CWM::Page, nil] nil if no appropiate page was found
-      def find_target_page(device)
-        page = pager.device_page(device)
-        return page if page
-
-        parents = device.parents
-        return nil if parents.empty?
-
-        find_ancestor_page(device)
-      end
-
-      # @see #find_target_page
-      #
-      # @return [CWM::Page, nil] nil if no appropiate page was found
-      def find_ancestor_page(device)
-        page = nil
-        device.parents.each do |parent|
-          page = find_target_page(parent)
-          break if page
-        end
-
-        page
       end
     end
   end
