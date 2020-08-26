@@ -120,7 +120,7 @@ module Y2Partitioner
           Item(Id(:rescan_devices), _("R&escan Devices")),
           Item(Id(:settings), _("Se&ttings...")),
           Item("---"),
-          Item(Id(:abort), _("&Abort (Abandon Changes)")),
+          Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
           Item("---"),
           Item(Id(:next), _("&Finish (Save and Exit)"))
         ].freeze
