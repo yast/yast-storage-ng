@@ -23,6 +23,7 @@ require "y2partitioner/execute_and_redraw"
 require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/actions/configure_actions"
 require "y2partitioner/actions/import_mount_points"
+require "y2partitioner/dialogs/summary_popup"
 
 module Y2Partitioner
   module Widgets
@@ -194,6 +195,10 @@ module Y2Partitioner
         execute_and_redraw { Actions::RescanDevices.new.run }
       end
 
+      def handle_settings
+        # FIXME: TODO
+      end
+
       def handle_abort
         # This is handled by the CWM base classes as the "Abort" wizard button.
         nil
@@ -201,6 +206,15 @@ module Y2Partitioner
 
       def handle_next
         # This is handled by the CWM base classes as the "Next" wizard button.
+        nil
+      end
+
+      def handle_device_graphs
+        # FIXME: TODO
+      end
+
+      def handle_installation_summary
+        Dialogs::SummaryPopup.run
         nil
       end
 
