@@ -143,11 +143,11 @@ module Y2Partitioner
       end
 
       def view_menu
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:device_graphs), _("Device &Graphs...")),
-          Item(Id(:installation_summary), _("Installation &Summary..."))
-        ].freeze
+        items = []
+        # TRANSLATORS: Menu items in the partitioner
+        items << Item(Id(:device_graphs), _("Device &Graphs...")) if Dialogs::DeviceGraph.supported?
+        items << Item(Id(:installation_summary), _("Installation &Summary..."))
+        items
       end
 
       def configure_menu

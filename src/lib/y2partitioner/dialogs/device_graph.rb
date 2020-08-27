@@ -36,6 +36,11 @@ module Y2Partitioner
         textdomain "storage"
       end
 
+      # Check if the current UI has the special widgets that this dialog needs
+      def self.supported?
+        Yast::UI.HasSpecialWidget(:Graph)
+      end
+
       # @macro seeAbstractWidget
       def title
         _("Device Graphs")
