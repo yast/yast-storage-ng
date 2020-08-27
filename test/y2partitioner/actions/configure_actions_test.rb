@@ -23,200 +23,44 @@ require_relative "../test_helper"
 require "cwm/rspec"
 require "y2partitioner/actions/configure_actions"
 
-describe Y2Partitioner::Actions::ConfigureActions do
-  subject(:actions) { described_class.new }
-
-  def menu_item_ids(items)
-    items.map do |item|
-      id = item.params.find { |param| param.is_a?(Yast::Term) && param.value == :id }
-      id.params.first
-    end
-  end
-
-  before do
-    Y2Storage::StorageManager.create_test_instance
-    allow(Yast::Stage).to receive(:initial).and_return install
-  end
-  let(:install) { false }
-
-  describe "#menu_items" do
-    before do
-      allow(Yast::WFM).to receive(:ClientExists) do |name|
-        !missing_clients.include?(name)
-      end
-      allow(Yast::Arch).to receive(:s390).and_return s390
-    end
-
-    let(:all_clients) { %w[iscsi-client fcoe-client dasd zfcp xpram] }
-
-    context "during installation" do
-      let(:install) { true }
-
-      context "in s390" do
-        let(:s390) { true }
-
-        context "if all the possible clients are available" do
-          let(:missing_clients) { [] }
-
-          it "returns menu items for crypt, iSCI, FCoE, DASD, zFCP and XPRAM" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
-            )
-          end
-        end
-
-        context "if some clients are not available" do
-          let(:missing_clients) { ["iscsi-client", "dasd"] }
-
-          it "returns menu items only for the available clients" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_fcoe, :configure_zfcp, :configure_xpram
-            )
-            expect(menu_item_ids(items)).to_not include(:configure_iscsi, :configure_dasd)
-          end
-        end
-
-        context "if no client is available" do
-          let(:missing_clients) { all_clients }
-
-          it "returns a menu button with 'Crypt Passwords' as the only option" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords]
-          end
-        end
-      end
-
-      context "in a non-s390 system" do
-        let(:s390) { false }
-
-        context "if all the possible clients are available" do
-          let(:missing_clients) { [] }
-
-          it "returns menu items for crypt, iSCI and FCoE" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
-            )
-          end
-        end
-
-        context "if some clients are not available" do
-          let(:missing_clients) { ["iscsi-client"] }
-
-          it "returns menu items only for the available clients" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords, :configure_fcoe]
-            expect(menu_item_ids(items)).to_not include(:configure_iscsi)
-          end
-        end
-
-        context "if no client is available" do
-          let(:missing_clients) { all_clients }
-
-          it "returns a menu button with 'Crypt Passwords' as the only option" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to eq [:provide_crypt_passwords]
-          end
-        end
-      end
-    end
-
-    context "in an already installed system" do
-      let(:install) { false }
-
-      context "in s390" do
-        let(:s390) { true }
-
-        context "if all the possible clients are available" do
-          let(:missing_clients) { [] }
-
-          it "returns menu items for all actions" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
-            )
-          end
-        end
-
-        context "if some clients are not available" do
-          let(:missing_clients) { ["iscsi-client", "dasd"] }
-
-          it "returns menu items for all actions" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe, :configure_dasd, :configure_zfcp, :configure_xpram
-            )
-          end
-        end
-      end
-
-      context "in a non-s390 system" do
-        let(:s390) { false }
-
-        context "if all the possible clients are available" do
-          let(:missing_clients) { [] }
-
-          it "returns menu items for all supported actions (crypt, iSCI and FCoE)" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
-            )
-          end
-        end
-
-        context "if some clients are not available" do
-          let(:missing_clients) { ["iscsi-client"] }
-
-          it "returns menu items for all supported actions (crypt, iSCI and FCoE)" do
-            items = actions.menu_items
-            expect(menu_item_ids(items)).to contain_exactly(
-              :provide_crypt_passwords, :configure_iscsi, :configure_fcoe
-            )
-          end
-        end
-      end
-    end
-  end
-
+describe Y2Partitioner::Actions::ConfigureAction do
   describe "#run" do
     before do
+      Y2Storage::StorageManager.create_test_instance
+      allow(Yast::Stage).to receive(:initial).and_return install
+
       allow(Yast::Popup).to receive(:YesNo).and_return accepted
       allow(manager).to receive(:probe).and_return true
     end
 
     let(:accepted) { false }
     let(:manager) { Y2Storage::StorageManager.instance }
-    let(:id) { :configure_iscsi }
 
     RSpec.shared_examples "configure nothing" do
-      it "returns nil" do
-        expect(actions.run(id)).to be_nil
+      it "returns :back" do
+        expect(subject.run).to eq :back
       end
 
       it "does not call any other YaST client" do
         expect(Yast::WFM).to_not receive(:call)
-        actions.run(id)
+        subject.run
       end
 
       it "does not run activation again" do
         expect(manager).to_not receive(:activate)
-        actions.run(id)
+        subject.run
       end
 
       it "does not probe again" do
         expect(manager).to_not receive(:probe)
-        actions.run(id)
+        subject.run
       end
     end
 
     RSpec.shared_examples "show configure warning" do
       it "displays the corresponding warning message" do
-        expect(Yast::Popup).to receive(:YesNo).with(/FCoE/).ordered
-        expect(Yast::Popup).to receive(:YesNo).with(/iSCSI/).ordered
-        actions.run(:configure_fcoe)
-        actions.run(:configure_iscsi)
+        expect(Yast::Popup).to receive(:YesNo).with(warning_regexp)
+        subject.run
       end
 
       context "if the user rejects the warning" do
@@ -226,85 +70,142 @@ describe Y2Partitioner::Actions::ConfigureActions do
       end
     end
 
-    context "during installation" do
-      let(:install) { true }
-      before { allow(manager).to receive(:activate).and_return true }
+    RSpec.shared_examples "try packages installation" do
+      before do
+        allow(Yast::PackageCallbacks).to receive(:RegisterEmptyProgressCallbacks)
+        allow(Yast::PackageCallbacks).to receive(:RestorePreviousProgressCallbacks)
+        allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return installed_pkgs
+      end
+      let(:installed_pkgs) { false }
 
-      include_examples "show configure warning"
+      it "checks for the corresponding packages and tries to installs them if needed" do
+        expect(Yast::PackageSystem)
+          .to receive(:CheckAndInstallPackages).with(packages)
+        subject.run
+      end
 
-      context "if the user accepts the warning" do
-        let(:accepted) { true }
+      context "if the packages were not installed" do
+        let(:installed_pkgs) { false }
 
-        context "for an action performed via a separate client" do
+        include_examples "configure nothing"
+      end
+    end
+
+    RSpec.shared_examples "action with a separate client" do
+      context "during installation" do
+        let(:install) { true }
+        before { allow(manager).to receive(:activate).and_return true }
+
+        include_examples "show configure warning"
+
+        context "if the user accepts the warning" do
+          let(:accepted) { true }
+
           it "calls the corresponding YaST client" do
-            expect(Yast::WFM).to receive(:call).with("iscsi-client")
-            actions.run(:configure_iscsi)
+            expect(Yast::WFM).to receive(:call).with(client_name)
+            subject.run
           end
         end
+      end
 
-        context "for activation of crypt devices" do
-          it "does not call any additional YaST client" do
-            expect(Yast::WFM).to_not receive(:call)
-            actions.run(:provide_crypt_passwords)
+      context "in an already installed system" do
+        let(:install) { false }
+
+        include_examples "show configure warning"
+
+        context "if the user accepts the warning" do
+          let(:accepted) { true }
+
+          include_examples "try packages installation"
+
+          context "if the packages were installed or already there" do
+            let(:installed_pkgs) { true }
+
+            it "calls the corresponding YaST client" do
+              expect(Yast::WFM).to receive(:call).with(client_name)
+              subject.run
+            end
           end
         end
       end
     end
 
-    context "in an already installed system" do
-      let(:install) { false }
-      # Ensure all actions are available
-      before { allow(Yast::Arch).to receive(:s390).and_return true }
+    describe Y2Partitioner::Actions::ConfigureIscsi do
+      let(:warning_regexp) { /iSCSI/ }
+      let(:packages) { ["yast2-iscsi-client"] }
+      let(:client_name) { "iscsi-client" }
 
-      include_examples "show configure warning"
+      include_examples "action with a separate client"
+    end
 
-      context "if the user accepts the warning" do
-        let(:accepted) { true }
+    describe Y2Partitioner::Actions::ConfigureDasd do
+      let(:warning_regexp) { /DASD configuration/ }
+      let(:packages) { ["yast2-s390"] }
+      let(:client_name) { "dasd" }
 
-        before do
-          allow(Yast::PackageCallbacks).to receive(:RegisterEmptyProgressCallbacks)
-          allow(Yast::PackageCallbacks).to receive(:RestorePreviousProgressCallbacks)
-          allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return installed_pkgs
-        end
-        let(:installed_pkgs) { false }
+      include_examples "action with a separate client"
+    end
 
-        it "checks for the corresponding packages and tries to installs them if needed" do
-          expect(Yast::PackageSystem)
-            .to receive(:CheckAndInstallPackages).with(["yast2-s390"]).ordered
-          expect(Yast::PackageSystem)
-            .to receive(:CheckAndInstallPackages).with(["yast2-fcoe-client"]).ordered
-          actions.run(:configure_dasd)
-          actions.run(:configure_fcoe)
-        end
+    describe Y2Partitioner::Actions::ConfigureFcoe do
+      let(:warning_regexp) { /FCoE/ }
+      let(:packages) { ["yast2-fcoe-client"] }
+      let(:client_name) { "fcoe-client" }
 
-        context "if the packages were not installed" do
-          let(:installed_pkgs) { false }
+      include_examples "action with a separate client"
+    end
 
-          include_examples "configure nothing"
-        end
+    describe Y2Partitioner::Actions::ConfigureZfcp do
+      let(:warning_regexp) { /zFCP/ }
+      let(:packages) { ["yast2-s390"] }
+      let(:client_name) { "zfcp" }
 
-        context "if the packages were installed or already there" do
-          let(:installed_pkgs) { true }
+      include_examples "action with a separate client"
+    end
 
-          context "for an action performed via a separate client" do
+    describe Y2Partitioner::Actions::ConfigureXpram do
+      let(:warning_regexp) { /XPRAM configuration/ }
+      let(:packages) { ["yast2-s390"] }
+      let(:client_name) { "xpram" }
 
-            it "calls the corresponding YaST client" do
-              expect(Yast::WFM).to receive(:call).with("iscsi-client")
-              actions.run(:configure_iscsi)
-            end
+      include_examples "action with a separate client"
+    end
 
-            it "does not run activation" do
-              expect(manager).to_not receive(:activate)
-              actions.run(:configure_iscsi)
-            end
+    describe Y2Partitioner::Actions::ProvideCryptPasswords do
+      let(:warning_regexp) { /crypt devices/ }
+      let(:packages) { ["cryptsetup"] }
+
+      context "during installation" do
+        let(:install) { true }
+        before { allow(manager).to receive(:activate).and_return true }
+
+        include_examples "show configure warning"
+
+        context "if the user accepts the warning" do
+          let(:accepted) { true }
+
+          it "does not call any additional YaST client" do
+            expect(Yast::WFM).to_not receive(:call)
+            subject.run
           end
+        end
+      end
 
-          context "for activation of crypt devices" do
-            before { allow(manager).to receive(:activate).and_return true }
+      context "in an already installed system" do
+        let(:install) { false }
+
+        include_examples "show configure warning"
+
+        context "if the user accepts the warning" do
+          let(:accepted) { true }
+
+          include_examples "try packages installation"
+
+          context "if the packages were installed or already there" do
+            let(:installed_pkgs) { true }
 
             it "does not call any additional YaST client" do
               expect(Yast::WFM).to_not receive(:call)
-              actions.run(:provide_crypt_passwords)
+              subject.run
             end
           end
         end

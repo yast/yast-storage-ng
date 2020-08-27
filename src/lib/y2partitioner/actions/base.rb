@@ -36,8 +36,7 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-      # Runs a dialog for adding a bcache and also modifies the device graph if the user
-      # confirms the dialog.
+      # Runs the action
       #
       # @return [Symbol]
       def run
