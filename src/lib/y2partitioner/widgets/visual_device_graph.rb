@@ -69,7 +69,7 @@ module Y2Partitioner
       #   node = Yast::UI.QueryWidget(graph_id, :Item)
       #   device = device_graph.find_device(node.to_i)
       #   return nil unless device
-      # 
+      #
       #   return nil unless page
       # end
 
