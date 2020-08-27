@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,56 +18,33 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/widget"
+require "yast/i18n"
+require "yast2/popup"
 require "y2partitioner/ui_state"
-require "y2partitioner/widgets/reprobe"
-require "y2partitioner/widgets/execute_and_redraw"
-
-Yast.import "Popup"
-Yast.import "Mode"
+require "y2partitioner/reprobe"
 
 module Y2Partitioner
-  module Widgets
-    # Button for rescanning system devices
-    class RescanDevicesButton < CWM::PushButton
+  module Actions
+    # Action class to rescan (reprobe) all devices
+    class RescanDevices
       include Reprobe
-      include ExecuteAndRedraw
+      include Yast::I18n
 
       def initialize
         textdomain "storage"
       end
 
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: button label to rescan devices
-        _("Rescan Devices")
-      end
-
-      # Shows a confirm message before reprobing
-      #
-      # @return [Symbol, nil]
-      def handle
-        return nil unless continue?
+      def run
+        return nil unless confirmed?
 
         UIState.create_instance
-        execute_and_redraw do
-          reprobe
-          :finish
-        end
-      end
-
-      # @macro seeAbstractWidget
-      def help
-        # TRANSLATORS: help text for the Partitioner
-        _(
-          "<p>The <b>Rescan Devices</b> button refreshes the information about storage " \
-          "devices.</p>"
-        )
+        reprobe
+        :finish
       end
 
       private
 
-      def continue?
+      def confirmed?
         Yast::Popup.YesNo(rescan_message)
       end
 

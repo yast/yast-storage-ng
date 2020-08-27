@@ -31,17 +31,16 @@ module Y2Partitioner
     # use it in NCurses.
     class DeviceGraphWithButtons < CWM::CustomWidget
       # Constructor
-      def initialize(device_graph, pager)
+      def initialize(device_graph)
         textdomain "storage"
 
         @device_graph = device_graph
-        @pager = pager
       end
 
       # @macro seeCustomWidget
       def contents
         VBox(
-          VisualDeviceGraph.new(device_graph, pager),
+          VisualDeviceGraph.new(device_graph),
           Left(
             HBox(
               SaveDeviceGraphButton.new(device_graph, :xml),
@@ -55,10 +54,6 @@ module Y2Partitioner
 
       # @return [Devicegraph] graph to display
       attr_reader :device_graph
-
-      # @return [CWM::TreePager] main pager used to jump to the different
-      #   partitioner sections
-      attr_reader :pager
     end
 
     # Widget for exporting a devicegraph in XML or Grapviz format

@@ -20,7 +20,7 @@
 Yast.import "Popup"
 
 RSpec.shared_examples "reprobing" do
-  it "shows an status message" do
+  it "shows a status message" do
     expect(Yast::Popup).to receive(:Feedback)
     subject.handle(*handle_args)
   end

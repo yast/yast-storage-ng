@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@ require "cwm/dialog"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
+require "y2partitioner/widgets/main_menu_bar"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
 require "y2partitioner/actions/quit_partitioner"
@@ -62,10 +63,13 @@ module Y2Partitioner
         overview_tree_pager = Widgets::OverviewTreePager.new(hostname)
         UIState.instance.overview_tree_pager = overview_tree_pager
 
-        MarginBox(
-          0.5,
-          0.5,
-          overview_tree_pager
+        VBox(
+          Widgets::MainMenuBar.new,
+          MarginBox(
+            0.5,
+            0.5,
+            overview_tree_pager
+          )
         )
       end
 

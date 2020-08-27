@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,28 +18,39 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/widget"
-require "y2partitioner/actions/import_mount_points"
-require "y2partitioner/widgets/execute_and_redraw"
+require "yast/i18n"
+require "y2partitioner/dialogs/popup"
+require "y2partitioner/widgets/summary_text"
+require "y2partitioner/actions/quit_partitioner"
+
+Yast.import "Label"
 
 module Y2Partitioner
-  module Widgets
-    # Button for importing mount points from a fstab file
-    class ImportMountPointsButton < CWM::PushButton
-      include ExecuteAndRedraw
+  module Dialogs
+    # Dialog to show the summary of changes performed by the user
+    class SummaryPopup < Popup
+      include Yast::I18n
 
       def initialize
         textdomain "storage"
       end
 
-      # @macro seeAbstractWidget
-      def label
-        _("Import Mount Points...")
+      def title
+        _("Expert Partitioner: Summary")
       end
 
-      # @return [Symbol, nil] nil when the action was not performed
-      def handle
-        execute_and_redraw { Actions::ImportMountPoints.new.run }
+      def contents
+        @contents ||= VBox(Widgets::SummaryText.new)
+      end
+
+      protected
+
+      def buttons
+        [ok_button]
+      end
+
+      def min_width
+        65
       end
     end
   end
