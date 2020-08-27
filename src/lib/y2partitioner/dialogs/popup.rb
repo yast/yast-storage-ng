@@ -37,8 +37,11 @@ module Y2Partitioner
       end
 
       def layout
-        MarginBox(1, 0.45,
-          VBox(Id(:help_text_container),
+        MarginBox(
+          1, # left / right
+          0.45, # top / bottom
+          VBox(
+            Id(:help_text_container),
             Left(Heading(Id(:title), title)),
             VSpacing(0.6),
             VCenter(MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty()))),
