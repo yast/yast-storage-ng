@@ -45,13 +45,9 @@ module Y2Partitioner
       def contents
         return @contents if @contents
 
-        @contents = MarginBox(2, 1,
-          VBox(
-            Left(
-              mount_by_selector
-            ),
-            VStretch()
-          )
+        @contents = VBox(
+          Left(mount_by_selector),
+          VStretch()
         )
       end
 

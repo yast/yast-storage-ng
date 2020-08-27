@@ -56,11 +56,7 @@ module Y2Partitioner
         return @contents if @contents
 
         @tabs = CWM::Tabs.new(current_tab, system_tab)
-        @contents = MarginBox(2, 0.4,
-          Top(
-            Left(@tabs)
-          )
-        )
+        @contents = Top(Left(@tabs))
       end
 
       # @macro seeAbstractWidget
@@ -78,14 +74,7 @@ module Y2Partitioner
       end
 
       def buttons
-        # This does not work; libyui complains that we need both an OkButton
-        # and a CancelButton:
-        #
-        # [ok_button, help_button]
-        #
-        # So we'll go without the help button for now; help doesn't work in
-        # popups anyway right now.
-        [ok_button]
+        [ok_button, help_button]
       end
 
       private
