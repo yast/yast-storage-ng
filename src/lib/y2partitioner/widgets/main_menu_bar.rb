@@ -19,101 +19,26 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/icons"
-require "y2partitioner/execute_and_redraw"
-require "y2partitioner/actions/rescan_devices"
-require "y2partitioner/actions/configure_actions"
-require "y2partitioner/actions/import_mount_points"
-require "y2partitioner/dialogs/summary_popup"
-require "y2partitioner/dialogs/settings"
-require "y2partitioner/dialogs/device_graph"
+require "y2partitioner/widgets/menus/system"
+require "y2partitioner/widgets/menus/view"
+require "y2partitioner/widgets/menus/configure"
 
 module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
       Yast.import "UI"
-      Yast.import "Stage"
       include Yast::Logger
-      include ExecuteAndRedraw
-
-      # Class to represent each one of the entries in the 'Configure' menu
-      class ConfigureEntry
-        include Yast::I18n
-        extend Yast::I18n
-
-        # Constructor
-        def initialize(action_class_name, label, icon)
-          @action_class_name = action_class_name
-          @label = label
-          @icon = icon
-        end
-
-        # All possible entries
-        ALL = [
-          new(:ProvideCryptPasswords, N_("Provide Crypt &Passwords..."), Icons::LOCK),
-          new(:ConfigureIscsi,        N_("Configure &iSCSI..."),         Icons::ISCSI),
-          new(:ConfigureFcoe,         N_("Configure &FCoE..."),          Icons::FCOE),
-          new(:ConfigureDasd,         N_("Configure &DASD..."),          Icons::DASD),
-          new(:ConfigureZfcp,         N_("Configure &zFCP..."),          Icons::ZFCP),
-          new(:ConfigureXpram,        N_("Configure &XPRAM..."),         Icons::XPRAM)
-        ]
-        private_constant :ALL
-
-        # All possible entries
-        #
-        # @return [Array<ConfigureEntry>]
-        def self.all
-          ALL.dup
-        end
-
-        # Entries that should be displayed to the user
-        #
-        # @return [Array<ConfigureEntry>]
-        def self.visible
-          all.select(&:visible?)
-        end
-
-        # @return [String] name of the icon to display next to the label
-        attr_reader :icon
-
-        # @return [String] Internationalized label
-        def label
-          _(@label)
-        end
-
-        # @return [Symbol] identifier for the action to use in the UI
-        def id
-          @id ||= action_class_name.to_s.gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
-        end
-
-        # Action to execute when the entry is selected
-        #
-        # @return [Y2Partitioner::Actions::ConfigureAction]
-        def action
-          @action ||= Y2Partitioner::Actions.const_get(action_class_name).new
-        end
-
-        # Whether the entry should be displayed to the user
-        #
-        # @return [Boolean]
-        def visible?
-          action.available?
-        end
-
-        private
-
-        # Name of the class for #{action}
-        #
-        # @return [Symbol]
-        attr_reader :action_class_name
-      end
 
       # Constructor
       def initialize
         textdomain "storage"
         self.handle_all_events = true
-        @configure_entries = ConfigureEntry.visible
+        @menus = [
+          Menus::System.new,
+          Menus::View.new,
+          Menus::Configure.new
+        ]
         super
       end
 
@@ -139,12 +64,11 @@ module Y2Partitioner
         return nil unless menu_event?(event)
 
         id = event["ID"]
-        entry = @configure_entries.find { |e| e.id == id }
-        if entry
-          execute_and_redraw { entry.action.run }
-        else
-          call_menu_item_handler(id)
+        result = nil
+        @menus.find do |menu|
+          result = menu.handle(id)
         end
+        result
       end
 
       private
@@ -154,94 +78,14 @@ module Y2Partitioner
         event["EventType"] == "MenuEvent"
       end
 
-      # Call a method "handle_id" for a menu item with ID "id" if such a method
-      # is defined in this class.
-      def call_menu_item_handler(id)
-        return nil if id.nil?
-
-        # log.info("Handling menu event: #{id}")
-        handler = "handle_#{id}"
-        if respond_to?(handler, true)
-          log.info("Calling #{handler}()")
-          send(handler)
-        else
-          log.info("No method #{handler}")
-          nil
-        end
-      end
-
-      # Check if we are running in the initial stage of an installation
-      def installation?
-        Yast::Stage.initial
-      end
-
       #----------------------------------------------------------------------
       # Menu Definitions
       #----------------------------------------------------------------------
 
       def main_menus
-        [
-          # TRANSLATORS: Pulldown menus in the partitioner
-          Menu(_("&System"), system_menu),
-          Menu(_("&Edit"), edit_menu),
-          Menu(_("&View"), view_menu),
-          Menu(_("&Configure"), configure_menu),
-          Menu(_("&Options"), options_menu)
-        ].freeze
-      end
-
-      def system_menu
-        # For each item with an ID "xy", write a "handle_xy" method.
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:rescan_devices), _("R&escan Devices")),
-          Item(Id(:settings), _("Se&ttings...")),
-          Item("---"),
-          Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
-          Item("---"),
-          Item(Id(:next), _("&Finish (Save and Exit)"))
-        ].freeze
-      end
-
-      def edit_menu
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:add), _("&Add...")),
-          Item(Id(:edit), _("&Edit...")),
-          Item(Id(:delete), _("&Delete")),
-          Item(Id(:delete_all), _("Delete A&ll")),
-          Item("---"),
-          Item(Id(:resize), _("Resi&ze...")),
-          Item(Id(:move), _("&Move..."))
-        ].freeze
-      end
-
-      def view_menu
-        items = []
-        # TRANSLATORS: Menu items in the partitioner
-        items << Item(Id(:device_graphs), _("Device &Graphs...")) if Dialogs::DeviceGraph.supported?
-        items << Item(Id(:installation_summary), _("Installation &Summary..."))
-        items
-      end
-
-      def configure_menu
-        @configure_entries.map do |entry|
-          Yast::Term.new(
-            :item,
-            Yast::Term.new(:id, entry.id),
-            Yast::Term.new(:icon, entry.icon),
-            entry.label
-          )
+        @menus.map do |menu|
+          Menu(menu.label, menu.items)
         end
-      end
-
-      def options_menu
-        items = []
-        # TRANSLATORS: Menu items in the partitioner
-        items << Item(Id(:create_partition_table), _("Create New Partition &Table..."))
-        items << Item(Id(:clone_partitions), _("&Clone Partitions to Other Devices..."))
-        items << Item(Id(:import_mount_points), _("&Import Mount Points...")) if installation?
-        items
       end
 
       # Enable or disable menu items according to the current status
@@ -265,46 +109,6 @@ module Y2Partitioner
       def disable_menu_items(*ids)
         disabled_hash = ids.each_with_object({}) { |id, h| h[id] = false }
         Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
-      end
-
-      #----------------------------------------------------------------------
-      # Handlers for the menu actions
-      #
-      # For each menu item with ID xy, write a method handle_xy.
-      # The methods are found via introspection in the event handler.
-      #----------------------------------------------------------------------
-
-      def handle_rescan_devices
-        execute_and_redraw { Actions::RescanDevices.new.run }
-      end
-
-      def handle_settings
-        Dialogs::Settings.new.run
-        nil
-      end
-
-      def handle_abort
-        # This is handled by the CWM base classes as the "Abort" wizard button.
-        nil
-      end
-
-      def handle_next
-        # This is handled by the CWM base classes as the "Next" wizard button.
-        nil
-      end
-
-      def handle_device_graphs
-        Dialogs::DeviceGraph.new.run
-        nil
-      end
-
-      def handle_installation_summary
-        Dialogs::SummaryPopup.new.run
-        nil
-      end
-
-      def handle_import_mount_points
-        execute_and_redraw { Actions::ImportMountPoints.new.run }
       end
     end
   end
