@@ -18,29 +18,37 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/execute_and_redraw"
-require "y2partitioner/dialogs/settings"
+require "y2partitioner/widgets/menus/base"
+require "y2partitioner/widgets/menus/configure"
 require "y2partitioner/actions/rescan_devices"
 require "y2partitioner/actions/import_mount_points"
 
 module Y2Partitioner
   module Widgets
     module Menus
-      class System
+      # Class representing the System menu
+      class System < Base
         Yast.import "Stage"
-        include Yast::I18n
-        include Yast::UIShortcuts
-        include ExecuteAndRedraw
 
+        # @see Base
         def label
-          _("&System")         
+          _("&System")
         end
 
+        # @see Base
         def items
-          items = [Item(Id(:rescan_devices), _("R&escan Devices"))]
-          items << Item(Id(:import_mount_points), _("&Import Mount Points...")) if installation?
-          items += [
-            Item(Id(:settings), _("Se&ttings...")),
+          return @items if @items
+
+          @items =
+            if installation?
+              [Item(Id(:import_mount_points), _("&Import Mount Points..."))]
+            else
+              []
+            end
+
+          @items += [
+            Item(Id(:rescan_devices), _("R&escan Devices")),
+            Menu("Configure", configure_menu.items),
             Item("---"),
             Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
             Item("---"),
@@ -48,35 +56,31 @@ module Y2Partitioner
           ]
         end
 
+        # @see Base
         def handle(event)
-          action = action_for(event)
-          if action
-            execute_and_redraw { action.run }
-          else
-            dialog = dialog_for(event)
-            dialog&.run
-            nil
-          end
+          configure_menu.handle(event) || super
         end
 
         private
 
-        # Check if we are running in the initial stage of an installation
+        # Whether we are running in the initial stage of an installation
+        #
+        # @return [Boolean]
         def installation?
           Yast::Stage.initial
         end
 
+        # Submenu with all the configure entries
+        def configure_menu
+          @configure_menu ||= Menus::Configure.new
+        end
+
+        # @see Base
         def action_for(event)
           if event == :rescan_devices
             Actions::RescanDevices.new
           elsif event == :import_mount_points
             Actions::ImportMountPoints.new
-          end
-        end
-
-        def dialog_for(event)
-          if event == :settings
-            Dialogs::Settings.new
           end
         end
       end

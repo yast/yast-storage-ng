@@ -18,41 +18,50 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2partitioner/widgets/menus/base"
 require "y2partitioner/dialogs/summary_popup"
 require "y2partitioner/dialogs/device_graph"
+require "y2partitioner/dialogs/settings"
 
 module Y2Partitioner
   module Widgets
     module Menus
-      class View
-        include Yast::I18n
-        include Yast::UIShortcuts
-
+      # Class to represent the View menu
+      class View < Base
+        # @see Base
         def label
           _("&View")
         end
 
+        # @see Base
         def items
-          items = []
-          # TRANSLATORS: Menu items in the partitioner
-          items << Item(Id(:device_graphs), _("Device &Graphs...")) if Dialogs::DeviceGraph.supported?
-          items << Item(Id(:installation_summary), _("Installation &Summary..."))
-          items
-        end
+          return @items if @items
 
-        def handle(event)
-          dialog_for(event)&.run
-          nil
+          @items =
+            if Dialogs::DeviceGraph.supported?
+              [Item(Id(:device_graphs), _("Device &Graphs..."))]
+            else
+              []
+            end
+
+          @items += [
+            Item(Id(:installation_summary), _("Installation &Summary...")),
+            Item(Id(:settings), _("Se&ttings...")),
+            Item(Id(:bcache_csets), _("Bcache Caching Sets..."))
+          ]
         end
 
         private
 
+        # @see Base
         def dialog_for(event)
           case event
           when :device_graphs
             Dialogs::DeviceGraph.new
           when :installation_summary
             Dialogs::SummaryPopup.new
+          when :settings
+            Dialogs::Settings.new
           end
         end
       end
