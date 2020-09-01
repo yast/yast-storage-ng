@@ -19,53 +19,66 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/menus/system"
+require "y2partitioner/widgets/menus/add"
+require "y2partitioner/widgets/menus/modify"
 require "y2partitioner/widgets/menus/view"
-require "y2partitioner/widgets/menus/configure"
+require "y2partitioner/widgets/menus/go"
+require "y2partitioner/widgets/menus/extra"
 
 module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
       Yast.import "UI"
-      include Yast::Logger
+
+      # @return [Array<Menus::Base>]
+      attr_reader :menus
 
       # Constructor
       def initialize
-        textdomain "storage"
         self.handle_all_events = true
-        @menus = [
-          Menus::System.new,
-          Menus::View.new,
-          Menus::Configure.new
-        ]
+        @device = nil
+        @page_device = nil
+        @menus = []
         super
       end
 
-      # Called by CWM after the widgets are created
-      def init
-        enable_items
+      # @see UIState#select_row
+      def select_row(id)
+        @device = find_device(id)
+        refresh
       end
 
+      # @see UIState#select_row
+      def select_page(pages_ids)
+        dev_id = pages_ids.reverse.find { |id| id.is_a?(Integer) }
+        @page_device = dev_id ? find_device(dev_id) : nil
+        @device = nil
+        refresh
+      end
+
+      # @macro seeAbstractWidget
       def id
         :menu_bar
       end
 
-      # Widget contents
+      # @macro seeAbstractWidget
       def contents
-        @contents ||= MenuBar(Id(id), main_menus)
+        @contents ||= MenuBar(Id(id), items)
       end
 
       # Event handler for the main menu.
       #
       # @param event [Hash] UI event
-      #
+      # @return [Symbol, nil]
       def handle(event)
         return nil unless menu_event?(event)
 
         id = event["ID"]
         result = nil
-        @menus.find do |menu|
+        menus.find do |menu|
           result = menu.handle(id)
         end
         result
@@ -73,42 +86,67 @@ module Y2Partitioner
 
       private
 
+      # Device currently selected in the UI, if any
+      #
+      # @return [Y2Storage::Device, nil]
+      attr_reader :device
+
+      # Device currently selected in the left tree, if any
+      #
+      # @return [Y2Storage::Device, nil]
+      attr_reader :page_device
+
       # Check if a UI event is a menu event
       def menu_event?(event)
         event["EventType"] == "MenuEvent"
       end
 
-      #----------------------------------------------------------------------
-      # Menu Definitions
-      #----------------------------------------------------------------------
-
-      def main_menus
-        @menus.map do |menu|
-          Menu(menu.label, menu.items)
-        end
+      # @return [Array<Yast::Term>]
+      def items
+        menus.map { |m| Menu(m.label, m.items) }
       end
 
-      # Enable or disable menu items according to the current status
-      def enable_items
-        enable_edit_items
-        enable_options_items
+      # @return [Array<Symbol>]
+      def disabled_items
+        menus.flat_map(&:disabled_items)
       end
 
-      def enable_edit_items
-        # Disable all items in the "Edit" menu for now: Right now they are only
-        # there to demonstrate what the final menu will look like.
-        disable_menu_items(:add, :edit, :delete, :delete_all, :resize, :move)
+      # Redraws the widget
+      def refresh
+        @menus = calculate_menus
+        Yast::UI.ChangeWidget(Id(id), :Items, items)
+        disable_menu_items(*disabled_items)
       end
 
-      def enable_options_items
-        # Not yet implemented on the menu level (:import_mount_points is!)
-        disable_menu_items(:create_partition_table, :clone_partitions)
+      # List of buttons that make sense for the current target device
+      #
+      # @return [Array<Menus::Base>]
+      def calculate_menus
+        [
+          Menus::System.new,
+          Menus::Modify.new(device || page_device),
+          Menus::Add.new(device || page_device),
+          Menus::View.new,
+          Menus::Go.new(page_device || device),
+          Menus::Extra.new(page_device || device)
+        ]
       end
 
       # Disable all items with the specified IDs
       def disable_menu_items(*ids)
         disabled_hash = ids.each_with_object({}) { |id, h| h[id] = false }
         Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
+      end
+
+      # @return [Y2Storage::Devicegraph]
+      def devicegraph
+        DeviceGraphs.instance.current
+      end
+
+      # @param sid [Integer]
+      # @return [Y2Storage::Device, nil]
+      def find_device(sid)
+        devicegraph.find_device(sid)
       end
     end
   end

@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2partitioner/icons"
-require "y2partitioner/execute_and_redraw"
+require "y2partitioner/widgets/menus/base"
 require "y2partitioner/actions/configure_actions"
 
 module Y2Partitioner
@@ -97,20 +97,21 @@ module Y2Partitioner
         attr_reader :action_class_name
       end
 
-      class Configure
-        include Yast::I18n
-        include ExecuteAndRedraw
-
+      # Class representing the Configure menu
+      class Configure < Base
+        # Constructor
         def initialize
           @configure_entries = ConfigureEntry.visible
         end
 
+        # @see Base
         def label
-          _("&Configure")         
+          _("&Configure")
         end
 
+        # @see Base
         def items
-          @configure_entries.map do |entry|
+          @items ||= configure_entries.map do |entry|
             Yast::Term.new(
               :item,
               Yast::Term.new(:id, entry.id),
@@ -120,17 +121,14 @@ module Y2Partitioner
           end
         end
 
-        def handle(event)
-          action = action_for(event)
-          return nil unless action
-
-          execute_and_redraw { action.run }
-        end
-
         private
 
+        # @return [Array<ConfigureEntry>]
+        attr_reader :configure_entries
+
+        # @see Base
         def action_for(event)
-          entry = @configure_entries.find { |e| e.id == event }
+          entry = configure_entries.find { |e| e.id == event }
           entry&.action
         end
       end
