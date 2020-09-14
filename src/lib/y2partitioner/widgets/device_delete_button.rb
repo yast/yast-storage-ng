@@ -30,8 +30,8 @@ module Y2Partitioner
   module Widgets
     # Button for deleting a device
     class DeviceDeleteButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

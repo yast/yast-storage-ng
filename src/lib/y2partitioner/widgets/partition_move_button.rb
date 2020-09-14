@@ -25,8 +25,8 @@ module Y2Partitioner
   module Widgets
     # Button for moving a partition
     class PartitionMoveButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 
