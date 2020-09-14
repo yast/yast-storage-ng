@@ -28,8 +28,8 @@ module Y2Partitioner
   module Widgets
     # Button for editing a block device
     class BlkDeviceEditButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

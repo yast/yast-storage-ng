@@ -25,8 +25,8 @@ module Y2Partitioner
   module Widgets
     # Button for deleting all partitions
     class PartitionsDeleteButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

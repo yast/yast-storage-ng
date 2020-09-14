@@ -27,8 +27,8 @@ module Y2Partitioner
   module Widgets
     # Button for resizing a block device
     class DeviceResizeButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 
