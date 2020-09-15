@@ -107,7 +107,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     let(:disks_pager) do
-      system_pager.children.values.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
     end
 
     let(:disks_pages) { disks_pager.pages - [disks_pager.page] }
@@ -117,7 +117,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     let(:btrfs_filesystems_page) do
-      system_pager.children.values.find do |i|
+      overview_tree.items.find do |i|
         i.page.is_a?(Y2Partitioner::Widgets::Pages::BtrfsFilesystems)
       end
     end
@@ -140,14 +140,6 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     it "system pager includes a BTRFS filesystems page" do
       expect(btrfs_filesystems_page).to_not be_nil
-    end
-
-    it "includes a 'Summary' page" do
-      expect(summary_page).to_not be_nil
-    end
-
-    it "includes a 'Settings' page" do
-      expect(settings_page).to_not be_nil
     end
 
     before do
@@ -270,22 +262,6 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "disk pager has no BTRFS pages" do
         btrfs_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::Btrfs) }
         expect(btrfs_pages).to be_empty
-      end
-    end
-
-    context "when the UI supports the Graph widget (Qt)" do
-      let(:graph_available) { true }
-
-      it "includes the 'Device Graph' page" do
-        expect(device_graph_page).to_not be_nil
-      end
-    end
-
-    context "when the UI does not support the Graph widget (ncurses)" do
-      let(:graph_available) { false }
-
-      it "does not include the 'Device Graph' page" do
-        expect(device_graph_page).to be_nil
       end
     end
   end
@@ -445,12 +421,17 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     let(:scenario) { "lvm-two-vgs.yml" }
 
     let(:with_children) do
-      ["Y2Partitioner::Widgets::Pages::System", "Y2Partitioner::Widgets::Pages::Disks",
-       "Y2Partitioner::Widgets::Pages::Lvm", "disk:/dev/sda", "lvm_vg:vg0", "lvm_vg:vg1"]
+      [
+        "Y2Partitioner::Widgets::Pages::Disks",
+        "Y2Partitioner::Widgets::Pages::Lvm",
+        "disk:/dev/sda",
+        "lvm_vg:vg0",
+        "lvm_vg:vg1"
+      ]
     end
 
     let(:ui_open_items) do
-      { "Y2Partitioner::Widgets::Pages::System" => "ID", "disk:/dev/sda" => "ID" }
+      { "Y2Partitioner::Widgets::Pages::Lvm" => "ID", "disk:/dev/sda" => "ID" }
     end
 
     it "contains an entry for each item with children" do
@@ -458,13 +439,12 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     it "sets the value of open items to true" do
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::System"]).to eq true
+      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq true
       expect(subject.open_items["disk:/dev/sda"]).to eq true
     end
 
     it "sets the value of closed items to false" do
       expect(subject.open_items["Y2Partitioner::Widgets::Pages::Disks"]).to eq false
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq false
       expect(subject.open_items["lvm_vg:vg0"]).to eq false
       expect(subject.open_items["lvm_vg:vg1"]).to eq false
     end
