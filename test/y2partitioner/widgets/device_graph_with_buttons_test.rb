@@ -33,16 +33,15 @@ describe Y2Partitioner::Widgets::DeviceGraphWithButtons do
   let(:visual_device_graph) { double("VisualDeviceGraph") }
   let(:xml_button) { double("SaveDeviceGraphButton") }
   let(:gv_button) { double("SaveDeviceGraphButton") }
-  let(:pager) { double("OverviewTreePager") }
 
-  subject(:widget) { described_class.new(device_graph, pager) }
+  subject(:widget) { described_class.new(device_graph) }
 
   include_examples "CWM::CustomWidget"
 
   describe "#contents" do
     it "includes the graph and the two buttons for saving" do
       expect(Y2Partitioner::Widgets::VisualDeviceGraph).to receive(:new)
-        .with(device_graph, pager).and_return visual_device_graph
+        .with(device_graph).and_return visual_device_graph
       expect(Y2Partitioner::Widgets::SaveDeviceGraphButton).to receive(:new)
         .with(device_graph, :xml).and_return xml_button
       expect(Y2Partitioner::Widgets::SaveDeviceGraphButton).to receive(:new)

@@ -18,28 +18,28 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/dialogs/settings"
 
-describe Y2Partitioner::Widgets::Pages::Settings do
+describe Y2Partitioner::Dialogs::Settings do
   subject(:page) { described_class.new }
 
-  include_examples "CWM::Page"
+  include_examples "CWM::Dialog"
 
   describe "#contents" do
     it "includes a widget to select default mount by" do
-      expect(Y2Partitioner::Widgets::Pages::Settings::MountBySelector).to receive(:new)
+      expect(Y2Partitioner::Dialogs::Settings::MountBySelector).to receive(:new)
       page.contents
     end
   end
 end
 
-describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
+describe Y2Partitioner::Dialogs::Settings::MountBySelector do
   include_examples "CWM::ComboBox"
 
-  describe "#handle" do
+  describe "#store" do
     before do
       allow(subject).to receive(:value).and_return(value)
       allow(subject).to receive(:widget_id).and_return(widget_id)
@@ -60,38 +60,19 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
 
     let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
 
-    context "when a mount_by is selected" do
-      let(:events) { { "ID" => widget_id } }
-
-      it "updates the default value for mount_by" do
-        expect(configuration.default_mount_by).to_not eq(value)
-        subject.handle(events)
-        expect(configuration.default_mount_by).to eq(value)
-      end
-
-      it "saves the selected value into the config file" do
-        expect(Yast::SCR).to receive(:Write) do |path, value|
-          expect(path.to_s).to match(/storage/)
-          expect(value).to eq("id")
-        end
-
-        subject.handle(events)
-      end
+    it "updates the default value for mount_by" do
+      expect(configuration.default_mount_by).to_not eq(value)
+      subject.store
+      expect(configuration.default_mount_by).to eq(value)
     end
 
-    context "when other widget has changed" do
-      let(:events) { { "ID" => "other_widget_id" } }
-
-      it "does not update the default value for mount_by" do
-        expect(configuration.default_mount_by.to_sym).to_not eq(value)
-        subject.handle(events)
-        expect(configuration.default_mount_by).to_not eq(value)
+    it "saves the selected value into the config file" do
+      expect(Yast::SCR).to receive(:Write) do |path, value|
+        expect(path.to_s).to match(/storage/)
+        expect(value).to eq("id")
       end
 
-      it "does not save the selected value into the config file" do
-        expect(Yast::SCR).to_not receive(:Write)
-        subject.handle(events)
-      end
+      subject.store
     end
   end
 end
