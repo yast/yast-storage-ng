@@ -45,7 +45,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("View")
+        _("Devices")
       end
 
       attr_reader :items
@@ -107,10 +107,10 @@ module Y2Partitioner
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # crypt_files_items,
           # device_mapper_items,
-          nfs_section,
-          btrfs_section
+          btrfs_section,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # unused_items
+          nfs_section
         ].compact
       end
 
