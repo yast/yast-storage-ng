@@ -51,10 +51,6 @@ module Y2Partitioner
         DeviceGraphs.create_instance(system, initial)
       end
 
-      def title
-        _("Expert Partitioner")
-      end
-
       def contents
         # NOTE: Since this method is used as first parameter of {Yast::CWM.show} every time that
         # {#run} calls `super`, a new {OverviewTreePager} will be created in every dialog redraw.
