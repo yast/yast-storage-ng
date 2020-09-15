@@ -45,7 +45,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("System View")
+        _("View")
       end
 
       attr_reader :items
@@ -98,7 +98,20 @@ module Y2Partitioner
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
-        [system_items]
+        [
+          system_section,
+          disks_section,
+          raids_section,
+          lvm_section,
+          bcache_section,
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # crypt_files_items,
+          # device_mapper_items,
+          nfs_section,
+          btrfs_section
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # unused_items
+        ].compact
       end
 
       # Overrides default behavior of TreePager to register the new state with
@@ -203,23 +216,10 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def system_items
+      def system_section
         page = Pages::System.new(hostname, self)
-        children = [
-          disks_section,
-          raids_section,
-          lvm_section,
-          bcache_section,
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # crypt_files_items,
-          # device_mapper_items,
-          nfs_section,
-          btrfs_section
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # unused_items
-        ].compact
 
-        section_item(page, Icons::ALL, children: children)
+        section_item(page, Icons::ALL)
       end
 
       # @return [CWM::PagerTreeItem]

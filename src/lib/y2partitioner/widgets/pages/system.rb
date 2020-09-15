@@ -47,7 +47,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          hostname
+          _("System Overview")
         end
 
         # @macro seeCustomWidget
