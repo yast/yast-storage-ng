@@ -18,20 +18,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/dialogs/summary_popup"
 
-describe Y2Partitioner::Widgets::Pages::Summary do
-  subject(:page) { described_class.new }
+describe Y2Partitioner::Dialogs::SummaryPopup do
+  subject { described_class.new }
 
-  include_examples "CWM::Page"
+  include_examples "CWM::Dialog"
 
   describe "#contents" do
     it "includes a widget with the interactive summary" do
       expect(Y2Partitioner::Widgets::SummaryText).to receive(:new)
-      page.contents
+      subject.contents
     end
   end
 end

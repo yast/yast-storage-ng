@@ -18,42 +18,41 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/dialogs/device_graph"
 require "y2partitioner/device_graphs"
 
-describe Y2Partitioner::Widgets::Pages::DeviceGraph do
+describe Y2Partitioner::Dialogs::DeviceGraph do
   before do
     devicegraph_stub("complex-lvm-encrypt")
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject(:page) { described_class.new(pager) }
+  subject { described_class.new }
 
-  let(:pager) { double("OverviewTreePager") }
   let(:system) { Y2Partitioner::DeviceGraphs.instance.system }
   let(:current) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  include_examples "CWM::Page"
+  include_examples "CWM::Dialog"
 
   describe "#contents" do
     it "includes a tab for the current graph and another for the system one" do
-      expect(Y2Partitioner::Widgets::Pages::DeviceGraphTab).to receive(:new)
+      expect(Y2Partitioner::Dialogs::DeviceGraphTab).to receive(:new)
         .with("Planned Devices", current, any_args)
-      expect(Y2Partitioner::Widgets::Pages::DeviceGraphTab).to receive(:new)
+      expect(Y2Partitioner::Dialogs::DeviceGraphTab).to receive(:new)
         .with("Current System Devices", system, any_args)
-      page.contents
+      subject.contents
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::DeviceGraphTab do
+  describe Y2Partitioner::Dialogs::DeviceGraphTab do
     let(:device_graph_widget) { double("DeviceGraphWithButtons") }
     let(:device_graph) { double("Devicegraph") }
 
-    subject(:widget) { described_class.new("Label", device_graph, "Description", pager) }
+    subject(:widget) { described_class.new("Label", device_graph, "Description") }
 
     include_examples "CWM::Tab"
 
@@ -66,7 +65,7 @@ describe Y2Partitioner::Widgets::Pages::DeviceGraph do
     describe "#contents" do
       it "includes the description and the graph widget" do
         expect(Y2Partitioner::Widgets::DeviceGraphWithButtons).to receive(:new)
-          .with(device_graph, pager).and_return device_graph_widget
+          .with(device_graph).and_return device_graph_widget
         contents = widget.contents
 
         found = contents.nested_find { |i| i == device_graph_widget }

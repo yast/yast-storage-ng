@@ -27,8 +27,8 @@ module Y2Partitioner
   module Widgets
     # Button for editing a BTRFS filesystem
     class BtrfsEditButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

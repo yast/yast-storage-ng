@@ -37,7 +37,7 @@ module Y2Partitioner
         #
         # @return [String]
         def self.label
-          _("Volume Management")
+          _("LVM")
         end
 
         # Constructor
