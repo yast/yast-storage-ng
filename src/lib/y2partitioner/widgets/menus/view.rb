@@ -22,6 +22,7 @@ require "y2partitioner/widgets/menus/base"
 require "y2partitioner/dialogs/summary_popup"
 require "y2partitioner/dialogs/device_graph"
 require "y2partitioner/dialogs/settings"
+require "y2partitioner/dialogs/bcache_csets"
 
 module Y2Partitioner
   module Widgets
@@ -62,6 +63,8 @@ module Y2Partitioner
             Dialogs::SummaryPopup.new
           when :settings
             Dialogs::Settings.new
+          when :bcache_csets
+            Dialogs::BcacheCsets.new
           end
         end
       end

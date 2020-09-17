@@ -155,7 +155,7 @@ module Y2Partitioner
       #   partitioner
       attr_reader :pager
 
-      # @return [Array<Y2Partitioner::DevicePresenter>] list of devices to display
+      # @return [Array<Y2Storage::Device>] list of devices to display
       attr_reader :devices
 
       DEFAULT_COLUMNS = [

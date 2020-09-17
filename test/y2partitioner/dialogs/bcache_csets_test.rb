@@ -19,38 +19,52 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/dialogs/bcache_csets"
 
-describe Y2Partitioner::Widgets::Pages::Bcaches do
+describe Y2Partitioner::Dialogs::BcacheCsets do
   before { devicegraph_stub(scenario) }
 
   let(:scenario) { "bcache1.xml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(bcaches, pager) }
+  subject { described_class.new }
 
   let(:bcaches) { device_graph.bcaches }
 
-  let(:pager) { double("OverviewTreePager") }
-
-  include_examples "CWM::Page"
+  include_examples "CWM::Dialog"
 
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-    it "shows a table with the bcache devices and their partitions" do
-      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+    it "contains a table for the Bcache Caching Sets" do
+      widget = subject.contents.nested_find do |i|
+        i.is_a?(Y2Partitioner::Dialogs::BcacheCsets::BcacheCsetsTable)
+      end
 
-      expect(table).to_not be_nil
+      expect(widget).to_not(be_nil)
+    end
+  end
 
-      devices = table.items.map { |i| i[1] }
+  describe Y2Partitioner::Dialogs::BcacheCsets::BcacheCsetsTable do
+    subject { described_class.new }
 
-      expect(remove_sort_keys(devices)).to contain_exactly("/dev/bcache0", "/dev/bcache1",
-        "/dev/bcache2", "/dev/bcache0p1", "/dev/bcache2p1")
+    before do
+      vda1 = device_graph.find_by_name("/dev/vda1")
+      vda1.create_bcache_cset
+    end
+
+    include_examples "CWM::CustomWidget"
+
+    describe "#items" do
+      it "contains all the Bcache Caching Sets" do
+        devices = subject.items.map { |i| i[1] }
+
+        expect(devices).to contain_exactly("/dev/vdb", "/dev/vda1")
+      end
     end
   end
 end
