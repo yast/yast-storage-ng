@@ -24,11 +24,7 @@ require "y2partitioner/widgets/pages/lvm"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
-require "y2partitioner/widgets/lvm_vg_description"
-require "y2partitioner/widgets/lvm_lv_add_button"
-require "y2partitioner/widgets/lvm_lvs_delete_button"
 require "y2partitioner/widgets/lvm_vg_resize_button"
-require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/columns"
 
@@ -71,8 +67,7 @@ module Y2Partitioner
               ),
               Left(
                 Tabs.new(
-                  LvmVgTab.new(@lvm_vg),
-                  LvmLvTab.new(@lvm_vg, @pager),
+                  LvmVgTab.new(@lvm_vg, @pager),
                   LvmPvTab.new(@lvm_vg, @pager)
                 )
               )
@@ -88,66 +83,17 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for a LVM Volume Group info
-      class LvmVgTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        def initialize(lvm_vg)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              LvmVgDescription.new(@lvm_vg),
-              Left(DeviceDeleteButton.new(device: @lvm_vg))
-            )
-        end
-      end
-
       # A Tab for the LVM logical volumes of a volume group
-      class LvmLvTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        # @param pager [CWM::TreePager]
-        def initialize(lvm_vg, pager)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("Log&ical Volumes")
-        end
-
+      class LvmVgTab < OverviewTab
         # @macro seeCustomWidget
         def contents
           return @contents if @contents
 
           device_buttons = DeviceButtonsSet.new(@pager)
           @contents = VBox(
-            LvmVgBarGraph.new(@lvm_vg),
+            LvmVgBarGraph.new(device),
             table(device_buttons),
             Left(device_buttons),
-            Right(
-              HBox(
-                LvmLvAddButton.new(device: @lvm_vg),
-                LvmLvsDeleteButton.new(device: @lvm_vg)
-              )
-            )
           )
         end
 
@@ -173,7 +119,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::LvmLv>]
         def devices
-          @lvm_vg.all_lvm_lvs
+          [device] + device.all_lvm_lvs
         end
       end
 

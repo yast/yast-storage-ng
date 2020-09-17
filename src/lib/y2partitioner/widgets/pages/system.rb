@@ -47,7 +47,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _("System Overview")
+          _("All Devices")
         end
 
         # @macro seeCustomWidget

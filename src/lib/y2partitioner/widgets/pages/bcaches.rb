@@ -41,7 +41,7 @@ module Y2Partitioner
         #
         # @return [String]
         def self.label
-          _("Bcache")
+          _("Bcache Devices")
         end
 
         # Constructor
