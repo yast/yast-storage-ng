@@ -111,7 +111,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a partition
       def partition_buttons
         [
-          PartitionModifyButton.new(device),
+          PartitionModifyButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
