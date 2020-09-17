@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,18 +25,20 @@ require "cwm/rspec"
 require "y2partitioner/widgets/partition_modify_button"
 
 describe Y2Partitioner::Widgets::PartitionModifyButton do
-  before { devicegraph_stub("mixed_disks") }
+  subject(:button) { described_class.new(device: device) }
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  before do
+    devicegraph_stub("mixed_disks")
+    allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
+  end
+
   let(:device) { current_graph.partitions.first }
 
-  subject(:button) { described_class.new(device) }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  describe "#items" do
-    it "returns a list" do
-      expect(button.items).to be_a(Array)
-    end
-  end
+  let(:sequence) { instance_double(Y2Partitioner::Actions::TransactionWizard, run: nil) }
+
+  include_examples "CWM::PushButton"
 
   describe "#label" do
     it "returns a string with keyboard shortcut" do
@@ -46,36 +48,22 @@ describe Y2Partitioner::Widgets::PartitionModifyButton do
   end
 
   describe "#handle" do
-    let(:widget_id) { subject.widget_id }
-    let(:event) { { "ID" => selected_option } }
-    let(:sequence) { instance_double(Y2Partitioner::Actions::TransactionWizard, run: nil) }
+    it "opens the workflow for editing the device" do
+      expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new)
+      button.handle
+    end
 
-    context "when the option for editing the partition is selected" do
-      let(:selected_option) { :"#{widget_id}_edit" }
+    it "returns :redraw if the workflow returns :finish" do
+      allow(sequence).to receive(:run).and_return :finish
+      expect(button.handle).to eq :redraw
+    end
 
-      before do
-        allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
-      end
-
-      it "opens the workflow for editing the device" do
-        expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new)
-        button.handle(event)
-      end
-
-      it "returns :redraw if the workflow returns :finish" do
-        allow(sequence).to receive(:run).and_return :finish
-        expect(button.handle(event)).to eq :redraw
-      end
-
-      it "returns nil if the workflow does not return :finish" do
-        allow(sequence).to receive(:run).and_return :back
-        expect(button.handle(event)).to be_nil
-      end
+    it "returns nil if the workflow does not return :finish" do
+      allow(sequence).to receive(:run).and_return :back
+      expect(button.handle).to be_nil
     end
 
     context "when the device is suddenly not available" do
-      let(:selected_option) { :"#{widget_id}_edit" }
-
       before do
         # Ensure the subject is initialized
         button
@@ -85,12 +73,12 @@ describe Y2Partitioner::Widgets::PartitionModifyButton do
 
       it "shows an error popup" do
         expect(Yast::Popup).to receive(:Error)
-        button.handle(event)
+        button.handle
       end
 
       it "returns nil" do
         allow(Yast::Popup).to receive(:Error)
-        expect(button.handle(event)).to be_nil
+        expect(button.handle).to be_nil
       end
     end
   end
