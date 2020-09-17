@@ -127,7 +127,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BcacheModifyButton,
+            Y2Partitioner::Widgets::DiskModifyButton,
             Y2Partitioner::Widgets::DeviceDeleteButton,
             Y2Partitioner::Widgets::PartitionAddButton
           )
