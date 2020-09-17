@@ -183,7 +183,7 @@ module Y2Partitioner
       #
       # @return [CWM::AbstractWidget]
       def modify_disk_button
-        return DiskModifyButton.new(device) if device.usable_as_blk_device?
+        return DiskModifyButton.new(device: device) if device.usable_as_blk_device?
 
         PartitionTableAddButton.new(device: device)
       end
