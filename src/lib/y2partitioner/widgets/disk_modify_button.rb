@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,14 +18,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/actions/create_partition_table"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying a disk device (disk, DASD, etc.)
-    class DiskModifyButton < DeviceMenuButton
+    # Device button for modifying a disk device (disk, DASD, etc.)
+    class DiskModifyButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -38,22 +37,12 @@ module Y2Partitioner
 
       private
 
-      # @see DeviceMenuButton#actions
+      # Returns the proper Actions class for editing a device
       #
-      # @return [Array<Hash>]
-      def actions
-        [
-          {
-            id:    :edit,
-            label: _("Edit Hard Disk..."),
-            class: Actions::EditBlkDevice
-          },
-          {
-            id:    :ptable,
-            label: _("Create New Partition Table..."),
-            class: Actions::CreatePartitionTable
-          }
-        ]
+      # @see DeviceButton#actions
+      # @see Actions::EditBlkDevice
+      def actions_class
+        Actions::EditBlkDevice
       end
     end
   end

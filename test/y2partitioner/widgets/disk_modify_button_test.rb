@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,20 +25,19 @@ require "cwm/rspec"
 require "y2partitioner/widgets/disk_modify_button"
 
 describe Y2Partitioner::Widgets::DiskModifyButton do
-  before { devicegraph_stub("empty_hard_disk_50GiB") }
+  subject(:button) { described_class.new(device: device) }
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-  let(:device) { current_graph.disks.first }
+  before do
+    devicegraph_stub("empty_hard_disk_50GiB")
 
-  subject(:button) { described_class.new(device) }
-
-  include_examples "CWM::AbstractWidget"
-
-  describe "#items" do
-    it "returns a list" do
-      expect(button.items).to be_a(Array)
-    end
+    allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
   end
+
+  let(:device) { current_graph.disks.first }
+  let(:sequence) { instance_double(Y2Partitioner::Actions::TransactionWizard, run: nil) }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  include_examples "CWM::PushButton"
 
   describe "#label" do
     it "returns a string with keyboard shortcut" do
@@ -48,54 +47,19 @@ describe Y2Partitioner::Widgets::DiskModifyButton do
   end
 
   describe "#handle" do
-    let(:widget_id) { subject.widget_id }
-    let(:event) { { "ID" => selected_option } }
-    let(:sequence) { instance_double(Y2Partitioner::Actions::TransactionWizard, run: nil) }
-
-    context "when the option for editing the disk is selected" do
-      let(:selected_option) { :"#{widget_id}_edit" }
-
-      before do
-        allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
-      end
-
-      it "opens the workflow for editing the device" do
-        expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new)
-        button.handle(event)
-      end
-
-      it "returns :redraw if the workflow returns :finish" do
-        allow(sequence).to receive(:run).and_return :finish
-        expect(button.handle(event)).to eq :redraw
-      end
-
-      it "returns nil if the workflow does not return :finish" do
-        allow(sequence).to receive(:run).and_return :back
-        expect(button.handle(event)).to be_nil
-      end
+    it "opens the workflow for editing the device" do
+      expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new)
+      button.handle
     end
 
-    context "when the option for creating a partition table is selected" do
-      let(:selected_option) { :"#{widget_id}_ptable" }
+    it "returns :redraw if the workflow returns :finish" do
+      allow(sequence).to receive(:run).and_return :finish
+      expect(button.handle).to eq :redraw
+    end
 
-      before do
-        allow(Y2Partitioner::Actions::CreatePartitionTable).to receive(:new).and_return sequence
-      end
-
-      it "opens the workflow for creating the partition table" do
-        expect(Y2Partitioner::Actions::CreatePartitionTable).to receive(:new)
-        button.handle(event)
-      end
-
-      it "returns :redraw if the workflow returns :finish" do
-        allow(sequence).to receive(:run).and_return :finish
-        expect(button.handle(event)).to eq :redraw
-      end
-
-      it "returns nil if the workflow does not return :finish" do
-        allow(sequence).to receive(:run).and_return :back
-        expect(button.handle(event)).to be_nil
-      end
+    it "returns nil if the workflow does not return :finish" do
+      allow(sequence).to receive(:run).and_return :back
+      expect(button.handle).to be_nil
     end
   end
 end
