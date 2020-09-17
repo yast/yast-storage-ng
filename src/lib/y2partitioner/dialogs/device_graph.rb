@@ -17,8 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "yast/i18n"
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/device_graph_with_buttons"
@@ -29,8 +27,6 @@ module Y2Partitioner
     # A dialog for displaying the device graphs (both current and system) in
     # interfaces supporting the Graph widget (Qt). Don't use in NCurses.
     class DeviceGraph < Popup
-      include Yast::I18n
-
       # Constructor
       def initialize
         textdomain "storage"
