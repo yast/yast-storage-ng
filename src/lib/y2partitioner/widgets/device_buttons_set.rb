@@ -19,14 +19,11 @@
 
 require "yast"
 require "cwm/widget"
-require "y2partitioner/widgets/partition_modify_button"
-require "y2partitioner/widgets/disk_modify_button"
-require "y2partitioner/widgets/lvm_lv_modify_button"
 require "y2partitioner/widgets/lvm_lv_add_button"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/btrfs_modify_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/partition_table_add_button"
 
 module Y2Partitioner
@@ -111,7 +108,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a partition
       def partition_buttons
         [
-          PartitionModifyButton.new(device: device),
+          BlkDeviceEditButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
@@ -119,7 +116,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a software raid
       def software_raid_buttons
         [
-          DiskModifyButton.new(device: device),
+          BlkDeviceEditButton.new(device: device),
           PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
@@ -128,7 +125,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a bcache device
       def bcache_buttons
         [
-          DiskModifyButton.new(device: device),
+          BlkDeviceEditButton.new(device: device),
           PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
@@ -159,7 +156,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a logical volume
       def lvm_lv_buttons
         [
-          LvmLvModifyButton.new(device: device),
+          BlkDeviceEditButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
@@ -179,7 +176,7 @@ module Y2Partitioner
       #
       # @return [CWM::AbstractWidget]
       def modify_disk_button
-        return DiskModifyButton.new(device: device) if device.usable_as_blk_device?
+        return BlkDeviceEditButton.new(device: device) if device.usable_as_blk_device?
 
         PartitionTableAddButton.new(device: device)
       end
