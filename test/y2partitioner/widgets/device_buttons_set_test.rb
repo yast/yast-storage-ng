@@ -53,7 +53,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::PartitionModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
@@ -70,7 +70,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::DiskModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::PartitionAddButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
@@ -89,7 +89,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             widgets = Yast::CWM.widgets_in_contents([content])
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-              Y2Partitioner::Widgets::DiskModifyButton,
+              Y2Partitioner::Widgets::BlkDeviceEditButton,
               Y2Partitioner::Widgets::PartitionAddButton
             )
           end
@@ -127,7 +127,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::DiskModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton,
             Y2Partitioner::Widgets::PartitionAddButton
           )
@@ -181,7 +181,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::LvmLvModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end

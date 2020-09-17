@@ -104,5 +104,11 @@ describe Y2Partitioner::Widgets::BlkDeviceEditButton do
       let(:device_name) { "/dev/md/b" }
       include_examples "run edit action"
     end
+
+    context "when the device is a LVM LV" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:device_name) { "/dev/vg0/lv1" }
+      include_examples "run edit action"
+    end
   end
 end
