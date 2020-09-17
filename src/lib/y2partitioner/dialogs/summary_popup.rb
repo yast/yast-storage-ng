@@ -17,20 +17,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "yast/i18n"
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/widgets/summary_text"
-require "y2partitioner/actions/quit_partitioner"
-
-Yast.import "Label"
 
 module Y2Partitioner
   module Dialogs
     # Dialog to show the summary of changes performed by the user
     class SummaryPopup < Popup
-      include Yast::I18n
-
       def initialize
         textdomain "storage"
       end

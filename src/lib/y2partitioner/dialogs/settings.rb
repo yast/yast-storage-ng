@@ -17,8 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "yast/i18n"
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/icons"
 require "y2storage/filesystems/mount_by_type"
@@ -29,8 +27,6 @@ module Y2Partitioner
   module Dialogs
     # A page for displaying the Partitioner settings
     class Settings < Popup
-      include Yast::I18n
-
       # Constructor
       def initialize
         textdomain "storage"
