@@ -23,7 +23,6 @@ require "y2partitioner/widgets/partition_modify_button"
 require "y2partitioner/widgets/disk_modify_button"
 require "y2partitioner/widgets/lvm_vg_modify_button"
 require "y2partitioner/widgets/lvm_lv_modify_button"
-require "y2partitioner/widgets/bcache_modify_button"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
@@ -130,7 +129,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a bcache device
       def bcache_buttons
         [
-          BcacheModifyButton.new(device),
+          DiskModifyButton.new(device: device),
           PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
