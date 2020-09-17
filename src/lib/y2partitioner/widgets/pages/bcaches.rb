@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,7 +22,6 @@ require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/bcache_add_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
@@ -71,69 +70,30 @@ module Y2Partitioner
                   Heading(label)
                 )
               ),
-              Left(tabs)
+              Left(
+                VBox(
+                  table,
+                  Left(device_buttons),
+                  Right(table_buttons)
+                )
+              )
             )
           )
         end
 
-        # @macro seeAbstractWidget
-        def init
-          # Start always in the first tab
-          tabs.switch_page(tabs.initial_page)
-        end
-
         private
 
-        # Page icon
-        #
-        # @return [String]
-        def icon
-          Icons::BCACHE
-        end
-
-        # Tabs to show
-        #
-        # @return [Array<CWM::Tab>]
-        def tabs
-          @tabs ||= Tabs.new(
-            BcachesTab.new(@bcaches, @pager),
-            BcacheCsetsTab.new(@pager)
-          )
-        end
-      end
-
-      # A Tab for the list of bcache devices
-      class BcachesTab < CWM::Tab
         # @return [Array<Y2Storage::Bcache>]
         attr_reader :bcaches
 
         # @return [CWM::TreePager]
         attr_reader :pager
 
-        # Constructor
+        # Page icon
         #
-        # @param bcaches [Array<Y2Storage::Bcache>]
-        # @param pager [CWM::TreePager]
-        def initialize(bcaches, pager)
-          textdomain "storage"
-
-          @bcaches = bcaches
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("Bcache Devices")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||=
-            VBox(
-              table,
-              Left(device_buttons),
-              Right(table_buttons)
-            )
+        # @return [String]
+        def icon
+          Icons::BCACHE
         end
 
         # Table to list all bcache devices and their partitions
@@ -163,65 +123,6 @@ module Y2Partitioner
             devices << bcache
             devices.concat(bcache.partitions)
           end
-        end
-      end
-
-      # A Tab for the list of caching set devices
-      class BcacheCsetsTab < CWM::Tab
-        # @return [CWM::TreePager]
-        attr_reader :pager
-
-        # Constructor
-        #
-        # @param pager [CWM::TreePager]
-        def initialize(pager)
-          textdomain "storage"
-
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("Caching Set Devices")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||= VBox(table)
-        end
-
-        # Table to list all caching set devices
-        #
-        # @return [BcacheCsetsTable]
-        def table
-          @table ||= BcacheCsetsTable.new(devices, pager)
-        end
-
-        # Returns all caching set devices
-        #
-        # @return [Array<Y2Storage::BcacheCset>]
-        def devices
-          DeviceGraphs.instance.current.bcache_csets
-        end
-      end
-
-      # Table for caching set devices
-      class BcacheCsetsTable < ConfigurableBlkDevicesTable
-        # Constructor
-        #
-        # @param devices [Array<Y2Storage::BcacheCsets>] see {#devices}
-        # @param pager [CWM::Pager] see {#pager}
-        # @param buttons_set [DeviceButtonsSet] see {#buttons_set}
-        def initialize(devices, pager, buttons_set = nil)
-          textdomain "storage"
-
-          super
-          show_columns(
-            Columns::CachingDevice,
-            Columns::Size,
-            Columns::Uuid,
-            Columns::UsedBy
-          )
         end
       end
     end
