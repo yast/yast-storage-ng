@@ -159,7 +159,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a logical volume
       def lvm_lv_buttons
         [
-          LvmLvModifyButton.new(device),
+          LvmLvModifyButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end

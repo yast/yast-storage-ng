@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,14 +18,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/actions/resize_blk_device"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying an LVM logical volume
-    class LvmLvModifyButton < DeviceMenuButton
+    # Device button for modifying an LVM logical volume
+    class LvmLvModifyButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -33,17 +32,17 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("&Modify")
+        _("&Edit Logical Volume...")
       end
 
       private
 
-      # @see DeviceMenuButton#actions
-      def actions
-        [
-          { id: :edit,   label: _("Edit Logical Volume..."),   class: Actions::EditBlkDevice },
-          { id: :resize, label: _("Resize Logical Volume..."), class: Actions::ResizeBlkDevice }
-        ]
+      # Returns the proper Actions class for editing a device
+      #
+      # @see DeviceButton#actions
+      # @see Actions::EditBlkDevice
+      def actions_class
+        Actions::EditBlkDevice
       end
     end
   end
