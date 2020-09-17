@@ -25,8 +25,8 @@ module Y2Partitioner
   module Widgets
     # Button for adding a partition
     class PartitionAddButton < DeviceButton
-      def initialize(args = {})
-        super(**args)
+      def initialize(*args)
+        super
         textdomain "storage"
       end
 
