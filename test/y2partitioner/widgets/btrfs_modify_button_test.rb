@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,9 +27,10 @@ require "y2partitioner/widgets/btrfs_modify_button"
 describe Y2Partitioner::Widgets::BtrfsModifyButton do
   before do
     devicegraph_stub(scenario)
+    allow(Y2Partitioner::Actions::EditBtrfs).to receive(:new).and_return sequence
   end
 
-  subject(:button) { described_class.new(device) }
+  subject(:button) { described_class.new(device: device) }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -39,11 +40,9 @@ describe Y2Partitioner::Widgets::BtrfsModifyButton do
 
   let(:device_name) { "/dev/sdb2" }
 
-  describe "#items" do
-    it "returns a list" do
-      expect(button.items).to be_a(Array)
-    end
-  end
+  let(:sequence) { instance_double(Y2Partitioner::Actions::TransactionWizard, run: nil) }
+
+  include_examples "CWM::PushButton"
 
   describe "#label" do
     it "returns a string with keyboard shortcut" do
@@ -53,56 +52,28 @@ describe Y2Partitioner::Widgets::BtrfsModifyButton do
   end
 
   describe "#handle" do
-    let(:widget_id) { subject.widget_id }
-
-    let(:event) { { "ID" => selected_option } }
-
     let(:action) { instance_double("Action", run: nil) }
 
-    RSpec.shared_examples "handle btrfs action result" do
-      it "returns :redraw if the workflow returns :finish" do
-        allow(action).to receive(:run).and_return :finish
-
-        expect(button.handle(event)).to eq :redraw
-      end
-
-      it "returns nil if the workflow does not return :finish" do
-        allow(action).to receive(:run).and_return :back
-
-        expect(button.handle(event)).to be_nil
-      end
+    before do
+      allow(Y2Partitioner::Actions::EditBtrfs).to receive(:new).and_return(action)
     end
 
-    context "when the option for editing the btrfs is selected" do
-      let(:selected_option) { :"#{widget_id}_edit" }
+    it "opens the workflow for editing the Btrfs" do
+      expect(Y2Partitioner::Actions::EditBtrfs).to receive(:new)
 
-      before do
-        allow(Y2Partitioner::Actions::EditBtrfs).to receive(:new).and_return(action)
-      end
-
-      it "opens the workflow for editing the Btrfs" do
-        expect(Y2Partitioner::Actions::EditBtrfs).to receive(:new)
-
-        button.handle(event)
-      end
-
-      include_examples "handle btrfs action result"
+      button.handle
     end
 
-    context "when the option for editing the devices is selected" do
-      let(:selected_option) { :"#{widget_id}_devices" }
+    it "returns :redraw if the workflow returns :finish" do
+      allow(action).to receive(:run).and_return :finish
 
-      before do
-        allow(Y2Partitioner::Actions::EditBtrfsDevices).to receive(:new).and_return(action)
-      end
+      expect(button.handle).to eq :redraw
+    end
 
-      it "opens the workflow for editing the devices" do
-        expect(Y2Partitioner::Actions::EditBtrfsDevices).to receive(:new)
+    it "returns nil if the workflow does not return :finish" do
+      allow(action).to receive(:run).and_return :back
 
-        button.handle(event)
-      end
-
-      include_examples "handle btrfs action result"
+      expect(button.handle).to be_nil
     end
   end
 end

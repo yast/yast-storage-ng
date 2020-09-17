@@ -167,7 +167,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a BTRFS filesystem
       def btrfs_buttons
         [
-          BtrfsModifyButton.new(device),
+          BtrfsModifyButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
