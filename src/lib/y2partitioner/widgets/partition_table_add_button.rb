@@ -33,7 +33,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button to add a partition table
-        _("New Partition Table...")
+        _("Create New Partition Table...")
       end
 
       private
