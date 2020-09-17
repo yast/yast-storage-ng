@@ -126,8 +126,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
           expect(button).to_not be_nil
         end
 
-        it "shows a menu-button for expert options on the partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
+        it "shows a button to create a new partition table" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
 
           expect(button).to_not be_nil
         end
@@ -144,8 +144,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
           expect(button).to be_nil
         end
 
-        it "shows a menu-button for expert options on the partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
+        it "shows a button to create a new partition table" do
+          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
 
           expect(button).to_not be_nil
         end
