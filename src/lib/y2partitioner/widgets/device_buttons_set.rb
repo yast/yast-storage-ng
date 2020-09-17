@@ -22,8 +22,8 @@ require "cwm/widget"
 require "y2partitioner/widgets/partition_modify_button"
 require "y2partitioner/widgets/disk_modify_button"
 require "y2partitioner/widgets/lvm_lv_modify_button"
+require "y2partitioner/widgets/lvm_lv_add_button"
 require "y2partitioner/widgets/partition_add_button"
-require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/btrfs_modify_button"
@@ -151,7 +151,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a volume group
       def lvm_vg_buttons
         [
-          LvmLogicalVolumesButton.new(device, pager),
+          LvmLvAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
