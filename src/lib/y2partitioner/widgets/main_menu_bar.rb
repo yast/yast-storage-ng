@@ -51,7 +51,7 @@ module Y2Partitioner
         refresh
       end
 
-      # @see UIState#select_row
+      # @see UIState#select_page
       def select_page(pages_ids)
         dev_id = pages_ids.reverse.find { |id| id.is_a?(Integer) }
         @page_device = dev_id ? find_device(dev_id) : nil
@@ -118,7 +118,7 @@ module Y2Partitioner
         disable_menu_items(*disabled_items)
       end
 
-      # List of buttons that make sense for the current target device
+      # Set of menus for the current {#device} and {#page_device}
       #
       # @return [Array<Menus::Base>]
       def calculate_menus
