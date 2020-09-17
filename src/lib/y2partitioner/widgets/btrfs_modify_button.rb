@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,14 +18,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/edit_btrfs"
-require "y2partitioner/actions/edit_btrfs_devices"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying a Btrfs filesystem
-    class BtrfsModifyButton < DeviceMenuButton
+    # Device button for modifying a Btrfs filesystem
+    class BtrfsModifyButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -33,30 +32,17 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("&Modify")
+        _("&Edit...")
       end
 
       private
 
-      # @see DeviceMenuButton#actions
+      # Returns the proper Actions class for editing a device
       #
-      # @see Actions::EditBtrfs
-      # @see Actions::EditBtrfsDevices
-      #
-      # @return [Array<Hash>]
-      def actions
-        [
-          {
-            id:    :edit,
-            label: _("Edit Btrfs..."),
-            class: Actions::EditBtrfs
-          },
-          {
-            id:    :devices,
-            label: _("Change Used Devices..."),
-            class: Actions::EditBtrfsDevices
-          }
-        ]
+      # @see DeviceButton#actions
+      # @see Actions::EditBtrfsDevice
+      def actions_class
+        Actions::EditBtrfs
       end
     end
   end
