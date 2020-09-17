@@ -21,7 +21,6 @@ require "yast"
 require "cwm/widget"
 require "y2partitioner/widgets/partition_modify_button"
 require "y2partitioner/widgets/disk_modify_button"
-require "y2partitioner/widgets/md_modify_button"
 require "y2partitioner/widgets/lvm_vg_modify_button"
 require "y2partitioner/widgets/lvm_lv_modify_button"
 require "y2partitioner/widgets/bcache_modify_button"
@@ -122,7 +121,7 @@ module Y2Partitioner
       # Buttons to display if {#device} is a software raid
       def software_raid_buttons
         [
-          MdModifyButton.new(device),
+          DiskModifyButton.new(device: device),
           PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
