@@ -19,246 +19,117 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/icons"
-require "y2partitioner/execute_and_redraw"
-require "y2partitioner/actions/rescan_devices"
-require "y2partitioner/actions/configure_actions"
-require "y2partitioner/actions/import_mount_points"
-require "y2partitioner/dialogs/summary_popup"
-require "y2partitioner/dialogs/settings"
-require "y2partitioner/dialogs/device_graph"
+require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/menus/system"
+require "y2partitioner/widgets/menus/add"
+require "y2partitioner/widgets/menus/modify"
+require "y2partitioner/widgets/menus/view"
+require "y2partitioner/widgets/menus/go"
+require "y2partitioner/widgets/menus/extra"
 
 module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
       Yast.import "UI"
-      Yast.import "Stage"
-      include Yast::Logger
-      include ExecuteAndRedraw
 
-      # Class to represent each one of the entries in the 'Configure' menu
-      class ConfigureEntry
-        include Yast::I18n
-        extend Yast::I18n
-
-        # Constructor
-        def initialize(action_class_name, label, icon)
-          @action_class_name = action_class_name
-          @label = label
-          @icon = icon
-        end
-
-        # All possible entries
-        ALL = [
-          new(:ProvideCryptPasswords, N_("Provide Crypt &Passwords..."), Icons::LOCK),
-          new(:ConfigureIscsi,        N_("Configure &iSCSI..."),         Icons::ISCSI),
-          new(:ConfigureFcoe,         N_("Configure &FCoE..."),          Icons::FCOE),
-          new(:ConfigureDasd,         N_("Configure &DASD..."),          Icons::DASD),
-          new(:ConfigureZfcp,         N_("Configure &zFCP..."),          Icons::ZFCP),
-          new(:ConfigureXpram,        N_("Configure &XPRAM..."),         Icons::XPRAM)
-        ]
-        private_constant :ALL
-
-        # All possible entries
-        #
-        # @return [Array<ConfigureEntry>]
-        def self.all
-          ALL.dup
-        end
-
-        # Entries that should be displayed to the user
-        #
-        # @return [Array<ConfigureEntry>]
-        def self.visible
-          all.select(&:visible?)
-        end
-
-        # @return [String] name of the icon to display next to the label
-        attr_reader :icon
-
-        # @return [String] Internationalized label
-        def label
-          _(@label)
-        end
-
-        # @return [Symbol] identifier for the action to use in the UI
-        def id
-          @id ||= action_class_name.to_s.gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
-        end
-
-        # Action to execute when the entry is selected
-        #
-        # @return [Y2Partitioner::Actions::ConfigureAction]
-        def action
-          @action ||= Y2Partitioner::Actions.const_get(action_class_name).new
-        end
-
-        # Whether the entry should be displayed to the user
-        #
-        # @return [Boolean]
-        def visible?
-          action.available?
-        end
-
-        private
-
-        # Name of the class for #{action}
-        #
-        # @return [Symbol]
-        attr_reader :action_class_name
-      end
+      # @return [Array<Menus::Base>]
+      attr_reader :menus
 
       # Constructor
       def initialize
-        textdomain "storage"
         self.handle_all_events = true
-        @configure_entries = ConfigureEntry.visible
+        @device = nil
+        @page_device = nil
+        @menus = []
         super
       end
 
-      # Called by CWM after the widgets are created
-      def init
-        enable_items
+      # @see UIState#select_row
+      def select_row(id)
+        @device = find_device(id)
+        refresh
       end
 
+      # @see UIState#select_page
+      def select_page(pages_ids)
+        dev_id = pages_ids.reverse.find { |id| id.is_a?(Integer) }
+        @page_device = dev_id ? find_device(dev_id) : nil
+        @device = nil
+        refresh
+      end
+
+      # @macro seeAbstractWidget
       def id
         :menu_bar
       end
 
-      # Widget contents
+      # @macro seeAbstractWidget
       def contents
-        @contents ||= MenuBar(Id(id), main_menus)
+        @contents ||= MenuBar(Id(id), items)
       end
 
       # Event handler for the main menu.
       #
       # @param event [Hash] UI event
-      #
+      # @return [Symbol, nil]
       def handle(event)
         return nil unless menu_event?(event)
 
         id = event["ID"]
-        entry = @configure_entries.find { |e| e.id == id }
-        if entry
-          execute_and_redraw { entry.action.run }
-        else
-          call_menu_item_handler(id)
+        result = nil
+        menus.find do |menu|
+          result = menu.handle(id)
         end
+        result
       end
 
       private
+
+      # Device currently selected in the UI, if any
+      #
+      # @return [Y2Storage::Device, nil]
+      attr_reader :device
+
+      # Device currently selected in the left tree, if any
+      #
+      # @return [Y2Storage::Device, nil]
+      attr_reader :page_device
 
       # Check if a UI event is a menu event
       def menu_event?(event)
         event["EventType"] == "MenuEvent"
       end
 
-      # Call a method "handle_id" for a menu item with ID "id" if such a method
-      # is defined in this class.
-      def call_menu_item_handler(id)
-        return nil if id.nil?
-
-        # log.info("Handling menu event: #{id}")
-        handler = "handle_#{id}"
-        if respond_to?(handler, true)
-          log.info("Calling #{handler}()")
-          send(handler)
-        else
-          log.info("No method #{handler}")
-          nil
-        end
+      # @return [Array<Yast::Term>]
+      def items
+        menus.map { |m| Menu(m.label, m.items) }
       end
 
-      # Check if we are running in the initial stage of an installation
-      def installation?
-        Yast::Stage.initial
+      # @return [Array<Symbol>]
+      def disabled_items
+        menus.flat_map(&:disabled_items)
       end
 
-      #----------------------------------------------------------------------
-      # Menu Definitions
-      #----------------------------------------------------------------------
+      # Redraws the widget
+      def refresh
+        @menus = calculate_menus
+        Yast::UI.ChangeWidget(Id(id), :Items, items)
+        disable_menu_items(*disabled_items)
+      end
 
-      def main_menus
+      # Set of menus for the current {#device} and {#page_device}
+      #
+      # @return [Array<Menus::Base>]
+      def calculate_menus
         [
-          # TRANSLATORS: Pulldown menus in the partitioner
-          Menu(_("&System"), system_menu),
-          Menu(_("&Edit"), edit_menu),
-          Menu(_("&View"), view_menu),
-          Menu(_("&Configure"), configure_menu),
-          Menu(_("&Options"), options_menu)
-        ].freeze
-      end
-
-      def system_menu
-        # For each item with an ID "xy", write a "handle_xy" method.
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:rescan_devices), _("R&escan Devices")),
-          Item(Id(:settings), _("Se&ttings...")),
-          Item("---"),
-          Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
-          Item("---"),
-          Item(Id(:next), _("&Finish (Save and Exit)"))
-        ].freeze
-      end
-
-      def edit_menu
-        [
-          # TRANSLATORS: Menu items in the partitioner
-          Item(Id(:add), _("&Add...")),
-          Item(Id(:edit), _("&Edit...")),
-          Item(Id(:delete), _("&Delete")),
-          Item(Id(:delete_all), _("Delete A&ll")),
-          Item("---"),
-          Item(Id(:resize), _("Resi&ze...")),
-          Item(Id(:move), _("&Move..."))
-        ].freeze
-      end
-
-      def view_menu
-        items = []
-        # TRANSLATORS: Menu items in the partitioner
-        items << Item(Id(:device_graphs), _("Device &Graphs...")) if Dialogs::DeviceGraph.supported?
-        items << Item(Id(:installation_summary), _("Installation &Summary..."))
-        items
-      end
-
-      def configure_menu
-        @configure_entries.map do |entry|
-          Yast::Term.new(
-            :item,
-            Yast::Term.new(:id, entry.id),
-            Yast::Term.new(:icon, entry.icon),
-            entry.label
-          )
-        end
-      end
-
-      def options_menu
-        items = []
-        # TRANSLATORS: Menu items in the partitioner
-        items << Item(Id(:create_partition_table), _("Create New Partition &Table..."))
-        items << Item(Id(:clone_partitions), _("&Clone Partitions to Other Devices..."))
-        items << Item(Id(:import_mount_points), _("&Import Mount Points...")) if installation?
-        items
-      end
-
-      # Enable or disable menu items according to the current status
-      def enable_items
-        enable_edit_items
-        enable_options_items
-      end
-
-      def enable_edit_items
-        # Disable all items in the "Edit" menu for now: Right now they are only
-        # there to demonstrate what the final menu will look like.
-        disable_menu_items(:add, :edit, :delete, :delete_all, :resize, :move)
-      end
-
-      def enable_options_items
-        # Not yet implemented on the menu level (:import_mount_points is!)
-        disable_menu_items(:create_partition_table, :clone_partitions)
+          Menus::System.new,
+          Menus::Modify.new(device || page_device),
+          Menus::Add.new(device || page_device),
+          Menus::View.new,
+          Menus::Go.new(page_device || device),
+          Menus::Extra.new(page_device || device)
+        ]
       end
 
       # Disable all items with the specified IDs
@@ -267,44 +138,15 @@ module Y2Partitioner
         Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
       end
 
-      #----------------------------------------------------------------------
-      # Handlers for the menu actions
-      #
-      # For each menu item with ID xy, write a method handle_xy.
-      # The methods are found via introspection in the event handler.
-      #----------------------------------------------------------------------
-
-      def handle_rescan_devices
-        execute_and_redraw { Actions::RescanDevices.new.run }
+      # @return [Y2Storage::Devicegraph]
+      def devicegraph
+        DeviceGraphs.instance.current
       end
 
-      def handle_settings
-        Dialogs::Settings.new.run
-        nil
-      end
-
-      def handle_abort
-        # This is handled by the CWM base classes as the "Abort" wizard button.
-        nil
-      end
-
-      def handle_next
-        # This is handled by the CWM base classes as the "Next" wizard button.
-        nil
-      end
-
-      def handle_device_graphs
-        Dialogs::DeviceGraph.new.run
-        nil
-      end
-
-      def handle_installation_summary
-        Dialogs::SummaryPopup.new.run
-        nil
-      end
-
-      def handle_import_mount_points
-        execute_and_redraw { Actions::ImportMountPoints.new.run }
+      # @param sid [Integer]
+      # @return [Y2Storage::Device, nil]
+      def find_device(sid)
+        devicegraph.find_device(sid)
       end
     end
   end
