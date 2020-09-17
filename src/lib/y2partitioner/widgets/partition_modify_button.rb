@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,15 +18,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/actions/resize_blk_device"
-require "y2partitioner/actions/move_partition"
 
 module Y2Partitioner
   module Widgets
-    # Menu button for modifying a partition
-    class PartitionModifyButton < DeviceMenuButton
+    # Device button for modifying a partition
+    class PartitionModifyButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -39,13 +37,12 @@ module Y2Partitioner
 
       private
 
-      # @see DeviceMenuButton#actions
-      def actions
-        [
-          { id: :edit,   label: _("Edit Partition..."),   class: Actions::EditBlkDevice },
-          { id: :resize, label: _("Resize Partition..."), class: Actions::ResizeBlkDevice },
-          { id: :move,   label: _("Move Partition..."),   class: Actions::MovePartition }
-        ]
+      # Returns the proper Actions class for editing a device
+      #
+      # @see DeviceButton#actions
+      # @see Actions::EditBlkDevice
+      def actions_class
+        Actions::EditBlkDevice
       end
     end
   end
