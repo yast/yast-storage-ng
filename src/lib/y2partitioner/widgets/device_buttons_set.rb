@@ -25,7 +25,7 @@ require "y2partitioner/widgets/md_modify_button"
 require "y2partitioner/widgets/lvm_vg_modify_button"
 require "y2partitioner/widgets/lvm_lv_modify_button"
 require "y2partitioner/widgets/bcache_modify_button"
-require "y2partitioner/widgets/partitions_button"
+require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
@@ -123,7 +123,7 @@ module Y2Partitioner
       def software_raid_buttons
         [
           MdModifyButton.new(device),
-          PartitionsButton.new(device, pager),
+          PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
@@ -132,7 +132,7 @@ module Y2Partitioner
       def bcache_buttons
         [
           BcacheModifyButton.new(device),
-          PartitionsButton.new(device, pager),
+          PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
@@ -141,7 +141,7 @@ module Y2Partitioner
       def disk_device_buttons
         [
           modify_disk_button,
-          PartitionsButton.new(device, pager)
+          PartitionAddButton.new(device: device)
         ]
       end
 

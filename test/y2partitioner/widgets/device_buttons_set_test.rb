@@ -71,7 +71,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::MdModifyButton,
-            Y2Partitioner::Widgets::PartitionsButton,
+            Y2Partitioner::Widgets::PartitionAddButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
@@ -90,7 +90,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
               Y2Partitioner::Widgets::DiskModifyButton,
-              Y2Partitioner::Widgets::PartitionsButton
+              Y2Partitioner::Widgets::PartitionAddButton
             )
           end
 
@@ -109,7 +109,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
               Y2Partitioner::Widgets::PartitionTableAddButton,
-              Y2Partitioner::Widgets::PartitionsButton
+              Y2Partitioner::Widgets::PartitionAddButton
             )
           end
 
@@ -129,7 +129,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BcacheModifyButton,
             Y2Partitioner::Widgets::DeviceDeleteButton,
-            Y2Partitioner::Widgets::PartitionsButton
+            Y2Partitioner::Widgets::PartitionAddButton
           )
         end
 
