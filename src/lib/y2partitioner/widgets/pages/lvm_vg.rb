@@ -93,7 +93,7 @@ module Y2Partitioner
           @contents = VBox(
             LvmVgBarGraph.new(device),
             table(device_buttons),
-            Left(device_buttons),
+            Left(device_buttons)
           )
         end
 
@@ -119,7 +119,9 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::LvmLv>]
         def devices
-          [device] + device.all_lvm_lvs
+          [
+            BlkDevicesTable::DeviceTree.new(device, children: device.all_lvm_lvs)
+          ]
         end
       end
 

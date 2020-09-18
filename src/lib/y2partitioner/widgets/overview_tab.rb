@@ -58,7 +58,7 @@ module Y2Partitioner
         ]
         @contents = VBox(*lines)
       end
-    
+
       private
 
       def devices
@@ -67,4 +67,3 @@ module Y2Partitioner
     end
   end
 end
-

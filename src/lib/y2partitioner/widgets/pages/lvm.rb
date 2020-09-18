@@ -74,9 +74,8 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def devices
-          device_graph.lvm_vgs.reduce([]) do |devices, vg|
-            devices << vg
-            devices.concat(vg.all_lvm_lvs)
+          device_graph.lvm_vgs.map do |vg|
+            BlkDevicesTable::DeviceTree.new(vg, children: vg.all_lvm_lvs)
           end
         end
       end
