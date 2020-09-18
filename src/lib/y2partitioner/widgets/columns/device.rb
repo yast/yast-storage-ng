@@ -52,14 +52,16 @@ module Y2Partitioner
         def device_name(device)
           return fstab_device_name(device) if fstab_entry?(device)
           return device.display_name unless device.is?(:blk_filesystem)
-          return device.type.to_human_string unless device.multidevice?
+
+          dev_name = device.blk_device_basename
+          dev_name = "(#{dev_name})" unless device.multidevice?
 
           format(
             # TRANSLATORS: fs_type is the filesystem type. I.e., BtrFS
             #              device_name is the base name of the block device. I.e., sda or sda1...
             _("%{fs_type} %{device_name}"),
             fs_type:     device.type.to_human_string,
-            device_name: device.blk_device_basename
+            device_name: dev_name
           )
         end
 

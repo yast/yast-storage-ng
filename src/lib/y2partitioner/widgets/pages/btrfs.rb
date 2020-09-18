@@ -102,7 +102,7 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            FilesystemTab.new(filesystem, initial: true),
+            OverviewTab.new(filesystem, pager, initial: true),
             BtrfsDevicesTab.new(filesystem, pager)
           ]
 
@@ -112,44 +112,6 @@ module Y2Partitioner
         # @return [String]
         def section
           BtrfsFilesystems.label
-        end
-      end
-
-      # A Tab for filesystem description
-      class FilesystemTab < CWM::Tab
-        # Constructor
-        #
-        # @param filesystem [Y2Storage::Filesystems::Btrfs]
-        # @param initial [Boolean]
-        def initialize(filesystem, initial: false)
-          textdomain "storage"
-
-          @filesystem = filesystem
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||=
-            VBox(
-              FilesystemDescription.new(@filesystem),
-              Left(HBox(*buttons))
-            )
-        end
-
-        private
-
-        # @return [Array<Widgets::DeviceButton>]
-        def buttons
-          [
-            BtrfsEditButton.new(device: @filesystem),
-            DeviceDeleteButton.new(device: @filesystem)
-          ]
         end
       end
 
