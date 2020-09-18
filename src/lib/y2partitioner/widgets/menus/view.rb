@@ -29,12 +29,15 @@ module Y2Partitioner
     module Menus
       # Class to represent the View menu
       class View < Base
-        extend Yast::I18n
-
-        textdomain "storage"
+        # @see Base
+        def initialize(*args)
+          textdomain "storage"
+          super
+        end
 
         # @see Base
         def label
+          # TRANSLATORS: Partitioner menu with some special dialogs
           _("&View")
         end
 
@@ -52,7 +55,7 @@ module Y2Partitioner
           @items += [
             Item(Id(:installation_summary), _("Installation &Summary...")),
             Item(Id(:settings), _("Se&ttings...")),
-            Item(Id(:bcache_csets), _("Bcache Caching Sets..."))
+            Item(Id(:bcache_csets), _("&Bcache Caching Sets..."))
           ]
         end
 
