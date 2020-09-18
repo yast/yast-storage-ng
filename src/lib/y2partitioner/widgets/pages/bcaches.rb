@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/bcache_add_button"
 require "y2partitioner/widgets/device_buttons_set"
@@ -65,12 +64,6 @@ module Y2Partitioner
           @contents ||= Top(
             VBox(
               Left(
-                HBox(
-                  Image(icon, ""),
-                  Heading(label)
-                )
-              ),
-              Left(
                 VBox(
                   table,
                   Left(device_buttons),
@@ -88,13 +81,6 @@ module Y2Partitioner
 
         # @return [CWM::TreePager]
         attr_reader :pager
-
-        # Page icon
-        #
-        # @return [String]
-        def icon
-          Icons::BCACHE
-        end
 
         # Table to list all bcache devices and their partitions
         #

@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/btrfs_filesystems"
@@ -61,12 +60,6 @@ module Y2Partitioner
         def contents
           Top(
             VBox(
-              Left(
-                HBox(
-                  Image(icon, ""),
-                  Heading(title)
-                )
-              ),
               Left(tabs)
             )
           )
@@ -76,22 +69,6 @@ module Y2Partitioner
 
         # @return [CWM::TreePager]
         attr_reader :pager
-
-        # Page icon
-        #
-        # @return [String]
-        def icon
-          Icons::BTRFS
-        end
-
-        # Page title
-        #
-        # @return [String]
-        def title
-          # TRANSLATORS: BTRFS page title, where %{basename} is replaced by the device
-          # basename (e.g., sda1).
-          format(_("Btrfs %{basename}"), basename: filesystem.blk_device_basename)
-        end
 
         # Tabs to show the filesystem data
         #

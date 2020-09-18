@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
@@ -57,12 +56,6 @@ module Y2Partitioner
         def contents
           Top(
             VBox(
-              Left(
-                HBox(
-                  Image(Icons::RAID, ""),
-                  Heading(format(_("RAID: %s"), @md.name))
-                )
-              ),
               Left(
                 Tabs.new(
                   MdTab.new(@md, initial: true),

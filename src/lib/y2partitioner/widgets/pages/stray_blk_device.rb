@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/stray_blk_device_description"
@@ -51,14 +50,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::DEFAULT_DEVICE, ""),
-                # TRANSLATORS: Heading for a generic storage device
-                # TRANSLATORS: String followed by name of the storage device
-                Heading(format(_("Device: %s"), device.name))
-              )
-            ),
             StrayBlkDeviceDescription.new(device),
             Left(
               HBox(
