@@ -21,7 +21,7 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/partitions_tab"
+require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/partition_table_button"
 
@@ -84,8 +84,7 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            DiskTab.new(disk),
-            PartitionsTab.new(disk, @pager)
+            DiskTab.new(disk, @pager)
           ]
 
           tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
@@ -115,48 +114,11 @@ module Y2Partitioner
       end
 
       # A Tab for disk device description
-      class DiskTab < CWM::Tab
-        # Constructor
-        #
-        # @param disk [Y2Storage::BlkDevice]
-        def initialize(disk, initial: false)
-          textdomain "storage"
-
-          @disk = disk
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(
-            DiskDeviceDescription.new(@disk),
-            Left(
-              HBox(*buttons)
-            )
-          )
-        end
-
+      class DiskTab < OverviewTab
         private
 
-        # Buttons for the device
-        #
-        # Note that some block devices cannot be edited because they cannot be used as block devices,
-        # (e.g., DASD devices).
-        #
-        # @return [Array<CWM::AbstractWidget>]
-        def buttons
-          buttons = []
-
-          buttons << BlkDeviceEditButton.new(device: @disk) if @disk.usable_as_blk_device?
-          buttons << PartitionTableButton.new(@disk)
-
-          buttons
+        def devices
+          [device] + device.partitions
         end
       end
     end
