@@ -48,12 +48,12 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
     context "when targeting a partition" do
       let(:device) { device_graph.partitions.first }
 
-      it "replaces the content with buttons to modify and delete" do
+      it "replaces the content with buttons to modify and delete it" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::PartitionModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
@@ -65,13 +65,13 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
     context "when targeting an MD" do
       let(:device) { device_graph.software_raids.first }
 
-      it "replaces the content with buttons to modify, to delete and to manage partitions" do
+      it "replaces the content with buttons to modify, to delete and to add a partition" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::MdModifyButton,
-            Y2Partitioner::Widgets::PartitionsButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
+            Y2Partitioner::Widgets::PartitionAddButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
@@ -84,13 +84,13 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       context "and the device can be used as a block device" do
         let(:device) { device_graph.disks.first }
 
-        it "replaces the content with buttons to modify and to manage partitions" do
+        it "replaces the content with buttons to modify and to add a partition" do
           expect(widget).to receive(:replace) do |content|
             widgets = Yast::CWM.widgets_in_contents([content])
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-              Y2Partitioner::Widgets::DiskModifyButton,
-              Y2Partitioner::Widgets::PartitionsButton
+              Y2Partitioner::Widgets::BlkDeviceEditButton,
+              Y2Partitioner::Widgets::PartitionAddButton
             )
           end
 
@@ -103,13 +103,13 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
         let(:device) { device_graph.dasds.first }
 
-        it "replaces the content with buttons to create a partiton table and to manage partitions" do
+        it "replaces the content with buttons to create a partiton table and to add a partition" do
           expect(widget).to receive(:replace) do |content|
             widgets = Yast::CWM.widgets_in_contents([content])
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
               Y2Partitioner::Widgets::PartitionTableAddButton,
-              Y2Partitioner::Widgets::PartitionsButton
+              Y2Partitioner::Widgets::PartitionAddButton
             )
           end
 
@@ -122,14 +122,14 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       let(:scenario) { "bcache2.xml" }
       let(:device) { device_graph.find_by_name("/dev/bcache0") }
 
-      it "replaces the content with buttons to modify, to delete and to manage partitions" do
+      it "replaces the content with buttons to modify, to delete and to adda a partition" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BcacheModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton,
-            Y2Partitioner::Widgets::PartitionsButton
+            Y2Partitioner::Widgets::PartitionAddButton
           )
         end
 
@@ -158,13 +158,12 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       let(:scenario) { "lvm-two-vgs" }
       let(:device) { device_graph.lvm_vgs.first }
 
-      it "replaces the content with buttons to modify, to delete and to manage LVs" do
+      it "replaces the content with buttons to add an LV and to delete the VG" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::LvmVgModifyButton,
-            Y2Partitioner::Widgets::LvmLogicalVolumesButton,
+            Y2Partitioner::Widgets::LvmLvAddButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
@@ -182,7 +181,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::LvmLvModifyButton,
+            Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end
