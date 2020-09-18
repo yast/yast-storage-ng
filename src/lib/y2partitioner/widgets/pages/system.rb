@@ -111,8 +111,9 @@ module Y2Partitioner
           # Disks" section, let's do the same in the general storage table
           all = device_graph.disk_devices + device_graph.stray_blk_devices
           all.each_with_object([]) do |disk, devices|
-            devices << disk
-            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
+            tree = BlkDevicesTable::DeviceTree.new(disk)
+            tree.children = disk.partitions if disk.respond_to?(:partitions)
+            devices << tree
           end
         end
 
@@ -123,17 +124,15 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def lvm_vgs
-          device_graph.lvm_vgs.reduce([]) do |devices, vg|
-            devices << vg
-            devices.concat(vg.all_lvm_lvs)
+          device_graph.lvm_vgs.map do |vg|
+            BlkDevicesTable::DeviceTree.new(vg, children: vg.all_lvm_lvs)
           end
         end
 
         # @return [Array<Y2Storage::Device>]
         def software_raids
-          device_graph.software_raids.reduce([]) do |devices, raid|
-            devices << raid
-            devices.concat(raid.partitions)
+          device_graph.software_raids.map do |raid|
+            BlkDevicesTable::DeviceTree.new(raid, children: raid.partitions)
           end
         end
 
@@ -144,10 +143,8 @@ module Y2Partitioner
 
         # @return [Array<Y2Storage::Device>]
         def bcaches
-          all = device_graph.bcaches
-          all.each_with_object([]) do |bcache, devices|
-            devices << bcache
-            devices.concat(bcache.partitions)
+          device_graph.bcaches.map do |bcache|
+            BlkDevicesTable::DeviceTree.new(bcache, children: bcache.partitions)
           end
         end
 

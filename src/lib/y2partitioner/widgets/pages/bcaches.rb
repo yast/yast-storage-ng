@@ -105,9 +105,8 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          bcaches.each_with_object([]) do |bcache, devices|
-            devices << bcache
-            devices.concat(bcache.partitions)
+          bcaches.map do |bcache|
+            BlkDevicesTable::DeviceTree.new(bcache, children: bcache.partitions)
           end
         end
       end
