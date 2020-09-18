@@ -21,11 +21,10 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/btrfs_filesystems"
+require "y2partitioner/widgets/overview_tab"
+require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/filesystem_description"
-require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/used_devices_edit_button"
-require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -102,7 +101,7 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            FilesystemTab.new(filesystem, initial: true),
+            FilesystemTab.new(filesystem, pager),
             BtrfsUsedDevicesTab.new(filesystem, pager)
           ]
 
@@ -115,41 +114,13 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for filesystem description
-      class FilesystemTab < CWM::Tab
-        # Constructor
-        #
-        # @param filesystem [Y2Storage::Filesystems::Btrfs]
-        # @param initial [Boolean]
-        def initialize(filesystem, initial: false)
-          textdomain "storage"
-
-          @filesystem = filesystem
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||=
-            VBox(
-              FilesystemDescription.new(@filesystem),
-              Left(HBox(*buttons))
-            )
-        end
-
+      # A tab to represent the Btrfs filesystem
+      class FilesystemTab < OverviewTab
         private
 
-        # @return [Array<Widgets::DeviceButton>]
-        def buttons
-          [
-            BtrfsEditButton.new(device: @filesystem),
-            DeviceDeleteButton.new(device: @filesystem)
-          ]
+        # @return [BtrfsFilesystemsTable]
+        def table(buttons_set)
+          BtrfsFilesystemsTable.new(devices, @pager, buttons_set)
         end
       end
 
