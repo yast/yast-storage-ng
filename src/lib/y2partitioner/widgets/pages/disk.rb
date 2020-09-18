@@ -118,7 +118,9 @@ module Y2Partitioner
         private
 
         def devices
-          [device] + device.partitions
+          [
+            BlkDevicesTable::DeviceTree.new(device, children: device.partitions)
+          ]
         end
 
         # Buttons for the device
