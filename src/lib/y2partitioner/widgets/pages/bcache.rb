@@ -20,6 +20,7 @@
 require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/bcaches"
+require "y2partitioner/widgets/bcache_edit_button"
 
 module Y2Partitioner
   module Widgets
@@ -60,7 +61,8 @@ module Y2Partitioner
               ),
               Left(
                 Tabs.new(
-                  BcacheTab.new(device),
+                  BcacheTab.new(device, @pager),
+                  BcacheDevicesTab.new(device, @pager)
                 )
               )
             )
@@ -81,6 +83,31 @@ module Y2Partitioner
 
         def devices
           [device] + device.partitions
+        end
+      end
+
+      # A Tab for the backing device and cset of a Bcache
+      class BcacheDevicesTab < UsedDevicesTab
+        # Constructor
+        #
+        # @param md [Y2Storage::Md]
+        # @param pager [CWM::TreePager]
+        # @param initial [Boolean] if it is the initial tab
+        def initialize(bcache, pager, initial: false)
+          textdomain "storage"
+
+          devices = ([bcache.backing_device] + bcache.bcache_cset.blk_devices).compact
+          super(devices, pager)
+          @bcache = bcache
+          @initial = initial
+        end
+
+        # @macro seeCustomWidget
+        def contents
+          @contents ||= VBox(
+            table,
+            Right(BcacheEditButton.new(device: @bcache))
+          )
         end
       end
     end
