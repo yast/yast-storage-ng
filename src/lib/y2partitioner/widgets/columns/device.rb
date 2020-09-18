@@ -51,8 +51,12 @@ module Y2Partitioner
         # @return [String]
         def device_name(device)
           return fstab_device_name(device) if fstab_entry?(device)
-          return device.display_name unless device.is?(:blk_filesystem)
+          return filesystem_name(device) if device.is?(:blk_filesystem)
 
+          device.is?(:disk_device, :raid, :lvm_vg, :bcache) ? device.display_name : device.basename
+        end
+
+        def filesystem_name(device)
           dev_name = device.blk_device_basename
           dev_name = "(#{dev_name})" unless device.multidevice?
 
