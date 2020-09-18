@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/used_devices_tab"
@@ -57,13 +56,6 @@ module Y2Partitioner
         def contents
           Top(
             VBox(
-              Left(
-                HBox(
-                  Image(Icons::HD, ""),
-                  # TRANSLATORS: Heading. String followed by device name of hard disk
-                  Heading(format(_("Hard Disk: %s"), disk.name))
-                )
-              ),
               Left(
                 tabs
               )

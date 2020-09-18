@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/pages/base"
@@ -55,13 +54,6 @@ module Y2Partitioner
         def contents
           Top(
             VBox(
-              Left(
-                HBox(
-                  Image(Icons::BCACHE, ""),
-                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
-                  Heading(format(_("Bcache: %s"), device.name))
-                )
-              ),
               Left(
                 Tabs.new(
                   BcacheTab.new(device, @pager),

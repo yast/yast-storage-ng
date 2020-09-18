@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/btrfs_add_button"
@@ -62,11 +61,6 @@ module Y2Partitioner
 
         # @return [Array<Y2Storage::Filesystems::Btrfs>]
         attr_reader :filesystems
-
-        # @see DevicesTable
-        def icon
-          Icons::BTRFS
-        end
 
         # @see DevicesTable
         def table_buttons

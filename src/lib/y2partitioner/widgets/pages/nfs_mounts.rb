@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/help"
 require "y2partitioner/yast_nfs_client"
@@ -55,13 +54,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::NFS, ""),
-                # TRANSLATORS: Heading for the expert partitioner page
-                Heading(_("Network File System (NFS)"))
-              )
-            ),
             nfs_client.init_ui || fallback_ui
           )
         end
