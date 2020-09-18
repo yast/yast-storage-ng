@@ -45,7 +45,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("Devices")
+        ""
       end
 
       attr_reader :items

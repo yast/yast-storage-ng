@@ -60,12 +60,6 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::LVM, ""),
-                  Heading(format(_("Volume Group: %s"), @lvm_vg.name))
-                )
-              ),
-              Left(
                 Tabs.new(
                   LvmVgTab.new(@lvm_vg, @pager),
                   LvmPvTab.new(@lvm_vg, @pager)

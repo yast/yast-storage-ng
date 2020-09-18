@@ -46,12 +46,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                Heading(heading)
-              )
-            ),
             table,
             Left(device_buttons),
             Right(table_buttons)
@@ -86,15 +80,6 @@ module Y2Partitioner
         # @return [Yast::UI::Term, CWM::AbstractWidget]
         def table_buttons
           Empty()
-        end
-
-        # Heading of the table
-        #
-        # By default, is the same than {#label}
-        #
-        # @return [String]
-        def heading
-          label
         end
 
         # Table to display

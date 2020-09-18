@@ -62,12 +62,6 @@ module Y2Partitioner
         def contents
           Top(
             VBox(
-              Left(
-                HBox(
-                  Image(icon, ""),
-                  Heading(title)
-                )
-              ),
               Left(tabs)
             )
           )
@@ -83,15 +77,6 @@ module Y2Partitioner
         # @return [String]
         def icon
           Icons::BTRFS
-        end
-
-        # Page title
-        #
-        # @return [String]
-        def title
-          # TRANSLATORS: BTRFS page title, where %{basename} is replaced by the device
-          # basename (e.g., sda1).
-          format(_("Btrfs %{basename}"), basename: filesystem.blk_device_basename)
         end
 
         # Tabs to show the filesystem data

@@ -65,12 +65,6 @@ module Y2Partitioner
           @contents ||= Top(
             VBox(
               Left(
-                HBox(
-                  Image(icon, ""),
-                  Heading(label)
-                )
-              ),
-              Left(
                 VBox(
                   table,
                   Left(device_buttons),

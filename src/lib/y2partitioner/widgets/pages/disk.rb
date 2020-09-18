@@ -60,13 +60,6 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::HD, ""),
-                  # TRANSLATORS: Heading. String followed by device name of hard disk
-                  Heading(format(_("Hard Disk: %s"), disk.name))
-                )
-              ),
-              Left(
                 tabs
               )
             )

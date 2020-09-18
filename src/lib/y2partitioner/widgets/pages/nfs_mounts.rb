@@ -55,13 +55,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::NFS, ""),
-                # TRANSLATORS: Heading for the expert partitioner page
-                Heading(_("Network File System (NFS)"))
-              )
-            ),
             nfs_client.init_ui || fallback_ui
           )
         end

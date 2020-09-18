@@ -51,14 +51,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::DEFAULT_DEVICE, ""),
-                # TRANSLATORS: Heading for a generic storage device
-                # TRANSLATORS: String followed by name of the storage device
-                Heading(format(_("Device: %s"), device.name))
-              )
-            ),
             StrayBlkDeviceDescription.new(device),
             Left(
               HBox(

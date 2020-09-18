@@ -57,12 +57,6 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::RAID, ""),
-                  Heading(format(_("RAID: %s"), @md.name))
-                )
-              ),
-              Left(
                 Tabs.new(
                   MdTab.new(@md, initial: true),
                   MdDevicesTab.new(@md, @pager)

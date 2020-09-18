@@ -56,7 +56,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(header),
             table,
             Left(device_buttons)
           )
@@ -77,17 +76,6 @@ module Y2Partitioner
 
           @contents = nil
           @table = nil
-        end
-
-        # Page header
-        #
-        # @return [Yast::UI::Term]
-        def header
-          HBox(
-            Image(Icons::ALL, ""),
-            # TRANSLATORS: Heading. String followed by the hostname
-            Heading(format(_("Available Storage on %s"), hostname))
-          )
         end
 
         # The table contains all storage devices, including Software RAIDs and LVM Vgs

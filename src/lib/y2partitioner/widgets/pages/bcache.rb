@@ -53,13 +53,6 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::BCACHE, ""),
-                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
-                  Heading(format(_("Bcache: %s"), device.name))
-                )
-              ),
-              Left(
                 Tabs.new(
                   BcacheTab.new(device, @pager),
                   BcacheDevicesTab.new(device, @pager)
