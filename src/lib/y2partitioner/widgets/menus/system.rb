@@ -28,13 +28,18 @@ module Y2Partitioner
     module Menus
       # Class representing the System menu
       class System < Base
-        extend Yast::I18n
         Yast.import "Stage"
 
-        textdomain "storage"
+        # @see Base
+        def initialize(*args)
+          textdomain "storage"
+          super
+        end
 
         # @see Base
         def label
+          # TRANSLATORS: Partitioner menu with actions that affect the whole
+          # system or the whole Partitioner itself
           _("&System")
         end
 
@@ -50,10 +55,10 @@ module Y2Partitioner
             end
 
           @items += [
-            Item(Id(:rescan_devices), _("R&escan Devices")),
+            Item(Id(:rescan_devices), _("&Rescan Devices")),
             Menu(_("&Configure"), configure_menu.items),
             Item("---"),
-            Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
+            Item(Id(:abort), _("&Abort (Abandon Changes)")),
             Item("---"),
             Item(Id(:next), _("&Finish (Save and Exit)"))
           ]

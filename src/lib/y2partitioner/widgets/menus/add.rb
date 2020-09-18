@@ -27,25 +27,28 @@ module Y2Partitioner
     module Menus
       # Class to represent the Add menu
       class Add < Device
-        extend Yast::I18n
-
-        textdomain "storage"
+        # @see Device
+        def initialize(*args)
+          textdomain "storage"
+          super
+        end
 
         # @see Base
         def label
+          # TRANSLATORS: Partitioner menu to create new devices
           _("&Add")
         end
 
         # @see Base
         def items
           @items ||= [
-            Item(Id(:menu_add_raid), _("RAID...")),
-            Item(Id(:menu_add_vg), _("LVM Volume Group...")),
-            Item(Id(:menu_add_btrfs), _("Btrfs...")),
-            Item(Id(:menu_add_bcache), _("Bcache...")),
+            Item(Id(:menu_add_raid), _("&RAID...")),
+            Item(Id(:menu_add_vg), _("LVM &Volume Group...")),
+            Item(Id(:menu_add_btrfs), _("&Btrfs...")),
+            Item(Id(:menu_add_bcache), _("B&cache...")),
             Item("---"),
-            Item(Id(:menu_add_partition), _("Partition...")),
-            Item(Id(:menu_add_lv), _("Logical Volume..."))
+            Item(Id(:menu_add_partition), _("&Partition...")),
+            Item(Id(:menu_add_lv), _("&Logical Volume..."))
           ]
         end
 
