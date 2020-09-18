@@ -51,11 +51,12 @@ module Y2Partitioner
 
         device_buttons = DeviceButtonsSet.new(@pager)
         table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
-        @contents = VBox(
-          DiskBarGraph.new(device),
+        lines = device.respond_to?(:free_spaces) ? [DiskBarGraph.new(device)] : []
+        lines += [
           table,
-          Left(device_buttons),
-        )
+          Left(device_buttons)
+        ]
+        @contents = VBox(*lines)
       end
     
       private

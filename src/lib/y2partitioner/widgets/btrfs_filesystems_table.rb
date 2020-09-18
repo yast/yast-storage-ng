@@ -34,22 +34,7 @@ module Y2Partitioner
         textdomain "storage"
 
         super
-        show_columns(*fs_columns)
-      end
-
-      private
-
-      # Table columns
-      #
-      # @return [Array<Symbol>]
-      def fs_columns
-        [
-          Columns::FilesystemId,
-          Columns::MountPoint,
-          Columns::FilesystemLabel,
-          Columns::FilesystemDevices,
-          Columns::Uuid
-        ]
+        remove_columns(Columns::RegionStart, Columns::RegionEnd)
       end
     end
   end
