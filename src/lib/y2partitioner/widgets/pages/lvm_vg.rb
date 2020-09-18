@@ -106,7 +106,9 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def devices
-          [device] + device.all_lvm_lvs
+          [
+            BlkDevicesTable::DeviceTree.new(device, children: device.all_lvm_lvs)
+          ]
         end
       end
 

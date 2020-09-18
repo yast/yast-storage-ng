@@ -38,6 +38,29 @@ module Y2Partitioner
 
       textdomain "storage"
 
+      # Helper class to create a row with children
+      class DeviceTree
+        attr_accessor :device
+        attr_accessor :children
+        attr_accessor :status
+
+        def initialize(device, children: [], status: :open)
+          @device = device
+          @children = children
+          @status = status
+        end
+
+        def sid
+          device.sid
+        end
+
+        def to_list
+          list = [device] + children.map { |c| c.is_a?(DeviceTree) ? c.to_list : c }
+
+          list.flatten
+        end
+      end
+
       # @see CWM::Table#header
       def header
         cols.map(&:title)
@@ -53,7 +76,7 @@ module Y2Partitioner
         change_items(items)
       end
 
-      protected
+      private
 
       # Returns true if given sid or device is available in table
       # @param device [Y2Storage::DevicePresenter, Integer] sid or a device presenter
@@ -62,10 +85,12 @@ module Y2Partitioner
 
         sid = device.respond_to?(:sid) ? device.sid : device.to_i
 
-        devices.any? { |d| d.sid == sid }
+        flat_devices.any? { |d| d.sid == sid }
       end
 
-      private
+      def flat_devices
+        devices.map { |d| d.respond_to?(:to_list) ? d.to_list : d }.flatten
+      end
 
       # @see #helptext_for
       def columns_help
@@ -73,7 +98,16 @@ module Y2Partitioner
       end
 
       def row_for(device)
-        [row_id(device)] + cols.map { |c| c.value_for(device) }
+        d = device.is_a?(DeviceTree) ? device.device : device
+
+        row = [row_id(d)] + cols.map { |c| c.value_for(d) }
+
+        if device.is_a?(DeviceTree)
+          row << device.children.map { |c| row_for(c) }
+          row << device.status
+        end
+
+        row
       end
 
       # LibYUI id to use for the row used to represent a device
