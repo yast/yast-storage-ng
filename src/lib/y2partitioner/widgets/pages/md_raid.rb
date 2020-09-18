@@ -95,7 +95,9 @@ module Y2Partitioner
         def initialize(md, pager, initial: false)
           textdomain "storage"
 
-          super(md.devices, pager)
+          devices = [BlkDevicesTable::DeviceTree.new(md, children: md.devices)]
+
+          super(devices, pager)
           @md = md
           @initial = initial
         end

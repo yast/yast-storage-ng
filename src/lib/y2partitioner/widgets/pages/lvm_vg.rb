@@ -170,7 +170,9 @@ module Y2Partitioner
         end
 
         def devices
-          @lvm_vg.lvm_pvs.map(&:plain_blk_device)
+          [
+            BlkDevicesTable::DeviceTree.new(@lvm_vg, children: @lvm_vg.lvm_pvs.map(&:plain_blk_device))
+          ]
         end
       end
     end

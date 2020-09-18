@@ -80,7 +80,7 @@ module Y2Partitioner
             DiskTab.new(disk, @pager)
           ]
 
-          tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
+          tabs << UsedDevicesTab.new(devices, @pager) if used_devices_tab?
 
           Tabs.new(*tabs)
         end
@@ -90,6 +90,12 @@ module Y2Partitioner
         # @return [Boolean]
         def used_devices_tab?
           disk.is?(:multipath, :dm_raid, :md)
+        end
+
+        def devices
+          [
+            BlkDevicesTable::DeviceTree.new(disk, children: used_devices)
+          ]
         end
 
         # Devices used by the RAID or Multipath

@@ -129,7 +129,9 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          filesystem.plain_blk_devices
+          [
+            BlkDevicesTable::DeviceTree.new(filesystem, children: filesystem.plain_blk_devices)
+          ]
         end
       end
     end
