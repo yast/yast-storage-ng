@@ -124,11 +124,9 @@ module Y2Partitioner
       def calculate_menus
         [
           Menus::System.new,
-          Menus::Modify.new(device || page_device),
-          Menus::Add.new(device || page_device),
-          Menus::View.new,
-          Menus::Go.new(page_device || device),
-          Menus::Extra.new(page_device || device)
+          Menus::Add.new(device),
+          Menus::Modify.new(device),
+          Menus::View.new
         ]
       end
 
