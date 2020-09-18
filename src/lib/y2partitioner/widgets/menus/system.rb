@@ -48,7 +48,7 @@ module Y2Partitioner
 
           @items += [
             Item(Id(:rescan_devices), _("R&escan Devices")),
-            Menu("Configure", configure_menu.items),
+            Menu(_("&Configure"), configure_menu.items),
             Item("---"),
             Item(Id(:abort), _("Abo&rt (Abandon Changes)")),
             Item("---"),
