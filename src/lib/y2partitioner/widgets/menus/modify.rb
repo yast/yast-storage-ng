@@ -25,6 +25,7 @@ require "y2partitioner/actions/edit_md_devices"
 require "y2partitioner/actions/edit_btrfs_devices"
 require "y2partitioner/actions/edit_bcache"
 require "y2partitioner/actions/resize_lvm_vg"
+require "y2partitioner/dialogs/device_description"
 
 module Y2Partitioner
   module Widgets
@@ -48,6 +49,7 @@ module Y2Partitioner
         def items
           @items ||= [
             Item(Id(:menu_edit), _("&Edit...")),
+            Item(Id(:menu_description), _("&Show Details")),
             Item(Id(:menu_delete), _("&Delete")),
             Item("---"),
             Item(Id(:menu_resize), _("&Resize...")),
@@ -102,6 +104,13 @@ module Y2Partitioner
           else
             Actions::EditBcache.new(device)
           end
+        end
+
+        # @see Base
+        def dialog_for(event)
+          return nil unless event == :menu_description
+
+          Dialogs::DeviceDescription.new(device)
         end
 
         # @see @disabled_for_device
