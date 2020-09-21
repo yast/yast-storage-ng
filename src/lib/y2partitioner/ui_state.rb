@@ -64,7 +64,7 @@ module Y2Partitioner
     # @param row_id [Integer] the id of selected row
     def select_row(row_id)
       current_status&.selected_row = row_id
-      menu_bar.select_row(row_id)
+      menu_bar&.select_row(row_id)
     end
 
     # Method to be called when the user decides to visit a page by clicking in one node of the
@@ -76,7 +76,7 @@ module Y2Partitioner
     # @param pages_ids [Array<String, Integer>] the path to the selected page
     def select_page(pages_ids)
       self.current_status = status_for(pages_ids)
-      menu_bar.select_page(pages_ids)
+      menu_bar&.select_page(pages_ids)
     end
 
     # Method to be called when the user switches to a tab within a page
