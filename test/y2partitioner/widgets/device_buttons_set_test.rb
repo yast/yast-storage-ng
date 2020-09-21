@@ -123,7 +123,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       let(:scenario) { "bcache2.xml" }
       let(:device) { device_graph.find_by_name("/dev/bcache0") }
 
-      it "replaces the content with buttons to modify, to delete and to adda a partition" do
+      it "replaces the content with buttons to modify, to delete and to add a partition" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
