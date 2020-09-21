@@ -32,6 +32,8 @@ module Y2Partitioner
 
         # Constructor
         def initialize(action_class_name, label, icon)
+          textdomain "storage"
+
           @action_class_name = action_class_name
           @label = label
           @icon = icon
@@ -101,6 +103,8 @@ module Y2Partitioner
       class Configure < Base
         # Constructor
         def initialize
+          textdomain "storage"
+
           @configure_entries = ConfigureEntry.visible
         end
 

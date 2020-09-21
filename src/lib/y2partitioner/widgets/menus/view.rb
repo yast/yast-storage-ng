@@ -29,6 +29,11 @@ module Y2Partitioner
     module Menus
       # Class to represent the View menu
       class View < Base
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Base
         def label
           _("&View")
