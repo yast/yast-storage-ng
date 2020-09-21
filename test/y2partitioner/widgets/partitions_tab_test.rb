@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -44,6 +45,20 @@ describe Y2Partitioner::Widgets::PartitionsTab do
 
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+    let(:items) { table.items.map { |i| i[1] } }
+
+    it "shows a table with the device and its partitions" do
+      expect(table).to_not be_nil
+
+      expect(remove_sort_keys(items)).to contain_exactly(
+        "/dev/sda",
+        "/dev/sda1",
+        "/dev/sda2"
+      )
+    end
 
     it "shows a button for adding a new partition" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionAddButton) }

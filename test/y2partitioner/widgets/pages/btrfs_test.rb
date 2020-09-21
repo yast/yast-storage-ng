@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -54,7 +55,7 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
     end
 
     it "shows an used devices tab" do
-      expect(Y2Partitioner::Widgets::Pages::BtrfsDevicesTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::Pages::BtrfsUsedDevicesTab).to receive(:new)
 
       subject.contents
     end
@@ -80,7 +81,7 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::BtrfsDevicesTab do
+  describe Y2Partitioner::Widgets::Pages::BtrfsUsedDevicesTab do
     subject { described_class.new(filesystem, pager) }
     let(:pager) { double("Y2Partitioner::Widgets::OverviewTreePager") }
 
@@ -89,15 +90,20 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
     describe "#contents" do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-      it "shows the table with used devices" do
-        used_devices_table = widgets.detect do |i|
-          i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable)
-        end
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
 
-        expect(used_devices_table).to_not be_nil
+      let(:items) { table.items.map { |i| i[1] } }
+
+      it "shows a table with the BtrFS and its devices" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "BtrFS",
+          "/dev/sdb2"
+        )
       end
 
-      it "shows a button for editing used devices" do
+      it "shows a button for editing the Btrfs devices" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
         expect(button).to_not be_nil
       end

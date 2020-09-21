@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,7 +22,7 @@
 require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/widgets/pages/md_raid"
 
 describe Y2Partitioner::Widgets::Pages::MdRaid do
   before { devicegraph_stub("md_raid") }
@@ -85,7 +86,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::MdDevicesTab do
+  describe Y2Partitioner::Widgets::Pages::MdUsedDevicesTab do
     subject { described_class.new(md, pager) }
 
     include_examples "CWM::Tab"
@@ -93,7 +94,21 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
     describe "#contents" do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-      it "shows a button to edit the used devices" do
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+      let(:items) { table.items.map { |i| i[1] } }
+
+      it "shows a table with the MD RAID and its devices" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/md/md0",
+          "/dev/sda1",
+          "/dev/sda2"
+        )
+      end
+
+      it "shows a button to edit the devices of the MD RAID" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
         expect(button).to_not be_nil
       end

@@ -22,7 +22,7 @@
 require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/widgets/pages/disk"
 
 describe Y2Partitioner::Widgets::Pages::Disk do
   before do
@@ -148,6 +148,56 @@ describe Y2Partitioner::Widgets::Pages::Disk do
           button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
 
           expect(button).to_not be_nil
+        end
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab do
+    subject { described_class.new(device, pager) }
+
+    let(:scenario) { "empty-dm_raids.xml" }
+
+    let(:device) { current_graph.bios_raids.first }
+
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+      let(:items) { table.items.map { |i| i[1] } }
+
+      context "when the device is a BIOS RAID" do
+        let(:scenario) { "empty-dm_raids.xml" }
+
+        let(:device) { current_graph.find_by_name("/dev/mapper/isw_ddgdcbibhd_test1") }
+
+        it "shows a table with the BIOS RAID and its devices" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/mapper/isw_ddgdcbibhd_test1",
+            "/dev/sdb",
+            "/dev/sdc"
+          )
+        end
+      end
+
+      context "when the device is a Multipath" do
+        let(:scenario) { "multipath-formatted.xml" }
+
+        let(:device) { current_graph.find_by_name("/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1") }
+
+        it "shows a table with the Multipath and its wires" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1",
+            "/dev/sda",
+            "/dev/sdb"
+          )
         end
       end
     end
