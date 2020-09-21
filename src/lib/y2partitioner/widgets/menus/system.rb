@@ -30,6 +30,11 @@ module Y2Partitioner
       class System < Base
         Yast.import "Stage"
 
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
         # @see Base
         def label
           _("&System")

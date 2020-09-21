@@ -29,6 +29,7 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::Device, nil] see #device
         def initialize(device)
+          textdomain "storage"
           @device_sid = device.sid unless device.nil?
         end
 

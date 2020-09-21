@@ -27,6 +27,13 @@ module Y2Partitioner
     module Menus
       # Menu to go directly to some tabs of the current device
       class Go < Device
+        # Constructor
+        def initialize(*args)
+          textdomain "storage"
+
+          super
+        end
+
         # @see Base
         def label
           _("&Go")
