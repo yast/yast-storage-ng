@@ -25,12 +25,9 @@ module Y2Partitioner
     module Menus
       # Menu with extra actions for a device (beyond those included in Edit/Modify)
       class Extra < Device
-        # Constructor
-        def initialize(*args)
-          textdomain "storage"
+        extend Yast::I18n
 
-          super
-        end
+        textdomain "storage"
 
         # @see Base
         def label

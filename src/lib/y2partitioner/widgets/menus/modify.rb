@@ -27,12 +27,9 @@ module Y2Partitioner
     module Menus
       # Class to represent the Modify/Edit menu
       class Modify < Device
-        # Constructor
-        def initialize(*args)
-          textdomain "storage"
+        extend Yast::I18n
 
-          super
-        end
+        textdomain "storage"
 
         # @see Base
         def label
