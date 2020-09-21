@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
@@ -28,10 +29,10 @@ require "y2partitioner/widgets/partition_table_add_button"
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for a disk device (Disk, Dasd, BIOS RAID, Multipath or Bcache).
+      # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
       #
       # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
-      # or BIOS RAID, it also contains a {UsedDevicesTab}.
+      # or BIOS RAID, it also contains a {DiskUsedDevicesTab}.
       class Disk < Base
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
@@ -40,7 +41,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::DmRaid,
-        #              Y2Storage::MdMember, Y2Storage::Multipath, Y2Storage::Bcache]
+        #              Y2Storage::MdMember, Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -88,7 +89,7 @@ module Y2Partitioner
             PartitionsTab.new(disk, @pager)
           ]
 
-          tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
+          tabs << DiskUsedDevicesTab.new(disk, @pager) if used_devices_tab?
 
           Tabs.new(*tabs)
         end
@@ -98,19 +99,6 @@ module Y2Partitioner
         # @return [Boolean]
         def used_devices_tab?
           disk.is?(:multipath, :dm_raid, :md)
-        end
-
-        # Devices used by the RAID or Multipath
-        #
-        # @return [Array<BlkDevice>]
-        def used_devices
-          if disk.is?(:multipath, :dm_raid)
-            disk.parents
-          elsif disk.is?(:md)
-            disk.devices
-          else
-            []
-          end
         end
       end
 
@@ -157,6 +145,14 @@ module Y2Partitioner
           buttons << PartitionTableAddButton.new(device: @disk)
 
           buttons
+        end
+      end
+
+      # A Tab for the used devices of a Multipath or BIOS RAID
+      class DiskUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.is?(:multipath, :dm_raid) ? device.parents : []
         end
       end
     end

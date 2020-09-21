@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,16 +23,16 @@ require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
-    # Class to represent a tab with a list of devices belonging to
-    # a specific device (raid, multipath, etc)
+    # Class to represent a tab with a list of devices used by a specific device. For example, the devices
+    # used to create a RAID, the wires of a Multipath, etc.
     class UsedDevicesTab < CWM::Tab
       # Constructor
       #
-      # @param devices [Array<Y2Storage::BlkDevice>]
+      # @param device [Y2Storage::Device]
       # @param pager [CWM::TreePager]
-      def initialize(devices, pager)
+      def initialize(device, pager)
         textdomain "storage"
-        @devices = devices
+        @device = device
         @pager = pager
       end
 
@@ -43,10 +43,22 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        @contents ||= VBox(table)
+        @contents ||= VBox(table, buttons)
       end
 
       private
+
+      # @return [Y2Storage::Device]
+      attr_reader :device
+
+      # Buttons to show
+      #
+      # Derived classes should redefine this method.
+      #
+      # @return [Yast::Term]
+      def buttons
+        Empty()
+      end
 
       # Returns a table with all devices used by the container device
       #
@@ -54,7 +66,7 @@ module Y2Partitioner
       def table
         return @table unless @table.nil?
 
-        @table = ConfigurableBlkDevicesTable.new(@devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @table.show_columns(*columns)
         @table
       end
@@ -64,8 +76,25 @@ module Y2Partitioner
           Columns::Device,
           Columns::Size,
           Columns::Format,
+          Columns::Encrypted,
           Columns::Type
         ]
+      end
+
+      # Devices to show in the table. It includes the device and all its used devices.
+      #
+      # @return [Array<Device>]
+      def devices
+        [device] + used_devices
+      end
+
+      # Devices considered as used by the device
+      #
+      # Derived classes should redefine this method.
+      #
+      # @return [Array<BlkDevice>]
+      def used_devices
+        []
       end
     end
   end

@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,8 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/lvm"
 require "y2partitioner/widgets/configurable_blk_devices_table"
@@ -31,6 +31,7 @@ require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/columns"
+require "y2partitioner/widgets/used_devices_tab"
 
 module Y2Partitioner
   module Widgets
@@ -167,68 +168,31 @@ module Y2Partitioner
         end
 
         # Returns all logical volumes of a volume group, including thin pools
-        # and thin volumes
+        # and thin volumes. Note that it also includes the Volume Group.
         #
         # @see Y2Storage::LvmVg#all_lvm_lvs
         #
-        # @return [Array<Y2Storage::LvmLv>]
+        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def devices
-          @lvm_vg.all_lvm_lvs
+          [@lvm_vg] + @lvm_vg.all_lvm_lvs
         end
       end
 
       # A Tab for the LVM physical volumes of a volume group
-      class LvmPvTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        # @param pager [CWM::TreePager]
-        def initialize(lvm_vg, pager)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
+      class LvmPvTab < UsedDevicesTab
+        # @see UsedDevicesTab#label
         def label
           _("&Physical Volumes")
         end
 
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(
-            table,
-            Right(LvmVgResizeButton.new(device: @lvm_vg))
-          )
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.lvm_pvs.map(&:plain_blk_device)
         end
 
-        private
-
-        # Returns a table with all physical volumes of a volume group
-        #
-        # @return [ConfigurableBlkDevicesTable]
-        def table
-          return @table unless @table.nil?
-
-          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          @table.show_columns(*columns)
-          @table
-        end
-
-        def columns
-          [
-            Columns::Device,
-            Columns::Size,
-            Columns::Format,
-            Columns::Encrypted,
-            Columns::Type
-          ]
-        end
-
-        def devices
-          @lvm_vg.lvm_pvs.map(&:plain_blk_device)
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(LvmVgResizeButton.new(device: device))
         end
       end
     end
