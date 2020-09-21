@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -74,8 +74,11 @@ module Y2Partitioner
 
       private
 
+      # Devices to show. It includes the parent device and its partitions.
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
       def devices
-        device.partitions
+        [device] + device.partitions
       end
     end
   end

@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/bcaches"
 require "y2partitioner/widgets/bcache_description"
@@ -26,6 +27,8 @@ require "y2partitioner/widgets/bcache_edit_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/partition_table_add_button"
 require "y2partitioner/widgets/partitions_tab"
+require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/bcache_edit_button"
 
 module Y2Partitioner
   module Widgets
@@ -67,7 +70,8 @@ module Y2Partitioner
               Left(
                 Tabs.new(
                   BcacheTab.new(device),
-                  PartitionsTab.new(device, @pager)
+                  PartitionsTab.new(device, @pager),
+                  BcacheUsedDevicesTab.new(device, @pager)
                 )
               )
             )
@@ -118,6 +122,19 @@ module Y2Partitioner
             DeviceDeleteButton.new(device: @bcache),
             PartitionTableAddButton.new(device: @bcache)
           ]
+        end
+      end
+
+      # A Tab for the used devices of a Bcache
+      class BcacheUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          ([device.backing_device] + device.bcache_cset.blk_devices).compact
+        end
+
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(BcacheEditButton.new(device: device))
         end
       end
     end

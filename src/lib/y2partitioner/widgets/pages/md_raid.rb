@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/md_raids"
@@ -32,7 +33,7 @@ require "y2partitioner/widgets/partitions_tab"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdDevicesTab}
+      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdUsedDevicesTab}
       class MdRaid < Base
         # Constructor
         #
@@ -69,7 +70,7 @@ module Y2Partitioner
               Left(
                 Tabs.new(
                   MdTab.new(@md, initial: true),
-                  MdDevicesTab.new(@md, @pager),
+                  MdUsedDevicesTab.new(@md, @pager),
                   PartitionsTab.new(@md, @pager)
                 )
               )
@@ -120,27 +121,16 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for the devices used by a Software RAID
-      class MdDevicesTab < UsedDevicesTab
-        # Constructor
-        #
-        # @param md [Y2Storage::Md]
-        # @param pager [CWM::TreePager]
-        # @param initial [Boolean] if it is the initial tab
-        def initialize(md, pager, initial: false)
-          textdomain "storage"
-
-          super(md.devices, pager)
-          @md = md
-          @initial = initial
+      # A Tab for the used devices of a MD RAID
+      class MdUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.devices
         end
 
-        # @macro seeCustomWidget
-        def contents
-          @contents ||= VBox(
-            table,
-            Right(UsedDevicesEditButton.new(device: @md))
-          )
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(UsedDevicesEditButton.new(device: device))
         end
       end
     end
