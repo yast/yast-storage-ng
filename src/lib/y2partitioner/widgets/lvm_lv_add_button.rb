@@ -38,6 +38,19 @@ module Y2Partitioner
 
       private
 
+      # When the selected device is a logical volume, its volume group
+      # is considered as the selected device
+      #
+      # @see DeviceButton#device
+      #
+      # @return [Y2Storage::Device, nil]
+      def device
+        dev = super
+        return dev if dev.nil?
+
+        dev.is?(:lvm_lv) ? dev.lvm_vg : dev
+      end
+
       # Returns the proper Actions class to perform the action for adding a
       # logical volume
       #
