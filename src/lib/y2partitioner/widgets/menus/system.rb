@@ -28,7 +28,10 @@ module Y2Partitioner
     module Menus
       # Class representing the System menu
       class System < Base
+        extend Yast::I18n
         Yast.import "Stage"
+
+        textdomain "storage"
 
         # @see Base
         def label

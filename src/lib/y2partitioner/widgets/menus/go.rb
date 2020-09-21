@@ -27,6 +27,10 @@ module Y2Partitioner
     module Menus
       # Menu to go directly to some tabs of the current device
       class Go < Device
+        extend Yast::I18n
+
+        textdomain "storage"
+
         # @see Base
         def label
           _("&Go")

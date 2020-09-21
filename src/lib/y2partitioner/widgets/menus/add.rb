@@ -27,6 +27,10 @@ module Y2Partitioner
     module Menus
       # Class to represent the Add menu
       class Add < Device
+        extend Yast::I18n
+
+        textdomain "storage"
+
         # @see Base
         def label
           _("&Add")

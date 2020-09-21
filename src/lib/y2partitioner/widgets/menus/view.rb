@@ -29,6 +29,10 @@ module Y2Partitioner
     module Menus
       # Class to represent the View menu
       class View < Base
+        extend Yast::I18n
+
+        textdomain "storage"
+
         # @see Base
         def label
           _("&View")
