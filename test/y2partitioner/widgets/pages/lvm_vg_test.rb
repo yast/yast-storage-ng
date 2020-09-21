@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -84,10 +85,11 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
         create_thin_provisioning(lvm_vg)
       end
 
-      it "shows a table with the lvs of a vg (including thin volumes)" do
+      it "shows a table with the vg and its lvs (including thin volumes)" do
         expect(table).to_not be_nil
 
         expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/vg0",
           "/dev/vg0/lv1",
           "/dev/vg0/lv2",
           "/dev/vg0/pool1",
@@ -109,5 +111,27 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
     subject { described_class.new(lvm_vg, pager) }
 
     include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+      let(:items) { table.items.map { |i| i[1] } }
+
+      it "shows a table with the vg and its pvs" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/vg0",
+          "/dev/sda7"
+        )
+      end
+
+      it "shows a button for editing the pvs" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgResizeButton) }
+        expect(button).to_not be_nil
+      end
+    end
   end
 end

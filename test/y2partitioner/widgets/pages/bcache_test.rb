@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,7 +22,7 @@
 require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require "y2partitioner/widgets/pages/bcache"
 
 describe Y2Partitioner::Widgets::Pages::Bcache do
   before do
@@ -43,8 +44,6 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
     it "shows a bcache overview tab" do
       expect(Y2Partitioner::Widgets::Pages::BcacheTab).to receive(:new)
       subject.contents
@@ -52,6 +51,11 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
 
     it "shows a partitions tab" do
       expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+      subject.contents
+    end
+
+    it "shows an used devices tab" do
+      expect(Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab).to receive(:new)
       subject.contents
     end
   end
@@ -86,6 +90,35 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
 
       it "shows a button for configuring the partition table" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
+        expect(button).to_not be_nil
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab do
+    subject { described_class.new(bcache, pager) }
+
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+      let(:items) { table.items.map { |i| i[1] } }
+
+      it "shows a table with the Bcache, its backing and its caching devices" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/bcache0",
+          "/dev/sdb2",
+          "/dev/sdb1"
+        )
+      end
+
+      it "shows a button for editing the Bcache device" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheEditButton) }
         expect(button).to_not be_nil
       end
     end
