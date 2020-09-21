@@ -54,6 +54,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BlkDeviceEditButton,
+            Y2Partitioner::Widgets::PartitionAddButton,
             Y2Partitioner::Widgets::DeviceDeleteButton
           )
         end

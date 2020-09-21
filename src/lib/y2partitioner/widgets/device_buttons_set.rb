@@ -109,6 +109,7 @@ module Y2Partitioner
       def partition_buttons
         [
           BlkDeviceEditButton.new(device: device),
+          PartitionAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
