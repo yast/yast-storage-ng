@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,6 +37,19 @@ module Y2Partitioner
       end
 
       private
+
+      # When the selected device is a logical volume, its volume group
+      # is considered as the selected device
+      #
+      # @see DeviceButton#device
+      #
+      # @return [Y2Storage::Device, nil]
+      def device
+        dev = super
+        return dev if dev.nil?
+
+        dev.is?(:lvm_lv) ? dev.lvm_vg : dev
+      end
 
       # Returns the proper Actions class to perform the action for adding a
       # logical volume
