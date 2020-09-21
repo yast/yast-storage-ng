@@ -158,6 +158,7 @@ module Y2Partitioner
       def lvm_lv_buttons
         [
           BlkDeviceEditButton.new(device: device),
+          LvmLvAddButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
