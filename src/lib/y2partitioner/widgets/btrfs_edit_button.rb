@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,7 +35,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button to edit a BTRFS filesystem
-        _("Edit...")
+        _("&Edit...")
       end
 
       private
