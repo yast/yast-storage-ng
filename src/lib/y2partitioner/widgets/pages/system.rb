@@ -47,7 +47,8 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _("System Overview")
+          # TRANSLATORS: label of the first element of the Partitioner left tree
+          _("All Devices")
         end
 
         # @macro seeCustomWidget
