@@ -65,7 +65,6 @@ module Y2Partitioner
           Left(device_buttons),
           Right(
             HBox(
-              PartitionAddButton.new(device: device),
               PartitionsDeleteButton.new(device: device)
             )
           )

@@ -99,11 +99,6 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
           "/dev/vg0/thin3"
         )
       end
-
-      it "shows a button to create a new lv" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmLvAddButton) }
-        expect(button).to_not be_nil
-      end
     end
   end
 
