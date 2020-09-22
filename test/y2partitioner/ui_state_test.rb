@@ -326,8 +326,8 @@ describe Y2Partitioner::UIState do
             ui_state.select_page(vg_page.tree_path)
           end
 
-          it "selects the last active tab in the page" do
-            expect(ui_state.active_tab).to eq lvs_tab.label
+          it "returns nil" do
+            expect(ui_state.active_tab).to be_nil
           end
         end
       end
@@ -408,8 +408,24 @@ describe Y2Partitioner::UIState do
           ui_state.select_page(disk_page.tree_path)
         end
 
-        it "returns the sid of last selected device in the page" do
-          expect(ui_state.row_id).to eq(device.sid)
+        context "and to the same tab" do
+          before do
+            ui_state.switch_to_tab(partitions_tab)
+          end
+
+          it "returns the sid of last selected device in the page" do
+            expect(ui_state.row_id).to eq(device.sid)
+          end
+        end
+
+        context "but to a different tab" do
+          before do
+            ui_state.switch_to_tab(overview_tab)
+          end
+
+          it "returns nil" do
+            expect(ui_state.row_id).to be_nil
+          end
         end
       end
     end

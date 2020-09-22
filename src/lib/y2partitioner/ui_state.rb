@@ -140,7 +140,18 @@ module Y2Partitioner
     # The current status
     #
     # @return [PageStatus]
-    attr_accessor :current_status
+    attr_reader :current_status
+
+    # Sets the current status
+    #
+    # Note that the active tab is not stored when switching to the status of another page.
+    #
+    # @param status [PageStatus]
+    def current_status=(status)
+      current_status.active_tab = nil if current_status && current_status != status
+
+      @current_status = status
+    end
 
     # Returns the status representation for a page
     #
