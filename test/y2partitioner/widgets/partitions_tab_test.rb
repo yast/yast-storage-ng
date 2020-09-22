@@ -60,11 +60,6 @@ describe Y2Partitioner::Widgets::PartitionsTab do
       )
     end
 
-    it "shows a button for adding a new partition" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionAddButton) }
-      expect(button).to_not be_nil
-    end
-
     it "shows a button for deleting all partitions" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionsDeleteButton) }
       expect(button).to_not be_nil
