@@ -145,7 +145,6 @@ module Y2Partitioner
             Left(device_buttons),
             Right(
               HBox(
-                LvmLvAddButton.new(device: @lvm_vg),
                 LvmLvsDeleteButton.new(device: @lvm_vg)
               )
             )
