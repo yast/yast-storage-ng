@@ -236,13 +236,6 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def disk_items(disk, page_class = Pages::Disk)
         page = page_class.new(disk, self)
-        children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        device_item(page, children: children)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def partition_items(partition)
-        page = Pages::Partition.new(partition)
         device_item(page)
       end
 
@@ -263,8 +256,7 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def raid_items(md)
         page = Pages::MdRaid.new(md, self)
-        children = md.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        device_item(page, children: children)
+        device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -288,13 +280,6 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
-        children = vg.all_lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
-        device_item(page, children: children)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def lvm_lv_items(lv)
-        page = Pages::LvmLv.new(lv)
         device_item(page)
       end
 
