@@ -22,7 +22,7 @@ require "cwm/widget"
 require "y2partitioner/widgets/lvm_lv_add_button"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/btrfs_modify_button"
+require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/partition_table_add_button"
 
