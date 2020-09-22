@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/btrfs_filesystems"
 require "y2partitioner/widgets/used_devices_tab"
@@ -25,14 +26,13 @@ require "y2partitioner/widgets/filesystem_description"
 require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/used_devices_edit_button"
 require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/tabs"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # Page for a BTRFS filesystem
       #
-      # This page contains a {FilesystemTab} and a {UsedDevicesTab}.
+      # This page contains a {FilesystemTab} and a {BtrfsUsedDevicesTab}.
       class Btrfs < Base
         # @return [Y2Storage::Filesystems::Btrfs]
         attr_reader :filesystem
@@ -103,7 +103,7 @@ module Y2Partitioner
         def tabs
           tabs = [
             FilesystemTab.new(filesystem, initial: true),
-            BtrfsDevicesTab.new(filesystem, pager)
+            BtrfsUsedDevicesTab.new(filesystem, pager)
           ]
 
           Tabs.new(*tabs)
@@ -153,36 +153,16 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for the devices used by a Btrfs
-      class BtrfsDevicesTab < UsedDevicesTab
-        # Constructor
-        #
-        # @param filesystem [Y2Storage::Filesystems::Btrfs]
-        # @param pager [CWM::TreePager]
-        def initialize(filesystem, pager)
-          @filesystem = filesystem
-
-          super(devices, pager)
+      # A Tab for the used devices of a Btrfs
+      class BtrfsUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.plain_blk_devices
         end
 
-        # @macro seeCustomWidget
-        def contents
-          @contents ||= VBox(
-            table,
-            Right(UsedDevicesEditButton.new(device: filesystem))
-          )
-        end
-
-        private
-
-        # @return [Y2Storage::Filesystems::Btrfs]
-        attr_reader :filesystem
-
-        # Devices used by the filesystem
-        #
-        # @return [Array<Y2Storage::BlkDevice>]
-        def devices
-          filesystem.plain_blk_devices
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(UsedDevicesEditButton.new(device: device))
         end
       end
     end
