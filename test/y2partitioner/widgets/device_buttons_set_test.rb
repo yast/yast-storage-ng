@@ -104,12 +104,11 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
         let(:device) { device_graph.dasds.first }
 
-        it "replaces the content with buttons to create a partiton table and to add a partition" do
+        it "replaces the content with a button to add a partition" do
           expect(widget).to receive(:replace) do |content|
             widgets = Yast::CWM.widgets_in_contents([content])
             expect(widgets.map(&:class)).to contain_exactly(
               Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-              Y2Partitioner::Widgets::PartitionTableAddButton,
               Y2Partitioner::Widgets::PartitionAddButton
             )
           end

@@ -423,10 +423,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     let(:with_children) do
       [
         "Y2Partitioner::Widgets::Pages::Disks",
-        "Y2Partitioner::Widgets::Pages::Lvm",
-        "disk:/dev/sda",
-        "lvm_vg:vg0",
-        "lvm_vg:vg1"
+        "Y2Partitioner::Widgets::Pages::Lvm"
       ]
     end
 
@@ -440,13 +437,6 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     it "sets the value of open items to true" do
       expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq true
-      expect(subject.open_items["disk:/dev/sda"]).to eq true
-    end
-
-    it "sets the value of closed items to false" do
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Disks"]).to eq false
-      expect(subject.open_items["lvm_vg:vg0"]).to eq false
-      expect(subject.open_items["lvm_vg:vg1"]).to eq false
     end
   end
 end
