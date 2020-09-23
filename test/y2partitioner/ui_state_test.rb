@@ -287,10 +287,9 @@ describe Y2Partitioner::UIState do
 
     let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
     let(:vg_tab) { Y2Partitioner::Widgets::Pages::LvmVgTab.new(vg) }
-    let(:lvs_tab) { Y2Partitioner::Widgets::Pages::LvmLvTab.new(vg, pager) }
     let(:pvs_tab) { Y2Partitioner::Widgets::Pages::LvmPvTab.new(vg, pager) }
 
-    let(:tabs) { [vg_tab, lvs_tab, pvs_tab] }
+    let(:tabs) { [vg_tab, pvs_tab] }
 
     before do
       ui_state.select_page(vg_page.tree_path)
@@ -305,15 +304,15 @@ describe Y2Partitioner::UIState do
     end
 
     context "when the user has switched to a tab in the current page" do
-      before { ui_state.switch_to_tab(lvs_tab.label) }
+      before { ui_state.switch_to_tab(pvs_tab.label) }
 
       it "selects the corresponding page" do
-        expect(ui_state.active_tab).to eq lvs_tab.label
+        expect(ui_state.active_tab).to eq pvs_tab.label
       end
 
       context "but then moves to a different page" do
         before do
-          ui_state.switch_to_tab(lvs_tab.label)
+          ui_state.switch_to_tab(pvs_tab.label)
           ui_state.select_page(system_page.tree_path)
         end
 

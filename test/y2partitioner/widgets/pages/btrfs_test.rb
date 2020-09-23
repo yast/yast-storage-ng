@@ -23,25 +23,25 @@ require_relative "../../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/pages/btrfs"
+require "y2partitioner/widgets/lvm_vg_bar_graph"
 
 describe Y2Partitioner::Widgets::Pages::Btrfs do
   before do
     devicegraph_stub(scenario)
   end
 
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device) { current_graph.find_by_name(device_name) }
+  let(:filesystem) { device.filesystem }
+  let(:pager) { double("Pager") }
+  let(:scenario) { "mixed_disks" }
+  let(:device_name) { "/dev/sdb2" }
+
   subject { described_class.new(filesystem, pager) }
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  let(:device) { current_graph.find_by_name(device_name) }
-
-  let(:filesystem) { device.filesystem }
-
-  let(:pager) { double("Pager") }
-
-  let(:scenario) { "mixed_disks" }
-
-  let(:device_name) { "/dev/sdb2" }
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { table.items.map { |i| i[1] } }
 
   include_examples "CWM::Page"
 
@@ -62,21 +62,22 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
   end
 
   describe Y2Partitioner::Widgets::Pages::FilesystemTab do
-    subject { described_class.new(filesystem) }
+    subject { described_class.new(filesystem, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows the description of the filesystem" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::FilesystemDescription) }
-        expect(description).to_not be_nil
+      it "contains no graph bar" do
+        disk_bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
+        lvm_bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgBarGraph) }
+        expect(disk_bar).to be_nil
+        expect(lvm_bar).to be_nil
       end
 
-      it "shows a button for editing the filesystem" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsEditButton) }
-        expect(button).to_not be_nil
+      it "shows a table containing only the RAID" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to eq ["sdb2"]
       end
     end
   end
@@ -88,12 +89,6 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-
-      let(:items) { table.items.map { |i| i[1] } }
-
       it "shows a table with the BtrFS and its devices" do
         expect(table).to_not be_nil
 
