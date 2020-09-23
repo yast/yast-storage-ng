@@ -19,8 +19,12 @@
 
 require "yast"
 require "y2partitioner/widgets/menus/device"
-require "y2partitioner/actions/add_partition"
 require "y2partitioner/actions/add_md"
+require "y2partitioner/actions/add_lvm_vg"
+require "y2partitioner/actions/add_btrfs"
+require "y2partitioner/actions/add_bcache"
+require "y2partitioner/actions/add_partition"
+require "y2partitioner/actions/add_lvm_lv"
 
 module Y2Partitioner
   module Widgets
@@ -42,7 +46,7 @@ module Y2Partitioner
         # @see Base
         def items
           @items ||= [
-            Item(Id(:menu_add_raid), _("&RAID...")),
+            Item(Id(:menu_add_md), _("&RAID...")),
             Item(Id(:menu_add_vg), _("LVM &Volume Group...")),
             Item(Id(:menu_add_btrfs), _("&Btrfs...")),
             Item(Id(:menu_add_bcache), _("B&cache...")),
@@ -54,25 +58,61 @@ module Y2Partitioner
 
         # @see Device
         def disabled_for_device
-          disabled = []
-          if !device.is?(:disk_device, :software_raid, :bcache, :partition)
-            disabled << :menu_add_partition
-          end
-          disabled << :menu_add_lv unless device.is?(:lvm_vg, :lvm_lv)
-          disabled
+          items = []
+          items << :menu_add_partition unless support_add_partition?
+          items << :menu_add_lv unless support_add_lv?
+          items
         end
 
         private
 
         # @see Base
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # Is this a complex method actually?
         def action_for(event)
           case event
-          when :menu_add_partition
-            dev = device.is?(:partition) ? device.partitionable : device
-            Actions::AddPartition.new(dev)
           when :menu_add_md
             Actions::AddMd.new
+          when :menu_add_vg
+            Actions::AddLvmVg.new
+          when :menu_add_btrfs
+            Actions::AddBtrfs.new
+          when :menu_add_bcache
+            Actions::AddBcache.new
+          when :menu_add_partition
+            add_partition_action
+          when :menu_add_lv
+            add_lv_action
           end
+        end
+        # rubocop:enable Metrics/CyclomaticComplexity
+
+        # @see #action_for
+        def add_partition_action
+          return unless support_add_partition?
+
+          dev = device.is?(:partition) ? device.partitionable : device
+          Actions::AddPartition.new(dev)
+        end
+
+        # @see #action_for
+        def add_lv_action
+          return unless support_add_lv?
+
+          vg = device.is?(:lvm_lv) ? device.lvm_vg : device
+          Actions::AddLvmLv.new(vg)
+        end
+
+        # Whether the action to add a partition can be called with the current device
+        #
+        # @return [Boolean]
+        def support_add_partition?
+          partitionable? || device.is?(:partition)
+        end
+
+        # Whether the action to add a LVM Logical Volume can be called with the current device
+        def support_add_lv?
+          device.is?(:lvm_vg, :lvm_lv)
         end
       end
     end
