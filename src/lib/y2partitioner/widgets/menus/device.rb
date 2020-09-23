@@ -71,6 +71,16 @@ module Y2Partitioner
 
           working_graph.find_device(device_sid)
         end
+
+        # @see #disabled_for_device
+        def multidevice?
+          device.is?(:software_raid, :btrfs, :lvm_vg, :bcache)
+        end
+
+        # @see #disabled_for_device
+        def partitionable?
+          device.is?(:software_raid, :disk_device, :bcache)
+        end
       end
     end
   end
