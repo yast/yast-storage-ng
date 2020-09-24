@@ -32,7 +32,7 @@ module Y2Partitioner
 
       # Constructor
       #
-      # @param device [Y2Storage::BlkDevice]
+      # @param device [Y2Storage::Device]
       # @param pager [CWM::TreePager]
       def initialize(device, pager, initial: true)
         textdomain "storage"
