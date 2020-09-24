@@ -61,57 +61,45 @@ functional in a text console with 80 columns and 24 lines.
 This is the main plan to overcome the mentioned challenges and problems. Readers interested in the
 result can simply check this section.
 
-To make navigation more understandable we plan to introduce three big changes in the layout used
-by the Partitioner to present the full picture:
+To make navigation more understandable we plan to introduce some changes in the layout used by the
+Partitioner:
 
-- Use a menu to allocate global actions that do not really fit in other parts of the UI (like
-  rescanning devices) and also for some contextual options that are not common enough to justify a
-  button.
-- Turn the left tree into a plain list of possible "views" with some numbers indicating the number
-  of elements presented in each view.
+- Use an application menu bar. It would contain global actions that do not really fit in other
+  parts of the UI (like rescanning devices) and also all the options that are contextual to the
+  device currently selected.
+- Simplify the contextual actions that are displayed below each table, showing only plain buttons
+  with the most common options, instead of menu-buttons with all possibilities. The less common
+  actions would now have to be reached through the menu.
 - Use nesting (with the possibility of expanding/collapsing) in the tables to better represent the
   relationship of disks vs partitions, volume groups vs logical volumes, filesystems vs subvolumes,
   etc.
+- Create a new Device Overview tab that would be similar for all kind of devices. It should display a
+  table with the device itself as first element and all the dependent devices (like partitions of
+  the given disk) nested below.
+- Limit the nesting in the left tree to display only a first level of devices. Navigating below that
+  level will not be possible (eg. there will be no "Device Overview" for an individual partition).
+- Show any other information as pop-ups.
 
 With all that, the previous screenshot will turn into something similar to this:
 
-```
-[Configure↓][View↓][Settings↓]
+![System view with agreed changes](partitioner_ui/img/system_new.png)
 
-   ┌View ──────────────┐Available Storage on guanche
-   │─System Overview   │┌──────────────────────────────────────────────────┐   
-   │─Hard Disks (3)    ││Device           │      Size│F│Enc│Type           │   
-   │─RAID (2)          ││┬─/dev/sda       │  8.00 GiB│ │   │HGST-HGST HTS72│   
-   │─Volume Manager (1)││├──/dev/sda1     │500.00 MiB│ │   │Part of EFI    │   
-   │─Bcache (0)        ││└──/dev/sda2     │  7.51 GiB│ │   │Part of OS     │   
-   │─NFS (0)           ││+─/dev/sdb       │468.00 GiB│ │   │Disk           │   
-   │─Btrfs (1)         ││┬─/dev/sdc       │  2.00 TiB│ │   │Disk           │ 
-   │                   ││└──/dev/sdc1     │ 12.00 GiB│ │   │FAT Partition  │
-   │                   ││──/dev/md/EFI    │499.94 MiB│ │   │FAT RAID       │   
-   │                   ││──/dev/md/OS     │  7.51 GiB│ │   │PV of system   │   
-   │                   ││┬─/dev/system    │  7.50 GiB│ │   │LVM            │   
-   │                   ││└──/dev/system/ro│  6.00 GiB│ │   │Btrfs LV       │   
-   │                   │└├───────────────────────────────┤─────────────────┘   
-   │                   │[Modify↓][Partitions↓]
-   └───────────────────┘                                                       
- [ Help ]                                      [Abort]               [Finish] 
+The options that are not longer visible at first sight in that screenshot are moved to the
+appropriate menus.
 
-```
+![Menu](partitioner_ui/img/menu_system.png)
 
-Of course, the look and feel of the table with nested elements may not be exactly as represented
-above. That widget still must be developed and could end up looking similar to the typical list of
-mails from a mail client (in which nesting is used to manage threads) or to the widgets currently
-used to display a hierarchy of directories in QDirStat.
+Adopting the new table-based Device Overview tab and using pop-ups dialogs when necessary will
+result in a more consistent and less confusing interface, with subvolumes management nicely
+integrated.
 
-![Nested list in Thunderbird](partitioner_ui/img/list-thunderbird.png)
-
-![Nested list in QDirStat](partitioner_ui/img/list-qdirstat.png)
+![New Overview Tab](partitioner_ui/img/overview_new.png)
 
 ## Other ideas
 
 Section with ideas and concepts that were important during the development of the current plan.
-Kept for completeness and for future reference, since we still plan to incorporate parts of them to
-the final implementation.
+Kept for completeness and for future reference, since we are still considering to incorporate parts
+of them to the final implementation.
 
 ### Initial ideas
 
