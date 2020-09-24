@@ -25,6 +25,12 @@ require "y2partitioner/actions/edit_md_devices"
 require "y2partitioner/actions/edit_btrfs_devices"
 require "y2partitioner/actions/edit_bcache"
 require "y2partitioner/actions/resize_lvm_vg"
+require "y2partitioner/actions/edit_blk_device"
+require "y2partitioner/actions/edit_btrfs"
+require "y2partitioner/actions/resize_blk_device"
+require "y2partitioner/actions/move_partition"
+require "y2partitioner/actions/create_partition_table"
+require "y2partitioner/actions/clone_partition_table"
 require "y2partitioner/dialogs/device_description"
 
 module Y2Partitioner
@@ -75,12 +81,34 @@ module Y2Partitioner
         end
 
         # @see Base
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # Is this a complex method actually?
         def action_for(event)
           case event
+          when :menu_edit
+            edit_action
           when :menu_delete
             delete_action
+          when :menu_resize
+            resize_action
+          when :menu_move
+            move_action
           when :menu_change_devs
             change_devs_action
+          when :menu_create_ptable
+            create_ptable_action
+          when :menu_clone_ptable
+            clone_ptable_action
+          end
+        end
+        # rubocop:enable Metrics/CyclomaticComplexity
+
+        # @see #action_for
+        def edit_action
+          if device.is?(:blk_device) && device.usable_as_blk_device?
+            Actions::EditBlkDevice.new(device)
+          elsif device.is?(:btrfs)
+            Actions::EditBtrfs.new(device)
           end
         end
 
@@ -94,6 +122,16 @@ module Y2Partitioner
         end
 
         # @see #action_for
+        def resize_action
+          Actions::ResizeBlkDevice.new(device) if device.is?(:partition, :lvm_lv)
+        end
+
+        # @see #action_for
+        def move_action
+          Actions::MovePartition.new(device) if device.is?(:partition)
+        end
+
+        # @see #action_for
         def change_devs_action
           if device.is?(:software_raid)
             Actions::EditMdDevices.new(device)
@@ -101,9 +139,19 @@ module Y2Partitioner
             Actions::ResizeLvmVg.new(device)
           elsif device.is?(:btrfs)
             Actions::EditBtrfsDevices.new(device)
-          else
+          elsif device.is?(:bcache)
             Actions::EditBcache.new(device)
           end
+        end
+
+        # @see #action_for
+        def create_ptable_action
+          Actions::CreatePartitionTable.new(device) if partitionable?
+        end
+
+        # @see #action_for
+        def clone_ptable_action
+          Actions::ClonePartitionTable.new(device) if device.is?(:disk_device)
         end
 
         # @see Base
@@ -122,16 +170,6 @@ module Y2Partitioner
           else
             []
           end
-        end
-
-        # @see #disabled_for_device
-        def multidevice?
-          device.is?(:software_raid, :btrfs, :lvm_vg, :bcache)
-        end
-
-        # @see #disabled_for_device
-        def partitionable?
-          device.is?(:software_raid, :disk_device, :bcache)
         end
       end
     end
