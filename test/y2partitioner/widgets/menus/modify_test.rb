@@ -233,6 +233,58 @@ describe Y2Partitioner::Widgets::Menus::Modify do
         end
       end
 
+      context "and the selected device is a LVM Volume Group" do
+        let(:scenario) { "trivial_lvm.yml" }
+
+        let(:device_name) { "/dev/vg0" }
+
+        it "calls an action to delete the Volume Group" do
+          expect(Y2Partitioner::Actions::DeleteLvmVg).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a LVM Logical Volume" do
+        let(:scenario) { "trivial_lvm.yml" }
+
+        let(:device_name) { "/dev/vg0/lv1" }
+
+        it "calls an action to delete the Logical Volume" do
+          expect(Y2Partitioner::Actions::DeleteLvmLv).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Bcache" do
+        let(:scenario) { "bcache1.xml" }
+
+        let(:device_name) { "/dev/bcache0" }
+
+        it "calls an action to delete the Bcache" do
+          expect(Y2Partitioner::Actions::DeleteBcache).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Btrfs" do
+        let(:scenario) { "trivial_btrfs.yml" }
+
+        let(:device_name) { "/dev/sda1" }
+
+        let(:btrfs) { device.blk_filesystem }
+
+        subject { described_class.new(btrfs) }
+
+        it "calls an action to delete the Btrfs" do
+          expect(Y2Partitioner::Actions::DeleteBtrfs).to receive(:new).with(btrfs)
+
+          subject.handle(event)
+        end
+      end
+
       include_examples "no action", "mixed_disks.yml", "/dev/sda"
     end
 

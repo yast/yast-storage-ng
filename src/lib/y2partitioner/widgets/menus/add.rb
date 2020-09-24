@@ -66,37 +66,36 @@ module Y2Partitioner
 
         private
 
-        # @see Base
-        # rubocop:disable Metrics/CyclomaticComplexity
-        # Is this a complex method actually?
-        def action_for(event)
-          case event
-          when :menu_add_md
-            Actions::AddMd.new
-          when :menu_add_vg
-            Actions::AddLvmVg.new
-          when :menu_add_btrfs
-            Actions::AddBtrfs.new
-          when :menu_add_bcache
-            Actions::AddBcache.new
-          when :menu_add_partition
-            add_partition_action
-          when :menu_add_lv
-            add_lv_action
-          end
+        # @see Device#action_for
+        def menu_add_md_action
+          Actions::AddMd.new
         end
-        # rubocop:enable Metrics/CyclomaticComplexity
 
-        # @see #action_for
-        def add_partition_action
+        # @see Device#action_for
+        def menu_add_vg_action
+          Actions::AddLvmVg.new
+        end
+
+        # @see Device#action_for
+        def menu_add_btrfs_action
+          Actions::AddBtrfs.new
+        end
+
+        # @see Device#action_for
+        def menu_add_bcache_action
+          Actions::AddBcache.new
+        end
+
+        # @see Device#action_for
+        def menu_add_partition_action
           return unless support_add_partition?
 
           dev = device.is?(:partition) ? device.partitionable : device
           Actions::AddPartition.new(dev)
         end
 
-        # @see #action_for
-        def add_lv_action
+        # @see Device#action_for
+        def menu_add_lv_action
           return unless support_add_lv?
 
           vg = device.is?(:lvm_lv) ? device.lvm_vg : device

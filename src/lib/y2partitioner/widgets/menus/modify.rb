@@ -19,8 +19,12 @@
 
 require "yast"
 require "y2partitioner/widgets/menus/device"
-require "y2partitioner/actions/delete_md"
 require "y2partitioner/actions/delete_partition"
+require "y2partitioner/actions/delete_md"
+require "y2partitioner/actions/delete_lvm_vg"
+require "y2partitioner/actions/delete_lvm_lv"
+require "y2partitioner/actions/delete_bcache"
+require "y2partitioner/actions/delete_btrfs"
 require "y2partitioner/actions/edit_md_devices"
 require "y2partitioner/actions/edit_btrfs_devices"
 require "y2partitioner/actions/edit_bcache"
@@ -80,31 +84,8 @@ module Y2Partitioner
           items
         end
 
-        # @see Base
-        # rubocop:disable Metrics/CyclomaticComplexity
-        # Is this a complex method actually?
-        def action_for(event)
-          case event
-          when :menu_edit
-            edit_action
-          when :menu_delete
-            delete_action
-          when :menu_resize
-            resize_action
-          when :menu_move
-            move_action
-          when :menu_change_devs
-            change_devs_action
-          when :menu_create_ptable
-            create_ptable_action
-          when :menu_clone_ptable
-            clone_ptable_action
-          end
-        end
-        # rubocop:enable Metrics/CyclomaticComplexity
-
-        # @see #action_for
-        def edit_action
+        # @see Device#action_for
+        def menu_edit_action
           if device.is?(:blk_device) && device.usable_as_blk_device?
             Actions::EditBlkDevice.new(device)
           elsif device.is?(:btrfs)
@@ -112,27 +93,30 @@ module Y2Partitioner
           end
         end
 
-        # @see #action_for
-        def delete_action
-          if device.is?(:partition)
-            Actions::DeletePartition.new(device)
-          elsif device.is?(:md)
-            Actions::DeleteMd.new(device)
-          end
+        # @see Device#action_for
+        def menu_delete_action
+          return if device.is?(:disk_device)
+
+          device_class = device.class.name.split("::").last
+          action_class = "Y2Partitioner::Actions::Delete#{device_class}"
+
+          return unless Kernel.const_defined?(action_class)
+
+          Kernel.const_get(action_class).new(device)
         end
 
-        # @see #action_for
-        def resize_action
+        # @see Device#action_for
+        def menu_resize_action
           Actions::ResizeBlkDevice.new(device) if device.is?(:partition, :lvm_lv)
         end
 
-        # @see #action_for
-        def move_action
+        # @see Device#action_for
+        def menu_move_action
           Actions::MovePartition.new(device) if device.is?(:partition)
         end
 
-        # @see #action_for
-        def change_devs_action
+        # @see Device#action_for
+        def menu_change_devs_action
           if device.is?(:software_raid)
             Actions::EditMdDevices.new(device)
           elsif device.is?(:lvm_vg)
@@ -144,13 +128,13 @@ module Y2Partitioner
           end
         end
 
-        # @see #action_for
-        def create_ptable_action
+        # @see Device#action_for
+        def menu_create_ptable_action
           Actions::CreatePartitionTable.new(device) if partitionable?
         end
 
-        # @see #action_for
-        def clone_ptable_action
+        # @see Device#action_for
+        def menu_clone_ptable_action
           Actions::ClonePartitionTable.new(device) if device.is?(:disk_device)
         end
 

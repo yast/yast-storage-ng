@@ -48,6 +48,13 @@ module Y2Partitioner
         # @return [Integer] device sid
         attr_reader :device_sid
 
+        # @see Base
+        def action_for(event)
+          action = "#{event}_action"
+
+          send(action) if respond_to?(action, true)
+        end
+
         # Items to disable if {#device} is not nil
         # @see #disabled_items
         #
