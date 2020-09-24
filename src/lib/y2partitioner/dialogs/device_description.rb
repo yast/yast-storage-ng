@@ -63,14 +63,14 @@ module Y2Partitioner
 
       # Widget classes that can be used to display information of a device
       WIDGETS = {
-        disk_device:        Widgets::DiskDeviceDescription,
-        filesystem:         Widgets::FilesystemDescription,
-        software_raid:      Widgets::MdDescription,
-        partition:          Widgets::PartitionDescription,
-        lvm_vg:             Widgets::LvmVgDescription,
-        lvm_lv:             Widgets::LvmLvDescription,
-        bcache:             Widgets::BcacheDescription,
-        stray_block_device: Widgets::StrayBlkDeviceDescription
+        disk_device:      Widgets::DiskDeviceDescription,
+        filesystem:       Widgets::FilesystemDescription,
+        software_raid:    Widgets::MdDescription,
+        partition:        Widgets::PartitionDescription,
+        lvm_vg:           Widgets::LvmVgDescription,
+        lvm_lv:           Widgets::LvmLvDescription,
+        bcache:           Widgets::BcacheDescription,
+        stray_blk_device: Widgets::StrayBlkDeviceDescription
       }
       private_constant :WIDGETS
 
