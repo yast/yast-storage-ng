@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -192,8 +193,8 @@ describe Y2Partitioner::Widgets::Columns::Type do
         let(:scenario) { "bcache1.xml" }
         let(:device_name) { "/dev/vdc" }
 
-        it "includes 'Part of'" do
-          expect(label).to include("Part of")
+        it "includes 'Backing of'" do
+          expect(label).to include("Backing of")
         end
 
         it "includes the bcache name" do
@@ -206,7 +207,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
         let(:device_name) { "/dev/vdb" }
 
         it "returns 'Bcache cache'" do
-          expect(label).to include("Bcache cache")
+          expect(label).to include("Bcache caching")
         end
       end
     end
