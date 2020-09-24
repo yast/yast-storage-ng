@@ -150,7 +150,7 @@ describe Y2Partitioner::Widgets::Menus::Modify do
 
       subject { described_class.new(device.blk_filesystem) }
 
-      it "contains Resize', 'Move', 'Create Partition Table' and 'Clone Partitions'" do
+      it "contains 'Resize', 'Move', 'Create Partition Table' and 'Clone Partitions'" do
         items = [:menu_resize, :menu_move, :menu_create_ptable, :menu_clone_ptable]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
@@ -164,7 +164,7 @@ describe Y2Partitioner::Widgets::Menus::Modify do
 
         let(:device_name) { device_name }
 
-        it "calls none action" do
+        it "calls no action" do
           expect(Y2Partitioner::Actions::Base).to_not receive(:new)
 
           subject.handle(event)

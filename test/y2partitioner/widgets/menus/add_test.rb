@@ -156,7 +156,7 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
         let(:device_name) { device_name }
 
-        it "calls none action" do
+        it "calls no action" do
           expect(Y2Partitioner::Actions::Base).to_not receive(:new)
 
           subject.handle(event)
