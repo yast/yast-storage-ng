@@ -27,8 +27,8 @@ module Y2Partitioner
     module Pages
       # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
       #
-      # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
-      # or BIOS RAID, it also contains a {DiskUsedDevicesTab}.
+      # This page contains a {DiskTab} and, in case of Multipath or BIOS RAID,
+      # also a {DiskUsedDevicesTab}.
       class Disk < Base
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk

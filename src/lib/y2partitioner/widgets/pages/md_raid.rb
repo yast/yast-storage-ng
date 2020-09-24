@@ -28,7 +28,7 @@ require "y2partitioner/widgets/overview_tab"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdUsedDevicesTab}
+      # A Page for a md raid device: contains {MdTab} and {MdUsedDevicesTab}
       class MdRaid < Base
         # Constructor
         #
