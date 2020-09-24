@@ -189,7 +189,7 @@ module Y2Partitioner
           elsif device.md
             part_of_label(device.md)
           elsif device.bcache
-            part_of_label(device.bcache)
+            bcache_backing_label(device.bcache)
           elsif device.in_bcache_cset
             bcache_cset_label
           else
@@ -260,12 +260,20 @@ module Y2Partitioner
           )
         end
 
-        # Label when the device is used as caching device in a bcache
+        # Label when the device is used as backing device of a Bcache
+        #
+        # @param [Y2Storage::Device] device
+        def bcache_backing_label(device)
+          # TRANSLATORS: %{bcache} is replaced by a device name (e.g., bcache0).
+          format(_("Backing of %{bcache}"), bcache: device.basename)
+        end
+
+        # Label when the device is used as caching device in a Bcache
         #
         # @return [String]
         def bcache_cset_label
           # TRANSLATORS: an special type of device
-          _("Bcache cache")
+          _("Bcache caching")
         end
 
         # Label when the device is part of another one, like Bcache or RAID
