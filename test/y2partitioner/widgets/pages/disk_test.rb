@@ -30,28 +30,22 @@ describe Y2Partitioner::Widgets::Pages::Disk do
   end
 
   let(:scenario) { "one-empty-disk.yml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:disk) { current_graph.disks.first }
+  let(:pager) { double("Pager") }
 
   subject { described_class.new(disk, pager) }
 
-  let(:disk) { current_graph.disks.first }
-
-  let(:pager) { double("Pager") }
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { table.items.map { |i| i[1] } }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
     context "when the device is neither BIOS RAID nor multipath" do
-      it "shows a disk tab" do
+      it "shows a disk overview tab" do
         expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -63,16 +57,10 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
     context "when the device is a BIOS RAID" do
       let(:scenario) { "md-imsm1-devicegraph.xml" }
-
       let(:disk) { current_graph.bios_raids.first }
 
-      it "shows a disk tab" do
+      it "shows a disk overview tab" do
         expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -84,16 +72,10 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
     context "when the device is a multipath" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
-
       let(:disk) { current_graph.multipaths.first }
 
-      it "shows a disk tab" do
+      it "shows a disk overview tab" do
         expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -105,49 +87,35 @@ describe Y2Partitioner::Widgets::Pages::Disk do
   end
 
   describe Y2Partitioner::Widgets::Pages::DiskTab do
-    subject { described_class.new(disk) }
+    subject { described_class.new(disk, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+      let(:scenario) { "mixed_disks" }
 
-      it "shows the description of the disk" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDeviceDescription) }
-        expect(description).to_not be_nil
+      it "contains a graph bar" do
+        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
+        expect(bar).to_not be_nil
       end
 
-      context "and the device can be used as a block device" do
-        let(:disk) { current_graph.disks.first }
+      context "when the disk contains no partitions" do
+        let(:disk) { current_graph.find_by_name("/dev/sdc") }
 
-        it "shows a button for editing the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+        it "shows a table containing only the disk" do
+          expect(table).to_not be_nil
 
-          expect(button).to_not be_nil
-        end
-
-        it "shows a button to create a new partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
-
-          expect(button).to_not be_nil
+          expect(remove_sort_keys(items)).to eq ["/dev/sdc"]
         end
       end
 
-      context "and the device cannot be used as a block device" do
-        let(:scenario) { "dasd_50GiB" }
+      context "when the disk is partitioned" do
+        it "shows a table with the disk and its partitions" do
+          expect(table).to_not be_nil
 
-        let(:disk) { current_graph.dasds.first }
-
-        it "does not show a button for editing the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-
-          expect(button).to be_nil
-        end
-
-        it "shows a button to create a new partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
-
-          expect(button).to_not be_nil
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/sda", "/dev/sda1", "/dev/sda2"
+          )
         end
       end
     end
@@ -157,18 +125,11 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     subject { described_class.new(device, pager) }
 
     let(:scenario) { "empty-dm_raids.xml" }
-
     let(:device) { current_graph.bios_raids.first }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-
-      let(:items) { table.items.map { |i| i[1] } }
-
       context "when the device is a BIOS RAID" do
         let(:scenario) { "empty-dm_raids.xml" }
 

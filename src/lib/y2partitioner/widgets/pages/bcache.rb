@@ -17,16 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
+require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/bcaches"
-require "y2partitioner/widgets/bcache_description"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/bcache_edit_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/partition_table_add_button"
-require "y2partitioner/widgets/partitions_tab"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/bcache_edit_button"
 
@@ -61,16 +55,8 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::BCACHE, ""),
-                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
-                  Heading(format(_("Bcache: %s"), device.name))
-                )
-              ),
-              Left(
                 Tabs.new(
-                  BcacheTab.new(device),
-                  PartitionsTab.new(device, @pager),
+                  BcacheTab.new(device, @pager),
                   BcacheUsedDevicesTab.new(device, @pager)
                 )
               )
@@ -87,41 +73,11 @@ module Y2Partitioner
       end
 
       # A Tab for a Bcache description and its buttons
-      class BcacheTab < CWM::Tab
-        # Constructor
-        #
-        # @param bcache [Y2Storage::Bcache]
-        def initialize(bcache)
-          textdomain "storage"
-
-          @bcache = bcache
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              BcacheDescription.new(@bcache),
-              Left(HBox(*buttons))
-            )
-        end
-
+      class BcacheTab < OverviewTab
         private
 
-        # @return [Array<Widgets::DeviceButton>]
-        def buttons
-          [
-            BlkDeviceEditButton.new(device: @bcache),
-            BcacheEditButton.new(device: @bcache),
-            DeviceDeleteButton.new(device: @bcache),
-            PartitionTableAddButton.new(device: @bcache)
-          ]
+        def devices
+          [device] + device.partitions
         end
       end
 

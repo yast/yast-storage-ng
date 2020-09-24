@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/device_buttons_set"
@@ -46,12 +45,6 @@ module Y2Partitioner
           return @contents if @contents
 
           @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                Heading(heading)
-              )
-            ),
             table,
             Left(device_buttons),
             Right(table_buttons)
@@ -71,12 +64,6 @@ module Y2Partitioner
         # @return [Array<Y2Storage::Device>]
         abstract_method :devices
 
-        # Icon of the page
-        #
-        # @return [String] one of the constants defined in
-        #   {Y2Partitioner::Icons}
-        abstract_method :icon
-
         # Widget representing the fixed buttons (those that do not change
         # every time the user selects a new row) displayed at the bottom of the
         # table.
@@ -86,15 +73,6 @@ module Y2Partitioner
         # @return [Yast::UI::Term, CWM::AbstractWidget]
         def table_buttons
           Empty()
-        end
-
-        # Heading of the table
-        #
-        # By default, is the same than {#label}
-        #
-        # @return [String]
-        def heading
-          label
         end
 
         # Table to display

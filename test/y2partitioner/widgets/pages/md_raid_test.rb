@@ -25,21 +25,22 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages/md_raid"
 
 describe Y2Partitioner::Widgets::Pages::MdRaid do
-  before { devicegraph_stub("md_raid") }
+  before { devicegraph_stub(scenario) }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
   let(:pager) { double("Pager") }
-
+  let(:scenario) { "md_raid" }
   let(:md) { current_graph.md_raids.first }
 
   subject { described_class.new(md, pager) }
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { table.items.map { |i| i[1] } }
+
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
     it "shows a MD tab" do
       expect(Y2Partitioner::Widgets::Pages::MdTab).to receive(:new)
       subject.contents
@@ -49,39 +50,37 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
       expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
       subject.contents
     end
-
-    it "shows a partitions tab" do
-      expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
-      subject.contents
-    end
   end
 
   describe Y2Partitioner::Widgets::Pages::MdTab do
-    subject { described_class.new(md) }
+    subject { described_class.new(md, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows the description of the MD RAID" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::MdDescription) }
-        expect(description).to_not be_nil
+      it "contains a graph bar" do
+        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
+        expect(bar).to_not be_nil
       end
 
-      it "shows a button to edit the raid" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-        expect(button).to_not be_nil
+      context "when the MD contains no partitions" do
+        it "shows a table containing only the RAID" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to eq ["/dev/md/md0"]
+        end
       end
 
-      it "shows a button to delete the raid" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-        expect(button).to_not be_nil
-      end
+      context "when the MD is partitioned" do
+        let(:scenario) { "partitioned_md_raid.xml" }
 
-      it "shows a button for creating a new partition table" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
-        expect(button).to_not be_nil
+        it "shows a table with the RAID and its partitions" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/md/md0", "/dev/md/md0p1"
+          )
+        end
       end
     end
   end
@@ -92,12 +91,6 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-
-      let(:items) { table.items.map { |i| i[1] } }
-
       it "shows a table with the MD RAID and its devices" do
         expect(table).to_not be_nil
 

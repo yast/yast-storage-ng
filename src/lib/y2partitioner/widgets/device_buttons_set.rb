@@ -22,9 +22,8 @@ require "cwm/widget"
 require "y2partitioner/widgets/lvm_lv_add_button"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/btrfs_modify_button"
+require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/partition_table_add_button"
 
 module Y2Partitioner
   module Widgets
@@ -134,10 +133,18 @@ module Y2Partitioner
 
       # Buttons to display if {#device} is a disk device
       def disk_device_buttons
-        [
-          modify_disk_button,
-          PartitionAddButton.new(device: device)
-        ]
+        # Note that some block devices cannot be edited because they cannot be used as block devices,
+        # (e.g., DASD devices).
+        if device.usable_as_blk_device?
+          [
+            BlkDeviceEditButton.new(device: device),
+            PartitionAddButton.new(device: device)
+          ]
+        else
+          [
+            PartitionAddButton.new(device: device)
+          ]
+        end
       end
 
       # Buttons to display if {#device} is a Xen virtual partition
@@ -169,18 +176,6 @@ module Y2Partitioner
           BtrfsEditButton.new(device: device),
           DeviceDeleteButton.new(pager: pager, device: device)
         ]
-      end
-
-      # Button to modify a disk device
-      #
-      # Note that some block devices cannot be edited because they cannot be used as block devices,
-      # (e.g., DASD devices).
-      #
-      # @return [CWM::AbstractWidget]
-      def modify_disk_button
-        return BlkDeviceEditButton.new(device: device) if device.usable_as_blk_device?
-
-        PartitionTableAddButton.new(device: device)
       end
 
       # Simple widget to represent an HBox with a CWM API

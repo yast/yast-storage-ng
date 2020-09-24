@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/md_add_button"
@@ -51,11 +50,6 @@ module Y2Partitioner
         end
 
         private
-
-        # @see DevicesTable
-        def icon
-          Icons::RAID
-        end
 
         # @see DevicesTable
         def table_buttons

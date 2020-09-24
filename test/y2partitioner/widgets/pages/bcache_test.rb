@@ -30,27 +30,22 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
   end
 
   let(:scenario) { "bcache2.xml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:bcache) { current_graph.find_by_name(device_name) }
+  let(:device_name) { "/dev/bcache0" }
+  let(:pager) { double("Pager") }
 
   subject { described_class.new(bcache, pager) }
 
-  let(:bcache) { current_graph.find_by_name(device_name) }
-
-  let(:device_name) { "/dev/bcache0" }
-
-  let(:pager) { double("Pager") }
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { table.items.map { |i| i[1] } }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
     it "shows a bcache overview tab" do
       expect(Y2Partitioner::Widgets::Pages::BcacheTab).to receive(:new)
-      subject.contents
-    end
-
-    it "shows a partitions tab" do
-      expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
       subject.contents
     end
 
@@ -61,36 +56,34 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
   end
 
   describe Y2Partitioner::Widgets::Pages::BcacheTab do
-    subject { described_class.new(bcache) }
+    subject { described_class.new(bcache, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows the description of the device" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheDescription) }
-        expect(description).to_not be_nil
+      it "contains a graph bar" do
+        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
+        expect(bar).to_not be_nil
       end
 
-      it "shows a button for editing the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-        expect(button).to_not be_nil
+      context "when the bcache device contains no partitions" do
+        it "shows a table containing only the bcache" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to eq ["/dev/bcache0"]
+        end
       end
 
-      it "shows a button for changing the caching options" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheEditButton) }
-        expect(button).to_not be_nil
-      end
+      context "when the bcache device is partitioned" do
+        let(:device_name) { "/dev/bcache1" }
 
-      it "shows a button for deleting the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-        expect(button).to_not be_nil
-      end
+        it "shows a table with the bcache and its partitions" do
+          expect(table).to_not be_nil
 
-      it "shows a button for configuring the partition table" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
-        expect(button).to_not be_nil
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/bcache1", "/dev/bcache1p1", "/dev/bcache1p2"
+          )
+        end
       end
     end
   end
@@ -101,12 +94,6 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-
-      let(:items) { table.items.map { |i| i[1] } }
-
       it "shows a table with the Bcache, its backing and its caching devices" do
         expect(table).to_not be_nil
 

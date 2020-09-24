@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_add_button"
@@ -37,7 +36,7 @@ module Y2Partitioner
         #
         # @return [String]
         def self.label
-          _("LVM")
+          _("LVM Volume Groups")
         end
 
         # Constructor
@@ -51,11 +50,6 @@ module Y2Partitioner
         end
 
         private
-
-        # @see DevicesTable
-        def icon
-          Icons::LVM
-        end
 
         # @see DevicesTable
         def table_buttons

@@ -17,23 +17,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/tabs"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/pages/md_raids"
-require "y2partitioner/widgets/md_description"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/partition_table_add_button"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/used_devices_edit_button"
-require "y2partitioner/widgets/partitions_tab"
+require "y2partitioner/widgets/overview_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdUsedDevicesTab}
+      # A Page for a md raid device: contains {MdTab} and {MdUsedDevicesTab}
       class MdRaid < Base
         # Constructor
         #
@@ -62,16 +57,9 @@ module Y2Partitioner
           Top(
             VBox(
               Left(
-                HBox(
-                  Image(Icons::RAID, ""),
-                  Heading(format(_("RAID: %s"), @md.name))
-                )
-              ),
-              Left(
                 Tabs.new(
                   MdTab.new(@md, initial: true),
-                  MdUsedDevicesTab.new(@md, @pager),
-                  PartitionsTab.new(@md, @pager)
+                  MdUsedDevicesTab.new(@md, @pager)
                 )
               )
             )
@@ -87,37 +75,11 @@ module Y2Partitioner
       end
 
       # A Tab for a Software RAID description
-      class MdTab < CWM::Tab
-        # Constructor
-        #
-        # @param md [Y2Storage::Md]
-        # @param initial [Boolean] if it is the initial tab
-        def initialize(md, initial: false)
-          textdomain "storage"
+      class MdTab < OverviewTab
+        private
 
-          @md = md
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              MdDescription.new(@md),
-              Left(
-                HBox(
-                  BlkDeviceEditButton.new(device: @md),
-                  DeviceDeleteButton.new(device: @md),
-                  PartitionTableAddButton.new(device: @md)
-                )
-              )
-            )
+        def devices
+          [device] + device.partitions
         end
       end
 
