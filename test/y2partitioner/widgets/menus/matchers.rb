@@ -26,6 +26,12 @@ RSpec::Matchers.define :be_item do
   end
 end
 
+RSpec::Matchers.define :be_menu do
+  match do |element|
+    element.is_a?(Yast::Term) && element.value == :menu
+  end
+end
+
 RSpec::Matchers.define :item_with_id do |expected_id|
   match do |item|
     return false unless be_item(item)
