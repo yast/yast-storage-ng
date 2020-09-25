@@ -147,7 +147,7 @@ module Y2Partitioner
 
         # @see @disabled_for_device
         def disabled_for_type
-          if device.is?(:disk_device)
+          if device.is?(:disk_device, :stray_blk_device)
             [:menu_delete]
           elsif device.is?(:lvm_vg)
             [:menu_edit]

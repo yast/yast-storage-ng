@@ -85,39 +85,6 @@ describe Y2Partitioner::UIState do
       end
     end
 
-    context "when the user has opened a partition page" do
-      let(:device_name) { "/dev/sda1" }
-      let(:partition_page) { Y2Partitioner::Widgets::Pages::Partition.new(device) }
-      let(:another_disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb") }
-      let(:another_disk_page) { Y2Partitioner::Widgets::Pages::Disk.new(another_disk, pager) }
-
-      before { ui_state.select_page(partition_page.tree_path) }
-
-      context "if the partition is still there after redrawing" do
-        before { pages.concat [partition_page, another_disk_page, disk_page] }
-
-        it "selects the partition page" do
-          expect(ui_state.find_page(pages_ids)).to eq partition_page.id
-        end
-      end
-
-      context "if the partition is not longer there after redrawing" do
-        before { pages.concat [another_disk_page, disk_page] }
-
-        it "selects the corresponding disk page" do
-          expect(ui_state.find_page(pages_ids)).to eq disk_page.id
-        end
-      end
-
-      context "if the whole disk is not longer there after redrawing" do
-        before { pages << another_disk_page }
-
-        it "returns nil" do
-          expect(ui_state.find_page(pages_ids)).to be_nil
-        end
-      end
-    end
-
     context "when the user has opened a disk page" do
       let(:device_name) { "/dev/sdb" }
       let(:another_disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
@@ -166,37 +133,6 @@ describe Y2Partitioner::UIState do
       context "if the RAID is not longer there after redrawing" do
         it "selects the general MD RAIDs page" do
           expect(ui_state.find_page(pages_ids)).to eq md_raids_page.id
-        end
-      end
-    end
-
-    context "when the user has opened a LV page" do
-      let(:device_name) { "/dev/vg0/lv1" }
-
-      let(:page) { Y2Partitioner::Widgets::Pages::LvmLv.new(device) }
-      let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(device.lvm_vg, pager) }
-
-      before { ui_state.select_page(page.tree_path) }
-
-      context "if the LV is still there after redrawing" do
-        before { pages.concat [page, vg_page] }
-
-        it "selects the LV page" do
-          expect(ui_state.find_page(pages_ids)).to eq page.id
-        end
-      end
-
-      context "if the LV is not longer there after redrawing" do
-        before { pages << vg_page }
-
-        it "selects the corresponding VG page" do
-          expect(ui_state.find_page(pages_ids)).to eq vg_page.id
-        end
-      end
-
-      context "if the whole VG is not longer there after redrawing" do
-        it "returns nil" do
-          expect(ui_state.find_page(pages_ids)).to be_nil
         end
       end
     end
@@ -460,19 +396,15 @@ describe Y2Partitioner::UIState do
 
   describe "#prune" do
     let(:device_name) { "/dev/sda" }
-    let(:sda1) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
-    let(:lv1) { vg.lvm_lvs.first }
 
     let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
     let(:sda_page) { Y2Partitioner::Widgets::Pages::Disk.new(device, pager) }
-    let(:sda1_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda1) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
     let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
-    let(:lv1_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv1) }
 
-    let(:initial_pages) { [disks_page, sda_page, sda1_page, lvm_page, vg_page, lv1_page] }
-    let(:final_pages) { [lvm_page, vg_page, lv1_page] }
+    let(:initial_pages) { [disks_page, sda_page, lvm_page, vg_page] }
+    let(:final_pages) { [lvm_page, vg_page] }
 
     before do
       # generates statuses for all pages by selecting them

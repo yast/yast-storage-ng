@@ -94,4 +94,29 @@ describe Y2Partitioner::Dialogs::DeviceDescription do
       end
     end
   end
+
+  context "for a XEN partition" do
+    let(:scenario) { "xen-partitions.xml" }
+    let(:device) { current_graph.find_by_name("/dev/xvda1") }
+
+    describe "#title" do
+      it "includes the name of the device" do
+        expect(subject.title).to include device.name
+      end
+    end
+
+    describe "#contents" do
+      it "includes a widget with the description of the device" do
+        expect(Y2Partitioner::Widgets::StrayBlkDeviceDescription).to receive(:new).with(device)
+        subject.contents
+      end
+    end
+
+    describe "#run" do
+      it "opens the pop-up and returns the result of the user input" do
+        expect_any_instance_of(Y2Partitioner::Dialogs::Popup).to receive(:run).and_return(:ok)
+        expect(subject.run).to eq :ok
+      end
+    end
+  end
 end

@@ -17,10 +17,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/pages/base"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/stray_blk_device_description"
-require "y2partitioner/dialogs"
+require "y2partitioner/widgets/overview_tab"
 
 module Y2Partitioner
   module Widgets
@@ -47,16 +46,14 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          return @contents if @contents
-
-          @contents = VBox(
-            StrayBlkDeviceDescription.new(device),
-            Left(
-              HBox(
-                BlkDeviceEditButton.new(device: device)
+          @contents ||=
+            Top(
+              VBox(
+                Left(
+                  OverviewTab.new(device, @pager)
+                )
               )
             )
-          )
         end
       end
     end

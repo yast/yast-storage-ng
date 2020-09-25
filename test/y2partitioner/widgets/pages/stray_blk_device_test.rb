@@ -27,39 +27,35 @@ describe Y2Partitioner::Widgets::Pages::StrayBlkDevice do
   before { devicegraph_stub("xen-partitions.xml") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
   let(:device) { current_graph.stray_blk_devices.first }
+  let(:pager) { double("Pager") }
 
   subject { described_class.new(device) }
+
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { table.items.map { |i| i[1] } }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-    it "shows the description of the device" do
-      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::StrayBlkDeviceDescription) }
-      expect(description).to_not be_nil
+    it "shows a generic device overview tab" do
+      expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
+      subject.contents
     end
+  end
 
-    it "shows a button for editing the device" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-      expect(button).to_not be_nil
-    end
+  describe Y2Partitioner::Widgets::OverviewTab do
+    subject { described_class.new(device, pager) }
 
-    it "does not display a button for moving the device" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionMoveButton) }
-      expect(button).to be_nil
-    end
+    include_examples "CWM::Tab"
 
-    it "does not display a button for resizing the device" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-      expect(button).to be_nil
-    end
+    describe "#contents" do
+      it "shows a table containing only the device" do
+        expect(table).to_not be_nil
 
-    it "does not display a button for deleting the device" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-      expect(button).to be_nil
+        expect(remove_sort_keys(items)).to eq ["/dev/xvda1"]
+      end
     end
   end
 end
