@@ -123,7 +123,7 @@ describe Y2Partitioner::Widgets::Menus::System do
       before { allow_any_instance_of(action_class).to receive(:run).and_return action_result }
       let(:action_result) { :whatever }
 
-      it "calls the correspondig action (#{action_class})" do
+      it "calls the corresponding action (#{action_class})" do
         expect_any_instance_of(action_class).to receive(:run)
         menu.handle(id)
       end
