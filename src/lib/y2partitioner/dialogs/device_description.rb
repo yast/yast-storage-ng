@@ -64,6 +64,7 @@ module Y2Partitioner
       # Widget classes that can be used to display information of a device
       WIDGETS = {
         disk_device:      Widgets::DiskDeviceDescription,
+        disk:             Widgets::DiskDeviceDescription,
         filesystem:       Widgets::FilesystemDescription,
         software_raid:    Widgets::MdDescription,
         partition:        Widgets::PartitionDescription,

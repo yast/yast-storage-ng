@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,9 +47,7 @@ describe Y2Partitioner::Dialogs::DeviceDescription do
     end
   end
 
-  context "for a hard disk" do
-    let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vda") }
-
+  shared_examples "hard disk" do
     describe "#title" do
       it "includes the name of the disk" do
         expect(subject.title).to include device.name
@@ -68,6 +67,28 @@ describe Y2Partitioner::Dialogs::DeviceDescription do
         expect(subject.run).to eq :ok
       end
     end
+  end
+
+  context "for a hard disk used as multipath wire" do
+    let(:scenario) { "multipath-formatted.xml" }
+
+    let(:device) { current_graph.find_by_name("/dev/sda") }
+
+    include_examples "hard disk"
+  end
+
+  context "for a hard disk used by a BIOS RAID" do
+    let(:scenario) { "empty-dm_raids.xml" }
+
+    let(:device) { current_graph.find_by_name("/dev/sdb") }
+
+    include_examples "hard disk"
+  end
+
+  context "for a hard disk" do
+    let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vda") }
+
+    include_examples "hard disk"
   end
 
   context "for Btrfs filesystem" do
