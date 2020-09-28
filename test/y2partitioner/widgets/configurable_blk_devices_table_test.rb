@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,8 +27,10 @@ require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
+
+  let(:scenario) { "mixed_disks_btrfs.yml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -136,7 +138,6 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
     before do
       allow(subject).to receive(:selected_device).and_return(device)
-      allow(pager).to receive(:device_page).with(device).and_return(page)
     end
 
     let(:device) { nil }
@@ -146,30 +147,83 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     context "when the event is Activated (double click)" do
       let(:event) { { "EventReason" => "Activated" } }
 
+      before do
+        allow(pager).to receive(:device_page?).and_return(device_page)
+      end
+
+      let(:device_page) { nil }
+
       context "when there is no selected device" do
-        it "returns nil" do
-          expect(subject.handle(event)).to be_nil
-        end
-      end
-
-      context "when there is no page associated to the selected device" do
-        let(:device) { Y2Storage::LvmPv.all(device_graph).first }
-
-        let(:page) { nil }
+        let(:device) { nil }
 
         it "returns nil" do
           expect(subject.handle(event)).to be_nil
         end
       end
 
-      context "when there is a page associated to the selected device" do
-        let(:device) { Y2Storage::Disk.all(device_graph).first }
+      context "when there is a selected device" do
+        let(:device) { device_graph.disks.first }
 
-        let(:page) { instance_double(Y2Partitioner::Widgets::Pages::Disk, widget_id: "disk_page_id") }
+        context "and the current page is associated to a specific device" do
+          let(:device_page) { true }
 
-        it "goes to the device page" do
-          expect(pager).to receive(:handle).with("ID" => "disk_page_id")
-          subject.handle(event)
+          let(:dialog) { instance_double(Y2Partitioner::Dialogs::DeviceDescription) }
+
+          it "opens a dialog with the description of the selected device" do
+            expect(Y2Partitioner::Dialogs::DeviceDescription).to receive(:new).with(device)
+              .and_return(dialog)
+
+            expect(dialog).to receive(:run)
+
+            subject.handle(event)
+          end
+        end
+
+        context "and the current page is not associated to a specific device" do
+          let(:device_page) { false }
+
+          before do
+            allow(pager).to receive(:device_page).with(device).and_return(page)
+            allow(pager).to receive(:handle)
+          end
+
+          context "and there is a page associated to the selected device" do
+            let(:page) do
+              instance_double(Y2Partitioner::Widgets::Pages::Disk, widget_id: "id", tree_path: ["disk"])
+            end
+
+            it "selects the device page" do
+              expect(Y2Partitioner::UIState.instance).to receive(:select_page).with(page.tree_path)
+
+              subject.handle(event)
+            end
+
+            it "selects the device row" do
+              expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
+
+              subject.handle(event)
+            end
+
+            it "calls the pager handler with the proper event" do
+              expect(pager).to receive(:handle).with("ID" => page.widget_id)
+
+              subject.handle(event)
+            end
+          end
+
+          context "and there is no page associated to the selected device" do
+            let(:page) { nil }
+
+            it "does not call the pager handler" do
+              expect(pager).to_not receive(:handle)
+
+              subject.handle(event)
+            end
+
+            it "returns nil" do
+              expect(subject.handle(event)).to be_nil
+            end
+          end
         end
       end
     end
