@@ -31,15 +31,15 @@ shared_examples "Y2Partitioner::Widgets::Menus" do
     it "produces an array of Items" do
       expect(subject.items).to be_an Array
 
-      expect(subject.items).to all(be_item)
+      expect(subject.items).to all(be_item.or(be_menu))
     end
   end
 
   describe "#disabled_items" do
-    it "produces an array of Items" do
-      expect(subject.items).to be_an Array
+    it "produces an array with symbols" do
+      expect(subject.disabled_items).to be_an Array
 
-      expect(subject.items).to all(be_item)
+      expect(subject.disabled_items).to all(be_a Symbol)
     end
   end
 
