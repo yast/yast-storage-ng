@@ -84,6 +84,13 @@ module Y2Partitioner
           items
         end
 
+        # @see Device
+        def action_for(*args)
+          return nil unless device
+
+          super
+        end
+
         # @see Device#action_for
         def menu_edit_action
           if device.is?(:blk_device) && device.usable_as_blk_device?
@@ -141,6 +148,7 @@ module Y2Partitioner
         # @see Base
         def dialog_for(event)
           return nil unless event == :menu_description
+          return nil unless device
 
           Dialogs::DeviceDescription.new(device)
         end

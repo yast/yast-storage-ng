@@ -111,11 +111,15 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def support_add_partition?
+          return false unless device
+
           partitionable? || device.is?(:partition)
         end
 
         # Whether the action to add a LVM Logical Volume can be called with the current device
         def support_add_lv?
+          return false unless device
+
           device.is?(:lvm_vg, :lvm_lv)
         end
       end
