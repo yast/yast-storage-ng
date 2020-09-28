@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -133,16 +133,28 @@ module Y2Partitioner
         Hash[items_with_children.map { |i| [i.to_s, open_items.include?(i)] }]
       end
 
+      # Checks whether the current page is associated to a specific device
+      #
+      # @return [Boolean]
+      def device_page?
+        current_page.respond_to?(:device)
+      end
+
       # Obtains the page associated to a specific device
+      #
+      # Note that some devices have no associated page (e.g., partitions and LVM LVs). In that case, the
+      # page associated to its parent device is considered as the page of the given device.
+      #
+      # @param device [Y2Storage::Device]
       # @return [CWM::Page, nil]
       def device_page(device)
-        if device.is?(:nfs)
-          # NFS is a special case because NFS devices don't have individual
-          # pages, all NFS devices are managed directly in the NFS list
-          @pages.find { |p| p.is_a?(Pages::NfsMounts) }
-        else
-          @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
-        end
+        # NFS is a special case because NFS devices don't have individual
+        # pages, all NFS devices are managed directly in the NFS list
+        return @pages.find { |p| p.is_a?(Pages::NfsMounts) } if device.is?(:nfs)
+
+        page = find_device_page(device)
+        page ||= find_device_page(parent_device(device))
+        page
       end
 
       # @macro seeAbstractWidget
@@ -155,6 +167,26 @@ module Y2Partitioner
       private
 
       attr_reader :tree
+
+      # Finds the page associated to a device
+      #
+      # @return [Yast::Page, nil]
+      def find_device_page(device)
+        return nil unless device
+
+        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+      end
+
+      # Parent device for the given device
+      #
+      # @return [Y2Storage::Device, nil]
+      def parent_device(device)
+        if device.is?(:partition)
+          device.partitionable
+        elsif device.is?(:lvm_lv)
+          device.lvm_vg
+        end
+      end
 
       # Select the initial page
       #
