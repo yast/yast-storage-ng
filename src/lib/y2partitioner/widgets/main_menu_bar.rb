@@ -48,6 +48,12 @@ module Y2Partitioner
         refresh
       end
 
+      # @see UIState#select_page
+      def select_page
+        @device = nil
+        refresh
+      end
+
       # @macro seeAbstractWidget
       def id
         :menu_bar
@@ -106,18 +112,33 @@ module Y2Partitioner
       #
       # @return [Array<Menus::Base>]
       def calculate_menus
-        [
-          Menus::System.new,
-          Menus::Add.new(device),
-          Menus::Modify.new(device),
-          Menus::View.new
-        ]
+        [system_menu, add_menu, modify_menu, view_menu]
       end
 
       # Disable all items with the specified IDs
       def disable_menu_items(*ids)
         disabled_hash = ids.each_with_object({}) { |id, h| h[id] = false }
         Yast::UI.ChangeWidget(Id(id), :EnabledItems, disabled_hash)
+      end
+
+      # @see #calculate_menus
+      def system_menu
+        @system_menu ||= Menus::System.new
+      end
+
+      # @see #calculate_menus
+      def view_menu
+        @view_menu ||= Menus::View.new
+      end
+
+      # @see #calculate_menus
+      def add_menu
+        Menus::Add.new(device)
+      end
+
+      # @see #calculate_menus
+      def modify_menu
+        Menus::Modify.new(device)
       end
 
       # @return [Y2Storage::Devicegraph]
