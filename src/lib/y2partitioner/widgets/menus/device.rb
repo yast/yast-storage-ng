@@ -40,7 +40,7 @@ module Y2Partitioner
         #
         # @return [Array<Symbol>]
         def disabled_items
-          @disabled_items ||= device ? disabled_for_device : []
+          @disabled_items ||= device ? disabled_for_device : disabled_without_device
         end
 
         private
@@ -61,6 +61,17 @@ module Y2Partitioner
         # @return [Array<Symbol>]
         def disabled_for_device
           []
+        end
+
+        # Items to disable if {#device} is nil
+        # @see #disabled_items
+        #
+        # @return [Array<Symbol>]
+        def disabled_without_device
+          items_with_id = items.select do |i|
+            i.value == :item && i.params[0].is_a?(Yast::Term) && i.params[0].value == :id
+          end
+          items_with_id.map { |i| i.params[0].params[0] }
         end
 
         # Current devicegraph

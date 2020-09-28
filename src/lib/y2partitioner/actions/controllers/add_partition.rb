@@ -20,7 +20,6 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/actions/controllers/base"
-require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
@@ -125,7 +124,6 @@ module Y2Partitioner
           slot = slot_for(region)
           aligned = align(region, slot, ptable)
           @partition = ptable.create_partition(slot.name, aligned, type)
-          UIState.instance.select_row(@partition.sid)
         end
 
         # Removes the previously created partition from the device

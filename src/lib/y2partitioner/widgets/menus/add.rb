@@ -56,6 +56,8 @@ module Y2Partitioner
           ]
         end
 
+        private
+
         # @see Device
         def disabled_for_device
           items = []
@@ -64,7 +66,10 @@ module Y2Partitioner
           items
         end
 
-        private
+        # @see Device
+        def disabled_without_device
+          [:menu_add_partition, :menu_add_lv]
+        end
 
         # @see Device#action_for
         def menu_add_md_action

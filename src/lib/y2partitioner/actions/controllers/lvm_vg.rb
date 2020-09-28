@@ -20,7 +20,6 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/size_parser"
-require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/available_devices"
@@ -223,8 +222,6 @@ module Y2Partitioner
           when :resize
             initialize_for_resize(current_vg)
           end
-
-          UIState.instance.select_row(vg.sid) unless vg.nil?
         end
 
         # Detects current action

@@ -22,6 +22,7 @@ require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/md"
 require "y2partitioner/dialogs/md"
 require "y2partitioner/dialogs/md_options"
+require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 
@@ -42,8 +43,10 @@ module Y2Partitioner
 
       def md_options
         result = Dialogs::MdOptions.run(controller)
+        return result unless result == :next
 
-        (result == :next) ? :finish : result
+        UIState.instance.select_row(controller.md.sid)
+        :finish
       end
 
       protected

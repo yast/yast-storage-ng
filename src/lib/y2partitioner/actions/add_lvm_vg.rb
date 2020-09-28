@@ -21,6 +21,7 @@ require "yast"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/lvm_vg"
 require "y2partitioner/dialogs/lvm_vg"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
@@ -42,6 +43,7 @@ module Y2Partitioner
         return result if result != :next
 
         controller.apply_values
+        UIState.instance.select_row(controller.vg.sid)
         :finish
       end
 
