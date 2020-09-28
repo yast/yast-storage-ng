@@ -97,14 +97,6 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       expect(controller.lv.lvm_vg).to eq(controller.vg)
     end
 
-    it "select the table row corresponding to the new lv" do
-      expect(Y2Partitioner::UIState.instance).to receive(:select_row) do |lv|
-        expect(lv).to eq(controller.lv.sid)
-      end
-
-      controller.create_lv
-    end
-
     context "when the stored lv type is thin" do
       let(:lv_type) { Y2Storage::LvType::THIN }
 

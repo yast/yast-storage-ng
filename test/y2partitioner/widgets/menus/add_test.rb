@@ -69,6 +69,15 @@ describe Y2Partitioner::Widgets::Menus::Add do
   end
 
   describe "#disabled_items" do
+    context "when there is no device" do
+      let(:device) { nil }
+
+      it "contains 'Partition' and 'Logical Volume'" do
+        items = [:menu_add_partition, :menu_add_lv]
+        expect(subject.disabled_items).to contain_exactly(*items)
+      end
+    end
+
     context "when the device is a disk device (Hard Disk, BIOS RAID, Multipath, DASD)" do
       let(:scenario) { "one-empty-disk.yml" }
 
@@ -231,6 +240,15 @@ describe Y2Partitioner::Widgets::Menus::Add do
         end
       end
 
+      context "but no device is selected" do
+        let(:device) { nil }
+
+        it "calls no action" do
+          expect(Y2Partitioner::Actions::AddPartition).to_not receive(:new)
+          subject.handle(event)
+        end
+      end
+
       include_examples "no action", "trivial_lvm.yml", "/dev/vg0"
     end
 
@@ -257,6 +275,15 @@ describe Y2Partitioner::Widgets::Menus::Add do
         it "calls an action to add a Logical Volume in the Volume Group of the selected device" do
           expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(device.lvm_vg)
 
+          subject.handle(event)
+        end
+      end
+
+      context "but no device is selected" do
+        let(:device) { nil }
+
+        it "calls no action" do
+          expect(Y2Partitioner::Actions::AddLvmLv).to_not receive(:new)
           subject.handle(event)
         end
       end
