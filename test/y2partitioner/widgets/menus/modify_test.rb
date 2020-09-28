@@ -77,6 +77,18 @@ describe Y2Partitioner::Widgets::Menus::Modify do
   end
 
   describe "#disabled_items" do
+    context "when there is no device" do
+      let(:device) { nil }
+
+      it "contains all the entries" do
+        items = [
+          :menu_edit, :menu_description, :menu_delete, :menu_resize, :menu_move,
+          :menu_change_devs, :menu_create_ptable, :menu_clone_ptable
+        ]
+        expect(subject.disabled_items).to contain_exactly(*items)
+      end
+    end
+
     context "when the device is a disk device (Hard Disk, BIOS RAID, Multipath, DASD)" do
       let(:scenario) { "one-empty-disk.yml" }
 
@@ -172,6 +184,17 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
     end
 
+    shared_examples "no device" do
+      context "but no device is selected" do
+        let(:device) { nil }
+
+        it "calls no action" do
+          expect(Y2Partitioner::Actions::Base).to_not receive(:new)
+          subject.handle(event)
+        end
+      end
+    end
+
     context "when 'Edit' is selected" do
       let(:event) { :menu_edit }
 
@@ -204,6 +227,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "trivial_lvm.yml", "/dev/vg0"
+
+      include_examples "no device"
     end
 
     context "when 'Delete' is selected" do
@@ -286,6 +311,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda"
+
+      include_examples "no device"
     end
 
     context "when 'Resize' is selected" do
@@ -316,6 +343,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda"
+
+      include_examples "no device"
     end
 
     context "when 'Move' is selected" do
@@ -334,6 +363,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda"
+
+      include_examples "no device"
     end
 
     context "when 'Change Used Devices' is selected" do
@@ -392,6 +423,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda"
+
+      include_examples "no device"
     end
 
     context "when 'Create Partition Table' is selected" do
@@ -410,6 +443,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda1"
+
+      include_examples "no device"
     end
 
     context "when 'Clone Partitions' is selected" do
@@ -428,6 +463,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda1"
+
+      include_examples "no device"
     end
 
     context "when 'Show Details' is selected" do
@@ -438,6 +475,8 @@ describe Y2Partitioner::Widgets::Menus::Modify do
 
         subject.handle(event)
       end
+
+      include_examples "no device"
     end
   end
 end
