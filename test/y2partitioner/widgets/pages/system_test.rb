@@ -23,6 +23,7 @@ require_relative "../../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/pages"
+require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::Pages::System do
   before do
