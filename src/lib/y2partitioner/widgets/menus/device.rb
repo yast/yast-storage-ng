@@ -66,6 +66,9 @@ module Y2Partitioner
         # Items to disable if {#device} is nil
         # @see #disabled_items
         #
+        # Unless redefined in a descendant class, all items of the menu are
+        # disabled when the device is nil
+        #
         # @return [Array<Symbol>]
         def disabled_without_device
           items_with_id = items.select do |i|
