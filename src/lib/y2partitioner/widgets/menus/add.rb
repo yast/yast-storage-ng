@@ -56,6 +56,8 @@ module Y2Partitioner
           ]
         end
 
+        private
+
         # @see Device
         def disabled_for_device
           items = []
@@ -64,7 +66,10 @@ module Y2Partitioner
           items
         end
 
-        private
+        # @see Device
+        def disabled_without_device
+          [:menu_add_partition, :menu_add_lv]
+        end
 
         # @see Device#action_for
         def menu_add_md_action
@@ -106,11 +111,15 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def support_add_partition?
+          return false unless device
+
           partitionable? || device.is?(:partition)
         end
 
         # Whether the action to add a LVM Logical Volume can be called with the current device
         def support_add_lv?
+          return false unless device
+
           device.is?(:lvm_vg, :lvm_lv)
         end
       end

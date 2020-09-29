@@ -35,12 +35,28 @@ describe Y2Partitioner::Widgets::MainMenuBar do
 
   include_examples "CWM::CustomWidget"
 
+  # Just to shorten
+  let(:system) { Y2Partitioner::Widgets::Menus::System }
+  let(:add) { Y2Partitioner::Widgets::Menus::Add }
+  let(:modify) { Y2Partitioner::Widgets::Menus::Modify }
+  let(:view) { Y2Partitioner::Widgets::Menus::View }
+
   describe "#contents" do
-    context "if no device has been selected yet" do
-      # FIXME: this behavior is actually a bug
+    context "if no device or page has been selected yet" do
       it "contains no menus" do
         menus = widget.contents.params[1]
         expect(menus).to eq []
+      end
+    end
+
+    context "if a page with no devices has been selected" do
+      before { widget.select_page }
+
+      it "contains menus for System, Add, Modify and View" do
+        menus = widget.contents.params[1]
+        expect(menus.map(&:value)).to all(eq :menu)
+        titles = menus.map { |m| m.params[0] }
+        expect(titles).to eq ["&System", "&Add", "&Device", "&View"]
       end
     end
 
@@ -56,17 +72,33 @@ describe Y2Partitioner::Widgets::MainMenuBar do
     end
   end
 
+  describe "#select_page" do
+    it "initializes the Add and Modify menus with no device" do
+      expect(add).to receive(:new).with(nil).and_call_original
+      expect(modify).to receive(:new).with(nil).and_call_original
+      widget.select_page
+    end
+  end
+
+  describe "#select_row" do
+    it "initializes the Add and Modify menus with the corresponding device" do
+      expect(add).to receive(:new).with(device).and_call_original
+      expect(modify).to receive(:new).with(device).and_call_original
+      widget.select_row(device.sid)
+    end
+  end
+
   describe "#handle" do
-    let(:system_menu) { Y2Partitioner::Widgets::Menus::System.new }
-    let(:add_menu) { Y2Partitioner::Widgets::Menus::Add.new(device) }
-    let(:modify_menu) { Y2Partitioner::Widgets::Menus::Modify.new(device) }
-    let(:view_menu) { Y2Partitioner::Widgets::Menus::View.new }
+    let(:system_menu) { system.new }
+    let(:add_menu) { add.new(device) }
+    let(:modify_menu) { modify.new(device) }
+    let(:view_menu) { view.new }
 
     before do
-      allow(Y2Partitioner::Widgets::Menus::System).to receive(:new).and_return system_menu
-      allow(Y2Partitioner::Widgets::Menus::Add).to receive(:new).and_return add_menu
-      allow(Y2Partitioner::Widgets::Menus::Modify).to receive(:new).and_return modify_menu
-      allow(Y2Partitioner::Widgets::Menus::View).to receive(:new).and_return view_menu
+      allow(system).to receive(:new).and_return system_menu
+      allow(add).to receive(:new).and_return add_menu
+      allow(modify).to receive(:new).and_return modify_menu
+      allow(view).to receive(:new).and_return view_menu
       widget.select_row(device.sid)
     end
 

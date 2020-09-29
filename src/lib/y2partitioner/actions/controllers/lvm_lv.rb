@@ -19,7 +19,6 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/ui_state"
 require "y2partitioner/actions/controllers/base"
 
 module Y2Partitioner
@@ -95,7 +94,6 @@ module Y2Partitioner
         # Creates the LV in the VG according to the controller attributes
         def create_lv
           @lv = lv_type.is?(:thin) ? create_thin_lv : create_normal_or_pool_lv
-          UIState.instance.select_row(@lv.sid)
         end
 
         # Removes the previously created logical volume

@@ -20,7 +20,6 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/actions/controllers/base"
-require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/actions/controllers/available_devices"
 
@@ -57,7 +56,6 @@ module Y2Partitioner
 
           @md_sid = md.sid
           @initial_name = md.name
-          UIState.instance.select_row(md.sid)
         end
 
         # MD RAID being modified
