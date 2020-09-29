@@ -58,7 +58,7 @@ module Y2Partitioner
             VBox(
               Left(
                 Tabs.new(
-                  MdTab.new(@md, initial: true),
+                  MdTab.new(@md, @pager, initial: true),
                   MdUsedDevicesTab.new(@md, @pager)
                 )
               )
