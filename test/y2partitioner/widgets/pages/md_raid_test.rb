@@ -42,12 +42,12 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
 
   describe "#contents" do
     it "shows a MD tab" do
-      expect(Y2Partitioner::Widgets::Pages::MdTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::Pages::MdTab).to receive(:new).with(md, pager, anything)
       subject.contents
     end
 
     it "shows a used devices tab" do
-      expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new).with(md, pager)
       subject.contents
     end
   end
