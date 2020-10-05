@@ -30,7 +30,13 @@ describe Y2Storage::Filesystems::Base do
 
   let(:blk_device) { fake_devicegraph.find_by_name("/dev/sda2") }
 
+  let(:btrfs_reader) { instance_double(Y2Storage::BtrfsReader, quotas?: false, qgroups: []) }
+
   subject(:filesystem) { blk_device.blk_filesystem }
+
+  before do
+    allow(Y2Storage::BtrfsReader).to receive(:new).and_return(btrfs_reader)
+  end
 
   describe "#free_space" do
     context "#detect_space_info succeed" do

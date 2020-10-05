@@ -509,6 +509,36 @@ module Y2Storage
         )
       end
 
+      # Determines whether support for quotas is enabled or not
+      #
+      # @return [Boolean]
+      def quotas
+        userdata_value(:quotas) || fs_attribute(:quotas)
+      end
+      alias_method :quotas?, :quotas
+
+      # Enables or disables quotas support
+      #
+      # @param value [Boolean] Whether support for quotas should be enabled or not
+      def quotas=(value)
+        save_userdata(:quotas, value)
+      end
+
+      # Returns the quota groups
+      #
+      # @return [Array<QGroup>] List of probed qgroups
+      def qgroups
+        fs_attribute(:qgroups) || []
+      end
+
+      # Returns the qgroup for the submodule with the given ID
+      #
+      # @param subvol_id [Integer] Subvolume ID
+      # @return [BtrfsQgroup]
+      def qgroup_for(subvol_id)
+        qgroups.find { |q| q.subvol_id == subvol_id }
+      end
+
       protected
 
       # Removes a subvolume
@@ -668,6 +698,20 @@ module Y2Storage
       # @return [Boolean]
       def snapper_path?(path)
         path.split("/")[0..1].include?(SNAPSHOTS_ROOT_SUBVOL_NAME)
+      end
+
+      # Reads and saves attributes from a probed filesystem
+      #
+      # It requires to mount the filesystem.
+      #
+      # @see Y2Storage::FilesystemReader
+      def read_fs_attributes
+        super
+        return unless exists_in_probed?
+
+        reader = BtrfsReader.new(self)
+        save_userdata(:quotas, reader.quotas?)
+        save_userdata(:qgroups, reader.qgroups)
       end
     end
   end

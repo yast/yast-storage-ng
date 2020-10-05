@@ -36,6 +36,14 @@ describe Y2Storage::Filesystems::Btrfs do
 
   let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
+  let(:btrfs_reader) do
+    instance_double(Y2Storage::BtrfsReader, quotas?: false, qgroups: [])
+  end
+
+  before do
+    allow(Y2Storage::BtrfsReader).to receive(:new).with(subject).and_return(btrfs_reader)
+  end
+
   describe "#btrfs_subvolumes" do
     it "returns an array of BtrfsSubvolume objects" do
       expect(filesystem.btrfs_subvolumes).to be_a Array
@@ -953,6 +961,66 @@ describe Y2Storage::Filesystems::Btrfs do
       it "returns nil" do
         expect(subject.display_name).to be_nil
       end
+    end
+  end
+
+  describe "#quotas?" do
+    let(:btrfs_reader) { instance_double(Y2Storage::BtrfsReader, quotas?: quotas?, qgroups: []) }
+    let(:quotas?) { false }
+
+    context "when quotas are enabled on the real filesystem" do
+      let(:quotas?) { true }
+
+      it "returns true" do
+        expect(subject.quotas?).to eq(true)
+      end
+    end
+
+    context "when quotas are disabled on the real filesystem" do
+      let(:quotas?) { false }
+
+      it "returns false" do
+        expect(subject.quotas?).to eq(false)
+      end
+    end
+  end
+
+  describe "#quotas=" do
+    it "sets whether quotas must be enabled" do
+      expect { subject.quotas = true }.to change { subject.quotas? }.from(false).to(true)
+    end
+  end
+
+  describe "#qgroups" do
+    let(:btrfs_reader) do
+      instance_double(Y2Storage::BtrfsReader, quotas?: true, qgroups: [qgroup])
+    end
+    let(:qgroup) { Y2Storage::BtrfsQgroup.new(5) }
+
+    before do
+      allow(Y2Storage::BtrfsReader).to receive(:new).with(subject).and_return(btrfs_reader)
+    end
+
+    it "returns the list of qgroups" do
+      qgroups = subject.qgroups
+      expect(qgroups).to contain_exactly(
+        an_object_having_attributes(subvol_id: 5)
+      )
+    end
+  end
+
+  describe "#qgroup_for" do
+    let(:btrfs_reader) do
+      instance_double(Y2Storage::BtrfsReader, quotas?: true, qgroups: [qgroup_5, qgroup_164])
+    end
+
+    let(:qgroup_5) { Y2Storage::BtrfsQgroup.new(5) }
+    let(:qgroup_164) { Y2Storage::BtrfsQgroup.new(164) }
+
+    it "returns the qgroup for the given subvolume ID" do
+      qgroup = subject.qgroup_for(164)
+      expect(qgroup).to be_a(Y2Storage::BtrfsQgroup)
+      expect(qgroup.subvol_id).to eq(164)
     end
   end
 end

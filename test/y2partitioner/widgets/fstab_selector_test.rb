@@ -41,6 +41,7 @@ describe Y2Partitioner::Widgets::FstabSelector do
   subject { described_class.new(controller) }
 
   let(:controller) { Y2Partitioner::Actions::Controllers::Fstabs.new }
+  let(:btrfs_reader) { instance_double(Y2Storage::BtrfsReader, quotas?: false, qgroups: []) }
 
   before do
     devicegraph_stub("mixed_disks.yml")
@@ -52,6 +53,8 @@ describe Y2Partitioner::Widgets::FstabSelector do
     allow(fstab3).to receive(:entries).and_return(fstab3_entries)
 
     allow(Yast::UI).to receive(:ChangeWidget).and_call_original
+
+    allow(Y2Storage::BtrfsReader).to receive(:new).and_return(btrfs_reader)
 
     controller.selected_fstab = selected_fstab
   end
