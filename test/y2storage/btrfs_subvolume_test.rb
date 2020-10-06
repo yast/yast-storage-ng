@@ -22,6 +22,8 @@ require_relative "../spec_helper"
 require "y2storage"
 
 describe Y2Storage::BtrfsSubvolume do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     fake_scenario(scenario)
   end
@@ -141,6 +143,58 @@ describe Y2Storage::BtrfsSubvolume do
 
       it "the result does not include the subvolume filesystem" do
         expect(subject.shadowers.map(&:sid)).to_not include(filesystem.sid)
+      end
+    end
+  end
+
+  context "quotas" do
+    subject { filesystem.find_btrfs_subvolume_by_path("@/home") }
+
+    let(:btrfs_filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
+    let(:qgroup) { Y2Storage::BtrfsQgroup.new(subject.id, 2.GiB, 3.GiB) }
+
+    before do
+      allow(subject).to receive(:filesystem).and_return(btrfs_filesystem)
+      allow(btrfs_filesystem).to receive(:qgroup_for).with(subject.id).and_return(qgroup)
+    end
+
+    describe "#rfer_limit" do
+      it "returns the rfer_limit from the qgroup" do
+        expect(subject.rfer_limit).to eq(2.GiB)
+      end
+
+      context "when it does not have an assigned qgroup" do
+        let(:qgroup) { nil }
+
+        it "returns nil" do
+          expect(subject.rfer_limit).to be_nil
+        end
+      end
+    end
+
+    describe "#excl_limit" do
+      it "returns the rfer_limit from the qgroup" do
+        expect(subject.excl_limit).to eq(3.GiB)
+      end
+
+      context "when it does not have an assigned qgroup" do
+        let(:qgroup) { nil }
+
+        it "returns nil" do
+          expect(subject.excl_limit).to be_nil
+        end
+      end
+    end
+
+    describe "#rfer_limit=" do
+      it "sets the referenced extents limit" do
+        expect { subject.rfer_limit = 1.GiB }.to change { subject.rfer_limit }.to(1.GiB)
+      end
+    end
+
+    describe "#excl_limit=" do
+      it "sets the referenced extents limit" do
+        expect { subject.excl_limit = 1.GiB }.to change { subject.excl_limit }.to(1.GiB)
       end
     end
   end

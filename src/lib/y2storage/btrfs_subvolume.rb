@@ -167,6 +167,47 @@ module Y2Storage
       Mountable.all(devicegraph).select { |m| shadowing?(m.mount_path, mount_path) }
     end
 
+    # Returns the assigned qgroup
+    #
+    # @return [BtrfsQgroup,nil] Assigned qgroup; nil if no qgroup is assigned
+    def qgroup
+      filesystem.qgroup_for(id)
+    end
+
+    # Assigns the referenced extents quota
+    #
+    # @param value [DiskSize,nil] Limit for referenced extents; nil to remove the quota.
+    # FIXME: nil does not look like a valid value. If save_userdata returns nil, it will
+    # use the value from the qgroup, which it is not what we want.
+    def rfer_limit=(value)
+      save_userdata(:rfer_limit, value)
+    end
+
+    # Assigns the exclusive extents quota
+    #
+    # @param value [DiskSize,nil] Limit for exclusive extents; nil to remove the quota.
+    def excl_limit=(value)
+      save_userdata(:excl_limit, value)
+    end
+
+    # Returns the referenced extents quota
+    #
+    # @return [DiskSize, nil]
+    def rfer_limit
+      user_limit = userdata_value(:rfer_limit)
+      return user_limit if user_limit
+      return qgroup.rfer_limit if qgroup
+    end
+
+    # Returns the exclusive extents quota
+    #
+    # @return [DiskSize, nil]
+    def excl_limit
+      user_limit = userdata_value(:excl_limit)
+      return user_limit if user_limit
+      return qgroup.excl_limit if qgroup
+    end
+
     protected
 
     def types_for_is
