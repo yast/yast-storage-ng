@@ -166,8 +166,8 @@ describe Y2Storage::BtrfsSubvolume do
       context "when it does not have an assigned qgroup" do
         let(:qgroup) { nil }
 
-        it "returns nil" do
-          expect(subject.rfer_limit).to be_nil
+        it "returns unlimited" do
+          expect(subject.rfer_limit).to eq(Y2Storage::DiskSize.unlimited)
         end
       end
     end
@@ -180,8 +180,8 @@ describe Y2Storage::BtrfsSubvolume do
       context "when it does not have an assigned qgroup" do
         let(:qgroup) { nil }
 
-        it "returns nil" do
-          expect(subject.excl_limit).to be_nil
+        it "returns unlimited" do
+          expect(subject.excl_limit).to eq(Y2Storage::DiskSize.unlimited)
         end
       end
     end

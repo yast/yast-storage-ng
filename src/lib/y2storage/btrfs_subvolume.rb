@@ -176,36 +176,37 @@ module Y2Storage
 
     # Assigns the referenced extents quota
     #
-    # @param value [DiskSize,nil] Limit for referenced extents; nil to remove the quota.
-    # FIXME: nil does not look like a valid value. If save_userdata returns nil, it will
-    # use the value from the qgroup, which it is not what we want.
+    # @param value [DiskSize] Limit for referenced extents; DiskSize.unlimited to remove the limit
     def rfer_limit=(value)
       save_userdata(:rfer_limit, value)
     end
 
     # Assigns the exclusive extents quota
     #
-    # @param value [DiskSize,nil] Limit for exclusive extents; nil to remove the quota.
+    # @param value [DiskSize] Limit for exclusive extents; DiskSize.unlimited to remove the limit
     def excl_limit=(value)
       save_userdata(:excl_limit, value)
     end
 
     # Returns the referenced extents quota
     #
-    # @return [DiskSize, nil]
+    # @param value [DiskSize] Limit for referenced extents; DiskSize.unlimited if no limit
+    # @return [DiskSize]
     def rfer_limit
       user_limit = userdata_value(:rfer_limit)
       return user_limit if user_limit
       return qgroup.rfer_limit if qgroup
+      DiskSize.unlimited
     end
 
     # Returns the exclusive extents quota
     #
-    # @return [DiskSize, nil]
+    # @param value [DiskSize] Limit for exclusive extents; DiskSize.unlimited if no limit
     def excl_limit
       user_limit = userdata_value(:excl_limit)
       return user_limit if user_limit
       return qgroup.excl_limit if qgroup
+      DiskSize.unlimited
     end
 
     protected
