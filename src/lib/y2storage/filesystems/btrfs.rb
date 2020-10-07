@@ -513,7 +513,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def quotas
-        userdata_value(:quotas) || fs_attribute(:quotas)
+        userdata_value(:quotas) || !qgroups.empty?
       end
       alias_method :quotas?, :quotas
 
@@ -710,7 +710,6 @@ module Y2Storage
         return unless exists_in_probed?
 
         reader = BtrfsReader.new(self)
-        save_userdata(:quotas, reader.quotas?)
         save_userdata(:qgroups, reader.qgroups)
       end
     end

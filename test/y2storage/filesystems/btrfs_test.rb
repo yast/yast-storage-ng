@@ -965,19 +965,18 @@ describe Y2Storage::Filesystems::Btrfs do
   end
 
   describe "#quotas?" do
-    let(:btrfs_reader) { instance_double(Y2Storage::BtrfsReader, quotas?: quotas?, qgroups: []) }
-    let(:quotas?) { false }
+    let(:btrfs_reader) { instance_double(Y2Storage::BtrfsReader, qgroups: qgroups) }
 
-    context "when quotas are enabled on the real filesystem" do
-      let(:quotas?) { true }
+    context "when qgroups exist on the real filesystem" do
+      let(:qgroups) { [Y2Storage::BtrfsQgroup.new(5)] }
 
       it "returns true" do
         expect(subject.quotas?).to eq(true)
       end
     end
 
-    context "when quotas are disabled on the real filesystem" do
-      let(:quotas?) { false }
+    context "when there are not qgroups on the real filesystem" do
+      let(:qgroups) { [] }
 
       it "returns false" do
         expect(subject.quotas?).to eq(false)
@@ -993,7 +992,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
   describe "#qgroups" do
     let(:btrfs_reader) do
-      instance_double(Y2Storage::BtrfsReader, quotas?: true, qgroups: [qgroup])
+      instance_double(Y2Storage::BtrfsReader, qgroups: [qgroup])
     end
     let(:qgroup) { Y2Storage::BtrfsQgroup.new(5) }
 
@@ -1011,7 +1010,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
   describe "#qgroup_for" do
     let(:btrfs_reader) do
-      instance_double(Y2Storage::BtrfsReader, quotas?: true, qgroups: [qgroup_5, qgroup_164])
+      instance_double(Y2Storage::BtrfsReader, qgroups: [qgroup_5, qgroup_164])
     end
 
     let(:qgroup_5) { Y2Storage::BtrfsQgroup.new(5) }
