@@ -158,43 +158,43 @@ describe Y2Storage::BtrfsSubvolume do
       allow(btrfs_filesystem).to receive(:qgroup_for).with(subject.id).and_return(qgroup)
     end
 
-    describe "#rfer_limit" do
-      it "returns the rfer_limit from the qgroup" do
-        expect(subject.rfer_limit).to eq(2.GiB)
+    describe "#max_referenced" do
+      it "returns the max_referenced from the qgroup" do
+        expect(subject.max_referenced).to eq(2.GiB)
       end
 
       context "when it does not have an assigned qgroup" do
         let(:qgroup) { nil }
 
         it "returns unlimited" do
-          expect(subject.rfer_limit).to eq(Y2Storage::DiskSize.unlimited)
+          expect(subject.max_referenced).to eq(Y2Storage::DiskSize.unlimited)
         end
       end
     end
 
-    describe "#excl_limit" do
-      it "returns the rfer_limit from the qgroup" do
-        expect(subject.excl_limit).to eq(3.GiB)
+    describe "#max_exclusive" do
+      it "returns the max_referenced from the qgroup" do
+        expect(subject.max_exclusive).to eq(3.GiB)
       end
 
       context "when it does not have an assigned qgroup" do
         let(:qgroup) { nil }
 
         it "returns unlimited" do
-          expect(subject.excl_limit).to eq(Y2Storage::DiskSize.unlimited)
+          expect(subject.max_exclusive).to eq(Y2Storage::DiskSize.unlimited)
         end
       end
     end
 
-    describe "#rfer_limit=" do
+    describe "#max_referenced=" do
       it "sets the referenced extents limit" do
-        expect { subject.rfer_limit = 1.GiB }.to change { subject.rfer_limit }.to(1.GiB)
+        expect { subject.max_referenced = 1.GiB }.to change { subject.max_referenced }.to(1.GiB)
       end
     end
 
-    describe "#excl_limit=" do
+    describe "#max_exclusive=" do
       it "sets the referenced extents limit" do
-        expect { subject.excl_limit = 1.GiB }.to change { subject.excl_limit }.to(1.GiB)
+        expect { subject.max_exclusive = 1.GiB }.to change { subject.max_exclusive }.to(1.GiB)
       end
     end
   end

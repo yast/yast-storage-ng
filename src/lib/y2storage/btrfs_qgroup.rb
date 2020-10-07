@@ -29,23 +29,23 @@ module Y2Storage
   class BtrfsQgroup
     attr_reader :subvol_id
 
-    # @attr :rfer_limit
+    # @attr :max_referenced
     #   @return [DiskSize,nil] Referenced extents quota (shared quota). `nil` if not set.
-    attr_reader :rfer_limit
+    attr_reader :max_referenced
 
-    # @attr :excl_limit
+    # @attr :max_exclusive
     #   @return [DiskSize,nil] Exclusive extents quota. `nil` if not set.
-    attr_reader :excl_limit
+    attr_reader :max_exclusive
 
     # Constructor
     #
     # @param subvol_id [Integer] Subvolume ID
-    # @param rfer_limit [DiskSize,nil] Referenced extents limit
-    # @param excl_limit [DiskSize,nil] Exclusive extents limit
-    def initialize(subvol_id, rfer_limit = nil, excl_limit = nil)
+    # @param max_referenced [DiskSize,nil] Referenced extents limit
+    # @param max_exclusive [DiskSize,nil] Exclusive extents limit
+    def initialize(subvol_id, max_referenced = nil, max_exclusive = nil)
       @subvol_id = subvol_id
-      @rfer_limit = rfer_limit
-      @excl_limit = excl_limit
+      @max_referenced = max_referenced
+      @max_exclusive = max_exclusive
     end
   end
 end

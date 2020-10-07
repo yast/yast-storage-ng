@@ -95,8 +95,8 @@ describe Y2Storage::BtrfsReader do
   describe "#qgroups" do
     it "returns the qgroups" do
       qgroups = reader.qgroups
-      expect(qgroups.first.rfer_limit).to eq(3.GiB)
-      expect(qgroups.first.excl_limit).to eq(2.GiB)
+      expect(qgroups.first.max_referenced).to eq(3.GiB)
+      expect(qgroups.first.max_exclusive).to eq(2.GiB)
     end
   end
 end

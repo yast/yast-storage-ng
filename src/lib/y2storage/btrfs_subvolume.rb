@@ -177,35 +177,36 @@ module Y2Storage
     # Assigns the referenced extents quota
     #
     # @param value [DiskSize] Limit for referenced extents; DiskSize.unlimited to remove the limit
-    def rfer_limit=(value)
-      save_userdata(:rfer_limit, value)
+    def max_referenced=(value)
+      save_userdata(:max_referenced, value)
     end
 
     # Assigns the exclusive extents quota
     #
     # @param value [DiskSize] Limit for exclusive extents; DiskSize.unlimited to remove the limit
-    def excl_limit=(value)
-      save_userdata(:excl_limit, value)
+    def max_exclusive=(value)
+      save_userdata(:max_exclusive, value)
     end
 
     # Returns the referenced extents quota
     #
-    # @param value [DiskSize] Limit for referenced extents; DiskSize.unlimited if no limit
-    # @return [DiskSize]
-    def rfer_limit
-      user_limit = userdata_value(:rfer_limit)
+    # @return [DiskSize] Limit for referenced extents; DiskSize.unlimited if no limit
+    def max_referenced
+      user_limit = userdata_value(:max_referenced)
       return user_limit if user_limit
-      return qgroup.rfer_limit if qgroup
+      return qgroup.max_referenced if qgroup
+
       DiskSize.unlimited
     end
 
     # Returns the exclusive extents quota
     #
-    # @param value [DiskSize] Limit for exclusive extents; DiskSize.unlimited if no limit
-    def excl_limit
-      user_limit = userdata_value(:excl_limit)
+    # @return [DiskSize] Limit for exclusive extents; DiskSize.unlimited if no limit
+    def max_exclusive
+      user_limit = userdata_value(:max_exclusive)
       return user_limit if user_limit
-      return qgroup.excl_limit if qgroup
+      return qgroup.max_exclusive if qgroup
+
       DiskSize.unlimited
     end
 
