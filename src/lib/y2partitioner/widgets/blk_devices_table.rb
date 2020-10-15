@@ -42,12 +42,10 @@ module Y2Partitioner
       class DeviceTree
         attr_accessor :device
         attr_accessor :children
-        attr_accessor :status
 
-        def initialize(device, children: [], status: :open)
+        def initialize(device, children: [])
           @device = device
           @children = children
-          @status = status
         end
 
         def sid
@@ -98,16 +96,17 @@ module Y2Partitioner
       end
 
       def row_for(device)
-        d = device.is_a?(DeviceTree) ? device.device : device
-
-        row = [row_id(d)] + cols.map { |c| c.value_for(d) }
-
         if device.is_a?(DeviceTree)
-          row << device.children.map { |c| row_for(c) }
-          row << device.status
+          tree = device
+          device = device.device
+        else
+          tree = DeviceTree.new(device)
         end
 
-        row
+        values = cols.map { |c| c.value_for(device) }
+        children = tree.children.map { |c| row_for(c) }
+
+        item(row_id(device), values, children: children)
       end
 
       # LibYUI id to use for the row used to represent a device
