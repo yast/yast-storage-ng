@@ -111,9 +111,8 @@ module Y2Partitioner
           # Disks" section, let's do the same in the general storage table
           all = device_graph.disk_devices + device_graph.stray_blk_devices
           all.each_with_object([]) do |disk, devices|
-            tree = BlkDevicesTable::DeviceTree.new(disk)
-            tree.children = disk.partitions if disk.respond_to?(:partitions)
-            devices << tree
+            children = disk.respond_to?(:partitions) ? disk.partitions : []
+            devices << DeviceTableEntry.new(disk, children: children)
           end
         end
 
@@ -125,32 +124,36 @@ module Y2Partitioner
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def lvm_vgs
           device_graph.lvm_vgs.map do |vg|
-            BlkDevicesTable::DeviceTree.new(vg, children: vg.all_lvm_lvs)
+            DeviceTableEntry.new(vg, children: vg.all_lvm_lvs)
           end
         end
 
         # @return [Array<Y2Storage::Device>]
         def software_raids
           device_graph.software_raids.map do |raid|
-            BlkDevicesTable::DeviceTree.new(raid, children: raid.partitions)
+            DeviceTableEntry.new(raid, children: raid.partitions)
           end
         end
 
         # @return [Array<Y2Storage::Device>]
         def nfs_devices
-          device_graph.nfs_mounts
+          device_graph.nfs_mounts.map do |nfs|
+            DeviceTableEntry.new(nfs)
+          end
         end
 
         # @return [Array<Y2Storage::Device>]
         def bcaches
           device_graph.bcaches.map do |bcache|
-            BlkDevicesTable::DeviceTree.new(bcache, children: bcache.partitions)
+            DeviceTableEntry.new(bcache, children: bcache.partitions)
           end
         end
 
         # @return [Array<Y2Storage::Filesystems::Base>]
         def multidevice_filesystems
-          device_graph.blk_filesystems.select(&:multidevice?)
+          device_graph.blk_filesystems.select(&:multidevice?).map do |fs|
+            DeviceTableEntry.new(fs)
+          end
         end
 
         def device_graph

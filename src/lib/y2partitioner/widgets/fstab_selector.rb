@@ -21,6 +21,7 @@ require "yast"
 require "cwm/widget"
 require "yast2/popup"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/columns"
 
@@ -257,23 +258,14 @@ module Y2Partitioner
         # BTRFS subvolume entries are not taken into account
         # (see {Y2Storage::Fstab#filesystem_entries}).
         #
-        # @return [Array<Y2Storage::SimpleEtcFstabEntry>]
-        def devices
-          fstab.filesystem_entries
+        # @return [Array<DeviceTableEntry]
+        def entries
+          fstab.filesystem_entries.map { |e| DeviceTableEntry.new(e) }
         end
 
         # @return [Y2Storage::Devicegraph]
         def system_graph
           DeviceGraphs.instance.system
-        end
-
-        # This method is redefined to use #object_id instead of #sid
-        #
-        # {Widgets::BlkDevicesTable} expects to have a {Y2Storage::BlkDevice} for each row,
-        # but in this case it has a {Y2Storage::SimpleEtcFstabEntry}, which does not respond
-        # to #sid method.
-        def row_id(entry)
-          "table:device:#{entry.object_id}"
         end
       end
     end

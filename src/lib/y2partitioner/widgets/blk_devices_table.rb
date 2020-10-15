@@ -30,34 +30,13 @@ module Y2Partitioner
     # The subclasses must define the following methods:
     #
     #   * #columns returning an array of {Y2Partitioner::Widgets::Columns::Base}
-    #   * #devices returning a collection of {Y2Storage::BlkDevice}
+    #   * #entries returning a collection of {DeviceTableEntry}
     #
     class BlkDevicesTable < CWM::Table
       include Help
       extend Yast::I18n
 
       textdomain "storage"
-
-      # Helper class to create a row with children
-      class DeviceTree
-        attr_accessor :device
-        attr_accessor :children
-
-        def initialize(device, children: [])
-          @device = device
-          @children = children
-        end
-
-        def sid
-          device.sid
-        end
-
-        def to_list
-          list = [device] + children.map { |c| c.is_a?(DeviceTree) ? c.to_list : c }
-
-          list.flatten
-        end
-      end
 
       # @see CWM::Table#header
       def header
@@ -66,7 +45,7 @@ module Y2Partitioner
 
       # @see CWM::Table#items
       def items
-        devices.map { |d| row_for(d) }
+        entries.map { |e| e.table_item(cols) }
       end
 
       # Updates table content
@@ -74,50 +53,31 @@ module Y2Partitioner
         change_items(items)
       end
 
-      private
+      # All devices referenced by the table entries
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
+      def devices
+        entries.flat_map(&:all_devices)
+      end
 
-      # Returns true if given sid or device is available in table
+      protected
+
+      # Entry of the table that references the given sid or device, if any
+      #
       # @param device [Y2Storage::DevicePresenter, Integer] sid or a device presenter
-      def valid_sid?(device)
-        return false if device.nil?
+      # @return [DeviceTableEntry, nil]
+      def entry(device)
+        return nil if device.nil?
 
         sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        flat_devices.any? { |d| d.sid == sid }
+        entries.flat_map(&:all_entries).find { |entry| entry.sid == sid }
       end
 
-      def flat_devices
-        devices.map { |d| d.respond_to?(:to_list) ? d.to_list : d }.flatten
-      end
+      private
 
       # @see #helptext_for
       def columns_help
         cols.map { |column| helptext_for(column.id) }.join("\n")
-      end
-
-      def row_for(device)
-        if device.is_a?(DeviceTree)
-          tree = device
-          device = device.device
-        else
-          tree = DeviceTree.new(device)
-        end
-
-        values = cols.map { |c| c.value_for(device) }
-        children = tree.children.map { |c| row_for(c) }
-
-        item(row_id(device), values, children: children)
-      end
-
-      # LibYUI id to use for the row used to represent a device
-      #
-      # @param device [Y2Storage::Device, Integer] sid or device object
-      #
-      # @return [String] row id for given device
-      def row_id(device)
-        sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        "table:device:#{sid}"
       end
 
       def cols

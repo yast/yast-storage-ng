@@ -106,7 +106,7 @@ module Y2Partitioner
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
           bcaches.map do |bcache|
-            BlkDevicesTable::DeviceTree.new(bcache, children: bcache.partitions)
+            DeviceTableEntry.new(bcache, children: bcache.partitions)
           end
         end
       end

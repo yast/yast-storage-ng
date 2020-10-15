@@ -19,6 +19,7 @@
 
 require "cwm/page"
 require "cwm/tree_pager"
+require "y2partitioner/widgets/device_table_entry"
 
 module Y2Partitioner
   module Widgets

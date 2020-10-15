@@ -95,9 +95,7 @@ module Y2Partitioner
         private
 
         def devices
-          [
-            BlkDevicesTable::DeviceTree.new(device, children: device.partitions)
-          ]
+          [DeviceTableEntry.new(device, children: device.partitions)]
         end
       end
 

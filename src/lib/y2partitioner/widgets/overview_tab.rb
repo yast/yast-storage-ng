@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "cwm/widget"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/device_buttons_set"
@@ -68,7 +69,7 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::Device>]
       def devices
-        [device]
+        [DeviceTableEntry.new(device)]
       end
 
       # Widget of the bar graph to display above the table

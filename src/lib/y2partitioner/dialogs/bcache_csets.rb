@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/dialogs/popup"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/columns"
 
@@ -58,13 +59,15 @@ module Y2Partitioner
 
       # Table for caching set devices
       class BcacheCsetsTable < Widgets::BlkDevicesTable
-        # Returns all caching set devices
+        # Returns entries for all caching set devices
         #
         # @see Widgets::BlkDevicesTable
         #
-        # @return [Array<Y2Storage::BcacheCset>]
-        def devices
-          DeviceGraphs.instance.current.bcache_csets
+        # @return [Array<DeviceTableEntry>]
+        def entries
+          DeviceGraphs.instance.current.bcache_csets.map do |dev|
+            Widgets::DeviceTableEntry.new(dev)
+          end
         end
 
         # Columns to show

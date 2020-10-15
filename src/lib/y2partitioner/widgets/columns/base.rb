@@ -32,6 +32,10 @@ module Y2Partitioner
       #   * #title returning the column title.
       #   * #value_for(device) returning the content to display for the given device.
       #
+      # Additionally, if the subclass needs access to the information contained directly in the
+      # table entry, it can redefine {#entry_value} which in the base class is just a direct
+      # call to {#value_for} with the device of the entry as single argument.
+      #
       # @example
       #   class StorageId < Base
       #     def title
@@ -82,6 +86,14 @@ module Y2Partitioner
         #   @param device [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry]
         #   @return [String, Yast::Term]
         abstract_method :value_for
+
+        # The value to display for the given table entry
+        #
+        # @param entry [DeviceTableEntry]
+        # @return [String, Yast::Term]
+        def entry_value(entry)
+          value_for(entry.device)
+        end
 
         # Convenience method to internally identify the column
         #
