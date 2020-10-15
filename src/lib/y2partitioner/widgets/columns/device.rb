@@ -36,10 +36,15 @@ module Y2Partitioner
           _("Device")
         end
 
+        # @see Columns::Base#entry_value
+        def entry_value(entry)
+          value_for(entry.device, entry: entry)
+        end
+
         # @see Columns::Base#value_for
-        def value_for(device)
+        def value_for(device, entry: nil)
           cell(
-            device_name(device),
+            device_name(device, entry),
             sort_key_for(device)
           )
         end
@@ -49,9 +54,9 @@ module Y2Partitioner
         # The device name
         #
         # @return [String]
-        def device_name(device)
-          return fstab_device_name(device) if fstab_entry?(device)
-          return device.display_name unless device.is?(:blk_filesystem)
+        def device_name(device, entry)
+          return fstab_device_name(device, entry) if fstab_entry?(device)
+          return blk_device_name(device, entry) unless device.is?(:blk_filesystem)
           return device.type.to_human_string unless device.multidevice?
 
           format(
@@ -63,13 +68,35 @@ module Y2Partitioner
           )
         end
 
+        # @see #device_name
+        #
+        # @return [String]
+        def blk_device_name(device, entry)
+          return device.basename if short_name?(entry)
+
+          device.display_name
+        end
+
+        # Whether a short name should be used to display the given entry
+        #
+        # @param entry [DeviceTableEntry, nil]
+        # @return [Boolean]
+        def short_name?(entry)
+          return false unless entry
+          return false if entry.full_name?
+          return false unless entry.device.is_a?(Y2Storage::Device)
+
+          entry.device.is?(:partition, :lvm_lv)
+        end
+
         # The name for the device in the given fstab entry
         #
         # @param fstab_entry [Y2Storage::SimpleEtcFstabEntry]
+        # @param table_entry [DeviceTableEntry, nil]
         # @return [String] the #device_name if it is found in the system; the fstab_device otherwise
-        def fstab_device_name(fstab_entry)
+        def fstab_device_name(fstab_entry, table_entry)
           device = fstab_entry.device(system_graph)
-          device ? device_name(device) : fstab_entry.fstab_device
+          device ? device_name(device, table_entry) : fstab_entry.fstab_device
         end
 
         # A sort key for the given device

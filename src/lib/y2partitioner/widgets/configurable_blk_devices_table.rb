@@ -34,13 +34,13 @@ module Y2Partitioner
 
       # Constructor
       #
-      # @param devices [Array<Y2Storage::Device>]
+      # @param entries [Array<DeviceTableEntry>]
       # @param pager [CWM::TreePager]
       # @param buttons_set [DeviceButtonsSet]
-      def initialize(devices, pager, buttons_set = nil)
+      def initialize(entries, pager, buttons_set = nil)
         textdomain "storage"
 
-        @devices = devices
+        @entries = entries
         @pager = pager
         @buttons_set = buttons_set
       end
@@ -58,7 +58,8 @@ module Y2Partitioner
 
         # if we do not have valid sid, then pick first available device.
         # Reason is to allow e.g. chain of delete like described in bsc#1076318
-        self.value = row_id(valid_sid?(initial_sid) ? initial_sid : devices.first)
+        entry = entry(initial_sid) || entries.first
+        self.value = entry.row_id
         handle_selected
       end
 
@@ -169,8 +170,8 @@ module Y2Partitioner
       #   partitioner
       attr_reader :pager
 
-      # @return [Array<Y2Storage::Device>] list of devices to display
-      attr_reader :devices
+      # @return [Array<DeviceTableEntry>] list of devices to display
+      attr_reader :entries
 
       DEFAULT_COLUMNS = [
         Columns::Device,
