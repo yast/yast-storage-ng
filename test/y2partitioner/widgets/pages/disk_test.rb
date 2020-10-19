@@ -38,14 +38,13 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
     context "when the device is neither BIOS RAID nor multipath" do
       it "shows a disk overview tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
@@ -60,7 +59,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       let(:disk) { current_graph.bios_raids.first }
 
       it "shows a disk overview tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
@@ -75,48 +74,13 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       let(:disk) { current_graph.multipaths.first }
 
       it "shows a disk overview tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
       it "shows a used devices tab" do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
-      end
-    end
-  end
-
-  describe Y2Partitioner::Widgets::Pages::DiskTab do
-    subject { described_class.new(disk, pager) }
-
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      let(:scenario) { "mixed_disks" }
-
-      it "contains a graph bar" do
-        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
-        expect(bar).to_not be_nil
-      end
-
-      context "when the disk contains no partitions" do
-        let(:disk) { current_graph.find_by_name("/dev/sdc") }
-
-        it "shows a table containing only the disk" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to eq ["/dev/sdc"]
-        end
-      end
-
-      context "when the disk is partitioned" do
-        it "shows a table with the disk and its partitions" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to contain_exactly(
-            "/dev/sda", "/dev/sda1", "/dev/sda2"
-          )
-        end
       end
     end
   end
@@ -130,6 +94,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     include_examples "CWM::Tab"
 
     describe "#contents" do
+      let(:items) { column_values(table, 0) }
+
       context "when the device is a BIOS RAID" do
         let(:scenario) { "empty-dm_raids.xml" }
 

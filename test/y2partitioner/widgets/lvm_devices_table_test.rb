@@ -21,6 +21,7 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/lvm_devices_table"
 
 describe Y2Partitioner::Widgets::LvmDevicesTable do
@@ -30,9 +31,12 @@ describe Y2Partitioner::Widgets::LvmDevicesTable do
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(devices, pager) }
+  subject { described_class.new(entries, pager) }
 
   let(:devices) { device_graph.lvm_vgs }
+  let(:entries) do
+    devices.map { |d| Y2Partitioner::Widgets::DeviceTableEntry.new_with_children(d) }
+  end
 
   let(:pager) { double("Pager") }
 
@@ -46,9 +50,9 @@ describe Y2Partitioner::Widgets::LvmDevicesTable do
   end
 
   describe "#items" do
-    it "returns array of arrays" do
+    it "returns array of CWM table items" do
       expect(subject.items).to be_a(::Array)
-      expect(subject.items.first).to be_a(::Array)
+      expect(subject.items.first).to be_a(CWM::TableItem)
     end
   end
 end
