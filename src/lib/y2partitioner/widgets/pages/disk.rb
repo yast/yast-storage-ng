@@ -27,7 +27,7 @@ module Y2Partitioner
     module Pages
       # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
       #
-      # This page contains a {DiskTab} and, in case of Multipath or BIOS RAID,
+      # This page contains an {OverviewTab} and, in case of Multipath or BIOS RAID,
       # also a {DiskUsedDevicesTab}.
       class Disk < Base
         # @return [Y2Storage::BlkDevice] Disk device this page is about
@@ -74,7 +74,7 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            DiskTab.new(disk, @pager)
+            OverviewTab.new(disk, @pager)
           ]
 
           tabs << DiskUsedDevicesTab.new(disk, @pager) if used_devices_tab?
@@ -87,15 +87,6 @@ module Y2Partitioner
         # @return [Boolean]
         def used_devices_tab?
           disk.is?(:multipath, :dm_raid, :md)
-        end
-      end
-
-      # A Tab for disk device description
-      class DiskTab < OverviewTab
-        private
-
-        def devices
-          [DeviceTableEntry.new(device, children: device.partitions)]
         end
       end
 

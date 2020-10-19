@@ -67,7 +67,7 @@ module Y2Partitioner
         def devices
           devicegraph = DeviceGraphs.instance.current
           devicegraph.software_raids.map do |raid|
-            DeviceTableEntry.new(raid, children: raid.partitions)
+            DeviceTableEntry.new_with_children(raid)
           end
         end
       end

@@ -98,16 +98,6 @@ module Y2Partitioner
         def bar_graph
           LvmVgBarGraph.new(device)
         end
-
-        # Returns all logical volumes of a volume group, including thin pools
-        # and thin volumes. Note that it also includes the Volume Group.
-        #
-        # @see Y2Storage::LvmVg#all_lvm_lvs
-        #
-        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
-        def devices
-          [DeviceTableEntry.new(device, children: device.all_lvm_lvs)]
-        end
       end
 
       # A Tab for the LVM physical volumes of a volume group
