@@ -132,12 +132,33 @@ module Y2Partitioner
               # All logical volumes, including thin pools and thin volumes
               device.all_lvm_lvs
             elsif device.respond_to?(:partitions)
-              device.partitions
+              # All partitions, with logical ones nested within the extended
+              nested_partitions(device)
             else
               []
             end
 
           new(device, children: children)
+        end
+
+        # Partitions of the given device, with logical partitions nested within
+        # the extended one
+        #
+        # @see .new_with_children
+        #
+        # @return [Array<Y2Storage::Partition, DeviceTableEntry>] the extended partition
+        #   is returned as a DeviceTableEntry with logical ones as children
+        def nested_partitions(device)
+          device.partitions.each_with_object([]) do |partition, children|
+            next if partition.type.is?(:logical)
+
+            children <<
+              if partition.type.is?(:primary)
+                partition
+              else
+                new(partition, children: partition.children)
+              end
+          end
         end
       end
     end
