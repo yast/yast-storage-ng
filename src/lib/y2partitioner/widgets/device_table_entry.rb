@@ -24,6 +24,10 @@ module Y2Partitioner
     # Class to represent each entry of a table of devices, including the device
     # itself and all the corresponding nested entries (like the partitions of a
     # given disk).
+    #
+    # For example, a table containing two disks with several partitions each would
+    # have two top-level DeviceTableEntry objects, each of them containing the
+    # corresponding partitions as nested ({#children}) DeviceTableEntry objects.
     class DeviceTableEntry
       # Device represented in this entry
       # @return [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry]
@@ -114,6 +118,27 @@ module Y2Partitioner
       def id
         # Y2Storage::SimpleEtcFstabEntry does not respond to #sid method
         sid || device.object_id
+      end
+
+      class << self
+        # Creates an entry for the given device with the expected descendant
+        # entries based on the type and content of the device
+        #
+        # @param device [Y2Storage::BlkDevice]
+        # @return [DeviceTableEntry]
+        def new_with_children(device)
+          children =
+            if device.is?(:lvm_vg)
+              # All logical volumes, including thin pools and thin volumes
+              device.all_lvm_lvs
+            elsif device.respond_to?(:partitions)
+              device.partitions
+            else
+              []
+            end
+
+          new(device, children: children)
+        end
       end
     end
   end

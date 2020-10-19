@@ -80,7 +80,7 @@ module Y2Partitioner
         end
 
         def entries
-          filesystems.map { |fs| DeviceTableEntry.new(fs) }
+          filesystems.map { |fs| DeviceTableEntry.new_with_children(fs) }
         end
       end
     end

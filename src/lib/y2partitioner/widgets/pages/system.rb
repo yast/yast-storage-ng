@@ -110,9 +110,8 @@ module Y2Partitioner
           # Since XEN virtual partitions are listed at the end of the "Hard
           # Disks" section, let's do the same in the general storage table
           all = device_graph.disk_devices + device_graph.stray_blk_devices
-          all.each_with_object([]) do |disk, devices|
-            children = disk.respond_to?(:partitions) ? disk.partitions : []
-            devices << DeviceTableEntry.new(disk, children: children)
+          all.map do |disk|
+            DeviceTableEntry.new_with_children(disk)
           end
         end
 
@@ -124,14 +123,14 @@ module Y2Partitioner
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def lvm_vgs
           device_graph.lvm_vgs.map do |vg|
-            DeviceTableEntry.new(vg, children: vg.all_lvm_lvs)
+            DeviceTableEntry.new_with_children(vg)
           end
         end
 
         # @return [Array<Y2Storage::Device>]
         def software_raids
           device_graph.software_raids.map do |raid|
-            DeviceTableEntry.new(raid, children: raid.partitions)
+            DeviceTableEntry.new_with_children(raid)
           end
         end
 
@@ -145,14 +144,14 @@ module Y2Partitioner
         # @return [Array<Y2Storage::Device>]
         def bcaches
           device_graph.bcaches.map do |bcache|
-            DeviceTableEntry.new(bcache, children: bcache.partitions)
+            DeviceTableEntry.new_with_children(bcache)
           end
         end
 
         # @return [Array<Y2Storage::Filesystems::Base>]
         def multidevice_filesystems
           device_graph.blk_filesystems.select(&:multidevice?).map do |fs|
-            DeviceTableEntry.new(fs)
+            DeviceTableEntry.new_with_children(fs)
           end
         end
 

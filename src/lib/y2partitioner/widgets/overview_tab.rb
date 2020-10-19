@@ -69,7 +69,7 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::Device>]
       def devices
-        [DeviceTableEntry.new(device)]
+        [DeviceTableEntry.new_with_children(device)]
       end
 
       # Widget of the bar graph to display above the table

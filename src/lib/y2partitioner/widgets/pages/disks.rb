@@ -51,9 +51,8 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          disks.each_with_object([]) do |disk, devices|
-            children = disk.respond_to?(:partitions) ? disk.partitions : []
-            devices << DeviceTableEntry.new(disk, children: children)
+          disks.map do |disk|
+            DeviceTableEntry.new_with_children(disk)
           end
         end
       end
