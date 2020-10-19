@@ -20,6 +20,7 @@
 require "yast"
 require "cwm/widget"
 require "cwm/table"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/columns"
 
@@ -249,8 +250,8 @@ module Y2Partitioner
 
       # Table part of the widget
       class DevicesTable < BlkDevicesTable
-        # @return [Array<Y2Storage::BlkDevice>] devices in the table
-        attr_accessor :devices
+        # @return [Array<DeviceTableEntry>] entries in the table
+        attr_accessor :entries
 
         # @return [String] id of the widget in Libyui
         attr_reader :widget_id
@@ -258,7 +259,12 @@ module Y2Partitioner
         def initialize(devices, widget_id)
           textdomain "storage"
           @widget_id = widget_id.to_s
-          @devices = devices
+          self.devices = devices
+        end
+
+        # @param devices [Array<Y2Storage::BlkDevice]
+        def devices=(devices)
+          @entries = devices.map { |dev| DeviceTableEntry.new(dev, full_names: true) }
         end
 
         # @macro seeAbstractWidget
@@ -274,11 +280,6 @@ module Y2Partitioner
             Columns::Encrypted,
             Columns::Type
           ]
-        end
-
-        # @see BlkDevicesTable
-        def row_id(device)
-          "#{widget_id}:device:#{device.sid}"
         end
 
         # Updates the table content ensuring the selected rows remain selected
