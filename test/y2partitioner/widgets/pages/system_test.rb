@@ -48,7 +48,7 @@ describe Y2Partitioner::Widgets::Pages::System do
 
     # Names from the devices in the list
     def row_names(table)
-      table.items.map { |i| i[1].params.first }
+      column_values(table, 0)
     end
 
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
@@ -66,18 +66,9 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "mixed_disks.yml" }
 
       it "contains all disks and their partitions" do
-        expect(remove_sort_keys(items)).to contain_exactly(
-          "/dev/sda",
-          "/dev/sda1",
-          "/dev/sda2",
-          "/dev/sdb",
-          "/dev/sdb1",
-          "/dev/sdb2",
-          "/dev/sdb3",
-          "/dev/sdb4",
-          "/dev/sdb5",
-          "/dev/sdb6",
-          "/dev/sdb7",
+        expect(items).to contain_exactly(
+          "/dev/sda", "sda1", "sda2",
+          "/dev/sdb", "sdb1", "sdb2", "sdb3", "sdb4", "sdb5", "sdb6", "sdb7",
           "/dev/sdc"
         )
       end
@@ -87,9 +78,8 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "dasd_50GiB.yml" }
 
       it "contains all DASDs and their partitions" do
-        expect(remove_sort_keys(items)).to contain_exactly(
-          "/dev/dasda",
-          "/dev/dasda1"
+        expect(items).to contain_exactly(
+          "/dev/dasda", "dasda1"
         )
       end
     end
@@ -98,24 +88,22 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "empty-dm_raids.xml" }
 
       it "contains all DM RAIDs" do
-        expect(remove_sort_keys(items)).to include(
+        expect(items).to include(
           "/dev/mapper/isw_ddgdcbibhd_test1",
           "/dev/mapper/isw_ddgdcbibhd_test2"
         )
       end
 
       it "does not contain devices belonging to DM RAIDs" do
-        expect(remove_sort_keys(items)).to_not include(
+        expect(items).to_not include(
           "/dev/sdb",
           "/dev/sdc"
         )
       end
 
       it "contains devices that does not belong to DM RAIDs" do
-        expect(remove_sort_keys(items)).to include(
-          "/dev/sda",
-          "/dev/sda1",
-          "/dev/sda2"
+        expect(items).to include(
+          "/dev/sda", "sda1", "sda2"
         )
       end
     end
@@ -124,14 +112,14 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "md-imsm1-devicegraph.xml" }
 
       it "contains all BIOS MD RAIDs" do
-        expect(remove_sort_keys(items)).to include(
+        expect(items).to include(
           "/dev/md/a",
           "/dev/md/b"
         )
       end
 
       it "does not contain devices belonging to BIOS DM RAIDs" do
-        expect(remove_sort_keys(items)).to_not include(
+        expect(items).to_not include(
           "/dev/sdb",
           "/dev/sdc",
           "/dev/sdd"
@@ -139,10 +127,8 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains devices that does not belong to BIOS DM RAIDs" do
-        expect(remove_sort_keys(items)).to include(
-          "/dev/sda",
-          "/dev/sda1",
-          "/dev/sda2"
+        expect(items).to include(
+          "/dev/sda", "sda1", "sda2"
         )
       end
     end
@@ -155,14 +141,14 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains all Software RAIDs" do
-        expect(remove_sort_keys(items)).to include(
+        expect(items).to include(
           "/dev/md/md0",
           "/dev/md1"
         )
       end
 
       it "contains devices belonging to Software RAIDs" do
-        expect(remove_sort_keys(items)).to include(
+        expect(items).to include(
           "/dev/sda"
         )
       end
@@ -177,25 +163,15 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
 
       it "contains all Volume Groups and their logical volumes (including thin volumes)" do
-        expect(remove_sort_keys(items)).to include(
-          "/dev/vg0",
-          "/dev/vg0/lv1",
-          "/dev/vg0/lv2",
-          "/dev/vg0/pool1",
-          "/dev/vg0/thin1",
-          "/dev/vg0/thin2",
-          "/dev/vg0/pool2",
-          "/dev/vg0/thin3",
-          "/dev/vg1",
-          "/dev/vg1/lv1"
+        expect(items).to include(
+          "/dev/vg0", "lv1", "lv2", "pool1", "thin1", "thin2", "pool2", "thin3",
+          "/dev/vg1", "lv1"
         )
       end
 
       it "contains devices belonging to Volume Groups" do
-        expect(remove_sort_keys(items)).to include(
-          "/dev/sda5",
-          "/dev/sda7",
-          "/dev/sda9"
+        expect(items).to include(
+          "sda5", "sda7", "sda9"
         )
       end
     end
@@ -212,7 +188,7 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "bcache1.xml" }
 
       it "contains all bcache devices" do
-        expect(remove_sort_keys(items)).to include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
+        expect(items).to include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
       end
     end
 

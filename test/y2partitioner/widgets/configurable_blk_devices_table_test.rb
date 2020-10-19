@@ -22,6 +22,7 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/overview"
 
@@ -34,9 +35,12 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(devices, pager) }
+  subject { described_class.new(entries, pager) }
 
   let(:devices) { device_graph.disks }
+  let(:entries) do
+    devices.map { |dev| Y2Partitioner::Widgets::DeviceTableEntry.new_with_children(dev) }
+  end
 
   let(:pager) { instance_double(Y2Partitioner::Widgets::OverviewTreePager) }
   let(:buttons_set) { instance_double(Y2Partitioner::Widgets::DeviceButtonsSet) }
@@ -53,16 +57,16 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   describe "#items" do
     let(:devices) { device_graph.partitions }
 
-    it "returns array of arrays" do
+    it "returns array of CWM::TableItem objects" do
       expect(subject.items).to be_a(::Array)
-      expect(subject.items.first).to be_a(::Array)
+      expect(subject.items.first).to be_a(CWM::TableItem)
     end
 
     it "adds asterisk to mount point when not mounted" do
       allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return(false)
 
-      items = subject.items
-      expect(subject.items.any? { |i| i.any? { |inner| inner =~ / */ } }).to(
+      items = table_values(subject)
+      expect(items.any? { |i| i.any? { |inner| inner =~ / */ } }).to(
         eq(true), "Missing items with asterisk: #{items.inspect}"
       )
     end
@@ -89,7 +93,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       end
 
       let(:device) { devices.first }
-      let(:selected_row) { subject.send(:row_id, device.sid) }
+      let(:selected_row) { subject.send(:entry, device.sid).row_id }
 
       shared_examples "selects the first device in the table" do
         it "selects the first device in the table" do
@@ -112,7 +116,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       end
 
       context "and UIState returns an sid of a device in table" do
-        let(:device) { devices.last }
+        let(:device) { devices.first.partitions.last }
         let(:row_id) { device.sid }
 
         it "sets value to row with the device" do
@@ -121,7 +125,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
         end
 
         context "if the table is associated to a buttons set" do
-          subject { described_class.new(devices, pager, buttons_set) }
+          subject { described_class.new(entries, pager, buttons_set) }
 
           it "initializes the buttons set according to the device" do
             expect(subject).to receive(:selected_device).and_return(device)

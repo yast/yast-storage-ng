@@ -61,7 +61,7 @@ describe Y2Partitioner::Dialogs::BcacheCsets do
 
     describe "#items" do
       it "contains all the Bcache Caching Sets" do
-        devices = subject.items.map { |i| i[1] }
+        devices = column_values(subject, 0)
 
         expect(devices).to contain_exactly("/dev/vdb", "/dev/vda1")
       end
