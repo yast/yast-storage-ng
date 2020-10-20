@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 20 15:36:03 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Added $LIBSTORAGE_IGNORE_PROBE_ERRORS environment variable
+  to ignore storage probing errors (bsc#1177332)
+- 4.1.97
+
+-------------------------------------------------------------------
 Mon Aug 17 12:37:24 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Do not append a suffix to LVM Volume Group names unless it
