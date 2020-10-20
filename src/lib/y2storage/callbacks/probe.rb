@@ -26,6 +26,31 @@ module Y2Storage
     # Class to implement callbacks used during libstorage-ng probe
     class Probe < Storage::ProbeCallbacks
       include LibstorageCallback
+
+      # Callback for libstorage-ng to report an error to the user.
+      #
+      # If the $LIBSTORAGE_IGNORE_PROBE_ERRORS environment variable is set,
+      # this just returns 'true', i.e. the error is ignored.
+      #
+      # Otherwise, this displays the error and prompts the user if the error
+      # should be ignored.
+      #
+      # @note If the user rejects to continue, the method will return false
+      # which implies libstorage-ng will raise the corresponding exception for
+      # the error.
+      #
+      # See Storage::Callbacks#error in libstorage-ng
+      #
+      # @param message [String] error title coming from libstorage-ng
+      #   (in the ASCII-8BIT encoding! see https://sourceforge.net/p/swig/feature-requests/89/)
+      # @param what [String] details coming from libstorage-ng (in the ASCII-8BIT encoding!)
+      # @return [Boolean] true will make libstorage-ng ignore the error, false
+      #   will result in a libstorage-ng exception
+      def error(message, what)
+        return true if StorageEnv.instance.ignore_probe_errors?
+
+        super(message, what)
+      end
     end
   end
 end
