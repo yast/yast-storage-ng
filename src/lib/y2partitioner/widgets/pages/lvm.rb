@@ -66,7 +66,7 @@ module Y2Partitioner
         #
         # @see Y2Storage::LvmVg#all_lvm_lvs
         #
-        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
+        # @return [Array<DeviceTableEntry>]
         def devices
           device_graph.lvm_vgs.map do |vg|
             DeviceTableEntry.new_with_children(vg)

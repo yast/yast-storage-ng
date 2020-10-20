@@ -103,7 +103,7 @@ module Y2Partitioner
 
         # Returns all bcache devices and their partitions
         #
-        # @return [Array<Y2Storage::BlkDevice>]
+        # @return [Array<DeviceTableEntry>]
         def devices
           bcaches.map do |bcache|
             DeviceTableEntry.new_with_children(bcache)

@@ -64,7 +64,7 @@ module Y2Partitioner
 
       # Entry of the table that references the given sid or device, if any
       #
-      # @param device [Y2Storage::DevicePresenter, Integer] sid or a device presenter
+      # @param device [Y2Storage::Device, Integer] sid or a device presenter
       # @return [DeviceTableEntry, nil]
       def entry(device)
         return nil if device.nil?

@@ -79,6 +79,7 @@ module Y2Partitioner
           @device_buttons ||= DeviceButtonsSet.new(pager)
         end
 
+        # @return [Array<DeviceTableEntry>]
         def entries
           filesystems.map { |fs| DeviceTableEntry.new_with_children(fs) }
         end

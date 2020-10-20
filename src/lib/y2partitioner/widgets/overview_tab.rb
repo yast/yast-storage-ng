@@ -67,7 +67,7 @@ module Y2Partitioner
       # All devices to show in the table, it should include the main device and
       # its relevant descendants
       #
-      # @return [Array<Y2Storage::Device>]
+      # @return [Array<DeviceTableEntry>]
       def devices
         [DeviceTableEntry.new_with_children(device)]
       end
