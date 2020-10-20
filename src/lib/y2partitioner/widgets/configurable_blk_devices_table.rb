@@ -170,7 +170,7 @@ module Y2Partitioner
       #   partitioner
       attr_reader :pager
 
-      # @return [Array<DeviceTableEntry>] list of devices to display
+      # @return [Array<DeviceTableEntry>] list of device entries to display
       attr_reader :entries
 
       DEFAULT_COLUMNS = [

@@ -63,7 +63,7 @@ module Y2Partitioner
 
         # Returns all Software RAIDs and its partitions
         #
-        # @return [Array<Y2Storage::Md>]
+        # @return [Array<DeviceTableEntry>]
         def devices
           devicegraph = DeviceGraphs.instance.current
           devicegraph.software_raids.map do |raid|
