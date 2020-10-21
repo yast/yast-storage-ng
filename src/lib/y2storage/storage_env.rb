@@ -32,7 +32,10 @@ module Y2Storage
 
     ENV_ACTIVATE_LUKS = "YAST_ACTIVATE_LUKS".freeze
 
+    ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS = "LIBSTORAGE_IGNORE_PROBE_ERRORS".freeze
+
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS
+    private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
 
     def initialize
       @active_cache = {}
@@ -65,6 +68,21 @@ module Y2Storage
     #
     def activate_luks?
       active?(ENV_ACTIVATE_LUKS, true)
+    end
+
+    # Whether errors during libstorage probing should be ignored.
+    #
+    # See bsc#1177332:
+    #
+    # Some storage technologies like Veritas Volume Manager use disk labels
+    # like "sun" that we don't support in libstorage / storage-ng. Setting the
+    # LIBSTORAGE_IGNORE_PROBE_ERRORS env var gives the admin a chance to use
+    # the YaST partitioner despite that. Those disks will show up like empty
+    # disks and not cause an error pop-up for each one.
+    def ignore_probe_errors?
+      result = active?(ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS)
+      log.info("Ignoring libstorage probe errors") if result
+      result
     end
 
     private

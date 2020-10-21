@@ -28,6 +28,25 @@ describe Y2Storage::Callbacks::Probe do
   describe "#error" do
     include_examples "general #error examples"
     include_examples "default #error true examples"
+
+    context "without LIBSTORAGE_IGNORE_PROBE_ERRORS" do
+      before { mock_env(env_vars) }
+      let(:env_vars) { {} }
+      it "it displays an error pop-up" do
+        expect(Yast::Report).to receive(:yesno_popup)
+        subject.error("probing failed", "")
+      end
+    end
+
+    context "with LIBSTORAGE_IGNORE_PROBE_ERRORS set" do
+      before { mock_env(env_vars) }
+      after { mock_env({}) } # clean up for future tests
+      let(:env_vars) { { "LIBSTORAGE_IGNORE_PROBE_ERRORS" => "1" } }
+      it "does not display an error pop-up and returns true" do
+        expect(Yast::Report).not_to receive(:yesno_popup)
+        expect(subject.error("probing failed", "")).to be true
+      end
+    end
   end
 
   describe "#begin" do
