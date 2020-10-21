@@ -44,7 +44,7 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
 
     let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
 
-    let(:items) { table.items.map { |i| i[1] } }
+    let(:items) { column_values(table, 0) }
 
     before do
       vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0")
@@ -56,15 +56,15 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
 
       expect(remove_sort_keys(items)).to contain_exactly(
         "/dev/vg0",
-        "/dev/vg0/lv1",
-        "/dev/vg0/lv2",
-        "/dev/vg0/pool1",
-        "/dev/vg0/thin1",
-        "/dev/vg0/thin2",
-        "/dev/vg0/pool2",
-        "/dev/vg0/thin3",
+        "lv1",
+        "lv2",
+        "pool1",
+        "thin1",
+        "thin2",
+        "pool2",
+        "thin3",
         "/dev/vg1",
-        "/dev/vg1/lv1"
+        "lv1"
       )
     end
 

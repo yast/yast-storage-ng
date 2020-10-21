@@ -28,7 +28,7 @@ require "y2partitioner/widgets/overview_tab"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab} and {MdUsedDevicesTab}
+      # A Page for a md raid device: contains {OverviewTab} and {MdUsedDevicesTab}
       class MdRaid < Base
         # Constructor
         #
@@ -58,7 +58,7 @@ module Y2Partitioner
             VBox(
               Left(
                 Tabs.new(
-                  MdTab.new(@md, @pager, initial: true),
+                  OverviewTab.new(@md, @pager, initial: true),
                   MdUsedDevicesTab.new(@md, @pager)
                 )
               )
@@ -71,15 +71,6 @@ module Y2Partitioner
         # @return [String]
         def section
           MdRaids.label
-        end
-      end
-
-      # A Tab for a Software RAID description
-      class MdTab < OverviewTab
-        private
-
-        def devices
-          [device] + device.partitions
         end
       end
 

@@ -39,52 +39,19 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
+  let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
     it "shows a bcache overview tab" do
-      expect(Y2Partitioner::Widgets::Pages::BcacheTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
       subject.contents
     end
 
     it "shows an used devices tab" do
       expect(Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab).to receive(:new)
       subject.contents
-    end
-  end
-
-  describe Y2Partitioner::Widgets::Pages::BcacheTab do
-    subject { described_class.new(bcache, pager) }
-
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      it "contains a graph bar" do
-        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
-        expect(bar).to_not be_nil
-      end
-
-      context "when the bcache device contains no partitions" do
-        it "shows a table containing only the bcache" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to eq ["/dev/bcache0"]
-        end
-      end
-
-      context "when the bcache device is partitioned" do
-        let(:device_name) { "/dev/bcache1" }
-
-        it "shows a table with the bcache and its partitions" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to contain_exactly(
-            "/dev/bcache1", "/dev/bcache1p1", "/dev/bcache1p2"
-          )
-        end
-      end
     end
   end
 

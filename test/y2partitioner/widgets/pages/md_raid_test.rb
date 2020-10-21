@@ -36,52 +36,19 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
+  let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
     it "shows a MD tab" do
-      expect(Y2Partitioner::Widgets::Pages::MdTab).to receive(:new).with(md, pager, anything)
+      expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new).with(md, pager, anything)
       subject.contents
     end
 
     it "shows a used devices tab" do
       expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new).with(md, pager)
       subject.contents
-    end
-  end
-
-  describe Y2Partitioner::Widgets::Pages::MdTab do
-    subject { described_class.new(md, pager) }
-
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      it "contains a graph bar" do
-        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskBarGraph) }
-        expect(bar).to_not be_nil
-      end
-
-      context "when the MD contains no partitions" do
-        it "shows a table containing only the RAID" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to eq ["/dev/md/md0"]
-        end
-      end
-
-      context "when the MD is partitioned" do
-        let(:scenario) { "partitioned_md_raid.xml" }
-
-        it "shows a table with the RAID and its partitions" do
-          expect(table).to_not be_nil
-
-          expect(remove_sort_keys(items)).to contain_exactly(
-            "/dev/md/md0", "/dev/md/md0p1"
-          )
-        end
-      end
     end
   end
 

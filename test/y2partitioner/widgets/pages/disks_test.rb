@@ -37,6 +37,11 @@ describe Y2Partitioner::Widgets::Pages::Disks do
 
   include_examples "CWM::Page"
 
+  # Name that is expected to be used for each device
+  def disk_dev_name(device)
+    device.is?(:lvm_lv, :partition) ? device.basename : device.name
+  end
+
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
     let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
@@ -47,8 +52,8 @@ describe Y2Partitioner::Widgets::Pages::Disks do
     it "shows a table with the disk devices and their partitions" do
       expect(table).to_not be_nil
 
-      devices_name = disks_and_parts.map(&:name)
-      items_name = table.items.map { |i| i[1] }
+      devices_name = disks_and_parts.map { |d| disk_dev_name(d) }
+      items_name = column_values(table, 0)
 
       expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
     end
@@ -61,8 +66,8 @@ describe Y2Partitioner::Widgets::Pages::Disks do
 
       it "shows a table with the disk devices, their partitions and the Xen virtual partitions" do
         devices = disks_and_parts + device_graph.stray_blk_devices
-        devices_name = devices.map(&:name)
-        items_name = table.items.map { |i| i[1] }
+        devices_name = devices.map { |d| disk_dev_name(d) }
+        items_name = column_values(table, 0)
 
         expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
       end

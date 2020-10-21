@@ -30,7 +30,7 @@ module Y2Partitioner
     # The subclasses must define the following methods:
     #
     #   * #columns returning an array of {Y2Partitioner::Widgets::Columns::Base}
-    #   * #devices returning a collection of {Y2Storage::BlkDevice}
+    #   * #entries returning a collection of {DeviceTableEntry}
     #
     class BlkDevicesTable < CWM::Table
       include Help
@@ -45,7 +45,7 @@ module Y2Partitioner
 
       # @see CWM::Table#items
       def items
-        devices.map { |d| row_for(d) }
+        entries.map { |e| e.table_item(cols) }
       end
 
       # Updates table content
@@ -53,16 +53,24 @@ module Y2Partitioner
         change_items(items)
       end
 
+      # All devices referenced by the table entries
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
+      def devices
+        entries.flat_map(&:all_devices)
+      end
+
       protected
 
-      # Returns true if given sid or device is available in table
-      # @param device [Y2Storage::DevicePresenter, Integer] sid or a device presenter
-      def valid_sid?(device)
-        return false if device.nil?
+      # Entry of the table that references the given sid or device, if any
+      #
+      # @param device [Y2Storage::Device, Integer] sid or a device presenter
+      # @return [DeviceTableEntry, nil]
+      def entry(device)
+        return nil if device.nil?
 
         sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        devices.any? { |d| d.sid == sid }
+        entries.flat_map(&:all_entries).find { |entry| entry.sid == sid }
       end
 
       private
@@ -70,21 +78,6 @@ module Y2Partitioner
       # @see #helptext_for
       def columns_help
         cols.map { |column| helptext_for(column.id) }.join("\n")
-      end
-
-      def row_for(device)
-        [row_id(device)] + cols.map { |c| c.value_for(device) }
-      end
-
-      # LibYUI id to use for the row used to represent a device
-      #
-      # @param device [Y2Storage::Device, Integer] sid or device object
-      #
-      # @return [String] row id for given device
-      def row_id(device)
-        sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        "table:device:#{sid}"
       end
 
       def cols

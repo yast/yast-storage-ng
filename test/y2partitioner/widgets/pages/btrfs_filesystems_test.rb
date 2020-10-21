@@ -47,7 +47,7 @@ describe Y2Partitioner::Widgets::Pages::BtrfsFilesystems do
       expect(table).to_not be_nil
 
       id_values = btrfs_filesystems.map(&:blk_device_basename)
-      first_column = table.items.map { |i| i[1] }
+      first_column = column_values(table, 0)
 
       expect(first_column).to contain_exactly(*id_values)
     end

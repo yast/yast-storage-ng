@@ -21,6 +21,7 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 
 describe Y2Partitioner::Widgets::BtrfsFilesystemsTable do
@@ -30,9 +31,10 @@ describe Y2Partitioner::Widgets::BtrfsFilesystemsTable do
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(filesystems, pager) }
+  subject { described_class.new(entries, pager) }
 
   let(:filesystems) { device_graph.btrfs_filesystems }
+  let(:entries) { filesystems.map { |fs| Y2Partitioner::Widgets::DeviceTableEntry.new(fs) } }
 
   let(:pager) { double("Pager") }
 

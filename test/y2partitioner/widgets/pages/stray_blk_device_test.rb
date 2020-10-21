@@ -34,7 +34,7 @@ describe Y2Partitioner::Widgets::Pages::StrayBlkDevice do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
+  let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
 
@@ -54,7 +54,7 @@ describe Y2Partitioner::Widgets::Pages::StrayBlkDevice do
       it "shows a table containing only the device" do
         expect(table).to_not be_nil
 
-        expect(remove_sort_keys(items)).to eq ["/dev/xvda1"]
+        expect(items).to eq ["/dev/xvda1"]
       end
     end
   end

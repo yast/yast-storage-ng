@@ -41,7 +41,7 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
+  let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
 

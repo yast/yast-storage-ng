@@ -56,7 +56,7 @@ module Y2Partitioner
             VBox(
               Left(
                 Tabs.new(
-                  BcacheTab.new(device, @pager),
+                  OverviewTab.new(device, @pager),
                   BcacheUsedDevicesTab.new(device, @pager)
                 )
               )
@@ -69,15 +69,6 @@ module Y2Partitioner
         # @return [String]
         def section
           Bcaches.label
-        end
-      end
-
-      # A Tab for a Bcache description and its buttons
-      class BcacheTab < OverviewTab
-        private
-
-        def devices
-          [device] + device.partitions
         end
       end
 

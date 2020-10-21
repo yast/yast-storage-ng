@@ -49,11 +49,10 @@ module Y2Partitioner
 
         # Returns all disks and their partitions
         #
-        # @return [Array<Y2Storage::BlkDevice>]
+        # @return [Array<DeviceTableEntry>]
         def devices
-          disks.each_with_object([]) do |disk, devices|
-            devices << disk
-            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
+          disks.map do |disk|
+            DeviceTableEntry.new_with_children(disk)
           end
         end
       end

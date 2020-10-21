@@ -52,16 +52,16 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   context "right after initialization" do
     describe "#contents" do
       it "displays all the unselected devices in the corresponding table" do
-        items = unselected_table.items
+        items = table_values(unselected_table)
         expect(items.size).to eq(4)
         names = ["^/dev/sdb$", "^/dev/sda3$", "^/dev/sda4$", "^/dev/sde3$"]
-        expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
+        expect(rows_match?(items, *names)).to eq(true)
       end
 
       it "displays all the selected devices in the corresponding table and order" do
-        items = selected_table.items
+        items = table_values(selected_table)
         expect(items.size).to eq(2)
-        expect(rows_match?(remove_sort_keys(items), "^/dev/sdc$", "^/dev/sda2$")).to eq(true)
+        expect(rows_match?(items, "^/dev/sdc$", "^/dev/sda2$")).to eq(true)
       end
     end
   end
@@ -87,7 +87,7 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
       before { widget.handle(event) }
 
       it "displays all the selected devices in the corresponding table" do
-        items = selected_table.items
+        items = table_values(selected_table)
         expect(items.size).to eq(6)
         names = ["/dev/sdb$", "/dev/sdc$", "/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
         expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
@@ -124,14 +124,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
         before { widget.handle(event) }
 
         it "displays all the selected devices in the corresponding table" do
-          items = selected_table.items
+          items = table_values(selected_table)
           expect(items.size).to eq(2)
           names = ["/dev/sdc$", "/dev/sda2$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
         end
 
         it "displays all the available devices in the corresponding table" do
-          items = unselected_table.items
+          items = table_values(unselected_table)
           expect(items.size).to eq(4)
           names = ["/dev/sdb$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
@@ -160,14 +160,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
         before { widget.handle(event) }
 
         it "displays all the selected devices in the corresponding table" do
-          items = selected_table.items
+          items = table_values(selected_table)
           expect(items.size).to eq(3)
           names = ["/dev/sdc$", "/dev/sda2$", "/dev/sda3$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
         end
 
         it "displays all the available devices in the corresponding table" do
-          items = unselected_table.items
+          items = table_values(unselected_table)
           expect(items.size).to eq(3)
           names = ["/dev/sdb$", "/dev/sda4$", "/dev/sde3$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
@@ -227,14 +227,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
       let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
       it "does not display the removed devices in the 'selected' table" do
-        items = selected_table.items
+        items = table_values(selected_table)
         expect(items.size).to eq(2)
         names = ["/dev/sdd$", "/dev/sde1$"]
         expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
       end
 
       it "displays all the available devices in the 'unselected' table" do
-        items = unselected_table.items
+        items = table_values(unselected_table)
         expect(items.size).to eq 6
         names = ["/dev/sdb$", "/dev/sdc$", "/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
         expect(rows_match?(remove_sort_keys(items), *names)).to eq true
@@ -266,14 +266,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
         before { widget.handle(event) }
 
         it "displays all the selected devices in the corresponding table" do
-          items = selected_table.items
+          items = table_values(selected_table)
           expect(items.size).to eq(2)
           names = ["/dev/sdc$", "/dev/sda2$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
         end
 
         it "displays all the available devices in the corresponding table" do
-          items = unselected_table.items
+          items = table_values(unselected_table)
           expect(items.size).to eq(4)
           names = ["/dev/sdb$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
           expect(rows_match?(remove_sort_keys(items), *names)).to eq(true)
@@ -307,14 +307,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
           before { widget.handle(event) }
 
           it "displays all the selected devices in the corresponding table" do
-            items = selected_table.items
+            items = table_values(selected_table)
             expect(items.size).to eq(3)
             names = ["/dev/sdc$", "/dev/sdd$", "/dev/sde1$"]
             expect(rows_match?(remove_sort_keys(items), *names)).to eq true
           end
 
           it "displays all the available devices in the corresponding table" do
-            items = unselected_table.items
+            items = table_values(unselected_table)
             expect(items.size).to eq(5)
             names = ["/dev/sdb$", "/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
             expect(rows_match?(remove_sort_keys(items), *names)).to eq true
@@ -348,14 +348,14 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
           before { widget.handle(event) }
 
           it "displays all the selected devices in the corresponding table" do
-            items = selected_table.items
+            items = table_values(selected_table)
             expect(items.size).to eq(4)
             names = ["/dev/sda2$", "/dev/sdc$", "/dev/sdd$", "/dev/sde1$"]
             expect(rows_match?(remove_sort_keys(items), *names)).to eq true
           end
 
           it "displays all the available devices in the corresponding table" do
-            items = unselected_table.items
+            items = table_values(unselected_table)
             expect(items.size).to eq(4)
             names = ["/dev/sdb$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
             expect(rows_match?(remove_sort_keys(items), *names)).to eq true

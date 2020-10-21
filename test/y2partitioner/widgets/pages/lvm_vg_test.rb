@@ -37,7 +37,7 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
-  let(:items) { table.items.map { |i| i[1] } }
+  let(:items) { column_values(table, 0) }
 
   describe "#contents" do
     it "shows a vg tab" do
@@ -69,15 +69,15 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
       it "shows a table with the vg and its lvs (including thin volumes)" do
         expect(table).to_not be_nil
 
-        expect(remove_sort_keys(items)).to contain_exactly(
+        expect(items).to contain_exactly(
           "/dev/vg0",
-          "/dev/vg0/lv1",
-          "/dev/vg0/lv2",
-          "/dev/vg0/pool1",
-          "/dev/vg0/thin1",
-          "/dev/vg0/thin2",
-          "/dev/vg0/pool2",
-          "/dev/vg0/thin3"
+          "lv1",
+          "lv2",
+          "pool1",
+          "thin1",
+          "thin2",
+          "pool2",
+          "thin3"
         )
       end
     end
@@ -93,7 +93,7 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
 
       let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
 
-      let(:items) { table.items.map { |i| i[1] } }
+      let(:items) { column_values(table, 0) }
 
       it "shows a table with the vg and its pvs" do
         expect(table).to_not be_nil

@@ -19,6 +19,7 @@
 
 require "cwm/widget"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
@@ -66,7 +67,7 @@ module Y2Partitioner
       def table
         return @table unless @table.nil?
 
-        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(entries, @pager)
         @table.show_columns(*columns)
         @table
       end
@@ -81,11 +82,12 @@ module Y2Partitioner
         ]
       end
 
-      # Devices to show in the table. It includes the device and all its used devices.
+      # Entries to show in the table. Typically one for the device with its used
+      # devices as children entries.
       #
-      # @return [Array<Device>]
-      def devices
-        [device] + used_devices
+      # @return [Array<DeviceTableEntry>]
+      def entries
+        [DeviceTableEntry.new(device, children: used_devices, full_names: true)]
       end
 
       # Devices considered as used by the device
