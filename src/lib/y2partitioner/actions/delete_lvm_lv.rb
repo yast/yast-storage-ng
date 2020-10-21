@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2partitioner/ui_state"
 require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
@@ -41,6 +42,7 @@ module Y2Partitioner
         log.info "deleting logical volume #{device}"
         vg = device.lvm_vg
         vg.delete_lvm_lv(device)
+        UIState.instance.select_row(vg.sid)
       end
 
       # Confirmation before performing the delete action
