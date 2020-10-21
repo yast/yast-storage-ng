@@ -83,7 +83,9 @@ module Y2Partitioner
     #
     # It records the decision, so the last active tab is displayed when the page will be redraw.
     #
-    # @param label [String]
+    # If the selected tab is the default one of the page, nil must be passed as argument
+    #
+    # @param label [String, nil] nil if switching to the default tab, no matter the label
     def switch_to_tab(label)
       current_status&.active_tab = label
     end
@@ -192,7 +194,8 @@ module Y2Partitioner
     #   * selected row
     #   * candidates pages
     class PageStatus
-      # The key to reference the selected row for a table not wrapped in a tab
+      # The key to reference the default tab of a page or to use when the page contains
+      # no known tabs
       FALLBACK_TAB = "root".freeze
       private_constant :FALLBACK_TAB
 
