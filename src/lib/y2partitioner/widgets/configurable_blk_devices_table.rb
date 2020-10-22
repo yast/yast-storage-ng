@@ -54,12 +54,7 @@ module Y2Partitioner
       def init
         return if devices.empty? # do nothing if there is nothing in table
 
-        initial_sid = UIState.instance.row_id
-
-        # if we do not have valid sid, then pick first available device.
-        # Reason is to allow e.g. chain of delete like described in bsc#1076318
-        entry = entry(initial_sid) || entries.first
-        self.value = entry.row_id
+        self.value = initial_entry.row_id
         handle_selected
       end
 
@@ -195,6 +190,42 @@ module Y2Partitioner
 
       def default_columns
         DEFAULT_COLUMNS
+      end
+
+      # Table entry to select initially when the table is rendered
+      #
+      # @see #init
+      #
+      # @return [DeviceTableEntry, nil]
+      def initial_entry
+        initial_sid = UIState.instance.row_id
+        @initial_entry = entry(initial_sid)
+
+        # After adding a new Btrfs, it may happen that such device is not represented in
+        # the table as a separate entry, but only through its block device
+        @initial_entry ||= fs_blk_device_entry(initial_sid)
+
+        # If we do not have a valid sid, then pick the first available device.
+        # Done to allow e.g. chain of delete like described in bsc#1076318,
+        # although this is very likely not longer necessary after many changes in the
+        # Partitioner and in the libyui tables
+        @initial_entry ||= entries.first
+      end
+
+      # Given the sid of a single (no multidevice) filesystem, returns the table
+      # entry of its block device
+      #
+      # @param sid [Integer]
+      # @return [DeviceTableEntry, nil] nil if the sid does not correspond to a single
+      #   filesystem or if the corresponding block device is not in the table
+      def fs_blk_device_entry(sid)
+        return nil unless sid
+
+        device = device_graph.find_device(sid.to_i)
+        return nil unless device&.is?(:blk_filesystem)
+        return nil if device.multidevice?
+
+        entry(device.plain_blk_devices.first.sid)
       end
     end
   end

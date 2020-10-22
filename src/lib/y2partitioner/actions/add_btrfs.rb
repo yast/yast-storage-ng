@@ -19,6 +19,7 @@
 
 require "yast"
 require "yast2/popup"
+require "y2partitioner/ui_state"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/controllers/btrfs_devices"
@@ -51,6 +52,7 @@ module Y2Partitioner
       def options
         fs_controller = Controllers::Filesystem.new(controller.filesystem, title)
 
+        UIState.instance.select_row(controller.filesystem.sid)
         Dialogs::BtrfsOptions.run(fs_controller)
       end
 
