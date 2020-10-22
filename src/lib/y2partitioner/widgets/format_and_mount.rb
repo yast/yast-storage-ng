@@ -24,6 +24,7 @@ require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
 require "y2partitioner/filesystems"
 require "y2partitioner/widgets/fstab_options"
+require "y2partitioner/dialogs/mkfs_options"
 require "y2partitioner/dialogs/btrfs_subvolumes"
 
 Yast.import "Popup"
