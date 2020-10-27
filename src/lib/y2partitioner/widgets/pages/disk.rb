@@ -17,8 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/overview_tab"
 
@@ -29,7 +28,7 @@ module Y2Partitioner
       #
       # This page contains an {OverviewTab} and, in case of Multipath or BIOS RAID,
       # also a {DiskUsedDevicesTab}.
-      class Disk < Base
+      class Disk < Tabbed
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
         alias_method :device, :disk
@@ -52,17 +51,6 @@ module Y2Partitioner
           disk.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                tabs
-              )
-            )
-          )
-        end
-
         private
 
         # Tabs to show device data
@@ -71,15 +59,12 @@ module Y2Partitioner
         # another one with the device partitions. When the device is a  BIOS RAID or
         # Multipath, a third tab is used to show the disks that belong to the device.
         #
-        # @return [Tabs]
-        def tabs
-          tabs = [
-            OverviewTab.new(disk, @pager)
-          ]
-
+        # @return [Array<CWM::Tab>]
+        def calculate_tabs
+          tabs = [OverviewTab.new(disk, @pager)]
           tabs << DiskUsedDevicesTab.new(disk, @pager) if used_devices_tab?
 
-          Tabs.new(*tabs)
+          tabs
         end
 
         # Whether a extra tab for used devices is necessary

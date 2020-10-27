@@ -17,9 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
 require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/md_raids"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/used_devices_edit_button"
@@ -29,7 +28,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a md raid device: contains {OverviewTab} and {MdUsedDevicesTab}
-      class MdRaid < Base
+      class MdRaid < Tabbed
         # Constructor
         #
         # @param md [Y2Storage::Md]
@@ -52,21 +51,15 @@ module Y2Partitioner
           @md.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                Tabs.new(
-                  OverviewTab.new(@md, @pager, initial: true),
-                  MdUsedDevicesTab.new(@md, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            OverviewTab.new(@md, @pager, initial: true),
+            MdUsedDevicesTab.new(@md, @pager)
+          ]
+        end
 
         # @return [String]
         def section

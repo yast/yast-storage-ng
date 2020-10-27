@@ -68,8 +68,8 @@ module Y2Partitioner
         end
 
         # @return [ConfigurableBlkDevicesTable]
-        def table
-          @table ||= BtrfsFilesystemsTable.new(entries, pager, device_buttons)
+        def calculate_table
+          BtrfsFilesystemsTable.new(entries, pager, device_buttons)
         end
 
         # Widget with the dynamic set of buttons for the selected row

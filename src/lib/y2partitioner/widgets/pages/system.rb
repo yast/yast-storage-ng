@@ -52,13 +52,17 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          invalidate_cached_content
-          return @contents if @contents
+          invalidate_cached_widgets
 
-          @contents = VBox(
+          VBox(
             table,
             Left(device_buttons)
           )
+        end
+
+        # @see Base
+        def state_info
+          { table.widget_id => table.ui_open_items }
         end
 
         private
@@ -71,10 +75,9 @@ module Y2Partitioner
 
         # Invalidates cached content if needed according to
         # {OverviewTreePager#invalidated_views}
-        def invalidate_cached_content
+        def invalidate_cached_widgets
           return unless pager.invalidated_pages.delete(:system)
 
-          @contents = nil
           @table = nil
         end
 

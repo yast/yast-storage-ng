@@ -114,10 +114,12 @@ module Y2Partitioner
         ].compact
       end
 
-      # Overrides default behavior of TreePager to register the new state with
-      # {UIState} before jumping to the tree node
+      # Overrides default behavior of TreePager to register with {UIState} the status
+      # of the current page and the new destination, before jumping to the tree node
       def switch_page(page)
-        UIState.instance.select_page(page.tree_path)
+        state = UIState.instance
+        state.save_extra_info
+        state.select_page(page.tree_path)
         super
       end
 
@@ -273,7 +275,7 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def stray_blk_device_item(device)
-        page = Pages::StrayBlkDevice.new(device)
+        page = Pages::StrayBlkDevice.new(device, self)
         device_item(page)
       end
 
@@ -296,7 +298,7 @@ module Y2Partitioner
         return nil unless Y2Storage::Bcache.supported?
 
         devices = device_graph.bcaches
-        page = Pages::Bcaches.new(devices, self)
+        page = Pages::Bcaches.new(self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }
         section_item(page, Icons::BCACHE, children: children)
       end

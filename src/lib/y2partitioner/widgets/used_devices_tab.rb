@@ -44,7 +44,16 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        @contents ||= VBox(table, buttons)
+        VBox(table, buttons)
+      end
+
+      # State information of the tab
+      #
+      # See {Widgets::Pages::Base#state_info}
+      #
+      # @return [Hash]
+      def state_info
+        { table.widget_id => table.ui_open_items }
       end
 
       private
@@ -58,7 +67,7 @@ module Y2Partitioner
       #
       # @return [Yast::Term]
       def buttons
-        Empty()
+        @buttons ||= Empty()
       end
 
       # Returns a table with all devices used by the container device

@@ -31,9 +31,7 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(bcaches, pager) }
-
-  let(:bcaches) { device_graph.bcaches }
+  subject { described_class.new(pager) }
 
   let(:pager) { double("OverviewTreePager") }
 

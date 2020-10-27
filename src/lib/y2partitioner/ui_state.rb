@@ -90,6 +90,31 @@ module Y2Partitioner
       current_status&.active_tab = label
     end
 
+    # Additional state information for the active tab of the current page
+    #
+    # @return [Object, nil]
+    def extra
+      current_status&.extra
+    end
+
+    # Sets the additional state information for the active page and tab
+    #
+    # @param info [Object, nil]
+    def extra=(info)
+      current_status.extra = info
+    end
+
+    # Stores the information of the active tab of the current page
+    #
+    # @see #extra
+    # @see #extra=
+    def save_extra_info
+      page = overview_tree_pager&.current_page
+      return unless page&.respond_to?(:state_info)
+
+      self.extra = page.state_info
+    end
+
     # Returns the id of the last selected row in the active tab of current page
     #
     # @return [Integer, nil]
@@ -233,6 +258,7 @@ module Y2Partitioner
         @page_id = page_id
         @candidate_pages = candidate_pages_ids
         @selected_rows = { FALLBACK_TAB => nil }
+        @extras = {}
       end
 
       # Returns the last selected row for the active tab
@@ -253,6 +279,24 @@ module Y2Partitioner
         selected_rows[tab] = sid
       end
 
+      # Returns the extra information previously stored for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
+      #
+      # @return [Object, nil]
+      def extra
+        extras[tab]
+      end
+
+      # Stores the extra information for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
+      #
+      # @param info [Object, nil]
+      def extra=(info)
+        extras[tab] = info
+      end
+
       private
 
       # A collection to keep the selected rows per tab
@@ -263,6 +307,13 @@ module Y2Partitioner
       #
       # @return [Hash{String => Integer}]
       attr_reader :selected_rows
+
+      # A collection to keep the additional information for each page and tab
+      #
+      # As in {#selected_rows}, FALLBACK_TAB is used as key in some cases.
+      #
+      # @return [Hash{String => Object}]
+      attr_reader :extras
 
       # Returns the active tab or the fallback when none
       #

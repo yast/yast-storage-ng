@@ -20,7 +20,7 @@
 require "yast"
 require "yast/i18n"
 require "yast2/popup"
-
+require "y2partitioner/ui_state"
 require "abstract_method"
 
 module Y2Partitioner
@@ -42,6 +42,7 @@ module Y2Partitioner
       def run
         return :back unless run?
 
+        UIState.instance.save_extra_info
         action_result = perform_action
 
         result(action_result)
