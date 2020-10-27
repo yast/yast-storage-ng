@@ -22,6 +22,8 @@ require "cwm/table"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/help"
 
+Yast.import "UI"
+
 module Y2Partitioner
   module Widgets
     # Abstract class to unify the definition of table widgets used to
@@ -45,11 +47,38 @@ module Y2Partitioner
 
       # @see CWM::Table#items
       def items
-        entries.map { |e| e.table_item(cols) }
+        @items ||= entries.map { |e| e.table_item(cols, open_items) }
+      end
+
+      # Hash listing the ids of the items with children of the table and specifying whether
+      # such item should be expanded (true) or collapsed (false).
+      #
+      # @return [Hash{String => Boolean}]
+      def open_items
+        @open_items || {}
+      end
+
+      # Sets the value of {#open_items}
+      #
+      # @param value [Hash{String => Boolean}]
+      def open_items=(value)
+        # First, invalidate the items memoization
+        @items = nil
+        @open_items = value
+      end
+
+      # Current state of the open items in the user interface, regardless the
+      # initial state specified by {#open_items}
+      #
+      # @return [Hash{String => Boolean}] same format as {#open_items}
+      def ui_open_items
+        open = Yast::UI.QueryWidget(Id(widget_id), :OpenItems).keys
+        Hash[all_items.map { |i| [i.id, open.include?(i.id)] }]
       end
 
       # Updates table content
       def refresh
+        @items = nil
         change_items(items)
       end
 
@@ -82,6 +111,18 @@ module Y2Partitioner
 
       def cols
         @cols ||= columns.map(&:new)
+      end
+
+      # Plain collection including the first level items and all its descendants
+      #
+      # @return [Array<CWM::TableItem>]
+      def all_items
+        items.flat_map { |item| item_with_descendants(item) }
+      end
+
+      # @see #all_items
+      def item_with_descendants(item)
+        [item] + item.children.flat_map { |child| item_with_descendants(child) }
       end
     end
   end
