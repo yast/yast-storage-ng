@@ -8,11 +8,16 @@ module Y2Partitioner
   module Widgets
     # Mixin for the different Tab subclasses to interact with {UIState}
     module TabsWithState
-      # Overrides default behavior of tabs to register the new state before
-      # doing the real switch
+      # Overrides default behavior of tabs to register the status of the current
+      # page and the set the new one in {UIState} before doing the real switch
       def switch_page(page)
+        state = UIState.instance
+
+        state.save_extra_info
+
         target = (page == default_page) ? nil : page.label
-        UIState.instance.switch_to_tab(target)
+        state.switch_to_tab(target)
+
         super
       end
 

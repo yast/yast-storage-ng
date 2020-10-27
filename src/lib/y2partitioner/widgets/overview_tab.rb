@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "cwm/widget"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
@@ -53,16 +54,40 @@ module Y2Partitioner
       def contents
         return @contents if @contents
 
-        buttons = device_buttons
+        initialize_widgets
         lines = [
           bar_graph,
-          table(buttons),
-          Left(buttons)
+          table,
+          Left(device_buttons)
         ].compact
         @contents = VBox(*lines)
       end
 
+      # State information of the tab
+      #
+      # See {Widgets::Pages::Base#state_info}
+      #
+      # @return [Hash]
+      def state_info
+        { table.widget_id => table.ui_open_items }
+      end
+
       private
+
+      # Widget of the bar graph to display above the table
+      #
+      # Nil if no graph should be displayed
+      attr_reader :bar_graph
+
+      # Widget of the table to display the device and its associated devices
+      attr_reader :table
+
+      # Widget with the buttons set to display below the table
+      #
+      # Nil if no buttons set should be used
+      #
+      # @return [DeviceButtonsSet, nil]
+      attr_reader :device_buttons
 
       # All devices to show in the table, it should include the main device and
       # its relevant descendants
@@ -72,28 +97,29 @@ module Y2Partitioner
         [DeviceTableEntry.new_with_children(device)]
       end
 
-      # Widget of the bar graph to display above the table
-      #
-      # Nil if no graph should be displayed
-      def bar_graph
+      # @see #contents
+      def initialize_widgets
+        @device_buttons = calculate_device_buttons
+        @bar_graph = calculate_bar_graph
+        @table = calculate_table(device_buttons)
+      end
+
+      # @see #initialize_widgets
+      def calculate_bar_graph
         return nil unless device.respond_to?(:free_spaces)
 
         DiskBarGraph.new(device)
       end
 
-      # Widget of the table to display the device and its associated devices
+      # @see #initialize_widgets
       #
       # @param buttons_set [DeviceButtonsSet, nil] see {#device_buttons}
-      def table(buttons_set)
+      def calculate_table(buttons_set)
         ConfigurableBlkDevicesTable.new(devices, @pager, buttons_set)
       end
 
-      # Widget with the buttons set to display below the table
-      #
-      # Nil if no buttons set should be used
-      #
-      # @return [DeviceButtonsSet, nil]
-      def device_buttons
+      # @see #initialize_widgets
+      def calculate_device_buttons
         DeviceButtonsSet.new(@pager)
       end
     end

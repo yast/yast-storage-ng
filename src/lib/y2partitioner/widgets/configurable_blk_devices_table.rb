@@ -21,6 +21,7 @@ require "yast"
 require "cwm/table"
 
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/columns"
 require "y2partitioner/dialogs/device_description"
@@ -50,9 +51,21 @@ module Y2Partitioner
         [:notify, :immediate]
       end
 
+      def contents
+        return @contents if @contents
+
+        # Before calculating the content, ensure consistency of #open_items
+        self.open_items = UIState.instance.extra&.fetch(widget_id, nil) || {}
+        @contents = super
+      end
+
       # @macro seeAbstractWidget
       def init
         return if devices.empty? # do nothing if there is nothing in table
+
+        # Now that the content has been displayed, invalidate its memoization to ensure #open_items
+        # is updated in the next UI draw with the information from UIState
+        @contents = nil
 
         self.value = initial_entry.row_id
         handle_selected
@@ -98,16 +111,7 @@ module Y2Partitioner
           return nil
         end
 
-        page = pager.device_page(device)
-
-        return nil unless page
-
-        # First, pretend the user visited the page and then select the device
-        state = UIState.instance
-        state.select_page(page.tree_path)
-        state.select_row(device.sid)
-
-        pager.handle("ID" => page.widget_id)
+        jump_to_page(device)
       end
 
       # Device object selected in the table
@@ -190,6 +194,26 @@ module Y2Partitioner
 
       def default_columns
         DEFAULT_COLUMNS
+      end
+
+      # Switches to the page of the specified device, if possible
+      #
+      # If the target page exists, it updates all the corresponding state information
+      # before doing the real switch.
+      def jump_to_page(device)
+        page = pager.device_page(device)
+        return nil unless page
+
+        state = UIState.instance
+
+        # First, save the status of the current page
+        state.save_extra_info
+
+        # Then, pretend the user visited the new page and then select the device
+        state.select_page(page.tree_path)
+        state.select_row(device.sid)
+
+        pager.handle("ID" => page.widget_id)
       end
 
       # Table entry to select initially when the table is rendered

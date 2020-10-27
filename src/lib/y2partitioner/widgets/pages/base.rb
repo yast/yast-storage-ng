@@ -56,6 +56,17 @@ module Y2Partitioner
           [parent, id].compact
         end
 
+        # State information of the page, for those pages that need to restore that state
+        # on each render
+        #
+        # It represents the current state of the widgets, so they can be initialized to the
+        # same state next time the page is redrawn.
+        #
+        # @return [Object, nil] it returns nil in the base class
+        def state_info
+          nil
+        end
+
         private
 
         # The parent page

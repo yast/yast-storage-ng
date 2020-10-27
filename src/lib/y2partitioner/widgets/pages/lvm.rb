@@ -57,8 +57,8 @@ module Y2Partitioner
         end
 
         # @see DevicesTable
-        def table
-          @table ||= LvmDevicesTable.new(devices, pager, device_buttons)
+        def calculate_table
+          LvmDevicesTable.new(devices, pager, device_buttons)
         end
 
         # Returns all volume groups and their logical volumes, including thin pools

@@ -17,8 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/btrfs_filesystems"
 require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/btrfs_filesystems_table"
@@ -31,7 +30,7 @@ module Y2Partitioner
       # Page for a BTRFS filesystem
       #
       # This page contains a {FilesystemTab} and a {BtrfsUsedDevicesTab}.
-      class Btrfs < Base
+      class Btrfs < Tabbed
         # @return [Y2Storage::Filesystems::Btrfs]
         attr_reader :filesystem
 
@@ -56,15 +55,6 @@ module Y2Partitioner
           filesystem.blk_device_basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(tabs)
-            )
-          )
-        end
-
         private
 
         # @return [CWM::TreePager]
@@ -75,14 +65,12 @@ module Y2Partitioner
         # There are two tabs: one for the filesystem info and another one with the devices
         # used by the filesystem.
         #
-        # @return [Tabs]
-        def tabs
-          tabs = [
+        # @return [Array<CWM::Tab>]
+        def calculate_tabs
+          [
             FilesystemTab.new(filesystem, pager),
             BtrfsUsedDevicesTab.new(filesystem, pager)
           ]
-
-          Tabs.new(*tabs)
         end
 
         # @return [String]
@@ -96,7 +84,7 @@ module Y2Partitioner
         private
 
         # @return [BtrfsFilesystemsTable]
-        def table(buttons_set)
+        def calculate_table(buttons_set)
           BtrfsFilesystemsTable.new(devices, @pager, buttons_set)
         end
       end

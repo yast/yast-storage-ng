@@ -57,8 +57,8 @@ module Y2Partitioner
         end
 
         # @see DevicesTable
-        def table
-          @table ||= MdRaidsTable.new(devices, pager, device_buttons)
+        def calculate_table
+          MdRaidsTable.new(devices, pager, device_buttons)
         end
 
         # Returns all Software RAIDs and its partitions

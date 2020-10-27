@@ -30,7 +30,7 @@ describe Y2Partitioner::Widgets::Pages::StrayBlkDevice do
   let(:device) { current_graph.stray_blk_devices.first }
   let(:pager) { double("Pager") }
 
-  subject { described_class.new(device) }
+  subject { described_class.new(device, pager) }
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }

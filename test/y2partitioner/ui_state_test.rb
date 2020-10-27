@@ -43,7 +43,7 @@ describe Y2Partitioner::UIState do
   let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
   let(:md_raids_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(pager) }
   let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
-  let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new([], pager) }
+  let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new(pager) }
   let(:btrfs_filesystems_page) { Y2Partitioner::Widgets::Pages::BtrfsFilesystems.new([], pager) }
 
   describe ".new" do

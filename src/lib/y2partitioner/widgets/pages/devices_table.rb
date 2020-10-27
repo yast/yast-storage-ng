@@ -20,6 +20,7 @@
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/device_buttons_set"
+require "abstract_method"
 
 module Y2Partitioner
   module Widgets
@@ -44,6 +45,7 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
+          @table = calculate_table
           @contents = VBox(
             table,
             Left(device_buttons),
@@ -54,6 +56,11 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         abstract_method :label
 
+        # @see Base
+        def state_info
+          { table.widget_id => table.ui_open_items }
+        end
+
         private
 
         # @return [CWM::TreePager]
@@ -63,6 +70,11 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         abstract_method :devices
+
+        # Table to display
+        #
+        # @return [Widgets::ConfigurableBlkDevicesTable]
+        attr_reader :table
 
         # Widget representing the fixed buttons (those that do not change
         # every time the user selects a new row) displayed at the bottom of the
@@ -75,11 +87,11 @@ module Y2Partitioner
           Empty()
         end
 
-        # Table to display
+        # @see #table
         #
         # @return [Widgets::ConfigurableBlkDevicesTable]
-        def table
-          @table ||= ConfigurableBlkDevicesTable.new(devices, pager, device_buttons)
+        def calculate_table
+          ConfigurableBlkDevicesTable.new(devices, pager, device_buttons)
         end
 
         # Widget with the dynamic set of buttons for the selected row

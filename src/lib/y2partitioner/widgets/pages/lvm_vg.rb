@@ -17,9 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/overview_tab"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/lvm"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
@@ -32,7 +31,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a LVM Volume Group. It contains several tabs.
-      class LvmVg < Base
+      class LvmVg < Tabbed
         # Constructor
         #
         # @param lvm_vg [Y2Storage::Lvm_vg]
@@ -55,21 +54,15 @@ module Y2Partitioner
           @lvm_vg.vg_name
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                Tabs.new(
-                  LvmVgTab.new(@lvm_vg, @pager),
-                  LvmPvTab.new(@lvm_vg, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            LvmVgTab.new(@lvm_vg, @pager),
+            LvmPvTab.new(@lvm_vg, @pager)
+          ]
+        end
 
         # @return [String]
         def section
@@ -88,14 +81,14 @@ module Y2Partitioner
         #
         # @param buttons_set [DeviceButtonsSet]
         # @return [LvmDevicesTable]
-        def table(buttons_set)
+        def calculate_table(buttons_set)
           LvmDevicesTable.new(devices, @pager, buttons_set)
         end
 
         # Bar graph representing the volume group
         #
         # @return [LvmBarGraph]
-        def bar_graph
+        def calculate_bar_graph
           LvmVgBarGraph.new(device)
         end
       end

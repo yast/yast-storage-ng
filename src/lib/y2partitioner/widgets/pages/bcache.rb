@@ -17,9 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
 require "y2partitioner/widgets/overview_tab"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/bcaches"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/bcache_edit_button"
@@ -28,7 +27,7 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a bcache device
-      class Bcache < Base
+      class Bcache < Tabbed
         # @return [Y2Storage::Bcache] Device this page is about
         attr_reader :bcache
         alias_method :device, :bcache
@@ -50,21 +49,15 @@ module Y2Partitioner
           device.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                Tabs.new(
-                  OverviewTab.new(device, @pager),
-                  BcacheUsedDevicesTab.new(device, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            OverviewTab.new(device, @pager),
+            BcacheUsedDevicesTab.new(device, @pager)
+          ]
+        end
 
         # @return [String]
         def section
