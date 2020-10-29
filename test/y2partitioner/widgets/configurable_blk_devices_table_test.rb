@@ -134,11 +134,33 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
           end
         end
       end
+
+      context "and UIState returns the sid of the btrfs on one device of the table" do
+        let(:device) { device_graph.find_by_name("/dev/sda2").filesystem }
+        let(:selected_dev) { device.blk_devices.first }
+        let(:row_id) { selected_dev.sid }
+        let(:selected_row) { subject.send(:entry, selected_dev.sid).row_id }
+
+        it "sets value to the row of the block device" do
+          expect(subject).to receive(:value=).with(selected_row)
+          subject.init
+        end
+
+        context "if the table is associated to a buttons set" do
+          subject { described_class.new(entries, pager, buttons_set) }
+
+          it "initializes the buttons set pointing to the block device" do
+            expect(subject).to receive(:selected_device).and_return(selected_dev)
+            expect(buttons_set).to receive(:device=).with selected_dev
+            subject.init
+          end
+        end
+      end
     end
   end
 
   describe "#handle" do
-    subject { described_class.new(devices, pager, set) }
+    subject { described_class.new(entries, pager, set) }
 
     before do
       allow(subject).to receive(:selected_device).and_return(device)
@@ -359,6 +381,34 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
           expect(device).to eq(selected_device)
         end
       end
+    end
+  end
+
+  describe "#ui_open_items" do
+    # sdb contains 3 primary partitions, one extended and 3 logical ones
+    # including three logical ones
+    let(:sdb) { device_graph.find_by_name("/dev/sdb") }
+    let(:sdb4) { device_graph.find_by_name("/dev/sdb4") }
+    let(:devices) { [sdb] }
+
+    before do
+      allow(Yast::UI).to receive(:QueryWidget).with(anything, :OpenItems)
+        .and_return(open_items)
+    end
+
+    let(:open_items) do
+      { "table:device:#{sdb4.sid}"=>"ID" }
+    end
+
+    it "contains an entry for each item of the table" do
+      ids = ([sdb] + sdb.partitions).map { |dev| "table:device:#{dev.sid}" }
+      expect(subject.ui_open_items.keys).to contain_exactly(*ids)
+    end
+
+    it "reports true for the open items and false for the rest" do
+      values = [false] * 7 + [true]
+      expect(subject.ui_open_items.values).to contain_exactly(*values)
+      expect(subject.ui_open_items["table:device:#{sdb4.sid}"]).to eq true
     end
   end
 end

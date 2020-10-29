@@ -37,18 +37,26 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
 
   include_examples "CWM::Page"
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
     it "shows a table with the bcache devices and their partitions" do
-      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
-
       expect(table).to_not be_nil
 
       devices = column_values(table, 0)
 
       expect(remove_sort_keys(devices)).to contain_exactly("/dev/bcache0", "/dev/bcache1",
         "/dev/bcache2", "bcache0p1", "bcache2p1")
+    end
+  end
+
+  describe "#state_info" do
+    let(:open) { { "id1" => true, "id2" => false } }
+
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end
