@@ -39,11 +39,10 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
 
   include_examples "CWM::Page"
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
+
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
-
     let(:items) { column_values(table, 0) }
 
     before do
@@ -71,6 +70,15 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
     it "shows a menu button to create a new VG" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgAddButton) }
       expect(button).to_not be_nil
+    end
+  end
+
+  describe "#state_info" do
+    let(:open) { { "id1" => true, "id2" => false } }
+
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end

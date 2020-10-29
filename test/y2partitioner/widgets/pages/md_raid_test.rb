@@ -19,9 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
+require_relative "device_page"
 require "y2partitioner/widgets/pages/md_raid"
 
 describe Y2Partitioner::Widgets::Pages::MdRaid do
@@ -51,6 +49,12 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
       subject.contents
     end
   end
+
+  include_examples(
+    "device page",
+    "Y2Partitioner::Widgets::OverviewTab",
+    "Y2Partitioner::Widgets::Pages::MdUsedDevicesTab"
+  )
 
   describe Y2Partitioner::Widgets::Pages::MdUsedDevicesTab do
     subject { described_class.new(md, pager) }

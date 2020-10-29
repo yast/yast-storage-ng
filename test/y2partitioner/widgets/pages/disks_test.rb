@@ -42,9 +42,10 @@ describe Y2Partitioner::Widgets::Pages::Disks do
     device.is?(:lvm_lv, :partition) ? device.basename : device.name
   end
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
     let(:disks_and_parts) do
       (device_graph.disks + device_graph.disks.map(&:partitions)).flatten.compact
     end
@@ -71,6 +72,15 @@ describe Y2Partitioner::Widgets::Pages::Disks do
 
         expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
       end
+    end
+  end
+
+  describe "#state_info" do
+    let(:open) { { "id1" => true, "id2" => false } }
+
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end

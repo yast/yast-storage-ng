@@ -19,9 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
+require_relative "device_page"
 require "y2partitioner/widgets/pages/disk"
 
 describe Y2Partitioner::Widgets::Pages::Disk do
@@ -67,6 +65,12 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
+
+      include_examples(
+        "device page",
+        "Y2Partitioner::Widgets::OverviewTab",
+        "Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab"
+      )
     end
 
     context "when the device is a multipath" do
@@ -82,6 +86,12 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
+
+      include_examples(
+        "device page",
+        "Y2Partitioner::Widgets::OverviewTab",
+        "Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab"
+      )
     end
   end
 

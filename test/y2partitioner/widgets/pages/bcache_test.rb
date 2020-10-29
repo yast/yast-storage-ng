@@ -19,9 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
+require_relative "device_page"
 require "y2partitioner/widgets/pages/bcache"
 
 describe Y2Partitioner::Widgets::Pages::Bcache do
@@ -42,6 +40,12 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
   let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
+
+  include_examples(
+    "device page",
+    "Y2Partitioner::Widgets::OverviewTab",
+    "Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab"
+  )
 
   describe "#contents" do
     it "shows a bcache overview tab" do

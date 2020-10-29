@@ -40,17 +40,17 @@ describe Y2Partitioner::Widgets::Pages::System do
 
   include_examples "CWM::Page"
 
+  # Widget with the list of devices
+  def find_table(widgets)
+    widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+  end
+
+  # Names from the devices in the list
+  def row_names(table)
+    column_values(table, 0)
+  end
+
   describe "#contents" do
-    # Widget with the list of devices
-    def find_table(widgets)
-      widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
-    end
-
-    # Names from the devices in the list
-    def row_names(table)
-      column_values(table, 0)
-    end
-
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
     let(:table) { find_table(widgets) }
@@ -236,6 +236,17 @@ describe Y2Partitioner::Widgets::Pages::System do
         # Still cached
         expect(remove_sort_keys(rows)).to eq ["/dev/sda", "new:/device"]
       end
+    end
+  end
+
+  describe "#state_info" do
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+    let(:table) { find_table(widgets) }
+    let(:open) { { "id1" => true, "id2" => false } }
+
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end

@@ -30,6 +30,11 @@ describe Y2Partitioner::UIState do
     devicegraph_stub(scenario)
   end
 
+  after do
+    # UIState is a singleton class, so let's clean-up to not pollute other tests
+    described_class.create_instance
+  end
+
   let(:scenario) { "complex-lvm-encrypt.yml" }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
@@ -429,6 +434,85 @@ describe Y2Partitioner::UIState do
 
         expect(ui_state.statuses.map(&:page_id)).to eq(final_pages.map(&:id))
       end
+    end
+  end
+
+  describe "#extra" do
+    context "if the user has still not visited any page" do
+      before { described_class.create_instance }
+
+      it "returns nil" do
+        expect(ui_state.extra).to eq nil
+      end
+    end
+
+    context "if some information has been saved for a given page" do
+      let(:info) { { "table" => "disks info" } }
+
+      before do
+        ui_state.select_page(disks_page.tree_path)
+        ui_state.extra = info
+      end
+
+      it "returns that information while the user is still on that page" do
+        expect(ui_state.extra).to eq info
+      end
+
+      it "does not longer return the information if the user moves to another page" do
+        expect(ui_state.extra).to eq info
+        ui_state.select_page(system_page.tree_path)
+        expect(ui_state.extra).to_not eq info
+      end
+
+      it "returns the information if the user returns later to the page" do
+        ui_state.select_page(system_page.tree_path)
+        expect(ui_state.extra).to_not eq info
+        ui_state.select_page(disks_page.tree_path)
+        expect(ui_state.extra).to eq info
+      end
+    end
+
+    context "if some information has been saved for a given tab" do
+      let(:info) { { "table" => "Used devices info" } }
+      let(:device_name) { "/dev/sda2" }
+      let(:devices_tab) { double("Tab", label: "Used Devices") }
+
+      before do
+        ui_state.select_page(disk_page.tree_path)
+        ui_state.switch_to_tab(devices_tab)
+        ui_state.extra = info
+      end
+
+      it "returns that information while the user is still on that tab" do
+        expect(ui_state.extra).to eq info
+      end
+
+      it "does not longer return the information if the user moves to another tab" do
+        expect(ui_state.extra).to eq info
+        ui_state.switch_to_tab(nil)
+        expect(ui_state.extra).to_not eq info
+      end
+
+      it "returns the information if the user returns to the tab" do
+        ui_state.switch_to_tab(nil)
+        expect(ui_state.extra).to_not eq info
+        ui_state.switch_to_tab(devices_tab)
+        expect(ui_state.extra).to eq info
+      end
+    end
+  end
+
+  describe "#save_extra_info" do
+    before do
+      ui_state.overview_tree_pager = pager
+      allow(pager).to receive(:current_page).and_return(system_page)
+      ui_state.select_page(system_page.tree_path)
+    end
+
+    it "stores in #extra the state of the current page" do
+      expect(system_page).to receive(:state_info).and_return("system" => "state")
+      ui_state.save_extra_info
+      expect(ui_state.extra).to eq("system" => "state")
     end
   end
 end

@@ -19,9 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
+require_relative "device_page"
 require "y2partitioner/widgets/pages/lvm_vg"
 
 describe Y2Partitioner::Widgets::Pages::LvmVg do
@@ -34,6 +32,12 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
   let(:pager) { double("Pager") }
 
   include_examples "CWM::Page"
+
+  include_examples(
+    "device page",
+    "Y2Partitioner::Widgets::Pages::LvmVgTab",
+    "Y2Partitioner::Widgets::Pages::LvmPvTab"
+  )
 
   let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
   let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
