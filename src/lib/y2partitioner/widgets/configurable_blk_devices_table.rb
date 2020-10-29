@@ -55,6 +55,7 @@ module Y2Partitioner
         return @contents if @contents
 
         # Before calculating the content, ensure consistency of #open_items
+        # FIXME: the API to fetch the stored state may change, see the comment in UIState#extra
         self.open_items = UIState.instance.extra&.fetch(widget_id, nil) || {}
         @contents = super
       end

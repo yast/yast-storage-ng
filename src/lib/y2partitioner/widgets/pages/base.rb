@@ -62,6 +62,7 @@ module Y2Partitioner
         # It represents the current state of the widgets, so they can be initialized to the
         # same state next time the page is redrawn.
         #
+        # FIXME: the API to query the UI state may change, see comment in UIState#save_extra_info
         # @return [Object, nil] it returns nil in the base class
         def state_info
           nil
