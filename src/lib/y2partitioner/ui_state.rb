@@ -92,6 +92,10 @@ module Y2Partitioner
 
     # Additional state information for the active tab of the current page
     #
+    # FIXME: in the mid-term, it would be nice to turn this into a proper API to
+    # store and fetch the status of each individual widget within the page, instead
+    # of this generic container for the state of the full tab/page.
+    #
     # @return [Object, nil]
     def extra
       current_status&.extra
@@ -108,6 +112,11 @@ module Y2Partitioner
     #
     # @see #extra
     # @see #extra=
+    #
+    # FIXME: see the comment in #extra. At some point, the #state_info method
+    # should be moved to each widget needing to store its information and the
+    # page itself would offer a method to make possible to iterate through all
+    # those widgets (e.g. #widgets_with_state_info).
     def save_extra_info
       page = overview_tree_pager&.current_page
       return unless page&.respond_to?(:state_info)
