@@ -56,8 +56,8 @@ Requires:  yast2 >= 4.3.38
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
 Requires:       yast2-ruby-bindings >= 4.0.6
-# for sortKey
-Requires:       yast2-ycp-ui-bindings >= 4.2.7
+# OpenItems for (nested) tables
+Requires:       yast2-ycp-ui-bindings >= 4.3.4
 # communicate with udisks
 Requires:       rubygem(%{rb_default_ruby_abi}:ruby-dbus)
 Requires(post): %fillup_prereq
