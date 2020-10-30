@@ -72,17 +72,9 @@ module Y2Partitioner
 
         # The parent page
         #
-        # @return [String, Integer, nil]
+        # @return [String, nil]
         def parent
-          return nil unless respond_to?(:device)
-
-          if device.is?(:partition)
-            device.partitionable.sid
-          elsif device.is?(:lvm_lv)
-            device.lvm_vg.sid
-          else
-            section
-          end
+          respond_to?(:device) ? section : nil
         end
 
         # The section which the page belongs
