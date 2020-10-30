@@ -1,8 +1,8 @@
 -------------------------------------------------------------------
 Fri Oct 30 11:58:50 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
-- Partitioner: revamped user interface (related to jsd#PM-73,
-  jsd#SLE-7742, jsd#SLE-15283).
+- Partitioner: revamped user interface (related to jsc#PM-73,
+  jsc#SLE-7742, jsc#SLE-15283).
 - 4.3.17
 
 -------------------------------------------------------------------
