@@ -138,7 +138,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       context "and UIState returns the sid of the btrfs on one device of the table" do
         let(:device) { device_graph.find_by_name("/dev/sda2").filesystem }
         let(:selected_dev) { device.blk_devices.first }
-        let(:row_id) { selected_dev.sid }
+        let(:row_id) { device.sid }
         let(:selected_row) { subject.send(:entry, selected_dev.sid).row_id }
 
         it "sets value to the row of the block device" do
