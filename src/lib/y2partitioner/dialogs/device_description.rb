@@ -65,7 +65,7 @@ module Y2Partitioner
       WIDGETS = {
         disk_device:      Widgets::DiskDeviceDescription,
         disk:             Widgets::DiskDeviceDescription,
-        filesystem:       Widgets::FilesystemDescription,
+        blk_filesystem:   Widgets::FilesystemDescription,
         software_raid:    Widgets::MdDescription,
         partition:        Widgets::PartitionDescription,
         lvm_vg:           Widgets::LvmVgDescription,
