@@ -30,6 +30,11 @@ describe Y2Partitioner::UIState do
     devicegraph_stub(scenario)
   end
 
+  after do
+    # UIState is a singleton class, so let's clean-up to not pollute other tests
+    described_class.create_instance
+  end
+
   let(:scenario) { "complex-lvm-encrypt.yml" }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
@@ -43,7 +48,7 @@ describe Y2Partitioner::UIState do
   let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
   let(:md_raids_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(pager) }
   let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
-  let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new([], pager) }
+  let(:bcaches_page) { Y2Partitioner::Widgets::Pages::Bcaches.new(pager) }
   let(:btrfs_filesystems_page) { Y2Partitioner::Widgets::Pages::BtrfsFilesystems.new([], pager) }
 
   describe ".new" do
@@ -82,39 +87,6 @@ describe Y2Partitioner::UIState do
 
       it "returns nil" do
         expect(ui_state.find_page(pages_ids)).to be_nil
-      end
-    end
-
-    context "when the user has opened a partition page" do
-      let(:device_name) { "/dev/sda1" }
-      let(:partition_page) { Y2Partitioner::Widgets::Pages::Partition.new(device) }
-      let(:another_disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb") }
-      let(:another_disk_page) { Y2Partitioner::Widgets::Pages::Disk.new(another_disk, pager) }
-
-      before { ui_state.select_page(partition_page.tree_path) }
-
-      context "if the partition is still there after redrawing" do
-        before { pages.concat [partition_page, another_disk_page, disk_page] }
-
-        it "selects the partition page" do
-          expect(ui_state.find_page(pages_ids)).to eq partition_page.id
-        end
-      end
-
-      context "if the partition is not longer there after redrawing" do
-        before { pages.concat [another_disk_page, disk_page] }
-
-        it "selects the corresponding disk page" do
-          expect(ui_state.find_page(pages_ids)).to eq disk_page.id
-        end
-      end
-
-      context "if the whole disk is not longer there after redrawing" do
-        before { pages << another_disk_page }
-
-        it "returns nil" do
-          expect(ui_state.find_page(pages_ids)).to be_nil
-        end
       end
     end
 
@@ -166,37 +138,6 @@ describe Y2Partitioner::UIState do
       context "if the RAID is not longer there after redrawing" do
         it "selects the general MD RAIDs page" do
           expect(ui_state.find_page(pages_ids)).to eq md_raids_page.id
-        end
-      end
-    end
-
-    context "when the user has opened a LV page" do
-      let(:device_name) { "/dev/vg0/lv1" }
-
-      let(:page) { Y2Partitioner::Widgets::Pages::LvmLv.new(device) }
-      let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(device.lvm_vg, pager) }
-
-      before { ui_state.select_page(page.tree_path) }
-
-      context "if the LV is still there after redrawing" do
-        before { pages.concat [page, vg_page] }
-
-        it "selects the LV page" do
-          expect(ui_state.find_page(pages_ids)).to eq page.id
-        end
-      end
-
-      context "if the LV is not longer there after redrawing" do
-        before { pages << vg_page }
-
-        it "selects the corresponding VG page" do
-          expect(ui_state.find_page(pages_ids)).to eq vg_page.id
-        end
-      end
-
-      context "if the whole VG is not longer there after redrawing" do
-        it "returns nil" do
-          expect(ui_state.find_page(pages_ids)).to be_nil
         end
       end
     end
@@ -287,10 +228,9 @@ describe Y2Partitioner::UIState do
 
     let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
     let(:vg_tab) { Y2Partitioner::Widgets::Pages::LvmVgTab.new(vg) }
-    let(:lvs_tab) { Y2Partitioner::Widgets::Pages::LvmLvTab.new(vg, pager) }
     let(:pvs_tab) { Y2Partitioner::Widgets::Pages::LvmPvTab.new(vg, pager) }
 
-    let(:tabs) { [vg_tab, lvs_tab, pvs_tab] }
+    let(:tabs) { [vg_tab, pvs_tab] }
 
     before do
       ui_state.select_page(vg_page.tree_path)
@@ -305,15 +245,15 @@ describe Y2Partitioner::UIState do
     end
 
     context "when the user has switched to a tab in the current page" do
-      before { ui_state.switch_to_tab(lvs_tab.label) }
+      before { ui_state.switch_to_tab(pvs_tab.label) }
 
       it "selects the corresponding page" do
-        expect(ui_state.active_tab).to eq lvs_tab.label
+        expect(ui_state.active_tab).to eq pvs_tab.label
       end
 
       context "but then moves to a different page" do
         before do
-          ui_state.switch_to_tab(lvs_tab.label)
+          ui_state.switch_to_tab(pvs_tab.label)
           ui_state.select_page(system_page.tree_path)
         end
 
@@ -326,8 +266,8 @@ describe Y2Partitioner::UIState do
             ui_state.select_page(vg_page.tree_path)
           end
 
-          it "selects the last active tab in the page" do
-            expect(ui_state.active_tab).to eq lvs_tab.label
+          it "returns nil" do
+            expect(ui_state.active_tab).to be_nil
           end
         end
       end
@@ -408,8 +348,24 @@ describe Y2Partitioner::UIState do
           ui_state.select_page(disk_page.tree_path)
         end
 
-        it "returns the sid of last selected device in the page" do
-          expect(ui_state.row_id).to eq(device.sid)
+        context "and to the same tab" do
+          before do
+            ui_state.switch_to_tab(partitions_tab)
+          end
+
+          it "returns the sid of last selected device in the page" do
+            expect(ui_state.row_id).to eq(device.sid)
+          end
+        end
+
+        context "but to a different tab" do
+          before do
+            ui_state.switch_to_tab(overview_tab)
+          end
+
+          it "returns nil" do
+            expect(ui_state.row_id).to be_nil
+          end
         end
       end
     end
@@ -445,19 +401,15 @@ describe Y2Partitioner::UIState do
 
   describe "#prune" do
     let(:device_name) { "/dev/sda" }
-    let(:sda1) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda1") }
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
-    let(:lv1) { vg.lvm_lvs.first }
 
     let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
     let(:sda_page) { Y2Partitioner::Widgets::Pages::Disk.new(device, pager) }
-    let(:sda1_page) { Y2Partitioner::Widgets::Pages::Partition.new(sda1) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
     let(:vg_page) { Y2Partitioner::Widgets::Pages::LvmVg.new(vg, pager) }
-    let(:lv1_page) { Y2Partitioner::Widgets::Pages::LvmLv.new(lv1) }
 
-    let(:initial_pages) { [disks_page, sda_page, sda1_page, lvm_page, vg_page, lv1_page] }
-    let(:final_pages) { [lvm_page, vg_page, lv1_page] }
+    let(:initial_pages) { [disks_page, sda_page, lvm_page, vg_page] }
+    let(:final_pages) { [lvm_page, vg_page] }
 
     before do
       # generates statuses for all pages by selecting them
@@ -482,6 +434,85 @@ describe Y2Partitioner::UIState do
 
         expect(ui_state.statuses.map(&:page_id)).to eq(final_pages.map(&:id))
       end
+    end
+  end
+
+  describe "#extra" do
+    context "if the user has still not visited any page" do
+      before { described_class.create_instance }
+
+      it "returns nil" do
+        expect(ui_state.extra).to eq nil
+      end
+    end
+
+    context "if some information has been saved for a given page" do
+      let(:info) { { "table" => "disks info" } }
+
+      before do
+        ui_state.select_page(disks_page.tree_path)
+        ui_state.extra = info
+      end
+
+      it "returns that information while the user is still on that page" do
+        expect(ui_state.extra).to eq info
+      end
+
+      it "does not longer return the information if the user moves to another page" do
+        expect(ui_state.extra).to eq info
+        ui_state.select_page(system_page.tree_path)
+        expect(ui_state.extra).to_not eq info
+      end
+
+      it "returns the information if the user returns later to the page" do
+        ui_state.select_page(system_page.tree_path)
+        expect(ui_state.extra).to_not eq info
+        ui_state.select_page(disks_page.tree_path)
+        expect(ui_state.extra).to eq info
+      end
+    end
+
+    context "if some information has been saved for a given tab" do
+      let(:info) { { "table" => "Used devices info" } }
+      let(:device_name) { "/dev/sda2" }
+      let(:devices_tab) { double("Tab", label: "Used Devices") }
+
+      before do
+        ui_state.select_page(disk_page.tree_path)
+        ui_state.switch_to_tab(devices_tab)
+        ui_state.extra = info
+      end
+
+      it "returns that information while the user is still on that tab" do
+        expect(ui_state.extra).to eq info
+      end
+
+      it "does not longer return the information if the user moves to another tab" do
+        expect(ui_state.extra).to eq info
+        ui_state.switch_to_tab(nil)
+        expect(ui_state.extra).to_not eq info
+      end
+
+      it "returns the information if the user returns to the tab" do
+        ui_state.switch_to_tab(nil)
+        expect(ui_state.extra).to_not eq info
+        ui_state.switch_to_tab(devices_tab)
+        expect(ui_state.extra).to eq info
+      end
+    end
+  end
+
+  describe "#save_extra_info" do
+    before do
+      ui_state.overview_tree_pager = pager
+      allow(pager).to receive(:current_page).and_return(system_page)
+      ui_state.select_page(system_page.tree_path)
+    end
+
+    it "stores in #extra the state of the current page" do
+      expect(system_page).to receive(:state_info).and_return("system" => "state")
+      ui_state.save_extra_info
+      expect(ui_state.extra).to eq("system" => "state")
     end
   end
 end

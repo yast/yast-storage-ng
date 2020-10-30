@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,7 @@ require "cwm/dialog"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
+require "y2partitioner/widgets/main_menu_bar"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
 require "y2partitioner/actions/quit_partitioner"
@@ -50,10 +51,6 @@ module Y2Partitioner
         DeviceGraphs.create_instance(system, initial)
       end
 
-      def title
-        _("Expert Partitioner")
-      end
-
       def contents
         # NOTE: Since this method is used as first parameter of {Yast::CWM.show} every time that
         # {#run} calls `super`, a new {OverviewTreePager} will be created in every dialog redraw.
@@ -62,10 +59,18 @@ module Y2Partitioner
         overview_tree_pager = Widgets::OverviewTreePager.new(hostname)
         UIState.instance.overview_tree_pager = overview_tree_pager
 
-        MarginBox(
-          0.5,
-          0.5,
-          overview_tree_pager
+        # Something similar happens with {MainMenuBar}, so it also makes sense to
+        # keep a reference to it in the {UIState}.
+        menu_bar = Widgets::MainMenuBar.new
+        UIState.instance.menu_bar = menu_bar
+
+        VBox(
+          menu_bar,
+          MarginBox(
+            0.5,
+            0.5,
+            overview_tree_pager
+          )
         )
       end
 

@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 
 module Y2Partitioner
@@ -50,17 +49,11 @@ module Y2Partitioner
 
         # Returns all disks and their partitions
         #
-        # @return [Array<Y2Storage::BlkDevice>]
+        # @return [Array<DeviceTableEntry>]
         def devices
-          disks.each_with_object([]) do |disk, devices|
-            devices << disk
-            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
+          disks.map do |disk|
+            DeviceTableEntry.new_with_children(disk)
           end
-        end
-
-        # @see DevicesTable
-        def icon
-          Icons::HD
         end
       end
     end

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,23 +17,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/btrfs_filesystems"
+require "y2partitioner/widgets/overview_tab"
+require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/filesystem_description"
-require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/widgets/used_devices_edit_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/tabs"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # Page for a BTRFS filesystem
       #
-      # This page contains a {FilesystemTab} and a {UsedDevicesTab}.
-      class Btrfs < Base
+      # This page contains a {FilesystemTab} and a {BtrfsUsedDevicesTab}.
+      class Btrfs < Tabbed
         # @return [Y2Storage::Filesystems::Btrfs]
         attr_reader :filesystem
 
@@ -58,55 +55,22 @@ module Y2Partitioner
           filesystem.blk_device_basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                HBox(
-                  Image(icon, ""),
-                  Heading(title)
-                )
-              ),
-              Left(tabs)
-            )
-          )
-        end
-
         private
 
         # @return [CWM::TreePager]
         attr_reader :pager
-
-        # Page icon
-        #
-        # @return [String]
-        def icon
-          Icons::BTRFS
-        end
-
-        # Page title
-        #
-        # @return [String]
-        def title
-          # TRANSLATORS: BTRFS page title, where %{basename} is replaced by the device
-          # basename (e.g., sda1).
-          format(_("Btrfs %{basename}"), basename: filesystem.blk_device_basename)
-        end
 
         # Tabs to show the filesystem data
         #
         # There are two tabs: one for the filesystem info and another one with the devices
         # used by the filesystem.
         #
-        # @return [Tabs]
-        def tabs
-          tabs = [
-            FilesystemTab.new(filesystem, initial: true),
-            BtrfsDevicesTab.new(filesystem, pager)
+        # @return [Array<CWM::Tab>]
+        def calculate_tabs
+          [
+            FilesystemTab.new(filesystem, pager),
+            BtrfsUsedDevicesTab.new(filesystem, pager)
           ]
-
-          Tabs.new(*tabs)
         end
 
         # @return [String]
@@ -115,74 +79,26 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for filesystem description
-      class FilesystemTab < CWM::Tab
-        # Constructor
-        #
-        # @param filesystem [Y2Storage::Filesystems::Btrfs]
-        # @param initial [Boolean]
-        def initialize(filesystem, initial: false)
-          textdomain "storage"
-
-          @filesystem = filesystem
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||=
-            VBox(
-              FilesystemDescription.new(@filesystem),
-              Left(HBox(*buttons))
-            )
-        end
-
+      # A tab to represent the Btrfs filesystem
+      class FilesystemTab < OverviewTab
         private
 
-        # @return [Array<Widgets::DeviceButton>]
-        def buttons
-          [
-            BtrfsEditButton.new(device: @filesystem),
-            DeviceDeleteButton.new(device: @filesystem)
-          ]
+        # @return [BtrfsFilesystemsTable]
+        def calculate_table(buttons_set)
+          BtrfsFilesystemsTable.new(devices, @pager, buttons_set)
         end
       end
 
-      # A Tab for the devices used by a Btrfs
-      class BtrfsDevicesTab < UsedDevicesTab
-        # Constructor
-        #
-        # @param filesystem [Y2Storage::Filesystems::Btrfs]
-        # @param pager [CWM::TreePager]
-        def initialize(filesystem, pager)
-          @filesystem = filesystem
-
-          super(devices, pager)
+      # A Tab for the used devices of a Btrfs
+      class BtrfsUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.plain_blk_devices
         end
 
-        # @macro seeCustomWidget
-        def contents
-          @contents ||= VBox(
-            table,
-            Right(UsedDevicesEditButton.new(device: filesystem))
-          )
-        end
-
-        private
-
-        # @return [Y2Storage::Filesystems::Btrfs]
-        attr_reader :filesystem
-
-        # Devices used by the filesystem
-        #
-        # @return [Array<Y2Storage::BlkDevice>]
-        def devices
-          filesystem.plain_blk_devices
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(UsedDevicesEditButton.new(device: device))
         end
       end
     end

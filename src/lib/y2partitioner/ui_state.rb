@@ -33,6 +33,11 @@ module Y2Partitioner
     # @return [Widgets::OverviewTreePager]
     attr_accessor :overview_tree_pager
 
+    # A reference to the main menu bar, which is a new instance on every dialog redraw
+    #
+    # @return [Widgets::MainMenuBar]
+    attr_accessor :menu_bar
+
     # Hash listing all the items with children of the tree and specifying whether
     # such item should be expanded (true) or collapsed (false) in the next redraw.
     #
@@ -59,6 +64,7 @@ module Y2Partitioner
     # @param row_id [Integer] the id of selected row
     def select_row(row_id)
       current_status&.selected_row = row_id
+      menu_bar&.select_row(row_id)
     end
 
     # Method to be called when the user decides to visit a page by clicking in one node of the
@@ -70,15 +76,52 @@ module Y2Partitioner
     # @param pages_ids [Array<String, Integer>] the path to the selected page
     def select_page(pages_ids)
       self.current_status = status_for(pages_ids)
+      menu_bar&.select_page
     end
 
     # Method to be called when the user switches to a tab within a page
     #
     # It records the decision, so the last active tab is displayed when the page will be redraw.
     #
-    # @param label [String]
+    # If the selected tab is the default one of the page, nil must be passed as argument
+    #
+    # @param label [String, nil] nil if switching to the default tab, no matter the label
     def switch_to_tab(label)
       current_status&.active_tab = label
+    end
+
+    # Additional state information for the active tab of the current page
+    #
+    # FIXME: in the mid-term, it would be nice to turn this into a proper API to
+    # store and fetch the status of each individual widget within the page, instead
+    # of this generic container for the state of the full tab/page.
+    #
+    # @return [Object, nil]
+    def extra
+      current_status&.extra
+    end
+
+    # Sets the additional state information for the active page and tab
+    #
+    # @param info [Object, nil]
+    def extra=(info)
+      current_status.extra = info
+    end
+
+    # Stores the information of the active tab of the current page
+    #
+    # @see #extra
+    # @see #extra=
+    #
+    # FIXME: see the comment in #extra. At some point, the #state_info method
+    # should be moved to each widget needing to store its information and the
+    # page itself would offer a method to make possible to iterate through all
+    # those widgets (e.g. #widgets_with_state_info).
+    def save_extra_info
+      page = overview_tree_pager&.current_page
+      return unless page&.respond_to?(:state_info)
+
+      self.extra = page.state_info
     end
 
     # Returns the id of the last selected row in the active tab of current page
@@ -133,7 +176,18 @@ module Y2Partitioner
     # The current status
     #
     # @return [PageStatus]
-    attr_accessor :current_status
+    attr_reader :current_status
+
+    # Sets the current status
+    #
+    # Note that the active tab is not stored when switching to the status of another page.
+    #
+    # @param status [PageStatus]
+    def current_status=(status)
+      current_status.active_tab = nil if current_status && current_status != status
+
+      @current_status = status
+    end
 
     # Returns the status representation for a page
     #
@@ -174,7 +228,8 @@ module Y2Partitioner
     #   * selected row
     #   * candidates pages
     class PageStatus
-      # The key to reference the selected row for a table not wrapped in a tab
+      # The key to reference the default tab of a page or to use when the page contains
+      # no known tabs
       FALLBACK_TAB = "root".freeze
       private_constant :FALLBACK_TAB
 
@@ -212,6 +267,7 @@ module Y2Partitioner
         @page_id = page_id
         @candidate_pages = candidate_pages_ids
         @selected_rows = { FALLBACK_TAB => nil }
+        @extras = {}
       end
 
       # Returns the last selected row for the active tab
@@ -232,6 +288,24 @@ module Y2Partitioner
         selected_rows[tab] = sid
       end
 
+      # Returns the extra information previously stored for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
+      #
+      # @return [Object, nil]
+      def extra
+        extras[tab]
+      end
+
+      # Stores the extra information for the active tab
+      #
+      # If the node has no tabs a fallback reference will be used. See #selected_rows
+      #
+      # @param info [Object, nil]
+      def extra=(info)
+        extras[tab] = info
+      end
+
       private
 
       # A collection to keep the selected rows per tab
@@ -242,6 +316,13 @@ module Y2Partitioner
       #
       # @return [Hash{String => Integer}]
       attr_reader :selected_rows
+
+      # A collection to keep the additional information for each page and tab
+      #
+      # As in {#selected_rows}, FALLBACK_TAB is used as key in some cases.
+      #
+      # @return [Hash{String => Object}]
+      attr_reader :extras
 
       # Returns the active tab or the fallback when none
       #

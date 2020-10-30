@@ -22,6 +22,8 @@ require "cwm/table"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/help"
 
+Yast.import "UI"
+
 module Y2Partitioner
   module Widgets
     # Abstract class to unify the definition of table widgets used to
@@ -30,7 +32,7 @@ module Y2Partitioner
     # The subclasses must define the following methods:
     #
     #   * #columns returning an array of {Y2Partitioner::Widgets::Columns::Base}
-    #   * #devices returning a collection of {Y2Storage::BlkDevice}
+    #   * #entries returning a collection of {DeviceTableEntry}
     #
     class BlkDevicesTable < CWM::Table
       include Help
@@ -45,24 +47,59 @@ module Y2Partitioner
 
       # @see CWM::Table#items
       def items
-        devices.map { |d| row_for(d) }
+        @items ||= entries.map { |e| e.table_item(cols, open_items) }
+      end
+
+      # Hash listing the ids of the items with children of the table and specifying whether
+      # such item should be expanded (true) or collapsed (false).
+      #
+      # @return [Hash{String => Boolean}]
+      def open_items
+        @open_items || {}
+      end
+
+      # Sets the value of {#open_items}
+      #
+      # @param value [Hash{String => Boolean}]
+      def open_items=(value)
+        # First, invalidate the items memoization
+        @items = nil
+        @open_items = value
+      end
+
+      # Current state of the open items in the user interface, regardless the
+      # initial state specified by {#open_items}
+      #
+      # @return [Hash{String => Boolean}] same format as {#open_items}
+      def ui_open_items
+        open = Yast::UI.QueryWidget(Id(widget_id), :OpenItems).keys
+        Hash[all_items.map { |i| [i.id, open.include?(i.id)] }]
       end
 
       # Updates table content
       def refresh
+        @items = nil
         change_items(items)
+      end
+
+      # All devices referenced by the table entries
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
+      def devices
+        entries.flat_map(&:all_devices)
       end
 
       protected
 
-      # Returns true if given sid or device is available in table
-      # @param device [Y2Storage::DevicePresenter, Integer] sid or a device presenter
-      def valid_sid?(device)
-        return false if device.nil?
+      # Entry of the table that references the given sid or device, if any
+      #
+      # @param device [Y2Storage::Device, Integer] sid or a device presenter
+      # @return [DeviceTableEntry, nil]
+      def entry(device)
+        return nil if device.nil?
 
         sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        devices.any? { |d| d.sid == sid }
+        entries.flat_map(&:all_entries).find { |entry| entry.sid == sid }
       end
 
       private
@@ -72,23 +109,20 @@ module Y2Partitioner
         cols.map { |column| helptext_for(column.id) }.join("\n")
       end
 
-      def row_for(device)
-        [row_id(device)] + cols.map { |c| c.value_for(device) }
-      end
-
-      # LibYUI id to use for the row used to represent a device
-      #
-      # @param device [Y2Storage::Device, Integer] sid or device object
-      #
-      # @return [String] row id for given device
-      def row_id(device)
-        sid = device.respond_to?(:sid) ? device.sid : device.to_i
-
-        "table:device:#{sid}"
-      end
-
       def cols
         @cols ||= columns.map(&:new)
+      end
+
+      # Plain collection including the first level items and all its descendants
+      #
+      # @return [Array<CWM::TableItem>]
+      def all_items
+        items.flat_map { |item| item_with_descendants(item) }
+      end
+
+      # @see #all_items
+      def item_with_descendants(item)
+        [item] + item.children.flat_map { |child| item_with_descendants(child) }
       end
     end
   end

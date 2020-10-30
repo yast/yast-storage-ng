@@ -19,10 +19,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require_relative "device_page"
+require "y2partitioner/widgets/pages/disk"
 
 describe Y2Partitioner::Widgets::Pages::Disk do
   before do
@@ -30,28 +28,21 @@ describe Y2Partitioner::Widgets::Pages::Disk do
   end
 
   let(:scenario) { "one-empty-disk.yml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:disk) { current_graph.disks.first }
+  let(:pager) { double("Pager") }
 
   subject { described_class.new(disk, pager) }
 
-  let(:disk) { current_graph.disks.first }
-
-  let(:pager) { double("Pager") }
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
 
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
     context "when the device is neither BIOS RAID nor multipath" do
-      it "shows a disk tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+      it "shows a disk overview tab" do
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
@@ -63,16 +54,10 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
     context "when the device is a BIOS RAID" do
       let(:scenario) { "md-imsm1-devicegraph.xml" }
-
       let(:disk) { current_graph.bios_raids.first }
 
-      it "shows a disk tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+      it "shows a disk overview tab" do
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
@@ -80,20 +65,20 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
+
+      include_examples(
+        "device page",
+        "Y2Partitioner::Widgets::OverviewTab",
+        "Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab"
+      )
     end
 
     context "when the device is a multipath" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
-
       let(:disk) { current_graph.multipaths.first }
 
-      it "shows a disk tab" do
-        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
-        subject.contents
-      end
-
-      it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+      it "shows a disk overview tab" do
+        expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
         subject.contents
       end
 
@@ -101,53 +86,55 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
+
+      include_examples(
+        "device page",
+        "Y2Partitioner::Widgets::OverviewTab",
+        "Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab"
+      )
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::DiskTab do
-    subject { described_class.new(disk) }
+  describe Y2Partitioner::Widgets::Pages::DiskUsedDevicesTab do
+    subject { described_class.new(device, pager) }
+
+    let(:scenario) { "empty-dm_raids.xml" }
+    let(:device) { current_graph.bios_raids.first }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+      let(:items) { column_values(table, 0) }
 
-      it "shows the description of the disk" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDeviceDescription) }
-        expect(description).to_not be_nil
-      end
+      context "when the device is a BIOS RAID" do
+        let(:scenario) { "empty-dm_raids.xml" }
 
-      context "and the device can be used as a block device" do
-        let(:disk) { current_graph.disks.first }
+        let(:device) { current_graph.find_by_name("/dev/mapper/isw_ddgdcbibhd_test1") }
 
-        it "shows a button for editing the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+        it "shows a table with the BIOS RAID and its devices" do
+          expect(table).to_not be_nil
 
-          expect(button).to_not be_nil
-        end
-
-        it "shows a menu-button for expert options on the partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
-
-          expect(button).to_not be_nil
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/mapper/isw_ddgdcbibhd_test1",
+            "/dev/sdb",
+            "/dev/sdc"
+          )
         end
       end
 
-      context "and the device cannot be used as a block device" do
-        let(:scenario) { "dasd_50GiB" }
+      context "when the device is a Multipath" do
+        let(:scenario) { "multipath-formatted.xml" }
 
-        let(:disk) { current_graph.dasds.first }
+        let(:device) { current_graph.find_by_name("/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1") }
 
-        it "does not show a button for editing the device" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+        it "shows a table with the Multipath and its wires" do
+          expect(table).to_not be_nil
 
-          expect(button).to be_nil
-        end
-
-        it "shows a menu-button for expert options on the partition table" do
-          button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
-
-          expect(button).to_not be_nil
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1",
+            "/dev/sda",
+            "/dev/sdb"
+          )
         end
       end
     end

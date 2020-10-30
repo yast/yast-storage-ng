@@ -43,3 +43,30 @@ def remove_sort_keys(value)
 
   value
 end
+
+# Content of the given table, with each row represented as an array of values
+#
+# @param table [CWM::Table]
+# @return [Array<Array>]
+def table_values(table)
+  table.items.flat_map { |i| table_item_values(i) }
+end
+
+# All values for the given column of a table
+#
+# @param table [CWM::Table]
+# @param index [Integer] position of the column in the table
+# @return [Array]
+def column_values(table, index)
+  table_values(table).map { |p| p[index] }
+end
+
+# @see #table_values
+def table_item_values(item)
+  return [remove_sort_keys(item)] if item.is_a?(Array)
+
+  [
+    remove_sort_keys(item.values),
+    *item.children.flat_map { |i| table_item_values(i) }
+  ]
+end

@@ -25,8 +25,8 @@ module Y2Partitioner
   module Widgets
     # Button for editing the list of physical volumes of an LVM VG
     class LvmVgResizeButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

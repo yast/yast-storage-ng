@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,6 +33,7 @@ describe Y2Partitioner::Widgets::LvmLvAddButton do
   let(:device) { vg }
 
   let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+  let(:lv) { Y2Storage::LvmLv.find_by_name(current_graph, "/dev/vg0/lv1") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -63,10 +64,22 @@ describe Y2Partitioner::Widgets::LvmLvAddButton do
 
       let(:action_class) { Y2Partitioner::Actions::AddLvmLv }
 
-      it "performs the action for adding a logical volume" do
-        expect(action_class).to receive(:new).with(device).and_return(action)
-        expect(action).to receive(:run)
-        subject.handle
+      context "and it is an LVM volume group" do
+        it "performs the action for adding a logical volume" do
+          expect(action_class).to receive(:new).with(device).and_return(action)
+          expect(action).to receive(:run)
+          subject.handle
+        end
+      end
+
+      context "but it is an LVM logical volume" do
+        let(:device) { lv }
+
+        it "performs the action for adding a logical volume over its volume group" do
+          expect(action_class).to receive(:new).with(vg).and_return(action)
+          expect(action).to receive(:run)
+          subject.handle
+        end
       end
 
       it "returns :redraw if the add action returns :finish" do

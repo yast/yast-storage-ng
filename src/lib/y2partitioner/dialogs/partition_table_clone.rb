@@ -96,7 +96,7 @@ module Y2Partitioner
 
         # FIXME: The help handle does not work without a wizard
         #
-        # This handle should belongs to the dialog
+        # This handle should belong to the dialog
         def handle(event)
           return nil if event["ID"] != :help
 

@@ -18,13 +18,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/icons"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/rescan_devices_button"
-require "y2partitioner/widgets/import_mount_points_button"
-require "y2partitioner/widgets/configure"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/columns"
 
@@ -50,20 +46,23 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          hostname
+          # TRANSLATORS: label of the first element of the Partitioner left tree
+          _("All Devices")
         end
 
         # @macro seeCustomWidget
         def contents
-          invalidate_cached_content
-          return @contents if @contents
+          invalidate_cached_widgets
 
-          @contents = VBox(
-            Left(header),
+          VBox(
             table,
-            Left(device_buttons),
-            Right(HBox(*buttons))
+            Left(device_buttons)
           )
+        end
+
+        # @see Base
+        def state_info
+          { table.widget_id => table.ui_open_items }
         end
 
         private
@@ -76,22 +75,10 @@ module Y2Partitioner
 
         # Invalidates cached content if needed according to
         # {OverviewTreePager#invalidated_views}
-        def invalidate_cached_content
+        def invalidate_cached_widgets
           return unless pager.invalidated_pages.delete(:system)
 
-          @contents = nil
           @table = nil
-        end
-
-        # Page header
-        #
-        # @return [Yast::UI::Term]
-        def header
-          HBox(
-            Image(Icons::ALL, ""),
-            # TRANSLATORS: Heading. String followed by the hostname
-            Heading(format(_("Available Storage on %s"), hostname))
-          )
         end
 
         # The table contains all storage devices, including Software RAIDs and LVM Vgs
@@ -112,30 +99,6 @@ module Y2Partitioner
           @device_buttons ||= DeviceButtonsSet.new(pager)
         end
 
-        # Page buttons
-        #
-        # @return [Array<Yast::UI::Term>]
-        def buttons
-          buttons = [rescan_devices_button]
-          buttons << import_mount_points_button if Yast::Mode.installation
-          buttons << Configure.new
-          buttons
-        end
-
-        # Button for rescanning devices
-        #
-        # @return [RescanDevicesButton]
-        def rescan_devices_button
-          RescanDevicesButton.new
-        end
-
-        # Button for importing mount points
-        #
-        # @return [ImportMountPointsButton]
-        def import_mount_points_button
-          ImportMountPointsButton.new
-        end
-
         # Returns all storage devices
         #
         # @note Software RAIDs and LVM Vgs are included.
@@ -145,14 +108,13 @@ module Y2Partitioner
           disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches + multidevice_filesystems
         end
 
-        # @return [Array<Y2Storage::Device>]
+        # @return [Array<DeviceTableEntry>]
         def disk_devices
           # Since XEN virtual partitions are listed at the end of the "Hard
           # Disks" section, let's do the same in the general storage table
           all = device_graph.disk_devices + device_graph.stray_blk_devices
-          all.each_with_object([]) do |disk, devices|
-            devices << disk
-            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
+          all.map do |disk|
+            DeviceTableEntry.new_with_children(disk)
           end
         end
 
@@ -161,39 +123,39 @@ module Y2Partitioner
         #
         # @see Y2Storage::LvmVg#all_lvm_lvs
         #
-        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
+        # @return [Array<DeviceTableEntry>]
         def lvm_vgs
-          device_graph.lvm_vgs.reduce([]) do |devices, vg|
-            devices << vg
-            devices.concat(vg.all_lvm_lvs)
+          device_graph.lvm_vgs.map do |vg|
+            DeviceTableEntry.new_with_children(vg)
           end
         end
 
-        # @return [Array<Y2Storage::Device>]
+        # @return [Array<DeviceTableEntry>]
         def software_raids
-          device_graph.software_raids.reduce([]) do |devices, raid|
-            devices << raid
-            devices.concat(raid.partitions)
+          device_graph.software_raids.map do |raid|
+            DeviceTableEntry.new_with_children(raid)
           end
         end
 
-        # @return [Array<Y2Storage::Device>]
+        # @return [Array<DeviceTableEntry>]
         def nfs_devices
-          device_graph.nfs_mounts
-        end
-
-        # @return [Array<Y2Storage::Device>]
-        def bcaches
-          all = device_graph.bcaches
-          all.each_with_object([]) do |bcache, devices|
-            devices << bcache
-            devices.concat(bcache.partitions)
+          device_graph.nfs_mounts.map do |nfs|
+            DeviceTableEntry.new(nfs)
           end
         end
 
-        # @return [Array<Y2Storage::Filesystems::Base>]
+        # @return [Array<DeviceTableEntry>]
+        def bcaches
+          device_graph.bcaches.map do |bcache|
+            DeviceTableEntry.new_with_children(bcache)
+          end
+        end
+
+        # @return [Array<DeviceTableEntry>]
         def multidevice_filesystems
-          device_graph.blk_filesystems.select(&:multidevice?)
+          device_graph.blk_filesystems.select(&:multidevice?).map do |fs|
+            DeviceTableEntry.new_with_children(fs)
+          end
         end
 
         def device_graph

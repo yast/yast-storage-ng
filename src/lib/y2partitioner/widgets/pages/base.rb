@@ -19,6 +19,7 @@
 
 require "cwm/page"
 require "cwm/tree_pager"
+require "y2partitioner/widgets/device_table_entry"
 
 module Y2Partitioner
   module Widgets
@@ -55,21 +56,25 @@ module Y2Partitioner
           [parent, id].compact
         end
 
+        # State information of the page, for those pages that need to restore that state
+        # on each render
+        #
+        # It represents the current state of the widgets, so they can be initialized to the
+        # same state next time the page is redrawn.
+        #
+        # FIXME: the API to query the UI state may change, see comment in UIState#save_extra_info
+        # @return [Object, nil] it returns nil in the base class
+        def state_info
+          nil
+        end
+
         private
 
         # The parent page
         #
-        # @return [String, Integer, nil]
+        # @return [String, nil]
         def parent
-          return nil unless respond_to?(:device)
-
-          if device.is?(:partition)
-            device.partitionable.sid
-          elsif device.is?(:lvm_lv)
-            device.lvm_vg.sid
-          else
-            section
-          end
+          respond_to?(:device) ? section : nil
         end
 
         # The section which the page belongs

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,10 +19,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
-require "y2partitioner/widgets/pages"
+require_relative "device_page"
+require "y2partitioner/widgets/pages/bcache"
 
 describe Y2Partitioner::Widgets::Pages::Bcache do
   before do
@@ -29,63 +28,55 @@ describe Y2Partitioner::Widgets::Pages::Bcache do
   end
 
   let(:scenario) { "bcache2.xml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:bcache) { current_graph.find_by_name(device_name) }
+  let(:device_name) { "/dev/bcache0" }
+  let(:pager) { double("Pager") }
 
   subject { described_class.new(bcache, pager) }
 
-  let(:bcache) { current_graph.find_by_name(device_name) }
-
-  let(:device_name) { "/dev/bcache0" }
-
-  let(:pager) { double("Pager") }
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+  let(:items) { column_values(table, 0) }
 
   include_examples "CWM::Page"
 
-  describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  include_examples(
+    "device page",
+    "Y2Partitioner::Widgets::OverviewTab",
+    "Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab"
+  )
 
+  describe "#contents" do
     it "shows a bcache overview tab" do
-      expect(Y2Partitioner::Widgets::Pages::BcacheTab).to receive(:new)
+      expect(Y2Partitioner::Widgets::OverviewTab).to receive(:new)
       subject.contents
     end
 
-    it "shows a partitions tab" do
-      expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+    it "shows an used devices tab" do
+      expect(Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab).to receive(:new)
       subject.contents
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::BcacheTab do
-    subject { described_class.new(bcache) }
+  describe Y2Partitioner::Widgets::Pages::BcacheUsedDevicesTab do
+    subject { described_class.new(bcache, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+      it "shows a table with the Bcache, its backing and its caching devices" do
+        expect(table).to_not be_nil
 
-      it "shows the description of the device" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheDescription) }
-        expect(description).to_not be_nil
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/bcache0",
+          "/dev/sdb2",
+          "/dev/sdb1"
+        )
       end
 
-      it "shows a button for editing the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for changing the caching options" do
+      it "shows a button for editing the Bcache device" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BcacheEditButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for deleting the device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for configuring the partition table" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
         expect(button).to_not be_nil
       end
     end

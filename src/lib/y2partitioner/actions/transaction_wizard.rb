@@ -20,6 +20,7 @@
 require "yast"
 require "ui/sequence"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 
 Yast.import "Wizard"
 
@@ -44,6 +45,7 @@ module Y2Partitioner
 
           sym =
             if run?
+              UIState.instance.save_extra_info
               wizard_next_back do
                 super(sequence: sequence_hash)
               end

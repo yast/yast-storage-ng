@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,7 +22,6 @@ require "yast2/popup"
 require "cwm/widget"
 require "cwm/tree"
 require "y2partitioner/icons"
-require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
@@ -46,7 +45,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("System View")
+        ""
       end
 
       attr_reader :items
@@ -100,17 +99,27 @@ module Y2Partitioner
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
         [
-          system_items,
-          *graph_items,
-          summary_item,
-          settings_item
-        ]
+          system_section,
+          disks_section,
+          raids_section,
+          lvm_section,
+          bcache_section,
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # crypt_files_items,
+          # device_mapper_items,
+          btrfs_section,
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # unused_items
+          nfs_section
+        ].compact
       end
 
-      # Overrides default behavior of TreePager to register the new state with
-      # {UIState} before jumping to the tree node
+      # Overrides default behavior of TreePager to register with {UIState} the status
+      # of the current page and the new destination, before jumping to the tree node
       def switch_page(page)
-        UIState.instance.select_page(page.tree_path)
+        state = UIState.instance
+        state.save_extra_info
+        state.select_page(page.tree_path)
         super
       end
 
@@ -126,16 +135,28 @@ module Y2Partitioner
         Hash[items_with_children.map { |i| [i.to_s, open_items.include?(i)] }]
       end
 
+      # Checks whether the current page is associated to a specific device
+      #
+      # @return [Boolean]
+      def device_page?
+        current_page.respond_to?(:device)
+      end
+
       # Obtains the page associated to a specific device
+      #
+      # Note that some devices have no associated page (e.g., partitions and LVM LVs). In that case, the
+      # page associated to its parent device is considered as the page of the given device.
+      #
+      # @param device [Y2Storage::Device]
       # @return [CWM::Page, nil]
       def device_page(device)
-        if device.is?(:nfs)
-          # NFS is a special case because NFS devices don't have individual
-          # pages, all NFS devices are managed directly in the NFS list
-          @pages.find { |p| p.is_a?(Pages::NfsMounts) }
-        else
-          @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
-        end
+        # NFS is a special case because NFS devices don't have individual
+        # pages, all NFS devices are managed directly in the NFS list
+        return @pages.find { |p| p.is_a?(Pages::NfsMounts) } if device.is?(:nfs)
+
+        page = find_device_page(device)
+        page ||= find_device_page(parent_device(device))
+        page
       end
 
       # @macro seeAbstractWidget
@@ -148,6 +169,26 @@ module Y2Partitioner
       private
 
       attr_reader :tree
+
+      # Finds the page associated to a device
+      #
+      # @return [Yast::Page, nil]
+      def find_device_page(device)
+        return nil unless device
+
+        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+      end
+
+      # Parent device for the given device
+      #
+      # @return [Y2Storage::Device, nil]
+      def parent_device(device)
+        if device.is?(:partition)
+          device.partitionable
+        elsif device.is?(:lvm_lv)
+          device.lvm_vg
+        end
+      end
 
       # Select the initial page
       #
@@ -209,23 +250,10 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def system_items
+      def system_section
         page = Pages::System.new(hostname, self)
-        children = [
-          disks_section,
-          raids_section,
-          lvm_section,
-          bcache_section,
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # crypt_files_items,
-          # device_mapper_items,
-          nfs_section,
-          btrfs_section
-          # TODO: Bring this back to life - disabled for now (bsc#1078849)
-          # unused_items
-        ].compact
 
-        section_item(page, Icons::ALL, children: children)
+        section_item(page, Icons::ALL)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -242,19 +270,12 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def disk_items(disk, page_class = Pages::Disk)
         page = page_class.new(disk, self)
-        children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        device_item(page, children: children)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def partition_items(partition)
-        page = Pages::Partition.new(partition)
         device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
       def stray_blk_device_item(device)
-        page = Pages::StrayBlkDevice.new(device)
+        page = Pages::StrayBlkDevice.new(device, self)
         device_item(page)
       end
 
@@ -269,8 +290,7 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def raid_items(md)
         page = Pages::MdRaid.new(md, self)
-        children = md.partitions.sort_by(&:number).map { |p| partition_items(p) }
-        device_item(page, children: children)
+        device_item(page)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -278,7 +298,7 @@ module Y2Partitioner
         return nil unless Y2Storage::Bcache.supported?
 
         devices = device_graph.bcaches
-        page = Pages::Bcaches.new(devices, self)
+        page = Pages::Bcaches.new(self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }
         section_item(page, Icons::BCACHE, children: children)
       end
@@ -294,13 +314,6 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
-        children = vg.all_lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
-        device_item(page, children: children)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def lvm_lv_items(lv)
-        page = Pages::LvmLv.new(lv)
         device_item(page)
       end
 
@@ -324,30 +337,6 @@ module Y2Partitioner
       def btrfs_item(filesystem)
         page = Pages::Btrfs.new(filesystem, self)
         device_item(page)
-      end
-
-      # @return [Array<CWM::PagerTreeItem>]
-      def graph_items
-        return [] unless Yast::UI.HasSpecialWidget(:Graph)
-
-        page = Pages::DeviceGraph.new(self)
-        dev_item = section_item(page, Icons::GRAPH)
-        # TODO: Bring this back to life - disabled for now (bsc#1078849)
-        # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
-        # [dev_item, mount_item]
-        [dev_item]
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def summary_item
-        page = Pages::Summary.new
-        section_item(page, Icons::SUMMARY)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def settings_item
-        page = Pages::Settings.new
-        section_item(page, Icons::SETTINGS)
       end
 
       # Generates a `section` tree item for given page

@@ -19,7 +19,6 @@
 
 require "yast"
 require "y2storage"
-require "y2partitioner/ui_state"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/actions/controllers/base"
 require "y2partitioner/actions/controllers/available_devices"
@@ -55,8 +54,6 @@ module Y2Partitioner
 
           @metadata_raid_level = Y2Storage::BtrfsRaidLevel::DEFAULT
           @data_raid_level = Y2Storage::BtrfsRaidLevel::DEFAULT
-
-          UIState.instance.select_row(filesystem.sid) if filesystem
         end
 
         # Metadata RAID level for the filesystem
@@ -224,8 +221,6 @@ module Y2Partitioner
           filesystem = device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
           filesystem.metadata_raid_level = @metadata_raid_level
           filesystem.data_raid_level = @data_raid_level
-
-          UIState.instance.select_row(filesystem.sid)
 
           @filesystem = filesystem
         end

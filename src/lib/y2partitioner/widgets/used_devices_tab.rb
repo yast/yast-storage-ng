@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,20 +19,21 @@
 
 require "cwm/widget"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/device_table_entry"
 require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
-    # Class to represent a tab with a list of devices belonging to
-    # a specific device (raid, multipath, etc)
+    # Class to represent a tab with a list of devices used by a specific device. For example, the devices
+    # used to create a RAID, the wires of a Multipath, etc.
     class UsedDevicesTab < CWM::Tab
       # Constructor
       #
-      # @param devices [Array<Y2Storage::BlkDevice>]
+      # @param device [Y2Storage::Device]
       # @param pager [CWM::TreePager]
-      def initialize(devices, pager)
+      def initialize(device, pager)
         textdomain "storage"
-        @devices = devices
+        @device = device
         @pager = pager
       end
 
@@ -43,10 +44,31 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        @contents ||= VBox(table)
+        VBox(table, buttons)
+      end
+
+      # State information of the tab
+      #
+      # See {Widgets::Pages::Base#state_info}
+      #
+      # @return [Hash]
+      def state_info
+        { table.widget_id => table.ui_open_items }
       end
 
       private
+
+      # @return [Y2Storage::Device]
+      attr_reader :device
+
+      # Buttons to show
+      #
+      # Derived classes should redefine this method.
+      #
+      # @return [Yast::Term]
+      def buttons
+        @buttons ||= Empty()
+      end
 
       # Returns a table with all devices used by the container device
       #
@@ -54,7 +76,7 @@ module Y2Partitioner
       def table
         return @table unless @table.nil?
 
-        @table = ConfigurableBlkDevicesTable.new(@devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(entries, @pager)
         @table.show_columns(*columns)
         @table
       end
@@ -64,8 +86,26 @@ module Y2Partitioner
           Columns::Device,
           Columns::Size,
           Columns::Format,
+          Columns::Encrypted,
           Columns::Type
         ]
+      end
+
+      # Entries to show in the table. Typically one for the device with its used
+      # devices as children entries.
+      #
+      # @return [Array<DeviceTableEntry>]
+      def entries
+        [DeviceTableEntry.new(device, children: used_devices, full_names: true)]
+      end
+
+      # Devices considered as used by the device
+      #
+      # Derived classes should redefine this method.
+      #
+      # @return [Array<BlkDevice>]
+      def used_devices
+        []
       end
     end
   end

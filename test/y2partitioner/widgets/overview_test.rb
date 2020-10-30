@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -75,11 +76,33 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     context "when there is not a page associated to the requested device" do
-      let(:device) { vg.lvm_pvs.first }
+      context "and the requested device is a partition" do
+        let(:device) { current_graph.find_by_name("/dev/sda1") }
 
-      it "returns nil" do
-        page = subject.device_page(device)
-        expect(page).to be_nil
+        it "returns the page associated to its parent device" do
+          page = subject.device_page(device)
+
+          expect(page.device).to eq(device.partitionable)
+        end
+      end
+
+      context "and the requested device is LVM Logical Volume" do
+        let(:device) { vg.lvm_lvs.first }
+
+        it "returns the page associated to the Volume Group" do
+          page = subject.device_page(device)
+
+          expect(page.device).to eq(device.lvm_vg)
+        end
+      end
+
+      context "and the requested device is neither a partiton nor a LVM Logical Volume" do
+        let(:device) { vg.lvm_pvs.first }
+
+        it "returns nil" do
+          page = subject.device_page(device)
+          expect(page).to be_nil
+        end
       end
     end
 
@@ -95,9 +118,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
   end
 
-  describe "#contents" do
-    let(:scenario) { "empty-dasd-and-multipath.xml" }
-
+  shared_context "pages" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
     let(:overview_tree) { widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::OverviewTree) } }
@@ -106,29 +127,29 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::System) }
     end
 
+    let(:system_page) { system_pager.page }
+
     let(:disks_pager) do
-      system_pager.children.values.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
     end
+
+    let(:disks_page) { disks_pager.page }
 
     let(:disks_pages) { disks_pager.pages - [disks_pager.page] }
 
-    let(:device_graph_page) do
-      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::DeviceGraph) }
-    end
-
-    let(:btrfs_filesystems_page) do
-      system_pager.children.values.find do |i|
+    let(:btrfs_filesystems_pager) do
+      overview_tree.items.find do |i|
         i.page.is_a?(Y2Partitioner::Widgets::Pages::BtrfsFilesystems)
       end
     end
 
-    let(:summary_page) do
-      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Summary) }
-    end
+    let(:btrfs_filesystems_page) { btrfs_filesystems_pager.page }
+  end
 
-    let(:settings_page) do
-      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Settings) }
-    end
+  describe "#contents" do
+    let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+    include_context "pages"
 
     it "has a OverviewTree widget" do
       expect(overview_tree).to_not be_nil
@@ -139,21 +160,8 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     it "system pager includes a BTRFS filesystems page" do
-      expect(btrfs_filesystems_page).to_not be_nil
+      expect(btrfs_filesystems_pager).to_not be_nil
     end
-
-    it "includes a 'Summary' page" do
-      expect(summary_page).to_not be_nil
-    end
-
-    it "includes a 'Settings' page" do
-      expect(settings_page).to_not be_nil
-    end
-
-    before do
-      allow(Yast::UI).to receive(:HasSpecialWidget).with(:Graph).and_return graph_available
-    end
-    let(:graph_available) { true }
 
     context "when there are disk, dasd or multipath devices" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
@@ -270,22 +278,6 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "disk pager has no BTRFS pages" do
         btrfs_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::Btrfs) }
         expect(btrfs_pages).to be_empty
-      end
-    end
-
-    context "when the UI supports the Graph widget (Qt)" do
-      let(:graph_available) { true }
-
-      it "includes the 'Device Graph' page" do
-        expect(device_graph_page).to_not be_nil
-      end
-    end
-
-    context "when the UI does not support the Graph widget (ncurses)" do
-      let(:graph_available) { false }
-
-      it "does not include the 'Device Graph' page" do
-        expect(device_graph_page).to be_nil
       end
     end
   end
@@ -445,12 +437,14 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     let(:scenario) { "lvm-two-vgs.yml" }
 
     let(:with_children) do
-      ["Y2Partitioner::Widgets::Pages::System", "Y2Partitioner::Widgets::Pages::Disks",
-       "Y2Partitioner::Widgets::Pages::Lvm", "disk:/dev/sda", "lvm_vg:vg0", "lvm_vg:vg1"]
+      [
+        "Y2Partitioner::Widgets::Pages::Disks",
+        "Y2Partitioner::Widgets::Pages::Lvm"
+      ]
     end
 
     let(:ui_open_items) do
-      { "Y2Partitioner::Widgets::Pages::System" => "ID", "disk:/dev/sda" => "ID" }
+      { "Y2Partitioner::Widgets::Pages::Lvm" => "ID", "disk:/dev/sda" => "ID" }
     end
 
     it "contains an entry for each item with children" do
@@ -458,15 +452,31 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     it "sets the value of open items to true" do
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::System"]).to eq true
-      expect(subject.open_items["disk:/dev/sda"]).to eq true
+      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq true
+    end
+  end
+
+  describe "#device_page?" do
+    include_context "pages"
+
+    before do
+      allow(subject).to receive(:current_page).and_return(page)
     end
 
-    it "sets the value of closed items to false" do
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Disks"]).to eq false
-      expect(subject.open_items["Y2Partitioner::Widgets::Pages::Lvm"]).to eq false
-      expect(subject.open_items["lvm_vg:vg0"]).to eq false
-      expect(subject.open_items["lvm_vg:vg1"]).to eq false
+    context "when the current page has an associated device" do
+      let(:page) { disks_pages.first }
+
+      it "returns true" do
+        expect(subject.device_page?).to eq(true)
+      end
+    end
+
+    context "when the current page has no associated device" do
+      let(:page) { disks_pager.page }
+
+      it "returns false" do
+        expect(subject.device_page?).to eq(false)
+      end
     end
   end
 end

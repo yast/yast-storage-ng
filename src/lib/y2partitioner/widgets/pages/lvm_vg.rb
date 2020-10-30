@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,26 +17,21 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/tabs"
-require "y2partitioner/icons"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/overview_tab"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/lvm"
-require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
-require "y2partitioner/widgets/lvm_vg_description"
-require "y2partitioner/widgets/lvm_lv_add_button"
-require "y2partitioner/widgets/lvm_lvs_delete_button"
 require "y2partitioner/widgets/lvm_vg_resize_button"
-require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/columns"
+require "y2partitioner/widgets/used_devices_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a LVM Volume Group. It contains several tabs.
-      class LvmVg < Base
+      class LvmVg < Tabbed
         # Constructor
         #
         # @param lvm_vg [Y2Storage::Lvm_vg]
@@ -59,28 +54,15 @@ module Y2Partitioner
           @lvm_vg.vg_name
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                HBox(
-                  Image(Icons::LVM, ""),
-                  Heading(format(_("Volume Group: %s"), @lvm_vg.name))
-                )
-              ),
-              Left(
-                Tabs.new(
-                  LvmVgTab.new(@lvm_vg),
-                  LvmLvTab.new(@lvm_vg, @pager),
-                  LvmPvTab.new(@lvm_vg, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            LvmVgTab.new(@lvm_vg, @pager),
+            LvmPvTab.new(@lvm_vg, @pager)
+          ]
+        end
 
         # @return [String]
         def section
@@ -88,69 +70,8 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for a LVM Volume Group info
-      class LvmVgTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        def initialize(lvm_vg)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              LvmVgDescription.new(@lvm_vg),
-              Left(DeviceDeleteButton.new(device: @lvm_vg))
-            )
-        end
-      end
-
-      # A Tab for the LVM logical volumes of a volume group
-      class LvmLvTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        # @param pager [CWM::TreePager]
-        def initialize(lvm_vg, pager)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("Log&ical Volumes")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
-
-          device_buttons = DeviceButtonsSet.new(@pager)
-          @contents = VBox(
-            LvmVgBarGraph.new(@lvm_vg),
-            table(device_buttons),
-            Left(device_buttons),
-            Right(
-              HBox(
-                LvmLvAddButton.new(device: @lvm_vg),
-                LvmLvsDeleteButton.new(device: @lvm_vg)
-              )
-            )
-          )
-        end
-
+      # A Tab for the LVM volume group and its subdevices (eg. logical volumes)
+      class LvmVgTab < OverviewTab
         private
 
         # Returns a table with all logical volumes of a volume group, including
@@ -160,75 +81,33 @@ module Y2Partitioner
         #
         # @param buttons_set [DeviceButtonsSet]
         # @return [LvmDevicesTable]
-        def table(buttons_set)
-          table = LvmDevicesTable.new(devices, @pager, buttons_set)
-          table.remove_columns(Columns::PeSize)
-          table
+        def calculate_table(buttons_set)
+          LvmDevicesTable.new(devices, @pager, buttons_set)
         end
 
-        # Returns all logical volumes of a volume group, including thin pools
-        # and thin volumes
+        # Bar graph representing the volume group
         #
-        # @see Y2Storage::LvmVg#all_lvm_lvs
-        #
-        # @return [Array<Y2Storage::LvmLv>]
-        def devices
-          @lvm_vg.all_lvm_lvs
+        # @return [LvmBarGraph]
+        def calculate_bar_graph
+          LvmVgBarGraph.new(device)
         end
       end
 
       # A Tab for the LVM physical volumes of a volume group
-      class LvmPvTab < CWM::Tab
-        # Constructor
-        #
-        # @param lvm_vg [Y2Storage::Lvm_vg]
-        # @param pager [CWM::TreePager]
-        def initialize(lvm_vg, pager)
-          textdomain "storage"
-
-          @lvm_vg = lvm_vg
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
+      class LvmPvTab < UsedDevicesTab
+        # @see UsedDevicesTab#label
         def label
           _("&Physical Volumes")
         end
 
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(
-            table,
-            Right(LvmVgResizeButton.new(device: @lvm_vg))
-          )
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.lvm_pvs.map(&:plain_blk_device)
         end
 
-        private
-
-        # Returns a table with all physical volumes of a volume group
-        #
-        # @return [ConfigurableBlkDevicesTable]
-        def table
-          return @table unless @table.nil?
-
-          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          @table.show_columns(*columns)
-          @table
-        end
-
-        def columns
-          [
-            Columns::Device,
-            Columns::Size,
-            Columns::Format,
-            Columns::Encrypted,
-            Columns::Type
-          ]
-        end
-
-        def devices
-          @lvm_vg.lvm_pvs.map(&:plain_blk_device)
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(LvmVgResizeButton.new(device: device))
         end
       end
     end

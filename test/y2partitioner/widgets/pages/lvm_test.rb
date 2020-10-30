@@ -39,12 +39,11 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
 
   include_examples "CWM::Page"
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
+
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
-
-    let(:items) { table.items.map { |i| i[1] } }
+    let(:items) { column_values(table, 0) }
 
     before do
       vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0")
@@ -56,21 +55,30 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
 
       expect(remove_sort_keys(items)).to contain_exactly(
         "/dev/vg0",
-        "/dev/vg0/lv1",
-        "/dev/vg0/lv2",
-        "/dev/vg0/pool1",
-        "/dev/vg0/thin1",
-        "/dev/vg0/thin2",
-        "/dev/vg0/pool2",
-        "/dev/vg0/thin3",
+        "lv1",
+        "lv2",
+        "pool1",
+        "thin1",
+        "thin2",
+        "pool2",
+        "thin3",
         "/dev/vg1",
-        "/dev/vg1/lv1"
+        "lv1"
       )
     end
 
     it "shows a menu button to create a new VG" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgAddButton) }
       expect(button).to_not be_nil
+    end
+  end
+
+  describe "#state_info" do
+    let(:open) { { "id1" => true, "id2" => false } }
+
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end

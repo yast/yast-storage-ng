@@ -17,27 +17,26 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
-require "y2partitioner/widgets/pages/base"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/stray_blk_device_description"
-require "y2partitioner/dialogs"
+require "y2partitioner/widgets/pages/tabbed"
+require "y2partitioner/widgets/overview_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a StrayBlkDevice (basically a XEN virtual partition)
-      class StrayBlkDevice < Base
+      class StrayBlkDevice < Tabbed
         # @return [Y2Storage::StrayBlkDevice] device the page is about
         attr_reader :device
 
         # Constructor
         #
         # @param [Y2Storage::StrayBlkDevice] device
-        def initialize(device)
+        # @param pager [CWM::TreePager]
+        def initialize(device, pager)
           textdomain "storage"
 
           @device = device
+          @pager = pager
           self.widget_id = "stray_blk_device:" + device.name
         end
 
@@ -46,26 +45,11 @@ module Y2Partitioner
           device.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
+        private
 
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(Icons::DEFAULT_DEVICE, ""),
-                # TRANSLATORS: Heading for a generic storage device
-                # TRANSLATORS: String followed by name of the storage device
-                Heading(format(_("Device: %s"), device.name))
-              )
-            ),
-            StrayBlkDeviceDescription.new(device),
-            Left(
-              HBox(
-                BlkDeviceEditButton.new(device: device)
-              )
-            )
-          )
+        # @see Tabbed
+        def calculate_tabs
+          [OverviewTab.new(device, @pager)]
         end
       end
     end

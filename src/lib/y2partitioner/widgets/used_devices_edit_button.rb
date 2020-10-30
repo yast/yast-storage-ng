@@ -28,8 +28,8 @@ module Y2Partitioner
   module Widgets
     # Button for editing the used devices (e.g., by a Software RAID)
     class UsedDevicesEditButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 

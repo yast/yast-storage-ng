@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,9 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../test_helper"
-
-require "cwm/rspec"
+require_relative "device_page"
 require "y2partitioner/widgets/pages/lvm_vg"
 
 describe Y2Partitioner::Widgets::Pages::LvmVg do
@@ -29,23 +28,24 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
   subject { described_class.new(lvm_vg, pager) }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
   let(:lvm_vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
-
   let(:pager) { double("Pager") }
 
   include_examples "CWM::Page"
 
-  describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  include_examples(
+    "device page",
+    "Y2Partitioner::Widgets::Pages::LvmVgTab",
+    "Y2Partitioner::Widgets::Pages::LvmPvTab"
+  )
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
+  let(:items) { column_values(table, 0) }
+
+  describe "#contents" do
     it "shows a vg tab" do
       expect(Y2Partitioner::Widgets::Pages::LvmVgTab).to receive(:new)
-      subject.contents
-    end
-
-    it "shows a lvs tab" do
-      expect(Y2Partitioner::Widgets::Pages::LvmLvTab).to receive(:new)
       subject.contents
     end
 
@@ -56,51 +56,33 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
   end
 
   describe Y2Partitioner::Widgets::Pages::LvmVgTab do
-    subject { described_class.new(lvm_vg) }
-
-    include_examples "CWM::Tab"
-
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-    it "shows the description of the vg" do
-      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgDescription) }
-      expect(description).to_not be_nil
-    end
-  end
-
-  describe Y2Partitioner::Widgets::Pages::LvmLvTab do
     subject { described_class.new(lvm_vg, pager) }
 
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
-
-      let(:items) { table.items.map { |i| i[1] } }
-
       before do
         create_thin_provisioning(lvm_vg)
       end
 
-      it "shows a table with the lvs of a vg (including thin volumes)" do
-        expect(table).to_not be_nil
-
-        expect(remove_sort_keys(items)).to contain_exactly(
-          "/dev/vg0/lv1",
-          "/dev/vg0/lv2",
-          "/dev/vg0/pool1",
-          "/dev/vg0/thin1",
-          "/dev/vg0/thin2",
-          "/dev/vg0/pool2",
-          "/dev/vg0/thin3"
-        )
+      it "contains a graph bar" do
+        bar = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgBarGraph) }
+        expect(bar).to_not be_nil
       end
 
-      it "shows a button to create a new lv" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmLvAddButton) }
-        expect(button).to_not be_nil
+      it "shows a table with the vg and its lvs (including thin volumes)" do
+        expect(table).to_not be_nil
+
+        expect(items).to contain_exactly(
+          "/dev/vg0",
+          "lv1",
+          "lv2",
+          "pool1",
+          "thin1",
+          "thin2",
+          "pool2",
+          "thin3"
+        )
       end
     end
   end
@@ -109,5 +91,27 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
     subject { described_class.new(lvm_vg, pager) }
 
     include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable) } }
+
+      let(:items) { column_values(table, 0) }
+
+      it "shows a table with the vg and its pvs" do
+        expect(table).to_not be_nil
+
+        expect(remove_sort_keys(items)).to contain_exactly(
+          "/dev/vg0",
+          "/dev/sda7"
+        )
+      end
+
+      it "shows a button for editing the pvs" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgResizeButton) }
+        expect(button).to_not be_nil
+      end
+    end
   end
 end

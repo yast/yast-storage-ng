@@ -17,22 +17,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
-require "y2partitioner/widgets/pages/base"
-require "y2partitioner/widgets/disk_device_description"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/partitions_tab"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/partition_table_button"
+require "y2partitioner/widgets/overview_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for a disk device (Disk, Dasd, BIOS RAID, Multipath or Bcache).
+      # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
       #
-      # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
-      # or BIOS RAID, it also contains a {UsedDevicesTab}.
-      class Disk < Base
+      # This page contains an {OverviewTab} and, in case of Multipath or BIOS RAID,
+      # also a {DiskUsedDevicesTab}.
+      class Disk < Tabbed
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
         alias_method :device, :disk
@@ -40,7 +36,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::DmRaid,
-        #              Y2Storage::MdMember, Y2Storage::Multipath, Y2Storage::Bcache]
+        #              Y2Storage::MdMember, Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -55,24 +51,6 @@ module Y2Partitioner
           disk.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                HBox(
-                  Image(Icons::HD, ""),
-                  # TRANSLATORS: Heading. String followed by device name of hard disk
-                  Heading(format(_("Hard Disk: %s"), disk.name))
-                )
-              ),
-              Left(
-                tabs
-              )
-            )
-          )
-        end
-
         private
 
         # Tabs to show device data
@@ -81,16 +59,12 @@ module Y2Partitioner
         # another one with the device partitions. When the device is a  BIOS RAID or
         # Multipath, a third tab is used to show the disks that belong to the device.
         #
-        # @return [Tabs]
-        def tabs
-          tabs = [
-            DiskTab.new(disk),
-            PartitionsTab.new(disk, @pager)
-          ]
+        # @return [Array<CWM::Tab>]
+        def calculate_tabs
+          tabs = [OverviewTab.new(disk, @pager)]
+          tabs << DiskUsedDevicesTab.new(disk, @pager) if used_devices_tab?
 
-          tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
-
-          Tabs.new(*tabs)
+          tabs
         end
 
         # Whether a extra tab for used devices is necessary
@@ -99,64 +73,13 @@ module Y2Partitioner
         def used_devices_tab?
           disk.is?(:multipath, :dm_raid, :md)
         end
-
-        # Devices used by the RAID or Multipath
-        #
-        # @return [Array<BlkDevice>]
-        def used_devices
-          if disk.is?(:multipath, :dm_raid)
-            disk.parents
-          elsif disk.is?(:md)
-            disk.devices
-          else
-            []
-          end
-        end
       end
 
-      # A Tab for disk device description
-      class DiskTab < CWM::Tab
-        # Constructor
-        #
-        # @param disk [Y2Storage::BlkDevice]
-        def initialize(disk, initial: false)
-          textdomain "storage"
-
-          @disk = disk
-          @initial = initial
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(
-            DiskDeviceDescription.new(@disk),
-            Left(
-              HBox(*buttons)
-            )
-          )
-        end
-
-        private
-
-        # Buttons for the device
-        #
-        # Note that some block devices cannot be edited because they cannot be used as block devices,
-        # (e.g., DASD devices).
-        #
-        # @return [Array<CWM::AbstractWidget>]
-        def buttons
-          buttons = []
-
-          buttons << BlkDeviceEditButton.new(device: @disk) if @disk.usable_as_blk_device?
-          buttons << PartitionTableButton.new(@disk)
-
-          buttons
+      # A Tab for the used devices of a Multipath or BIOS RAID
+      class DiskUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.is?(:multipath, :dm_raid) ? device.parents : []
         end
       end
     end

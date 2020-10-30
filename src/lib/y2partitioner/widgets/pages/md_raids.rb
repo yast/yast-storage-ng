@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/md_add_button"
@@ -53,28 +52,22 @@ module Y2Partitioner
         private
 
         # @see DevicesTable
-        def icon
-          Icons::RAID
-        end
-
-        # @see DevicesTable
         def table_buttons
           MdAddButton.new
         end
 
         # @see DevicesTable
-        def table
-          @table ||= MdRaidsTable.new(devices, pager, device_buttons)
+        def calculate_table
+          MdRaidsTable.new(devices, pager, device_buttons)
         end
 
         # Returns all Software RAIDs and its partitions
         #
-        # @return [Array<Y2Storage::Md>]
+        # @return [Array<DeviceTableEntry>]
         def devices
           devicegraph = DeviceGraphs.instance.current
-          devicegraph.software_raids.each_with_object([]) do |raid, devices|
-            devices << raid
-            devices.concat(raid.partitions)
+          devicegraph.software_raids.map do |raid|
+            DeviceTableEntry.new_with_children(raid)
           end
         end
       end

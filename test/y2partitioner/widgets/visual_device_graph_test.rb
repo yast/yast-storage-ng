@@ -30,66 +30,10 @@ describe Y2Partitioner::Widgets::VisualDeviceGraph do
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-  let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }
 
-  subject(:widget) { described_class.new(device_graph, pager) }
+  subject(:widget) { described_class.new(device_graph) }
 
   include_examples "CWM::CustomWidget"
-
-  describe "#handle" do
-    before do
-      Y2Storage::Filesystems::Nfs.create(device_graph, "new", "/device")
-      allow(Yast::UI).to receive(:QueryWidget).and_return item
-    end
-
-    context "when there is no device with the clicked sid" do
-      # The first sid used by libstorage-ng is 42. And when a devicegraph is loaded from a yaml file,
-      # sids are continuously increasing after each new load. So using a big sid number to represent a
-      # missing device is not safe enough. Such big number could be reached if several yaml files are
-      # loaded before this test. The safer solution is to use a sid less than 42 (for example, 1).
-      let(:item) { "1" }
-
-      it "doesn't change the current section" do
-        expect(pager).to_not receive(:switch_page)
-        widget.handle
-      end
-    end
-
-    context "when an NFS device is clicked" do
-      let(:item) { device_graph.nfs_mounts.first.sid.to_s }
-
-      it "switches to the NFS section" do
-        expect(pager).to receive(:switch_page) do |page|
-          expect(page.label).to eq "NFS"
-        end
-        widget.handle
-      end
-    end
-
-    context "when a device with its own page is clicked" do
-      let(:partition) { device_graph.find_by_name("/dev/sda1") }
-      let(:item) { partition.sid.to_s }
-
-      it "switches to the corresponding section" do
-        expect(pager).to receive(:switch_page) do |page|
-          expect(page.label).to eq "sda1"
-        end
-        widget.handle
-      end
-    end
-
-    context "when a file system is clicked" do
-      let(:device) { device_graph.find_by_name("/dev/vg0/lv1") }
-      let(:item) { device.filesystem.sid.to_s }
-
-      it "switches to the section of the host device" do
-        expect(pager).to receive(:switch_page) do |page|
-          expect(page.label).to eq "lv1"
-        end
-        widget.handle
-      end
-    end
-  end
 
   describe "#init" do
     it "updates the content of the graph widget" do

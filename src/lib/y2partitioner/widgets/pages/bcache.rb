@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,21 +17,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/overview_tab"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/bcaches"
-require "y2partitioner/widgets/bcache_description"
-require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/bcache_edit_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/partition_table_add_button"
-require "y2partitioner/widgets/partitions_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for a bcache device
-      class Bcache < Base
+      class Bcache < Tabbed
         # @return [Y2Storage::Bcache] Device this page is about
         attr_reader :bcache
         alias_method :device, :bcache
@@ -53,28 +49,15 @@ module Y2Partitioner
           device.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                HBox(
-                  Image(Icons::BCACHE, ""),
-                  # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
-                  Heading(format(_("Bcache: %s"), device.name))
-                )
-              ),
-              Left(
-                Tabs.new(
-                  BcacheTab.new(device),
-                  PartitionsTab.new(device, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            OverviewTab.new(device, @pager),
+            BcacheUsedDevicesTab.new(device, @pager)
+          ]
+        end
 
         # @return [String]
         def section
@@ -82,42 +65,16 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for a Bcache description and its buttons
-      class BcacheTab < CWM::Tab
-        # Constructor
-        #
-        # @param bcache [Y2Storage::Bcache]
-        def initialize(bcache)
-          textdomain "storage"
-
-          @bcache = bcache
+      # A Tab for the used devices of a Bcache
+      class BcacheUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          ([device.backing_device] + device.bcache_cset.blk_devices).compact
         end
 
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              BcacheDescription.new(@bcache),
-              Left(HBox(*buttons))
-            )
-        end
-
-        private
-
-        # @return [Array<Widgets::DeviceButton>]
+        # @see UsedDevicesTab#buttons
         def buttons
-          [
-            BlkDeviceEditButton.new(device: @bcache),
-            BcacheEditButton.new(device: @bcache),
-            DeviceDeleteButton.new(device: @bcache),
-            PartitionTableAddButton.new(device: @bcache)
-          ]
+          Right(BcacheEditButton.new(device: device))
         end
       end
     end

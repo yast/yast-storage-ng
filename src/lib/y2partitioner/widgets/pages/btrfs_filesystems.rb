@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/btrfs_add_button"
@@ -64,18 +63,13 @@ module Y2Partitioner
         attr_reader :filesystems
 
         # @see DevicesTable
-        def icon
-          Icons::BTRFS
-        end
-
-        # @see DevicesTable
         def table_buttons
           BtrfsAddButton.new
         end
 
         # @return [ConfigurableBlkDevicesTable]
-        def table
-          @table ||= BtrfsFilesystemsTable.new(filesystems, pager, device_buttons)
+        def calculate_table
+          BtrfsFilesystemsTable.new(entries, pager, device_buttons)
         end
 
         # Widget with the dynamic set of buttons for the selected row
@@ -83,6 +77,11 @@ module Y2Partitioner
         # @return [DeviceButtonsSet]
         def device_buttons
           @device_buttons ||= DeviceButtonsSet.new(pager)
+        end
+
+        # @return [Array<DeviceTableEntry>]
+        def entries
+          filesystems.map { |fs| DeviceTableEntry.new_with_children(fs) }
         end
       end
     end

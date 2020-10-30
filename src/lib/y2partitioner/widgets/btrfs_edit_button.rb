@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,15 +27,15 @@ module Y2Partitioner
   module Widgets
     # Button for editing a BTRFS filesystem
     class BtrfsEditButton < DeviceButton
-      def initialize(*args)
-        super
+      def initialize(args = {})
+        super(**args)
         textdomain "storage"
       end
 
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button to edit a BTRFS filesystem
-        _("Edit...")
+        _("&Edit...")
       end
 
       private

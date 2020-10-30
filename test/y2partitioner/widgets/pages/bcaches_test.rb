@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018-2019] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,71 +31,32 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(bcaches, pager) }
-
-  let(:bcaches) { device_graph.bcaches }
+  subject { described_class.new(pager) }
 
   let(:pager) { double("OverviewTreePager") }
 
   include_examples "CWM::Page"
 
+  let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+  let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+
   describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+    it "shows a table with the bcache devices and their partitions" do
+      expect(table).to_not be_nil
 
-    it "shows a bcache devices tab" do
-      expect(Y2Partitioner::Widgets::Pages::BcachesTab).to receive(:new)
-      subject.contents
-    end
+      devices = column_values(table, 0)
 
-    it "shows a caching set devices tab" do
-      expect(Y2Partitioner::Widgets::Pages::BcacheCsetsTab).to receive(:new)
-      subject.contents
+      expect(remove_sort_keys(devices)).to contain_exactly("/dev/bcache0", "/dev/bcache1",
+        "/dev/bcache2", "bcache0p1", "bcache2p1")
     end
   end
 
-  describe Y2Partitioner::Widgets::Pages::BcachesTab do
-    subject { described_class.new(bcaches, pager) }
+  describe "#state_info" do
+    let(:open) { { "id1" => true, "id2" => false } }
 
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows a table with the bcache devices and their partitions" do
-        table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
-
-        expect(table).to_not be_nil
-
-        devices = table.items.map { |i| i[1] }
-
-        expect(remove_sort_keys(devices)).to contain_exactly("/dev/bcache0", "/dev/bcache1",
-          "/dev/bcache2", "/dev/bcache0p1", "/dev/bcache2p1")
-      end
-    end
-  end
-
-  describe Y2Partitioner::Widgets::Pages::BcacheCsetsTab do
-    subject { described_class.new(pager) }
-
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      before do
-        vda1 = device_graph.find_by_name("/dev/vda1")
-        vda1.create_bcache_cset
-      end
-
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows a table with the caching set devices" do
-        table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
-
-        expect(table).to_not be_nil
-
-        devices = table.items.map { |i| i[1] }
-
-        expect(devices).to contain_exactly("/dev/vdb", "/dev/vda1")
-      end
+    it "returns a hash with the id of the devices table and its corresponding open items" do
+      expect(table).to receive(:ui_open_items).and_return open
+      expect(subject.state_info).to eq(table.widget_id => open)
     end
   end
 end

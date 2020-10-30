@@ -20,7 +20,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/actions/add_btrfs"
-require "y2partitioner/widgets/execute_and_redraw"
+require "y2partitioner/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets

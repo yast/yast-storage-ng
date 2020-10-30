@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,23 +17,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/pages/base"
+require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/pages/md_raids"
-require "y2partitioner/widgets/md_description"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/partition_table_add_button"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/used_devices_edit_button"
-require "y2partitioner/widgets/partitions_tab"
+require "y2partitioner/widgets/overview_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdDevicesTab}
-      class MdRaid < Base
+      # A Page for a md raid device: contains {OverviewTab} and {MdUsedDevicesTab}
+      class MdRaid < Tabbed
         # Constructor
         #
         # @param md [Y2Storage::Md]
@@ -56,28 +51,15 @@ module Y2Partitioner
           @md.basename
         end
 
-        # @macro seeCustomWidget
-        def contents
-          Top(
-            VBox(
-              Left(
-                HBox(
-                  Image(Icons::RAID, ""),
-                  Heading(format(_("RAID: %s"), @md.name))
-                )
-              ),
-              Left(
-                Tabs.new(
-                  MdTab.new(@md, initial: true),
-                  MdDevicesTab.new(@md, @pager),
-                  PartitionsTab.new(@md, @pager)
-                )
-              )
-            )
-          )
-        end
-
         private
+
+        # @see Tabbed
+        def calculate_tabs
+          [
+            OverviewTab.new(@md, @pager, initial: true),
+            MdUsedDevicesTab.new(@md, @pager)
+          ]
+        end
 
         # @return [String]
         def section
@@ -85,62 +67,16 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for a Software RAID description
-      class MdTab < CWM::Tab
-        # Constructor
-        #
-        # @param md [Y2Storage::Md]
-        # @param initial [Boolean] if it is the initial tab
-        def initialize(md, initial: false)
-          textdomain "storage"
-
-          @md = md
-          @initial = initial
+      # A Tab for the used devices of a MD RAID
+      class MdUsedDevicesTab < UsedDevicesTab
+        # @see UsedDevicesTab#used_devices
+        def used_devices
+          device.devices
         end
 
-        # @macro seeAbstractWidget
-        def label
-          _("&Overview")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||=
-            VBox(
-              MdDescription.new(@md),
-              Left(
-                HBox(
-                  BlkDeviceEditButton.new(device: @md),
-                  DeviceDeleteButton.new(device: @md),
-                  PartitionTableAddButton.new(device: @md)
-                )
-              )
-            )
-        end
-      end
-
-      # A Tab for the devices used by a Software RAID
-      class MdDevicesTab < UsedDevicesTab
-        # Constructor
-        #
-        # @param md [Y2Storage::Md]
-        # @param pager [CWM::TreePager]
-        # @param initial [Boolean] if it is the initial tab
-        def initialize(md, pager, initial: false)
-          textdomain "storage"
-
-          super(md.devices, pager)
-          @md = md
-          @initial = initial
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          @contents ||= VBox(
-            table,
-            Right(UsedDevicesEditButton.new(device: @md))
-          )
+        # @see UsedDevicesTab#buttons
+        def buttons
+          Right(UsedDevicesEditButton.new(device: device))
         end
       end
     end

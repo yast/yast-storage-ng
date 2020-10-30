@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/icons"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_add_button"
@@ -37,7 +36,7 @@ module Y2Partitioner
         #
         # @return [String]
         def self.label
-          _("Volume Management")
+          _("LVM Volume Groups")
         end
 
         # Constructor
@@ -53,18 +52,13 @@ module Y2Partitioner
         private
 
         # @see DevicesTable
-        def icon
-          Icons::LVM
-        end
-
-        # @see DevicesTable
         def table_buttons
           LvmVgAddButton.new
         end
 
         # @see DevicesTable
-        def table
-          @table ||= LvmDevicesTable.new(devices, pager, device_buttons)
+        def calculate_table
+          LvmDevicesTable.new(devices, pager, device_buttons)
         end
 
         # Returns all volume groups and their logical volumes, including thin pools
@@ -72,11 +66,10 @@ module Y2Partitioner
         #
         # @see Y2Storage::LvmVg#all_lvm_lvs
         #
-        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
+        # @return [Array<DeviceTableEntry>]
         def devices
-          device_graph.lvm_vgs.reduce([]) do |devices, vg|
-            devices << vg
-            devices.concat(vg.all_lvm_lvs)
+          device_graph.lvm_vgs.map do |vg|
+            DeviceTableEntry.new_with_children(vg)
           end
         end
       end
