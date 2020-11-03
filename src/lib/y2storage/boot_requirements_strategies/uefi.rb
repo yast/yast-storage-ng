@@ -125,6 +125,13 @@ module Y2Storage
       EFI_MAX_START = DiskSize.TiB(2).freeze
       private_constant :EFI_MAX_START
 
+      # Value of Planned::Partition#mkfs_options used to enforce FAT32
+      FAT32_OPT = "-F32".freeze
+      # Min size for which it's safe to enforce FAT32. Based on a limitation of the FAT32
+      # file format when used in Advanced Format 4K Native drives (4-KB-per-sector).
+      SIZE_FOR_FAT32 = DiskSize.MiB(256).freeze
+      private_constant :FAT32_OPT, :SIZE_FOR_FAT32
+
       # @return [Planned::Partition]
       def efi_partition(target)
         planned_partition = create_planned_partition(efi_volume, target)
@@ -137,9 +144,20 @@ module Y2Storage
         else
           planned_partition.max_start_offset = EFI_MAX_START
           planned_partition.disk = boot_disk.name
+          planned_partition.mkfs_options = FAT32_OPT if force_fat32?(planned_partition)
         end
 
         planned_partition
+      end
+
+      # Whether FAT32 should be enforced for the given planned EFI partition
+      #
+      # The EFI standard recommends to use FAT32 in general, specially for fixed drives.
+      #
+      # @param partition [Planned::Partition]
+      # @return [Boolean]
+      def force_fat32?(partition)
+        partition.min_size >= SIZE_FOR_FAT32
       end
 
       def reusable_efi

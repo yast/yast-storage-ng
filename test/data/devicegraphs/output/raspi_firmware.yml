@@ -12,7 +12,7 @@
         file_system: vfat
         mount_point: /boot/vc
     - partition:
-        size: 256 MiB
+        size: 128 MiB
         name: /dev/sda2
         type: primary
         id: esp

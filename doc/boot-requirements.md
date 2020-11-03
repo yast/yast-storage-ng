@@ -118,37 +118,45 @@
 				- **requires the /boot/efi partition to have id ESP (according to the EFI standard)**
 		- and the first partition contains no boot code or EFI files
 			- **requires only a new /boot/efi partition**
-			- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+			- **requires /boot/efi to be the first partition of the device**
+			- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 		- and there are no partitions in the boot disk
 			- **requires only a new /boot/efi partition**
-			- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+			- **requires /boot/efi to be the first partition of the device**
+			- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 	- and the first partition in the boot disk is a standard EFI with id ESP
 		- **requires only a new /boot/efi partition**
-		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 - if the target boot disk initially contains a GPT partition table
 	- even if the first partition has id DOS32 and a FAT filesystem with an EFI system
 		- **requires only a new /boot/efi partition**
-		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 	- if there are no partitions in the boot disk
 		- **requires only a new /boot/efi partition**
-		- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 - if the target boot disk contains no partition table initially
 	- **requires only a new /boot/efi partition**
-	- **requires /boot/efi to be at the start of an MBR partition table, bumping any existing table if needed**
+	- **requires /boot/efi to be the first partition of the device**
+	- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
 	- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
 - when proposing a new EFI partition
 	- **requires /boot/efi to be on the boot disk**
 	- **requires /boot/efi to be a non-encrypted vfat partition**
 	- **requires /boot/efi to be close enough to the beginning of disk**
 	- when aiming for the recommended size
-		- **requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)**
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
 	- when aiming for the minimal size
-		- **requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)**
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
 
 ## needed partitions in a S/390 system
 - trying to install in a FBA DASD disk
@@ -302,7 +310,10 @@
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
 		- when aiming for the recommended size
-			- **requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)**
-		- when aiming for the minimal size
+			- **requires /boot/efi to use FAT32**
 			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
-			- **requires it to be at most 500 MiB (enough space for several operating systems)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
+		- when aiming for the minimal size
+			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+			- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
