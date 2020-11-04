@@ -189,10 +189,27 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       context "when the subvolume does not exist on disk yet" do
         let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", false) }
 
-        it "tries to fix the path" do
-          expect(subject).to receive(:fix_path)
+        context "and the path is not modifed" do
+          let(:value) { "@/foo" }
 
-          subject.validate
+          it "does not try to fix the path" do
+            expect(subject).to_not receive(:fix_path)
+
+            subject.validate
+          end
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+        context "and the path is modifed" do
+          let(:value) { "@/bar" }
+
+          it "tries to fix the path" do
+            expect(subject).to receive(:fix_path)
+
+            subject.validate
+          end
         end
       end
     end

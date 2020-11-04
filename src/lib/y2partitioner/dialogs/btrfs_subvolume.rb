@@ -139,13 +139,14 @@ module Y2Partitioner
 
         # Whether to skip the validations
         #
-        # Note that validations are not performed when the subvolume already exists on disk.
+        # Note that validations are not performed when the subvolume already exists on disk or when the
+        # path is not modified.
         #
         # @return [Boolean]
         def skip_validation?
           return false unless controller.subvolume
 
-          controller.exist_subvolume?
+          controller.exist_subvolume? || controller.subvolume.path == value
         end
 
         # Error when the given path is empty
