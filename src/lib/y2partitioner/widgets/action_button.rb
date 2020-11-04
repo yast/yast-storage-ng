@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,33 +17,27 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "cwm"
-require "y2partitioner/actions/add_md"
+require "abstract_method"
 require "y2partitioner/execute_and_redraw"
 
 module Y2Partitioner
   module Widgets
-    # Button for openng a wizard to add a new MD array
-    class MdAddButton < CWM::PushButton
+    # Base class for a button that performs an action
+    class ActionButton < CWM::PushButton
       include ExecuteAndRedraw
 
-      # Constructor
-      def initialize
-        textdomain "storage"
-      end
-
       # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: button label to add a MD Raid
-        _("Add RAID...")
-      end
-
-      # @macro seeAbstractWidget
-      # @see Actions::AddMd
       def handle
-        execute_and_redraw { Actions::AddMd.new.run }
+        execute_and_redraw { action.run }
       end
+
+      # Action to perform when the button is clicked
+      #
+      # Derived classes must define this method.
+      #
+      # @return [Actions::Base]
+      abstract_method :action
     end
   end
 end

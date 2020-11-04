@@ -19,13 +19,11 @@
 
 require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/pages/tabbed"
-require "y2partitioner/widgets/pages/lvm"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
-require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_buttons_set"
+require "y2partitioner/widgets/device_edit_buttons"
 require "y2partitioner/widgets/columns"
-require "y2partitioner/widgets/used_devices_tab"
 
 module Y2Partitioner
   module Widgets

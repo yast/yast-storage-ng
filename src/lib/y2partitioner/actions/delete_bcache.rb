@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,15 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/actions/delete_device"
+require "y2partitioner/actions/delete_blk_device"
 require "y2partitioner/actions/controllers/bcache"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
-    # Action for deleting a bcache, see {Actions::DeleteBcache}
-    class DeleteBcache < DeleteDevice
+    # Action for deleting a Bcache, see {Actions::DeleteBlkDevice}
+    class DeleteBcache < DeleteBlkDevice
       # Constructor
       #
       # @param bcache [Y2Storage::Bcache]
@@ -48,7 +47,7 @@ module Y2Partitioner
         (super + [flash_only_error, unsafe_detach_error]).compact
       end
 
-      # Error when the bcache is Flash-only
+      # Error when the Bcache is Flash-only
       #
       # @return [String, nil] nil if the bcache is not Flash-only.
       def flash_only_error
@@ -78,17 +77,17 @@ module Y2Partitioner
         )
       end
 
-      # Deletes the indicated bcache (see {Actions::DeleteDevice#device})
+      # Deletes the indicated Bcache (see {Actions::DeleteDevice#device})
       def delete
         bcache_controller.delete_bcache
       end
 
-      # @see DeleteDevice
+      # @see DeleteBlkDevice
       def simple_confirm_text
         bcache_cset_note + super
       end
 
-      # @see DeleteDevice
+      # @see DeleteBlkDevice
       def recursive_confirm_text_below
         bcache_cset_note + super
       end
@@ -106,7 +105,7 @@ module Y2Partitioner
         )
       end
 
-      # Whether the bcache is Flash-only
+      # Whether the Bcache is Flash-only
       #
       # @return [Boolean]
       def flash_only_bcache?

@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,8 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2storage"
+require "yast2/popup"
 require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
@@ -40,15 +39,13 @@ module Y2Partitioner
         device.blk_devices.first.delete_filesystem
       end
 
-      # @see DeleteDevice#simple_confirm_text
-      #
-      # @note The implementation in the base class relies on the #display_name
-      #   method of the device, which returns nil for regular (non multi-device)
-      #   filesystems.
-      #
-      # @return [String]
-      def simple_confirm_text
-        _("Really delete the filesystem?")
+      # @see DeleteDevice#confirm
+      def confirm
+        # TRANSLATORS: Message when deleting a Btrfs filesystem, where %{name} is replaced by the Btrfs
+        #   name (e.g., "BtrFS sda1").
+        text = format(_("Really delete the file system %{name}?"), name: device.name)
+
+        Yast2::Popup.show(text, buttons: :yes_no) == :yes
       end
 
       # @see DeleteDevice#committed_device
@@ -56,9 +53,9 @@ module Y2Partitioner
         @committed_device ||= system_graph.find_device(device.sid)
       end
 
-      # @see DeleteDevice#committed_device_mounted?
-      def committed_device_mounted?
-        return false if committed_device.nil?
+      # @see DeleteDevice#try_unmount?
+      def try_unmount?
+        return false unless committed_device
 
         committed_device.active_mount_point?
       end

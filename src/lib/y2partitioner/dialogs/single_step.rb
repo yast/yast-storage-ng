@@ -17,31 +17,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/widgets/columns/base"
+require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
-  module Widgets
-    module Columns
-      # Widget for displaying the column holding the `Devices` used by a filesystem
-      class FilesystemDevices < Base
-        # Constructor
-        def initialize
-          textdomain "storage"
-        end
+  module Dialogs
+    # Base class for dialogs that do not belong to a wizard. They are intended to be used in a single
+    # step action.
+    class SingleStep < Base
+      # Always opens a new dialog (do not override the current wizard content). Otherwise, the main
+      # wizard (which contains the left tree, menu, etc) should be refreshed even though the user cancels
+      # the current action.
+      def should_open_dialog?
+        true
+      end
 
-        # @see Columns::Base#title
-        def title
-          # TRANSLATORS: label of a table column
-          _("Devices")
-        end
+      # Hides abort button
+      def abort_button
+        ""
+      end
 
-        # @see Columns::Base#value_for
-        def value_for(device)
-          return "" unless device&.is?(:filesystem)
+      def next_button
+        Yast::Label.AcceptButton
+      end
 
-          device.plain_blk_devices.map(&:name).sort.join(", ")
-        end
+      def back_button
+        Yast::Label.CancelButton
       end
     end
   end

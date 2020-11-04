@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,35 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/edit_bcache"
-
-Yast.import "Popup"
-
-module Y2Partitioner
-  module Widgets
-    # Button for editing a bcache
-    class BcacheEditButton < DeviceButton
-      def initialize(args = {})
-        super(**args)
-        textdomain "storage"
-      end
-
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: label for button to edit a bcache
-        _("Change Caching...")
-      end
-
-      private
-
-      # Returns the proper Actions class to edit the bcache
-      #
-      # @see Actions::EditBcache
-      def actions_class
-        Actions::EditBcache
-      end
-    end
-  end
-end
+require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/widgets/device_edit_buttons"
+require "y2partitioner/widgets/device_delete_buttons"

@@ -116,6 +116,32 @@ describe Y2Partitioner::Dialogs::DeviceDescription do
     end
   end
 
+  context "for Btrfs subvolume" do
+    let(:scenario) { "mixed_disks_btrfs" }
+    let(:filesystem) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/sda2").filesystem }
+    let(:device) { filesystem.btrfs_subvolumes.find { |s| s.path == "@/home" } }
+
+    describe "#title" do
+      it "includes the path of the Btrfs subvolume" do
+        expect(subject.title).to include "@/home"
+      end
+    end
+
+    describe "#contents" do
+      it "includes a widget with the description of the Btrfs subvolume" do
+        expect(Y2Partitioner::Widgets::BtrfsSubvolumeDescription).to receive(:new).with(device)
+        subject.contents
+      end
+    end
+
+    describe "#run" do
+      it "opens the pop-up and returns the result of the user input" do
+        expect_any_instance_of(Y2Partitioner::Dialogs::Popup).to receive(:run).and_return(:ok)
+        expect(subject.run).to eq :ok
+      end
+    end
+  end
+
   context "for a XEN partition" do
     let(:scenario) { "xen-partitions.xml" }
     let(:device) { current_graph.find_by_name("/dev/xvda1") }

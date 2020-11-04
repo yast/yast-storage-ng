@@ -144,9 +144,6 @@ module Y2Partitioner
 
       # Obtains the page associated to a specific device
       #
-      # Note that some devices have no associated page (e.g., partitions and LVM LVs). In that case, the
-      # page associated to its parent device is considered as the page of the given device.
-      #
       # @param device [Y2Storage::Device]
       # @return [CWM::Page, nil]
       def device_page(device)
@@ -154,9 +151,7 @@ module Y2Partitioner
         # pages, all NFS devices are managed directly in the NFS list
         return @pages.find { |p| p.is_a?(Pages::NfsMounts) } if device.is?(:nfs)
 
-        page = find_device_page(device)
-        page ||= find_device_page(parent_device(device))
-        page
+        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
       end
 
       # @macro seeAbstractWidget
@@ -169,26 +164,6 @@ module Y2Partitioner
       private
 
       attr_reader :tree
-
-      # Finds the page associated to a device
-      #
-      # @return [Yast::Page, nil]
-      def find_device_page(device)
-        return nil unless device
-
-        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
-      end
-
-      # Parent device for the given device
-      #
-      # @return [Y2Storage::Device, nil]
-      def parent_device(device)
-        if device.is?(:partition)
-          device.partitionable
-        elsif device.is?(:lvm_lv)
-          device.lvm_vg
-        end
-      end
 
       # Select the initial page
       #

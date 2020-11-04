@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,16 +17,15 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "y2partitioner/ui_state"
-require "y2partitioner/actions/delete_device"
+require "y2partitioner/actions/delete_blk_device"
 
 module Y2Partitioner
   module Actions
     # Action for deleting a logical volume
     #
-    # @see DeleteDevice
-    class DeleteLvmLv < DeleteDevice
+    # @see DeleteBlkDevice
+    class DeleteLvmLv < DeleteBlkDevice
       def initialize(*args)
         super
         textdomain "storage"

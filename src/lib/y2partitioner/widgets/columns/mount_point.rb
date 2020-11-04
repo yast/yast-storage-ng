@@ -40,14 +40,29 @@ module Y2Partitioner
         def value_for(device)
           return device.mount_point if fstab_entry?(device)
 
+          mount_point = mount_point_for(device)
+
+          return "" unless mount_point
+
+          path = mount_point.path
+          path += " *" unless mount_point.active?
+
+          path
+        end
+
+        private
+
+        # Mount point for the given device
+        #
+        # @return [Y2Storage::MountPoint, nil]
+        def mount_point_for(device)
+          return device.mount_point if device.is?(:btrfs_subvolume)
+
           filesystem = filesystem_for(device)
 
-          return "" if filesystem.nil?
-          return "" if part_of_multidevice?(device, filesystem)
+          return nil if !filesystem || part_of_multidevice?(device, filesystem)
 
-          res = filesystem.mount_path
-          res += " *" if filesystem.mount_point && !filesystem.mount_point.active?
-          res
+          filesystem.mount_point
         end
       end
     end

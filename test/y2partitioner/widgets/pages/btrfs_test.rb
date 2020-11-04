@@ -74,10 +74,10 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
         expect(lvm_bar).to be_nil
       end
 
-      it "shows a table containing only the RAID" do
+      it "shows a table containing only the Btrfs" do
         expect(table).to_not be_nil
 
-        expect(remove_sort_keys(items)).to eq ["sdb2"]
+        expect(remove_sort_keys(items)).to eq ["BtrFS sdb2"]
       end
     end
   end
@@ -93,13 +93,13 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
         expect(table).to_not be_nil
 
         expect(remove_sort_keys(items)).to contain_exactly(
-          "BtrFS",
+          "BtrFS sdb2",
           "/dev/sdb2"
         )
       end
 
       it "shows a button for editing the Btrfs devices" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsDevicesEditButton) }
         expect(button).to_not be_nil
       end
     end

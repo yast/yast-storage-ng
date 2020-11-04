@@ -17,8 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2partitioner/widgets/pages/devices_table"
-require "y2partitioner/widgets/bcache_add_button"
+require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/device_table_entry"
 
 module Y2Partitioner
   module Widgets

@@ -45,6 +45,27 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
   end
 
   describe "#device=" do
+    before do
+      allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
+    end
+
+    let(:btrfs) { false }
+
+    shared_examples "btrfs subvolume button" do
+      context "and the device is formatted as Btrfs" do
+        let(:btrfs) { true }
+
+        it "includes a button to add a Btrfs subvolume" do
+          expect(widget).to receive(:replace) do |content|
+            widgets = Yast::CWM.widgets_in_contents([content])
+            expect(widgets.map(&:class)).to include(Y2Partitioner::Widgets::BtrfsSubvolumeAddButton)
+          end
+
+          widget.device = device
+        end
+      end
+    end
+
     context "when targeting a partition" do
       let(:device) { device_graph.partitions.first }
 
@@ -55,12 +76,14 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::PartitionAddButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
+            Y2Partitioner::Widgets::PartitionDeleteButton
           )
         end
 
         widget.device = device
       end
+
+      include_examples "btrfs subvolume button"
     end
 
     context "when targeting an MD" do
@@ -73,12 +96,14 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::PartitionAddButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
+            Y2Partitioner::Widgets::MdDeleteButton
           )
         end
 
         widget.device = device
       end
+
+      include_examples "btrfs subvolume button"
     end
 
     context "when targeting a disk device" do
@@ -97,6 +122,8 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
           widget.device = device
         end
+
+        include_examples "btrfs subvolume button"
       end
 
       context "and the device cannot be used as a block device" do
@@ -128,13 +155,15 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BlkDeviceEditButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton,
+            Y2Partitioner::Widgets::BcacheDeleteButton,
             Y2Partitioner::Widgets::PartitionAddButton
           )
         end
 
         widget.device = device
       end
+
+      include_examples "btrfs subvolume button"
     end
 
     context "when targeting a Xen virtual partition (stray block device)" do
@@ -152,6 +181,8 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
         widget.device = device
       end
+
+      include_examples "btrfs subvolume button"
     end
 
     context "when targeting a volume group" do
@@ -164,7 +195,7 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::LvmLvAddButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
+            Y2Partitioner::Widgets::LvmVgDeleteButton
           )
         end
 
@@ -183,7 +214,28 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
             Y2Partitioner::Widgets::BlkDeviceEditButton,
             Y2Partitioner::Widgets::LvmLvAddButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
+            Y2Partitioner::Widgets::LvmLvDeleteButton
+          )
+        end
+
+        widget.device = device
+      end
+
+      include_examples "btrfs subvolume button"
+    end
+
+    context "when targeting a Btrfs filesystem" do
+      let(:scenario) { "mixed_disks" }
+      let(:device) { device_graph.find_by_name("/dev/sdb2").filesystem }
+
+      it "replaces the content with buttons to edit, to delete the filesystem and to add a subvolume" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::BtrfsEditButton,
+            Y2Partitioner::Widgets::BtrfsSubvolumeAddButton,
+            Y2Partitioner::Widgets::BtrfsDeleteButton
           )
         end
 
@@ -191,17 +243,18 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       end
     end
 
-    context "when targeting a BTRFS filesystem" do
+    context "when targeting a Btrfs subvolume" do
       let(:scenario) { "mixed_disks" }
-      let(:device) { device_graph.find_by_name("/dev/sdb2").filesystem }
+      let(:device) { device_graph.find_by_name("/dev/sdb2").filesystem.btrfs_subvolumes.first }
 
-      it "replaces the content with buttons to edit and to delete the filesystem" do
+      it "replaces the content with buttons to edit, to delete the subvolume and to add a subvolume" do
         expect(widget).to receive(:replace) do |content|
           widgets = Yast::CWM.widgets_in_contents([content])
           expect(widgets.map(&:class)).to contain_exactly(
             Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
-            Y2Partitioner::Widgets::BtrfsEditButton,
-            Y2Partitioner::Widgets::DeviceDeleteButton
+            Y2Partitioner::Widgets::BtrfsSubvolumeEditButton,
+            Y2Partitioner::Widgets::BtrfsSubvolumeAddButton,
+            Y2Partitioner::Widgets::BtrfsSubvolumeDeleteButton
           )
         end
 

@@ -240,14 +240,36 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
           context "and there is no page associated to the selected device" do
             let(:page) { nil }
 
-            it "does not call the pager handler" do
-              expect(pager).to_not receive(:handle)
+            let(:device) { device_graph.partitions.first }
+
+            let(:parent) { device.partitionable }
+
+            let(:parent_page) do
+              instance_double(Y2Partitioner::Widgets::Pages::Disk,
+                widget_id: "parent_id", tree_path: ["disk", "parent"])
+            end
+
+            before do
+              allow(pager).to receive(:device_page).with(parent).and_return(parent_page)
+            end
+
+            it "selects the device page associated to the parent entry" do
+              expect(Y2Partitioner::UIState.instance)
+                .to receive(:select_page).with(parent_page.tree_path)
 
               subject.handle(event)
             end
 
-            it "returns nil" do
-              expect(subject.handle(event)).to be_nil
+            it "selects the device row" do
+              expect(Y2Partitioner::UIState.instance).to receive(:select_row).with(device.sid)
+
+              subject.handle(event)
+            end
+
+            it "calls the pager handler with the proper event" do
+              expect(pager).to receive(:handle).with("ID" => parent_page.widget_id)
+
+              subject.handle(event)
             end
           end
         end
