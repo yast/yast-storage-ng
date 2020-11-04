@@ -60,6 +60,8 @@ module Y2Partitioner
 
         # @see Device
         def disabled_for_device
+          return all_item_ids if disable_all?
+
           items = []
           items << :menu_add_partition unless support_add_partition?
           items << :menu_add_lv unless support_add_lv?
@@ -68,6 +70,8 @@ module Y2Partitioner
 
         # @see Device
         def disabled_without_device
+          return all_item_ids if disable_all?
+
           [:menu_add_partition, :menu_add_lv]
         end
 
@@ -121,6 +125,27 @@ module Y2Partitioner
           return false unless device
 
           device.is?(:lvm_vg, :lvm_lv)
+        end
+
+        # Whether all actions in this menus should be disabled.
+        #
+        # For NFS, we are embedding a separate YaST module (yast-nfs-client)
+        # That doesn't fit very well into the partitioner's menu structure;
+        # so we have to disable all actions in this menu and rely on buttons
+        # that the embedded module adds below the devices table.
+        #
+        # @return [Boolean]
+        def disable_all?
+          nfs_page?
+        end
+
+        # Whether the current page in the partitioner is the NFS page.
+        #
+        # @return [Boolean]
+        def nfs_page?
+          # FIXME: This is ugly. We need a better way to check what the current page is.
+          page = Yast::UI.QueryWidget(Id("Y2Partitioner::Widgets::OverviewTree"), :Value)
+          page.end_with?("NfsMounts")
         end
       end
     end

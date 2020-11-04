@@ -58,6 +58,13 @@ module Y2Partitioner
           end
         end
 
+        # Return a list of the IDs of all items in this menu.
+        #
+        # @return [Array<Symbol>] ids of the menu items
+        def all_item_ids
+          items.map { |item| item_id(item) }.compact
+        end
+
         private
 
         # Dialog that should be opened for the given UI event
@@ -74,6 +81,19 @@ module Y2Partitioner
         # @return [Actions::Base, nil] nil if the event does not correspond to any action
         def action_for(_event)
           nil
+        end
+
+        # Return the ID of a menu item.
+        #
+        # @return Symbol|String|nil
+        def item_id(item)
+          return nil if item.nil? || !item.is_a?(Yast::Term)
+
+          id_term = item.first
+          return nil if id_term.nil? || !id_term.is_a?(Yast::Term)
+          return nil unless id_term.value == :id
+
+          id_term.first
         end
       end
     end

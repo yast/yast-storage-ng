@@ -53,7 +53,7 @@ module Y2Partitioner
 
     # Widget representing partitioner overview pager with tree on left side and rest on right side.
     #
-    # It has replace point where it displays more details about selected element in partitioning.
+    # It has a replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
       # Pages whose cached content should be considered outdated
       #
