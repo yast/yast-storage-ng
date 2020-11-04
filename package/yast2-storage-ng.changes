@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  4 09:21:55 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Proposal: adjusted the size and format of the EFI partition
+  (bsc#1177358, bsc#1170625, bsc#1119318).
+- 4.3.18
+
+-------------------------------------------------------------------
 Fri Oct 30 11:58:50 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: revamped user interface (related to jsc#PM-73,

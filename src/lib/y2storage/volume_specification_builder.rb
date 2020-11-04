@@ -107,9 +107,11 @@ module Y2Storage
         v.mount_point = "/boot/efi"
         v.fs_types = [Filesystems::Type::VFAT]
         v.fs_type = Filesystems::Type::VFAT
-        v.min_size = DiskSize.MiB(256)
-        v.desired_size = DiskSize.MiB(500)
-        v.max_size = DiskSize.MiB(500)
+        v.min_size = DiskSize.MiB(128)
+        v.desired_size = DiskSize.MiB(256)
+        # Note 512MiB seems to be the threshold used by mkfs.vfat to
+        # automatically use FAT32 if no FAT size is specified
+        v.max_size = DiskSize.MiB(512)
       end
     end
 

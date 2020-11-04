@@ -65,9 +65,9 @@ describe Y2Storage::VolumeSpecificationBuilder do
             mount_point:  "/boot/efi",
             fs_types:     [Y2Storage::Filesystems::Type::VFAT],
             fs_type:      Y2Storage::Filesystems::Type::VFAT,
-            min_size:     256.MiB,
-            desired_size: 500.MiB,
-            max_size:     500.MiB
+            min_size:     128.MiB,
+            desired_size: 256.MiB,
+            max_size:     512.MiB
           )
         end
       end

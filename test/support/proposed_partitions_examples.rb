@@ -116,21 +116,34 @@ RSpec.shared_examples "flexible size EFI partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)" do
-      expect(efi_part.min_size).to eq 500.MiB
-      expect(efi_part.max_size).to eq 500.MiB
+    it "requires /boot/efi to use FAT32" do
+      expect(efi_part.mkfs_options).to include "-F32"
+    end
+
+    it "requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)" do
+      expect(efi_part.min).to eq 256.MiB
+    end
+
+    it "requires it to be at most 512 MiB (enough space for several operating systems)" do
+      expect(efi_part.max).to eq 512.MiB
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)" do
-      expect(efi_part.min).to eq 256.MiB
+    it "does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)" do
+      expect(efi_part.mkfs_options).to be_nil
     end
 
-    it "requires it to be at most 500 MiB (enough space for several operating systems)" do
-      expect(efi_part.max).to eq 500.MiB
+    # See Windows requirements at
+    # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/configure-uefigpt-based-hard-drive-partitions
+    it "requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)" do
+      expect(efi_part.min).to eq 128.MiB
+    end
+
+    it "requires it to be at most 512 MiB (enough space for several operating systems)" do
+      expect(efi_part.max).to eq 512.MiB
     end
   end
 end
@@ -141,18 +154,26 @@ RSpec.shared_examples "minimalistic EFI partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)" do
-      expect(efi_part.min_size).to eq 256.MiB
-      expect(efi_part.max_size).to eq 256.MiB
+    it "does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)" do
+      expect(efi_part.mkfs_options).to be_nil
+    end
+
+    it "requires /boot/efi to be exactly 128 MiB large" do
+      expect(efi_part.min_size).to eq 128.MiB
+      expect(efi_part.max_size).to eq 128.MiB
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires /boot/efi to be exactly 256 MiB large (always FAT32 min size)" do
-      expect(efi_part.min_size).to eq 256.MiB
-      expect(efi_part.max_size).to eq 256.MiB
+    it "does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)" do
+      expect(efi_part.mkfs_options).to be_nil
+    end
+
+    it "requires /boot/efi to be exactly 128 MiB large" do
+      expect(efi_part.min_size).to eq 128.MiB
+      expect(efi_part.max_size).to eq 128.MiB
     end
   end
 end
