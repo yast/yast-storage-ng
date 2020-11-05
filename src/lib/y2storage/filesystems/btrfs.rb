@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -488,25 +488,6 @@ module Y2Storage
 
         ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
         add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
-      end
-
-      # Display name to represent the filesystem
-      #
-      # Only multidevice Btrfs has its own representation
-      #
-      # @return [String, nil]
-      def display_name
-        return nil unless multidevice?
-
-        textdomain "storage"
-
-        # TRANSLATORS: display name when the Btrfs is multidevice, where %{num_devices} is replaced by
-        # a number (e.g., "2") and %{name} is replaced by a device representation (e.g., "(sda1...)").
-        format(
-          _("Btrfs over %{num_devices} devices %{name}"),
-          num_devices: blk_devices.size,
-          name:        blk_device_basename
-        )
       end
 
       protected
