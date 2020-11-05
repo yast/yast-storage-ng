@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov  5 10:26:55 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Disable "Device" menu items for NFS shares
+  (related to jsc#PM-73, jsc#SLE-7742, jsc#SLE-15283)
+- 4.3.19
+
+-------------------------------------------------------------------
 Wed Nov  4 09:21:55 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Proposal: adjusted the size and format of the EFI partition
