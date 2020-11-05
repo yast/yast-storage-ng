@@ -93,13 +93,13 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
         expect(table).to_not be_nil
 
         expect(remove_sort_keys(items)).to contain_exactly(
-          "BtrFS",
+          "BtrFS sdb2",
           "/dev/sdb2"
         )
       end
 
       it "shows a button for editing the Btrfs devices" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsDevicesEditButton) }
         expect(button).to_not be_nil
       end
     end

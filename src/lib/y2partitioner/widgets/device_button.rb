@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,20 +17,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "cwm"
-require "y2partitioner/execute_and_redraw"
-
-Yast.import "Popup"
+require "yast2/popup"
+require "y2partitioner/widgets/action_button"
 
 module Y2Partitioner
   module Widgets
-    # Base class for a button that performs some action over a specificic device,
-    # e.g., edit, resize, delete, etc.
-    class DeviceButton < CWM::PushButton
-      include ExecuteAndRedraw
-
+    # Base class for a button that performs an action over a specific device (e.g., edit, resize,
+    # delete, etc)
+    class DeviceButton < ActionButton
       # Constructor
+      #
       # @param pager [CWM::TreePager]
       # @param device [Y2Storage::Device]
       def initialize(pager: nil, device: nil)
@@ -44,7 +40,7 @@ module Y2Partitioner
       def handle
         return nil unless validate_presence
 
-        execute_and_redraw { actions }
+        super
       end
 
       protected
@@ -71,21 +67,6 @@ module Y2Partitioner
         working_graph.find_device(device_sid)
       end
 
-      # Actions to perform when the button is clicked
-      #
-      # @return [Symbol, nil] result of the action, nil if nothing is executed
-      def actions
-        if actions_class.nil?
-          Yast::Popup.Warning("Not yet implemented")
-          return nil
-        end
-
-        actions_class.new(device).run
-      end
-
-      # @return [Actions] an Actions class name to perform the expected actions
-      abstract_method :actions_class
-
       # Checks whether there is a device on which to act
       #
       # @note An error popup is shown when there is no device.
@@ -94,7 +75,8 @@ module Y2Partitioner
       def validate_presence
         return true unless device.nil?
 
-        Yast::Popup.Error(_("No device selected"))
+        # TRANSLATORS: error when a button is clicked and no device is selected.
+        Yast2::Popup.show(_("No device selected"), headline: :error)
         false
       end
     end

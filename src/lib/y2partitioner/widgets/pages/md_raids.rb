@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,7 +19,7 @@
 
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
-require "y2partitioner/widgets/md_add_button"
+require "y2partitioner/widgets/device_add_buttons"
 
 module Y2Partitioner
   module Widgets
