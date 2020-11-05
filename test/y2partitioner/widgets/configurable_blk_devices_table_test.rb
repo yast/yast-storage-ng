@@ -410,6 +410,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     # sdb contains 3 primary partitions, one extended and 3 logical ones
     # including three logical ones
     let(:sdb) { device_graph.find_by_name("/dev/sdb") }
+    let(:sdb2) { device_graph.find_by_name("/dev/sdb2") }
     let(:sdb4) { device_graph.find_by_name("/dev/sdb4") }
     let(:devices) { [sdb] }
 
@@ -422,15 +423,56 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       { "table:device:#{sdb4.sid}"=>"ID" }
     end
 
+    def btrfs_subvolumes(device)
+      device.filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
+    end
+
     it "contains an entry for each item of the table" do
-      ids = ([sdb] + sdb.partitions).map { |dev| "table:device:#{dev.sid}" }
+      devs = [sdb] + sdb.partitions + btrfs_subvolumes(sdb2)
+      ids = devs.map { |dev| "table:device:#{dev.sid}" }
       expect(subject.ui_open_items.keys).to contain_exactly(*ids)
     end
 
     it "reports true for the open items and false for the rest" do
-      values = [false] * 7 + [true]
+      values = [false] * 10 + [true]
       expect(subject.ui_open_items.values).to contain_exactly(*values)
       expect(subject.ui_open_items["table:device:#{sdb4.sid}"]).to eq true
+    end
+  end
+
+  describe "#open_items" do
+    let(:devices) { [sda] }
+
+    let(:sda) { device_graph.find_by_name("/dev/sda") }
+    let(:sda2) { device_graph.find_by_name("/dev/sda2") }
+
+    before do
+      subject.open_items = open_items
+    end
+
+    context "when #open_items has not been set" do
+      let(:open_items) { nil }
+
+      it "reports true for items with 10 children at most" do
+        result = subject.open_items
+        result.reject! { |k, _| k == "table:device:#{sda2.sid}" }
+
+        expect(result.values).to all(eq(true))
+      end
+
+      it "reports false for items with more than 10 children" do
+        result = subject.open_items
+
+        expect(result["table:device:#{sda2.sid}"]).to eq(false)
+      end
+    end
+
+    context "when #open_items has been set" do
+      let(:open_items) { { "table:device:33" => true, "table::device::34" => false } }
+
+      it "returns its current value" do
+        expect(subject.open_items).to eq(open_items)
+      end
     end
   end
 end
