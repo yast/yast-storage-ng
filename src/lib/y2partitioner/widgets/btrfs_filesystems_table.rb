@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,7 +23,7 @@ require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
-    # Table for BTRFS filesystems
+    # Table for Btrfs filesystems
     class BtrfsFilesystemsTable < ConfigurableBlkDevicesTable
       # Constructor
       #
@@ -41,14 +41,13 @@ module Y2Partitioner
 
       # Table columns
       #
-      # @return [Array<Symbol>]
+      # @return [Array<#new>]
       def fs_columns
         [
-          Columns::FilesystemId,
-          Columns::MountPoint,
+          Columns::Device,
+          Columns::Type,
           Columns::FilesystemLabel,
-          Columns::FilesystemDevices,
-          Columns::Uuid
+          Columns::MountPoint
         ]
       end
     end

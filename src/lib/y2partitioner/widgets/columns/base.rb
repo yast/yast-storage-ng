@@ -27,7 +27,7 @@ module Y2Partitioner
       # Base class for all widgets representing a column of a table displaying a collection of
       # devices
       #
-      # Each subclasses must define the following methods:
+      # Each subclass must define the following methods:
       #
       #   * #title returning the column title.
       #   * #value_for(device) returning the content to display for the given device.
@@ -105,7 +105,7 @@ module Y2Partitioner
         def id
           self.class.name
             .gsub(/^.*::/, "") # demodulize
-            .gsub(/(.)([A-Z])/, "\1_\2") # underscore
+            .gsub(/(.)([A-Z])/, '\1_\2') # underscore
             .downcase.to_sym
         end
 
