@@ -76,33 +76,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     context "when there is not a page associated to the requested device" do
-      context "and the requested device is a partition" do
-        let(:device) { current_graph.find_by_name("/dev/sda1") }
+      let(:device) { current_graph.find_by_name("/dev/sda1") }
 
-        it "returns the page associated to its parent device" do
-          page = subject.device_page(device)
-
-          expect(page.device).to eq(device.partitionable)
-        end
-      end
-
-      context "and the requested device is LVM Logical Volume" do
-        let(:device) { vg.lvm_lvs.first }
-
-        it "returns the page associated to the Volume Group" do
-          page = subject.device_page(device)
-
-          expect(page.device).to eq(device.lvm_vg)
-        end
-      end
-
-      context "and the requested device is neither a partiton nor a LVM Logical Volume" do
-        let(:device) { vg.lvm_pvs.first }
-
-        it "returns nil" do
-          page = subject.device_page(device)
-          expect(page).to be_nil
-        end
+      it "returns nil" do
+        page = subject.device_page(device)
+        expect(page).to be_nil
       end
     end
 
