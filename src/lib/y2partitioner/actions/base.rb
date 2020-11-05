@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -38,14 +38,13 @@ module Y2Partitioner
 
       # Runs the action
       #
-      # @return [Symbol]
+      # @return [Symbol, nil]
       def run
         return :back unless run?
 
         UIState.instance.save_extra_info
-        action_result = perform_action
 
-        result(action_result)
+        perform_action
       end
 
       private
@@ -54,7 +53,7 @@ module Y2Partitioner
       #
       # This method should be defined by derived classes.
       #
-      # @return [Symbol, nil]
+      # @return [Symbol, nil] nil when the action is canceled
       abstract_method :perform_action
 
       # Checks whether the action can be performed
@@ -83,17 +82,6 @@ module Y2Partitioner
       # @return [Array<String>] translated error messages
       def errors
         []
-      end
-
-      # Result of the action
-      #
-      # Some actions could return a specific result depending on the result
-      # of {#perform_action}.
-      #
-      # @param _action_result [Symbol] result of {#perform_action}
-      # @return [Symbol]
-      def result(_action_result)
-        :finish
       end
     end
   end

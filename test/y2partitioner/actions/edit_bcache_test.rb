@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -152,8 +153,8 @@ describe Y2Partitioner::Actions::EditBcache do
 
         include_examples "not edit device"
 
-        it "returns :finish" do
-          expect(subject.run).to eq :finish
+        it "returns nil" do
+          expect(subject.run).to be_nil
         end
       end
     end
