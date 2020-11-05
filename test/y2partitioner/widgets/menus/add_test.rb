@@ -66,14 +66,42 @@ describe Y2Partitioner::Widgets::Menus::Add do
     it "includes 'Logical Volume'" do
       expect(subject.items).to include(item_with_id(:menu_add_lv))
     end
+
+    it "includes 'Btrfs Subvolume'" do
+      expect(subject.items).to include(item_with_id(:menu_add_btrfs_subvolume))
+    end
   end
 
   describe "#disabled_items" do
+    shared_examples "btrfs formatted" do
+      context "and the device is formatted as Btrfs" do
+        before do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        it "does not include 'Btrfs Subvolume'" do
+          expect(subject.disabled_items).to_not include(:menu_add_btrfs_subvolume)
+        end
+
+        context "and the filesystem is multi-device" do
+          before do
+            allow_any_instance_of(Y2Storage::Filesystems::Btrfs)
+              .to receive(:multidevice?).and_return(true)
+          end
+
+          it "includes 'Btrfs Subvolume'" do
+            expect(subject.disabled_items).to include(:menu_add_btrfs_subvolume)
+          end
+        end
+      end
+    end
+
     context "when there is no device" do
       let(:device) { nil }
 
-      it "contains 'Partition' and 'Logical Volume'" do
-        items = [:menu_add_partition, :menu_add_lv]
+      it "contains 'Partition', 'Logical Volume' and 'Btrfs Subvolume'" do
+        items = [:menu_add_partition, :menu_add_lv, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
     end
@@ -83,10 +111,12 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/sda" }
 
-      it "contains 'Logical Volume'" do
-        items = [:menu_add_lv]
+      it "contains 'Logical Volume' and 'Btrfs Subvolume'" do
+        items = [:menu_add_lv, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
+
+      include_examples "btrfs formatted"
     end
 
     context "when the device is a partition" do
@@ -94,10 +124,12 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/sda1" }
 
-      it "contains 'Logical Volume'" do
-        items = [:menu_add_lv]
+      it "contains 'Logical Volume' and 'Btrfs Subvolume'" do
+        items = [:menu_add_lv, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
+
+      include_examples "btrfs formatted"
     end
 
     context "when the device is a MD RAID" do
@@ -105,10 +137,12 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/md/md0" }
 
-      it "contains 'Logical Volume'" do
-        items = [:menu_add_lv]
+      it "contains 'Logical Volume' and 'Btrfs Subvolume'" do
+        items = [:menu_add_lv, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
+
+      include_examples "btrfs formatted"
     end
 
     context "when the device is a LVM Volume Group" do
@@ -116,8 +150,8 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/vg0" }
 
-      it "contains 'Partition'" do
-        items = [:menu_add_partition]
+      it "contains 'Partition' and 'Btrfs Subvolume'" do
+        items = [:menu_add_partition, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
     end
@@ -127,10 +161,16 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/vg0/lv1" }
 
-      it "contains 'Partition'" do
-        items = [:menu_add_partition]
+      before do
+        device.delete_filesystem
+      end
+
+      it "contains 'Partition' and 'Btrfs Subvolume'" do
+        items = [:menu_add_partition, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
+
+      include_examples "btrfs formatted"
     end
 
     context "when the device is a Bcache" do
@@ -138,10 +178,12 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       let(:device_name) { "/dev/bcache0" }
 
-      it "contains 'Logical Volume'" do
-        items = [:menu_add_lv]
+      it "contains 'Logical Volume' and 'Btrfs Subvolume'" do
+        items = [:menu_add_lv, :menu_add_btrfs_subvolume]
         expect(subject.disabled_items).to contain_exactly(*items)
       end
+
+      include_examples "btrfs formatted"
     end
 
     context "when the device is a Btrfs" do
@@ -150,6 +192,19 @@ describe Y2Partitioner::Widgets::Menus::Add do
       let(:device_name) { "/dev/sda1" }
 
       subject { described_class.new(device.blk_filesystem) }
+
+      it "contains 'Partition' and 'Logical Volume'" do
+        items = [:menu_add_partition, :menu_add_lv]
+        expect(subject.disabled_items).to contain_exactly(*items)
+      end
+    end
+
+    context "when the device is a Btrfs subvolume" do
+      let(:scenario) { "mixed_disks_btrfs.yml" }
+
+      let(:device_name) { "/dev/sda2" }
+
+      subject { described_class.new(device.filesystem.btrfs_subvolumes.first) }
 
       it "contains 'Partition' and 'Logical Volume'" do
         items = [:menu_add_partition, :menu_add_lv]
@@ -289,6 +344,57 @@ describe Y2Partitioner::Widgets::Menus::Add do
       end
 
       include_examples "no action", "mixed_disks.yml", "/dev/sda1"
+    end
+
+    context "when 'Btrfs Subvolume' is selected" do
+      let(:event) { :menu_add_btrfs_subvolume }
+
+      context "and the selected device is used by a single-device Btrfs" do
+        let(:scenario) { "mixed_disks_btrfs.yml" }
+
+        let(:device_name) { "/dev/sda2" }
+
+        it "calls an action to add a Btrfs Subvolume to the filesystem of the selected device" do
+          expect(Y2Partitioner::Actions::AddBtrfsSubvolume).to receive(:new).with(device.filesystem)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Btrfs subvolume" do
+        let(:scenario) { "mixed_disks_btrfs.yml" }
+
+        let(:device) { current_graph.find_by_name("/dev/sda2").filesystem.btrfs_subvolumes.first }
+
+        it "calls an action to add a Btrfs Subvolume to the filesystem of the selected subvolume" do
+          expect(Y2Partitioner::Actions::AddBtrfsSubvolume).to receive(:new).with(device.filesystem)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Btrfs filesystem" do
+        let(:scenario) { "mixed_disks_btrfs.yml" }
+
+        let(:device) { current_graph.find_by_name("/dev/sda2").filesystem }
+
+        it "calls an action to add a Btrfs Subvolume to the filesystem" do
+          expect(Y2Partitioner::Actions::AddBtrfsSubvolume).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
+      context "but no device is selected" do
+        let(:device) { nil }
+
+        it "calls no action" do
+          expect(Y2Partitioner::Actions::AddBtrfsSubvolume).to_not receive(:new)
+          subject.handle(event)
+        end
+      end
+
+      include_examples "no action", "btrfs-multidevice-over-partitions.xml", "/dev/sda1"
     end
   end
 end

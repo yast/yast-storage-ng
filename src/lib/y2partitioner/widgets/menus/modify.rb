@@ -25,12 +25,14 @@ require "y2partitioner/actions/delete_lvm_vg"
 require "y2partitioner/actions/delete_lvm_lv"
 require "y2partitioner/actions/delete_bcache"
 require "y2partitioner/actions/delete_btrfs"
+require "y2partitioner/actions/delete_btrfs_subvolume"
 require "y2partitioner/actions/edit_md_devices"
 require "y2partitioner/actions/edit_btrfs_devices"
 require "y2partitioner/actions/edit_bcache"
 require "y2partitioner/actions/resize_lvm_vg"
 require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/actions/edit_btrfs"
+require "y2partitioner/actions/edit_btrfs_subvolume"
 require "y2partitioner/actions/resize_blk_device"
 require "y2partitioner/actions/move_partition"
 require "y2partitioner/actions/create_partition_table"
@@ -97,6 +99,8 @@ module Y2Partitioner
             Actions::EditBlkDevice.new(device)
           elsif device.is?(:btrfs)
             Actions::EditBtrfs.new(device)
+          elsif device.is?(:btrfs_subvolume)
+            Actions::EditBtrfsSubvolume.new(device)
           end
         end
 
