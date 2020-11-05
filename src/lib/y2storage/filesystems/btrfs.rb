@@ -409,6 +409,13 @@ module Y2Storage
 
       # Determines the btrfs subvolumes prefix
       #
+      # FIXME: this logic looks wrong. For a new filesystem the result could make sense because the
+      #   default subvolume is either the top level subvolume or the default one indicated in the control
+      #   file (typically @ for root filesystem). But, in case of an existing Btrfs, the logic does not
+      #   work well when adding subvolumes to a Btrfs that currently lacks of subvolumes. Note that in
+      #   that scenario, the prefix is taken from the first added subvolume, making the rest of
+      #   new subvolumes to be created as children of such first one.
+      #
       # When a default subvolume name have been used, a subvolume named after
       # it lives under the #top_level_btrfs_subvolume. Otherwise, an empty
       # string will be taken as the default subvolume name.
