@@ -18,7 +18,12 @@
 # find current contact information at www.suse.com.
 
 require "cwm/widget"
-require "y2partitioner/widgets/device_buttons"
+require "y2partitioner/widgets/partition_buttons"
+require "y2partitioner/widgets/md_buttons"
+require "y2partitioner/widgets/lvm_buttons"
+require "y2partitioner/widgets/bcache_buttons"
+require "y2partitioner/widgets/btrfs_buttons"
+require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
   module Widgets

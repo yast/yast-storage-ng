@@ -21,7 +21,7 @@ require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/btrfs_filesystems_table"
-require "y2partitioner/widgets/device_edit_buttons"
+require "y2partitioner/widgets/btrfs_buttons"
 
 module Y2Partitioner
   module Widgets

@@ -19,7 +19,7 @@
 
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
-require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/widgets/md_buttons"
 
 module Y2Partitioner
   module Widgets

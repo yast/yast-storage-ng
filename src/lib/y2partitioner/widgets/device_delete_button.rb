@@ -17,6 +17,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/device_add_buttons"
-require "y2partitioner/widgets/device_edit_buttons"
-require "y2partitioner/widgets/device_delete_buttons"
+require "y2partitioner/widgets/device_button"
+
+module Y2Partitioner
+  module Widgets
+    # Base class for buttons to delete a device
+    class DeviceDeleteButton < DeviceButton
+      # @macro seeAbstractWidget
+      def label
+        textdomain "storage"
+
+        # TRANSLATORS: label of the button for deleting a device
+        _("Delete")
+      end
+    end
+  end
+end

@@ -23,7 +23,7 @@ require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/device_buttons_set"
-require "y2partitioner/widgets/device_edit_buttons"
+require "y2partitioner/widgets/lvm_buttons"
 require "y2partitioner/widgets/columns"
 
 module Y2Partitioner

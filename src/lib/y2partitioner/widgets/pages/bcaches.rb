@@ -19,7 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/pages/devices_table"
-require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/widgets/bcache_buttons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/device_table_entry"
 

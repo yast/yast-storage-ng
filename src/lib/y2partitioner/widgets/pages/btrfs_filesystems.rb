@@ -22,7 +22,7 @@ require "y2storage/filesystems/type"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/device_buttons_set"
-require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/widgets/btrfs_buttons"
 
 module Y2Partitioner
   module Widgets

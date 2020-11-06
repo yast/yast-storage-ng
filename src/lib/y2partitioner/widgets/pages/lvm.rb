@@ -19,7 +19,7 @@
 
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
-require "y2partitioner/widgets/device_add_buttons"
+require "y2partitioner/widgets/lvm_buttons"
 
 module Y2Partitioner
   module Widgets
