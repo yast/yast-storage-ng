@@ -145,6 +145,7 @@ module Y2Storage
       def display_name
         return nil unless multidevice?
 
+        # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
         textdomain "storage"
 
         format(
@@ -164,6 +165,7 @@ module Y2Storage
       #
       # @return [String]
       def name
+        # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
         textdomain "storage"
 
         format(

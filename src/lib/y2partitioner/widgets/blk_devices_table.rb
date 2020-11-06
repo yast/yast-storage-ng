@@ -55,9 +55,7 @@ module Y2Partitioner
       #
       # @return [Hash{String => Boolean}]
       def open_items
-        return default_open_items if !@open_items || @open_items.empty?
-
-        @open_items
+        @open_items || default_open_items
       end
 
       # Sets the value of {#open_items}

@@ -148,7 +148,7 @@ module Y2Partitioner
         def btrfs_devices_value
           devices = filesystem.plain_blk_devices.map(&:name)
 
-          # TRANSLATORS: Information abut devices used by a Btrfs filesystem, where %s is replaced by a
+          # TRANSLATORS: Information about devices used by a Btrfs filesystem, where %s is replaced by a
           #   comma separated list of device names (e.g., "/dev/sda1, /dev/sda2").
           format(_("Used Devices: %s"), Yast::HTML.List(devices))
         end
