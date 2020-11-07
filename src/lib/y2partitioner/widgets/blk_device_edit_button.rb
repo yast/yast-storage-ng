@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,32 +17,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/widgets/device_button"
+require "y2partitioner/widgets/device_edit_button"
 require "y2partitioner/actions/edit_blk_device"
 
 module Y2Partitioner
   module Widgets
-    # Device button for modifying a {Y2Storage::BlkDevice}
-    class BlkDeviceEditButton < DeviceButton
-      def initialize(args = {})
-        super(**args)
-        textdomain "storage"
-      end
-
-      # @macro seeAbstractWidget
-      def label
-        _("&Edit...")
-      end
-
-      private
-
-      # Returns the proper Actions class for editing a device
-      #
-      # @see DeviceButton#actions
-      # @see Actions::EditBlkDevice
-      def actions_class
-        Actions::EditBlkDevice
+    # Button for editing a block device
+    class BlkDeviceEditButton < DeviceEditButton
+      # @see ActionButton#action
+      def action
+        Actions::EditBlkDevice.new(device)
       end
     end
   end

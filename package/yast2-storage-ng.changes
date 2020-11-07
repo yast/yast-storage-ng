@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov  5 12:04:37 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: improve support for Btrfs subvolumes.
+- Related to bsc#996598, bsc#1175139, bug#1161408.
+- 4.3.20
+
+-------------------------------------------------------------------
 Thu Nov  5 10:26:55 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Disable "Device" menu items for NFS shares

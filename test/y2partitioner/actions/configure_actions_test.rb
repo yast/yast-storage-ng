@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,8 +38,8 @@ describe Y2Partitioner::Actions::ConfigureAction do
     let(:manager) { Y2Storage::StorageManager.instance }
 
     RSpec.shared_examples "configure nothing" do
-      it "returns :back" do
-        expect(subject.run).to eq :back
+      it "returns nil" do
+        expect(subject.run).to be_nil
       end
 
       it "does not call any other YaST client" do

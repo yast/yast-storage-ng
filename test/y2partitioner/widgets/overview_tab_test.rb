@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -66,7 +67,7 @@ describe Y2Partitioner::Widgets::OverviewTab do
         expect(table).to_not be_nil
 
         part_names = device.partitions.map(&:basename)
-        expect(items).to contain_exactly(device_name, *part_names)
+        expect(items).to include(device_name, *part_names)
 
         expect(table.items.size).to eq 1
         item = table.items.first
@@ -90,7 +91,7 @@ describe Y2Partitioner::Widgets::OverviewTab do
         include_examples "overview tab with partitions"
       end
 
-      context "when the disks contains logical partitions" do
+      context "when the disk contains logical partitions" do
         let(:device_name) { "/dev/sdb" }
         let(:primary) { ["sdb1", "sdb2", "sdb3"] }
         let(:extended) { "sdb4" }
@@ -109,6 +110,47 @@ describe Y2Partitioner::Widgets::OverviewTab do
             remove_sort_key(item.values.first) == extended
           end
           expect(children_names(ext_item)).to contain_exactly(*logical)
+        end
+      end
+
+      context "when the disk contains partitions formatted as Btrfs" do
+        def btrfs_subvolumes(device)
+          device.filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
+        end
+
+        context "and the Btrfs is not multidevice" do
+          let(:scenario) { "mixed_disks_btrfs" }
+
+          let(:device_name) { "/dev/sda" }
+
+          it "shows a table with Btrfs subvolumes correctly nested" do
+            first_item = table.items.first
+
+            sda2_item = first_item.children.find do |item|
+              remove_sort_key(item.values.first) == "sda2"
+            end
+
+            sda2 = current_graph.find_by_name("/dev/sda2")
+            subvolumes = btrfs_subvolumes(sda2).map(&:path)
+
+            expect(children_names(sda2_item)).to contain_exactly(*subvolumes)
+          end
+        end
+
+        context "and the Btrfs is multidevice" do
+          let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+
+          let(:device_name) { "/dev/sda" }
+
+          it "shows a table without the Btrfs subvolumes" do
+            first_item = table.items.first
+
+            sda2_item = first_item.children.find do |item|
+              remove_sort_key(item.values.first) == "sda2"
+            end
+
+            expect(sda2_item.children).to be_empty
+          end
         end
       end
     end

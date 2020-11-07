@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,7 +24,7 @@ require "yast2/popup"
 Yast.import "Mode"
 
 module Y2Partitioner
-  # Mixin that offers a dialog to immediate unmount a block device
+  # Mixin that offers a dialog to immediate unmount a device
   #
   # @note This feature is intended to allow to unmount devices before the commit phase, for example,
   #   when a device is deleted or resized. But there are serveral scenarios where the actions require
@@ -33,7 +33,7 @@ module Y2Partitioner
   module ImmediateUnmount
     # Shows a Popup dialog to try to unmount the device
     #
-    # @param device [Y2Storage::BlkDevice]
+    # @param device [Y2Storage::BlkDevice, Y2Storage::BlkFilesystem, Y2Storage::BtrfsSubvolume]
     # @param full_message [String, nil] message to show in the dialog (param note would be ignored)
     # @param note [String, nil] note to add to the generic message (ignored if full_message is used)
     # @param allow_continue [Boolean] if it should allow to continue without unmounting
@@ -54,7 +54,7 @@ module Y2Partitioner
 
       # Constructor
       #
-      # @param device [Y2Storage::BlkDevice]
+      # @param device [Y2Storage::BlkDevice, Y2Storage::BlkFilesystem, Y2Storage::BtrfsSubvolume]
       # @param full_message [String, nil] message to show in the dialog (param note would be ignored)
       # @param note [String, nil] note to add to the generic message (ignored if full_message is used)
       # @param allow_continue [Boolean] if it should allow to continue without unmounting
@@ -86,7 +86,7 @@ module Y2Partitioner
 
       private
 
-      # @return [Y2Storage::BlkDevice]
+      # @return [Y2Storage::BlkDevice, Y2Storage::BlkFilesystem, Y2Storage::BtrfsSubvolume]
       attr_reader :device
 
       # @return [String, nil] message to show in the dialog (note would be ignored)
@@ -125,7 +125,7 @@ module Y2Partitioner
 
         # TRANSLATORS: Generic message when trying to unmount a device. %1 is replaced
         # by a mount point path (e.g., /home).
-        Yast::Builtins.sformat(_("The file system is currently mounted on %1."), mount_point) +
+        Yast::Builtins.sformat(_("The device is currently mounted on %1."), mount_point) +
           note_message + "\n\n" + options_message
       end
 
@@ -191,7 +191,7 @@ module Y2Partitioner
       # @param details [String] error details
       def show_unmount_error(details)
         # TRANSLATORS: Error message when the device could not be unmounted
-        message = _("The file system could not be unmounted")
+        message = _("The device could not be unmounted")
 
         Yast2::Popup.show(message, headline: :error, details: details, buttons: :ok)
       end

@@ -51,7 +51,8 @@ module Y2Partitioner
         sector_size:               N_("<b>Sector Size</b> shows the size of the\n" \
                                       "sectors of the hard disk."),
 
-        device:                    N_("<b>Device</b> shows the kernel name of the\ndevice."),
+        device:                    N_("<b>Device</b> shows the name to identify the device, e.g. the " \
+                                      "kernel name when it applies."),
 
         disk_label:                N_("<b>Partition Table</b> shows the partition table\n" \
                                       "type of the disk, e.g <tt>MS-DOS</tt> or <tt>GPT</tt>."),

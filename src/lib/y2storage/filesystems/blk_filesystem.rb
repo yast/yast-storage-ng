@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -135,6 +135,49 @@ module Y2Storage
         # TRANSLATORS: block device basename for a multi-device filesystem, where %{basename} is replaced
         # by the basename of the first block device (e.g., "(sda1...)").
         format(_("(%{basename}\u2026)"), basename: basename)
+      end
+
+      # Display name to represent the filesystem
+      #
+      # Only multidevice filesystems have a display name
+      #
+      # @return [String, nil]
+      def display_name
+        return nil unless multidevice?
+
+        # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
+        textdomain "storage"
+
+        format(
+          # TRANSLATORS: display name when is a multidevice, where %{fs_type} is replaced by the
+          #   filesystem type (e.g., BtrFS), %{num_devices} is replaced by the number of devices
+          #   (e.g., "2") and %{device_name} is replaced by a device representation (e.g., "(sda1...)").
+          #
+          #   Example: "BtrFS over 2 devices (sda1...)"
+          _("%{fs_type} over %{num_devices} devices %{device_name}"),
+          fs_type:     type.to_human_string,
+          num_devices: blk_devices.size,
+          device_name: blk_device_basename
+        )
+      end
+
+      # Name used to identify the filesystem
+      #
+      # @return [String]
+      def name
+        # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
+        textdomain "storage"
+
+        format(
+          # TRANSLATORS: name used to identify a filesystem, where %{fs_type} is replaced by the
+          #   filesystem type (e.g., BtrFS) and %{device_name} is replaced by a device representation
+          #   (e.g., "sda1", "(sda1...)").
+          #
+          #   Examples: "BtrFS (sda1...)", "Ext4 sda2"
+          _("%{fs_type} %{device_name}"),
+          fs_type:     type.to_human_string,
+          device_name: blk_device_basename
+        )
       end
 
       # Whether it is a multi-device filesystem

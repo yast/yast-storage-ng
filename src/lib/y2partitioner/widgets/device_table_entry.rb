@@ -69,6 +69,14 @@ module Y2Partitioner
         end
       end
 
+      # Whether the entry is the parent of the given one
+      #
+      # @param entry [DeviceTableEntry]
+      # @return [Boolean]
+      def parent?(entry)
+        children.include?(entry)
+      end
+
       # Device identifier of the referenced device, if any
       #
       # @return [Integer, nil] nil if the device is not part of the devicegraph
@@ -129,41 +137,55 @@ module Y2Partitioner
         # Creates an entry for the given device with the expected descendant
         # entries based on the type and content of the device
         #
-        # @param device [Y2Storage::BlkDevice]
+        # @param device [Y2Storage::Device]
         # @return [DeviceTableEntry]
         def new_with_children(device)
-          children =
-            if device.is?(:lvm_vg)
-              # All logical volumes, including thin pools and thin volumes
-              device.all_lvm_lvs
-            elsif device.respond_to?(:partitions)
-              # All partitions, with logical ones nested within the extended
-              nested_partitions(device)
-            else
-              []
-            end
+          items = children(device).map { |c| new_with_children(c) }
 
-          new(device, children: children)
+          new(device, children: items)
         end
 
-        # Partitions of the given device, with logical partitions nested within
-        # the extended one
-        #
-        # @see .new_with_children
-        #
-        # @return [Array<Y2Storage::Partition, DeviceTableEntry>] the extended partition
-        #   is returned as a DeviceTableEntry with logical ones as children
-        def nested_partitions(device)
-          device.partitions.each_with_object([]) do |partition, children|
-            next if partition.type.is?(:logical)
+        private
 
-            children <<
-              if partition.type.is?(:primary)
-                partition
-              else
-                new(partition, children: partition.children)
-              end
+        def children(device)
+          return btrfs_subvolumes(device) if nesting_btrfs_subvolumes?(device)
+
+          if device.is?(:lvm_vg)
+            # All logical volumes, including thin pools and thin volumes
+            device.all_lvm_lvs
+          elsif device.respond_to?(:partitions)
+            # Logical partitions are not included because they are nested within the extended one
+            device.partitions.reject { |p| p.type.is?(:logical) }
+          elsif device.is?(:partition) && device.type.is?(:extended)
+            # All logical partitions
+            device.children
+          else
+            []
           end
+        end
+
+        # Whether the given device should show Btrfs subvolumes as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def nesting_btrfs_subvolumes?(device)
+          return true if device.is?(:btrfs)
+
+          return false unless device.is?(:blk_device)
+
+          device.formatted_as?(:btrfs) && !device.filesystem.multidevice?
+        end
+
+        # Btrfs subvolumes to show as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Array<Y2Storage::BtrfsSubvolume>]
+        def btrfs_subvolumes(device)
+          filesystem = device.is?(:filesystem) ? device : device.filesystem
+
+          # FIXME: the default subvolume is not shown, but maybe it should be included when pointing
+          #   to something different to @.
+          filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
         end
       end
     end

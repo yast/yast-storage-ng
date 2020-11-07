@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,16 +17,15 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "y2partitioner/ui_state"
-require "y2partitioner/actions/delete_device"
+require "y2partitioner/actions/delete_blk_device"
 
 module Y2Partitioner
   module Actions
     # Action for deleting a partition
     #
     # @see DeleteDevice
-    class DeletePartition < DeleteDevice
+    class DeletePartition < DeleteBlkDevice
       def initialize(*args)
         super
         textdomain "storage"
@@ -35,6 +34,8 @@ module Y2Partitioner
       private
 
       # Deletes the indicated partition (see {DeleteDevice#device})
+      #
+      # @see DeleteDevice#delete
       def delete
         log.info "deleting partition #{device}"
         parent_device = device.partitionable
@@ -42,7 +43,7 @@ module Y2Partitioner
         UIState.instance.select_row(parent_device.sid)
       end
 
-      # @see DeleteDevice#errors
+      # @see Base#errors
       def errors
         errors = super + [implicit_partition_error]
         errors.compact

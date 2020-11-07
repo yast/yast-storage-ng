@@ -60,24 +60,13 @@ module Y2Partitioner
       private
 
       # @see Actions::Base#perform_action
-      #
-      # @return [Boolean] whether the action was actually performed
       def perform_action
-        return false unless warning_accepted? && availability_ensured?
+        return unless warning_accepted? && availability_ensured?
 
         Yast::WFM.call(client) if client
         reprobe(activate: activate)
-        true
-      end
 
-      # Result of the action
-      #
-      # @see Actions::Base#result
-      #
-      # @param action_result [Boolean] result of {#perform_action}
-      # @return [Symbol]
-      def result(action_result)
-        action_result ? :finish : :back
+        :finish
       end
 
       # Whether YaST is running in the initial stage of installation

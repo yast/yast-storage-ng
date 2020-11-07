@@ -167,6 +167,21 @@ describe Y2Partitioner::Widgets::Menus::Modify do
         expect(subject.disabled_items).to contain_exactly(*items)
       end
     end
+
+    context "when the device is a Btrfs subvolume" do
+      let(:scenario) { "mixed_disks_btrfs.yml" }
+
+      let(:device_name) { "/dev/sda2" }
+
+      let(:subvolume) { device.filesystem.btrfs_subvolumes.first }
+
+      subject { described_class.new(subvolume) }
+
+      it "contains 'Resize', 'Move', 'Change Devices', 'Create Part Table' and 'Clone Partitions'" do
+        items = [:menu_resize, :menu_move, :menu_change_devs, :menu_create_ptable, :menu_clone_ptable]
+        expect(subject.disabled_items).to contain_exactly(*items)
+      end
+    end
   end
 
   describe "#handle" do
@@ -221,6 +236,22 @@ describe Y2Partitioner::Widgets::Menus::Modify do
 
         it "calls an action to edit the Btrfs" do
           expect(Y2Partitioner::Actions::EditBtrfs).to receive(:new).with(btrfs)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Btrfs subvolume" do
+        let(:scenario) { "mixed_disks_btrfs.yml" }
+
+        let(:device_name) { "/dev/sda2" }
+
+        let(:subvolume) { device.filesystem.btrfs_subvolumes.first }
+
+        subject { described_class.new(subvolume) }
+
+        it "calls an action to edit the Btrfs subvolume" do
+          expect(Y2Partitioner::Actions::EditBtrfsSubvolume).to receive(:new).with(subvolume)
 
           subject.handle(event)
         end
@@ -305,6 +336,22 @@ describe Y2Partitioner::Widgets::Menus::Modify do
 
         it "calls an action to delete the Btrfs" do
           expect(Y2Partitioner::Actions::DeleteBtrfs).to receive(:new).with(btrfs)
+
+          subject.handle(event)
+        end
+      end
+
+      context "and the selected device is a Btrfs subvolume" do
+        let(:scenario) { "mixed_disks_btrfs.yml" }
+
+        let(:device_name) { "/dev/sda2" }
+
+        let(:subvolume) { device.filesystem.btrfs_subvolumes.first }
+
+        subject { described_class.new(subvolume) }
+
+        it "calls an action to delete the Btrfs subvolume" do
+          expect(Y2Partitioner::Actions::DeleteBtrfsSubvolume).to receive(:new).with(subvolume)
 
           subject.handle(event)
         end

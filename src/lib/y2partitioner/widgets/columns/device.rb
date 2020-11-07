@@ -56,16 +56,10 @@ module Y2Partitioner
         # @return [String]
         def device_name(device, entry)
           return fstab_device_name(device, entry) if fstab_entry?(device)
+          return device.path if device.is?(:btrfs_subvolume)
           return blk_device_name(device, entry) unless device.is?(:blk_filesystem)
-          return device.type.to_human_string unless device.multidevice?
 
-          format(
-            # TRANSLATORS: fs_type is the filesystem type. I.e., BtrFS
-            #              device_name is the base name of the block device. I.e., sda or sda1...
-            _("%{fs_type} %{device_name}"),
-            fs_type:     device.type.to_human_string,
-            device_name: device.blk_device_basename
-          )
+          device.name
         end
 
         # @see #device_name

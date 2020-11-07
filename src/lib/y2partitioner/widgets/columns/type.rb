@@ -30,16 +30,17 @@ module Y2Partitioner
         #
         # @see #icon
         DEVICE_ICONS = {
-          bcache:    Icons::BCACHE,
-          disk:      Icons::HD,
-          dasd:      Icons::HD,
-          multipath: Icons::MULTIPATH,
-          nfs:       Icons::NFS,
-          partition: Icons::HD_PART,
-          raid:      Icons::RAID,
-          lvm_vg:    Icons::LVM,
-          lvm_lv:    Icons::LVM_LV,
-          btrfs:     Icons::BTRFS
+          bcache:          Icons::BCACHE,
+          disk:            Icons::HD,
+          dasd:            Icons::HD,
+          multipath:       Icons::MULTIPATH,
+          nfs:             Icons::NFS,
+          partition:       Icons::HD_PART,
+          raid:            Icons::RAID,
+          lvm_vg:          Icons::LVM,
+          lvm_lv:          Icons::LVM_LV,
+          btrfs:           Icons::BTRFS,
+          btrfs_subvolume: Icons::BTRFS
         }
         private_constant :DEVICE_ICONS
 
@@ -47,26 +48,27 @@ module Y2Partitioner
         #
         # @see #default_label
         DEVICE_LABELS = {
-          bcache:         N_("Bcache"),
-          disk:           N_("Disk"),
-          dasd:           N_("Disk"),
-          multipath:      N_("Multipath"),
-          nfs:            N_("NFS"),
-          bios_raid:      N_("BIOS RAID"),
-          software_raid:  N_("RAID"),
-          lvm_pv:         N_("PV"),
-          lvm_vg:         N_("LVM"),
-          lvm_thin:       N_("Thin LV"),
-          lvm_thin_pool:  N_("Thin Pool"),
-          lvm_raid:       N_("RAID LV"),
-          lvm_cache:      N_("Cache LV"),
-          lvm_cache_pool: N_("Cache Pool"),
-          lvm_writecache: N_("Writecache LV"),
-          lvm_snapshot:   N_("Snapshot LV"),
-          lvm_mirror:     N_("Mirror LV"),
-          lvm_lv:         N_("LV"),
-          stray:          N_("Xen"),
-          partition:      N_("Partition")
+          bcache:          N_("Bcache"),
+          disk:            N_("Disk"),
+          dasd:            N_("Disk"),
+          multipath:       N_("Multipath"),
+          nfs:             N_("NFS"),
+          bios_raid:       N_("BIOS RAID"),
+          software_raid:   N_("RAID"),
+          lvm_pv:          N_("PV"),
+          lvm_vg:          N_("LVM"),
+          lvm_thin:        N_("Thin LV"),
+          lvm_thin_pool:   N_("Thin Pool"),
+          lvm_raid:        N_("RAID LV"),
+          lvm_cache:       N_("Cache LV"),
+          lvm_cache_pool:  N_("Cache Pool"),
+          lvm_writecache:  N_("Writecache LV"),
+          lvm_snapshot:    N_("Snapshot LV"),
+          lvm_mirror:      N_("Mirror LV"),
+          lvm_lv:          N_("LV"),
+          stray:           N_("Xen"),
+          partition:       N_("Partition"),
+          btrfs_subvolume: N_("BtrFS Subvolume")
         }
         private_constant :DEVICE_LABELS
 
@@ -131,7 +133,7 @@ module Y2Partitioner
         def device_label(device)
           return fstab_device_label(device) if fstab_entry?(device)
           return device.type.to_human_string if device.is?(:filesystem)
-          return default_label(device) if device.is?(:lvm_vg)
+          return default_label(device) if device.is?(:lvm_vg, :btrfs_subvolume)
           return snapshot_type_label(device) if device.is?(:lvm_snapshot)
 
           formatted_device_type_label(device) || unformatted_device_type_label(device)

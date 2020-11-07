@@ -26,6 +26,7 @@ require "y2partitioner/widgets/lvm_vg_description"
 require "y2partitioner/widgets/lvm_lv_description"
 require "y2partitioner/widgets/bcache_description"
 require "y2partitioner/widgets/stray_blk_device_description"
+require "y2partitioner/widgets/btrfs_subvolume_description"
 
 module Y2Partitioner
   module Dialogs
@@ -45,19 +46,21 @@ module Y2Partitioner
       # Possible page titles, based on the type of device
       TITLES = {
         # TRANSLATORS: Heading. String followed by a device name like /dev/bcache0
-        bcache:        N_("Bcache: %s"),
+        bcache:          N_("Bcache: %s"),
         # TRANSLATORS: Heading. String followed by device name of hard disk
-        disk_device:   N_("Hard Disk: %s"),
-        # TRANSLATORS: BTRFS page title, where %s is replaced by the device basename (e.g., sda1).
-        filesystem:    N_("Btrfs: %s"),
+        disk_device:     N_("Hard Disk: %s"),
+        # TRANSLATORS: Heading. String followed by name of a file system
+        filesystem:      N_("File System: %s"),
         # TRANSLATORS: Heading. String followed by name of an LVM logical volume
-        lvm_lv:        N_("Logical Volume: %s"),
+        lvm_lv:          N_("Logical Volume: %s"),
         # TRANSLATORS: Heading. String followed by name of an LVM volume group
-        lvm_vg:        N_("Volume Group: %s"),
+        lvm_vg:          N_("Volume Group: %s"),
         # TRANSLATORS: Heading. String followed by name of a software RAID
-        software_raid: N_("RAID: %s"),
+        software_raid:   N_("RAID: %s"),
         # TRANSLATORS: Heading. String followed by the name of a partition
-        partition:     N_("Partition: %s")
+        partition:       N_("Partition: %s"),
+        # TRANSLATORS: Heading. String followed by name of a Btrfs subvolume
+        btrfs_subvolume: N_("Btrfs Subvolume: %s")
       }
       private_constant :TITLES
 
@@ -71,7 +74,8 @@ module Y2Partitioner
         lvm_vg:           Widgets::LvmVgDescription,
         lvm_lv:           Widgets::LvmLvDescription,
         bcache:           Widgets::BcacheDescription,
-        stray_blk_device: Widgets::StrayBlkDeviceDescription
+        stray_blk_device: Widgets::StrayBlkDeviceDescription,
+        btrfs_subvolume:  Widgets::BtrfsSubvolumeDescription
       }
       private_constant :WIDGETS
 
@@ -106,11 +110,11 @@ module Y2Partitioner
 
       private
 
-      # Name of the device to display in the heading
+      # Device name used for the title of the dialog
       #
       # @return [String]
       def name
-        return device.blk_device_basename if device.is?(:filesystem)
+        return device.path if device.is?(:btrfs_subvolume)
 
         device.name
       end

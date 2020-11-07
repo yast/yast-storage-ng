@@ -55,7 +55,7 @@ module Y2Partitioner
       #
       # @return [Hash{String => Boolean}]
       def open_items
-        @open_items || {}
+        @open_items || default_open_items
       end
 
       # Sets the value of {#open_items}
@@ -104,6 +104,10 @@ module Y2Partitioner
 
       private
 
+      # Children limit to decide whether an entry is open/close by default
+      OPEN_CHILDREN_LIMIT = 10
+      private_constant :OPEN_CHILDREN_LIMIT
+
       # @see #helptext_for
       def columns_help
         cols.map { |column| helptext_for(column.id) }.join("\n")
@@ -123,6 +127,21 @@ module Y2Partitioner
       # @see #all_items
       def item_with_descendants(item)
         [item] + item.children.flat_map { |child| item_with_descendants(child) }
+      end
+
+      # Items to be open by default
+      #
+      # Items with more than {OPEN_CHILDREN_LIMIT} children are closed by default.
+      #
+      # @see #open_items
+      #
+      # @return [Hash{String => Boolean}]
+      def default_open_items
+        all_entries = entries.flat_map(&:all_entries)
+
+        all_entries.each_with_object({}) do |entry, result|
+          result[entry.row_id] = (entry.children.size <= OPEN_CHILDREN_LIMIT)
+        end
       end
     end
   end

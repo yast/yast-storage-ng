@@ -25,6 +25,7 @@ require "y2partitioner/actions/add_btrfs"
 require "y2partitioner/actions/add_bcache"
 require "y2partitioner/actions/add_partition"
 require "y2partitioner/actions/add_lvm_lv"
+require "y2partitioner/actions/add_btrfs_subvolume"
 
 module Y2Partitioner
   module Widgets
@@ -52,7 +53,8 @@ module Y2Partitioner
             Item(Id(:menu_add_bcache), _("B&cache...")),
             Item("---"),
             Item(Id(:menu_add_partition), _("&Partition...")),
-            Item(Id(:menu_add_lv), _("&Logical Volume..."))
+            Item(Id(:menu_add_lv), _("&Logical Volume...")),
+            Item(Id(:menu_add_btrfs_subvolume), _("Btrfs &Subvolume..."))
           ]
         end
 
@@ -63,12 +65,13 @@ module Y2Partitioner
           items = []
           items << :menu_add_partition unless support_add_partition?
           items << :menu_add_lv unless support_add_lv?
+          items << :menu_add_btrfs_subvolume unless support_add_btrfs_subvolume?
           items
         end
 
         # @see Device
         def disabled_without_device
-          [:menu_add_partition, :menu_add_lv]
+          [:menu_add_partition, :menu_add_lv, :menu_add_btrfs_subvolume]
         end
 
         # @see Device#action_for
@@ -107,6 +110,14 @@ module Y2Partitioner
           Actions::AddLvmLv.new(vg)
         end
 
+        # @see Device#action_for
+        def menu_add_btrfs_subvolume_action
+          return unless support_add_btrfs_subvolume?
+
+          filesystem = device.is?(:btrfs) ? device : device.filesystem
+          Actions::AddBtrfsSubvolume.new(filesystem)
+        end
+
         # Whether the action to add a partition can be called with the current device
         #
         # @return [Boolean]
@@ -121,6 +132,17 @@ module Y2Partitioner
           return false unless device
 
           device.is?(:lvm_vg, :lvm_lv)
+        end
+
+        # Whether the action to add a Btrfs subvolume can be called with the current device
+        #
+        # @return [Boolean]
+        def support_add_btrfs_subvolume?
+          return false unless device
+
+          return true if device.is?(:btrfs, :btrfs_subvolume)
+
+          device.is?(:blk_device) && device.formatted_as?(:btrfs) && !device.filesystem.multidevice?
         end
       end
     end

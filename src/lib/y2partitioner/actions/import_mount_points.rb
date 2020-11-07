@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -49,14 +49,12 @@ module Y2Partitioner
       # The mount points are imported only if the dialog is accepted.
       #
       # @see Actions::Base#perform_action
-      #
-      # @return [Symbol] result of the dialog
       def perform_action
-        dialog_result = import_dialog.run
+        return unless import_dialog.run == :ok
 
-        controller.import_mount_points if dialog_result == :ok
+        controller.import_mount_points
 
-        dialog_result
+        :finish
       end
 
       # Dialog to import mount points from a fstab file
@@ -64,21 +62,6 @@ module Y2Partitioner
       # @return [Dialogs::ImportMountPoints]
       def import_dialog
         @import_dialog ||= Dialogs::ImportMountPoints.new(controller)
-      end
-
-      # Result of the action
-      #
-      # @see Actions::Base#result
-      #
-      # It returns `:finish` when the action is performed. Otherwise, it returns
-      # the result of the dialog, see {#perform_action}.
-      #
-      # @param action_result [Symbol] result of {#permorm_action}
-      # @return [Symbol]
-      def result(action_result)
-        return super if action_result == :ok
-
-        action_result
       end
 
       # List of errors that avoid to import mount points

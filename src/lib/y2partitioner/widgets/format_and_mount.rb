@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,7 +25,6 @@ require "y2storage/btrfs_subvolume"
 require "y2partitioner/filesystems"
 require "y2partitioner/widgets/fstab_options"
 require "y2partitioner/dialogs/mkfs_options"
-require "y2partitioner/dialogs/btrfs_subvolumes"
 
 Yast.import "Popup"
 
@@ -174,7 +173,6 @@ module Y2Partitioner
 
         @mount_point_widget = MountPoint.new(controller)
         @fstab_options_widget = FstabOptionsButton.new(controller)
-        @btrfs_subvolumes_widget = BtrfsSubvolumesButton.new(controller)
 
         self.handle_all_events = true
       end
@@ -191,7 +189,6 @@ module Y2Partitioner
       # Synchronize the widget with the information from the controller
       def refresh
         @mount_point_widget.refresh
-        @btrfs_subvolumes_widget.refresh
 
         if filesystem&.supports_mount?
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
@@ -229,9 +226,7 @@ module Y2Partitioner
               ),
               Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
             )
-          ),
-          VSpacing(1),
-          Left(@btrfs_subvolumes_widget)
+          )
         )
       end
 
@@ -625,50 +620,6 @@ module Y2Partitioner
         return false if value == "swap"
 
         controller.mounted_paths.include?(value)
-      end
-    end
-
-    # The subvolumes button is implemented as a replace point to allow hidden it
-    class BtrfsSubvolumesButton < CWM::ReplacePoint
-      def initialize(controller)
-        @controller = controller
-        super(id: "subvolumes_button", widget: current_widget)
-      end
-
-      def refresh
-        replace(current_widget)
-      end
-
-      private
-
-      def filesystem
-        @controller.filesystem
-      end
-
-      def current_widget
-        if filesystem&.supports_btrfs_subvolumes?
-          Button.new(@controller)
-        else
-          CWM::Empty.new("empty_widget")
-        end
-      end
-    end
-
-    # Button to manage btrfs subvolumes
-    class Button < CWM::PushButton
-      # @param controller [Actions::Controllers::Filesystem]
-      def initialize(controller)
-        textdomain "storage"
-        @controller = controller
-      end
-
-      def label
-        _("Subvolume Handling")
-      end
-
-      def handle
-        Dialogs::BtrfsSubvolumes.new(@controller.filesystem).run
-        nil
       end
     end
 
