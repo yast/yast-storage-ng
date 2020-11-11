@@ -59,7 +59,7 @@ module Y2Storage
 
       # @!method btrfs_subvolumes
       #   Collection of Btrfs subvolumes of the filesystem
-      #   @return [Array<BtrfsSubvolumes>]
+      #   @return [Array<BtrfsSubvolume>]
       storage_forward :btrfs_subvolumes, as: "BtrfsSubvolume"
 
       # @!method find_btrfs_subvolume_by_path(path)
@@ -126,6 +126,35 @@ module Y2Storage
       #   @param device [BlkDevice]
       #   @raise [Storage::Exception] if the device cannot be removed
       storage_forward :remove_device
+
+      # @!method btrfs_qgroups
+      #   Collection of Btrfs qgroups of the filesystem
+      #   @return [Array<BtrfsQgroup>]
+      storage_forward :btrfs_qgroups, as: "BtrfsQgroup"
+
+      # @!method has_quota
+      #   Whether quota support is enabled for this btrfs filesystem
+      #
+      #   @return [Boolean]
+      storage_forward :has_quota
+      alias_method :quota?, :has_quota
+
+      # @!method quota=(value)
+      #   Enable or disable quota for the btrfs
+      #
+      #   When disabling quota, all qgroups and qgroup relations of the btrfs are removed.
+      #
+      #   When enabling quota, qgroups and qgroup relations are created for the
+      #   btrfs. This is done so that no qgroup related actions will be done during
+      #   commit (unless further changes are done). If quota was disabled during probing,
+      #   the qgroups are created like btrfs would do. If quota was enabled during
+      #   probing, the qgroups from probing are restored.
+      #
+      #   @raise [Storage::Exception] according to libstorage-ng documentation this method
+      #     can raise an exception, although the circumstances are not clear.
+      #
+      #   @param value [Boolean]
+      storage_forward :quota=
 
       # Only Btrfs should support subvolumes
       def supports_btrfs_subvolumes?

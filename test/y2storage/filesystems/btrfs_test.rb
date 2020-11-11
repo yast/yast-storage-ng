@@ -934,4 +934,74 @@ describe Y2Storage::Filesystems::Btrfs do
       expect(subvol_mount_bys(filesystem)).to all(eq :uuid)
     end
   end
+
+  describe "#quota=" do
+    context "on a filesystem that had no quota support originally" do
+      it "enables support and creates the necessary qgroups when true is given" do
+        expect(subject.quota?).to eq false
+        expect(subject.btrfs_qgroups).to be_empty
+        subvols = subject.btrfs_subvolumes.size
+
+        subject.quota = true
+
+        expect(subject.quota?).to eq true
+        expect(subject.btrfs_qgroups).to_not be_empty
+        expect(subject.btrfs_qgroups.size).to eq subvols
+      end
+
+      it "has no effect when false is given" do
+        expect(subject.quota?).to eq false
+        expect(subject.btrfs_qgroups).to be_empty
+
+        subject.quota = false
+
+        expect(subject.quota?).to eq false
+        expect(subject.btrfs_qgroups).to be_empty
+      end
+    end
+
+    context "on a filesystem which already supports quotas" do
+      let(:scenario) { "btrfs_simple_quotas.xml" }
+      let(:dev_name) { "/dev/vda2" }
+
+      it "has no effect when true is given" do
+        expect(subject.quota?).to eq true
+        qgroups = subject.btrfs_qgroups
+        expect(qgroups).to_not be_empty
+
+        subject.quota = true
+
+        expect(subject.quota?).to eq true
+        expect(subject.btrfs_qgroups).to contain_exactly(*qgroups)
+      end
+
+      it "disables support and removes the qgroups when false is given" do
+        expect(subject.quota?).to eq true
+        expect(subject.btrfs_qgroups).to_not be_empty
+
+        subject.quota = false
+
+        expect(subject.quota?).to eq false
+        expect(subject.btrfs_qgroups).to be_empty
+      end
+
+      context "if quotas were previously disabled" do
+        before do
+          @qgroups_sids = subject.btrfs_qgroups.map(&:sid)
+          subject.quota = false
+        end
+
+        it "re-enables support and restores the qgroups when true is given" do
+          expect(subject.quota?).to eq false
+          expect(subject.btrfs_qgroups).to be_empty
+
+          subject.quota = true
+
+          expect(subject.quota?).to eq true
+          expect(subject.btrfs_qgroups).to_not be_empty
+          expect(subject.btrfs_qgroups.map(&:sid)).to contain_exactly(*@qgroups_sids)
+        end
+      end
+    end
+  end
 end
