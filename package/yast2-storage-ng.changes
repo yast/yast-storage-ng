@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Nov 11 14:44:26 UTC 2020 - Martin Vidner <mvidner@suse.com>
+
+- Untranslated error message in 'Edit Btrfs subvolumes'/
+  'Add subvolume' (bsc#1130822)
+- Detect missing textdomain during unit testing.
+- 4.3.20
+
+-------------------------------------------------------------------
 Thu Nov  5 10:26:55 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Disable "Device" menu items for NFS shares
