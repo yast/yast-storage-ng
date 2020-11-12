@@ -29,6 +29,7 @@ module Y2Storage
   # Although they can be organized in a tree hierarchy, we are only considering the
   # first level (level 0, actually), so they are associated to a single subvolume.
   #
+  # @see man btrfs-quota
   # @see man btrfs-qgroup
   class BtrfsQgroup < Device
     wrap_class Storage::BtrfsQgroup
