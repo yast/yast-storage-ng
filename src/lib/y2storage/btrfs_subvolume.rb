@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_class_wrapper"
+require "y2storage/btrfs_qgroup"
 require "y2storage/mountable"
 
 module Y2Storage
@@ -67,6 +68,22 @@ module Y2Storage
     #   @return [BtrfsSubvolume]
     storage_forward :create_btrfs_subvolume, as: "BtrfsSubvolume"
 
+    # @!method btrfs_qgroup
+    #   Level 0 qgroup associated to this subvolume, if any
+    #
+    #   @return [BtrfsQgroup, nil]
+    storage_forward :btrfs_qgroup, as: "BtrfsQgroup", check_with: :has_btrfs_qgroup
+
+    # @!method create_btrfs_qgroup
+    #   Creates the corresponding level 0 qgroup for the subvolume
+    #
+    #   Quota support must be enabled for the filesystem (see {Filesystems::Btrfs#quota?}).
+    #   If that's the case, usually the qgroup already exists unless it was removed by
+    #   the user.
+    #
+    #   @raise [Storage::Exception] if quota support is not enabled
+    storage_forward :create_btrfs_qgroup, as: "BtrfsQgroup"
+
     # Sets this subvolume as the default one
     def set_default_btrfs_subvolume
       # The original libstorage method is wrongly renamed to
@@ -107,6 +124,67 @@ module Y2Storage
     # @see #can_be_auto_deleted?
     def can_be_auto_deleted=(value)
       save_userdata(:can_be_auto_deleted, value)
+    end
+
+    # Size of the referenced space of the subvolume, if known
+    #
+    # The information is obtained from the qgroup of level 0 associated to the subvolume,
+    # which implies it can only be known if quotas are enabled for the filesystem.
+    # If quota support is disabled, this method returns nil.
+    #
+    # If the filesystem already existed during probing but got no quota support enabled at
+    # that moment, this method returns zero if quota support was enabled after probing.
+    #
+    # @return [DiskSize, nil] nil if quota support is disabled, zero if it was enabled only
+    #   after probing, the known size in any other case
+    def referenced
+      btrfs_qgroup&.referenced
+    end
+
+    # Size of the exclusive space of the subvolume, if known
+    #
+    # See {#referenced} for details about the possible returned values in several situations.
+    #
+    # @return [DiskSize, nil] nil if quota support is disabled, zero if it was enabled only
+    #   after probing, the known size in any other case
+    def exclusive
+      btrfs_qgroup&.exclusive
+    end
+
+    # Limit of the referenced space for the subvolume
+    #
+    # @return [DiskSize] unlimited if there is no quota
+    def referenced_limit
+      btrfs_qgroup&.referenced_limit || DiskSize.unlimited
+    end
+
+    # Limit of the referenced space for the subvolume
+    #
+    # @return [DiskSize] unlimited if there is no quota
+    def exclusive_limit
+      btrfs_qgroup&.exclusive_limit || DiskSize.unlimited
+    end
+
+    # Setter for #{referenced_limit}
+    #
+    # Works only if quotas are enabled for the filesystem (see {Filesystems::Btrfs#quota?})
+    #
+    # @param limit [DiskSize] setting it to DiskSize.Unlimited removes the quota
+    def referenced_limit=(limit)
+      return unless create_missing_qgroup
+
+      btrfs_qgroup.referenced_limit = limit
+    end
+
+    # Setter for #{exclusive_limit}
+    #
+    # Works only if quotas are enabled for the filesystem (see {Filesystems::Btrfs#quota?})
+    #
+    # @param limit [DiskSize] setting it to DiskSize.Unlimited removes the quota
+    def exclusive_limit=(limit)
+      return unless create_missing_qgroup
+
+      btrfs_qgroup.exclusive_limit = limit
     end
 
     # Checks whether the subvolume is shadowed by any other mount point in the system
@@ -169,8 +247,20 @@ module Y2Storage
 
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :btrfs_subvolume
+    end
+
+    # Returns the associated level 0 qgroup, creating one if needed and possible
+    #
+    # @return [BtrfsQgroup, nil] nil if quotas are disabled for the filesystem, a valid
+    #   qgroup (new or pre-existing) in any other case
+    def create_missing_qgroup
+      btrfs_qgroup || create_btrfs_qgroup
+      # libstorage-ng throws an exception for #create_btrfs_qgroup if quotas are disabled
+    rescue Storage::Exception
+      nil
     end
   end
 end
