@@ -18,7 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "yast2/popup"
-require "cwm/common_widgets"
+require "cwm"
+require "y2partitioner/size_parser"
 require "y2partitioner/dialogs/single_step"
 
 module Y2Partitioner
@@ -53,7 +54,10 @@ module Y2Partitioner
         HVSquash(
           VBox(
             Left(SubvolumePath.new(controller)),
-            Left(SubvolumeNocow.new(controller))
+            VSpacing(0.5),
+            Left(SubvolumeNocow.new(controller)),
+            VSpacing(0.5),
+            Left(SubvolumeRferLimit.new(controller))
           )
         )
       end
@@ -265,6 +269,201 @@ module Y2Partitioner
 
         # @return [Actions::Controllers::BtrfsSubvolume]
         attr_reader :controller
+      end
+
+      # Widget to set the size of BtrfsSubvolume#referenced_limit, if quota
+      # support is enabled for the Btrfs
+      class SubvolumeRferLimit < CWM::CustomWidget
+        # Constructor
+        #
+        # @param controller [Actions::Controllers::BtrfsSubvolume]
+        #   a controller collecting data for a subvolume to be created or edited
+        def initialize(controller)
+          textdomain "storage"
+          @controller = controller
+        end
+
+        # @macro seeAbstractWidget
+        def contents
+          VBox(
+            Left(check_box_widget),
+            Left(size_widget)
+          )
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          _(
+            "<p><b>Limit Size</b> allows to set a quota on the referenced space of the " \
+            "subvolume. This is only possible if Btrfs quotas are enabled for this file " \
+            "system. Btrfs quotas can be enabled or disabled editing the file system " \
+            "from the Btrfs section of the Partitioner.</p>"
+          )
+        end
+
+        # Disables the widget if quotas are not enabled
+        #
+        # @see #disable_widgets
+        def init
+          disable_widgets unless quota?
+        end
+
+        # @macro seeAbstractWidget
+        def value
+          if quota? && check_box_widget.value
+            size_widget.value
+          else
+            Y2Storage::DiskSize.unlimited
+          end
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @controller.subvolume_referenced_limit = value
+        end
+
+        # @macro seeAbstractWidget
+        def validate
+          return true if value
+
+          Yast::Popup.Error(_("The size entered is invalid."))
+          Yast::UI.SetFocus(Id(size_widget.widget_id))
+          false
+        end
+
+        private
+
+        # Widget for the checkbox used to add/remove the quota
+        #
+        # @return [SubvolumeRferLimitCheckBox]
+        def check_box_widget
+          @check_box_widget ||= SubvolumeRferLimitCheckBox.new(initial_check_box, size_widget)
+        end
+
+        # Widget to introduce the size of the quota
+        #
+        # @return [SubvolumeRferLimitSize]
+        def size_widget
+          @size_widget ||= SubvolumeRferLimitSize.new(initial_size)
+        end
+
+        # Disables the sub-widgets
+        #
+        # To be used when quotas are not enabled
+        def disable_widgets
+          check_box_widget.disable
+          size_widget.disable
+        end
+
+        # Whether quotas are enabled for the file system
+        #
+        # @return [Boolean]
+        def quota?
+          @controller.quota?
+        end
+
+        # Initial value for {#size_widget}
+        #
+        # @return [Y2Storage::DiskSize]
+        def initial_size
+          initial_limit = @controller.subvolume_referenced_limit
+          if !initial_limit || initial_limit.unlimited?
+            @controller.fallback_referenced_limit
+          else
+            @controller.subvolume_referenced_limit
+          end
+        end
+
+        # Initial value for {#check_box_widget}
+        #
+        # @return [Boolean]
+        def initial_check_box
+          initial_limit = @controller.subvolume_referenced_limit
+          return false unless initial_limit
+
+          !initial_limit.unlimited?
+        end
+      end
+
+      # Sub-widget of SubvolumeRferLimit used to enter the size if the
+      # limit is set
+      class SubvolumeRferLimitSize < CWM::InputField
+        include SizeParser
+
+        # Constructor
+        #
+        # @param initial [Y2Storage::DiskSize] initial value
+        def initialize(initial)
+          textdomain "storage"
+          @initial = initial
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Max referenced size")
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = @initial
+        end
+
+        # @return [Y2Storage::DiskSize, nil] nil if the value cannot be parsed
+        def value
+          parse_user_size(super)
+        end
+
+        # @param disk_size [Y2Storage::DiskSize]
+        def value=(disk_size)
+          super(disk_size.human_floor)
+        end
+      end
+
+      # Sub-widget of SubvolumeRferLimit used to activate or deactivate
+      # the limit
+      class SubvolumeRferLimitCheckBox < CWM::CheckBox
+        # Constructor
+        #
+        # @param initial [Boolean] initial state of the checkbox
+        # @param size_widget [SubvolumeRferLimitSize] see {#size_widget}
+        def initialize(initial, size_widget)
+          textdomain "storage"
+          @initial = initial
+          @size_widget = size_widget
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Limit size")
+        end
+
+        # @macro seeAbstractWidget
+        def opt
+          [:notify]
+        end
+
+        # @macro seeAbstractWidget
+        def handle
+          refresh_size
+          nil
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = @initial
+          refresh_size
+        end
+
+        private
+
+        # @return [SubvolumeRferLimitSize] dependant widget to introduce the size
+        #   when the checkbox is enabled
+        attr_reader :size_widget
+
+        # Enables or disabled {#size_widget} based on the value of the widget
+        def refresh_size
+          value ? size_widget.enable : size_widget.disable
+        end
       end
     end
   end

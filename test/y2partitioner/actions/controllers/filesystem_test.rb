@@ -242,6 +242,46 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     end
   end
 
+  describe "#btrfs_quota?" do
+    context "when the currently editing device has a Btrfs filesystem" do
+      let(:dev_name) { "/dev/sda2" }
+
+      it "returns the filesystem value for #quota?" do
+        expect(controller.btrfs_quota?).to eq false
+        device.filesystem.quota = true
+        expect(controller.btrfs_quota?).to eq true
+      end
+    end
+
+    context "when the currently editing device has a no-Btrfs filesystem" do
+      let(:dev_name) { "/dev/sdb6" }
+
+      it "returns false" do
+        expect(controller.btrfs_quota?).to eq false
+      end
+    end
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      it "returns false" do
+        expect(controller.btrfs_quota?).to eq false
+      end
+    end
+  end
+
+  describe "#btrfs_quota=" do
+    let(:dev_name) { "/dev/sda2" }
+
+    it "sets #quota? for the current Btrfs filesystem" do
+      expect(device.filesystem.quota?).to eq false
+      controller.btrfs_quota = true
+      expect(device.filesystem.quota?).to eq true
+      controller.btrfs_quota = false
+      expect(device.filesystem.quota?).to eq false
+    end
+  end
+
   describe "#apply_role" do
     before do
       subject.role_id = role

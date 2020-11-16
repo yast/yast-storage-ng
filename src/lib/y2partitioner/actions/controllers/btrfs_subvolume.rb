@@ -41,6 +41,11 @@ module Y2Partitioner
         # @return [Boolean]
         attr_accessor :subvolume_nocow
 
+        # Referenced limit attribute for the subvolume. Widgets set this value.
+        #
+        # @return [DiskSize]
+        attr_accessor :subvolume_referenced_limit
+
         # Constructor
         #
         # @param filesystem [Y2Storage::Filesystems::Btrfs] filesystem to work on
@@ -79,6 +84,7 @@ module Y2Partitioner
           end
 
           subvolume.nocow = subvolume_nocow
+          subvolume.referenced_limit = subvolume_referenced_limit
         end
 
         # Prefix used for the subvolumes
@@ -131,17 +137,41 @@ module Y2Partitioner
           !new?(subvolume)
         end
 
+        # Whether quota support is enabled for the Btrfs filesystem
+        #
+        # @return [Boolean]
+        def quota?
+          filesystem.quota?
+        end
+
+        # Placeholder size to display in the referenced_limit widget when the
+        # current value is DiskSize.unlimited
+        #
+        # Done to improve usability by:
+        #
+        #  - Suggesting the previous value if the user disables and re-enables the limit,
+        #  which gives some sense of continuity,
+        #  - Displaying some reasonable starting point if the user is setting the limit
+        #  for the first time.
+        #
+        # @return [DiskSize]
+        def fallback_referenced_limit
+          subvolume&.former_referenced_limit || filesystem.blk_devices.first.size
+        end
+
         private
 
         # Default values for the subvolume attributes
         def set_default_values
           @subvolume_path = subvolumes_prefix
           @subvolume_nocow = false
+          @subvolume_referenced_limit = Y2Storage::DiskSize.unlimited
 
           return unless subvolume
 
           @subvolume_path = subvolume.path
           @subvolume_nocow = subvolume.nocow?
+          @subvolume_referenced_limit = subvolume.referenced_limit
         end
       end
     end

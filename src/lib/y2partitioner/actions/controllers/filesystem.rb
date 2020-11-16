@@ -384,6 +384,28 @@ module Y2Partitioner
           filesystem.configure_snapper
         end
 
+        # Sets quota support for the filesystem if it makes sense
+        #
+        # @see Y2Storage::Filesystems::Btrfs.quota=
+        #
+        # @param value [Boolean]
+        def btrfs_quota=(value)
+          return if filesystem.nil? || !filesystem.is?(:btrfs)
+
+          filesystem.quota = value
+        end
+
+        # Status of the quota support for the Btrfs filesystem
+        #
+        # @see Y2Storage::Filesystems::Btrfs.quota?
+        #
+        # @return [Boolean]
+        def btrfs_quota?
+          return false if filesystem.nil? || !filesystem.is?(:btrfs)
+
+          filesystem.quota?
+        end
+
         # Paths that are mounted in the current device graph, excluding
         # subvolumes
         #

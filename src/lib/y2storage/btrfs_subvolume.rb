@@ -193,6 +193,9 @@ module Y2Storage
     def referenced_limit=(limit)
       return unless create_missing_qgroup
 
+      if referenced_limit && !referenced_limit.unlimited?
+        save_userdata(:former_referenced_limit, referenced_limit)
+      end
       btrfs_qgroup.referenced_limit = limit
     end
 
@@ -205,6 +208,16 @@ module Y2Storage
       return unless create_missing_qgroup
 
       btrfs_qgroup.exclusive_limit = limit
+    end
+
+    # Previous significant (ie. not unlimited) value of {#referenced_limit}
+    #
+    # Used by the Partitioner to restore the value of the corresponding widget if the
+    # user re-enables the limit, which improves the sense of continuity.
+    #
+    # @return [DiskSize, nil] nil if the limit has never changed
+    def former_referenced_limit
+      userdata_value(:former_referenced_limit)
     end
 
     protected
