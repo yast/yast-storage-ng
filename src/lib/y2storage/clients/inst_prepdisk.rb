@@ -67,7 +67,7 @@ module Y2Storage
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
-        mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exist?(EFIVARS_PATH)
+        mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if mount_efivars?
         mount_in_target("/run", "/run", "--bind")
 
         true
@@ -87,6 +87,26 @@ module Y2Storage
         end
 
         nil
+      end
+
+      # Check if efivars should be mounted, i.e. if /sys/firmware/efi/efivars
+      # exists and the system supports the efivarfs filesystem type.
+      #
+      # @return [Boolean] true if efivarfs should be mounted
+      def mount_efivars?
+        File.exist?(EFIVARS_PATH) && efivarfs_support?
+      end
+
+      # Check if the efivarfs filesystem type is supported on this system,
+      # i.e. if /proc/filesystems contains a line with "efivarfs".
+      #
+      # Notice that a system might have the /sys/firmware/efi/efivars file,
+      # but no support for the efivarfs filesystem to actually mount it.
+      # See https://bugzilla.suse.com/show_bug.cgi?id=1174029
+      #
+      # @return [Boolean] true if efivarfs is supported
+      def efivarfs_support?
+        File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
       end
 
       def manager
