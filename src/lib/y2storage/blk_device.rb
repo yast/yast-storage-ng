@@ -644,6 +644,13 @@ module Y2Storage
       false
     end
 
+    # Whether this device contains, directly or indirectly, the root mount point
+    #
+    # @return [Boolean]
+    def contain_root?
+      ([self] + descendants).any? { |desc| desc.is_a?(MountPoint) && desc.root? }
+    end
+
     # Whether the block device fulfills conditions to be used for a Windows system
     #
     # Note that only partitions can be used for installing Windows.

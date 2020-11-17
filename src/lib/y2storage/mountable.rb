@@ -110,6 +110,16 @@ module Y2Storage
       mount_point.root?
     end
 
+    # Whether the device is mounted as root or based in the same disk than the
+    # device mounted as root
+    #
+    # @return [Boolean]
+    def root_disk?
+      return true if root?
+
+      ([self] + ancestors).any? { |dev| dev.is_a?(BlkDevice) && dev.contain_root? }
+    end
+
     # Creates a mount point object for the device
     #
     # @param path [String]
