@@ -265,7 +265,7 @@ module Y2Storage
       def needs_network_mount_options?
         # Adding "_netdev" and similar options in fstab for / should not be necessary
         # and it confuses (or used to confuse) systemd. See bsc#1165937.
-        in_network? && !root?
+        in_network? && !root_disk?
       end
 
       # @see Device#is?
