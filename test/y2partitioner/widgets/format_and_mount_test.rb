@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,12 +27,16 @@ require "y2partitioner/actions/controllers"
 
 describe Y2Partitioner::Widgets do
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:blk_device) { Y2Storage::Partition.find_by_name(current_graph, "/dev/sda1") }
+  let(:blk_device) { current_graph.find_by_name(device_name) }
+
+  let(:scenario) { "lvm-two-vgs.yml" }
+
+  let(:device_name) { "/dev/sda1" }
 
   let(:controller) do
     Y2Partitioner::Actions::Controllers::Filesystem.new(blk_device, "")
@@ -78,6 +83,10 @@ describe Y2Partitioner::Widgets do
     include_examples "CWM::CustomWidget"
 
     describe "#validate" do
+      before do
+        allow(Yast2::Popup).to receive(:show)
+      end
+
       context "when the device is not formatted" do
         before do
           blk_device.delete_filesystem
@@ -125,7 +134,7 @@ describe Y2Partitioner::Widgets do
               end
 
               it "shows an error popup" do
-                expect(Yast::Popup).to receive(:Error)
+                expect(Yast2::Popup).to receive(:show)
                 subject.validate
               end
 
@@ -144,6 +153,123 @@ describe Y2Partitioner::Widgets do
               end
             end
           end
+        end
+      end
+
+      context "when there are no errors" do
+        let(:scenario) { "mixed_disks" }
+
+        let(:device_name) { "/dev/sdb2" }
+
+        shared_examples "no action" do
+          it "does not modofy the current value about restoring the default list of subvolumes" do
+            controller.restore_btrfs_subvolumes = true
+
+            subject.validate
+
+            expect(controller.restore_btrfs_subvolumes?).to eq(true)
+          end
+
+          it "does not ask to the user about restoring or removing subvolumes" do
+            expect(Yast2::Popup).to_not receive(:show)
+
+            subject.validate
+          end
+        end
+
+        context "and the currently edited filesystem is a Btrfs that does not exist on disk yet" do
+          before do
+            blk_device.remove_descendants
+            blk_device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+            blk_device.filesystem.mount_path = "/"
+          end
+
+          context "and the mount path has not been modified" do
+            before do
+              allow(controller).to receive(:mount_path_modified?).and_return(false)
+            end
+
+            include_examples "no action"
+          end
+
+          context "and the filesystem does not contain subvolumes" do
+            it "sets the controller to restore the default list of subvolumes" do
+              expect(controller.restore_btrfs_subvolumes?).to eq(false)
+
+              subject.validate
+
+              expect(controller.restore_btrfs_subvolumes?).to eq(true)
+            end
+
+            it "does not ask to the user about restoring or removing subvolumes" do
+              expect(Yast2::Popup).to_not receive(:show)
+
+              subject.validate
+            end
+          end
+
+          context "and the filesystem contains subvolumes" do
+            before do
+              blk_device.filesystem.create_btrfs_subvolume("foo", false)
+              blk_device.filesystem.create_btrfs_subvolume("bar", false)
+
+              allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(volume_spec)
+              allow(volume_spec).to receive(:subvolumes).and_return(subvolumes)
+              allow(Yast2::Popup).to receive(:show).and_return(restore)
+            end
+
+            let(:volume_spec) do
+              Y2Storage::VolumeSpecification.new(
+                "btrfs_default_subvolume" => default_subvolume,
+                "btrfs_read_only"         => false
+              )
+            end
+
+            let(:restore) { nil }
+
+            context "and there is a default list of subvolumes for the filesystem" do
+              let(:default_subvolume) { "@" }
+
+              let(:subvolumes) do
+                [
+                  Y2Storage::SubvolSpecification.new("home"),
+                  Y2Storage::SubvolSpecification.new("var")
+                ]
+              end
+
+              it "ask to the user whether to restore the default list of subvolumes" do
+                expect(Yast2::Popup).to receive(:show).with(/restore the default list/, anything)
+
+                subject.validate
+              end
+
+              context "and the user accepts" do
+                let(:restore) { :yes }
+
+                it "sets the controller to restore the default list of subvolumes" do
+                  subject.validate
+
+                  expect(controller.restore_btrfs_subvolumes?).to eq(true)
+                end
+              end
+
+              context "and the user refuses" do
+                let(:restore) { false }
+
+                it "sets the controller to not restore the default list of subvolumes" do
+                  subject.validate
+
+                  expect(controller.restore_btrfs_subvolumes?).to eq(false)
+                end
+              end
+            end
+          end
+        end
+
+        context "and the currently edited filesystem is not a new Btrfs" do
+          let(:device_name) { "/dev/sda2" }
+
+          include_examples "no action"
         end
       end
     end
@@ -216,10 +342,10 @@ describe Y2Partitioner::Widgets do
     include_examples "CWM::ComboBox"
 
     describe "#validate" do
-
       before do
         allow(subject).to receive(:enabled?).and_return(enabled)
         allow(subject).to receive(:value).and_return(value)
+        allow(Yast2::Popup).to receive(:show)
       end
 
       let(:value) { nil }
@@ -239,7 +365,7 @@ describe Y2Partitioner::Widgets do
           let(:value) { "" }
 
           it "shows an error message" do
-            expect(Yast::Popup).to receive(:Error)
+            expect(Yast2::Popup).to receive(:show)
             subject.validate
           end
 
@@ -252,7 +378,7 @@ describe Y2Partitioner::Widgets do
           let(:value) { "/home" }
 
           it "shows an error message" do
-            expect(Yast::Popup).to receive(:Error)
+            expect(Yast2::Popup).to receive(:show)
             subject.validate
           end
 
@@ -265,7 +391,7 @@ describe Y2Partitioner::Widgets do
           let(:value) { "swap" }
 
           it "does not show any error message" do
-            expect(Yast::Popup).to_not receive(:Error)
+            expect(Yast2::Popup).to_not receive(:show)
             subject.validate
           end
 
@@ -280,39 +406,6 @@ describe Y2Partitioner::Widgets do
 
             it "returns true" do
               expect(subject.validate).to be(true)
-            end
-          end
-
-          context "and the mount point shadows a subvolume" do
-            let(:value) { "/foo" }
-
-            before do
-              device_graph = Y2Partitioner::DeviceGraphs.instance.current
-              device = Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2")
-              filesystem = device.filesystem
-              subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
-              subvolume.can_be_auto_deleted = can_be_auto_deleted
-            end
-
-            context "and the subvolume cannot be shadowed" do
-              let(:can_be_auto_deleted) { false }
-
-              it "shows an error message" do
-                expect(Yast::Popup).to receive(:Error)
-                subject.validate
-              end
-
-              it "returns false" do
-                expect(subject.validate).to be(false)
-              end
-            end
-
-            context "and the subvolume can be shadowed" do
-              let(:can_be_auto_deleted) { true }
-
-              it "returns true" do
-                expect(subject.validate).to be(true)
-              end
             end
           end
         end
@@ -364,7 +457,7 @@ describe Y2Partitioner::Widgets do
         before do
           expect(controller).to receive(:blk_device)
             .and_return(double(size: Y2Storage::DiskSize.MiB(1)))
-          allow(Yast::Popup).to receive(:Error)
+          allow(Yast2::Popup).to receive(:show)
         end
 
         it "returns false" do
@@ -372,7 +465,7 @@ describe Y2Partitioner::Widgets do
         end
 
         it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
+          expect(Yast2::Popup).to receive(:show)
 
           subject.validate
         end

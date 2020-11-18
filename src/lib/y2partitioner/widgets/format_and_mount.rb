@@ -19,14 +19,13 @@
 
 require "yast"
 require "cwm"
+require "yast2/popup"
 require "y2storage"
 require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
 require "y2partitioner/filesystems"
 require "y2partitioner/widgets/fstab_options"
 require "y2partitioner/dialogs/mkfs_options"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
@@ -249,12 +248,62 @@ module Y2Partitioner
         nil
       end
 
+      # @see #errors
       def validate
-        validate_system_mount_points && validate_mount_by_label
+        return false unless system_mount_points_warning
+
+        error = errors.first
+
+        if error
+          Yast2::Popup.show(error, headline: :error)
+          return false
+        end
+
+        btrfs_subvolumes_question
+        true
       end
 
       private
 
+      # @return [Actions::Controllers::Filesystem]
+      attr_reader :controller
+
+      # Asks to the user what to do with the current list of Btrfs subvolumes
+      #
+      # Note that the user is only asked when the Btrfs filesystem does not exist on disk yet and it has
+      # subvolumes.
+      def btrfs_subvolumes_question
+        return unless controller.new_btrfs? && controller.mount_path_modified?
+
+        controller.restore_btrfs_subvolumes = true
+
+        # It does not have subvolumes, so let's simply restore the default list.
+        return unless controller.btrfs_subvolumes?
+
+        if controller.default_btrfs_subvolumes?
+          # TRANSLATORS: message to ask to the user about restoring the default list of subvolumes.
+          message = _("Do you want to restore the default list of subvolumes?")
+        else
+          # TRANSLATORS: message to ask to the user about deleting the current subvolumes.
+          message = _("Do you want to delete the current subvolumes?")
+        end
+
+        restore = Yast2::Popup.show(message, buttons: :yes_no) == :yes
+
+        controller.restore_btrfs_subvolumes = restore
+      end
+
+      # List of errors
+      #
+      # @see #validate
+      #
+      # @return [Array<String>]
+      def errors
+        [mount_by_label_error].compact
+      end
+
+      # Error when the label is missing.
+      #
       # It is necessary to prevent an empty filesystem label when the option mount_by is set
       # to label by default. The label value is validated when the user gives one value
       # (by editing the fstab options), but the user could mount a device without entering
@@ -263,22 +312,19 @@ module Y2Partitioner
       # Here only the presence of a label is checked. The correctness of the label is checked
       # when the label is entered (see {Dialogs::FstabOptions}).
       #
-      # @return [Boolean] true if the label is not required or it is required and given; false
-      #   otherwise.
-      def validate_mount_by_label
-        return true if !formatted? || !mounted? || !mounted_by_label? || !empty_label?
+      # @return [String, nil] nil if the label is not required or it is required and given
+      def mount_by_label_error
+        return nil if !formatted? || !mounted? || !mounted_by_label? || !empty_label?
 
-        # TRANSLATORS: Error message when a device should be mounted by label but no label
-        # is given.
-        Yast::Popup.Error(_("Provide a volume label to mount by label."))
-        false
+        # TRANSLATORS: Error message when a device should be mounted by label but no label is given.
+        _("Provide a volume label to mount by label.")
       end
 
       # Check if a system mount point is reused without formatting the
       # partition during installation and warn the user if it is.
       #
       # @return [Boolean] true if okay, false if not
-      def validate_system_mount_points
+      def system_mount_points_warning
         return true unless Yast::Mode.installation
         return true if to_be_formatted?
         return true unless mounted?
@@ -318,7 +364,7 @@ module Y2Partitioner
             "\n" \
             "Really skip formatting the partition?\n"
           )
-        Yast::Popup.YesNo(message)
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end
 
       def mount_device
@@ -540,7 +586,7 @@ module Y2Partitioner
 
       # Synchronize the widget with the information from the controller
       def refresh
-        self.value = @controller.mount_path
+        self.value = controller.mount_path
       end
 
       def label
@@ -556,14 +602,14 @@ module Y2Partitioner
         controller.mount_paths.map { |mp| [mp, mp] }
       end
 
-      # The following condintions are checked:
-      # - The mount point is not empty
-      # - The mount point is unique
-      # - The mount point does not shadow a subvolume that cannot be auto deleted
+      # @see #errors
       def validate
-        return true if !enabled?
+        error = errors.first
 
-        content_validation && uniqueness_validation && subvolumes_shadowing_validation
+        return true unless error
+
+        Yast2::Popup.show(error, headline: :error)
+        false
       end
 
       private
@@ -571,48 +617,41 @@ module Y2Partitioner
       # @return [Actions::Controllers::Filesystem]
       attr_reader :controller
 
-      # Validates not empty mount point
-      # An error popup is shown when an empty mount point is entered.
+      # List of errors
       #
-      # @return [Boolean] true if mount point is not empty
-      def content_validation
-        return true unless value.empty?
+      # The following condintions are checked:
+      # - The mount point is not empty
+      # - The mount point is unique
+      #
+      # @return [Array<String>]
+      def errors
+        return [] unless enabled?
 
-        Yast::Popup.Error(_("Empty mount point not allowed."))
-        false
+        [content_error, uniqueness_error].compact
       end
 
-      # Validates that mount point is unique in the whole system
-      # An error popup is shown when the mount point already exists.
+      # Error when the mount point is empty
+      #
+      # @return [String, nil] nil if the mount point is given
+      def content_error
+        return nil unless value.empty?
+
+        _("Empty mount point not allowed.")
+      end
+
+      # Error when the mount point is not unique in the whole system
       #
       # @see #duplicated_mount_point?
       #
-      # @return [Boolean] true if mount point is unique
-      def uniqueness_validation
-        return true unless duplicated_mount_point?
+      # @return [String, nil] nil if the mount point is unique
+      def uniqueness_error
+        return nil unless duplicated_mount_point?
 
-        Yast::Popup.Error(_("This mount point is already in use. Select a different one."))
-        false
-      end
-
-      # Validates that the mount point does not shadow a subvolume that cannot be auto deleted
-      # An error popup is shown when a subvolume is shadowed by the mount point.
-      #
-      # @return [Boolean] true if mount point does not shadow a subvolume
-      def subvolumes_shadowing_validation
-        controller.subvolumes_mount_paths.each do |mount_path|
-          next unless Y2Storage::BtrfsSubvolume.shadowing?(value, mount_path)
-
-          Yast::Popup.Error(
-            format(_("The Btrfs subvolume mounted at %s is shadowed."), mount_path)
-          )
-          return false
-        end
-
-        true
+        _("This mount point is already in use. Select a different one.")
       end
 
       # Checks if the mount point is duplicated
+      #
       # @return [Boolean]
       def duplicated_mount_point?
         # The special mount point "swap" can be used for several devices at the
@@ -659,7 +698,7 @@ module Y2Partitioner
         # size number is from bsc1065071#c5
         return true if @controller.blk_device.size > ::Y2Storage::DiskSize.MiB(2)
 
-        ::Yast::Popup.Error(_("Only devices bigger than 2 MiB can be encrypted."))
+        Yast2::Popup.show(_("Only devices bigger than 2 MiB can be encrypted."), heading: :error)
         false
       end
 

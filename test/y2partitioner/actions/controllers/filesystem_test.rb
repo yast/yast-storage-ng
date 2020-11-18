@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,7 +35,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
   subject(:controller) { described_class.new(device, "The title") }
 
-  let(:device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
+  let(:device) { devicegraph.find_by_name(dev_name) }
 
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -675,202 +675,6 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     end
   end
 
-  RSpec.shared_examples "btrfs subvolumes check" do
-    let(:filesystem) { subject.filesystem }
-
-    before do
-      allow(Y2Storage::VolumeSpecification).to receive(:for).with(mount_path)
-        .and_return(volume_spec)
-    end
-
-    it "does not delete the probed subvolumes" do
-      subvolumes = filesystem.btrfs_subvolumes
-      send_testing_method(subject)
-
-      expect(filesystem.btrfs_subvolumes).to include(*subvolumes)
-    end
-
-    it "updates the subvolumes mount points" do
-
-      send_testing_method(subject)
-      mount_points = filesystem.btrfs_subvolumes.map(&:mount_path).compact
-      expect(mount_points).to all(start_with(mount_path))
-    end
-
-    it "does not change the mount point for special subvolumes" do
-      send_testing_method(subject)
-      expect(filesystem.top_level_btrfs_subvolume.mount_path.to_s).to be_empty
-      expect(filesystem.default_btrfs_subvolume.mount_path.to_s).to be_empty
-    end
-
-    it "refreshes btrfs subvolumes shadowing" do
-      expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-      send_testing_method(subject)
-    end
-
-    context "and there is spec with specific default btrfs subvolume for the mount point" do
-      let(:default_subvolume) { "@" }
-
-      context "and the current default subvolume is the top level" do
-        before do
-          filesystem.top_level_btrfs_subvolume.set_default_btrfs_subvolume
-        end
-
-        it "creates a new default subvolume" do
-          send_testing_method(subject)
-
-          expect(filesystem.top_level_btrfs_subvolume).to_not eq(filesystem.default_btrfs_subvolume)
-          expect(filesystem.default_btrfs_subvolume.path).to eq("@")
-        end
-      end
-
-      context "and the current default subvolume is probed" do
-        context "and the default subvolume spec has the same path" do
-          let(:default_subvolume) { "@" }
-
-          it "does not change the default subvolume" do
-            initial_default_subvolume = filesystem.default_btrfs_subvolume
-
-            send_testing_method(subject)
-
-            expect(filesystem.default_btrfs_subvolume.sid).to eq(initial_default_subvolume.sid)
-            expect(filesystem.default_btrfs_subvolume.path).to eq("@")
-          end
-        end
-
-        context "and the default subvolume spec has a different path" do
-          let(:default_subvolume) { "@@" }
-
-          it "does not remove the previous default subvolume" do
-            send_testing_method(subject)
-
-            expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path: "@"))
-          end
-
-          it "creates a new default subvolume" do
-            send_testing_method(subject)
-
-            expect(filesystem.default_btrfs_subvolume.path).to eq("@@")
-          end
-        end
-      end
-
-      context "and the current default subvolume is not probed" do
-        before do
-          filesystem.ensure_default_btrfs_subvolume(path: "@@")
-        end
-
-        it "removes the previous default subvolume" do
-          default_subvolume_sid = filesystem.default_btrfs_subvolume.sid
-          send_testing_method(subject)
-
-          expect(filesystem.btrfs_subvolumes)
-            .to_not include(an_object_having_attributes(sid: default_subvolume_sid))
-        end
-
-        it "creates a new default subvolume" do
-          send_testing_method(subject)
-
-          expect(filesystem.default_btrfs_subvolume.path).to eq("@")
-        end
-      end
-    end
-
-    context "and there is no spec with specific default btrfs subvolume for the mount point" do
-      let(:default_subvolume) { nil }
-
-      context "and the current default subvolume is the top level" do
-        before do
-          filesystem.top_level_btrfs_subvolume.set_default_btrfs_subvolume
-        end
-
-        it "does not change the default subvolume" do
-          initial_default_subvolume = filesystem.default_btrfs_subvolume
-
-          send_testing_method(subject)
-
-          expect(filesystem.default_btrfs_subvolume.sid).to eq(initial_default_subvolume.sid)
-          expect(filesystem.default_btrfs_subvolume.path).to eq("")
-        end
-      end
-
-      context "and the current default subvolume is probed" do
-        it "does not change the default subvolume" do
-          default_subvolume = filesystem.default_btrfs_subvolume
-          send_testing_method(subject)
-
-          expect(filesystem.default_btrfs_subvolume.sid).to eq(default_subvolume.sid)
-        end
-      end
-
-      context "and the current default subvolume is not probed" do
-        before do
-          filesystem.ensure_default_btrfs_subvolume(path: "@@")
-        end
-
-        it "removes the previous not probed default subvolume" do
-          expect(filesystem.default_btrfs_subvolume.path).to eq("@@")
-
-          send_testing_method(subject)
-
-          expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: "@@"))
-        end
-
-        it "sets the top level subvolume as default subvolume" do
-          send_testing_method(subject)
-          expect(filesystem.top_level_btrfs_subvolume).to eq(filesystem.default_btrfs_subvolume)
-        end
-      end
-    end
-
-    context "and it has 'not probed' subvolumes" do
-      let(:path) { "@/bar" }
-
-      before do
-        filesystem.create_btrfs_subvolume(path, false)
-      end
-
-      it "deletes the not probed subvolumes" do
-        send_testing_method(subject)
-        expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
-      end
-    end
-
-    context "and there are subvolumes defined for the given mount point" do
-      let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
-      # The default subvolume must be consistent with the list of subvolumes.
-      # The fallback list contains "@" and expects it to be the default.
-      let(:default_subvolume) { "@" }
-
-      before do
-        # Make sure there is no other mount points
-        all_filesystems = Y2Storage::MountPoint.all(devicegraph).map(&:filesystem)
-        other_filesystems = all_filesystems - [filesystem]
-        other_filesystems.each(&:remove_descendants)
-      end
-
-      it "adds the proposed subvolumes that do not exist" do
-        send_testing_method(subject)
-
-        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(subvolumes)
-        paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
-
-        expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
-      end
-    end
-
-    context "and there are no subvolumes defined for the given mount point" do
-      let(:subvolumes) { nil }
-
-      it "does not add any subvolume" do
-        paths = filesystem.btrfs_subvolumes.map(&:path)
-        send_testing_method(subject)
-
-        expect(filesystem.btrfs_subvolumes.map(&:path) - paths).to be_empty
-      end
-    end
-  end
-
   RSpec.shared_examples "does nothing" do
     it "does nothing" do
       devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
@@ -934,12 +738,6 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
             expect(filesystem.mount_point.mount_options).to eq(fs_type.default_mount_options)
           end
         end
-
-        context "and the filesystem is btrfs" do
-          let(:dev_name) { "/dev/sda2" }
-
-          include_examples "btrfs subvolumes check"
-        end
       end
     end
   end
@@ -998,12 +796,6 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
             expect(filesystem.mount_point.mount_options).to_not be_empty
             expect(filesystem.mount_point.mount_options).to eq(filesystem.type.default_mount_options)
-          end
-
-          context "and the filesystem is btrfs" do
-            let(:dev_name) { "/dev/sda2" }
-
-            include_examples "btrfs subvolumes check"
           end
         end
       end
@@ -1084,11 +876,6 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         it "removes the filesystem mount point" do
           subject.remove_mount_point
           expect(subject.filesystem.mount_point).to be_nil
-        end
-
-        it "refreshes btrfs subvolumes shadowing" do
-          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-          subject.remove_mount_point
         end
       end
     end
@@ -1171,12 +958,415 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
               expect(filesystem.mount_point.mount_options).to_not eq(fs_type.default_mount_options)
             end
           end
+        end
+      end
+    end
+  end
 
-          context "and the filesystem is btrfs" do
-            let(:dev_name) { "/dev/sda2" }
+  describe "#btrfs?" do
+    context "when the currently editing device has no filesystem" do
+      # sdb7 is not formatted
+      let(:dev_name) { "/dev/sdb7" }
 
-            include_examples "btrfs subvolumes check"
+      it "returns false" do
+        expect(subject.btrfs?).to eq(false)
+      end
+    end
+
+    context "when the currently editing device has a no Btrfs filesystem" do
+      # sda3 is formatted as EXT3
+      let(:dev_name) { "/dev/sda3" }
+
+      it "returns false" do
+        expect(subject.btrfs?).to eq(false)
+      end
+    end
+
+    context "when the currently editing device has a Btrfs filesystem" do
+      # sda2 is formatted as Btrfs
+      let(:dev_name) { "/dev/sda2" }
+
+      it "returns true" do
+        expect(subject.btrfs?).to eq(true)
+      end
+    end
+  end
+
+  describe "#new_btrfs?" do
+    context "when the currently editing device has a no Btrfs filesystem" do
+      # sda3 is formatted as EXT3
+      let(:dev_name) { "/dev/sda3" }
+
+      it "returns false" do
+        expect(subject.new_btrfs?).to eq(false)
+      end
+    end
+
+    context "when the currently editing device has a Btrfs filesystem" do
+      # sda2 is formatted as Btrfs
+      let(:dev_name) { "/dev/sda2" }
+
+      context "and the filesystem already exists on disk" do
+        it "returns false" do
+          expect(subject.new_btrfs?).to eq(false)
+        end
+      end
+
+      context "and the filesystem does not exist on disk yet" do
+        before do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        it "returns true" do
+          expect(subject.new_btrfs?).to eq(true)
+        end
+      end
+    end
+  end
+
+  describe "#btrfs_subvolumes?" do
+    context "when the currently editing device has a no Btrfs filesystem" do
+      # sda3 is formatted as EXT3
+      let(:dev_name) { "/dev/sda3" }
+
+      it "returns false" do
+        expect(subject.btrfs_subvolumes?).to eq(false)
+      end
+    end
+
+    context "when the currently editing device has a Btrfs filesystem" do
+      # sda2 is formatted as Btrfs
+      let(:dev_name) { "/dev/sda2" }
+
+      context "and the filesystem has subvolumes" do
+        it "returns true" do
+          expect(subject.btrfs_subvolumes?).to eq(true)
+        end
+      end
+
+      context "and the filesystem has no subvolumes" do
+        before do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        it "returns false" do
+          expect(subject.btrfs_subvolumes?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#default_btrfs_subvolumes?" do
+    # sda2 is formatted as Btrfs
+    let(:dev_name) { "/dev/sda2" }
+
+    before do
+      allow(Y2Storage::VolumeSpecification).to receive(:for).with(device.filesystem.mount_path)
+        .and_return(spec)
+    end
+
+    context "when there is no volume specification for the currently editing device" do
+      let(:spec) { nil }
+
+      it "returns false" do
+        expect(subject.default_btrfs_subvolumes?).to eq(false)
+      end
+    end
+
+    context "when there is a volume specification for the currently editing device" do
+      let(:spec) { volume_spec }
+
+      context "and the specification does not contain subvolumes" do
+        let(:subvolumes) { [] }
+
+        context "and the specification indicates a default subvolume" do
+          let(:default_subvolume) { "@" }
+
+          it "returns true" do
+            expect(subject.default_btrfs_subvolumes?).to eq(true)
           end
+        end
+
+        context "and the specification does not indicate a default subvolume" do
+          let(:default_subvolume) { "" }
+
+          it "returns false!" do
+            expect(subject.default_btrfs_subvolumes?).to eq(false)
+          end
+        end
+      end
+      context "and the specification contains subvolumes" do
+        let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
+
+        it "returns true" do
+          expect(subject.default_btrfs_subvolumes?).to eq(true)
+        end
+      end
+    end
+  end
+
+  describe "#finish" do
+    def all_subvolumes
+      devicegraph.btrfs_filesystems.flat_map(&:btrfs_subvolumes)
+    end
+
+    context "when the currently editing device has no a Btrfs filesystem" do
+      # sda3 is formatted as EXT3
+      let(:dev_name) { "/dev/sda3" }
+
+      it "does not create or remove any subvolume" do
+        subvolumes_before = all_subvolumes
+
+        subject.finish
+
+        expect(all_subvolumes).to eq(subvolumes_before)
+      end
+
+      it "refreshes the subvolumes shadowing" do
+        expect_any_instance_of(Y2Storage::Shadower).to receive(:refresh_shadowing)
+
+        subject.finish
+      end
+    end
+
+    context "when the currently editing device has a Btrfs filesystem" do
+      # sda2 is formatted as Btrfs
+      let(:dev_name) { "/dev/sda2" }
+
+      before do
+        subject.restore_btrfs_subvolumes = restore
+        device.filesystem.auto_deleted_subvolumes = [Y2Storage::SubvolSpecification.new("foobar")]
+      end
+
+      let(:default_subvolume) { "@" }
+
+      context "and restoring subvolumes was requested" do
+        let(:restore) { true }
+
+        before do
+          # Avoid shadowing to not alter the list of auto deleted subvolumes
+          allow_any_instance_of(Y2Storage::Shadower).to receive(:refresh_shadowing).and_return(nil)
+        end
+
+        it "deletes the current list of subvolumes from the filesystem" do
+          sids = device.filesystem.btrfs_subvolumes.reject(&:top_level?).map(&:sid)
+
+          subject.finish
+
+          expect(sids.map { |i| devicegraph.find_device(i) }).to all(be_nil)
+        end
+
+        it "deletes the current list of auto deleted subvolumes from the filesystem" do
+          subject.finish
+
+          expect(device.filesystem.auto_deleted_subvolumes).to be_empty
+        end
+
+        context "and there is a default list of subvolumes for the current filesystem" do
+          let(:subvolumes) do
+            [
+              Y2Storage::SubvolSpecification.new("foo"),
+              Y2Storage::SubvolSpecification.new("bar")
+            ]
+          end
+
+          it "adds the default list of subvolumes to the filesystem" do
+            subject.finish
+
+            paths = device.filesystem.btrfs_subvolumes.reject(&:top_level?).map(&:path)
+
+            expect(paths).to contain_exactly("@", "@/foo", "@/bar")
+          end
+
+          it "refreshes the subvolumes shadowing" do
+            expect_any_instance_of(Y2Storage::Shadower).to receive(:refresh_shadowing)
+
+            subject.finish
+          end
+        end
+
+        context "and there is no default list of subvolumes for the current filesystem" do
+          let(:default_subvolume) { "" }
+
+          let(:subvolumes) { [] }
+
+          it "does not add subvolumes to the filesystem" do
+            subject.finish
+
+            subvolumes = device.filesystem.btrfs_subvolumes.reject(&:top_level?)
+
+            expect(subvolumes).to be_empty
+          end
+
+          it "refreshes the subvolumes shadowing" do
+            expect_any_instance_of(Y2Storage::Shadower).to receive(:refresh_shadowing)
+
+            subject.finish
+          end
+        end
+      end
+
+      context "and restoring subvolumes was not requested" do
+        let(:restore) { false }
+
+        it "does not delete any subvolume from the filesystem" do
+          sids = device.filesystem.btrfs_subvolumes.map(&:sid)
+
+          subject.finish
+
+          expect(device.filesystem.btrfs_subvolumes.map(&:sid)).to include(*sids)
+        end
+
+        it "does not delete the current list of auto deleted subvolumes from the filesystem" do
+          auto_deleted_before = device.filesystem.auto_deleted_subvolumes.map(&:path)
+          expect(auto_deleted_before).to_not be_empty
+
+          subject.finish
+
+          expect(device.filesystem.auto_deleted_subvolumes.map(&:path)).to eq(auto_deleted_before)
+        end
+
+        it "restores the default mount points for the subvolumes from the current filesystem" do
+          subvol = device.filesystem.btrfs_subvolumes.find { |s| s.path == "@/tmp" }
+          subvol.mount_path = ""
+
+          subject.finish
+
+          subvol = device.filesystem.btrfs_subvolumes.find { |s| s.path == "@/tmp" }
+          expect(subvol.mount_path).to eq("/tmp")
+        end
+
+        it "refreshes the subvolumes shadowing" do
+          expect_any_instance_of(Y2Storage::Shadower).to receive(:refresh_shadowing)
+
+          subject.finish
+        end
+      end
+    end
+  end
+
+  describe "#mount_path_modified?" do
+    before do
+      allow(Y2Partitioner::DeviceGraphs.instance).to receive(:pre_transaction)
+        .and_return(pre_transaction_graph)
+    end
+
+    let(:pre_transaction_graph) { devicegraph.dup }
+
+    let(:dev_name) { "/dev/sda2" }
+
+    let(:initial_device) { pre_transaction_graph.find_device(device.sid) }
+
+    context "when there is an initial filesystem" do
+      before do
+        initial_device.remove_descendants
+        initial_device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+      end
+
+      context "and the initial fileystem had mount path" do
+        before do
+          initial_device.filesystem.mount_path = "/foo"
+        end
+
+        context "and the mount path was not modified" do
+          before do
+            device.filesystem.mount_path = "/foo"
+          end
+
+          it "returns false" do
+            expect(subject.mount_path_modified?).to eq(false)
+          end
+        end
+
+        context "and the mount path was modified" do
+          before do
+            device.filesystem.mount_path = "/bar"
+          end
+
+          it "returns true" do
+            expect(subject.mount_path_modified?).to eq(true)
+          end
+        end
+
+        context "and the filesystem was removed" do
+          before do
+            device.remove_descendants
+          end
+
+          it "returns true" do
+            expect(subject.mount_path_modified?).to eq(true)
+          end
+        end
+      end
+
+      context "and the initial filesystem has no mount path" do
+        context "and a mount path was added" do
+          before do
+            device.filesystem.mount_path = "/foo"
+          end
+
+          it "returns true" do
+            expect(subject.mount_path_modified?).to eq(true)
+          end
+        end
+
+        context "and a mount path was not added" do
+          before do
+            device.filesystem.remove_mount_point
+          end
+
+          it "returns false" do
+            expect(subject.mount_path_modified?).to eq(false)
+          end
+        end
+
+        context "and the filesystem was removed" do
+          before do
+            device.remove_descendants
+          end
+
+          it "returns false" do
+            expect(subject.mount_path_modified?).to eq(false)
+          end
+        end
+      end
+    end
+
+    context "when there is not initial filesystem" do
+      before do
+        initial_device.remove_descendants
+        device.remove_descendants
+      end
+
+      context "and a new filesystem was added" do
+        before do
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        context "and a mount path was added" do
+          before do
+            device.filesystem.mount_path = "/foo"
+          end
+
+          it "returns true" do
+            expect(subject.mount_path_modified?).to eq(true)
+          end
+        end
+
+        context "and a mount path was not added" do
+          it "returns false" do
+            expect(device.filesystem.mount_path).to be_nil
+            expect(subject.mount_path_modified?).to eq(false)
+          end
+        end
+      end
+
+      context "and a new filesystem was not added" do
+        it "returns false" do
+          expect(device.filesystem).to be_nil
+          expect(subject.mount_path_modified?).to eq(false)
         end
       end
     end

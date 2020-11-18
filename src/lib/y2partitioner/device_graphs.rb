@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -58,6 +58,11 @@ module Y2Partitioner
     # @return [Y2Storage::Devicegraph]
     attr_accessor :current
 
+    # Devicegraph before starting a transaction
+    #
+    # @return [Y2Storage::Devicegraph, nil] nil if a transaction was not started
+    attr_reader :pre_transaction
+
     def initialize(system: nil, initial: nil)
       @system = system || storage_manager.probed
       @initial = initial || storage_manager.staging
@@ -97,18 +102,20 @@ module Y2Partitioner
     # @yieldreturn [Boolean]
     # @return What the block returned
     def transaction(&block)
-      initial_graph = current
-      self.current = initial_graph.dup
+      @pre_transaction = current
+      self.current = pre_transaction.dup
       begin
         res = block.call
 
-        self.current = initial_graph if !res
+        self.current = pre_transaction if !res
       rescue StandardError
-        self.current = initial_graph
+        self.current = pre_transaction
         raise
       end
 
       res
+    ensure
+      @pre_transaction = nil
     end
 
     # Stores a snapshot of the current devicegraph associated to the given
