@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/actions/controllers/base"
+require "y2storage/shadower"
 
 module Y2Partitioner
   module Actions
@@ -55,10 +56,17 @@ module Y2Partitioner
 
         # Adds a new Btrfs subvolume
         #
+        # Note that the new added subvolume could be shadowed. In that case, the mount point of the
+        # subvolume is removed, see {Y2Storage::Shadower#refresh_shadowing}.
+        #
         # @param path [String]
         # @param nocow [Booelan]
         def create_subvolume(path, nocow = false)
           @subvolume = filesystem.create_btrfs_subvolume(path, nocow)
+
+          Y2Storage::Shadower.new(current_graph, filesystems: [filesystem]).refresh_shadowing
+
+          subvolume
         end
 
         # Updates the Btrfs subvolume properties

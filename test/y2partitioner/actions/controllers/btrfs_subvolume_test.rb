@@ -44,6 +44,8 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
   let(:device_name) { "/dev/sda2" }
 
   describe "#create_subvolume" do
+    let(:shadower) { instance_double(Y2Storage::Shadower) }
+
     it "creates a new subvolume with the given attributes" do
       foo_subvolume = filesystem.btrfs_subvolumes.find { |s| s.path == "@/foo" }
       expect(foo_subvolume).to be_nil
@@ -53,6 +55,15 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
       expect(subject.subvolume).to_not be_nil
       expect(subject.subvolume.path).to eq("@/foo")
       expect(subject.subvolume.nocow?).to eq(true)
+    end
+
+    it "refreshes the shadowing of the subvolumes from the current filesystem" do
+      expect(Y2Storage::Shadower).to receive(:new).with(anything, filesystems: [filesystem])
+        .and_return(shadower)
+
+      expect(shadower).to receive(:refresh_shadowing)
+
+      subject.create_subvolume("@/foo", true)
     end
   end
 

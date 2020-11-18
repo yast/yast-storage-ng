@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,123 +26,167 @@ describe Y2Storage::BtrfsSubvolume do
   using Y2Storage::Refinements::SizeCasts
 
   before do
+    allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(root_spec)
+
     fake_scenario(scenario)
   end
 
-  let(:scenario) { "mixed_disks_btrfs" }
+  let(:root_spec) { instance_double(Y2Storage::VolumeSpecification, btrfs_default_subvolume: "@") }
 
-  let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
-
-  let(:dev_name) { "/dev/sda2" }
-
-  let(:subvolume_path) { "@/home" }
+  let(:blk_device) { devicegraph.find_by_name(dev_name) }
 
   let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
-  let(:filesystem) { blk_device.blk_filesystem }
+  let(:scenario) { "mixed_disks_btrfs" }
 
-  subject(:subvolume) { filesystem.find_btrfs_subvolume_by_path(subvolume_path) }
+  let(:dev_name) { "/dev/sda2" }
 
-  describe ".shadowing?" do
-    context "when a mount point is shadowing another mount point" do
-      let(:mount_point) { "/foo" }
-      let(:other_mount_point) { "/foo/bar" }
+  subject(:subvolume) { blk_device.filesystem.btrfs_subvolumes.find { |s| s.path == subvolume_path } }
 
-      it "returns true" do
-        expect(described_class.shadowing?(mount_point, other_mount_point)).to be(true)
+  let(:subvolume_path) { "@/home" }
+
+  describe "#set_default_mount_point" do
+    before do
+      blk_device.filesystem.remove_mount_point
+      blk_device.filesystem.create_mount_point(fs_mount_path)
+    end
+
+    shared_examples "default not required" do
+      context "and it has a mount point" do
+        before do
+          subject.mount_path = "/home"
+        end
+
+        it "removes the mount point" do
+          subject.set_default_mount_point
+
+          expect(subject.mount_point).to be_nil
+        end
+      end
+
+      context "and it has no mount point" do
+        before do
+          subject.remove_mount_point if subject.mount_point
+        end
+
+        it "does not add a mount point" do
+          subject.set_default_mount_point
+
+          expect(subject.mount_point).to be_nil
+        end
       end
     end
 
-    context "when a mount point is not shadowing another mount point" do
-      let(:mount_point) { "/foo" }
-      let(:other_mount_point) { "/foobar" }
+    shared_examples "default required" do |mount_path|
+      context "and its mount point is the default one" do
+        before do
+          subject.mount_path = mount_path
+        end
 
-      it "returns false" do
-        expect(described_class.shadowing?(mount_point, other_mount_point)).to be(false)
+        it "does not modify its mount point" do
+          subject.set_default_mount_point
+
+          expect(subject.mount_path).to eq(mount_path)
+        end
       end
-    end
-  end
 
-  describe ".shadowed?" do
-    context "when the mount point is not shadowed by other mount points in the system" do
-      let(:mount_point) { "/foo" }
+      context "and its mount point is not the default one" do
+        before do
+          subject.mount_path = mount_path + "bar"
+        end
 
-      it "returns false" do
-        expect(described_class.shadowed?(devicegraph, mount_point)).to be(false)
+        it "mounts it at its default mount path" do
+          subject.set_default_mount_point
+
+          expect(subject.mount_path).to eq(mount_path)
+        end
       end
-    end
 
-    context "when the mount point is shadowed by other other mount points in the system" do
-      let(:mount_point) { "/home" }
+      context "and it has no mount point" do
+        before do
+          subject.remove_mount_point
+        end
 
-      it "returns true" do
-        expect(described_class.shadowed?(devicegraph, mount_point)).to be(true)
-      end
-    end
-  end
+        it "adds its default mount point" do
+          subject.set_default_mount_point
 
-  describe ".shadowers" do
-    context "when the mount point is not shadowed" do
-      let(:mount_point) { "/foo" }
-
-      it "returns an empty list" do
-        expect(described_class.shadowers(devicegraph, mount_point)).to be_empty
-      end
-    end
-
-    context "when the mount point is shadowed by other mount points" do
-      let(:mount_point) { "/home" }
-
-      it "returns a list of shadowers" do
-        result = described_class.shadowers(devicegraph, mount_point)
-        expect(result).to_not be_empty
-        expect(result).to all(be_a(Y2Storage::Mountable))
-      end
-    end
-  end
-
-  describe "#shadowed?" do
-    context "when the subvolume is not shadowed" do
-      let(:subvolume_path) { "@/tmp" }
-
-      it "returns false" do
-        expect(subject.shadowed?).to eq false
+          expect(subject.mount_path).to eq(mount_path)
+        end
       end
     end
 
-    context "when the subvolume is shadowed" do
+    context "when the subvolume does not belong to the root filesystem" do
+      let(:fs_mount_path) { "/foo" }
+
       let(:subvolume_path) { "@/home" }
 
-      it "returns true" do
-        expect(subject.shadowed?).to eq true
-      end
-    end
-  end
-
-  describe "#shadowers" do
-    context "when the subvolume is not shadowed" do
-      let(:subvolume_path) { "@/tmp" }
-
-      it "returns an empty list" do
-        expect(subject.shadowers).to be_empty
-      end
+      include_examples "default not required"
     end
 
-    context "when the subvolume is shadowed" do
-      let(:subvolume_path) { "@/home" }
+    context "when the subvolume belongs to the root filesystem" do
+      let(:fs_mount_path) { "/" }
 
-      it "returns a list of shadowers" do
-        result = subject.shadowers
-        expect(result).to_not be_empty
-        expect(result).to all(be_a(Y2Storage::Mountable))
+      context "and it is the top level subvolume" do
+        let(:subvolume_path) { "" }
+
+        it "does not add a mount point" do
+          subject.set_default_mount_point
+
+          expect(subject.mount_point).to be_nil
+        end
       end
 
-      it "the result does not include the subvolume itself" do
-        expect(subject.shadowers.map(&:sid)).to_not include(subject.sid)
+      context "and it is the default subvolume" do
+        before do
+          subject.set_default_btrfs_subvolume
+        end
+
+        let(:subvolume_path) { "@/home" }
+
+        include_examples "default not required"
       end
 
-      it "the result does not include the subvolume filesystem" do
-        expect(subject.shadowers.map(&:sid)).to_not include(filesystem.sid)
+      context "and it is a snapshot subvolume" do
+        before do
+          blk_device.filesystem.create_btrfs_subvolume(".snapshots/1/snapshot", true)
+        end
+
+        let(:subvolume_path) { ".snapshots/1/snapshot" }
+
+        include_examples "default not required"
+      end
+
+      context "and its parent is neither the top level nor the prefix subvolume" do
+        before do
+          # This subvolume is created as child of the existing @/tmp.
+          blk_device.filesystem.create_btrfs_subvolume("@/tmp/foo", true)
+        end
+
+        let(:subvolume_path) { "@/tmp/foo" }
+
+        include_examples "default not required"
+      end
+
+      context "and its parent is the top level subvolume" do
+        before do
+          # FIXME: The filesystem is recreated because there is an error when calculting the subvolumes
+          #   prefix for an existing filesystem.
+          blk_device.delete_filesystem
+          blk_device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+          blk_device.filesystem.mount_path = "/"
+
+          blk_device.filesystem.create_btrfs_subvolume("foo", true)
+        end
+
+        let(:subvolume_path) { "foo" }
+
+        include_examples "default required", "/foo"
+      end
+
+      context "and its parent is the prefix subvolume" do
+        let(:subvolume_path) { "@/home" }
+
+        include_examples "default required", "/home"
       end
     end
   end
