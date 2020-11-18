@@ -106,7 +106,12 @@ module Y2Storage
       #
       # @return [Boolean] true if efivarfs is supported
       def efivarfs_support?
-        File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
+        begin
+          File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
+        rescue Errno::ENOENT => err
+          log.error("Can't check efivarfss support: #{err}")
+          false
+        end
       end
 
       def manager
