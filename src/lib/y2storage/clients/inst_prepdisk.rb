@@ -28,6 +28,7 @@ Yast.import "SlideShow"
 Yast.import "Installation"
 Yast.import "FileUtils"
 Yast.import "Mode"
+Yast.import "Report"
 
 module Y2Storage
   module Clients
@@ -36,9 +37,14 @@ module Y2Storage
     # target system and any other action handled by libstorage.
     class InstPrepdisk
       include Yast
+      include Yast::I18n
       include Yast::Logger
 
       EFIVARS_PATH = "/sys/firmware/efi/efivars".freeze
+
+      def initialize
+        textdomain "storage"
+      end
 
       def run
         return :auto if Mode.update
@@ -83,7 +89,8 @@ module Y2Storage
         log.info "Cmd: mount #{options} #{device} #{target_path}"
 
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
-          raise ".target.mount failed"
+          # TRANSLATORS: %s is the path of a system mount like "/dev", "/proc", "/sys"
+          Yast::Report.Warning(_("Could not mount %s") % path )
         end
 
         nil
