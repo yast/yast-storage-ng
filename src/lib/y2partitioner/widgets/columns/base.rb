@@ -20,6 +20,7 @@
 require "yast"
 require "abstract_method"
 require "y2partitioner/device_graphs"
+require "y2partitioner/bidi"
 
 module Y2Partitioner
   module Widgets
@@ -110,6 +111,11 @@ module Y2Partitioner
         end
 
         private
+
+        def left_to_right(path_string)
+          pn = Pathname.new(path_string)
+          Bidi.pathname_bidi_to_s(pn)
+        end
 
         # Helper method to create a `cell` term
         #

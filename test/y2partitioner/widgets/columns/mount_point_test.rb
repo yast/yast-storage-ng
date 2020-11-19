@@ -37,13 +37,13 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
     devicegraph_stub(scenario)
   end
 
-  describe "#values_for" do
+  describe "#value_for" do
     context "when given device is a fstab entry" do
       let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
       let(:home_fstab_entry) { fstab_entry("/dev/sda2", "/home", btrfs, ["subvol=@/home"], 0, 0) }
 
       it "returns its mount point" do
-        expect(subject.value_for(home_fstab_entry)).to eq("/home")
+        expect(Bidi.bidi_strip(subject.value_for(home_fstab_entry))).to eq("/home")
       end
     end
 
@@ -95,7 +95,7 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
 
       it "returns the mount path without an asterisk sign" do
-        expect(subject.value_for(device)).to eq("/test2")
+        expect(Bidi.bidi_strip(subject.value_for(device))).to eq("/test2")
       end
     end
 
@@ -105,8 +105,8 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
         Y2Storage::Filesystems::Nfs.find_by_server_and_path(devicegraph, "srv", "/home/a")
       end
 
-      it "returns the mount path including an asterkisk sign" do
-        expect(subject.value_for(device)).to eq("/test1 *")
+      it "returns the mount path including an asterisk sign" do
+        expect(Bidi.bidi_strip(subject.value_for(device))).to eq("/test1 *")
       end
     end
   end
