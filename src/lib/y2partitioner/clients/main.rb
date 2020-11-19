@@ -74,7 +74,7 @@ module Y2Partitioner
       end
 
       # Checks if help is needed to be printed
-      # @param [Boolean] if client is testing one or not
+      # @param testing_client [Boolean] if client is testing one or not
       # @return [Boolean] true if help is printed and action should be stopped
       def print_help(testing_client:)
         args = Yast::WFM.Args
