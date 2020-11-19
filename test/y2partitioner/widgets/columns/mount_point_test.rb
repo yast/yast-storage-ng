@@ -109,5 +109,19 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
         expect(Bidi.bidi_strip(subject.value_for(device))).to eq("/test1 *")
       end
     end
+
+    context "(not only) when the mount path contains right to left (RTL) characters" do
+      let(:scenario) { "bidi.yml" }
+      let(:device_name) { "/dev/sdb1" }
+
+      it "returns the mount path with appropriate bidi control characters" do
+        # \u20xx are the control characters
+        # \u06xx are Arabic letters
+        expect(subject.value_for(device)).to eq("\u2066" \
+                                                "/\u2068\u0641\u064A\u062F\u064A\u0648\u2069" \
+                                                "/\u2068\u0642\u062F\u064A\u0645\u0629\u2069" \
+                                                "\u2069")
+      end
+    end
   end
 end
