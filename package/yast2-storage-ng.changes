@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov 19 09:10:13 UTC 2020 - Josef Reidinger <jreidinger@suse.com>
+
+- print properly help to avoid accidental opening of module by bash
+  completion (bsc#1172340) 
+- 4.3.21
+
+-------------------------------------------------------------------
 Wed Nov 11 14:44:26 UTC 2020 - Martin Vidner <mvidner@suse.com>
 
 - Untranslated error message in 'Edit Btrfs subvolumes'/
