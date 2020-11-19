@@ -44,6 +44,7 @@ module Y2Partitioner
       #
       # @param allow_commit [Boolean] whether the changes can be stored on disk
       def run(allow_commit: true)
+        return nil if print_help(testing_client: !allow_commit)
         return nil if !run_partitioner?
 
         begin
@@ -70,6 +71,32 @@ module Y2Partitioner
       def run_partitioner?
         start_partitioner_warning == :yes &&
           setup_storage_manager
+      end
+
+      # Checks if help is needed to be printed
+      # @param [Boolean] if client is testing one or not
+      # @return [Boolean] true if help is printed and action should be stopped
+      def print_help(testing_client:)
+        args = Yast::WFM.Args
+        msg = if testing_client
+          return false if args.size == 1 && args[0] != "help"
+
+          _("Usage: `yast2 partitioner_testing <hw_setup.[xml|yaml]`")
+        else
+          return false if args.empty?
+
+          _("CLI is not supporter and also no arguments.")
+        end
+
+        cmdline_description = {
+          "id"   => "partitioner",
+          "help" => msg
+        }
+
+        Yast.import "CommandLine"
+        Yast::CommandLine.Run(cmdline_description)
+
+        true
       end
 
       # Tries to initialize the storage stack

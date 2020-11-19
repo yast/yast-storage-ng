@@ -26,15 +26,21 @@ require "y2storage"
 # Comment next line and run the file with root privileges to test system lock
 Y2Storage::StorageManager.create_test_instance
 
-arg = Yast::WFM.Args.first
-case arg
-when /.ya?ml$/
-  Y2Storage::StorageManager.instance(mode: :rw).probe_from_yaml(arg)
-when /.xml$/
-  # note: support only xml device graph, not xml output of probing commands
-  Y2Storage::StorageManager.instance(mode: :rw).probe_from_xml(arg)
-else
-  raise "Invalid testing parameter #{arg}, expecting foo.yml or foo.xml."
+if Yast::WFM.Args.size == 1
+  arg = Yast::WFM.Args.first
+  case arg
+  when /.ya?ml$/
+    Y2Storage::StorageManager.instance(mode: :rw).probe_from_yaml(arg)
+  when /.xml$/
+    # note: support only xml device graph, not xml output of probing commands
+    Y2Storage::StorageManager.instance(mode: :rw).probe_from_xml(arg)
+  # rubocop:disable Lint/EmptyWhen
+  when /help/
+  # handled later by client
+  # rubocop:enable Lint/EmptyWhen
+  else
+    raise "Invalid testing parameter #{arg}, expecting foo.yml or foo.xml."
+  end
 end
 
 Y2Partitioner::Clients::Main.new.run(allow_commit: false)
