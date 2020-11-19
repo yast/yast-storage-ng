@@ -84,4 +84,40 @@ describe Y2Storage::Clients::InstPrepdisk do
       end
     end
   end
+
+  describe "#efivarvs_support?" do
+    it "returns true if efivarfs is in /proc/filesystems" do
+      allow(File).to receive(:readlines).and_return(["ext2", "efivarfs"])
+      expect(client.send(:efivarfs_support?)).to be true
+    end
+
+    it "returns false if efivarfs is not in /proc/filesystems" do
+      allow(File).to receive(:readlines).and_return(["ext2", "xfs"])
+      expect(client.send(:efivarfs_support?)).to be false
+    end
+
+    it "returns false if /proc/filesystems does not exist" do
+      allow(File).to receive(:readlines).and_raise Errno::ENOENT
+      expect(client.send(:efivarfs_support?)).to be false
+    end
+  end
+
+  describe "#mount_in_target" do
+    before do
+      # Make sure the check for the mount point is successful
+      allow(Yast::FileUtils).to receive(:Exists).and_return(true)
+    end
+
+    it "Does not show a warning dialog if the mount was successful" do
+      allow(Yast::SCR).to receive(:Execute).and_return(true)
+      expect(Yast::Report).not_to receive(:Warning)
+      client.send(:mount_in_target, "/proc", "proc", "")
+    end
+
+    it "Shows a warning dialog if the mount failed" do
+      allow(Yast::SCR).to receive(:Execute).and_return(false)
+      expect(Yast::Report).to receive(:Warning)
+      client.send(:mount_in_target, "/proc", "proc", "")
+    end
+  end
 end

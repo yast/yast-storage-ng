@@ -28,6 +28,7 @@ Yast.import "SlideShow"
 Yast.import "Installation"
 Yast.import "FileUtils"
 Yast.import "Mode"
+Yast.import "Report"
 
 module Y2Storage
   module Clients
@@ -36,9 +37,14 @@ module Y2Storage
     # target system and any other action handled by libstorage.
     class InstPrepdisk
       include Yast
+      include Yast::I18n
       include Yast::Logger
 
       EFIVARS_PATH = "/sys/firmware/efi/efivars".freeze
+
+      def initialize
+        textdomain "storage"
+      end
 
       def run
         return :auto if Mode.update
@@ -67,7 +73,7 @@ module Y2Storage
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
-        mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exist?(EFIVARS_PATH)
+        mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if mount_efivars?
         mount_in_target("/run", "/run", "--bind")
 
         true
@@ -83,10 +89,34 @@ module Y2Storage
         log.info "Cmd: mount #{options} #{device} #{target_path}"
 
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
-          raise ".target.mount failed"
+          # TRANSLATORS: %s is the path of a system mount like "/dev", "/proc", "/sys"
+          Yast::Report.Warning(_("Could not mount %s") % path)
         end
 
         nil
+      end
+
+      # Check if efivars should be mounted, i.e. if /sys/firmware/efi/efivars
+      # exists and the system supports the efivarfs filesystem type.
+      #
+      # @return [Boolean] true if efivarfs should be mounted
+      def mount_efivars?
+        File.exist?(EFIVARS_PATH) && efivarfs_support?
+      end
+
+      # Check if the efivarfs filesystem type is supported on this system,
+      # i.e. if /proc/filesystems contains a line with "efivarfs".
+      #
+      # Notice that a system might have the /sys/firmware/efi/efivars file,
+      # but no support for the efivarfs filesystem to actually mount it.
+      # See https://bugzilla.suse.com/show_bug.cgi?id=1174029
+      #
+      # @return [Boolean] true if efivarfs is supported
+      def efivarfs_support?
+        File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
+      rescue Errno::ENOENT => e
+        log.error("Can't check efivarfss support: #{e}")
+        false
       end
 
       def manager
