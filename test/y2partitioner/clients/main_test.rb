@@ -156,6 +156,10 @@ describe Y2Partitioner::Clients::Main do
           context "and it is not allowed to commit" do
             let(:allow_commit) { false }
 
+            before do
+              allow(Yast::WFM).to receive(:Args).and_return(["test.xml"])
+            end
+
             it "shows a message" do
               expect(Yast2::Popup).to receive(:show).with(/commit is not allowed/)
 
