@@ -90,7 +90,7 @@ module Y2Storage
 
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
           # TRANSLATORS: %s is the path of a system mount like "/dev", "/proc", "/sys"
-          Yast::Report.Warning(_("Could not mount %s") % path )
+          Yast::Report.Warning(_("Could not mount %s") % path)
         end
 
         nil
@@ -113,12 +113,10 @@ module Y2Storage
       #
       # @return [Boolean] true if efivarfs is supported
       def efivarfs_support?
-        begin
-          File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
-        rescue Errno::ENOENT => err
-          log.error("Can't check efivarfss support: #{err}")
-          false
-        end
+        File.readlines("/proc/filesystems").any? { |line| line =~ /efivarfs/ }
+      rescue Errno::ENOENT => e
+        log.error("Can't check efivarfss support: #{e}")
+        false
       end
 
       def manager
