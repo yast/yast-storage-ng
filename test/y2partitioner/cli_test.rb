@@ -1,5 +1,5 @@
 #! /usr/bin/rspec
-# Copyright (c) 2014 SUSE LLC.
+# Copyright (c) 2020 SUSE LLC.
 #  All Rights Reserved.
 
 #  This program is free software; you can redistribute it and/or
