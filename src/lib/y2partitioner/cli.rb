@@ -25,7 +25,7 @@ module Y2Partitioner
 
     def self.run
       cmdline_description = {
-        "id"   => "partitioner"
+        "id" => "partitioner"
       }
 
       Yast::CommandLine.Run(cmdline_description)
