@@ -37,10 +37,10 @@ The list of subvolumes for a BtrFS file system can be configured by means of the
 
 This configuration of subvolumes is taken into accout by the Storage Proposal when calculating the partitioning proposal. But it also affects to the Expert Partitioner, see *Expert Partitioner* section.
 
-Note that there is a `btrfs_default_subvolume` option. This option allows to configure a kind of "prefix" subvolume, and it has some implications over the rest of subvolumes:
+Note that there is a *btrfs_default_subvolume* option. This option allows to configure a kind of "prefix" subvolume, and it may end up being the real default subvolume or not. For example, when using snapshots, the default subvolume is a snapshot subvolume instead of this one. The *btrfs_default_subvolume* has some implications over the rest of subvolumes:
 
-* All the subvolumes are created as children of the default one.
-* The path of the default subvolume is prepended to the path of all the other subvolumes.
+* All the subvolumes are created as children of the *btrfs_default_subvolume*.
+* The path of the *btrfs_default_subvolume* is prepended to the path of all the other subvolumes.
 
 When the storage proposal is calculated during the installation, all the BtrFS file systems are configured to contain the list of subvolumes indicated in the control file. Note that the list of subvolumes can be defined for all the volumes formatted as BtrFS and not only for root. In the very specific case of root, the Storage Proposal will use a fallback list of subvolumes when nothing is indicated in the control file. The list of subvolumes can always be manually adapted by means of the Expert Partitioner.
 

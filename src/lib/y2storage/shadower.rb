@@ -25,8 +25,8 @@ module Y2Storage
   #
   # This class is used to automatically shadow Btrfs Subvolumes. In some cases, Btrfs subvolumes are
   # automatically added when creating a Btrfs. Those subvolumes should also be automatically hidden when
-  # other device shadows them. Moreover, subvolumes added by the user should be automatically mounted or
-  # unmounted depending on whether they are shadowed or not.
+  # other device shadows them. Moreover, subvolumes that already exist on disk or manually added by the
+  # user should be automatically mounted or unmounted depending on whether they are shadowed or not.
   class Shadower
     # Constructor
     #
