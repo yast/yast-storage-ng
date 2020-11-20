@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,6 +41,11 @@ describe Y2Partitioner::Actions::EditBtrfs do
       allow(Y2Partitioner::Dialogs::BtrfsOptions).to receive(:new).and_return(dialog)
 
       allow(dialog).to receive(:run).and_return(dialog_result)
+
+      allow(Y2Partitioner::Actions::Controllers::Filesystem).to receive(:new)
+        .and_return(fs_controller)
+
+      allow(fs_controller).to receive(:finish).and_return(:finish)
     end
 
     let(:dialog) { instance_double(Y2Partitioner::Dialogs::BtrfsOptions) }
@@ -52,6 +58,8 @@ describe Y2Partitioner::Actions::EditBtrfs do
 
     let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
 
+    let(:fs_controller) { instance_double(controller_class) }
+
     it "shows the dialog for editing a BTRFS filesystem" do
       expect(dialog).to receive(:run)
 
@@ -59,13 +67,19 @@ describe Y2Partitioner::Actions::EditBtrfs do
     end
 
     it "includes the device base name in the title passed to the controller" do
-      expect(controller_class).to receive(:new).with(filesystem, /sdb2/)
+      expect(controller_class).to receive(:new).with(filesystem, /sdb2/).and_return(fs_controller)
 
       subject.run
     end
 
     context "and the dialog is not accepted" do
       let(:dialog_result) { :abort }
+
+      it "does not perform the final steps over the filesystem" do
+        expect(fs_controller).to_not receive(:finish)
+
+        subject.run
+      end
 
       it "returns the result of the dialog" do
         expect(subject.run).to eq(:abort)
@@ -74,6 +88,12 @@ describe Y2Partitioner::Actions::EditBtrfs do
 
     context "and the dialog is accepted" do
       let(:dialog_result) { :next }
+
+      it "performs the final steps over the filesystem" do
+        expect(fs_controller).to receive(:finish)
+
+        subject.run
+      end
 
       it "returns :finish" do
         expect(subject.run).to eq(:finish)

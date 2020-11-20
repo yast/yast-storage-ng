@@ -23,6 +23,7 @@ require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
 require "y2storage/btrfs_raid_level"
 require "y2storage/subvol_specification"
+require "y2storage/shadower"
 
 Yast.import "ProductFeatures"
 
@@ -198,7 +199,6 @@ module Y2Storage
       # @param path [String] subvolume path
       #
       # @return [Array<BtrfsSubvolume>]
-      #
       def subvolume_descendants(path)
         path = canonical_subvolume_name(path)
         path += "/" unless path.empty?
@@ -401,39 +401,11 @@ module Y2Storage
       # Subvolumes are shadowed or unshadowed according to current mount points
       # in the whole system.
       #
-      # @see #remove_shadowed_subvolumes
-      # @see #restore_unshadowed_subvolumes
+      # @see Y2Storage::Shadower#refresh_shadowing
       #
       # @param devicegraph [Devicegraph]
       def self.refresh_subvolumes_shadowing(devicegraph)
-        filesystems = BlkFilesystem.all(devicegraph).select(&:supports_btrfs_subvolumes?)
-        return if filesystems.empty?
-
-        filesystems.each do |filesystem|
-          filesystem.remove_shadowed_subvolumes
-          filesystem.restore_unshadowed_subvolumes
-        end
-      end
-
-      # Removes current shadowed subvolumes
-      # Only subvolumes that "can be auto deleted" will be removed.
-      def remove_shadowed_subvolumes
-        subvolumes = btrfs_subvolumes.select(&:can_be_auto_deleted?)
-        subvolumes.each do |subvolume|
-          next unless subvolume.shadowed?
-
-          shadow_btrfs_subvolume(subvolume.path)
-        end
-      end
-
-      # Creates subvolumes that were previously removed because they were shadowed
-      def restore_unshadowed_subvolumes
-        auto_deleted_subvolumes.each do |spec|
-          mount_path = btrfs_subvolume_mount_point(spec.path)
-          next if BtrfsSubvolume.shadowed?(devicegraph, mount_path)
-
-          unshadow_btrfs_subvolume(spec.path)
-        end
+        Y2Storage::Shadower.new(devicegraph).refresh_shadowing
       end
 
       # Determines the btrfs subvolumes prefix
@@ -527,52 +499,6 @@ module Y2Storage
       end
 
       protected
-
-      # Removes a subvolume
-      # The subvolume is cached into {auto_deleted_subvolumes} list
-      #
-      # @param path [String] subvolume path
-      def shadow_btrfs_subvolume(path)
-        subvolume = find_btrfs_subvolume_by_path(path)
-        return false if subvolume.nil?
-
-        add_auto_deleted_subvolume(subvolume.path, subvolume.nocow?)
-        delete_btrfs_subvolume(subvolume.path)
-        true
-      end
-
-      # Creates a previously auto deleted subvolume
-      # The subvolume is removed from {auto_deleted_subvolumes} list
-      #
-      # @param path [String] subvolume path
-      def unshadow_btrfs_subvolume(path)
-        spec = auto_deleted_subvolumes.detect { |s| s.path == path }
-        return false if spec.nil?
-
-        subvolume = spec.create_btrfs_subvolume(self)
-        remove_auto_deleted_subvolume(subvolume.path)
-        true
-      end
-
-      # Adds a subvolume to the list of auto deleted subvolumes
-      # @see #auto_deleted_list
-      #
-      # @param path [String] subvolume path
-      # @param nocow [Boolean] nocow attribute
-      def add_auto_deleted_subvolume(path, nocow)
-        spec = Y2Storage::SubvolSpecification.new(path, copy_on_write: !nocow)
-        specs = auto_deleted_subvolumes.push(spec)
-        self.auto_deleted_subvolumes = specs
-      end
-
-      # Removes a subvolume from the list of auto deleted subvolumes
-      # @see #auto_deleted_list
-      #
-      # @param path [String] subvolume path
-      def remove_auto_deleted_subvolume(path)
-        specs = auto_deleted_subvolumes.reject { |s| s.path == path }
-        self.auto_deleted_subvolumes = specs
-      end
 
       def path_without_prefix(subvolume_path)
         subvolume_path.gsub(subvolumes_prefix, "")
@@ -669,8 +595,8 @@ module Y2Storage
 
         subvolume = parent_subvolume.create_btrfs_subvolume(path)
         subvolume.nocow = nocow
-        subvolume_mount_path = btrfs_subvolume_mount_point(path)
-        subvolume.create_mount_point(subvolume_mount_path) unless subvolume_mount_path.nil?
+        subvolume.set_default_mount_point
+
         subvolume
       end
 

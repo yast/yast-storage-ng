@@ -20,6 +20,7 @@
 require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
+require "y2storage/volume_specification"
 
 module Y2Storage
   module Filesystems

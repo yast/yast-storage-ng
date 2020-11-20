@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,8 +23,7 @@ require "y2partitioner/actions/controllers/base"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/widgets/mkfs_optiondata"
 require "y2partitioner/filesystem_role"
-require "y2storage/filesystems/btrfs"
-require "y2storage/subvol_specification"
+require "y2storage/shadower"
 
 Yast.import "Mode"
 Yast.import "Stage"
@@ -62,6 +61,9 @@ module Y2Partitioner
 
         # @return [Boolean] Whether the user wants to encrypt the device
         attr_accessor :encrypt
+
+        # @return [Boolean] Whether the user wants to restore the default list of subvolumes
+        attr_writer :restore_btrfs_subvolumes
 
         # Name of the plain device
         #
@@ -106,6 +108,16 @@ module Y2Partitioner
         # @return [Symbol, nil]
         def role_id
           @role ? role.id : nil
+        end
+
+        # Whether to restore the default list of subvolumes
+        #
+        # Note that in some cases this implies to simply remove all the subvolumes because there is no a
+        # default list of subvolumes for the current filesystem.
+        #
+        # @return [Boolean]
+        def restore_btrfs_subvolumes?
+          !!@restore_btrfs_subvolumes
         end
 
         # Plain block device being modified, i.e. device where the filesystem is
@@ -268,11 +280,9 @@ module Y2Partitioner
           # The mount point is not created if there is already a mount point
           return unless mount_point.nil?
 
-          before_change_mount_point
           mp = filesystem.create_mount_point(path)
           options[:mount_options] ||= mp.default_mount_options
           apply_mount_point_options(options)
-          after_change_mount_point
         end
 
         # Updates the current filesystem mount point
@@ -282,11 +292,9 @@ module Y2Partitioner
           return if mount_point.nil?
           return if mount_point.path == path
 
-          before_change_mount_point
           mount_point.path = path
           options = { mount_options: mount_point.default_mount_options }
           apply_mount_point_options(options)
-          after_change_mount_point
         end
 
         # Creates a mount point if the filesystem has no mount point. Otherwise, the
@@ -307,9 +315,7 @@ module Y2Partitioner
         def remove_mount_point
           return if mount_point.nil?
 
-          before_change_mount_point
           filesystem.remove_mount_point
-          after_change_mount_point
         end
 
         # Removes the current mount point (if there is one) and creates a new
@@ -318,23 +324,14 @@ module Y2Partitioner
         # @param path [String]
         # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
         def restore_mount_point(path, options = {})
-          if filesystem.nil?
-            # No chance to restore the mount point, let's unshadow its
-            # potentially shadowed subvolumes
-            Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
-            return
-          end
-
-          before_change_mount_point
+          return unless filesystem
 
           filesystem.remove_mount_point if mount_point
 
-          if path && !path.empty?
-            filesystem.create_mount_point(path)
-            apply_mount_point_options(options)
-          end
+          return if !path || path.empty?
 
-          after_change_mount_point
+          filesystem.create_mount_point(path)
+          apply_mount_point_options(options)
         end
 
         # Whether is possible to define the generic format options for the current
@@ -425,11 +422,40 @@ module Y2Partitioner
           subvolumes.map(&:mount_path).compact.reject(&:empty?)
         end
 
-        # Check if the filesystem is a btrfs.
+        # Whether the filesystem is a Btrfs.
         #
         # @return [Boolean]
         def btrfs?
+          return false unless filesystem
+
           filesystem.supports_btrfs_subvolumes?
+        end
+
+        # Whether the filesystem is a new Btrfs that was not probed
+        #
+        # @return [Boolean]
+        def new_btrfs?
+          btrfs? && new?(filesystem)
+        end
+
+        # Whether the filesystem has Btrfs subvolumes
+        #
+        # @return [Boolean]
+        def btrfs_subvolumes?
+          return false unless btrfs?
+
+          filesystem.top_level_btrfs_subvolume.children.any?
+        end
+
+        # Whether there is a list of default Btrfs subvolumes for the filesystem
+        #
+        # @return [Boolean]
+        def default_btrfs_subvolumes?
+          spec = filesystem.volume_specification
+
+          return false unless spec
+
+          spec.subvolumes.any? || !spec.btrfs_default_subvolume.empty?
         end
 
         # Saves the current status of the block device
@@ -439,13 +465,35 @@ module Y2Partitioner
           @restorer.update_checkpoint
         end
 
+        # Applies last changes to the filesystem at the end of the wizard
+        #
+        # Either the default list of subvolumes is restored or the current subvolumes are mounted at
+        # their default locations.
+        def finish
+          if btrfs?
+            # Restores the default list of subvolumes, if requested so. Otherwise, restores the default
+            # mount point of the subvolumes because the mount point of the file system could be modified.
+            restore_btrfs_subvolumes? ? restore_btrfs_subvolumes : restore_btrfs_subvolumes_mount_points
+          end
+
+          # Shadowing control is always performed.
+          Y2Storage::Shadower.new(current_graph).refresh_shadowing
+        end
+
+        # Whether the mount path was modified
+        #
+        # @return [Boolean]
+        def mount_path_modified?
+          device = filesystem ? filesystem.blk_devices.first : blk_device
+          initial_filesystem = pre_transaction_device(device)&.filesystem
+
+          initial_filesystem&.mount_path != filesystem&.mount_path
+        end
+
         private
 
         def delete_filesystem
           filesystem_parent.remove_descendants
-          # Shadowing control of btrfs subvolumes might be needed if the deleted
-          # filesystem had mount point
-          Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
         end
 
         def create_filesystem(type, label: nil)
@@ -522,62 +570,31 @@ module Y2Partitioner
           end
         end
 
-        def before_change_mount_point
-          # When the filesystem is btrfs, the not probed subvolumes are deleted.
-          delete_not_probed_subvolumes if btrfs?
+        # Deletes current subvolumes, except the top level one.
+        def delete_btrfs_subvolumes
+          subvolumes = filesystem.btrfs_subvolumes.reject(&:top_level?)
+          subvolumes.map(&:path).each { |p| filesystem.delete_btrfs_subvolume(p) }
+
+          # Auto deleted subvolumes are also discarded
+          filesystem.auto_deleted_subvolumes = []
         end
 
-        def after_change_mount_point
-          if btrfs? && mount_point
-            filesystem.setup_default_btrfs_subvolumes
-            update_mount_points
-          end
-          # Shadowing control of btrfs subvolumes is always performed.
-          Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
-        end
-
-        # Deletes not probed subvolumes
-        def delete_not_probed_subvolumes
-          loop do
-            subvolume = find_not_probed_subvolume
-            return if subvolume.nil?
-
-            filesystem.delete_btrfs_subvolume(subvolume.path)
-          end
-        end
-
-        # Finds first not probed subvolume
+        # Restores the list of default subvolumes
         #
-        # @note Top level subvolume is not taken into account.
+        # The current subvolumes are deleted and the default list of subvolumes is restored, if any.
+        def restore_btrfs_subvolumes
+          delete_btrfs_subvolumes
+          filesystem.setup_default_btrfs_subvolumes
+        end
+
+        # Restores the default mount point of the subvolumes
+        def restore_btrfs_subvolumes_mount_points
+          filesystem.btrfs_subvolumes.each(&:set_default_mount_point)
+        end
+
+        # Whether the filesystem has root mount point
         #
-        # @return [Y2Storage::BtrfsSubvolume, nil]
-        def find_not_probed_subvolume
-          filesystem.btrfs_subvolumes.detect do |subvolume|
-            !subvolume.top_level? && new?(subvolume)
-          end
-        end
-
-        # Updates subvolumes mount point
-        #
-        # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
-        def update_mount_points
-          subvolumes.each do |subvolume|
-            new_mount_point = filesystem.btrfs_subvolume_mount_point(subvolume.path)
-            if new_mount_point.nil?
-              subvolume.remove_mount_point if subvolume.mount_point
-            else
-              subvolume.mount_path = new_mount_point
-            end
-          end
-        end
-
-        # Btrfs subvolumes without top level and default ones
-        def subvolumes
-          filesystem.btrfs_subvolumes.select do |subvolume|
-            !subvolume.top_level? && !subvolume.default_btrfs_subvolume?
-          end
-        end
-
+        # @return [Boolean]
         def root?
           filesystem.root?
         end
@@ -646,13 +663,16 @@ module Y2Partitioner
           return [] if fs.nil?
 
           devices = [fs]
-          devices += filesystem_subvolumes if fs.is?(:btrfs)
+          devices += filesystem_btrfs_subvolumes if fs.is?(:btrfs)
           devices
         end
 
         # Subvolumes to take into account
-        # @return [Array[Y2Storage::BtrfsSubvolume]]
-        def filesystem_subvolumes
+        #
+        # Top level and default subvolumes are excluded.
+        #
+        # @return [Array<Y2Storage::BtrfsSubvolume>]
+        def filesystem_btrfs_subvolumes
           filesystem.btrfs_subvolumes.select { |s| !s.top_level? && !s.default_btrfs_subvolume? }
         end
 

@@ -64,16 +64,19 @@ module Y2Partitioner
       def open_items=(value)
         # First, invalidate the items memoization
         @items = nil
-        @open_items = value
+        @open_items = add_missing_items(value)
       end
 
-      # Current state of the open items in the user interface, regardless the
-      # initial state specified by {#open_items}
+      # Current state of the open items in the user interface, regardless the initial state specified by
+      # {#open_items}
+      #
+      # Note that items without children are considered as open. This is useful to automatically open the
+      # edited item, for example, when Btrfs subvolumes are automatically added.
       #
       # @return [Hash{String => Boolean}] same format as {#open_items}
       def ui_open_items
         open = Yast::UI.QueryWidget(Id(widget_id), :OpenItems).keys
-        Hash[all_items.map { |i| [i.id, open.include?(i.id)] }]
+        Hash[all_items.map { |i| [i.id, open.include?(i.id) || i.children.none?] }]
       end
 
       # Updates table content
@@ -129,6 +132,17 @@ module Y2Partitioner
         [item] + item.children.flat_map { |child| item_with_descendants(child) }
       end
 
+      # Adds the missing items to the given collection of open items
+      #
+      # This is useful to automatically open/close items that were created after saving the page state.
+      #
+      # @param items [Hash{String => Boolean}]
+      def add_missing_items(items)
+        return nil unless items
+
+        default_open_items.merge(items)
+      end
+
       # Items to be open by default
       #
       # Items with more than {OPEN_CHILDREN_LIMIT} children are closed by default.
@@ -137,11 +151,16 @@ module Y2Partitioner
       #
       # @return [Hash{String => Boolean}]
       def default_open_items
-        all_entries = entries.flat_map(&:all_entries)
-
         all_entries.each_with_object({}) do |entry, result|
           result[entry.row_id] = (entry.children.size <= OPEN_CHILDREN_LIMIT)
         end
+      end
+
+      # Plain collection including the first level entries and all its descendants
+      #
+      # @return [Array<DeviceTableEntry>]
+      def all_entries
+        entries.flat_map(&:all_entries)
       end
     end
   end

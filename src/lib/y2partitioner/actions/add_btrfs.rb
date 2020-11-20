@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,23 +50,34 @@ module Y2Partitioner
       #
       # @see Dialogs::BtrfsOptions
       def options
-        fs_controller = Controllers::Filesystem.new(controller.filesystem, title)
+        @fs_controller = Controllers::Filesystem.new(controller.filesystem, title)
 
         UIState.instance.select_row(controller.filesystem.sid)
         Dialogs::BtrfsOptions.run(fs_controller)
       end
 
+      # Final step to perform the last actions over the filesystem (see {Controllers::Filesystem#finish})
+      def finish
+        fs_controller.finish
+
+        :finish
+      end
+
       protected
 
-      # @return Controllers::BtrfsDevices
+      # @return [Controllers::BtrfsDevices]
       attr_reader :controller
+
+      # @return [Controllers::Filesystem]
+      attr_reader :fs_controller
 
       # @see TransactionWizard
       def sequence_hash
         {
           "ws_start" => "devices",
           "devices"  => { next: "options" },
-          "options"  => { next: :finish }
+          "options"  => { next: "finish" },
+          "finish"   => { finish: :finish }
         }
       end
 

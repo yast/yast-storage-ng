@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -42,6 +42,13 @@ module Y2Partitioner
 
         alias_method :working_graph, :current_graph
 
+        # Devicegraph before starting a transaction
+        #
+        # @return [Y2Storage::Devicegraph, nil] nil if a transaction was not started
+        def pre_transaction_graph
+          DeviceGraphs.instance.pre_transaction
+        end
+
         # Disk analyzer for the system devicegraph
         #
         # @return [Y2Storage::DiskAnalyzer]
@@ -49,7 +56,7 @@ module Y2Partitioner
           DeviceGraphs.instance.disk_analyzer
         end
 
-        # Checks whether the given devicegraph has been added during this execution
+        # Checks whether the given device has been added during this execution
         # of the Partitioner or whether it already existed when the Partitioner
         # was started.
         #
@@ -67,6 +74,18 @@ module Y2Partitioner
         #   nil if the device does not exist on the real system
         def system_device(device)
           system_graph.find_device(device.sid)
+        end
+
+        # Equivalent to the given device in the pre-transaciton devicegraph, if any
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Y2Storage::Device, nil] nil if a transaction was not started or the device did not
+        #   exist before starting the transaction.
+        def pre_transaction_device(device)
+          return nil unless device
+          return nil unless pre_transaction_graph
+
+          pre_transaction_graph.find_device(device.sid)
         end
       end
     end

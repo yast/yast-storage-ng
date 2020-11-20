@@ -1,5 +1,4 @@
-# Copyright (c) [2012-2016] Novell, Inc.
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/shadower"
 
 Yast.import "Arch"
 Yast.import "ProductFeatures"
@@ -143,7 +143,7 @@ module Y2Storage
       return false if fs_mount_point.nil? || other_mount_points.nil?
 
       mount_point = Y2Storage::Filesystems::Btrfs.btrfs_subvolume_mount_point(fs_mount_point, path)
-      other_mount_points.compact.any? { |m| Y2Storage::BtrfsSubvolume.shadowing?(m, mount_point) }
+      other_mount_points.compact.any? { |m| Y2Storage::Shadower.shadowing?(m, mount_point) }
     end
 
     # Creates a new btrfs subvolume for the indicated filesystem
