@@ -156,7 +156,7 @@ module Y2Partitioner
         #
         # @return [DiskSize]
         def fallback_referenced_limit
-          subvolume&.former_referenced_limit || filesystem.blk_devices.first.size
+          subvolume&.former_referenced_limit || filesystem.blk_devices.map(&:size).min
         end
 
         private

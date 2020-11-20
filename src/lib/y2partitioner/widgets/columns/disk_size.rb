@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/columns/base"
+require "abstract_method"
 
 module Y2Partitioner
   module Widgets

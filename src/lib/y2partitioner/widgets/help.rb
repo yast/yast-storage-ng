@@ -41,13 +41,13 @@ module Y2Partitioner
                                       "of the BtrFS subvolume. This is the space that would be\n" \
                                       "freed by deleting the subvolume. Known and displayed only\n" \
                                       "if quotas were active for the corresponding BtrFS file\n" \
-                                      "system during the hardware probing."),
+                                      "system during the hardware detection."),
 
         btrfs_referenced:          N_("<b>Ref. Size</b> shows the size of the referenced space\n" \
                                       "of the BtrFS subvolume. This is the total size of all files\n" \
                                       "in the subvolume. Known and displayed only if quotas were\n" \
                                       "active for the corresponding BtrFS file system during the\n" \
-                                      "hardware probing."),
+                                      "hardware detection."),
 
         btrfs_rfer_limit:          N_("<b>Size Limit</b> shows the max size of the referenced\n" \
                                       "space for the BtrFS subvolume, if BtrFS quotas are active in\n" \

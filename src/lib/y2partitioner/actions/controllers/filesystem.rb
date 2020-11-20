@@ -390,7 +390,7 @@ module Y2Partitioner
         #
         # @param value [Boolean]
         def btrfs_quota=(value)
-          return if filesystem.nil? || !filesystem.is?(:btrfs)
+          return unless btrfs?
 
           filesystem.quota = value
         end
@@ -401,7 +401,7 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def btrfs_quota?
-          return false if filesystem.nil? || !filesystem.is?(:btrfs)
+          return false unless btrfs?
 
           filesystem.quota?
         end

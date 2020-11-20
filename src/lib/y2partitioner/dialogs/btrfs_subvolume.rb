@@ -295,9 +295,11 @@ module Y2Partitioner
         def help
           _(
             "<p><b>Limit Size</b> allows to set a quota on the referenced space of the " \
-            "subvolume. This is only possible if Btrfs quotas are enabled for this file " \
-            "system. Btrfs quotas can be enabled or disabled editing the file system " \
-            "from the Btrfs section of the Partitioner.</p>"
+            "subvolume. The referenced space is the total size of the data contained " \
+            "in the subvolume, including the data that is shared with other subvolumes. " \
+            "Setting a limit is only possible if Btrfs quotas are active in this file " \
+            "system. Btrfs quotas can be enabled or disabled editing the file system from " \
+            "the Btrfs section of the Partitioner.</p>"
           )
         end
 
