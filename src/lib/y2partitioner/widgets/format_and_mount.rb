@@ -280,12 +280,18 @@ module Y2Partitioner
         # It does not have subvolumes, so let's simply restore the default list.
         return unless controller.btrfs_subvolumes?
 
-        if controller.default_btrfs_subvolumes?
-          # TRANSLATORS: message to ask to the user about restoring the default list of subvolumes.
-          message = _("Do you want to restore the default list of subvolumes?")
+        message = if controller.default_btrfs_subvolumes?
+          format(
+            _("You have chosen to mount the device at %{mount_path}.\n\n" \
+              "Do you want to remove the current subvolumes and\n" \
+              "create the suggested subvolumes for %{mount_path}?"),
+            mount_path: controller.mount_path
+          )
         else
-          # TRANSLATORS: message to ask to the user about deleting the current subvolumes.
-          message = _("Do you want to delete the current subvolumes?")
+          _(
+            "You have changed the mount point of the device.\n\n" \
+            "Do you want to delete the current subvolumes?"
+          )
         end
 
         restore = Yast2::Popup.show(message, buttons: :yes_no) == :yes

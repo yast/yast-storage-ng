@@ -213,6 +213,7 @@ describe Y2Partitioner::Widgets do
               blk_device.filesystem.create_btrfs_subvolume("foo", false)
               blk_device.filesystem.create_btrfs_subvolume("bar", false)
 
+              allow(Y2Storage::VolumeSpecification).to receive(:for)
               allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(volume_spec)
               allow(volume_spec).to receive(:subvolumes).and_return(subvolumes)
               allow(Yast2::Popup).to receive(:show).and_return(restore)
@@ -225,24 +226,13 @@ describe Y2Partitioner::Widgets do
               )
             end
 
+            let(:subvolumes) { [] }
+
+            let(:default_subvolume) { "" }
+
             let(:restore) { nil }
 
-            context "and there is a default list of subvolumes for the filesystem" do
-              let(:default_subvolume) { "@" }
-
-              let(:subvolumes) do
-                [
-                  Y2Storage::SubvolSpecification.new("home"),
-                  Y2Storage::SubvolSpecification.new("var")
-                ]
-              end
-
-              it "ask to the user whether to restore the default list of subvolumes" do
-                expect(Yast2::Popup).to receive(:show).with(/restore the default list/, anything)
-
-                subject.validate
-              end
-
+            shared_examples "user decision" do
               context "and the user accepts" do
                 let(:restore) { :yes }
 
@@ -262,6 +252,39 @@ describe Y2Partitioner::Widgets do
                   expect(controller.restore_btrfs_subvolumes?).to eq(false)
                 end
               end
+            end
+
+            context "and there is a default list of subvolumes for the filesystem" do
+              let(:default_subvolume) { "@" }
+
+              let(:subvolumes) do
+                [
+                  Y2Storage::SubvolSpecification.new("home"),
+                  Y2Storage::SubvolSpecification.new("var")
+                ]
+              end
+
+              it "ask to the user whether to restore the default list of subvolumes" do
+                expect(Yast2::Popup).to receive(:show).with(/create the suggested/, anything)
+
+                subject.validate
+              end
+
+              include_examples "user decision"
+            end
+
+            context "and there is not a default list of subvolumes for the filesystem" do
+              before do
+                blk_device.filesystem.mount_path = "/foo"
+              end
+
+              it "ask to the user whether to delete the current subvolumes" do
+                expect(Yast2::Popup).to receive(:show).with(/delete the current/, anything)
+
+                subject.validate
+              end
+
+              include_examples "user decision"
             end
           end
         end
