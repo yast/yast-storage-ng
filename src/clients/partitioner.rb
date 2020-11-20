@@ -19,9 +19,14 @@
 
 require "yast"
 require "y2partitioner/clients/main"
+require "y2partitioner/cli"
 
 # To test with simulated hardware (from a bug report?), use
 #   yast2 partitioner_testing foo.xml
 #   yast2 partitioner_testing foo.yml
 
-Y2Partitioner::Clients::Main.new.run
+if Yast::WFM.Args.empty?
+  Y2Partitioner::Clients::Main.new.run
+else
+  Y2Partitioner::CLI.run
+end

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Nov 20 12:53:43 UTC 2020 - Josef Reidinger <jreidinger@suse.com>
+
+- print properly help to avoid accidental opening of module by bash
+  completion (bsc#1172340)
+- 4.3.22
+
+-------------------------------------------------------------------
 Wed Nov 18 16:30:03 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Improved error handling for mounting /sys/firmware/efi/efivars
