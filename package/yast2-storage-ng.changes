@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu May  6 08:00:23 UTC 2021 - Martin Vidner <mvidner@suse.com>
+
+- Display pathnames correctly in a Right-to-Left context
+  (bsc#1128091).
+- 4.4.1
+
+-------------------------------------------------------------------
 Tue Apr 20 13:51:55 UTC 2021 - Ladislav Slezák <lslezak@suse.cz>
 
 - 4.4.0 (bsc#1185510)
