@@ -113,8 +113,20 @@ module Y2Partitioner
         private
 
         def left_to_right(path_string)
+          return path_string unless bidi_supported?
+
           pn = Pathname.new(path_string)
           Bidi.pathname_bidi_to_s(pn)
+        end
+
+        # In ncurses the bidi characters would mess up columns,
+        # making things worse; return false there.
+        def bidi_supported?
+          return @bidi_supported unless @bidi_supported.nil?
+
+          di = Yast::UI.GetDisplayInfo() || {}
+          text_mode = di.fetch("TextMode", true)
+          @bidi_supported = !text_mode
         end
 
         # Helper method to create a `cell` term

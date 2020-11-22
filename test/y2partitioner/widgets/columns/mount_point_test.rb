@@ -115,6 +115,8 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       let(:device_name) { "/dev/sdb1" }
 
       it "returns the mount path with appropriate bidi control characters" do
+        allow(subject).to receive(:bidi_supported?).and_return(true)
+
         # \u20xx are the control characters
         # \u06xx are Arabic letters
         expect(subject.value_for(device)).to eq("\u2066" \
