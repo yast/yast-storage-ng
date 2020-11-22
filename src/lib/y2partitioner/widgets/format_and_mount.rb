@@ -555,6 +555,7 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Enable Snapshots")
       end
@@ -573,6 +574,17 @@ module Y2Partitioner
       def handle(event)
         @controller.configure_snapper = value if event["ID"] == widget_id
         nil
+      end
+
+      # @macro seeAbstractWidget
+      def help
+        format(
+          # TRANSLATORS: help text, where %{label} is the label of the explained widget
+          _("<p><b>%{label}</b> configures Snapper and the subvolumes of the root file " \
+            "system in a way that makes possible to take snapshots of the system. That " \
+            "allows to boot to any of those former snapshots, rolling back any change " \
+            "done to the system and restoring its previous state.</p>"), label: label
+        )
       end
     end
 

@@ -58,6 +58,11 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       expect(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeNocow).to receive(:new)
       subject.contents
     end
+
+    it "has a widget to set the subvolume referenced limit" do
+      expect(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimit).to receive(:new)
+      subject.contents
+    end
   end
 
   describe Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumePath do
@@ -235,5 +240,112 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         expect(controller.subvolume_nocow).to eq(value)
       end
     end
+  end
+
+  describe Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimit do
+    subject { described_class.new(controller) }
+
+    let(:size_widget) { double("SubvolumeRferLimitSize", disable: nil) }
+    let(:check_box_widget) { double("SubvolumeRferLimitCheckBox", disable: nil) }
+
+    include_examples "CWM::AbstractWidget"
+
+    describe "#contents" do
+      it "contains a check box to enable/disable the quota" do
+        expect(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitCheckBox).to receive(:new)
+        subject.contents
+      end
+
+      it "contains an input to enter the size of the quota" do
+        expect(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitSize)
+          .to receive(:new).and_return size_widget
+        subject.contents
+      end
+    end
+
+    describe "#store" do
+      before do
+        allow(subject).to receive(:value).and_return(value)
+      end
+
+      let(:value) { Y2Storage::DiskSize.MiB(500) }
+
+      it "saves the given value" do
+        subject.store
+
+        expect(controller.subvolume_referenced_limit).to eq(value)
+      end
+    end
+
+    describe "#value" do
+      before do
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitCheckBox)
+          .to receive(:new).and_return check_box_widget
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitSize)
+          .to receive(:new).and_return size_widget
+      end
+
+      context "if quotas are disabled for the filesystem" do
+        before do
+          expect(controller).to receive(:quota?).and_return false
+        end
+
+        it "returns unlimited" do
+          expect(subject.value).to be_unlimited
+        end
+      end
+
+      context "if quotas are enabled for the filesystem" do
+        before do
+          expect(controller).to receive(:quota?).and_return true
+        end
+
+        context "and the checkbox is disabled" do
+          before do
+            allow(check_box_widget).to receive(:value).and_return false
+          end
+
+          it "returns unlimited" do
+            expect(subject.value).to be_unlimited
+          end
+        end
+
+        context "and the checkbox is enabled" do
+          before do
+            allow(check_box_widget).to receive(:value).and_return true
+            allow(size_widget).to receive(:value).and_return size_value
+          end
+
+          let(:size_value) { Y2Storage::DiskSize.MiB(22) }
+
+          it "returns unlimited" do
+            expect(subject.value).to eq size_value
+          end
+        end
+      end
+    end
+  end
+
+  describe Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitSize do
+    let(:initial) { Y2Storage::DiskSize.MiB(25) }
+    subject { described_class.new(initial) }
+
+    include_examples "CWM::AbstractWidget"
+
+    describe "#init" do
+      it "writes to the UI the string representation of the initial value" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(anything, :Value, "25.00 MiB")
+        subject.init
+      end
+    end
+  end
+
+  describe Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitCheckBox do
+    let(:initial) { true }
+    let(:size_widget) { double("SubvolumeRferLimitSize", disable: nil, enable: nil) }
+
+    subject { described_class.new(true, size_widget) }
+
+    include_examples "CWM::AbstractWidget"
   end
 end

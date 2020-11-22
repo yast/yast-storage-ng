@@ -25,6 +25,9 @@ module Y2Partitioner
   end
 end
 
+require "y2partitioner/widgets/columns/btrfs_exclusive"
+require "y2partitioner/widgets/columns/btrfs_referenced"
+require "y2partitioner/widgets/columns/btrfs_rfer_limit"
 require "y2partitioner/widgets/columns/caching_device"
 require "y2partitioner/widgets/columns/chunk_size"
 require "y2partitioner/widgets/columns/device"

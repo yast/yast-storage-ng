@@ -225,4 +225,54 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
       end
     end
   end
+
+  describe "#quota?" do
+    context "when quotas are active in the filesystem" do
+      before do
+        filesystem.quota = true
+      end
+
+      it "returns true" do
+        expect(subject.quota?).to eq true
+      end
+    end
+
+    context "when quotas are active in the filesystem" do
+      it "returns false" do
+        expect(subject.quota?).to eq false
+      end
+    end
+  end
+
+  describe "#fallback_referenced_limit" do
+    context "when there is not a specific subvolume" do
+      let(:subvolume) { nil }
+
+      it "returns the size of the filesystem" do
+        expect(subject.fallback_referenced_limit).to eq device.size
+      end
+    end
+
+    context "when there is a subvolume" do
+      before { filesystem.quota = true }
+      let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", true) }
+
+      context "and the subvolume has still not had any limit" do
+        it "returns the size of the filesystem" do
+          expect(subject.fallback_referenced_limit).to eq device.size
+        end
+      end
+
+      context "and the subvolume used to have a limit" do
+        before do
+          subvolume.referenced_limit = Y2Storage::DiskSize.MiB(300)
+          subvolume.referenced_limit = Y2Storage::DiskSize.unlimited
+        end
+
+        it "returns the former limit" do
+          expect(subject.fallback_referenced_limit).to eq Y2Storage::DiskSize.MiB(300)
+        end
+      end
+    end
+  end
 end

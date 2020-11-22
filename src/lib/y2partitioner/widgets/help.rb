@@ -37,6 +37,22 @@ module Y2Partitioner
         bios_id:                   N_("<b>BIOS ID</b> shows the BIOS ID of the hard\n" \
                                       "disk. This field can be empty."),
 
+        btrfs_exclusive:           N_("<b>Excl. Size</b> shows the size of the exclusive space\n" \
+                                      "of the BtrFS subvolume. This is the space that would be\n" \
+                                      "freed by deleting the subvolume. Known and displayed only\n" \
+                                      "if quotas were active for the corresponding BtrFS file\n" \
+                                      "system during the hardware detection."),
+
+        btrfs_referenced:          N_("<b>Ref. Size</b> shows the size of the referenced space\n" \
+                                      "of the BtrFS subvolume. This is the total size of all files\n" \
+                                      "in the subvolume. Known and displayed only if quotas were\n" \
+                                      "active for the corresponding BtrFS file system during the\n" \
+                                      "hardware detection."),
+
+        btrfs_rfer_limit:          N_("<b>Size Limit</b> shows the max size of the referenced\n" \
+                                      "space for the BtrFS subvolume, if BtrFS quotas are active in\n" \
+                                      "the corresponding BtrFS file system."),
+
         bus:                       N_("<b>Bus</b> shows how the device is connected to\n" \
                                       "the system. This field can be empty, e.g. for multipath disks."),
 

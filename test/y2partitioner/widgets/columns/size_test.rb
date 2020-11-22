@@ -108,5 +108,40 @@ describe Y2Partitioner::Widgets::Columns::Size do
         end
       end
     end
+
+    context "when the device is a btrfs subvolume" do
+      let(:scenario) { "btrfs_simple_quotas.xml" }
+      let(:device_name) { "/dev/vda2" }
+      let(:subvolume) { device.filesystem.find_btrfs_subvolume_by_path("@/opt") }
+
+      before { subvolume.referenced_limit = limit }
+
+      context "if the subvolume has no quota" do
+        let(:limit) { Y2Storage::DiskSize.unlimited }
+
+        it "returns empty string" do
+          expect(subject.value_for(subvolume)).to eq("")
+        end
+      end
+
+      context "if the subvolume has a quota" do
+        let(:limit) { 512.MiB }
+
+        it "contains the human readable representation of the device size" do
+          value = subject.value_for(subvolume)
+          size = value.params[0]
+
+          expect(size).to eq("0.50 GiB")
+        end
+
+        it "contains a sort key for the device size" do
+          value = subject.value_for(subvolume)
+          sort_key = value.params.find { |param| param.is_a?(Yast::Term) && param.value == :sortKey }
+
+          expect(sort_key).to_not be_nil
+          expect(sort_key.params).to include("536870912")
+        end
+      end
+    end
   end
 end

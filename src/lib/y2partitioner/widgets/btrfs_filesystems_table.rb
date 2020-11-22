@@ -45,8 +45,9 @@ module Y2Partitioner
       def fs_columns
         [
           Columns::Device,
-          Columns::Type,
-          Columns::FilesystemLabel,
+          Columns::BtrfsRferLimit,
+          Columns::BtrfsReferenced,
+          Columns::BtrfsExclusive,
           Columns::MountPoint
         ]
       end
