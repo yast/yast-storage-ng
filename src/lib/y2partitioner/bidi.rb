@@ -1,4 +1,6 @@
 # Bidirectional Text: Left-to-right (Latin) and right-to-left (Arabic).
+#
+# See https://en.wikipedia.org/wiki/Bidirectional_text
 module Bidi
   LRE = "\u{202A}".freeze
   RLE = "\u{202B}".freeze
@@ -20,6 +22,43 @@ module Bidi
   FIRST_STRONG_ISOLATE = FSI
   POP_DIRECTIONAL_ISOLATE = PDI
 
+  module_function
+
+  # Wrap *str* in a pair of characters: Left-to-Right Embedding
+  def ltr_embed(str)
+    LRE + str + PDF
+  end
+
+  # Wrap *str* in a pair of characters: Right-to-Left Embedding
+  def rtl_embed(str)
+    RLE + str + PDF
+  end
+
+  # Wrap *str* in a pair of characters: Left-to-Right Override
+  def ltr_override(str)
+    LRO + str + PDF
+  end
+
+  # Wrap *str* in a pair of characters: Right-to-Left Override
+  def rtl_override(str)
+    RLO + str + PDF
+  end
+
+  # Wrap *str* in a pair of characters: Left-to-Right Isolate
+  def ltr_isolate(str)
+    LRI + str + PDI
+  end
+
+  # Wrap *str* in a pair of characters: Right-to-Left Isolate
+  def rtl_isolate(str)
+    RLI + str + PDI
+  end
+
+  # Wrap *str* in a pair of characters: First Strong Isolate
+  def first_strong_isolate(str)
+    FSI + str + PDI
+  end
+
   BIDI_CONTROLS = LRE + RLE + PDF + LRO + RLO + LRI + RLI + FSI + PDI
 
   LRM = "\u{200E}".freeze
@@ -30,20 +69,17 @@ module Bidi
   RIGHT_TO_LEFT_MARK = RLM
   ARABIC_LETTER_MARK = ALM
 
-  # Add bidi formatting characters to *pn*
+  # Add bidi formatting characters to *pname*
   # otherwise /dev/sda will be presented as dev/sda/ in RTL context
-  # @param pn [Pathname]
-  def pathname_bidi_to_s(pn)
-    isolated_components = pn.each_filename.map do |fn|
-      Bidi::FIRST_STRONG_ISOLATE + fn + Bidi::POP_DIRECTIONAL_ISOLATE
-    end
+  # @param pname [Pathname]
+  def pathname_bidi_to_s(pname)
+    isolated_components = pname.each_filename.map { |fn| first_strong_isolate(fn) }
 
-    isolated_components.unshift("") if pn.absolute?
+    isolated_components.unshift("") if pname.absolute?
     joined = isolated_components.join(File::SEPARATOR) # "/" pedantry
 
-    Bidi::LEFT_TO_RIGHT_ISOLATE + joined + POP_DIRECTIONAL_ISOLATE
+    ltr_isolate(joined)
   end
-  module_function :pathname_bidi_to_s
 
   # Return a copy of *str* where bidirectional formatting characters are removed
   # @param str [String]
@@ -51,5 +87,4 @@ module Bidi
   def bidi_strip(str)
     str.tr(BIDI_CONTROLS, "")
   end
-  module_function :bidi_strip
 end
