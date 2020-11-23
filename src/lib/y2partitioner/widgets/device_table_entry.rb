@@ -178,14 +178,14 @@ module Y2Partitioner
 
         # Btrfs subvolumes to show as children devices
         #
+        # Note that the top level subvolume and the prefix subvolume (typically @) are not included.
+        #
         # @param device [Y2Storage::Device]
         # @return [Array<Y2Storage::BtrfsSubvolume>]
         def btrfs_subvolumes(device)
           filesystem = device.is?(:filesystem) ? device : device.filesystem
 
-          # FIXME: the default subvolume is not shown, but maybe it should be included when pointing
-          #   to something different to @.
-          filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
+          filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.prefix? }
         end
       end
     end

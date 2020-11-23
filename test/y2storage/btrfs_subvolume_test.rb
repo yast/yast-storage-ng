@@ -444,4 +444,26 @@ describe Y2Storage::BtrfsSubvolume do
       end
     end
   end
+
+  describe "prefix?" do
+    before do
+      blk_device.filesystem.subvolumes_prefix = prefix
+    end
+
+    context "when the subvolume is used as prefix" do
+      let(:prefix) { subvolume_path }
+
+      it "returns true" do
+        expect(subject.prefix?).to eq(true)
+      end
+    end
+
+    context "when the subvolume is not used as prefix" do
+      let(:prefix) { "foo" }
+
+      it "returns false" do
+        expect(subject.prefix?).to eq(false)
+      end
+    end
+  end
 end

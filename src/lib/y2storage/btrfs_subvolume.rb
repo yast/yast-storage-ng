@@ -219,6 +219,13 @@ module Y2Storage
       userdata_value(:former_referenced_limit)
     end
 
+    # Whether the subvolume is used as prefix (typically @)
+    #
+    # @return [Boolean]
+    def prefix?
+      path == filesystem.subvolumes_prefix
+    end
+
     protected
 
     # Whether the subvolume requires a default mount point
@@ -250,13 +257,6 @@ module Y2Storage
     # @return [Boolean]
     def for_snapshots?
       path.match?(/.snapshots/)
-    end
-
-    # Whether the subvolume is the used as prefix (typically @)
-    #
-    # @return [Boolean]
-    def prefix?
-      path == filesystem.subvolumes_prefix
     end
 
     # Parent subvolume
