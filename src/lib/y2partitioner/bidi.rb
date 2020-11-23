@@ -73,6 +73,8 @@ module Bidi
   # otherwise /dev/sda will be presented as dev/sda/ in RTL context
   # @param pname [Pathname]
   def pathname_bidi_to_s(pname)
+    return ltr_isolate(File::SEPARATOR) if pname.root?
+
     isolated_components = pname.each_filename.map { |fn| first_strong_isolate(fn) }
 
     isolated_components.unshift("") if pname.absolute?

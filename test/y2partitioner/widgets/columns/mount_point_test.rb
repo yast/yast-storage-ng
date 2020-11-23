@@ -110,8 +110,11 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
     end
 
-    context "(not only) when the mount path contains right to left (RTL) characters" do
+    describe "bidi right to left (RTL) handling" do
       let(:scenario) { "bidi.yml" }
+      before do
+        allow(subject).to receive(:bidi_supported?).and_return(true)
+      end
       let(:device_name) { "/dev/sdb1" }
 
       it "returns the mount path with appropriate bidi control characters" do
@@ -123,6 +126,14 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
                                                 "/\u2068\u0641\u064A\u062F\u064A\u0648\u2069" \
                                                 "/\u2068\u0642\u062F\u064A\u0645\u0629\u2069" \
                                                 "\u2069")
+      end
+
+      context "when the path is root /" do
+        let(:device_name) { "/dev/sda" }
+
+        it "returns the mount path wrapped with LTR Isolate" do
+          expect(subject.value_for(device)).to eq("\u2066/\u2069")
+        end
       end
     end
   end
