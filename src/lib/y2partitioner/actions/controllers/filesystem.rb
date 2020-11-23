@@ -466,7 +466,7 @@ module Y2Partitioner
         def btrfs_subvolumes?
           return false unless btrfs?
 
-          filesystem.top_level_btrfs_subvolume.children.any?
+          filesystem.btrfs_subvolumes?
         end
 
         # Whether there is a list of default Btrfs subvolumes for the filesystem
@@ -593,9 +593,10 @@ module Y2Partitioner
         end
 
         # Deletes current subvolumes, except the top level one.
+        #
+        # @see Y2Storage::Filesystems::Btrfs_delete_btrfs_subvolume
         def delete_btrfs_subvolumes
-          subvolumes = filesystem.btrfs_subvolumes.reject(&:top_level?)
-          subvolumes.map(&:path).each { |p| filesystem.delete_btrfs_subvolume(p) }
+          filesystem.btrfs_subvolumes.map(&:path).each { |p| filesystem.delete_btrfs_subvolume(p) }
 
           # Auto deleted subvolumes are also discarded
           filesystem.auto_deleted_subvolumes = []

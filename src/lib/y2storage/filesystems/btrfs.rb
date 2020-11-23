@@ -162,6 +162,13 @@ module Y2Storage
         true
       end
 
+      # Whether the filesystem contains subvolumes (without taking into account the top level one)
+      #
+      # @return [Boolean]
+      def btrfs_subvolumes?
+        btrfs_subvolumes.reject(&:top_level?).any?
+      end
+
       # Convert path to canonical form.
       #
       # That is, a single slash between elements. No leading or final slashes.
@@ -248,6 +255,9 @@ module Y2Storage
 
         devicegraph.remove_btrfs_subvolume(subvolume)
         top_level_btrfs_subvolume.set_default_btrfs_subvolume if deleted_default
+
+        # Resets the prefix to force to re-calculate it next time a subvolume is added
+        self.subvolumes_prefix = nil unless btrfs_subvolumes?
       end
 
       # Creates a new btrfs subvolume for the filesystem
@@ -408,28 +418,26 @@ module Y2Storage
         Y2Storage::Shadower.new(devicegraph).refresh_shadowing
       end
 
-      # Determines the btrfs subvolumes prefix
+      # Btrfs subvolumes prefix, typically @ for root.
       #
-      # FIXME: this logic looks wrong. For a new filesystem the result could make sense because the
-      #   default subvolume is either the top level subvolume or the default one indicated in the control
-      #   file (typically @ for root filesystem). But, in case of an existing Btrfs, the logic does not
-      #   work well when adding subvolumes to a Btrfs that currently lacks of subvolumes. Note that in
-      #   that scenario, the prefix is taken from the first added subvolume, making the rest of
-      #   new subvolumes to be created as children of such first one.
+      # The subvolume prefix in inferred in case it is not set yet, see {#infer_subvolumes_prefix}. Note
+      # that all new subvolumes will be created as children of the subvolume prefix, and their paths will
+      # be prepended with the subvolumes prefix.
       #
-      # When a default subvolume name have been used, a subvolume named after
-      # it lives under the #top_level_btrfs_subvolume. Otherwise, an empty
-      # string will be taken as the default subvolume name.
-      #
-      # If the filesystem does not exists yet, consider the default Btrfs subvolume
-      # (#default_btrfs_subvolume) path as the prefix.
-      #
-      # @return [String] Default subvolume name
+      # @return [String]
       def subvolumes_prefix
-        return default_btrfs_subvolume.path unless exists_in_probed?
+        self.subvolumes_prefix = infer_subvolumes_prefix unless userdata_value(:subvolumes_prefix)
 
-        children = top_level_btrfs_subvolume.children.reject { |s| snapper_path?(s.path) }
-        (children.size == 1) ? children.first.path : ""
+        userdata_value(:subvolumes_prefix)
+      end
+
+      # Sets the subvolumes prefix
+      #
+      # Note that setting it to nil forces to {#subvolumes_prefix} to infer the prefix.
+      #
+      # @param value [String, nil]
+      def subvolumes_prefix=(value)
+        save_userdata(:subvolumes_prefix, value)
       end
 
       # Determines whether the snapshots (snapper) are activated
@@ -495,6 +503,10 @@ module Y2Storage
         return unless spec
 
         ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
+
+        # Sets the subvolume prefix to create the rest of subvolumes as children of this one.
+        self.subvolumes_prefix = spec.btrfs_default_subvolume
+
         add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
       end
 
@@ -510,6 +522,50 @@ module Y2Storage
 
       private
 
+      DEFAULT_CANDIDATE_SUBVOLUMES_PREFIX = "@".freeze
+      private_constant :DEFAULT_CANDIDATE_SUBVOLUMES_PREFIX
+
+      # Tries to infer the subvolumes prefix
+      #
+      # There is a subvolumes prefix when the top level subvolume has only a child and that child
+      # subvolume is suitable as prefix, see {#suitable_subvolume_prefix?}. Otherwise, an empty string
+      # is considered as prefix.
+      #
+      # @return [String]
+      def infer_subvolumes_prefix
+        subvolumes = top_level_btrfs_subvolume.children
+        return "" if subvolumes.size != 1
+
+        subvolume = subvolumes.first
+        return "" unless suitable_subvolume_prefix?(subvolume)
+
+        subvolume.path
+      end
+
+      # Whether the given subvolume fulfills all the conditions to be a prefix
+      #
+      # To consider a subvolume as prefix suitable, the path of all its children must start with its
+      # path. Moreover, its path must be one of the candidate prefixes.
+      #
+      # @see #candidate_subvolume_prefixes
+      #
+      # @param subvolume [Y2Storage::BtrfsSubvolume]
+      # @return [Boolean]
+      def suitable_subvolume_prefix?(subvolume)
+        return false unless subvolume.children.all? { |s| s.path.start_with?(subvolume.path) }
+
+        return false unless candidate_subvolume_prefixes.include?(subvolume.path)
+
+        true
+      end
+
+      # Possible subvolume prefixes to consider
+      #
+      # @return [Array<String>]
+      def candidate_subvolume_prefixes
+        [DEFAULT_CANDIDATE_SUBVOLUMES_PREFIX, volume_specification&.btrfs_default_subvolume].compact.uniq
+      end
+
       # Check for existing descendants of a subvolume path.
       #
       # @param path [String] subvolume path
@@ -517,7 +573,7 @@ module Y2Storage
       # @return [Boolean]
       #
       def subvolume_descendants_exist?(path)
-        !subvolume_descendants(path).empty?
+        subvolume_descendants(path).any?
       end
 
       # Find the most suitable parent for a new subvolume
@@ -598,19 +654,6 @@ module Y2Storage
         subvolume.set_default_mount_point
 
         subvolume
-      end
-
-      # Determines whether a subvolume path is reserved for snapper
-      #
-      # There is some kind of egg and chicken problem: we should know the
-      # #subvolumes_prefix in order to get the right path but we need to filter
-      # snapshots in order to get the #subvolumes prefix. So we are assuming
-      # that finding SNAPSHOTS_ROOT_SUBVOL_NAME in the first or the second
-      # component of the path should be enough.
-      #
-      # @return [Boolean]
-      def snapper_path?(path)
-        path.split("/")[0..1].include?(SNAPSHOTS_ROOT_SUBVOL_NAME)
       end
     end
   end

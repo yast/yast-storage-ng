@@ -20,7 +20,6 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/btrfs_qgroup"
 require "y2storage/mountable"
-require "y2storage/volume_specification"
 
 module Y2Storage
   # A subvolume in a Btrfs filesystem
@@ -241,29 +240,23 @@ module Y2Storage
     # @return [Boolean]
     def require_default_mount_point?
       return false unless filesystem.root?
-      return false if top_level? || default_btrfs_subvolume? || snapshot?
+      return false if top_level? || default_btrfs_subvolume? || for_snapshots?
 
       parent_subvolume.top_level? || parent_subvolume.prefix?
     end
 
-    # Whether the subvolume is for snapshots
+    # Whether the subvolume is used for snapshots
     #
     # @return [Boolean]
-    def snapshot?
-      path.match?(/^.snapshots/)
+    def for_snapshots?
+      path.match?(/.snapshots/)
     end
 
     # Whether the subvolume is the used as prefix (typically @)
     #
     # @return [Boolean]
     def prefix?
-      return false unless filesystem.root?
-
-      spec = Y2Storage::VolumeSpecification.for("/")
-
-      return false unless spec&.btrfs_default_subvolume
-
-      spec.btrfs_default_subvolume == path
+      path == filesystem.subvolumes_prefix
     end
 
     # Parent subvolume
