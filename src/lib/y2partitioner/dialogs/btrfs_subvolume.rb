@@ -181,8 +181,7 @@ module Y2Partitioner
         def uniqueness_error
           return nil unless controller.exist_path?(value)
 
-          # TRANSLATORS: error message, where %s is replaced by a path given by the user.
-          format(_("Subvolume name %s already exists."), value)
+          format(_("A subvolume already exists with this path."), value)
         end
 
         # Error when the given path is part of an already existing path

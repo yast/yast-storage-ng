@@ -209,17 +209,13 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
   end
 
   describe "#exist_path?" do
-    context "when the filesystem already has a subvolume on disk with the given path" do
+    context "when the filesystem already has a subvolume with the given path" do
       it "returns true" do
         expect(subject.exist_path?("@/home")).to eq(true)
       end
     end
 
-    context "when the filesystem does not have a subvolume on disk with the given path" do
-      before do
-        filesystem.create_btrfs_subvolume("@/foo", false)
-      end
-
+    context "when the filesystem has not a subvolume with the given path" do
       it "returns false" do
         expect(subject.exist_path?("@/foo")).to eq(false)
       end

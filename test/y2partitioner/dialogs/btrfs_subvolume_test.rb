@@ -88,33 +88,33 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
     end
 
     describe "#validate" do
-      context "when no path is given" do
-        let(:value) { "" }
+      shared_examples "common validations" do
+        context "when no path is given" do
+          let(:value) { "" }
 
-        it "shows an error message" do
-          expect(Yast2::Popup).to receive(:show).with(/Empty .* path .*/, anything)
-          subject.validate
+          it "shows an error message" do
+            expect(Yast2::Popup).to receive(:show).with(/Empty .* path .*/, anything)
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to be(false)
+          end
         end
 
-        it "returns false" do
-          expect(subject.validate).to be(false)
+        context "when a path with unsafe characters is given" do
+          let(:value) { "@/foo,bar" }
+
+          it "shows an error message" do
+            expect(Yast2::Popup).to receive(:show).with(/contains unsafe characters/, anything)
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to be(false)
+          end
         end
-      end
 
-      context "when a path with unsafe characters is given" do
-        let(:value) { "@/foo,bar" }
-
-        it "shows an error message" do
-          expect(Yast2::Popup).to receive(:show).with(/contains unsafe characters/, anything)
-          subject.validate
-        end
-
-        it "returns false" do
-          expect(subject.validate).to be(false)
-        end
-      end
-
-      context "when a path is given" do
         context "and the filesystem does not have a specific subvolumes prefix" do
           let(:device_name) { "/dev/sdd1" }
 
@@ -140,12 +140,25 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
           end
         end
 
-        context "and there is no subvolume with that path" do
-          context "and the mount point already exists" do
-            let(:value) { "@/home" }
+        context "and there is a subvolume with the resulting path" do
+          let(:value) { "@/home" }
+
+          it "shows an error message" do
+            expect(Yast2::Popup).to receive(:show).with(/already exists/, anything)
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to be(false)
+          end
+        end
+
+        context "and there is not a subvolume with the resulting path" do
+          context "and there already are subvolumes on disk under the given path" do
+            let(:value) { "@/var" }
 
             it "shows an error message" do
-              expect(Yast2::Popup).to receive(:show).at_least(:once)
+              expect(Yast2::Popup).to receive(:show).with(/Cannot create/, anything)
               subject.validate
             end
 
@@ -154,48 +167,28 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
             end
           end
 
-          context "and the mount point does not exist yet" do
+          context "and there are not subvolumes on disk under the given path" do
             let(:value) { "@/foo" }
+
+            it "does not show an error message" do
+              expect(Yast2::Popup).to_not receive(:show)
+              subject.validate
+            end
 
             it "returns true" do
               expect(subject.validate).to be(true)
             end
           end
         end
-
-        context "and there is a subvolume with that path" do
-          let(:value) { "@/home" }
-
-          it "shows an error message" do
-            expect(Yast2::Popup).to receive(:show)
-            subject.validate
-          end
-
-          it "returns false" do
-            expect(subject.validate).to be(false)
-          end
-        end
       end
 
-      context "when the subvolume exists on disk" do
-        let(:subvolume) { filesystem.btrfs_subvolumes.first }
-
-        it "does not try to fix the path" do
-          expect(subject).to_not receive(:fix_path)
-
-          subject.validate
-        end
-
-        it "returns true" do
-          expect(subject.validate).to eq(true)
-        end
+      context "when creating a subvolume" do
+        include_examples "common validations"
       end
 
-      context "when the subvolume does not exist on disk yet" do
-        let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", false) }
-
-        context "and the path is not modifed" do
-          let(:value) { "@/foo" }
+      context "when editing a subvolume" do
+        context "when the subvolume exists on disk" do
+          let(:subvolume) { filesystem.btrfs_subvolumes.first }
 
           it "does not try to fix the path" do
             expect(subject).to_not receive(:fix_path)
@@ -207,13 +200,26 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
             expect(subject.validate).to eq(true)
           end
         end
-        context "and the path is modifed" do
-          let(:value) { "@/bar" }
 
-          it "tries to fix the path" do
-            expect(subject).to receive(:fix_path)
+        context "when the subvolume does not exist on disk yet" do
+          let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", false) }
 
-            subject.validate
+          context "and the path is not modifed" do
+            let(:value) { "@/foo" }
+
+            it "does not try to fix the path" do
+              expect(subject).to_not receive(:fix_path)
+
+              subject.validate
+            end
+
+            it "returns true" do
+              expect(subject.validate).to eq(true)
+            end
+          end
+
+          context "and the path is modifed" do
+            include_examples "common validations"
           end
         end
       end
