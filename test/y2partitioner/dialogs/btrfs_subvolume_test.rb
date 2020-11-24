@@ -144,7 +144,7 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
           let(:value) { "@/home" }
 
           it "shows an error message" do
-            expect(Yast2::Popup).to receive(:show).with(/already exists/, anything)
+            expect(Yast2::Popup).to receive(:show).with(/There is already a subvolume/, anything)
             subject.validate
           end
 

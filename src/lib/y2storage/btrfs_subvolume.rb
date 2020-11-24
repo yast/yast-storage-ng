@@ -256,7 +256,9 @@ module Y2Storage
     #
     # @return [Boolean]
     def for_snapshots?
-      path.match?(/.snapshots/)
+      snapshots_root = filesystem.snapshots_root
+
+      path == snapshots_root || path.start_with?(snapshots_root + "/")
     end
 
     # Parent subvolume
