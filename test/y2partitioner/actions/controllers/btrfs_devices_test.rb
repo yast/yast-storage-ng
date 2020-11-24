@@ -436,25 +436,48 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
     let(:device_name) { "/dev/sdb6" }
 
     before do
+      # To check bsc#1142669, create the same checkpoints than Controllers::Filesystem
+      restorer = Y2Partitioner::BlkDeviceRestorer.new(sdc)
       sdc.remove_descendants
       sdc.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+      restorer.update_checkpoint
 
       device.remove_descendants
       sdc.filesystem.add_device(device)
     end
 
-    it "removes the device from the Btrfs" do
-      expect(subject.filesystem.blk_devices).to include(device)
+    context "when removing a block device that was added via 'Used Devices'" do
+      it "removes the device from the Btrfs" do
+        expect(subject.filesystem.blk_devices).to include(device)
 
-      subject.remove_device(device)
+        subject.remove_device(device)
 
-      expect(subject.filesystem.blk_devices).to_not include(device)
+        expect(subject.filesystem.blk_devices).to_not include(device)
+      end
+
+      it "does not remove any other device from the Btrfs" do
+        subject.remove_device(device)
+
+        expect(subject.filesystem.blk_devices).to include(sdc)
+      end
     end
 
-    it "does not remove any other device from the Btrfs" do
-      subject.remove_device(device)
+    context "when removing a block device that was added via 'Edit'" do
+      # Regression test for bsc#1142669, this used to crash because it tried
+      # to restore the Btrfs again on top of sdc
+      it "removes the device from the Btrfs" do
+        expect(subject.filesystem.blk_devices).to include(sdc)
 
-      expect(subject.filesystem.blk_devices).to include(sdc)
+        subject.remove_device(sdc)
+
+        expect(subject.filesystem.blk_devices).to_not include(sdc)
+      end
+
+      it "does not remove any other device from the Btrfs" do
+        subject.remove_device(sdc)
+
+        expect(subject.filesystem.blk_devices).to include(device)
+      end
     end
   end
 end

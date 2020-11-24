@@ -117,7 +117,9 @@ module Y2Partitioner
     # @param dev [Y2Storage::BlkDevice, nil] source device
     # @return [Boolean]
     def can_restore_descendants?(dev)
-      return true if dev.filesystem
+      # Restore the filesystem if the device was formatted, except if it's a
+      # multi-device filesystem (bsc#1179100)
+      return true if dev.filesystem && !dev.filesystem.multidevice?
       return true if dev.descendants.size == 1 && dev.encrypted?
 
       dev.respond_to?(:partition_table?) && dev.partition_table?

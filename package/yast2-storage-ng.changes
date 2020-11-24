@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov 24 14:07:12 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: fixed a crash when 'Do not format' is selected for a
+  device that used to be part of a Btrfs (bsc#1179100).
+- 4.3.23
+
+-------------------------------------------------------------------
 Fri Nov 20 12:53:43 UTC 2020 - Josef Reidinger <jreidinger@suse.com>
 
 - print properly help to avoid accidental opening of module by bash
