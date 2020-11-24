@@ -617,6 +617,26 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         end
       end
     end
+
+    context "when the device was originally part of a multi-device Btrfs" do
+      let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+      let(:dev_name) { "/dev/sda1" }
+
+      before do
+        # Delete the original multi-device btrfs filesystem
+        device.delete_filesystem
+
+        # Edit the partition selecting any of the roles that would pre-select "Format device"
+        subject.new_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      end
+
+      # Regression test for bsc#1179100, this used to crash because it tried to restore the
+      # Btrfs, something that makes no sense for a multi-device filesystem
+      it "removes current filesystem" do
+        subject.dont_format
+        expect(subject.filesystem).to be_nil
+      end
+    end
   end
 
   describe "#partition_id=" do
