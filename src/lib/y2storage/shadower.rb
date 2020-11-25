@@ -163,11 +163,17 @@ module Y2Storage
 
     # Restores a previously auto deleted subvolume
     #
+    # If there already is a subvolume with the same path, the auto deleted subvolume is not restored.
+    #
     # @see #remove_auto_deleted
     #
     # @param filesystem [Filesystems::Btrfs] filesystem where to remove the subvolume as auto deleted
     # @param spec [SubvolSpecification] specification of the subvolume to restore
     def unshadow_btrfs_subvolume_spec(filesystem, spec)
+      subvolume_path = filesystem.btrfs_subvolume_path(spec.path)
+
+      return if filesystem.find_btrfs_subvolume_by_path(subvolume_path)
+
       subvolume = spec.create_btrfs_subvolume(filesystem)
       remove_auto_deleted(filesystem, subvolume)
     end

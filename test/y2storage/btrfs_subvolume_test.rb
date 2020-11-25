@@ -148,10 +148,10 @@ describe Y2Storage::BtrfsSubvolume do
 
       context "and it is a snapshot subvolume" do
         before do
-          blk_device.filesystem.create_btrfs_subvolume(".snapshots/1/snapshot", true)
+          blk_device.filesystem.create_btrfs_subvolume("@/.snapshots/1/snapshot", true)
         end
 
-        let(:subvolume_path) { ".snapshots/1/snapshot" }
+        let(:subvolume_path) { "@/.snapshots/1/snapshot" }
 
         include_examples "default not required"
       end
@@ -169,18 +169,16 @@ describe Y2Storage::BtrfsSubvolume do
 
       context "and its parent is the top level subvolume" do
         before do
-          # FIXME: The filesystem is recreated because there is an error when calculting the subvolumes
-          #   prefix for an existing filesystem.
-          blk_device.delete_filesystem
-          blk_device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
           blk_device.filesystem.mount_path = "/"
 
-          blk_device.filesystem.create_btrfs_subvolume("foo", true)
+          # Note that this subvolume is not considered a subvolume for working with snapshots because
+          # it is not under the subvolume prefix (does not start by @).
+          blk_device.filesystem.create_btrfs_subvolume(".snapshots", true)
         end
 
-        let(:subvolume_path) { "foo" }
+        let(:subvolume_path) { ".snapshots" }
 
-        include_examples "default required", "/foo"
+        include_examples "default required", "/.snapshots"
       end
 
       context "and its parent is the prefix subvolume" do
@@ -441,6 +439,28 @@ describe Y2Storage::BtrfsSubvolume do
           subvolume.exclusive_limit = Y2Storage::DiskSize.unlimited
           expect(subvolume.exclusive_limit).to be_unlimited
         end
+      end
+    end
+  end
+
+  describe "prefix?" do
+    before do
+      blk_device.filesystem.subvolumes_prefix = prefix
+    end
+
+    context "when the subvolume is used as prefix" do
+      let(:prefix) { subvolume_path }
+
+      it "returns true" do
+        expect(subject.prefix?).to eq(true)
+      end
+    end
+
+    context "when the subvolume is not used as prefix" do
+      let(:prefix) { "foo" }
+
+      it "returns false" do
+        expect(subject.prefix?).to eq(false)
       end
     end
   end

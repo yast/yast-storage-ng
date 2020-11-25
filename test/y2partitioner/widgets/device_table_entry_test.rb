@@ -33,7 +33,6 @@ describe Y2Partitioner::Widgets::DeviceTableEntry do
   let(:device) { current_graph.find_by_name(device_name) }
 
   describe ".new_with_children" do
-
     let(:entry) { described_class.new_with_children(device) }
 
     shared_examples "create entry" do
@@ -80,6 +79,14 @@ describe Y2Partitioner::Widgets::DeviceTableEntry do
         let(:device_name) { "/dev/sdb2" }
 
         include_examples "create subvolumes entries"
+
+        it "does not create a child entry for the prefix subvolume" do
+          device.filesystem.subvolumes_prefix = "@/home"
+
+          children_devices = entry.children.map(&:device)
+
+          expect(children_devices.map(&:path)).to_not include("@/home")
+        end
       end
 
       context "and the Btrfs is multidevice" do
@@ -101,6 +108,14 @@ describe Y2Partitioner::Widgets::DeviceTableEntry do
       include_examples "create entry"
 
       include_examples "create subvolumes entries"
+
+      it "does not create a child entry for the prefix subvolume" do
+        device.subvolumes_prefix = "@/home"
+
+        children_devices = entry.children.map(&:device)
+
+        expect(children_devices.map(&:path)).to_not include("@/home")
+      end
     end
 
     context "when the given device contains partitions" do

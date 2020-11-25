@@ -25,6 +25,7 @@ require "y2partitioner/actions/delete_btrfs_subvolume"
 
 describe Y2Partitioner::Actions::DeleteBtrfsSubvolume do
   before do
+    allow(Y2Storage::VolumeSpecification).to receive(:for)
     allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(root_spec)
 
     devicegraph_stub(scenario)

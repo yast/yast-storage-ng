@@ -126,15 +126,11 @@ module Y2Partitioner
           !new?(subvolume)
         end
 
-        # Whether the filesystem already has a subvolume on disk with the given path
+        # Whether the filesystem already has a subvolume with the given path
         #
         # @return [Boolean]
         def exist_path?(path)
-          subvolume = filesystem.btrfs_subvolumes.find { |s| s.path == path }
-
-          return false unless subvolume
-
-          !new?(subvolume)
+          filesystem.btrfs_subvolumes.any? { |s| s.path == path }
         end
 
         # Whether quota support is enabled for the Btrfs filesystem

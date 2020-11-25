@@ -26,6 +26,7 @@ require "y2storage/shadower"
 
 describe Y2Storage::Shadower do
   before do
+    allow(Y2Storage::VolumeSpecification).to receive(:for)
     allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(root_spec)
 
     fake_scenario(scenario)
