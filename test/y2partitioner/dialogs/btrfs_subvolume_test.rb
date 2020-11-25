@@ -251,7 +251,7 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
   describe Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimit do
     subject { described_class.new(controller) }
 
-    let(:size_widget) { double("SubvolumeRferLimitSize", disable: nil) }
+    let(:size_widget) { double("SubvolumeRferLimitSize", disable: nil, widget_id: :size) }
     let(:check_box_widget) { double("SubvolumeRferLimitCheckBox", disable: nil) }
 
     include_examples "CWM::AbstractWidget"
@@ -303,7 +303,7 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
       context "if quotas are enabled for the filesystem" do
         before do
-          expect(controller).to receive(:quota?).and_return true
+          allow(controller).to receive(:quota?).and_return true
         end
 
         context "and the checkbox is disabled" do
@@ -324,9 +324,111 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
           let(:size_value) { Y2Storage::DiskSize.MiB(22) }
 
-          it "returns unlimited" do
+          it "returns the size in the text input" do
             expect(subject.value).to eq size_value
           end
+        end
+      end
+    end
+
+    describe "#validate" do
+      before do
+        allow(controller).to receive(:quota?).and_return true
+
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitCheckBox)
+          .to receive(:new).and_return check_box_widget
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitSize)
+          .to receive(:new).and_return size_widget
+
+        allow(check_box_widget).to receive(:value).and_return check_box_value
+        allow(size_widget).to receive(:value).and_return size_value
+      end
+
+      RSpec.shared_examples "valid limit" do
+        it "returns true" do
+          expect(subject.validate).to eq true
+        end
+
+        it "does not open any error popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          subject.validate
+        end
+      end
+
+      context "if the checkbox is enabled" do
+        let(:check_box_value) { true }
+
+        context "and the text input contains a valid size" do
+          let(:size_value) { Y2Storage::DiskSize.MiB(50) }
+
+          include_examples "valid limit"
+        end
+
+        context "and the text input does not contain a valid size" do
+          let(:size_value) { nil }
+
+          it "returns false" do
+            allow(Yast::Popup).to receive(:Error)
+            allow(Yast::UI).to receive(:SetFocus)
+
+            expect(subject.validate).to eq false
+          end
+
+          it "opens an error popup and sets the focus in the widget" do
+            expect(Yast::Popup).to receive(:Error)
+            expect(Yast::UI).to receive(:SetFocus)
+
+            subject.validate
+          end
+        end
+      end
+
+      context "if the checkbox is disabled" do
+        let(:check_box_value) { false }
+
+        context "and the text input contains a valid size" do
+          let(:size_value) { Y2Storage::DiskSize.MiB(50) }
+
+          include_examples "valid limit"
+        end
+
+        context "and the text input does not contain a valid size" do
+          let(:size_value) { nil }
+
+          include_examples "valid limit"
+        end
+      end
+    end
+
+    describe "#init" do
+      before do
+        allow(controller).to receive(:quota?).and_return quota
+
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitCheckBox)
+          .to receive(:new).and_return check_box_widget
+        allow(Y2Partitioner::Dialogs::BtrfsSubvolume::SubvolumeRferLimitSize)
+          .to receive(:new).and_return size_widget
+      end
+
+      context "if quotas are disabled for the filesystem" do
+        let(:quota) { false }
+
+        it "disables the inner widgets" do
+          expect(check_box_widget).to receive(:disable)
+          expect(size_widget).to receive(:disable)
+
+          subject.init
+        end
+      end
+
+      context "if quotas are enabled for the filesystem" do
+        let(:quota) { true }
+
+        it "does not disable the inner widgets" do
+          expect(check_box_widget).to_not receive(:disable)
+          expect(size_widget).to_not receive(:disable)
+
+          subject.init
         end
       end
     end
