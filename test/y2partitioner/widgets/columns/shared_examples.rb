@@ -25,4 +25,10 @@ RSpec.shared_examples "Y2Partitioner::Widgets::Column" do
       expect(subject.title).to be_an(String).or be_a(Yast::Term)
     end
   end
+
+  describe "#id" do
+    it "returns a symbol" do
+      expect(subject.id).to be_a(Symbol)
+    end
+  end
 end
