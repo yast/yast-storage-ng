@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -57,12 +58,14 @@ describe Y2Partitioner::Widgets::Columns::Device do
       end
     end
 
-    context "when the device is a single-device filesystem" do
-      let(:dev_name) { "/dev/sda2" }
-      let(:device) { blk_device.filesystem }
+    shared_examples "filesystem" do
 
-      it "returns its readable filesystem type name" do
-        expect(name).to eq("Ext4")
+      it "includes the human readable filesystem type" do
+        expect(name).to include(device.type.to_human_string)
+      end
+
+      it "includes the #blk_device_basename" do
+        expect(name).to include(device.blk_device_basename)
       end
 
       it "does not provide a sort key" do
@@ -70,22 +73,19 @@ describe Y2Partitioner::Widgets::Columns::Device do
       end
     end
 
+    context "when the device is a single-device filesystem" do
+      let(:dev_name) { "/dev/sda2" }
+      let(:device) { blk_device.filesystem }
+
+      include_examples "filesystem"
+    end
+
     context "when the device is a multi-device filesystem" do
       let(:scenario) { "btrfs2-devicegraph.xml" }
       let(:dev_name) { "/dev/sdb1" }
       let(:device) { blk_device.filesystem }
 
-      it "includes the human readable filesystem type" do
-        expect(name).to include("BtrFS")
-      end
-
-      it "includes the #blk_device_basename" do
-        expect(name).to include("sdb1")
-      end
-
-      it "does not provide a sort key" do
-        expect(sort_key).to be_nil
-      end
+      include_examples "filesystem"
     end
   end
 end

@@ -17,14 +17,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/widgets/columns/base"
+require "y2partitioner/widgets/columns/disk_size"
 
 module Y2Partitioner
   module Widgets
     module Columns
       # Widget for displaying the `Size` column
-      class Size < Base
+      class Size < DiskSize
         # Constructor
         def initialize
           textdomain "storage"
@@ -34,15 +33,6 @@ module Y2Partitioner
         def title
           # TRANSLATORS: table header, size of block device e.g. "8.00 GiB"
           Right(_("Size"))
-        end
-
-        # @see Columns::Base#value_for
-        def value_for(device)
-          size = device_size(device)
-
-          return "" unless size
-
-          cell(size.to_human_string, sort_key(size.to_i.to_s))
         end
 
         private
@@ -56,6 +46,7 @@ module Y2Partitioner
           return nil unless device
           return fstab_device_size(device) if fstab_entry?(device)
           return bcache_cset_size(device) if device.is?(:bcache_cset)
+          return subvolume_size(device) if device.is?(:btrfs_subvolume)
 
           device.respond_to?(:size) && device.size
         end
@@ -82,6 +73,21 @@ module Y2Partitioner
           device = fstab_entry.device(system_graph)
 
           device_size(device)
+        end
+
+        # Returns the Y2Storage::DiskSize for a Y2Storage::BtrfsSubvolume, if possible
+        #
+        # Subvolumes don't have sizes in the strict sense. But if quotas are enabled for
+        # the file system, this returns the referenced limit of the subvolume, if any.
+        #
+        # @see #device_size
+        #
+        # @param subvolume [Y2Storage::BtrfsSubvolume]
+        # @return [Y2Storage::Disksize, nil]
+        def subvolume_size(subvolume)
+          return nil if subvolume.referenced_limit.unlimited?
+
+          subvolume.referenced_limit
         end
       end
     end

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -46,10 +47,10 @@ describe Y2Partitioner::Widgets::Pages::BtrfsFilesystems do
 
       expect(table).to_not be_nil
 
-      id_values = btrfs_filesystems.map(&:blk_device_basename)
+      id_values = btrfs_filesystems.map(&:name)
       first_column = column_values(table, 0)
 
-      expect(first_column).to contain_exactly(*id_values)
+      expect(first_column).to include(*id_values)
     end
 
     it "shows a buttons set" do

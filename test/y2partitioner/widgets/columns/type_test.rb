@@ -63,6 +63,16 @@ describe Y2Partitioner::Widgets::Columns::Type do
       end
     end
 
+    context "when the device is a Btrfs subvolume" do
+      let(:scenario) { "mixed_disks_btrfs" }
+      let(:filesystem) { devicegraph.find_by_name("/dev/sda2").filesystem }
+      let(:device) { filesystem.btrfs_subvolumes.first }
+
+      it "returns 'BtrFS Subvolume'" do
+        expect(label).to eq("BtrFS Subvolume")
+      end
+    end
+
     context "when the device is an LVM volume group" do
       let(:device_name) { "/dev/vg0" }
 

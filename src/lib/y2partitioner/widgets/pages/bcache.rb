@@ -17,11 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/pages/tabbed"
-require "y2partitioner/widgets/pages/bcaches"
+require "y2partitioner/widgets/overview_tab"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/bcache_edit_button"
+require "y2partitioner/widgets/bcache_buttons"
 
 module Y2Partitioner
   module Widgets

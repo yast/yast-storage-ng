@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -109,7 +110,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       end
 
       it "shows multi-device Btrfs information" do
-        label = find_label(subject.contents, "Part of Btrfs")
+        label = find_label(subject.contents, "Part of BtrFS")
         expect(label).to_not be_nil
       end
 

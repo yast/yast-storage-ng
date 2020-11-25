@@ -23,8 +23,12 @@ require "y2storage"
 
 describe Y2Storage::MountPoint do
   before do
+    allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return(root_spec)
+
     fake_scenario(scenario)
   end
+
+  let(:root_spec) { instance_double(Y2Storage::VolumeSpecification, btrfs_default_subvolume: "@") }
 
   let(:scenario) { "mixed_disks_btrfs" }
 
@@ -374,25 +378,15 @@ describe Y2Storage::MountPoint do
         [Y2Storage::SubvolSpecification.new("foo"), Y2Storage::SubvolSpecification.new("bar")]
       end
 
-      RSpec.shared_examples "passno 0 with subvolumes" do
-        it "is set to 0 for the filesystem and all its subvolumes" do
-          expect(mount_point.passno).to eq 0
+      let(:path) { "/" }
 
-          filesystem.add_btrfs_subvolumes(specs)
-          mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
-          expect(mount_points.size).to eq specs.size
-          expect(mount_points.map(&:passno)).to all(eq(0))
-        end
-      end
+      it "is set to 0 for the filesystem and all its subvolumes" do
+        expect(mount_point.passno).to eq 0
 
-      context "mounted at /" do
-        let(:path) { "/" }
-        include_examples "passno 0 with subvolumes"
-      end
-
-      context "mounted at a non-root location" do
-        let(:path) { "/home" }
-        include_examples "passno 0 with subvolumes"
+        filesystem.add_btrfs_subvolumes(specs)
+        mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
+        expect(mount_points.any?).to eq(true)
+        expect(mount_points.map(&:passno)).to all(eq(0))
       end
     end
 

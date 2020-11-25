@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -44,10 +45,15 @@ describe Y2Partitioner::Actions::AddBtrfs do
   describe "#run" do
     let(:controller) { Y2Partitioner::Actions::Controllers::BtrfsDevices.new }
 
+    let(:fs_controller) { instance_double(Y2Partitioner::Actions::Controllers::Filesystem) }
+
     before do
       allow(Yast2::Popup).to receive(:show)
 
       allow(Y2Partitioner::Actions::Controllers::Filesystem).to receive(:new)
+        .and_return(fs_controller)
+
+      allow(fs_controller).to receive(:finish).and_return(:finish)
 
       allow(Y2Partitioner::Actions::Controllers::BtrfsDevices).to receive(:new)
         .and_return(controller)
@@ -83,6 +89,12 @@ describe Y2Partitioner::Actions::AddBtrfs do
           allow(Y2Partitioner::Dialogs::BtrfsOptions).to receive(:run).and_return :next
         end
 
+        it "performs the final steps over the filesystem" do
+          expect(fs_controller).to receive(:finish)
+
+          sequence.run
+        end
+
         it "returns :finish" do
           expect(sequence.run).to eq :finish
         end
@@ -97,6 +109,12 @@ describe Y2Partitioner::Actions::AddBtrfs do
       context "if the user aborts the process at some point" do
         before do
           allow(Y2Partitioner::Dialogs::BtrfsOptions).to receive(:run).and_return :abort
+        end
+
+        it "does not perform the final steps over the filesystem" do
+          expect(fs_controller).to_not receive(:finish)
+
+          sequence.run
         end
 
         it "returns :abort" do

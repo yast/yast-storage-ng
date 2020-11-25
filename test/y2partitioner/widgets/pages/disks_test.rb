@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -49,14 +50,14 @@ describe Y2Partitioner::Widgets::Pages::Disks do
     let(:disks_and_parts) do
       (device_graph.disks + device_graph.disks.map(&:partitions)).flatten.compact
     end
+    let(:items) { remove_sort_keys(column_values(table, 0)) }
 
     it "shows a table with the disk devices and their partitions" do
       expect(table).to_not be_nil
 
       devices_name = disks_and_parts.map { |d| disk_dev_name(d) }
-      items_name = column_values(table, 0)
 
-      expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
+      expect(items).to include(*devices_name)
     end
 
     # This test is here to ensure we don't try to access the partitions within a
@@ -68,9 +69,34 @@ describe Y2Partitioner::Widgets::Pages::Disks do
       it "shows a table with the disk devices, their partitions and the Xen virtual partitions" do
         devices = disks_and_parts + device_graph.stray_blk_devices
         devices_name = devices.map { |d| disk_dev_name(d) }
-        items_name = column_values(table, 0)
 
-        expect(remove_sort_keys(items_name.sort)).to eq(devices_name.sort)
+        expect(items).to include(*devices_name)
+      end
+    end
+
+    context "when some of the devices to show are formatted as Btrfs" do
+      def btrfs_subvolumes(device)
+        device.filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
+      end
+
+      context "and the Btrfs is not multidevice" do
+        it "includes its Btrfs subvolumes in the table" do
+          sda2 = device_graph.find_by_name("/dev/sda2")
+          subvolumes = btrfs_subvolumes(sda2).map(&:path)
+
+          expect(items).to include(*subvolumes)
+        end
+      end
+
+      context "and the Btrfs is multidevice" do
+        let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+
+        it "does not include its Btrfs subvolumes in the table" do
+          sda2 = device_graph.find_by_name("/dev/sda2")
+          subvolumes = btrfs_subvolumes(sda2).map(&:path)
+
+          expect(items).to_not include(*subvolumes)
+        end
       end
     end
   end

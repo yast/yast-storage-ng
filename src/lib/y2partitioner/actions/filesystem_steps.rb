@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -77,6 +77,7 @@ module Y2Partitioner
       end
 
       def filesystem_commit
+        fs_controller.finish
         encrypt_controller.finish
         UIState.instance.select_row(fs_controller.blk_device.sid)
         :finish

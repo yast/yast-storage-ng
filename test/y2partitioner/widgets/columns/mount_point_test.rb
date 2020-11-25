@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -46,8 +47,16 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
     end
 
-    context "when given device is a filesystem" do
-      let(:device_name) { "/dev/sdb" }
+    context "when given device is formatted and mounted" do
+      let(:device_name) { "/dev/sda3" }
+
+      it "returns its mount point" do
+        expect(subject.value_for(device)).to eq("swap")
+      end
+    end
+
+    context "when given device is not mounted" do
+      let(:device_name) { "/dev/sda1" }
 
       it "returns an empty string" do
         expect(subject.value_for(device)).to eq("")
@@ -59,6 +68,23 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
 
       it "returns an empty string" do
         expect(subject.value_for(device)).to eq("")
+      end
+    end
+
+    context "when given device is a filesystem" do
+      let(:device) { devicegraph.find_by_name("/dev/sdb1").filesystem }
+
+      it "returns its mount point" do
+        expect(subject.value_for(device)).to eq("/test")
+      end
+    end
+
+    context "when given device is a Btrfs subvolume" do
+      let(:filesystem) { devicegraph.find_by_name("/dev/sdb1").filesystem }
+      let(:device) { filesystem.btrfs_subvolumes.find { |s| s.path == "sub1" } }
+
+      it "returns its mount point" do
+        expect(subject.value_for(device)).to eq("/test/sub1")
       end
     end
 

@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_class_wrapper"
+require "y2storage/btrfs_qgroup"
 require "y2storage/mountable"
 
 module Y2Storage
@@ -67,12 +68,47 @@ module Y2Storage
     #   @return [BtrfsSubvolume]
     storage_forward :create_btrfs_subvolume, as: "BtrfsSubvolume"
 
+    # @!method btrfs_qgroup
+    #   Level 0 qgroup associated to this subvolume, if any
+    #
+    #   @return [BtrfsQgroup, nil]
+    storage_forward :btrfs_qgroup, as: "BtrfsQgroup", check_with: :has_btrfs_qgroup
+
+    # @!method create_btrfs_qgroup
+    #   Creates the corresponding level 0 qgroup for the subvolume
+    #
+    #   Quota support must be enabled for the filesystem (see {Filesystems::Btrfs#quota?}).
+    #   If that's the case, usually the qgroup already exists unless it was removed by
+    #   the user.
+    #
+    #   @raise [Storage::Exception] if quota support is not enabled
+    storage_forward :create_btrfs_qgroup, as: "BtrfsQgroup"
+
     # Sets this subvolume as the default one
     def set_default_btrfs_subvolume
       # The original libstorage method is wrongly renamed to
       # :default_btrfs_subvolume= by SWIG, because it's named like a setter
       # although it is not.
       to_storage_value.public_send(:default_btrfs_subvolume=)
+    end
+
+    # Assigns the default mount point for this subvolume
+    #
+    # Note that the current mount point is deleted if the subvolume does not require a default mount
+    # point, see {#require_default_mount_point?}.
+    def set_default_mount_point
+      if !require_default_mount_point?
+        remove_mount_point if mount_point
+        return
+      end
+
+      default_mount_path = filesystem.btrfs_subvolume_mount_point(path)
+
+      return if mount_path == default_mount_path
+
+      remove_mount_point if mount_point
+
+      create_mount_point(default_mount_path)
     end
 
     # Create a mount point with the same mount_by as the parent Btrfs.
@@ -109,66 +145,141 @@ module Y2Storage
       save_userdata(:can_be_auto_deleted, value)
     end
 
-    # Checks whether the subvolume is shadowed by any other mount point in the system
+    # Size of the referenced space of the subvolume, if known
     #
-    # @return [Boolean] true if the subvolume is shadowed
-    def shadowed?
-      !shadowers.empty?
+    # The information is obtained from the qgroup of level 0 associated to the subvolume,
+    # which implies it can only be known if quotas are enabled for the filesystem.
+    # If quota support is disabled, this method returns nil.
+    #
+    # If the filesystem already existed during probing but got no quota support enabled at
+    # that moment, this method returns zero if quota support was enabled after probing.
+    #
+    # @return [DiskSize, nil] nil if quota support is disabled, zero if it was enabled only
+    #   after probing, the known size in any other case
+    def referenced
+      btrfs_qgroup&.referenced
     end
 
-    # Returns the devices that shadow the subvolume
+    # Size of the exclusive space of the subvolume, if known
     #
-    # It prevents to return the subvolume itself or its filesystem as shadower.
+    # See {#referenced} for details about the possible returned values in several situations.
     #
-    # @return [Array<Mountable>] shadowers
-    def shadowers
-      shadowers = BtrfsSubvolume.shadowers(devicegraph, mount_path)
-      shadowers.reject { |s| s.sid == sid || s.sid == btrfs.sid }
+    # @return [DiskSize, nil] nil if quota support is disabled, zero if it was enabled only
+    #   after probing, the known size in any other case
+    def exclusive
+      btrfs_qgroup&.exclusive
     end
 
-    # Checks whether a mount path is shadowing another mount path
+    # Limit of the referenced space for the subvolume
     #
-    # @note The existence of devices with that mount paths is not checked.
-    #
-    # @param mount_path [String]
-    # @param other_mount_path [String]
-    #
-    # @return [Boolean] true if other_mount_path is shadowed by mount_path
-    def self.shadowing?(mount_path, other_mount_path)
-      return false if mount_path.nil? || other_mount_path.nil?
-      return false if mount_path.empty? || other_mount_path.empty?
-
-      # Just checking with start_with? is not sufficient:
-      # "/bootinger/schlonz".start_with?("/boot") -> true
-      # So append "/" to make sure only complete subpaths are compared:
-      # "/bootinger/schlonz/".start_with?("/boot/") -> false
-      # "/boot/schlonz/".start_with?("/boot/") -> true
-      check_path = "#{other_mount_path}/"
-      check_path.start_with?("#{mount_path}/")
+    # @return [DiskSize] unlimited if there is no quota
+    def referenced_limit
+      btrfs_qgroup&.referenced_limit || DiskSize.unlimited
     end
 
-    # Checks whether a mount path is currently shadowed by any other mount path
+    # Limit of the referenced space for the subvolume
     #
-    # @param devicegraph [Devicegraph]
-    # @param mount_path [String] mount point to check
+    # @return [DiskSize] unlimited if there is no quota
+    def exclusive_limit
+      btrfs_qgroup&.exclusive_limit || DiskSize.unlimited
+    end
+
+    # Setter for #{referenced_limit}
+    #
+    # Works only if quotas are enabled for the filesystem (see {Filesystems::Btrfs#quota?})
+    #
+    # @param limit [DiskSize] setting it to DiskSize.Unlimited removes the quota
+    def referenced_limit=(limit)
+      return unless create_missing_qgroup
+
+      if referenced_limit && !referenced_limit.unlimited?
+        save_userdata(:former_referenced_limit, referenced_limit)
+      end
+      btrfs_qgroup.referenced_limit = limit
+    end
+
+    # Setter for #{exclusive_limit}
+    #
+    # Works only if quotas are enabled for the filesystem (see {Filesystems::Btrfs#quota?})
+    #
+    # @param limit [DiskSize] setting it to DiskSize.Unlimited removes the quota
+    def exclusive_limit=(limit)
+      return unless create_missing_qgroup
+
+      btrfs_qgroup.exclusive_limit = limit
+    end
+
+    # Previous significant (ie. not unlimited) value of {#referenced_limit}
+    #
+    # Used by the Partitioner to restore the value of the corresponding widget if the
+    # user re-enables the limit, which improves the sense of continuity.
+    #
+    # @return [DiskSize, nil] nil if the limit has never changed
+    def former_referenced_limit
+      userdata_value(:former_referenced_limit)
+    end
+
+    # Whether the subvolume is used as prefix (typically @)
     #
     # @return [Boolean]
-    def self.shadowed?(devicegraph, mount_path)
-      !shadowers(devicegraph, mount_path).empty?
-    end
-
-    # Returns the current shadowers for a specific mount point
-    #
-    # @param devicegraph [Devicegraph]
-    # @param mount_path [String]
-    #
-    # @return [Array<Mountable>] shadowers
-    def self.shadowers(devicegraph, mount_path)
-      Mountable.all(devicegraph).select { |m| shadowing?(m.mount_path, mount_path) }
+    def prefix?
+      path == filesystem.subvolumes_prefix
     end
 
     protected
 
+    # Whether the subvolume requires a default mount point
+    #
+    # Only subvolumes for root require a default mount point. This is necessary to correctly mount the
+    # subvolumes when snapshoting is used. Also note that a subvolume does not require a mount point when
+    # any of its ancestors already has a mount point or when the subvolume is a snapshot.
+    #
+    # Example:
+    #
+    # top-level                       -> false
+    # |-- @                           -> false
+    #    |-- var                      -> true
+    #    |  |-- log                   -> false
+    #    |-- .snapshots               -> false
+    #        |--.snapshots/1/snapshot -> false
+    # |-- foo                         -> true
+    #
+    # @return [Boolean]
+    def require_default_mount_point?
+      return false unless filesystem.root?
+      return false if top_level? || default_btrfs_subvolume? || for_snapshots?
+
+      parent_subvolume.top_level? || parent_subvolume.prefix?
+    end
+
+    # Whether the subvolume is used for snapshots
+    #
+    # @return [Boolean]
+    def for_snapshots?
+      snapshots_root = filesystem.snapshots_root
+
+      path == snapshots_root || path.start_with?(snapshots_root + "/")
+    end
+
+    # Parent subvolume
+    #
+    # @return [BtrfsSubvolume, nil]
+    def parent_subvolume
+      parents.find { |p| p.is?(:btrfs_subvolume) }
+    end
+
+    # Returns the associated level 0 qgroup, creating one if needed and possible
+    #
+    # @return [BtrfsQgroup, nil] nil if quotas are disabled for the filesystem, a valid
+    #   qgroup (new or pre-existing) in any other case
+    def create_missing_qgroup
+      btrfs_qgroup || create_btrfs_qgroup
+      # libstorage-ng throws an exception for #create_btrfs_qgroup if quotas are disabled
+    rescue Storage::Exception
+      nil
+    end
+
+    # @see Device#is?
     def types_for_is
       super << :btrfs_subvolume
     end

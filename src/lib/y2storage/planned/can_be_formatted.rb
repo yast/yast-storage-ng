@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2015-2017] SUSE LLC
+# Copyright (c) [2015-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -226,9 +222,11 @@ module Y2Storage
         # If a default subvolume is configured (in control.xml), create it; if not,
         # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
         filesystem.ensure_default_btrfs_subvolume(path: @default_subvolume)
-        return unless subvolumes?
 
-        filesystem.add_btrfs_subvolumes(subvolumes)
+        # Sets the subvolume prefix to create the rest of subvolumes as children of this one.
+        filesystem.subvolumes_prefix = @default_subvolume || ""
+
+        filesystem.add_btrfs_subvolumes(subvolumes) if subvolumes
       end
 
       def reuse_device!(device)

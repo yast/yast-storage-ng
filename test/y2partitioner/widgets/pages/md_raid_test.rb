@@ -73,7 +73,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
       end
 
       it "shows a button to edit the devices of the MD RAID" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::MdDevicesEditButton) }
         expect(button).to_not be_nil
       end
     end
