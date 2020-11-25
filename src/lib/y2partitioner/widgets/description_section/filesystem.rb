@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -54,7 +54,7 @@ module Y2Partitioner
         def btrfs_entries
           return [] unless filesystem&.is?(:btrfs)
 
-          [:btrfs_data_raid_level, :btrfs_metadata_raid_level]
+          [:btrfs_data_raid_level, :btrfs_metadata_raid_level, :btrfs_devices]
         end
 
         # Extra entries when the filesystem is Ext
@@ -74,7 +74,7 @@ module Y2Partitioner
 
           # TRANSLATORS: Filesystem type information, where %s is replaced by
           # a filesystem type (e.g., VFAT, BTRFS)
-          format(_("File System: %s"), type)
+          format(_("Type: %s"), type)
         end
 
         # Information about the mount point
@@ -140,6 +140,17 @@ module Y2Partitioner
 
           # TRANSLATORS: Btrfs metadata information, where %s is replaced by a RAID level (e.g., RAID0).
           format(_("Metadata RAID Level: %s"), level)
+        end
+
+        # Information about the devices used by the Btrfs filesystem
+        #
+        # @return [String]
+        def btrfs_devices_value
+          devices = filesystem.plain_blk_devices.map(&:name)
+
+          # TRANSLATORS: Information about devices used by a Btrfs filesystem, where %s is replaced by a
+          #   comma separated list of device names (e.g., "/dev/sda1, /dev/sda2").
+          format(_("Used Devices: %s"), Yast::HTML.List(devices))
         end
 
         # Whether the mount point is inactive

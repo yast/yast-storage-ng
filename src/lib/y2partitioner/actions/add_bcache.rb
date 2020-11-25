@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,7 +25,7 @@ require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
-    # Action for adding a bcache device, see {Actions::Base}
+    # Action for adding a Bcache device, see {Actions::Base}
     class AddBcache < Base
       def initialize
         super
@@ -40,7 +40,7 @@ module Y2Partitioner
       # @return [Controllers::Bcache]
       attr_reader :controller
 
-      # List of errors that avoid to create a bcache
+      # List of errors that avoid to create a Bcache
       #
       # @see Actions::Base#errors
       #
@@ -49,7 +49,7 @@ module Y2Partitioner
         (super + [no_backing_devices_error]).compact
       end
 
-      # Error when there is no suitable backing devices for creating a bcache
+      # Error when there is no suitable backing devices for creating a Bcache
       #
       # @return [String, nil] nil if there are suitable backing devices.
       def no_backing_devices_error
@@ -59,9 +59,9 @@ module Y2Partitioner
         _("There are not enough suitable unused devices to create a bcache.")
       end
 
-      # Opens a dialog to create a bcache
+      # Opens a dialog to create a Bcache
       #
-      # The bcache is created only if the dialog is accepted.
+      # The Bcache is created only if the dialog is accepted.
       #
       # @see Actions::Base#perform_action
       def perform_action
@@ -71,6 +71,8 @@ module Y2Partitioner
 
         controller.create_bcache(dialog.backing_device, dialog.caching_device, dialog.options)
         UIState.instance.select_row(controller.bcache.sid)
+
+        :finish
       end
 
       # Whether there is suitable backing devices

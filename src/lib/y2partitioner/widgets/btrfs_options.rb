@@ -19,6 +19,7 @@
 
 require "y2partitioner/widgets/filesystem_options"
 require "y2partitioner/widgets/format_and_mount"
+require "y2partitioner/widgets/btrfs_quota"
 
 module Y2Partitioner
   module Widgets
@@ -29,7 +30,9 @@ module Y2Partitioner
         VBox(
           mount_options_widget,
           VSpacing(0.5),
-          snapshots_widget
+          Left(snapshots_widget),
+          VSpacing(0.5),
+          Left(quota_widget)
         )
       end
 
@@ -63,6 +66,10 @@ module Y2Partitioner
       # @return [Widgets::Snapshots]
       def snapshots_widget
         @snapshots_widget ||= Widgets::Snapshots.new(controller)
+      end
+
+      def quota_widget
+        @quota_widget ||= Widgets::BtrfsQuota.new(controller)
       end
 
       # Refreshes the snapshots widget

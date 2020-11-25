@@ -57,6 +57,12 @@ describe Y2Partitioner::Widgets::BtrfsOptions do
     expect(widget).to_not be_nil
   end
 
+  it "includes a widget to configure BtrFS quotas" do
+    widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsQuota) }
+
+    expect(widget).to_not be_nil
+  end
+
   describe "#validate" do
     before do
       allow(subject).to receive(:filesystem_errors).and_return(warnings)

@@ -19,10 +19,10 @@
 
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/tabbed"
-require "y2partitioner/widgets/pages/md_raids"
 require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/used_devices_edit_button"
 require "y2partitioner/widgets/overview_tab"
+require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/md_buttons"
 
 module Y2Partitioner
   module Widgets
@@ -76,7 +76,7 @@ module Y2Partitioner
 
         # @see UsedDevicesTab#buttons
         def buttons
-          Right(UsedDevicesEditButton.new(device: device))
+          Right(MdDevicesEditButton.new(device: device))
         end
       end
     end

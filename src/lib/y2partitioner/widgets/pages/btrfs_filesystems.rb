@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,16 +18,16 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/filesystems/type"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
-require "y2partitioner/widgets/btrfs_add_button"
 require "y2partitioner/widgets/device_buttons_set"
-require "y2storage/filesystems/type"
+require "y2partitioner/widgets/btrfs_buttons"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for BTRFS filesystems
+      # Page for Btrfs filesystems
       class BtrfsFilesystems < DevicesTable
         extend Yast::I18n
 

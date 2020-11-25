@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018-2019] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -169,8 +170,8 @@ describe Y2Partitioner::Actions::AddBcache do
           expect(fake_devicegraph.bcaches).to be_empty
         end
 
-        it "returns :finish" do
-          expect(subject.run).to eq :finish
+        it "returns nil" do
+          expect(subject.run).to be_nil
         end
       end
     end

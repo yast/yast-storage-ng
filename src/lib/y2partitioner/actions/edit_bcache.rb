@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,7 +25,7 @@ require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
-    # Action for editing a bcache device, see {Actions::Base}
+    # Action for editing a Bcache device, see {Actions::Base}
     class EditBcache < Base
       # Constructor
       #
@@ -44,7 +44,7 @@ module Y2Partitioner
       # @return [Controllers::Bcache]
       attr_reader :controller
 
-      # List of errors that avoid to edit a bcache
+      # List of errors that avoid to edit a Bcache
       #
       # @see Actions::Base#errors
       #
@@ -81,7 +81,7 @@ module Y2Partitioner
         )
       end
 
-      # Opens a dialog to edit a bcache
+      # Opens a dialog to edit a Bcache
       #
       # The bcache is updated only if the dialog is accepted.
       #
@@ -92,9 +92,11 @@ module Y2Partitioner
         return unless dialog.run == :next
 
         controller.update_bcache(dialog.caching_device, dialog.options)
+
+        :finish
       end
 
-      # Whether the bcache is Flash-only
+      # Whether the Bcache is Flash-only
       #
       # @return [Boolean]
       def flash_only_bcache?

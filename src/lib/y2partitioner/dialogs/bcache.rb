@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,14 +22,14 @@ require "yast2/popup"
 require "cwm/common_widgets"
 require "y2storage/cache_mode"
 require "y2storage/disk_size"
-require "y2partitioner/dialogs/base"
+require "y2partitioner/dialogs/single_step"
 
 module Y2Partitioner
   module Dialogs
     # Bcache dialog
     #
     # Used by {Actions::AddBcache}.
-    class Bcache < Base
+    class Bcache < SingleStep
       # Constructor
       #
       # @param controller [Actions::Controllers::Bcache]
@@ -204,7 +204,7 @@ module Y2Partitioner
           # TRANSLATORS: %{label} is replaced by the label of the option to select a backing device.
           format(
             _("<p>" \
-                "<b>%{label}</b> is the device that will be used as backing device for bcache." \
+                "<b>%{label}</b> is the device that will be used as backing device for bcache. " \
                 "It will define the size of the resulting bcache device. " \
                 "The device will be formatted so any previous content will be wiped out." \
               "</p>"),

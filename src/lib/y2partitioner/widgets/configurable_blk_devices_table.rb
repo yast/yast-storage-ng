@@ -56,7 +56,7 @@ module Y2Partitioner
 
         # Before calculating the content, ensure consistency of #open_items
         # FIXME: the API to fetch the stored state may change, see the comment in UIState#extra
-        self.open_items = UIState.instance.extra&.fetch(widget_id, nil) || {}
+        self.open_items = UIState.instance.extra&.fetch(widget_id, nil)
         @contents = super
       end
 
@@ -152,12 +152,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       # @see #columns_help
       def help
-        header = _(
-          "<p>This view shows storage devices.</p>" \
-          "<p>The overview contains:</p>" \
-        )
-
-        header + columns_help
+        "<p>Table containing the selected list of devices, where:</p>" + columns_help
       end
 
       private
@@ -166,8 +161,7 @@ module Y2Partitioner
       #   updated when the user changes the selection in the table
       attr_reader :buttons_set
 
-      # @return [CWM::TreePager] general pager used to navigate through the
-      #   partitioner
+      # @return [CWM::TreePager] general pager used to navigate through the Partitioner
       attr_reader :pager
 
       # @return [Array<DeviceTableEntry>] list of device entries to display
@@ -195,26 +189,6 @@ module Y2Partitioner
 
       def default_columns
         DEFAULT_COLUMNS
-      end
-
-      # Switches to the page of the specified device, if possible
-      #
-      # If the target page exists, it updates all the corresponding state information
-      # before doing the real switch.
-      def jump_to_page(device)
-        page = pager.device_page(device)
-        return nil unless page
-
-        state = UIState.instance
-
-        # First, save the status of the current page
-        state.save_extra_info
-
-        # Then, pretend the user visited the new page and then select the device
-        state.select_page(page.tree_path)
-        state.select_row(device.sid)
-
-        pager.handle("ID" => page.widget_id)
       end
 
       # Table entry to select initially when the table is rendered
@@ -251,6 +225,61 @@ module Y2Partitioner
         return nil if device.multidevice?
 
         entry(device.plain_blk_devices.first.sid)
+      end
+
+      # Switches to the page of the specified device, if possible
+      #
+      # If the target page exists, it updates all the corresponding state information
+      # before doing the real switch.
+      def jump_to_page(device)
+        page = device_page(device)
+
+        return nil unless page
+
+        state = UIState.instance
+
+        # First, save the status of the current page
+        state.save_extra_info
+
+        # Then, pretend the user visited the new page and then select the device
+        state.select_page(page.tree_path)
+        state.select_row(device.sid)
+
+        pager.handle("ID" => page.widget_id)
+      end
+
+      # Finds a page associated to the given device
+      #
+      # When there is no page for the given device, it tries to find a page associated to the device of
+      # the parent table entries.
+      #
+      # @param device [Y2Storage::Device]
+      # @return [CWM::Page, nil]
+      def device_page(device)
+        page = pager.device_page(device)
+        return page if page
+
+        device = holding_device(device)
+        return nil unless device
+
+        device_page(device)
+      end
+
+      # Device associated to the parent table entry of the given device
+      #
+      # @param device [Y2Storage::Device]
+      # @return [Y2Storage::Device, nil]
+      def holding_device(device)
+        parent_entry = parent_entry(entry(device))
+        parent_entry&.device
+      end
+
+      # Parent table entry of the given one
+      #
+      # @param entry [DeviceTableEntry]
+      # @return [DeviceTableEntry, nil]
+      def parent_entry(entry)
+        entries.flat_map(&:all_entries).find { |e| e.parent?(entry) }
       end
     end
   end

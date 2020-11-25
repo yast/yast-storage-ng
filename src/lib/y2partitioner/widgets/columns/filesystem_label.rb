@@ -52,10 +52,11 @@ module Y2Partitioner
 
         # Returns the label for the given device, when possible
         #
-        # @param device [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry, nil]
+        # @param device [Y2Storage::Device, nil]
         # @return [String] the label if possible; empty string otherwise
         def filesystem_label(device)
           return "" unless device
+          return "" if device.is?(:btrfs_subvolume)
 
           filesystem = filesystem_for(device)
 

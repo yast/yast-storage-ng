@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -72,6 +73,16 @@ describe Y2Partitioner::Widgets::Columns::FilesystemLabel do
   context "when the device is part of a multi-device filesystem" do
     let(:scenario) { "btrfs2-devicegraph.xml" }
     let(:device_name) { "/dev/sdb1" }
+
+    it "returns an empty string" do
+      expect(subject.value_for(device)).to eq("")
+    end
+  end
+
+  context "when the device is a Btrfs subvolume" do
+    let(:scenario) { "mixed_disks_btrfs" }
+    let(:filesystem) { devicegraph.find_by_name("/dev/sda2").filesystem }
+    let(:device) { filesystem.btrfs_subvolumes.first }
 
     it "returns an empty string" do
       expect(subject.value_for(device)).to eq("")

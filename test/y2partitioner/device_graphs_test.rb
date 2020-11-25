@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -83,6 +84,32 @@ describe Y2Partitioner::DeviceGraphs do
 
       it "returns true" do
         expect(subject.devices_edited?).to eq(true)
+      end
+    end
+  end
+
+  describe "#pre_transaction_graph" do
+    context "when a transaction was started" do
+      it "returns a devicegraph" do
+        exist = false
+
+        subject.transaction { exist = subject.pre_transaction.is_a?(Y2Storage::Devicegraph) }
+
+        expect(exist).to eq(true)
+      end
+    end
+
+    context "when a transaction was finished" do
+      it "returns nil" do
+        subject.transaction {}
+
+        expect(subject.pre_transaction).to be_nil
+      end
+    end
+
+    context "when a transaction was not started" do
+      it "returns nil" do
+        expect(subject.pre_transaction).to be_nil
       end
     end
   end

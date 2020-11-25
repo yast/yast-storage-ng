@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2018] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,94 +17,67 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
+require "yast2/popup"
 require "cwm"
-require "y2partitioner/dialogs/popup"
-require "y2storage/filesystems/btrfs"
-
-Yast.import "Popup"
+require "y2partitioner/size_parser"
+require "y2partitioner/dialogs/single_step"
 
 module Y2Partitioner
   module Dialogs
-    # Popup dialog to create a btrfs subvolume
-    class BtrfsSubvolume < Popup
-      include Yast::Logger
-
-      attr_reader :filesystem
-      attr_reader :form
-
-      # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
-      def initialize(filesystem, form = nil)
+    # Dialog to create and edit a Btrfs subvolume
+    #
+    # Used by {Actions::AddBtrfsSubvolume} and {Actions::EditBtrfsSubvolume}.
+    class BtrfsSubvolume < SingleStep
+      # Constructor
+      #
+      # @param controller [Actions::Controllers::BtrfsSubvolume]
+      def initialize(controller)
         textdomain "storage"
 
-        @filesystem = filesystem
-        @form = form || Form.new
+        super()
+
+        @controller = controller
       end
 
+      # @macro seeDialog
       def title
-        _("Add subvolume")
+        text = _("Add subvolume to %{device}")
+        text = _("Edit subvolume of %{device}") if controller.subvolume
+
+        format(text, device: controller.filesystem.name)
       end
 
-      # Shows widgets for the subvolume attributes
+      # Shows widgets for the Btrfs subvolume attributes
+      #
+      # @macro seeDialog
       def contents
         HVSquash(
           VBox(
-            Left(SubvolumePath.new(form, filesystem: filesystem)),
-            Left(SubvolumeNocow.new(form, filesystem: filesystem))
+            Left(SubvolumePath.new(controller)),
+            VSpacing(0.5),
+            Left(SubvolumeNocow.new(controller)),
+            VSpacing(0.5),
+            Left(SubvolumeRferLimit.new(controller))
           )
         )
       end
 
-      # Custom layout
-      #
-      # Similar to {Popup#layout} but without help button
-      def layout
-        VBox(
-          HSpacing(50),
-          Left(Heading(Id(:title), title)),
-          VStretch(),
-          VSpacing(1),
-          VBox(ReplacePoint(Id(:contents), Empty())),
-          VSpacing(1),
-          VStretch(),
-          ButtonBox(
-            PushButton(Id(:ok), Opt(:default), Yast::Label.OKButton),
-            PushButton(Id(:cancel), Yast::Label.CancelButton)
-          )
-        )
-      end
+      private
 
-      # Form object for the dialog
-      #
-      # Widgets use this object to storage data
-      class Form
-        # @!attribute path
-        #   subvolume path
-        attr_accessor :path
-        # @!attribute nocow
-        #   subvolume nocow attribute
-        attr_accessor :nocow
+      # @return [Actions::Controllers::BtrfsSubvolume]
+      attr_reader :controller
 
-        def initialize
-          @path = ""
-          @nocow = false
-        end
-      end
-
-      # Input field to set the subvolume path
+      # Input field to set the Btrfs subvolume path
       class SubvolumePath < CWM::InputField
-        attr_reader :form
-        attr_reader :filesystem
-
         UNSAFE_CHARS = "\n\t\v\r\s,".freeze
         private_constant :UNSAFE_CHARS
 
-        # @param form [Dialogs::BtrfsSubvolume::Form]
-        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
-        def initialize(form, filesystem: nil)
+        # Constructor
+        #
+        # @param controller [Actions::Controllers::BtrfsSubvolume]
+        def initialize(controller)
           textdomain "storage"
-          @form = form
-          @filesystem = filesystem
+          @controller = controller
         end
 
         def label
@@ -112,12 +85,13 @@ module Y2Partitioner
         end
 
         def store
-          form.path = value
+          controller.subvolume_path = value
         end
 
         def init
-          focus
-          self.value = form.path
+          controller.exist_subvolume? ? disable : focus
+
+          self.value = controller.subvolume_path
         end
 
         # Validates the subvolume path
@@ -132,22 +106,52 @@ module Y2Partitioner
         #
         # @return [Boolean] true if the subvolume path is valid
         def validate
+          return true if skip_validation?
+
           fix_path
 
           error = presence_error || content_error || uniqueness_error || hierarchy_error
 
           return true if error.nil?
 
-          Yast::Popup.Error(error)
+          Yast2::Popup.show(error, headline: :error)
 
           focus
           false
         end
 
+        # @macro seeAbstractWidget
+        def help
+          format(
+            # TRANSLATORS: help text, where %{label} is replaced by a widget label (i.e., "Path")
+            _("<p>" \
+                "<b>%{label}</b> is the path of the subvolume. Note that the path should be prefixed " \
+                "by the default subvolume path, typically @\\. The path cannot be modified for " \
+                "existing subvolumes." \
+              "</p>"),
+            label: label
+          )
+        end
+
         private
+
+        # @return [Actions::Controllers::BtrfsSubvolume]
+        attr_reader :controller
 
         def focus
           Yast::UI.SetFocus(Id(widget_id))
+        end
+
+        # Whether to skip the validations
+        #
+        # Note that validations are not performed when the subvolume already exists on disk or when the
+        # path is not modified.
+        #
+        # @return [Boolean]
+        def skip_validation?
+          return false unless controller.subvolume
+
+          controller.exist_subvolume? || controller.subvolume.path == value
         end
 
         # Error when the given path is empty
@@ -156,6 +160,7 @@ module Y2Partitioner
         def presence_error
           return nil unless value.empty?
 
+          # TRANSLATORS: error message.
           _("Empty subvolume path not allowed.")
         end
 
@@ -165,6 +170,7 @@ module Y2Partitioner
         def content_error
           return nil unless /[#{UNSAFE_CHARS}]/.match?(value)
 
+          # TRANSLATORS: error message.
           _("Subvolume path contains unsafe characters. Be sure it\n" \
             "does not include spaces, tabs, line breaks, commas or\n" \
             "similar special characters.")
@@ -174,20 +180,23 @@ module Y2Partitioner
         #
         # @return [String, nil] nil if the path does not exist yet
         def uniqueness_error
-          return nil unless exist_path?
+          return nil unless controller.exist_path?(value)
 
-          format(_("Subvolume name %s already exists."), value)
+          format(_("There is already a subvolume with that path."), value)
         end
 
         # Error when the given path is part of an already existing path
         #
         # @return [String, nil] nil if the path is not part of an already existing path
         def hierarchy_error
-          return nil if filesystem.subvolume_can_be_created?(value)
+          return nil if controller.filesystem.subvolume_can_be_created?(value)
 
+          # TRANSLATORS: error message, where %s is replaced by a Btrfs subvolume path (e.g., "@/home").
           error = format(_("Cannot create subvolume %s."), value)
 
-          sv = filesystem.subvolume_descendants(value).first
+          sv = controller.filesystem.subvolume_descendants(value).first
+          # TRANSLATORS: last part of the error message, where %s is replaced by a Btrfs subvolume path
+          #   (e.g., "@/home").
           error << "\n" << format(_("Delete subvolume %s first."), sv.path) if sv
 
           error
@@ -201,45 +210,28 @@ module Y2Partitioner
         # @see Y2Storage::Filesystems::Btrfs#subvolumes_prefix
         # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
-          log.info "Fixing BTRFS subvolume path: #{value}"
-
-          self.value = filesystem.canonical_subvolume_name(value)
           return if value.empty?
-
-          prefix = filesystem.subvolumes_prefix
-          prefix << "/" unless prefix.empty?
-
-          log.info "Adding BTRFS subvolumes prefix: #{prefix}"
-
-          return value if value.start_with?(prefix)
+          return unless controller.missing_subvolumes_prefix?(value)
 
           message = format(
-            _("Only subvolume names starting with \"%{prefix}\" currently allowed!\n" \
-              "Automatically prepending \"%{prefix}\" to name of subvolume."), prefix: prefix
+            # TRANSLATORS: error message, where %s is replaced by a Btrfs subvolume prefix (e.g., "@/").
+            _("Only subvolume paths starting with \"%{prefix}\" are currently allowed!\n" \
+              "Automatically prepending \"%{prefix}\" to the path of the subvolume."),
+            prefix: controller.subvolumes_prefix
           )
-          Yast::Popup.Message(message)
 
-          self.value = filesystem.btrfs_subvolume_path(value)
-        end
+          Yast2::Popup.show(message, headline: :warning)
 
-        # Checks if the filesystem already has a subvolume with the entered path
-        # @return [Boolean]
-        def exist_path?
-          filesystem.btrfs_subvolumes.any? { |s| s.path == value }
+          self.value = controller.add_subvolumes_prefix(value)
         end
       end
 
-      # Input field to set the subvolume nocow attribute
+      # Input field to set the Btrfs subvolume noCoW attribute
       class SubvolumeNocow < CWM::CheckBox
-        attr_reader :form
-        attr_reader :filesystem
-
-        # @param form [Dialogs::BtrfsSubvolume::Form]
-        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
-        def initialize(form, filesystem: nil)
+        # @return [Actions::Controllers::BtrfsSubvolume]
+        def initialize(controller)
           textdomain "storage"
-          @form = form
-          @filesystem = filesystem
+          @controller = controller
         end
 
         def label
@@ -250,11 +242,230 @@ module Y2Partitioner
         end
 
         def store
-          form.nocow = value
+          controller.subvolume_nocow = value
         end
 
         def init
-          self.value = form.nocow
+          self.value = controller.subvolume_nocow
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          format(
+            # TRANSLATORS: help text, where %{label} is replaced by a widget label (i.e., "noCoW")
+            _("<p>" \
+                "<b>%{label}</b> shows the subvolume noCoW attribute. " \
+                "If set, the subvolume explicitly does not use Btrfs copy on write feature. " \
+                "Copy on write means that when something is copied, the resource is shared without " \
+                "doing a real copy. The shared resource is actually copied when first write operation " \
+                "is performed. With noCoW, the resource is always copied during initialization. " \
+                "This is useful when runtime performace is required, so there is no risk for delaying " \
+                "copy when application is running." \
+              "</p>"),
+            label: label
+          )
+        end
+
+        private
+
+        # @return [Actions::Controllers::BtrfsSubvolume]
+        attr_reader :controller
+      end
+
+      # Widget to set the size of BtrfsSubvolume#referenced_limit, if quota
+      # support is enabled for the Btrfs
+      class SubvolumeRferLimit < CWM::CustomWidget
+        # Constructor
+        #
+        # @param controller [Actions::Controllers::BtrfsSubvolume]
+        #   a controller collecting data for a subvolume to be created or edited
+        def initialize(controller)
+          textdomain "storage"
+          @controller = controller
+        end
+
+        # @macro seeAbstractWidget
+        def contents
+          VBox(
+            Left(check_box_widget),
+            Left(size_widget)
+          )
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          _(
+            "<p><b>Limit Size</b> allows to set a quota on the referenced space of the " \
+            "subvolume. The referenced space is the total size of the data contained " \
+            "in the subvolume, including the data that is shared with other subvolumes. " \
+            "Setting a limit is only possible if Btrfs quotas are active in this file " \
+            "system. Btrfs quotas can be enabled or disabled editing the file system from " \
+            "the Btrfs section of the Partitioner.</p>"
+          )
+        end
+
+        # Disables the widget if quotas are not enabled
+        #
+        # @see #disable_widgets
+        def init
+          disable_widgets unless quota?
+        end
+
+        # @macro seeAbstractWidget
+        def value
+          if quota? && check_box_widget.value
+            size_widget.value
+          else
+            Y2Storage::DiskSize.unlimited
+          end
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @controller.subvolume_referenced_limit = value
+        end
+
+        # @macro seeAbstractWidget
+        def validate
+          return true if value
+
+          Yast::Popup.Error(_("The size entered is invalid."))
+          Yast::UI.SetFocus(Id(size_widget.widget_id))
+          false
+        end
+
+        private
+
+        # Widget for the checkbox used to add/remove the quota
+        #
+        # @return [SubvolumeRferLimitCheckBox]
+        def check_box_widget
+          @check_box_widget ||= SubvolumeRferLimitCheckBox.new(initial_check_box, size_widget)
+        end
+
+        # Widget to introduce the size of the quota
+        #
+        # @return [SubvolumeRferLimitSize]
+        def size_widget
+          @size_widget ||= SubvolumeRferLimitSize.new(initial_size)
+        end
+
+        # Disables the sub-widgets
+        #
+        # To be used when quotas are not enabled
+        def disable_widgets
+          check_box_widget.disable
+          size_widget.disable
+        end
+
+        # Whether quotas are enabled for the file system
+        #
+        # @return [Boolean]
+        def quota?
+          @controller.quota?
+        end
+
+        # Initial value for {#size_widget}
+        #
+        # @return [Y2Storage::DiskSize]
+        def initial_size
+          initial_limit = @controller.subvolume_referenced_limit
+          if !initial_limit || initial_limit.unlimited?
+            @controller.fallback_referenced_limit
+          else
+            @controller.subvolume_referenced_limit
+          end
+        end
+
+        # Initial value for {#check_box_widget}
+        #
+        # @return [Boolean]
+        def initial_check_box
+          initial_limit = @controller.subvolume_referenced_limit
+          return false unless initial_limit
+
+          !initial_limit.unlimited?
+        end
+      end
+
+      # Sub-widget of SubvolumeRferLimit used to enter the size if the
+      # limit is set
+      class SubvolumeRferLimitSize < CWM::InputField
+        include SizeParser
+
+        # Constructor
+        #
+        # @param initial [Y2Storage::DiskSize] initial value
+        def initialize(initial)
+          textdomain "storage"
+          @initial = initial
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Max referenced size")
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = @initial
+        end
+
+        # @return [Y2Storage::DiskSize, nil] nil if the value cannot be parsed
+        def value
+          parse_user_size(super)
+        end
+
+        # @param disk_size [Y2Storage::DiskSize]
+        def value=(disk_size)
+          super(disk_size.human_floor)
+        end
+      end
+
+      # Sub-widget of SubvolumeRferLimit used to activate or deactivate
+      # the limit
+      class SubvolumeRferLimitCheckBox < CWM::CheckBox
+        # Constructor
+        #
+        # @param initial [Boolean] initial state of the checkbox
+        # @param size_widget [SubvolumeRferLimitSize] see {#size_widget}
+        def initialize(initial, size_widget)
+          textdomain "storage"
+          @initial = initial
+          @size_widget = size_widget
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Limit size")
+        end
+
+        # @macro seeAbstractWidget
+        def opt
+          [:notify]
+        end
+
+        # @macro seeAbstractWidget
+        def handle
+          refresh_size
+          nil
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = @initial
+          refresh_size
+        end
+
+        private
+
+        # @return [SubvolumeRferLimitSize] dependant widget to introduce the size
+        #   when the checkbox is enabled
+        attr_reader :size_widget
+
+        # Enables or disabled {#size_widget} based on the value of the widget
+        def refresh_size
+          value ? size_widget.enable : size_widget.disable
         end
       end
     end

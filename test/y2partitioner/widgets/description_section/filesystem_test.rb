@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,7 +51,7 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
     end
 
     it "includes an entry about the filesystem type" do
-      expect(subject.value).to match(/File System:/)
+      expect(subject.value).to match(/Type:/)
     end
 
     it "includes an entry about the mount point" do
@@ -127,6 +128,10 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
 
       it "includes an entry about the data raid level" do
         expect(subject.value).to match(/RAID Level:/)
+      end
+
+      it "includes an entry about the used devices" do
+        expect(subject.value).to match(/Used Devices:/)
       end
     end
   end

@@ -17,12 +17,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "cwm/widget"
-require "y2partitioner/widgets/lvm_lv_add_button"
-require "y2partitioner/widgets/partition_add_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/btrfs_edit_button"
+require "y2partitioner/widgets/partition_buttons"
+require "y2partitioner/widgets/md_buttons"
+require "y2partitioner/widgets/lvm_buttons"
+require "y2partitioner/widgets/bcache_buttons"
+require "y2partitioner/widgets/btrfs_buttons"
 require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
@@ -30,17 +30,18 @@ module Y2Partitioner
     # Widget containing the set of buttons that is displayed for each device at
     # the bottom of a table of devices. Initially it displays an empty
     # widget. Every time the widget is (re)targeted to a new device (see
-    # {#device=}) the content will be replaced by the appropiate set of buttons
+    # {#device=}) the content will be replaced by the appropriate set of buttons
     # for that device.
     class DeviceButtonsSet < CWM::ReplacePoint
       # List of supported device types
       #
       # Each entry represents a symbol to be passed to Device#is?, it that call
-      # returns true, the appropiate set of buttons is returned
+      # returns true, the appropriate set of buttons is returned
       #
       # @return [Array<Symbol>]
       SUPPORTED_TYPES = [
-        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device, :btrfs
+        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device, :btrfs,
+        :btrfs_subvolume
       ]
       private_constant :SUPPORTED_TYPES
 
@@ -91,12 +92,12 @@ module Y2Partitioner
       def calculate_buttons
         return [] if device.nil?
 
-        SUPPORTED_TYPES.each do |type|
-          return send(:"#{type}_buttons") if device.is?(type)
-        end
+        type = SUPPORTED_TYPES.detect { |t| device.is?(t) }
 
         # Returns no buttons if the device is not supported
-        []
+        return [] unless type
+
+        send(:"#{type}_buttons").compact
       end
 
       # Just an empty widget to display in case there are no buttons to display
@@ -109,7 +110,8 @@ module Y2Partitioner
         [
           BlkDeviceEditButton.new(device: device),
           PartitionAddButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          btrfs_subvolume_add_button,
+          PartitionDeleteButton.new(pager: pager, device: device)
         ]
       end
 
@@ -118,16 +120,18 @@ module Y2Partitioner
         [
           BlkDeviceEditButton.new(device: device),
           PartitionAddButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          btrfs_subvolume_add_button,
+          MdDeleteButton.new(pager: pager, device: device)
         ]
       end
 
-      # Buttons to display if {#device} is a bcache device
+      # Buttons to display if {#device} is a Bcache device
       def bcache_buttons
         [
           BlkDeviceEditButton.new(device: device),
           PartitionAddButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          btrfs_subvolume_add_button,
+          BcacheDeleteButton.new(pager: pager, device: device)
         ]
       end
 
@@ -138,7 +142,8 @@ module Y2Partitioner
         if device.usable_as_blk_device?
           [
             BlkDeviceEditButton.new(device: device),
-            PartitionAddButton.new(device: device)
+            PartitionAddButton.new(device: device),
+            btrfs_subvolume_add_button
           ]
         else
           [
@@ -150,14 +155,17 @@ module Y2Partitioner
       # Buttons to display if {#device} is a Xen virtual partition
       # (StrayBlkDevice)
       def stray_blk_device_buttons
-        [BlkDeviceEditButton.new(device: device)]
+        [
+          BlkDeviceEditButton.new(device: device),
+          btrfs_subvolume_add_button
+        ]
       end
 
       # Buttons to display if {#device} is a volume group
       def lvm_vg_buttons
         [
           LvmLvAddButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          LvmVgDeleteButton.new(pager: pager, device: device)
         ]
       end
 
@@ -166,16 +174,37 @@ module Y2Partitioner
         [
           BlkDeviceEditButton.new(device: device),
           LvmLvAddButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          btrfs_subvolume_add_button,
+          LvmLvDeleteButton.new(pager: pager, device: device)
         ]
       end
 
-      # Buttons to display if {#device} is a BTRFS filesystem
+      # Buttons to display if {#device} is a Btrfs filesystem
       def btrfs_buttons
         [
           BtrfsEditButton.new(device: device),
-          DeviceDeleteButton.new(pager: pager, device: device)
+          BtrfsSubvolumeAddButton.new(device: device),
+          BtrfsDeleteButton.new(pager: pager, device: device)
         ]
+      end
+
+      # Buttons to display if {#device} is a Btrfs subvolume
+      def btrfs_subvolume_buttons
+        [
+          BtrfsSubvolumeEditButton.new(device: device),
+          BtrfsSubvolumeAddButton.new(device: device),
+          BtrfsSubvolumeDeleteButton.new(pager: pager, device: device)
+        ]
+      end
+
+      # Button to add a Btrfs subvolume
+      #
+      # @return [BtrfsSubvolumeAddButton, nil] nil if a Btrfs subvolume cannot be added to the device.
+      def btrfs_subvolume_add_button
+        return nil unless device.is?(:blk_device)
+        return nil unless device.formatted_as?(:btrfs)
+
+        BtrfsSubvolumeAddButton.new(device: device)
       end
 
       # Simple widget to represent an HBox with a CWM API

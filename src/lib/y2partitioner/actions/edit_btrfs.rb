@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -60,7 +60,8 @@ module Y2Partitioner
       def sequence_hash
         {
           "ws_start"      => "btrfs_options",
-          "btrfs_options" => { next: :finish }
+          "btrfs_options" => { next: "finish" },
+          "finish"        => { finish: :finish }
         }
       end
 
@@ -68,6 +69,13 @@ module Y2Partitioner
       def btrfs_options
         dialog = Dialogs::BtrfsOptions.new(controller)
         dialog.run
+      end
+
+      # Final step to perform the last actions over the filesystem (see {Controllers::Filesystem#finish})
+      def finish
+        controller.finish
+
+        :finish
       end
     end
   end
