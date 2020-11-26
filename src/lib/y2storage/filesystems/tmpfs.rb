@@ -27,7 +27,7 @@ module Y2Storage
     # The Tmpfs object should always have MountPoint as child. So the Tmpfs
     # must be deleted whenever the MountPoint is removed.
     #
-    # This a wrapper for Storage::Tmpfs
+    # This is a wrapper for Storage::Tmpfs
     class Tmpfs < Base
       wrap_class Storage::Tmpfs
 
