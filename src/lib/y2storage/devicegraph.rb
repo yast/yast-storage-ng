@@ -28,6 +28,7 @@ require "y2storage/dump_manager"
 require "y2storage/fake_device_factory"
 require "y2storage/filesystems/base"
 require "y2storage/filesystems/blk_filesystem"
+require "y2storage/filesystems/tmpfs"
 require "y2storage/filesystems/nfs"
 require "y2storage/lvm_lv"
 require "y2storage/lvm_vg"
@@ -301,6 +302,11 @@ module Y2Storage
     # @return [Array<Filesystems::BlkFilesystem::Btrfs>]
     def multidevice_btrfs_filesystems
       btrfs_filesystems.select(&:multidevice?)
+    end
+
+    # @return [Array<Filesystem::Tmpfs>]
+    def tmp_filesystems
+      Filesystems::Tmpfs.all(self)
     end
 
     # @return [Array<Filesystem::Nfs>]
