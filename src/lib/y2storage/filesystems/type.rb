@@ -125,6 +125,10 @@ module Y2Storage
           default_partition_id: PartitionId::SWAP,
           name:                 "Swap"
         },
+        tmpfs:     {
+          fstab_options: COMMON_FSTAB_OPTIONS + ["size=", "nr_blocks="],
+          name: "Tmpfs"
+        },
         vfat:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
           default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS,
