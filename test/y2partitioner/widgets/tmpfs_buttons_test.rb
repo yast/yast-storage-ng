@@ -23,11 +23,21 @@ require_relative "button_examples"
 require "y2partitioner/widgets/tmpfs_buttons"
 
 describe Y2Partitioner::Widgets::TmpfsAddButton do
-  # TODO
+  let(:action) { Y2Partitioner::Actions::AddTmpfs }
+
+  let(:scenario) { "one-empty-disk" }
+
+  include_examples "add button"
 end
 
 describe Y2Partitioner::Widgets::TmpfsEditButton do
-  # TODO
+  let(:action) { Y2Partitioner::Actions::EditTmpfs }
+
+  let(:scenario) { "tmpfs1-devicegraph.xml" }
+
+  let(:device) { devicegraph.tmp_filesystems.last }
+
+  include_examples "button"
 end
 
 describe Y2Partitioner::Widgets::TmpfsDeleteButton do
