@@ -202,13 +202,6 @@ module Y2Storage
         blk_devices.find(&:journal?)
       end
 
-      # Checks whether the filesystem has the capability of hosting Btrfs subvolumes
-      #
-      # It only should be true for Btrfs.
-      def supports_btrfs_subvolumes?
-        false
-      end
-
       # @return [Boolean]
       def in_network?
         blk_devices.any?(&:in_network?)
