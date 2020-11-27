@@ -287,6 +287,61 @@ describe Y2Partitioner::Widgets do
     include_examples "InputField"
   end
 
+  describe Y2Partitioner::Widgets::TmpfsSize do
+    include_examples "InputField"
+
+    describe "#validate" do
+      before do
+        allow(subject).to receive(:value).and_return value
+      end
+
+      context "if the value is an empty string" do
+        let(:value) { "" }
+
+        it "returns true and displays no popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "if the value is numeric" do
+        let(:value) { "128" }
+
+        it "returns true and displays no popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "if the value is a number followed by k, m or g" do
+        let(:value) { "256m" }
+
+        it "returns true and displays no popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "if the value is a percentage" do
+        let(:value) { "25%" }
+
+        it "returns true and displays no popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "if the value is invalid" do
+        let(:value) { "m" }
+
+        it "shows and error popup and returns false" do
+          expect(Yast::Popup).to receive(:Error)
+          expect(subject.validate).to eq(false)
+        end
+      end
+    end
+  end
+
   describe Y2Partitioner::Widgets::IOCharset do
     include_examples "CWM::ComboBox"
     include_examples "CWM::AbstractWidget#init#store"

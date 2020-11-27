@@ -241,6 +241,20 @@ describe Y2Partitioner::Widgets::Menus::Modify do
         end
       end
 
+      context "and the selected device is a tmpfs" do
+        let(:scenario) { "tmpfs1-devicegraph.xml" }
+
+        let(:device) { current_graph.tmp_filesystems.last }
+
+        subject { described_class.new(device) }
+
+        it "calls an action to edit the Tmpfs" do
+          expect(Y2Partitioner::Actions::EditTmpfs).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
       context "and the selected device is a Btrfs subvolume" do
         let(:scenario) { "mixed_disks_btrfs.yml" }
 
