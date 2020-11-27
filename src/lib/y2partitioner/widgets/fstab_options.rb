@@ -799,6 +799,7 @@ module Y2Partitioner
       def widgets
         [
           SwapPriority.new(@controller),
+          TmpfsSize.new(@controller),
           IOCharset.new(@controller),
           Codepage.new(@controller)
         ]
@@ -831,6 +832,55 @@ module Y2Partitioner
       def help
         _("<p><b>Swap Priority:</b>\nEnter the swap priority. " \
         "Higher numbers mean higher priority.</p>\n")
+      end
+    end
+
+    # Size for tmpfs
+    class TmpfsSize < CWM::InputField
+      include FstabCommon
+
+      # Possible values of the widget
+      VALUES = ["size="].freeze
+      # Format of the option
+      REGEXP  = /^size=/
+      # Default value of the widget
+      DEFAULT = "".freeze
+      # Regular expression to validate the content of #value
+      VALUE_REGEXP = /^\d+(k|m|g|%)?$/i
+
+      # @macro seeAbstractWidget
+      def label
+        _("Max Size")
+      end
+
+      # @macro seeAbstractWidget
+      def store
+        delete_fstab_option!(REGEXP)
+        add_fstab_option("size=#{value}") if value && !value.empty?
+      end
+
+      # @macro seeAbstractWidget
+      def validate
+        return true if value.nil? || value.empty?
+        return true if value =~ VALUE_REGEXP
+
+        Yast::Popup.Error(
+          _(
+            "The size must be a number,\n" \
+            "optionally followed by a unit (k, m or g) or by a percent sign (%)."
+          )
+        )
+        focus
+        false
+      end
+
+      # @macro seeAbstractWidget
+      def help
+        _("<p><b>Max Size:</b>\nUpper limit on the size of the file system. " \
+        "The size is given in bytes by default, optionally followed by a <b>k</b>, <b>m</b> " \
+        "or <b>g</b> suffix to specify KiB, MiB or GiB. The size may also have a <b>%</b> " \
+        "suffix to limit this instance to a percentage of physical RAM. " \
+        "The default, when neither this option nor nr_blocks is specified, is 50%.</p>\n")
       end
     end
 
