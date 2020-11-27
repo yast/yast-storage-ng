@@ -208,8 +208,7 @@ module Y2Partitioner
           VBox(
             Left(MountBy.new(@controller)),
             VSpacing(1),
-            Left(VolumeLabel.new(@controller, self)),
-            VSpacing(1),
+            * ui_term_with_vspace(VolumeLabel.new(@controller, self)),
             Left(GeneralOptions.new(@controller)),
             Left(FilesystemsOptions.new(@controller)),
             * ui_term_with_vspace(JournalOptions.new(@controller)),
@@ -254,6 +253,15 @@ module Y2Partitioner
         super(controller)
 
         @parent_widget = parent_widget
+      end
+
+      # @see FstabCommon::supported_by_filesystem?
+      #
+      # @return [Boolean]
+      def supported_by_filesystem?
+        return false unless filesystem.supports_label?
+
+        super
       end
 
       # @macro seeAbstractWidget
