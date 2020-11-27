@@ -82,6 +82,20 @@ module Y2Storage
         false
       end
 
+      # Checks whether the filesystem has the capability of hosting Btrfs subvolumes
+      #
+      # @return [Boolean] it only should be true for Btrfs.
+      def supports_btrfs_subvolumes?
+        false
+      end
+
+      # Whether the filesystem supports having a label
+      #
+      # @return [Boolean]
+      def supports_label?
+        false
+      end
+
       # @see Mountable#extra_default_mount_options
       #
       # @return [Array<String>]
