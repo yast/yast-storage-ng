@@ -34,7 +34,7 @@ module Y2Storage
     # This is a wrapper for Storage::Filesystem
     class Base < Mountable
       wrap_class Storage::Filesystem,
-        downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs"]
+        downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs", "Filesystems::Tmpfs"]
 
       # @!method self.all(devicegraph)
       #   @param devicegraph [Devicegraph]

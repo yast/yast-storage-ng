@@ -28,7 +28,7 @@ module Y2Storage
     # The class does not provide functions to change the server or path since
     # that would create a completely different filesystem.
     #
-    # This a wrapper for Storage::Nfs
+    # This is a wrapper for Storage::Nfs
     class Nfs < Base
       wrap_class Storage::Nfs
 

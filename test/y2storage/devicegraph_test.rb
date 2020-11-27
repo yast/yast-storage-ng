@@ -187,6 +187,29 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#tmp_filesystems" do
+    before do
+      Y2Storage::StorageManager.create_test_instance
+
+      tmp1 = Y2Storage::Filesystems::Tmpfs.create(fake_devicegraph)
+      tmp1.mount_path = "/mnt/tmp1"
+
+      tmp2 = Y2Storage::Filesystems::Tmpfs.create(fake_devicegraph)
+      tmp2.mount_path = "/mnt/tmp2"
+    end
+
+    subject(:list) { fake_devicegraph.tmp_filesystems }
+
+    it "returns an array of tmp filesystems" do
+      expect(list).to be_a Array
+      expect(list.map { |i| i.is?(:tmpfs) }).to all(be(true))
+    end
+
+    it "finds all the tmp filesystems from the devicegraph" do
+      expect(list.map(&:mount_path)).to contain_exactly("/mnt/tmp1", "/mnt/tmp2")
+    end
+  end
+
   describe "#filesystems" do
     before { fake_scenario("complex-lvm-encrypt") }
     subject(:list) { fake_devicegraph.filesystems }
