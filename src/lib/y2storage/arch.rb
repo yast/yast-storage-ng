@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/storage_class_wrapper"
 
 module Y2Storage
@@ -57,6 +58,16 @@ module Y2Storage
     # @return [Boolean]
     def support_resume?
       !s390?
+    end
+
+    # Current RAM size in bytes
+    #
+    # @note RAM size is read from /proc/meminfo, where sizes are supposed to
+    #   be in KiB.
+    #
+    # @return [Integer] bytes (intead of {DiskSize}) for consistency with {#page_size}
+    def ram_size
+      1024 * Yast::SCR.Read(Yast::Path.new(".proc.meminfo"))["memtotal"]
     end
   end
 end
