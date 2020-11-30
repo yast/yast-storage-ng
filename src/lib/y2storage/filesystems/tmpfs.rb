@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_class_wrapper"
+require "y2storage/storage_manager"
 require "y2storage/filesystems/base"
 
 module Y2Storage
@@ -45,9 +46,18 @@ module Y2Storage
       #
       # @return [DiskSize] zero if the size couldn't be determined
       def size
-        DiskSize.parse(size_from_mount_options, legacy_units: true)
-      rescue StandardError
-        DiskSize.zero
+        option = size_mount_option || DEFAULT_SIZE_MOUNT_OPTION
+        size =
+          case option
+          when /^size=(\d+)%/
+            size_from_percent($1)
+          when /^size=(.*)/
+            size_from_value($1)
+          when /^nr_blocks=(.*)/
+            size_from_blocks($1)
+          end
+
+        size || DiskSize.zero
       end
 
       protected
@@ -57,32 +67,66 @@ module Y2Storage
       SIZE_OPT = "size".freeze
       private_constant :SIZE_OPT
 
+      BLOCKS_OPT = "nr_blocks".freeze
+      private_constant :BLOCKS_OPT
+
+      DEFAULT_SIZE_MOUNT_OPTION = "size=50%".freeze
+      private_constant :DEFAULT_SIZE_MOUNT_OPTION
+
       # @see Device#is?
       def types_for_is
         super << :tmpfs
       end
 
-      # Mount options used to define the size of the temporary filesystem
+      def size_from_value(size_str)
+        parse(size_str)&.ceil(page_size)
+      end
+
+      def size_from_blocks(blocks_str)
+        blocks = parse(blocks_str)
+        return nil unless blocks
+
+        blocks * page_size.to_i
+      end
+
+      def size_from_percent(percent_str)
+        percent = percent_str.chomp("%")
+        ((ram_size * percent.to_i) / 100).ceil(page_size)
+      end
+
+      # Mount option used to define the max size of the temporary filesystem
       #
-      # For a sane tmpfs, this should be an array with just one element. But it could be empty
-      # if the size is not defined or could contain several entries if the "size=" argument is
-      # specified more than once.
+      # @return [String, nil] nil if there is no mount option regarding size limit
+      def size_mount_option
+        size_mount_options.last
+      end
+
+      # Mount options used to define the max size of the temporary filesystem
+      #
+      # The max size can be set using the size= or nr_blocks= options, all occurrences of both
+      # are included in the returned array, in the same order they appear.
+      #
+      # Both can be ommitted, in which case the method returns an empty array.
       #
       # @return [Array<String>]
       def size_mount_options
         return [] unless mount_point
 
-        mount_point.mount_options.select { |opt| opt =~ /#{SIZE_OPT}=/i }
+        mount_point.mount_options.select { |opt| opt =~ /^(#{SIZE_OPT}|#{BLOCKS_OPT})=/ }
       end
 
-      # String representation of the filesystem size, as specified in the mount options
-      #
-      # @return [String, nil] nil if no size is given in the mount options
-      def size_from_mount_options
-        option = size_mount_options.last
-        return nil unless option
+      def parse(size_str)
+        DiskSize.parse(size_str, legacy_units: true)
+      rescue StandardError
+        nil
+      end
 
-        option.split("=").last
+      def page_size
+        DiskSize.new(StorageManager.instance.arch.page_size)
+      end
+
+      def ram_size
+        DiskSize.new(StorageManager.instance.arch.ram_size)
       end
     end
   end

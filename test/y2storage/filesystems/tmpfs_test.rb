@@ -24,7 +24,12 @@ require "y2storage"
 describe Y2Storage::Filesystems::Tmpfs do
   before do
     Y2Storage::StorageManager.create_test_instance
+
+    # Let's assume 8 GiB of RAM
+    allow(Yast::SCR).to receive(:Read).with(path(".proc.meminfo"))
+      .and_return("memtotal" => 8388608)
   end
+
   subject(:filesystem) { described_class.create(fake_devicegraph) }
 
   describe "#size" do
@@ -35,13 +40,13 @@ describe Y2Storage::Filesystems::Tmpfs do
       expect(filesystem.size).to eq Y2Storage::DiskSize.MiB(128)
     end
 
-    it "returns zero if there is no mount point" do
-      expect(filesystem.size).to eq Y2Storage::DiskSize.zero
+    it "returns half of the ram size (tmpfs default) if there is no mount point" do
+      expect(filesystem.size).to eq Y2Storage::DiskSize.GiB(4)
     end
 
-    it "returns zero if there are no mount options" do
+    it "returns half of the ram size (tmpfs default) if there are no mount options" do
       filesystem.mount_path = "/tmp"
-      expect(filesystem.size).to eq Y2Storage::DiskSize.zero
+      expect(filesystem.size).to eq Y2Storage::DiskSize.GiB(4)
     end
   end
 end
