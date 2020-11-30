@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/storage_class_wrapper"
 
 module Y2Storage
@@ -51,5 +52,15 @@ module Y2Storage
     # @!method page_size
     #   @return [Integer] the system page size
     storage_forward :page_size
+
+    # Current RAM size in bytes
+    #
+    # @note RAM size is read from /proc/meminfo, where sizes are supposed to
+    #   be in KiB.
+    #
+    # @return [Integer] bytes (intead of {DiskSize}) for consistency with {#page_size}
+    def ram_size
+      1024 * Yast::SCR.Read(Yast::Path.new(".proc.meminfo"))["memtotal"]
+    end
   end
 end
