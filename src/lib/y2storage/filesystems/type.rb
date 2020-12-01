@@ -143,6 +143,9 @@ module Y2Storage
         },
         bitlocker: {
           name: "BitLocker"
+        },
+        tmpfs:     {
+          name: "Tmpfs"
         }
       }
 

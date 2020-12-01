@@ -28,10 +28,6 @@ describe Y2Storage::Filesystems::Type do
     it "returns the description of the type" do
       expect(Y2Storage::Filesystems::Type::HFSPLUS.to_human_string).to eq "MacHFS+"
     end
-
-    it "returns the internal name (#to_s) for types with no description" do
-      expect(Y2Storage::Filesystems::Type::TMPFS.to_human_string).to eq "tmpfs"
-    end
   end
 
   describe "#supported_fstab_options" do
