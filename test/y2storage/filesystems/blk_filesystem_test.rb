@@ -431,7 +431,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       let(:dev_name) { "/dev/sdb1" }
 
       it "returns a name representing the filesystem" do
-        expect(subject.display_name).to match(/BtrFS over .* devices .*/)
+        expect(subject.display_name).to match(/Btrfs over .* devices .*/)
       end
     end
 

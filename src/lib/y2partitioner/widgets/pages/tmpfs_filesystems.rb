@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,56 +19,44 @@
 
 require "yast"
 require "y2partitioner/widgets/pages/devices_table"
-require "y2partitioner/widgets/btrfs_filesystems_table"
+require "y2partitioner/widgets/tmpfs_filesystems_table"
 require "y2partitioner/widgets/device_buttons_set"
-require "y2partitioner/widgets/btrfs_buttons"
+require "y2partitioner/widgets/tmpfs_buttons"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for Btrfs filesystems
-      class BtrfsFilesystems < DevicesTable
-        extend Yast::I18n
-
-        textdomain "storage"
-
-        # Label for all the instances
-        #
-        # @see #label
-        #
-        # @return [String]
-        def self.label
-          _("Btrfs")
-        end
-
+      # Page for Tmpfs filesystems
+      class TmpfsFilesystems < DevicesTable
         # Constructor
         #
-        # @param filesystems [Array<Y2Storage::Filesystems::Btrfs>]
         # @param pager [CWM::TreePager]
-        def initialize(filesystems, pager)
-          super(pager)
+        def initialize(pager)
+          textdomain "storage"
 
-          @filesystems = filesystems
+          super
         end
 
         # @macro seeAbstractWidget
         def label
-          self.class.label
+          _("Tmpfs")
         end
 
         private
 
-        # @return [Array<Y2Storage::Filesystems::Btrfs>]
-        attr_reader :filesystems
+        # @return [Array<Y2Storage::Filesystems::Tmpfs>]
+        def devices
+          device_graph.tmp_filesystems
+        end
 
         # @see DevicesTable
         def table_buttons
-          BtrfsAddButton.new
+          TmpfsAddButton.new
         end
 
         # @return [ConfigurableBlkDevicesTable]
         def calculate_table
-          BtrfsFilesystemsTable.new(entries, pager, device_buttons)
+          TmpfsFilesystemsTable.new(entries, pager, device_buttons)
         end
 
         # Widget with the dynamic set of buttons for the selected row
@@ -80,7 +68,7 @@ module Y2Partitioner
 
         # @return [Array<DeviceTableEntry>]
         def entries
-          filesystems.map { |fs| DeviceTableEntry.new_with_children(fs) }
+          devices.map { |d| DeviceTableEntry.new(d) }
         end
       end
     end

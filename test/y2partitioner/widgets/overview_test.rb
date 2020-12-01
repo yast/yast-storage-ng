@@ -105,23 +105,35 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::System) }
     end
 
-    let(:system_page) { system_pager.page }
-
     let(:disks_pager) do
       overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
     end
 
-    let(:disks_page) { disks_pager.page }
-
-    let(:disks_pages) { disks_pager.pages - [disks_pager.page] }
-
-    let(:btrfs_filesystems_pager) do
-      overview_tree.items.find do |i|
-        i.page.is_a?(Y2Partitioner::Widgets::Pages::BtrfsFilesystems)
-      end
+    let(:md_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::MdRaids) }
     end
 
-    let(:btrfs_filesystems_page) { btrfs_filesystems_pager.page }
+    let(:lvm_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Lvm) }
+    end
+
+    let(:bcache_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Bcaches) }
+    end
+
+    let(:btrfs_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::BtrfsFilesystems) }
+    end
+
+    let(:tmpfs_pager) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::TmpfsFilesystems) }
+    end
+
+    let(:pages) { pager.pages - [pager.page] }
+
+    let(:pages_devices) { pages.map { |p| p.device.name } }
+
+    let(:pager) { system_pager }
   end
 
   describe "#contents" do
@@ -133,68 +145,76 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       expect(overview_tree).to_not be_nil
     end
 
-    it "has a pager for the disk devices" do
+    it "has a section for all the devices" do
+      expect(system_pager).to_not be_nil
+    end
+
+    it "has a section for the disk devices" do
       expect(disks_pager).to_not be_nil
     end
 
-    it "system pager includes a BTRFS filesystems page" do
-      expect(btrfs_filesystems_pager).to_not be_nil
+    it "has a section for the Software Raids" do
+      expect(md_pager).to_not be_nil
+    end
+
+    it "has a section for the LVM volume groups" do
+      expect(lvm_pager).to_not be_nil
+    end
+
+    it "has a section for the Bcache devices" do
+      expect(bcache_pager).to_not be_nil
+    end
+
+    it "has a section for the Btrfs filesystems" do
+      expect(btrfs_pager).to_not be_nil
+    end
+
+    it "has a section for the Tmpfs filesystems" do
+      expect(tmpfs_pager).to_not be_nil
     end
 
     context "when there are disk, dasd or multipath devices" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
 
-      let(:md0) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
-
-      let(:md3) { "/dev/mapper/36005076305ffc73a00000000000013b5" }
-
-      let(:dasd) { "/dev/dasdb" }
-
-      let(:sde) { "/dev/sde" }
+      let(:pager) { disks_pager }
 
       it "disks pager has a page for each dasd device" do
-        dasd_page = disks_pages.find { |p| p.device.name == dasd }
-        expect(dasd_page).to_not be_nil
+        expect(pages_devices).to include("/dev/dasdb")
       end
 
       it "disks pager has a page for each multipath device" do
-        md0_page = disks_pages.find { |p| p.device.name == md0 }
-        expect(md0_page).to_not be_nil
+        multipaths = [
+          "/dev/mapper/36005076305ffc73a00000000000013b4",
+          "/dev/mapper/36005076305ffc73a00000000000013b5"
+        ]
 
-        md3_page = disks_pages.find { |p| p.device.name == md3 }
-        expect(md3_page).to_not be_nil
+        expect(pages_devices).to include(*multipaths)
       end
 
       it "disks pager has a page for each disk device" do
-        sde_page = disks_pages.find { |p| p.device.name == sde }
-        expect(sde_page).to_not be_nil
+        expect(pages_devices).to include("/dev/sde")
       end
 
       it "disks pager does not have a page for disks belonging to a multipath" do
-        sda_page = disks_pages.find { |p| p.device.name == "/dev/sda" }
-        expect(sda_page).to be_nil
+        expect(pages_devices).to_not include("/dev/sda")
       end
     end
 
     context "when there Xen devices representing disks and virtual partitions" do
       let(:scenario) { "xen-disks-and-partitions.xml" }
 
+      let(:pager) { disks_pager }
+
       it "disks pager has a page for each Xen disk" do
-        page = disks_pages.find { |p| p.device.name == "/dev/xvdc" }
-        expect(page).to_not be_nil
+        expect(pages_devices).to include("/dev/xvdc")
       end
 
       it "disks pager has a page for each Xen virtual partition" do
-        page = disks_pages.find { |p| p.device.name == "/dev/xvda1" }
-        expect(page).to_not be_nil
-
-        page = disks_pages.find { |p| p.device.name == "/dev/xvda2" }
-        expect(page).to_not be_nil
+        expect(pages_devices).to include("/dev/xvda1", "/dev/xvda2")
       end
 
       it "disks pager does not include an extra device to group Xen virtual partitions" do
-        page = disks_pages.find { |p| p.device.name == "/dev/xvda" }
-        expect(page).to be_nil
+        expect(pages_devices).to_not include("/dev/xvda")
       end
     end
 
@@ -207,55 +227,76 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
       let(:sda) { "/dev/sda" }
 
-      it "disks pager has a page for each BIOS RAID device" do
-        mda_page = disks_pages.find { |p| p.device.name == mda }
-        expect(mda_page).to_not be_nil
+      let(:pager) { disks_pager }
 
-        mdb_page = disks_pages.find { |p| p.device.name == mdb }
-        expect(mdb_page).to_not be_nil
+      it "disks section has an entry for each BIOS RAID device" do
+        expect(pages_devices).to include("/dev/md/a", "/dev/md/b")
       end
 
-      it "disks pager has a page for each disk device" do
-        sda_page = disks_pages.find { |p| p.device.name == sda }
-        expect(sda_page).to_not be_nil
+      it "disks section has an entry for each disk device" do
+        expect(pages_devices).to include("/dev/sda")
       end
 
-      it "disks pager does not have a page for disks belonging to a BIOS RAID" do
-        sdb_page = disks_pages.find { |p| p.device.name == "/dev/sdb" }
-        expect(sdb_page).to be_nil
-
-        sdc_page = disks_pages.find { |p| p.device.name == "/dev/sdc" }
-        expect(sdc_page).to be_nil
-
-        sdd_page = disks_pages.find { |p| p.device.name == "/dev/sdd" }
-        expect(sdd_page).to be_nil
+      it "disks section has no entry for disks belonging to a BIOS RAID" do
+        expect(pages_devices).to_not include("/dev/sdb", "/dev/sdc", "/dev/sdd")
       end
     end
 
-    context "when there are volume groups" do
+    context "when there are LVM volume groups" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
-      it "disk pager has not vg pages" do
-        vg_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::LvmVg) }
-        expect(vg_pages).to be_empty
+      let(:pager) { lvm_pager }
+
+      it "LVM section has an entry for each volume group" do
+        expect(pages_devices).to contain_exactly("/dev/vg0", "/dev/vg1")
       end
     end
 
     context "when there are Software RAIDs" do
       let(:scenario) { "md_raid" }
 
-      it "disk pager has not Software RAID pages" do
-        md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }
-        expect(md_pages).to be_empty
+      let(:pager) { md_pager }
+
+      it "Software Raids section has an entry for each Software RAID" do
+        expect(pages_devices).to contain_exactly("/dev/md/md0")
       end
     end
 
-    context "when there are non-multidevice BTRFS filesystems" do
-      let(:scenario) { "mixed_disks" }
+    context "when there are Bcache devices" do
+      let(:scenario) { "bcache1.xml" }
 
-      it "disk pager has no BTRFS pages" do
-        btrfs_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::Btrfs) }
-        expect(btrfs_pages).to be_empty
+      let(:pager) { bcache_pager }
+
+      it "Bcache section has an entry for each Bcache device" do
+        expect(pages_devices).to contain_exactly("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
+      end
+    end
+
+    context "when there are BTRFS filesystems" do
+      let(:scenario) { "mixed_disks_btrfs" }
+
+      let(:pager) { btrfs_pager }
+
+      it "Btrfs section has an entry for each Btrfs filesystem" do
+        filesystems = [
+          "Btrfs sda2",
+          "Btrfs sdb2",
+          "Btrfs sdb3",
+          "Btrfs sdd1",
+          "Btrfs sde1"
+        ]
+
+        expect(pages_devices).to contain_exactly(*filesystems)
+      end
+    end
+
+    context "when there are Tmpfs filesystems" do
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
+
+      let(:pager) { tmpfs_pager }
+
+      it "Tmpfs section has an entry for each Tmpfs filesystem" do
+        expect(pages_devices).to contain_exactly("Tmpfs /test1", "Tmpfs /test2", "Tmpfs /test5")
       end
     end
   end
@@ -441,8 +482,10 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(subject).to receive(:current_page).and_return(page)
     end
 
+    let(:pager) { disks_pager }
+
     context "when the current page has an associated device" do
-      let(:page) { disks_pages.first }
+      let(:page) { pages.first }
 
       it "returns true" do
         expect(subject.device_page?).to eq(true)
@@ -450,7 +493,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     context "when the current page has no associated device" do
-      let(:page) { disks_pager.page }
+      let(:page) { pager.page }
 
       it "returns false" do
         expect(subject.device_page?).to eq(false)
