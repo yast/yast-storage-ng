@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/filesystems/type"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/btrfs_filesystems_table"
 require "y2partitioner/widgets/device_buttons_set"
