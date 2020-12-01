@@ -75,7 +75,8 @@ module Y2Partitioner
         lvm_lv:           Widgets::LvmLvDescription,
         bcache:           Widgets::BcacheDescription,
         stray_blk_device: Widgets::StrayBlkDeviceDescription,
-        btrfs_subvolume:  Widgets::BtrfsSubvolumeDescription
+        btrfs_subvolume:  Widgets::BtrfsSubvolumeDescription,
+        tmpfs:            Widgets::FilesystemDescription
       }
       private_constant :WIDGETS
 

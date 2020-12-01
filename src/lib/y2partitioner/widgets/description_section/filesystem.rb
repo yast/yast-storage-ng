@@ -45,7 +45,17 @@ module Y2Partitioner
 
         # @see DescriptionSection::Base#entries
         def entries
-          [:fs_type, :mount_point, :mount_by, :label, :uuid] + ext_entries + btrfs_entries
+          [:fs_type, :mount_point, :mount_by, :mount_options] +
+            blk_filesystem_entries + ext_entries + btrfs_entries
+        end
+
+        # Extra entries when it is a block filesystem
+        #
+        # @return [Array<Symbol>]
+        def blk_filesystem_entries
+          return [] unless filesystem&.is?(:blk_filesystem)
+
+          [:label, :uuid]
         end
 
         # Extra entries when the filesystem is Btrfs
@@ -98,6 +108,13 @@ module Y2Partitioner
         def mount_by_value
           # TRANSLATORS: Mount by information, where %s is replaced by a "mount by" option
           format(_("Mount By: %s"), mount_by)
+        end
+
+        # Entry data about the mount options
+        #
+        # @return [String]
+        def mount_options_value
+          format(_("Mount Options: %s"), mount_options)
         end
 
         # Entry data about the filesystem label
@@ -169,6 +186,15 @@ module Y2Partitioner
           return "" unless filesystem&.mount_point
 
           filesystem.mount_point.mount_by.to_human_string
+        end
+
+        # Mount options from the mount point
+        #
+        # @return [String]
+        def mount_options
+          return "" unless filesystem&.mount_point
+
+          filesystem.mount_point.mount_options.join(" ")
         end
 
         # Information about journal
