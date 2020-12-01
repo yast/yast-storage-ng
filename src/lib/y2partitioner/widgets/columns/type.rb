@@ -69,7 +69,7 @@ module Y2Partitioner
           lvm_lv:          N_("LV"),
           stray:           N_("Xen"),
           partition:       N_("Partition"),
-          btrfs_subvolume: N_("BtrFS Subvolume")
+          btrfs_subvolume: N_("Btrfs Subvolume")
         }
         private_constant :DEVICE_LABELS
 
