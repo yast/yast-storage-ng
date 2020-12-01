@@ -78,6 +78,17 @@ describe Y2Storage::Filesystems::Tmpfs do
 
         expect(filesystem.size).to eq Y2Storage::DiskSize.zero
       end
+
+      it "returns the size specified by the last option if several ones are given" do
+        filesystem.mount_point.mount_options = ["size=128M", "nr_blocks=25k", "size=25%"]
+        expect(filesystem.size).to eq Y2Storage::DiskSize.GiB(2)
+
+        filesystem.mount_point.mount_options = ["size=25%", "size=128M", "nr_blocks=25k"]
+        expect(filesystem.size).to eq(Y2Storage::DiskSize.KiB(25) * 4096)
+
+        filesystem.mount_point.mount_options = ["size=25%", "nr_blocks=25k", "size=128M"]
+        expect(filesystem.size).to eq Y2Storage::DiskSize.MiB(128)
+      end
     end
   end
 end
