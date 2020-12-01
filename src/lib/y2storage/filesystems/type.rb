@@ -82,7 +82,7 @@ module Y2Storage
       PROPERTIES = {
         btrfs:     {
           fstab_options: COMMON_FSTAB_OPTIONS,
-          name:          "BtrFS"
+          name:          "Btrfs"
         },
         ext2:      {
           fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
