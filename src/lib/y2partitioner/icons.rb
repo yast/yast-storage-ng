@@ -56,6 +56,8 @@ module Y2Partitioner
     # icon
     BTRFS = LVM
 
+    TMPFS = BTRFS
+
     # icon
     UNUSED = "emblem-warning".freeze
 

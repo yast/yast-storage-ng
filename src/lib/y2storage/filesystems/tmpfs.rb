@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
 require "y2storage/filesystems/base"
@@ -30,6 +31,8 @@ module Y2Storage
     #
     # This is a wrapper for Storage::Tmpfs
     class Tmpfs < Base
+      include Yast::I18n
+
       wrap_class Storage::Tmpfs
 
       # @!method self.create(devicegraph)
@@ -63,6 +66,21 @@ module Y2Storage
           end
 
         size || DiskSize.zero
+      end
+
+      # Name used to idenfity the device
+      #
+      # @return [String]
+      def name
+        # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
+        textdomain "storage"
+
+        # TRANSLATORS: name used to identify a tmpfs filesystem, where %{fs_type} is replaced by the
+        #   filesystem type (i.e., Tmpfs) and %{mount_path} is replaced by the tmpfs mount path
+        #   (e.g., "/tmp").
+        #
+        #   Examples: "Tmpfs /tmp"
+        format(_("%{type} %{mount_path}"), type: type.to_human_string, mount_path: mount_path)
       end
 
       protected
