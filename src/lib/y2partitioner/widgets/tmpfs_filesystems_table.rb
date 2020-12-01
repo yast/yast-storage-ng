@@ -37,6 +37,13 @@ module Y2Partitioner
         show_columns(*fs_columns)
       end
 
+      # @see ConfigurableBlkDevicesTable#help
+      def help
+        super +
+          "<p>Only temporary file systems included in /etc/fstab are considered here. Other " \
+          "automatically mounted temporary file systems are not shown.</p>"
+      end
+
       private
 
       # Table columns
