@@ -75,7 +75,7 @@ module Y2Storage
         # FIXME: wrapper classes should not provide strings to be presented in the UI. Use decorators.
         textdomain "storage"
 
-        # TRANSLATORS: name used to identify a tmpfs filesystem, where %{fs_type} is replaced by the
+        # TRANSLATORS: name used to identify a tmpfs filesystem, where %{type} is replaced by the
         #   filesystem type (i.e., Tmpfs) and %{mount_path} is replaced by the tmpfs mount path
         #   (e.g., "/tmp").
         #
