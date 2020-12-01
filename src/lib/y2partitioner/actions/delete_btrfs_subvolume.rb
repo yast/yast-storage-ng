@@ -28,8 +28,8 @@ module Y2Partitioner
     # @see DeleteDevice
     class DeleteBtrfsSubvolume < DeleteDevice
       def initialize(*args)
-        super
         textdomain "storage"
+        super
       end
 
       private
@@ -53,34 +53,11 @@ module Y2Partitioner
         Yast2::Popup.show(text, buttons: :yes_no) == :yes
       end
 
-      # @see DeleteDevice#committed_device
-      def committed_device
-        @committed_device ||= system_graph.find_device(device.sid)
-      end
-
-      # @see DeleteDevice#try_unmount?
-      def try_unmount?
-        return false unless committed_device
-
-        committed_device.active_mount_point?
-      end
-
       # Filesystem holding the subvolume
       #
       # @return [Filesystems::Btrfs]
       def filesystem
         device.filesystem
-      end
-
-      # Devicegraph that represents the current version of the devices in the system
-      #
-      # @note To check whether a subvolume is currently mounted, it must be checked
-      #   in the system devicegraph. When a mount point is "immediate deactivated", the
-      #   mount point is set as inactive only in the system devicegraph.
-      #
-      # @return [Y2Storage::Devicegraph]
-      def system_graph
-        Y2Storage::StorageManager.instance.system
       end
     end
   end

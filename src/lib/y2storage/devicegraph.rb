@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,6 +30,7 @@ require "y2storage/filesystems/base"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/filesystems/tmpfs"
 require "y2storage/filesystems/nfs"
+require "y2storage/filesystems/tmpfs"
 require "y2storage/lvm_lv"
 require "y2storage/lvm_vg"
 require "y2storage/md"
@@ -473,6 +474,17 @@ module Y2Storage
       raise(ArgumentError, "Incorrect device #{nfs.inspect}") unless nfs&.is?(:nfs)
 
       remove_with_dependants(nfs)
+    end
+
+    # Removes a Tmpfs filesystem and all its descendants
+    #
+    # @param tmpfs [Filesystems::Tmpfs]
+    #
+    # @raise [ArgumentError] if the Tmpfs filesystem does not exist in the devicegraph
+    def remove_tmpfs(tmpfs)
+      raise(ArgumentError, "Incorrect device #{tmpfs.inspect}") unless tmpfs&.is?(:tmpfs)
+
+      remove_with_dependants(tmpfs)
     end
 
     # String to represent the whole devicegraph, useful for comparison in

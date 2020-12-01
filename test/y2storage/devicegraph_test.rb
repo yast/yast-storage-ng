@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2019] SUSE LLC
+
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -946,6 +947,53 @@ describe Y2Storage::Devicegraph do
 
         expect { devicegraph.remove_lvm_vg(vg) }.to raise_error ArgumentError
         expect(Y2Storage::LvmVg.find_by_vg_name(other_devicegraph, new_vg_name)).to_not be_nil
+      end
+    end
+  end
+
+  describe "#remove_tmpfs" do
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    before do
+      fake_scenario(scenario)
+    end
+
+    context "when the given device is a Tmpfs fileystem" do
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
+
+      let(:device) do
+        devicegraph.tmp_filesystems.find { |i| i.mount_path == "/test1" }
+      end
+
+      it "removes the given Tmpfs filesystem" do
+        expect(device).to_not be_nil
+
+        sid = device.sid
+        devicegraph.remove_tmpfs(device)
+
+        expect(devicegraph.find_device(sid)).to be_nil
+      end
+
+      it "removes all the Tmpfs descendants" do
+        descendants_sid = device.descendants.map(&:sid)
+        expect(descendants_sid).to_not be_empty
+
+        devicegraph.remove_tmpfs(device)
+
+        existing_descendants = descendants_sid.map { |sid| devicegraph.find_device(sid) }.compact
+        expect(existing_descendants).to be_empty
+      end
+    end
+
+    context "when the given device is not a Tmpfs filesystem" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:device) { devicegraph.find_by_name("/dev/sda1") }
+
+      it "raises an exception and does not remove the given device" do
+        expect { devicegraph.remove_tmpfs(device) }.to raise_error(ArgumentError)
+
+        expect(devicegraph.find_by_name("/dev/sda1")).to_not be_nil
       end
     end
   end
