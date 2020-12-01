@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast/i18n"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
@@ -31,8 +30,6 @@ module Y2Storage
   module Filesystems
     # This is a wrapper for Storage::Btrfs
     class Btrfs < BlkFilesystem
-      include Yast::I18n
-
       wrap_class Storage::Btrfs
 
       # @!method top_level_btrfs_subvolume
