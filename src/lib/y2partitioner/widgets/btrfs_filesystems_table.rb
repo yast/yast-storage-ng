@@ -27,10 +27,10 @@ module Y2Partitioner
     class BtrfsFilesystemsTable < ConfigurableBlkDevicesTable
       # Constructor
       #
-      # @param filesystems [Array<Y2Storage::Filesystems::Btrfs>]
+      # @param entries [Array<DeviceTableEntry>]
       # @param pager [CWM::Pager]
       # @param buttons_set [DeviceButtonsSet]
-      def initialize(filesystems, pager, buttons_set = nil)
+      def initialize(entries, pager, buttons_set = nil)
         textdomain "storage"
 
         super

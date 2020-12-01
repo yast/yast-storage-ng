@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast/i18n"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/base"
 require "y2partitioner/widgets/device_buttons_set"
