@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/storage_manager"
 require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
@@ -122,12 +123,9 @@ module Y2Storage
 
         # Return the total amount of RAM as DiskSize
         #
-        # @note RAM size is read from /proc/meminfo, where sizes are supposed to
-        #   be in KiB.
-        #
         # @return [DiskSize] current RAM size
         def ram_size
-          DiskSize.KiB(Yast::SCR.Read(path(".proc.meminfo"))["memtotal"])
+          DiskSize.new(StorageManager.instance.arch.ram_size)
         end
       end
     end
