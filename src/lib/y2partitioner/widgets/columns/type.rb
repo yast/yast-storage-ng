@@ -40,7 +40,8 @@ module Y2Partitioner
           lvm_vg:          Icons::LVM,
           lvm_lv:          Icons::LVM_LV,
           btrfs:           Icons::BTRFS,
-          btrfs_subvolume: Icons::BTRFS
+          btrfs_subvolume: Icons::BTRFS,
+          tmpfs:           Icons::TMPFS
         }
         private_constant :DEVICE_ICONS
 

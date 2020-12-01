@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -105,7 +105,8 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches + multidevice_filesystems
+          disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches + multidevice_filesystems +
+            tmp_filesystems
         end
 
         # @return [Array<DeviceTableEntry>]
@@ -156,6 +157,11 @@ module Y2Partitioner
           device_graph.blk_filesystems.select(&:multidevice?).map do |fs|
             DeviceTableEntry.new_with_children(fs)
           end
+        end
+
+        # @return [Array<DeviceTableEntry>]
+        def tmp_filesystems
+          device_graph.tmp_filesystems.map { |f| DeviceTableEntry.new(f) }
         end
 
         def device_graph

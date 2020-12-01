@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -200,6 +200,17 @@ describe Y2Partitioner::Widgets::Pages::System do
         expected_items = multidevice_filesystems.map do |fs|
           "#{fs.type.to_human_string} #{fs.blk_device_basename}"
         end
+
+        expect(items).to include(*expected_items)
+      end
+    end
+
+    context "when there are Tmpfs filesystems" do
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
+      let(:filesystems) { current_graph.tmp_filesystems }
+
+      it "contains all the Tmpfs filesystems" do
+        expected_items = filesystems.map(&:name)
 
         expect(items).to include(*expected_items)
       end

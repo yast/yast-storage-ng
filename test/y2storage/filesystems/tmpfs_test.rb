@@ -91,4 +91,16 @@ describe Y2Storage::Filesystems::Tmpfs do
       end
     end
   end
+
+  describe "#name" do
+    it "returns an string" do
+      expect(filesystem.name).to be_a(String)
+    end
+
+    it "includes the type and the mount path of the filesystem" do
+      filesystem.mount_path = "/tmp"
+
+      expect(filesystem.name).to eq("Tmpfs /tmp")
+    end
+  end
 end
