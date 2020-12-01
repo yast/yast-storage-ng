@@ -57,26 +57,6 @@ module Y2Partitioner
       # @see #perform_action
       abstract_method :delete
 
-      # Whether it is necessary to try to unmount (i.e., when deleting a mounted device that exists on
-      # the system)
-      #
-      # Derived classes must implement this method.
-      #
-      # @see #try_unmount
-      #
-      # @return [Boolean]
-      abstract_method :try_unmount?
-
-      # Device taken from the system devicegraph
-      #
-      # Derived classes should implement this method, although this is only required when the device can
-      # be mounted.
-      #
-      # @see #try_unmount
-      #
-      # @return [Y2Storage::Device, nil] nil if the device does not exist on disk yet.
-      abstract_method :committed_device
-
       # Checks whether delete action can be performed and if so, a confirmation popup is shown.
       # It only asks for unmounting the device it is currently mounted in the system.
       #
@@ -107,6 +87,29 @@ module Y2Partitioner
         Yast2::Popup.show(text, buttons: :yes_no) == :yes
       end
 
+      # Device taken from the system devicegraph
+      #
+      # This is only required when the device can be mounted.
+      #
+      # @see #try_unmount
+      #
+      # @return [Y2Storage::Device, nil] nil if the device does not exist on disk yet.
+      def committed_device
+        @committed_device ||= system_graph.find_device(device.sid)
+      end
+
+      # Whether it is necessary to try to unmount (i.e., when deleting a mounted device that exists on
+      # the system)
+      #
+      # @see #try_unmount
+      #
+      # @return [Boolean]
+      def try_unmount?
+        return false unless committed_device
+
+        committed_device.active_mount_point?
+      end
+
       # Tries to unmount the device, if it is required.
       #
       # It asks the user for immediate unmount the device, see {#immediate_unmount}.
@@ -127,6 +130,17 @@ module Y2Partitioner
       # @return [Y2Storage::Devicegraph]
       def device_graph
         DeviceGraphs.instance.current
+      end
+
+      # Devicegraph that represents the current version of the devices in the system
+      #
+      # @note To check whether a filesystem is currently mounted, it must be checked
+      #   in the system devicegraph. When a mount point is "immediate deactivated", the
+      #   mount point is set as inactive only in the system devicegraph.
+      #
+      # @return [Y2Storage::Devicegraph]
+      def system_graph
+        Y2Storage::StorageManager.instance.system
       end
     end
   end
