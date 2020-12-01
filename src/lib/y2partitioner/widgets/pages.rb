@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -40,3 +40,5 @@ require "y2partitioner/widgets/pages/bcache.rb"
 require "y2partitioner/widgets/pages/bcaches.rb"
 require "y2partitioner/widgets/pages/btrfs_filesystems.rb"
 require "y2partitioner/widgets/pages/btrfs.rb"
+require "y2partitioner/widgets/pages/tmpfs_filesystems.rb"
+require "y2partitioner/widgets/pages/tmpfs.rb"

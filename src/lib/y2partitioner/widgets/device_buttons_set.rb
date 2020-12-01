@@ -23,6 +23,7 @@ require "y2partitioner/widgets/md_buttons"
 require "y2partitioner/widgets/lvm_buttons"
 require "y2partitioner/widgets/bcache_buttons"
 require "y2partitioner/widgets/btrfs_buttons"
+require "y2partitioner/widgets/tmpfs_buttons"
 require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
@@ -41,7 +42,7 @@ module Y2Partitioner
       # @return [Array<Symbol>]
       SUPPORTED_TYPES = [
         :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device, :btrfs,
-        :btrfs_subvolume
+        :btrfs_subvolume, :tmpfs
       ]
       private_constant :SUPPORTED_TYPES
 
@@ -194,6 +195,14 @@ module Y2Partitioner
           BtrfsSubvolumeEditButton.new(device: device),
           BtrfsSubvolumeAddButton.new(device: device),
           BtrfsSubvolumeDeleteButton.new(pager: pager, device: device)
+        ]
+      end
+
+      # Buttons to display if {#device} is a Tmpfs filesystem
+      def tmpfs_buttons
+        [
+          TmpfsEditButton.new(device: device),
+          TmpfsDeleteButton.new(pager: pager, device: device)
         ]
       end
 
