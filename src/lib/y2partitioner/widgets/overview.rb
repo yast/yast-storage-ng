@@ -108,6 +108,7 @@ module Y2Partitioner
           # crypt_files_items,
           # device_mapper_items,
           btrfs_section,
+          tmpfs_section,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # unused_items
           nfs_section
@@ -293,12 +294,6 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def nfs_section
-        page = Pages::NfsMounts.new(self)
-        section_item(page, Icons::NFS)
-      end
-
-      # @return [CWM::PagerTreeItem]
       def btrfs_section
         filesystems = device_graph.btrfs_filesystems.sort_by(&:blk_device_basename)
 
@@ -312,6 +307,26 @@ module Y2Partitioner
       def btrfs_item(filesystem)
         page = Pages::Btrfs.new(filesystem, self)
         device_item(page)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def tmpfs_section
+        page = Pages::TmpfsFilesystems.new(self)
+        children = device_graph.tmp_filesystems.map { |f| tmpfs_item(f) }
+        section_item(page, Icons::TMPFS, children: children)
+      end
+
+      # @param filesystem [Y2Storage::Filesystems::Tmpfs]
+      # @return [CWM::PagerTreeItem]
+      def tmpfs_item(filesystem)
+        page = Pages::Tmpfs.new(filesystem, self)
+        device_item(page)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def nfs_section
+        page = Pages::NfsMounts.new(self)
+        section_item(page, Icons::NFS)
       end
 
       # Generates a `section` tree item for given page
