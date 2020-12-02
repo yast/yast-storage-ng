@@ -20,6 +20,8 @@
 require "y2partitioner/widgets/action_button"
 require "y2partitioner/widgets/device_edit_button"
 require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/actions/add_tmpfs"
+require "y2partitioner/actions/edit_tmpfs"
 require "y2partitioner/actions/delete_tmpfs"
 
 module Y2Partitioner
@@ -36,7 +38,7 @@ module Y2Partitioner
 
       # @see ActionButton#action
       def action
-        # TODO
+        Actions::AddTmpfs.new
       end
     end
 
@@ -44,7 +46,7 @@ module Y2Partitioner
     class TmpfsEditButton < DeviceEditButton
       # @see ActionButton#action
       def action
-        # TODO
+        Actions::EditTmpfs.new(device)
       end
     end
 
