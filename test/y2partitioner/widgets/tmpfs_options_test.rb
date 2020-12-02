@@ -77,6 +77,19 @@ describe Y2Partitioner::Widgets do
           subject.init
         end
       end
+
+      describe "#validate" do
+        it "silently returns true if the filesystem has a reasonable mount path" do
+          expect(Yast::Popup).to_not receive(:Error)
+          expect(subject.validate).to eq true
+        end
+
+        it "opens an error popup and returns false if filesystem is mounted at '/'" do
+          filesystem.mount_path = "/"
+          expect(Yast::Popup).to receive(:Error)
+          expect(subject.validate).to eq false
+        end
+      end
     end
   end
 end

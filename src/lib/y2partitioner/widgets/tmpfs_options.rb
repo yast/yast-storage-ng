@@ -65,6 +65,17 @@ module Y2Partitioner
           "amount of RAM. That max limit can be customized with the appropriate fstab option.</p>"
         )
       end
+
+      def validate
+        return false unless super
+        return true unless controller.mount_point&.root?
+
+        Yast::Popup.Error(
+          _("Installing into a temporary file system is not supported.")
+        )
+        @mount_point_widget.focus
+        false
+      end
     end
   end
 end
