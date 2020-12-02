@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -51,12 +51,5 @@ module Y2Storage
     # @!method page_size
     #   @return [Integer] the system page size
     storage_forward :page_size
-
-    # Whether to resume from swap is supported by the current architecture
-    #
-    # @return [Boolean]
-    def support_resume?
-      !s390?
-    end
   end
 end

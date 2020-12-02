@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,9 +18,10 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/storage_manager"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
+
+Yast.import "Kernel"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -392,11 +393,16 @@ module Y2Storage
       @fs_types.unshift(fs_type) if fs_type && !fs_types.include?(fs_type)
     end
 
-    # Whether the current architecture supports to resume from swap
+    # Whether hibernation feature is considered as supported
+    #
+    # Resuming from swap can be considered as unsupported because of different reasons. For example,
+    # because such feature is actually not supported for the current architecture (e.g., s390, Power) or
+    # because it does not make much sense to offer such feature (e.g., virtual machines). Moreover, some
+    # products can be explicitly configured (with a control file option) to offer hibernation or not.
     #
     # @return [Boolean]
     def resume_supported?
-      StorageManager.instance.arch.support_resume?
+      Yast::Kernel.propose_hibernation?
     end
   end
 end
