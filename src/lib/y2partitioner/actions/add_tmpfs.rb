@@ -71,7 +71,7 @@ module Y2Partitioner
       # @return [String]
       def title
         # TRANSLATORS: wizard title when creating a new Tmpfs filesystem.
-        _("Add tmpfs")
+        _("Add Tmpfs")
       end
     end
   end
