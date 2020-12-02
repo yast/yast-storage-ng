@@ -71,7 +71,7 @@ module Y2Partitioner
       def title
         # TRANSLATORS: wizard title when editing a tmpfs filesystem, where %s is
         # replaced by the path where tmpfs is mounted
-        format(_("Edit tmpfs at %s"), device.mount_path)
+        format(_("Edit Tmpfs at %s"), device.mount_path)
       end
     end
   end
