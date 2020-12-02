@@ -25,6 +25,11 @@ module Y2Partitioner
   module Widgets
     # Widget to set tmpfs options
     class TmpfsOptions < MountOptions
+      # Constructor
+      #
+      # @param controller [Actions::Controllers::Filesystem]
+      # @param edit [Boolean] whether the tmpfs is being edited. False if the widget
+      #   is being used to create a new tmpfs object
       def initialize(controller, edit)
         textdomain "storage"
 
