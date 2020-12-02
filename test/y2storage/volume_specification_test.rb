@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,6 +29,8 @@ describe Y2Storage::VolumeSpecification do
 
   before do
     Y2Storage::StorageManager.create_test_instance
+
+    allow(Yast::Kernel).to receive(:propose_hibernation?).and_return(true)
   end
 
   describe ".for" do
@@ -211,18 +213,20 @@ describe Y2Storage::VolumeSpecification do
     context "when 'adjust_by_ram' is true" do
       let(:adjust_by_ram) { true }
 
-      let(:storage_arch) { instance_double(Storage::Arch) }
+      before do
+        allow(Yast::Kernel).to receive(:propose_hibernation?).and_return(resume)
+      end
 
-      context "and the current architecture supports to resume from swap" do
-        let(:architecture) { :x86 }
+      context "and resume from swap can be offered" do
+        let(:resume) { true }
 
         it "keeps 'adjust_by_ram' to true" do
           expect(subject.adjust_by_ram).to eq(true)
         end
       end
 
-      context "and the current architecture does not support to resume from swap" do
-        let(:architecture) { :s390 }
+      context "and resume from swap cannot be offered" do
+        let(:resume) { false }
 
         context "and the volume is not for swap" do
           let(:mount_point) { "/" }
@@ -646,18 +650,20 @@ describe Y2Storage::VolumeSpecification do
     context "when the volume is for swap" do
       let(:mount_point) { "swap" }
 
-      let(:storage_arch) { instance_double(Storage::Arch) }
+      before do
+        allow(Yast::Kernel).to receive(:propose_hibernation?).and_return(resume)
+      end
 
-      context "and the current architecture does not support to resume from swap" do
-        let(:architecture) { :s390 }
+      context "and resume from swap cannot be offered" do
+        let(:resume) { false }
 
         it "return false" do
           expect(subject.enlarge_for_resume_supported?).to eq(false)
         end
       end
 
-      context "and the current architecture supports to resume from swap" do
-        let(:architecture) { :x86 }
+      context "and resume from swap can be offered" do
+        let(:resume) { true }
 
         it "return true" do
           expect(subject.enlarge_for_resume_supported?).to eq(true)
