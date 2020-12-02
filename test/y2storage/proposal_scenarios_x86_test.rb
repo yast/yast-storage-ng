@@ -27,6 +27,10 @@ require_relative "#{TEST_PATH}/support/proposal_context"
 describe Y2Storage::GuidedProposal do
   using Y2Storage::Refinements::SizeCasts
 
+  before do
+    allow(Yast::Kernel).to receive(:propose_hibernation?).and_return(true)
+  end
+
   describe "#propose" do
     include_context "proposal"
 
