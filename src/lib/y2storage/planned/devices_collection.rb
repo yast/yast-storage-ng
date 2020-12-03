@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -162,6 +162,13 @@ module Y2Storage
       # @return [Array<Planned::Btrfs>]
       def btrfs_filesystems
         @btrfs_filesystems ||= devices.select { |d| d.is_a?(Planned::Btrfs) }
+      end
+
+      # Returns the list of planned Tmpfs filesystems
+      #
+      # @return [Array<Planned::Tmpfs>]
+      def tmpfs_filesystems
+        @tmpfs_filesystems ||= devices.select { |d| d.is_a?(Planned::Tmpfs) }
       end
 
       # Returns all devices, including nested ones

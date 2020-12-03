@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -137,6 +137,13 @@ module Y2Storage
       # @return [Array<DriveSection>]
       def btrfs_drives
         drives.select { |d| d.type == :CT_BTRFS }
+      end
+
+      # Drive sections with type :CT_TMPFS
+      #
+      # @return [Array<DriveSection>]
+      def tmpfs_drives
+        drives.select { |d| d.type == :CT_TMPFS }
       end
 
       # All drive sections generated from a given devicegraph
