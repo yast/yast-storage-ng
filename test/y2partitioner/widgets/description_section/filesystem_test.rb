@@ -62,20 +62,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
       expect(subject.value).to match(/Mount By:/)
     end
 
-    it "includes an entry about the filesystem label" do
-      expect(subject.value).to match(/Label:/)
-    end
-
-    it "includes an entry about the filesystem UUID" do
-      expect(subject.value).to match(/UUID:/)
-    end
-
-    it "does not include an entry about the metadata raid level" do
-      expect(subject.value).to_not match(/Metadata RAID Level:/)
-    end
-
-    it "does not include an entry about the data raid level" do
-      expect(subject.value).to_not match(/RAID Level:/)
+    it "includes an entry about the mount options" do
+      expect(subject.value).to match(/Mount Options:/)
     end
 
     it "contains (not mounted) if mount point is not active" do
@@ -83,6 +71,24 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
         .and_return(double(path: "/", active?: false).as_null_object)
 
       expect(subject.value).to match(/Mount Point: \/ \(not mounted\)/)
+    end
+
+    context "when the filesystem is a block filesystem" do
+      it "includes an entry about the filesystem label" do
+        expect(subject.value).to match(/Label:/)
+      end
+
+      it "includes an entry about the filesystem UUID" do
+        expect(subject.value).to match(/UUID:/)
+      end
+
+      it "does not include an entry about the metadata raid level" do
+        expect(subject.value).to_not match(/Metadata RAID Level:/)
+      end
+
+      it "does not include an entry about the data raid level" do
+        expect(subject.value).to_not match(/RAID Level:/)
+      end
     end
 
     context "when using a Ext3/4 filesystem" do
@@ -137,7 +143,7 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
   end
 
   describe "#help_fields" do
-    let(:excluded_help_fields) { [] }
+    let(:excluded_help_fields) { [:mount_options] }
 
     include_examples "help fields"
   end

@@ -77,7 +77,7 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
       it "shows a table containing only the Btrfs" do
         expect(table).to_not be_nil
 
-        expect(remove_sort_keys(items)).to eq ["BtrFS sdb2"]
+        expect(remove_sort_keys(items)).to eq ["Btrfs sdb2"]
       end
     end
   end
@@ -89,11 +89,11 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
     include_examples "CWM::Tab"
 
     describe "#contents" do
-      it "shows a table with the BtrFS and its devices" do
+      it "shows a table with the Btrfs and its devices" do
         expect(table).to_not be_nil
 
         expect(remove_sort_keys(items)).to contain_exactly(
-          "BtrFS sdb2",
+          "Btrfs sdb2",
           "/dev/sdb2"
         )
       end

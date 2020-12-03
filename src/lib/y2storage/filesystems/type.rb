@@ -27,7 +27,10 @@ module Y2Storage
     # Class to represent all the possible filesystem types
     #
     # This is a wrapper for the Storage::FsType enum
-    class Type
+    #
+    # FIXME: this class contains several big hashes which triggered Rubocop's
+    # ClassLength cop.
+    class Type # rubocop:disable ClassLength
       include StorageEnumWrapper
 
       wrap_enum "FsType"
@@ -79,7 +82,7 @@ module Y2Storage
       PROPERTIES = {
         btrfs:     {
           fstab_options: COMMON_FSTAB_OPTIONS,
-          name:          "BtrFS"
+          name:          "Btrfs"
         },
         ext2:      {
           fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
@@ -124,6 +127,10 @@ module Y2Storage
           fstab_options:        ["pri="],
           default_partition_id: PartitionId::SWAP,
           name:                 "Swap"
+        },
+        tmpfs:     {
+          fstab_options: COMMON_FSTAB_OPTIONS + ["size=", "nr_blocks="],
+          name:          "Tmpfs"
         },
         vfat:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],

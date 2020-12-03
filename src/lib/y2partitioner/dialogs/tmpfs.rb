@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,35 +17,43 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast2/popup"
-require "y2partitioner/actions/delete_device"
+require "y2partitioner/dialogs/base"
+require "y2partitioner/widgets/tmpfs_options"
 
 module Y2Partitioner
-  module Actions
-    # Action for deleting a Btrfs filesystem
-    #
-    # @see DeleteDevice
-    class DeleteBtrfs < DeleteDevice
-      def initialize(*args)
-        super
+  module Dialogs
+    # Dialog to create and edit a tmpfs filesystem
+    class Tmpfs < Base
+      # @param controller [Actions::Controllers::Filesystem]
+      def initialize(controller, edit: false)
+        super()
+
         textdomain "storage"
+
+        @controller = controller
+        @edit = edit
+      end
+
+      # @macro seeDialog
+      def title
+        @controller.wizard_title
+      end
+
+      # @macro seeDialog
+      def contents
+        HVSquash(widget)
       end
 
       private
 
-      # Deletes the indicated filesystem (see {DeleteDevice#device})
-      def delete
-        log.info "deleting btrfs #{device}"
-        device.blk_devices.first.delete_filesystem
-      end
+      # @return [Actions::Controllers::Filesystem]
+      attr_reader :controller
 
-      # @see DeleteDevice#confirm
-      def confirm
-        # TRANSLATORS: Message when deleting a Btrfs filesystem, where %{name} is replaced by the Btrfs
-        #   name (e.g., "BtrFS sda1").
-        text = format(_("Really delete the file system %{name}?"), name: device.name)
-
-        Yast2::Popup.show(text, buttons: :yes_no) == :yes
+      # Widget for Tmpfs options
+      #
+      # @return [Widgets::TmpfsOptions]
+      def widget
+        @widget ||= Widgets::TmpfsOptions.new(controller, @edit)
       end
     end
   end

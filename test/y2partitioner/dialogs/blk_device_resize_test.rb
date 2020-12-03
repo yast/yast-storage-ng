@@ -110,7 +110,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       end
 
       it "shows multi-device Btrfs information" do
-        label = find_label(subject.contents, "Part of BtrFS")
+        label = find_label(subject.contents, "Part of Btrfs")
         expect(label).to_not be_nil
       end
 

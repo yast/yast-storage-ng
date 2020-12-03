@@ -59,7 +59,7 @@ describe Y2Partitioner::Widgets::Columns::Type do
       let(:device) { blk_filesystem }
 
       it "returns its human readable type" do
-        expect(subject.value_for(device)).to include("BtrFS")
+        expect(subject.value_for(device)).to include("Btrfs")
       end
     end
 
@@ -68,8 +68,8 @@ describe Y2Partitioner::Widgets::Columns::Type do
       let(:filesystem) { devicegraph.find_by_name("/dev/sda2").filesystem }
       let(:device) { filesystem.btrfs_subvolumes.first }
 
-      it "returns 'BtrFS Subvolume'" do
-        expect(label).to eq("BtrFS Subvolume")
+      it "returns 'Btrfs Subvolume'" do
+        expect(label).to eq("Btrfs Subvolume")
       end
     end
 

@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,58 +17,43 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "y2partitioner/widgets/pages/devices_table"
-require "y2partitioner/widgets/btrfs_filesystems_table"
+require "y2partitioner/widgets/tmpfs_filesystems_table"
 require "y2partitioner/widgets/device_buttons_set"
-require "y2partitioner/widgets/btrfs_buttons"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for Btrfs filesystems
-      class BtrfsFilesystems < DevicesTable
-        extend Yast::I18n
+      # Page for a Tmpfs filesystem
+      class Tmpfs < DevicesTable
+        # @return [Y2Storage::Filesystems::Tmpfs]
+        attr_reader :filesystem
 
-        textdomain "storage"
-
-        # Label for all the instances
-        #
-        # @see #label
-        #
-        # @return [String]
-        def self.label
-          _("Btrfs")
-        end
+        # Needed for searching a device page, see {OverviewTreePager#device_page}
+        alias_method :device, :filesystem
 
         # Constructor
         #
-        # @param filesystems [Array<Y2Storage::Filesystems::Btrfs>]
         # @param pager [CWM::TreePager]
-        def initialize(filesystems, pager)
+        def initialize(filesystem, pager)
+          textdomain "storage"
+
           super(pager)
 
-          @filesystems = filesystems
+          @filesystem = filesystem
+          self.widget_id = "tmpfs:" + filesystem.sid.to_s
         end
 
         # @macro seeAbstractWidget
         def label
-          self.class.label
+          filesystem.mount_path
         end
 
         private
 
-        # @return [Array<Y2Storage::Filesystems::Btrfs>]
-        attr_reader :filesystems
-
-        # @see DevicesTable
-        def table_buttons
-          BtrfsAddButton.new
-        end
-
         # @return [ConfigurableBlkDevicesTable]
         def calculate_table
-          BtrfsFilesystemsTable.new(entries, pager, device_buttons)
+          TmpfsFilesystemsTable.new(entries, pager, device_buttons)
         end
 
         # Widget with the dynamic set of buttons for the selected row
@@ -80,7 +65,7 @@ module Y2Partitioner
 
         # @return [Array<DeviceTableEntry>]
         def entries
-          filesystems.map { |fs| DeviceTableEntry.new_with_children(fs) }
+          [DeviceTableEntry.new(filesystem)]
         end
       end
     end

@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,8 +23,8 @@ require "y2partitioner/widgets/columns"
 
 module Y2Partitioner
   module Widgets
-    # Table for Btrfs filesystems
-    class BtrfsFilesystemsTable < ConfigurableBlkDevicesTable
+    # Table for Tmpfs filesystems
+    class TmpfsFilesystemsTable < ConfigurableBlkDevicesTable
       # Constructor
       #
       # @param entries [Array<DeviceTableEntry>]
@@ -37,6 +37,13 @@ module Y2Partitioner
         show_columns(*fs_columns)
       end
 
+      # @see ConfigurableBlkDevicesTable#help
+      def help
+        super +
+          "<p>Only temporary file systems included in /etc/fstab are considered here. Other " \
+          "automatically mounted temporary file systems are not shown.</p>"
+      end
+
       private
 
       # Table columns
@@ -45,9 +52,8 @@ module Y2Partitioner
       def fs_columns
         [
           Columns::Device,
-          Columns::BtrfsRferLimit,
-          Columns::BtrfsReferenced,
-          Columns::BtrfsExclusive,
+          Columns::Size,
+          Columns::Type,
           Columns::MountPoint
         ]
       end

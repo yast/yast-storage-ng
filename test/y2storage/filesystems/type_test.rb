@@ -30,7 +30,7 @@ describe Y2Storage::Filesystems::Type do
     end
 
     it "returns the internal name (#to_s) for types with no description" do
-      expect(Y2Storage::Filesystems::Type::TMPFS.to_human_string).to eq "tmpfs"
+      expect(Y2Storage::Filesystems::Type::MINIX.to_human_string).to eq "minix"
     end
   end
 

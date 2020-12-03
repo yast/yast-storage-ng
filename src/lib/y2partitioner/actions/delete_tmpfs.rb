@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,28 +22,31 @@ require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
   module Actions
-    # Action for deleting a Btrfs filesystem
+    # Action for deleting a Tmpfs filesystem
     #
     # @see DeleteDevice
-    class DeleteBtrfs < DeleteDevice
+    class DeleteTmpfs < DeleteDevice
       def initialize(*args)
-        super
         textdomain "storage"
+        super
       end
 
       private
 
       # Deletes the indicated filesystem (see {DeleteDevice#device})
       def delete
-        log.info "deleting btrfs #{device}"
-        device.blk_devices.first.delete_filesystem
+        log.info "deleting tmpfs #{device}"
+        device_graph.remove_tmpfs(device)
       end
 
       # @see DeleteDevice#confirm
       def confirm
-        # TRANSLATORS: Message when deleting a Btrfs filesystem, where %{name} is replaced by the Btrfs
-        #   name (e.g., "BtrFS sda1").
-        text = format(_("Really delete the file system %{name}?"), name: device.name)
+        text = format(
+          # TRANSLATORS: Message when deleting a Tmpfs filesystem, where %{mount_path} is replaced by a
+          #   mount path (e.g., "/tmp").
+          _("Really delete the temporary file system mounted at %{mount_path}?"),
+          mount_path: device.mount_path
+        )
 
         Yast2::Popup.show(text, buttons: :yes_no) == :yes
       end

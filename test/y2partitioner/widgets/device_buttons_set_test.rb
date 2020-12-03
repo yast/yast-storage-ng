@@ -262,6 +262,24 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       end
     end
 
+    context "when targeting a Tmpfs filesystem" do
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
+      let(:device) { device_graph.tmp_filesystems.first }
+
+      it "replaces the content with buttons to edit and to delete the Tmpfs filesystem" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::TmpfsEditButton,
+            Y2Partitioner::Widgets::TmpfsDeleteButton
+          )
+        end
+
+        widget.device = device
+      end
+    end
+
     context "when an unsupported device is used" do
       let(:device) { device_graph.filesystems.first }
 
