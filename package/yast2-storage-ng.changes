@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Dec  3 09:28:34 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: added management of tmpfs file systems (related to
+  jsc#SLE-11308).
+- 4.3.26
+
+-------------------------------------------------------------------
 Wed Dec  2 11:49:57 UTC 2020 - José Iván López González <jlopez@suse.com>
 
 - Use Yast::Kernel.propose_hibernation? (related to jsc#SLE-12280).
