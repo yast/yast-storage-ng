@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec  4 08:57:17 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Fix unit tests (related to jsc#SLE-11308).
+- 4.3.27
+
+-------------------------------------------------------------------
 Thu Dec  3 09:28:34 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: added management of tmpfs file systems (related to
