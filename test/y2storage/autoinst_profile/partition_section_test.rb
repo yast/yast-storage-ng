@@ -535,6 +535,22 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           end
         end
       end
+
+      context "and quotas are enabled" do
+        before do
+          allow(filesystem).to receive(:quota?).and_return(true)
+        end
+
+        it "initializes the 'quotas' attribute to 'true'" do
+          expect(section.quotas).to eq(true)
+        end
+      end
+
+      context "and quotas are disabled" do
+        it "initializes the 'quotas' attribute to 'false'" do
+          expect(section.quotas).to eq(false)
+        end
+      end
     end
 
     context "given a block filesystem" do

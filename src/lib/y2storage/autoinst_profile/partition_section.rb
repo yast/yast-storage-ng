@@ -79,7 +79,8 @@ module Y2Storage
         { name: :bcache_backing_for },
         { name: :bcache_caching_for },
         { name: :device },
-        { name: :btrfs_name }
+        { name: :btrfs_name },
+        { name: :quotas }
       ].freeze
       private_constant :ATTRIBUTES
 
@@ -171,6 +172,9 @@ module Y2Storage
       # @!attribute btrfs_name
       #   @return [String] Btrfs in which this partition will be included
 
+      # @!attribute quotas
+      #   @return [Boolean] Whether support for quotas is enabled or not
+
       def init_from_hashes(hash)
         super
 
@@ -192,7 +196,8 @@ module Y2Storage
       # @see PartitioningSection.new_from_storage for more details
       #
       # @param device [Device] a device that can be cloned into a <partition> section,
-      #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
+      #   like a partition, an LVM logical volume, an MD RAID, a NFS filesystem or a
+      #   Btrfs multi-device.
       # @return [PartitionSection]
       def self.new_from_storage(device, parent = nil)
         result = new(parent)
@@ -392,6 +397,7 @@ module Y2Storage
         @filesystem = filesystem.type.to_sym
         @label = filesystem.label unless filesystem.label.empty?
         @mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
+        @quotas = filesystem.quota? if filesystem.respond_to?(:quota?)
         init_subvolumes(filesystem)
         init_mount_options(filesystem)
       end
