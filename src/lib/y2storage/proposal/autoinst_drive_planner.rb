@@ -201,6 +201,7 @@ module Y2Storage
         device.mkfs_options = partition_section.mkfs_options
         device.fstab_options = partition_section.fstab_options
         device.read_only = read_only?(partition_section.mount)
+        device.quotas = !!partition_section.quotas
       end
 
       # Sets device attributes related to snapshots

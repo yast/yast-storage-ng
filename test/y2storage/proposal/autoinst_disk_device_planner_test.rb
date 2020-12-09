@@ -741,5 +741,42 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
       end
     end
+
+    context "speciyfing quotas support" do
+      let(:root_spec) do
+        { "mount" => "/", "filesystem" => "btrfs", "quotas" => quotas? }
+      end
+
+      let(:planned_root) do
+        disk = planner.planned_devices(drive).first
+        disk.partitions.first
+      end
+
+      context "when quotas are enabled" do
+        let(:quotas?) { true }
+
+        it "enables the quotas" do
+          expect(planned_root.quotas?).to eq(true)
+        end
+      end
+
+      context "when quotas are not enabled" do
+        let(:quotas?) { false }
+
+        it "does not plan for quotas" do
+          expect(planned_root.quotas?).to eq(false)
+        end
+      end
+
+      context "when it not specified whether quotas must be enabled or not" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs" }
+        end
+
+        it "does not plan for quotas" do
+          expect(planned_root.quotas?).to eq(false)
+        end
+      end
+    end
   end
 end
