@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,18 +28,18 @@ describe Y2Partitioner::Actions::QuitPartitioner do
     devicegraph_stub("mixed_disks")
 
     devicegraphs = Y2Partitioner::DeviceGraphs.instance
-    allow(devicegraphs).to receive(:devices_edited?).and_return(devices_edited)
+    allow(devicegraphs).to receive(:actions?).and_return(actions)
 
     allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(devicegraphs)
   end
 
-  let(:devices_edited) { false }
+  let(:actions) { false }
 
   subject { described_class.new }
 
   describe "#run" do
     context "when no devices have been modified" do
-      let(:devices_edited) { false }
+      let(:actions) { false }
 
       it "does not show a confirmation popup" do
         expect(Yast2::Popup).to_not receive(:show)
@@ -52,7 +53,7 @@ describe Y2Partitioner::Actions::QuitPartitioner do
     end
 
     context "when some devices have been modified" do
-      let(:devices_edited) { true }
+      let(:actions) { true }
 
       before do
         allow(Yast2::Popup).to receive(:show).and_return(accept)
@@ -86,7 +87,7 @@ describe Y2Partitioner::Actions::QuitPartitioner do
 
   describe "#quit?" do
     context "when no devices have been modified" do
-      let(:devices_edited) { false }
+      let(:actions) { false }
 
       it "returns true" do
         expect(subject.quit?).to eq(true)
@@ -94,7 +95,7 @@ describe Y2Partitioner::Actions::QuitPartitioner do
     end
 
     context "when some devices have been modified" do
-      let(:devices_edited) { true }
+      let(:actions) { true }
 
       before do
         allow(Yast2::Popup).to receive(:show).and_return(accept)

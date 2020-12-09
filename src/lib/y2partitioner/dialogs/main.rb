@@ -175,7 +175,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def system_edited?
-        DeviceGraphs.instance.devices_edited?
+        DeviceGraphs.instance.actions?
       end
 
       # Current devicegraph with all the modifications
