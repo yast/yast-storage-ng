@@ -142,11 +142,11 @@ module Y2Partitioner
       @checkpoints[device.sid]
     end
 
-    # Whether initial devices have been modified
+    # Whether there are actions to perform during the commit phase
     #
     # @return [Boolean]
-    def devices_edited?
-      current != initial
+    def actions?
+      !current.actiongraph.empty?
     end
 
     private

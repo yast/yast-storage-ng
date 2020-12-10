@@ -69,21 +69,28 @@ describe Y2Partitioner::DeviceGraphs do
     end
   end
 
-  describe "#devices_edited?" do
-    context "when no devices have been modified in the current graph" do
+  describe "#actions?" do
+    context "when there are no actions to perform in the current graph" do
+      before do
+        # Note that adding userdata makes devicegraphs to be not equal when comparing them.
+        # Regression for bsc#1179829.
+        sdb2 = subject.current.find_by_name("/dev/sdb2")
+        sdb2.filesystem.subvolumes_prefix = "@"
+      end
+
       it "returns false" do
-        expect(subject.devices_edited?).to eq(false)
+        expect(subject.actions?).to eq(false)
       end
     end
 
-    context "when some devices have been modified in the current graph" do
+    context "when there are actions to perform in the current graph" do
       before do
         sda2 = subject.current.find_by_name("/dev/sda2")
         sda2.delete_filesystem
       end
 
       it "returns true" do
-        expect(subject.devices_edited?).to eq(true)
+        expect(subject.actions?).to eq(true)
       end
     end
   end
