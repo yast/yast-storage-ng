@@ -201,7 +201,6 @@ module Y2Storage
         device.mkfs_options = partition_section.mkfs_options
         device.fstab_options = partition_section.fstab_options
         device.read_only = read_only?(partition_section.mount)
-        device.quotas = !!partition_section.quotas
       end
 
       # Sets device attributes related to snapshots
@@ -240,6 +239,29 @@ module Y2Storage
           else
             []
           end
+
+        configure_btrfs_quotas(device, section)
+      end
+
+      # Sets the Btrfs quotas according to the section and the subvolumes
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def configure_btrfs_quotas(device, section)
+        if section.quotas
+          device.quotas = true
+          return
+        end
+
+        subvols_with_quotas = device.subvolumes.select do |subvol|
+          subvol.referenced_limit && !subvol.referenced_limit.unlimited?
+        end
+        return if subvols_with_quotas.empty? || device.quotas?
+
+        device.quotas = true
+        issues_list.add(
+          Y2Storage::AutoinstIssues::MissingBtrfsQuotas, section, subvols_with_quotas
+        )
       end
 
       # Return the default subvolume attributes for a given mount point

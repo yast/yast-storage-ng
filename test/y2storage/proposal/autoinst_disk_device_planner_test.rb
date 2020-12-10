@@ -744,7 +744,11 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
     context "speciyfing quotas support" do
       let(:root_spec) do
-        { "mount" => "/", "filesystem" => "btrfs", "quotas" => quotas? }
+        { "mount" => "/", "filesystem" => "btrfs", "quotas" => quotas?, "subvolumes" => subvolumes }
+      end
+
+      let(:subvolumes) do
+        [{ "path" => "@/var" }]
       end
 
       let(:planned_root) do
@@ -760,21 +764,57 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
       end
 
-      context "when quotas are not enabled" do
+      context "when quotas are disabled" do
         let(:quotas?) { false }
 
         it "does not plan for quotas" do
           expect(planned_root.quotas?).to eq(false)
         end
+
+        context "but a subvolume requires quotas" do
+          let(:subvolumes) do
+            [{ "path" => "@/tmp", "referenced_limit" => "1GiB" }]
+          end
+
+          it "plans for quotas" do
+            expect(planned_root.quotas?).to eq(true)
+          end
+
+          it "reports an issue" do
+            planner.planned_devices(drive)
+            issue = planner.issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::MissingBtrfsQuotas)
+            end
+            expect(issue).to_not be_nil
+          end
+        end
       end
 
       context "when it not specified whether quotas must be enabled or not" do
         let(:root_spec) do
-          { "mount" => "/", "filesystem" => "btrfs" }
+          { "mount" => "/", "filesystem" => "btrfs", "subvolumes" => subvolumes }
         end
 
         it "does not plan for quotas" do
           expect(planned_root.quotas?).to eq(false)
+        end
+
+        context "but a subvolume requires quotas" do
+          let(:subvolumes) do
+            [{ "path" => "@/tmp", "referenced_limit" => "1GiB" }]
+          end
+
+          it "plans for quotas" do
+            expect(planned_root.quotas?).to eq(true)
+          end
+
+          it "reports an issue" do
+            planner.planned_devices(drive)
+            issue = planner.issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::MissingBtrfsQuotas)
+            end
+            expect(issue).to_not be_nil
+          end
         end
       end
     end
