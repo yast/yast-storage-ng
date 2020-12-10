@@ -250,12 +250,9 @@ module Y2Storage
           filesystem = final_device!(device).filesystem
           if filesystem
             setup_quotas(filesystem)
-            # FIXME replace with '#setup_mount_point'
-            assign_mount_point(filesystem)
-            setup_fstab_options(filesystem.mount_point)
+            setup_mount_point(filesystem)
           end
         end
-
       end
 
       # @param filesystem [Filesystems::Base]
