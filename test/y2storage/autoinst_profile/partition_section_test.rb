@@ -995,6 +995,22 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         end
 
       end
+
+      context "when a subvolume has" do
+        before do
+          section.subvolumes = [
+            Y2Storage::SubvolSpecification.new(
+              "@/usr", copy_on_write: true, referenced_limit: Y2Storage::DiskSize.new("5 GiB")
+            )
+          ]
+        end
+
+        it "exports subvolumes as an array of hashes" do
+          expect(section.to_hashes["subvolumes"]).to include(
+            a_hash_including("referenced_limit" => "5 GiB")
+          )
+        end
+      end
     end
 
     context "when there are not subvolumes" do

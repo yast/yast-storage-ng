@@ -192,7 +192,11 @@ module Y2Storage
     # @param subvolume [BtrfsSubvolume] Btrfs subvolume
     # @return [SubvolSpecification]
     def self.create_from_btrfs_subvolume(subvolume)
-      subvol = SubvolSpecification.new(subvolume.path, copy_on_write: !subvolume.nocow?)
+      subvol = SubvolSpecification.new(
+        subvolume.path,
+        copy_on_write:    !subvolume.nocow?,
+        referenced_limit: subvolume.referenced_limit
+      )
       log.info "Creating from Btrfs subvolume: #{subvol}"
       subvol
     end

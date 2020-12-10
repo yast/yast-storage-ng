@@ -463,13 +463,18 @@ module Y2Storage
 
       # Returns an array of hashes representing subvolumes
       #
-      # AutoYaST only uses a subset of subvolumes properties: 'path' and 'copy_on_write'.
+      # AutoYaST only uses a subset of subvolumes properties: 'path', 'copy_on_write'
+      # and 'referenced_limit'.
       #
       # @return [Array<Hash>] Array of hash-based representations of subvolumes
       def subvolumes_to_hashes
         subvolumes.map do |subvol|
           subvol_path = subvol.path.sub(/\A#{@subvolumes_prefix}\//, "")
-          { "path" => subvol_path, "copy_on_write" => subvol.copy_on_write }
+          hash = { "path" => subvol_path, "copy_on_write" => subvol.copy_on_write }
+          if subvol.referenced_limit && !subvol.referenced_limit.unlimited?
+            hash["referenced_limit"] = subvol.referenced_limit.to_s
+          end
+          hash
         end
       end
 
