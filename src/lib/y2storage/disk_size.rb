@@ -364,6 +364,31 @@ module Y2Storage
         DiskSize.new(bytes)
       end
 
+      # Create a {DiskSize} from a parsed string but returns a fallback when the string is not valid
+      #
+      # The parse method raises an exception when the given string does not
+      # correspond to a valid size. This method returns a fallback value
+      # instead of raising an exception.
+      #
+      # @example
+      #   DiskSize.parse_or("42 GiB")                             #=> <DiskSize 42.00 GiB (45097156608)>
+      #   DiskSize.parse_or("GiB")                                #=> nil
+      #   DiskSize.parse_or("GiB", DiskSize.unlimited)            #=> <DiskSize <unlimited> -1>
+      #   DiskSize.parse_or("1GB", legacy_units: true)            #=> <DiskSize 1.00 GiB (1073741824)>
+      #
+      # @param str [String] String representing a size
+      # @param fallback [Object] Fallback value to return when parsing failed
+      # @param legacy_units [Boolean] if true, International System units
+      #   are considered as base 2 units, that is, MB is the same than MiB.
+      # @return [DiskSize]
+      #
+      # @see .parse
+      def parse_or(str, fallback = nil, legacy_units: false)
+        parse(str, legacy_units: legacy_units)
+      rescue TypeError
+        fallback
+      end
+
       alias_method :from_s, :parse
       alias_method :from_human_string, :parse
 

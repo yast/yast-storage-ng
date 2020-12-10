@@ -30,7 +30,7 @@ module Y2Storage
   class SubvolSpecification
     include Yast::Logger
 
-    attr_accessor :path, :copy_on_write, :archs
+    attr_accessor :path, :copy_on_write, :archs, :referenced_limit
 
     COW_SUBVOL_PATHS = [
       "home",
@@ -70,16 +70,18 @@ module Y2Storage
       "boot/grub2/s390x-emu"        => ["s390"]
     }
 
-    def initialize(path, copy_on_write: true, archs: nil)
+    def initialize(path, copy_on_write: true, archs: nil, referenced_limit: nil)
       @path = path
       @copy_on_write = copy_on_write
       @archs = archs
+      @referenced_limit = referenced_limit
     end
 
     def to_s
       text = "SubvolSpecification #{@path}"
       text += " (NoCOW)" unless @copy_on_write
       text += " (archs: #{@archs})" if arch_specific?
+      text += " (limit): #{@referenced_limit}" if @referenced_limit
       text
     end
 
@@ -159,6 +161,7 @@ module Y2Storage
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, !copy_on_write)
       return if subvolume.nil?
 
+      subvolume.referenced_limit = referenced_limit if referenced_limit
       subvolume.can_be_auto_deleted = true
       subvolume
     end
@@ -169,17 +172,17 @@ module Y2Storage
     #   or just a string (for subvolumes specified just as a path)
     # @return [SubvolSpecification] or nil if error
     def self.create_from_xml(xml)
-      return nil if xml.nil?
-
+      xml ||= {}
       xml = { "path" => xml } if xml.is_a?(String)
       return nil unless xml.key?("path")
 
-      path = xml["path"]
-      cow = true
-      cow = xml["copy_on_write"] if xml.key?("copy_on_write")
+      cow = xml.key?("copy_on_write") ? xml["copy_on_write"] : true
       archs = nil
       archs = xml["archs"].gsub(/\s+/, "").split(",") if xml.key?("archs")
-      planned_subvol = SubvolSpecification.new(path, copy_on_write: cow, archs: archs)
+      referenced_limit = DiskSize.parse_or(xml["referenced_limit"]) if xml["referenced_limit"]
+      planned_subvol = SubvolSpecification.new(
+        xml["path"], copy_on_write: cow, archs: archs, referenced_limit: referenced_limit
+      )
       log.info("Creating from XML: #{planned_subvol}")
       planned_subvol
     end
