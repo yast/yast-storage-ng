@@ -742,7 +742,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
     end
 
-    context "speciyfing quotas support" do
+    context "specifying quotas support" do
       let(:root_spec) do
         { "mount" => "/", "filesystem" => "btrfs", "quotas" => quotas?, "subvolumes" => subvolumes }
       end

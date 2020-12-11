@@ -996,7 +996,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
       end
 
-      context "when a subvolume has" do
+      context "when a subvolume has a referenced limit" do
         before do
           section.subvolumes = [
             Y2Storage::SubvolSpecification.new(
