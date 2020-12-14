@@ -81,7 +81,8 @@ module Y2Storage
     #     (like, for example, a duplicated id)
     storage_forward :check
 
-    # @!method storage_used_features
+    # @!method storage_used_features(dependency_type)
+    #   @param dependency_type [Integer] value of Storage::UsedFeaturesDependencyType
     #   @return [Integer] bit-field with the used features of the devicegraph
     storage_forward :storage_used_features, to: :used_features
     private :storage_used_features
@@ -552,9 +553,22 @@ module Y2Storage
 
     # List of storage features used by the devicegraph
     #
+    # By default, it returns the features associated to all devices and filesystems
+    # in the devicegraph. The required_only argument can be used to limit the result
+    # by excluding features associated to those filesystems that have no mount point.
+    #
+    # @param required_only [Boolean] whether the result should only include those
+    #   features that are mandatory (ie. associated to devices with a mount point)
     # @return [StorageFeaturesList]
-    def used_features
-      StorageFeaturesList.from_bitfield(storage_used_features)
+    def used_features(required_only: false)
+      type =
+        if required_only
+          Storage::UsedFeaturesDependencyType_REQUIRED
+        else
+          Storage::UsedFeaturesDependencyType_SUGGESTED
+        end
+
+      StorageFeaturesList.from_bitfield(storage_used_features(type))
     end
 
     private

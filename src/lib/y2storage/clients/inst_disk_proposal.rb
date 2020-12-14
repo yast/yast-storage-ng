@@ -46,6 +46,7 @@ module Y2Storage
       include InstDialogMixin
       include PartitioningFeatures
 
+      # Constructor
       def initialize
         textdomain "storage"
 
@@ -60,6 +61,7 @@ module Y2Storage
         create_initial_proposal
       end
 
+      # Executes the client
       def run
         log.info("BEGIN of inst_disk_proposal")
 
@@ -101,6 +103,8 @@ module Y2Storage
         ret
       end
 
+      # Saves the result to the instance of {StorageManager}, called when the user
+      # clicks 'next'
       def save_to_storage_manager
         if @proposal
           log.info "Storing accepted proposal"
@@ -113,6 +117,7 @@ module Y2Storage
         save_used_fs_list
       end
 
+      # Executes the Guided Setup, called when the user presses the corresponding button
       def guided_setup
         return if manual_partitioning? && !overwrite_manual_settings?
 
@@ -126,6 +131,7 @@ module Y2Storage
         end
       end
 
+      # Executes the Partitioner, called when the user presses the corresponding button
       def expert_partitioner(initial_graph)
         return unless initial_graph && run_partitioner?
 
@@ -157,7 +163,21 @@ module Y2Storage
       # set of packages to be installed.
       def add_storage_packages
         features = storage_manager.staging.used_features
-        pkg_handler = Y2Storage::PackageHandler.new(features.pkg_list)
+        required_features = storage_manager.staging.used_features(required_only: true)
+
+        required_packages = required_features.pkg_list
+        optional_packages = features.pkg_list - required_packages
+
+        set_proposal_packages(required_packages, false)
+        set_proposal_packages(optional_packages, true)
+      end
+
+      # @see #add_storage_packages
+      #
+      # @param pkgs [Array<String>] list of packages
+      # @param optional [Boolean] whether the packages in the list are optional
+      def set_proposal_packages(pkgs, optional)
+        pkg_handler = Y2Storage::PackageHandler.new(pkgs, optional: optional)
         pkg_handler.set_proposal_packages
       end
 
@@ -172,10 +192,12 @@ module Y2Storage
         res
       end
 
+      # @return StorageManager
       def storage_manager
         StorageManager.instance
       end
 
+      # @return DiskAnalyzer
       def probed_analyzer
         storage_manager.probed_disk_analyzer
       end

@@ -100,6 +100,10 @@ module Y2Partitioner
 
       # Updates the value of {#packages}
       def calculate_packages
+        # This is only used during installation (the summary in a installed system does not
+        # include the packages to be installed because they are interactively installed right
+        # away), so we use Devicegraph#used_features (without arguments) to display all packages
+        # that are added to the software proposal, both optional and required.
         @packages = current_graph.used_features.pkg_list
       end
 
