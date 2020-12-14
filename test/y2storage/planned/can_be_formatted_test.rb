@@ -106,7 +106,7 @@ describe Y2Storage::Planned::CanBeFormatted do
 
     context "when quotas are planned to be enabled" do
       before do
-        planned.quotas = true
+        planned.quota = true
       end
 
       it "enables the quotas" do
@@ -206,7 +206,7 @@ describe Y2Storage::Planned::CanBeFormatted do
       let(:device_name) { "/dev/sda1" }
 
       before do
-        planned.quotas = true
+        planned.quota = true
       end
 
       it "enables the quotas" do

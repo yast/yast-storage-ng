@@ -73,15 +73,15 @@ module Y2Storage
       attr_accessor :mkfs_options
 
       # @return [Boolean] Whether quotas are enabled
-      attr_accessor :quotas
-      alias_method :quotas?, :quotas
+      attr_accessor :quota
+      alias_method :quota?, :quota
 
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_formatted
         @subvolumes = []
         @reformat = false
         @snapshots = false
-        @quotas = false
+        @quota = false
       end
 
       # See #subvolumes
@@ -109,7 +109,7 @@ module Y2Storage
         final_device.remove_descendants
         filesystem = final_device.create_blk_filesystem(filesystem_type)
         setup_filesystem(filesystem)
-        setup_quotas(filesystem)
+        setup_quota(filesystem)
         btrfs_setup(filesystem)
 
         filesystem
@@ -197,10 +197,10 @@ module Y2Storage
         mount_point.mount_options = options unless options.empty?
       end
 
-      def setup_quotas(filesystem)
+      def setup_quota(filesystem)
         return unless filesystem.respond_to?(:quota=)
 
-        filesystem.quota = quotas?
+        filesystem.quota = quota?
       end
 
       # Returns fstab options for the given mount point
@@ -249,7 +249,7 @@ module Y2Storage
         else
           filesystem = final_device!(device).filesystem
           if filesystem
-            setup_quotas(filesystem)
+            setup_quota(filesystem)
             setup_mount_point(filesystem)
           end
         end

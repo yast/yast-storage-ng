@@ -249,16 +249,16 @@ module Y2Storage
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def configure_btrfs_quotas(device, section)
         if section.quotas
-          device.quotas = true
+          device.quota = true
           return
         end
 
         subvols_with_quotas = device.subvolumes.select do |subvol|
           subvol.referenced_limit && !subvol.referenced_limit.unlimited?
         end
-        return if subvols_with_quotas.empty? || device.quotas?
+        return if subvols_with_quotas.empty? || device.quota?
 
-        device.quotas = true
+        device.quota = true
         issues_list.add(
           Y2Storage::AutoinstIssues::MissingBtrfsQuotas, section, subvols_with_quotas
         )

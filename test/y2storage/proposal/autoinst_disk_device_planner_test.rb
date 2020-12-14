@@ -760,7 +760,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:quotas?) { true }
 
         it "enables the quotas" do
-          expect(planned_root.quotas?).to eq(true)
+          expect(planned_root.quota?).to eq(true)
         end
       end
 
@@ -768,7 +768,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:quotas?) { false }
 
         it "does not plan for quotas" do
-          expect(planned_root.quotas?).to eq(false)
+          expect(planned_root.quota?).to eq(false)
         end
 
         context "but a subvolume requires quotas" do
@@ -777,7 +777,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           end
 
           it "plans for quotas" do
-            expect(planned_root.quotas?).to eq(true)
+            expect(planned_root.quota?).to eq(true)
           end
 
           it "reports an issue" do
@@ -796,7 +796,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         it "does not plan for quotas" do
-          expect(planned_root.quotas?).to eq(false)
+          expect(planned_root.quota?).to eq(false)
         end
 
         context "but a subvolume requires quotas" do
@@ -805,7 +805,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           end
 
           it "plans for quotas" do
-            expect(planned_root.quotas?).to eq(true)
+            expect(planned_root.quota?).to eq(true)
           end
 
           it "reports an issue" do
