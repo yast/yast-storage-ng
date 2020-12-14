@@ -535,6 +535,22 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           end
         end
       end
+
+      context "and quotas are enabled" do
+        before do
+          allow(filesystem).to receive(:quota?).and_return(true)
+        end
+
+        it "initializes the 'quotas' attribute to 'true'" do
+          expect(section.quotas).to eq(true)
+        end
+      end
+
+      context "and quotas are disabled" do
+        it "initializes the 'quotas' attribute to 'false'" do
+          expect(section.quotas).to eq(false)
+        end
+      end
     end
 
     context "given a block filesystem" do
@@ -978,6 +994,22 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           expect(section.to_hashes["subvolumes_prefix"]).to eq("@")
         end
 
+      end
+
+      context "when a subvolume has a referenced limit" do
+        before do
+          section.subvolumes = [
+            Y2Storage::SubvolSpecification.new(
+              "@/usr", copy_on_write: true, referenced_limit: Y2Storage::DiskSize.new("5 GiB")
+            )
+          ]
+        end
+
+        it "exports subvolumes as an array of hashes" do
+          expect(section.to_hashes["subvolumes"]).to include(
+            a_hash_including("referenced_limit" => "5 GiB")
+          )
+        end
       end
     end
 
