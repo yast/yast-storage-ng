@@ -214,7 +214,7 @@ module Y2Partitioner
       def packages_installed?
         return true if Yast::Mode.installation
 
-        pkgs = device_graph.used_features.pkg_list
+        pkgs = device_graph.actiongraph.used_features.pkg_list
         Y2Storage::PackageHandler.new(pkgs).install
       end
 

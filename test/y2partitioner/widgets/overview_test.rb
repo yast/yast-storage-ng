@@ -426,6 +426,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     context "when the current setup is valid" do
       let(:valid_setup) { true }
+      let(:actiongraph) { instance_double(Y2Storage::Actiongraph) }
 
       it "does not show an error popup" do
         expect(Yast2::Popup).to_not receive(:show)
@@ -436,13 +437,23 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         expect(subject.validate).to eq(true)
       end
 
-      it "checks for needed packages" do
+      # bsc#1168077: in a installed system check only for packages needed for the actions
+      it "gets the list of needed packages from the actiongraph" do
+        expect(current_graph).to_not receive(:used_features)
+
+        expect(current_graph).to receive(:actiongraph).and_return actiongraph
+        expect(actiongraph).to receive(:used_features).and_return used_features
+
+        subject.validate
+      end
+
+      it "checks whether the needed packages are installed" do
         expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
           .with(["xfsprogs"])
         subject.validate
       end
 
-      context "but the user refuses to install them " do
+      context "but the user refuses to install the packages" do
         let(:installed_packages) { false }
 
         it "returns false" do

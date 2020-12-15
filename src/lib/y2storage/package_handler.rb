@@ -52,8 +52,10 @@ module Y2Storage
     # Constructor
     #
     # @param packages [Array<String>] packages to be added to {#pkg_list}
-    def initialize(packages)
+    # @param optional [Boolean] see {#optional}
+    def initialize(packages, optional: false)
       textdomain("storage")
+      @optional = optional
       @pkg_list = []
       add_packages(packages)
     end
@@ -102,8 +104,10 @@ module Y2Storage
     def set_proposal_packages
       return true if @pkg_list.empty?
 
-      log.info("Marking #{pkg_list} for installation")
-      success = Yast::PackagesProposal.SetResolvables(PROPOSAL_ID, :package, @pkg_list)
+      log.info("Marking #{pkg_list} for installation (optional: #{optional})")
+      success = Yast::PackagesProposal.SetResolvables(
+        PROPOSAL_ID, :package, @pkg_list, optional: optional
+      )
       if !success
         log.error("PackagesProposal::SetResolvables() for #{pkg_list} failed")
         set_resolvables_error_popup
@@ -114,6 +118,14 @@ module Y2Storage
     end
 
     private
+
+    # Whether the packages should be considered as optional when adding them to the
+    # installation proposal.
+    #
+    # Obviously, this is relevant for {#set_proposal_packages} but not for {#install}.
+    #
+    # @return [Boolean]
+    attr_reader :optional
 
     # Add a number of packages to the list of packages to be installed
     #
