@@ -209,14 +209,7 @@ module Y2Storage
       # @param tmpfs_drives [Array<AutoinstProfile::DriveSection>] List of Tmpfs specifications from
       #   AutoYaST
       def add_tmpfs_filesystems(tmpfs_drives)
-        tmpfs_drives.each do |drive|
-          if drive.mount.nil? || drive.mount.empty?
-            issues_list.add(Y2Storage::AutoinstIssues::MissingValue, drive, :mount)
-            next
-          end
-
-          @drives[d.mount] = d
-        end
+        tmpfs_drives.each_with_index { |d, i| @drives["tmpfs-#{i}"] = d }
       end
 
       # Adds NFS filesystems to the device map

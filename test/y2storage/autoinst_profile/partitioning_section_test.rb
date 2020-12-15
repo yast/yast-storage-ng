@@ -199,6 +199,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     let(:drive9) { double("DriveSection", type: :CT_NFS) }
     let(:drive10) { double("DriveSection", type: :CT_BTRFS) }
     let(:drive11) { double("DriveSection", type: :CT_DMMULTIPATH) }
+    let(:drive12) { double("DriveSection", type: :CT_TMPFS) }
     let(:wrongdrv1) { double("DriveSection", device: "/dev/md", type: :CT_DISK) }
     let(:wrongdrv2) { double("DriveSection", device: "/dev/sdc", type: :CT_MD) }
     let(:wrongdrv3) { double("DriveSection", device: "/dev/sdd", type: :CT_WRONG) }
@@ -208,7 +209,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     before do
       section.drives = [
         drive1, drive2, drive3, drive4, drive5, drive6, drive7, drive8, drive9, drive10,
-        drive11, wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
+        drive11, drive12, wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
       ]
     end
 
@@ -249,6 +250,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "#nfs_drives" do
       it "returns drives which type is :CT_NFS, even if they look invalid" do
         expect(section.nfs_drives).to contain_exactly(drive9)
+      end
+    end
+
+    describe "#tmpfs_drives" do
+      it "returns drives which type is :CT_TMPFS" do
+        expect(section.tmpfs_drives).to contain_exactly(drive12)
       end
     end
   end

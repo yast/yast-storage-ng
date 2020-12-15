@@ -37,14 +37,14 @@ module Y2Storage
       #
       # @param planned_tmpfs  [Planned::Tmpfs] planned Tmpfs filesystem
       # @return [CreatorResult] result containing the new Tmpfs filesystem
-      def create_nfs(planned_tmpfs)
+      def create_tmpfs(planned_tmpfs)
         new_graph = original_devicegraph.duplicate
 
-        nfs = Filesystems::Tmpfs.create(new_graph)
-        nfs.mount_path = planned_tmpfs.mount_point
-        nfs.mount_point.mount_options = planned_tmpfs.fstab_options
+        tmpfs = Filesystems::Tmpfs.create(new_graph)
+        tmpfs.mount_path = planned_tmpfs.mount_point
+        tmpfs.mount_point.mount_options = planned_tmpfs.fstab_options
 
-        CreatorResult.new(new_graph, nfs.mount_path => planned_tmpfs)
+        CreatorResult.new(new_graph, tmpfs.mount_path => planned_tmpfs)
       end
     end
   end

@@ -63,7 +63,9 @@ module Y2Storage
     # when it is not possible to place the devices in the given free space. But
     # we would also need to do further changes, like skipping some checks when
     # running in this flexible mode.
-    class AutoinstDevicesCreator
+    #
+    # FIXME: class too long, refactoring needed.
+    class AutoinstDevicesCreator # rubocop:disable Metrics/ClassLength
       include Yast::Logger
       include AutoinstPartitionSize
 
@@ -435,7 +437,7 @@ module Y2Storage
       #
       # @param tmpfs_filesystems [Array<Planned::Tmpfs>] List of planned Tmpfs filesystems
       # @return [Proposal::CreatorResult] Result containing the specified Tmpfs filesystems
-      def tmpfs_filesystems(tmpfs_filesystems)
+      def create_tmpfs_filesystems(tmpfs_filesystems)
         tmpfs_filesystems.reduce(creator_result) do |result, planned_tmpfs|
           new_result = create_tmpfs_filesystem(result.devicegraph, planned_tmpfs)
           result.merge(new_result)
@@ -518,7 +520,7 @@ module Y2Storage
       #
       # @return [Proposal::CreatorResult] Result containing the specified Tmpfs
       def create_tmpfs_filesystem(devicegraph, planned_tmpfs)
-        tmpfs_creator = Proposal::NfsCreator.new(devicegraph)
+        tmpfs_creator = Proposal::TmpfsCreator.new(devicegraph)
         tmpfs_creator.create_tmpfs(planned_tmpfs)
       end
 

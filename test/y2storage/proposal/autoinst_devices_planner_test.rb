@@ -327,5 +327,21 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
     end
+
+    context "using CT_TMPFS as type" do
+      let(:partitioning_array) do
+        [{
+          "type" => :CT_TMPFS, "partitions" => [{ "mount" => "/srv" }, { "mount" => "/var/tmp" }]
+        }]
+      end
+
+      it "plans a disk device" do
+        devices = planner.planned_devices(drives_map)
+        expect(devices.tmpfs_filesystems).to contain_exactly(
+          an_object_having_attributes(mount_point: "/srv"),
+          an_object_having_attributes(mount_point: "/var/tmp")
+        )
+      end
+    end
   end
 end
