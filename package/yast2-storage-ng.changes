@@ -1,8 +1,7 @@
 -------------------------------------------------------------------
 Tue Dec 15 15:56:44 UTC 2020 - José Iván López González <jlopez@suse.com>
 
-- AutoYaST: added management of tmpfs file systems (related to
-  jsc#SLE-11308).
+- AutoYaST: added management of tmpfs file systems (jsc#SLE-11308).
 - 4.3.31
 
 -------------------------------------------------------------------

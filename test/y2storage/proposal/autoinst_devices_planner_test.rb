@@ -335,7 +335,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         }]
       end
 
-      it "plans a disk device" do
+      it "plans a tmpfs file system for each partition section" do
         devices = planner.planned_devices(drives_map)
         expect(devices.tmpfs_filesystems).to contain_exactly(
           an_object_having_attributes(mount_point: "/srv"),
