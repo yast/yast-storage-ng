@@ -1162,6 +1162,13 @@ describe Y2Storage::Devicegraph do
         expect(features.map(&:id))
           .to contain_exactly(:UF_BTRFS, :UF_EXT4, :UF_NTFS, :UF_XFS, :UF_SWAP)
       end
+
+      it "returns only the features for mounted filesystems if required_only is given" do
+        features = fake_devicegraph.used_features(required_only: true)
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id))
+          .to contain_exactly(:UF_BTRFS, :UF_XFS, :UF_SWAP)
+      end
     end
 
     context "with unformatted DASD and FC devices" do

@@ -48,6 +48,11 @@ module Y2Storage
     storage_forward :storage_compound_actions, to: :compound_actions, as: "CompoundAction"
     private :storage_compound_actions
 
+    # @!method storage_used_features
+    #   @return [Integer] bit-field with the used features of the actiongraph
+    storage_forward :storage_used_features, to: :used_features
+    private :storage_used_features
+
     # List of compound actions of the actiongraph.
     #
     # @note This is different from ::Storage#compound_actions because this
@@ -60,6 +65,13 @@ module Y2Storage
     def compound_actions
       to_storage_value.generate_compound_actions unless generated_compound_actions?
       storage_compound_actions
+    end
+
+    # List of storage features used by the actiongraph
+    #
+    # @return [StorageFeaturesList]
+    def used_features
+      StorageFeaturesList.from_bitfield(storage_used_features)
     end
 
     private
