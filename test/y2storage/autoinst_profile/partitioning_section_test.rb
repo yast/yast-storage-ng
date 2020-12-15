@@ -34,6 +34,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   let(:bcache_section) { double("bcache_section") }
   let(:nfs_section) { double("nfs_section") }
   let(:btrfs_section) { double("btrfs_section") }
+  let(:tmpfs_section) { double("tmpfs_section") }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -75,7 +76,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           stray_blk_devices:             [stray],
           bcaches:                       [bcache],
           nfs_mounts:                    [nfs],
-          multidevice_btrfs_filesystems: [btrfs]
+          multidevice_btrfs_filesystems: [btrfs],
+          tmp_filesystems:               [tmpfs]
         )
       end
 
@@ -88,6 +90,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:bcache) { instance_double(Y2Storage::Bcache) }
       let(:nfs) { instance_double(Y2Storage::Filesystems::Nfs) }
       let(:btrfs) { instance_double(Y2Storage::Filesystems::Btrfs) }
+      let(:tmpfs) { instance_double(Y2Storage::Filesystems::Tmpfs) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -106,6 +109,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(nfs).and_return(nfs_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(btrfs).and_return(btrfs_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(tmpfs).and_return(tmpfs_section)
       end
 
       subject(:section) { described_class.new_from_storage(devicegraph) }

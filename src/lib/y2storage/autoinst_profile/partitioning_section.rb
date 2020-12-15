@@ -163,7 +163,6 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       # @return [Array<Device>]
       def self.exportable_devices(devicegraph)
-        # TODO: consider also TMPFS
         [].concat(
           devicegraph.bcaches,
           devicegraph.software_raids,
@@ -171,7 +170,8 @@ module Y2Storage
           devicegraph.disk_devices,
           devicegraph.stray_blk_devices,
           devicegraph.multidevice_btrfs_filesystems,
-          devicegraph.nfs_mounts
+          devicegraph.nfs_mounts,
+          devicegraph.tmp_filesystems
         )
       end
 
