@@ -37,7 +37,7 @@ module Y2Storage
 
       # Generates a planned Tmpfs from a drive section
       #
-      # @param partition_Section [AutoinstProfile::PartitionSection] partition section
+      # @param partition_section [AutoinstProfile::PartitionSection] partition section
       #   describing the tmpfs filesystem
       # @return [Planned::Tmpfs,nil] A planned tmpfs or nil if it some error ocurred
       def planned_tmpfs(partition_section)
