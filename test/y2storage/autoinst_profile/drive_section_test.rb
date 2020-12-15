@@ -213,6 +213,11 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(described_class.new_from_storage(nfs)).to be_a described_class
     end
 
+    it "returns a DriveSection object for a tmpfs filesystem" do
+      tmpfs = Y2Storage::Filesystems::Tmpfs.create(fake_devicegraph)
+      expect(described_class.new_from_storage(tmpfs)).to be_a described_class
+    end
+
     it "returns a DriveSection object for a multi-device Btrfs filesystem" do
       sdd1 = device("sdd1")
       sdd3 = device("sdd3")
