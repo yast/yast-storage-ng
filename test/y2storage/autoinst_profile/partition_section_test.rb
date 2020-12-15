@@ -568,7 +568,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "given a tmpfs" do
-      let(:scenario) { "tmpfs1-devicegraph.xml"}
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
 
       let(:dev) do
         fake_devicegraph.tmp_filesystems.find { |d| d.mount_path == "/test1" }
