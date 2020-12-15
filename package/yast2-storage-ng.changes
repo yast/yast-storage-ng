@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Dec 15 13:34:29 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Do not enforce installation of packages that are not strictly
+  needed (bsc#1065588).
+- Partitioner: improved calculation of which packages need to be
+  installed in the running system (bsc#1168077).
+
+-------------------------------------------------------------------
 Thu Dec 10 16:45:41 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - AutoYaST: add support for Btrfs quotas (jsc#SLE-7742).
