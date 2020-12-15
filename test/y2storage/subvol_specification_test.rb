@@ -46,6 +46,37 @@ describe Y2Storage::SubvolSpecification do
     end
   end
 
+  describe ".create_from_xml" do
+    it "returns a subvolume specification with the given path" do
+      subvol_spec = described_class.create_from_xml("path" => "/srv")
+      expect(subvol_spec.path).to eq("/srv")
+    end
+
+    it "sets the list of architectures" do
+      subvol_spec = described_class.create_from_xml("path" => "/srv", "archs" => "x86,aarch64")
+      expect(subvol_spec.archs).to eq(["x86", "aarch64"])
+    end
+
+    context "when a string is given" do
+      it "is used as the subvolume path" do
+        subvol_spec = described_class.create_from_xml("/srv")
+        expect(subvol_spec.path).to eq("/srv")
+      end
+    end
+
+    context "when 'nil' is given" do
+      it "returns nil" do
+        expect(described_class.create_from_xml(nil)).to be_nil
+      end
+    end
+
+    context "when no 'path' is specified" do
+      it "returns nil" do
+        expect(described_class.create_from_xml({})).to be_nil
+      end
+    end
+  end
+
   describe "#current_arch?" do
 
     context "when 'archs' is an empty array" do

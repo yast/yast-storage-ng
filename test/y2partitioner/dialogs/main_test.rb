@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,14 +31,14 @@ describe Y2Partitioner::Dialogs::Main do
     allow(Yast::Mode).to receive(:installation).and_return(installation)
 
     devicegraphs = Y2Partitioner::DeviceGraphs.instance
-    allow(devicegraphs).to receive(:devices_edited?).and_return(devices_edited)
+    allow(devicegraphs).to receive(:actions?).and_return(actions)
 
     allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(devicegraphs)
   end
 
   let(:installation) { true }
 
-  let(:devices_edited) { false }
+  let(:actions) { false }
 
   let(:system_graph) { Y2Partitioner::DeviceGraphs.instance.system }
 
@@ -91,7 +92,7 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are no changes" do
-        let(:devices_edited) { false }
+        let(:actions) { false }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
@@ -101,7 +102,7 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are changes" do
-        let(:devices_edited) { true }
+        let(:actions) { true }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
@@ -123,7 +124,7 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are no changes" do
-        let(:devices_edited) { false }
+        let(:actions) { false }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
@@ -133,7 +134,7 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are changes" do
-        let(:devices_edited) { true }
+        let(:actions) { true }
 
         before do
           allow(Y2Partitioner::Dialogs::Summary).to receive(:run).and_return(summary_result)
@@ -198,7 +199,7 @@ describe Y2Partitioner::Dialogs::Main do
       let(:installation) { false }
 
       context "and there are no changes" do
-        let(:devices_edited) { false }
+        let(:actions) { false }
 
         it "returns 'Finish' label" do
           expect(subject.next_button).to eq(Yast::Label.FinishButton)
@@ -206,7 +207,7 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are changes" do
-        let(:devices_edited) { true }
+        let(:actions) { true }
 
         it "returns 'Next' label" do
           expect(subject.next_button).to eq(Yast::Label.NextButton)
@@ -217,7 +218,7 @@ describe Y2Partitioner::Dialogs::Main do
 
   shared_examples "quiting partitioner" do
     context "when there are no changes" do
-      let(:devices_edited) { false }
+      let(:actions) { false }
 
       it "does not show a confirmation popup" do
         expect(Yast2::Popup).to_not receive(:show)
@@ -231,7 +232,7 @@ describe Y2Partitioner::Dialogs::Main do
     end
 
     context "when there are changes" do
-      let(:devices_edited) { true }
+      let(:actions) { true }
 
       before do
         allow(Yast2::Popup).to receive(:show).and_return(accept)

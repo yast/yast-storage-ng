@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -65,7 +65,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def system_edited?
-        DeviceGraphs.instance.devices_edited?
+        DeviceGraphs.instance.actions?
       end
 
       # Confirmation popup before quitting the Expert Partitioner

@@ -161,16 +161,28 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       expect(lvm_pager).to_not be_nil
     end
 
-    it "has a section for the Bcache devices" do
-      expect(bcache_pager).to_not be_nil
-    end
-
     it "has a section for the Btrfs filesystems" do
       expect(btrfs_pager).to_not be_nil
     end
 
     it "has a section for the Tmpfs filesystems" do
       expect(tmpfs_pager).to_not be_nil
+    end
+
+    context "when Bcache is supported" do
+      let(:architecture) { :x86_64 }
+
+      it "has a section for the Bcache devices" do
+        expect(bcache_pager).to_not be_nil
+      end
+    end
+
+    context "when Bcache is not supported" do
+      let(:architecture) { :s390 }
+
+      it "has not a section for the Bcache devices" do
+        expect(bcache_pager).to be_nil
+      end
     end
 
     context "when there are disk, dasd or multipath devices" do
@@ -263,6 +275,8 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     context "when there are Bcache devices" do
+      let(:architecture) { :x86_64 }
+
       let(:scenario) { "bcache1.xml" }
 
       let(:pager) { bcache_pager }

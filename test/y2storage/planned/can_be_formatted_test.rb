@@ -44,12 +44,13 @@ describe Y2Storage::Planned::CanBeFormatted do
   end
 
   subject(:planned) { FormattableDevice.new }
+  let(:scenario) { "windows-linux-free-pc" }
   let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
   let(:mount_by) { Y2Storage::Filesystems::MountByType::DEVICE }
   let(:mount_point) { "/" }
 
   before do
-    fake_scenario("windows-linux-free-pc")
+    fake_scenario(scenario)
   end
 
   describe "#format!" do
@@ -100,6 +101,32 @@ describe Y2Storage::Planned::CanBeFormatted do
           planned.format!(blk_device)
           expect(blk_device.filesystem.mount_options).to_not include("ro")
         end
+      end
+    end
+
+    context "when quotas are planned to be enabled" do
+      before do
+        planned.quota = true
+      end
+
+      it "enables the quotas" do
+        planned.format!(blk_device)
+        expect(blk_device.filesystem.quota?).to eq(true)
+      end
+
+      context "but they are not supported" do
+        let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+        it "does not enable the quotas" do
+          expect { planned.format!(blk_device) }.to_not raise_error
+        end
+      end
+    end
+
+    context "when quotas are not enabled" do
+      it "does not enable the quotas" do
+        planned.format!(blk_device)
+        expect(blk_device.filesystem.quota?).to eq(false)
       end
     end
   end
@@ -171,6 +198,39 @@ describe Y2Storage::Planned::CanBeFormatted do
           expect { planned.reuse!(fake_devicegraph) }
             .to_not(change { blk_device.filesystem.mount_by })
         end
+      end
+    end
+
+    context "when quotas are planned to be enabled" do
+      let(:scenario) { "trivial_btrfs" }
+      let(:device_name) { "/dev/sda1" }
+
+      before do
+        planned.quota = true
+      end
+
+      it "enables the quotas" do
+        planned.reuse!(fake_devicegraph)
+        expect(blk_device.filesystem.quota?).to eq(true)
+      end
+
+      context "but they are not supported" do
+        let(:scenario) { "windows-linux-free-pc" }
+        let(:device_name) { "/dev/sda2" }
+
+        it "does not enable the quotas" do
+          expect { planned.reuse!(fake_devicegraph) }.to_not raise_error
+        end
+      end
+    end
+
+    context "when quotas are not enabled" do
+      let(:scenario) { "trivial_btrfs" }
+      let(:device_name) { "/dev/sda1" }
+
+      it "does not enable the quotas" do
+        planned.reuse!(fake_devicegraph)
+        expect(blk_device.filesystem.quota?).to eq(false)
       end
     end
   end

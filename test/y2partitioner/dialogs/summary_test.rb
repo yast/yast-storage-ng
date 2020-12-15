@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -43,7 +44,7 @@ describe Y2Partitioner::Dialogs::Summary do
   describe "#abort_handler" do
     before do
       devicegraphs = Y2Partitioner::DeviceGraphs.instance
-      allow(devicegraphs).to receive(:devices_edited?).and_return(true)
+      allow(devicegraphs).to receive(:actions?).and_return(true)
 
       allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(devicegraphs)
 

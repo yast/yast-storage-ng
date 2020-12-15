@@ -535,6 +535,20 @@ describe Y2Storage::DiskSize do
     end
   end
 
+  describe ".parse_or" do
+    it "parses the given value" do
+      size = described_class.parse_or("10GiB", Y2Storage::DiskSize.unlimited)
+      expect(size).to eq(described_class.new("10GiB"))
+    end
+
+    context "when an invalid value is given" do
+      it "returns the fallback" do
+        size = described_class.parse_or("GiB", Y2Storage::DiskSize.unlimited)
+        expect(size).to eq(Y2Storage::DiskSize.unlimited)
+      end
+    end
+  end
+
   describe "#ceil" do
     # Use 31337 bytes (prime) to ensure we don't success accidentally
     let(:rounding) { Y2Storage::DiskSize.new(31337) }

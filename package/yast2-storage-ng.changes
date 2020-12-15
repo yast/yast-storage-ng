@@ -1,4 +1,23 @@
 -------------------------------------------------------------------
+Thu Dec 10 16:45:41 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: add support for Btrfs quotas (jsc#SLE-7742).
+- 4.3.29
+
+-------------------------------------------------------------------
+Thu Dec 10 08:45:09 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: do not show summary when there are no actions to
+  perform (bsc#1179829).
+- 4.3.28
+
+-------------------------------------------------------------------
+Fri Dec  4 08:57:17 UTC 2020 - José Iván López González <jlopez@suse.com>
+
+- Fix unit tests (related to jsc#SLE-11308).
+- 4.3.27
+
+-------------------------------------------------------------------
 Thu Dec  3 09:28:34 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: added management of tmpfs file systems (related to
