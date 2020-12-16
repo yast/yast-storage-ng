@@ -155,8 +155,26 @@ module Y2Storage
       def self.drives_from_storage(devicegraph)
         devices = exportable_devices(devicegraph)
 
-        devices.map { |d| DriveSection.new_from_storage(d) }.compact
+        drives = devices.map { |d| DriveSection.new_from_storage(d) }.compact
+        merge_by_type(drives, :CT_TMPFS)
       end
+
+      # Merges drive sections of a given type into a single section
+      #
+      # @param drives [Array<DriveSection>] Drive sections
+      # @param type [Symbol] Type to merge
+      # @return [Array<DriveSection>] Drive sections containing a single section, if any, of
+      #   the given type
+      def self.merge_by_type(drives, type)
+        by_type, others = drives.partition { |d| d.type == type }
+        return others if by_type.empty?
+
+        parts = by_type.map(&:partitions).flatten
+        merged_drive = by_type.first.clone
+        merged_drive.partitions = parts
+        others + [merged_drive]
+      end
+      private_class_method :merge_by_type
 
       # All devices that can be exported by AutoYaST
       #

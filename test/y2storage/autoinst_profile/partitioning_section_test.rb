@@ -26,15 +26,24 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
   let(:sda) { { "device" => "/dev/sda", "use" => "linux" } }
   let(:sdb) { { "device" => "/dev/sdb", "use" => "all" } }
-  let(:disk_section) { double("disk_section") }
-  let(:dasd_section) { double("dasd_section") }
-  let(:vg_section) { double("vg_section") }
-  let(:md_section) { double("md_section") }
-  let(:stray_section) { double("stray_section") }
-  let(:bcache_section) { double("bcache_section") }
-  let(:nfs_section) { double("nfs_section") }
-  let(:btrfs_section) { double("btrfs_section") }
-  let(:tmpfs_section) { double("tmpfs_section") }
+  let(:disk_section) { double("disk_section", type: :CT_DISK) }
+  let(:dasd_section) { double("dasd_section", type: :CT_DISK) }
+  let(:vg_section) { double("vg_section", type: :CT_LVM) }
+  let(:md_section) { double("md_section", type: :CT_MD) }
+  let(:stray_section) { double("stray_section", type: :CT_DISK) }
+  let(:bcache_section) { double("bcache_section", type: :CT_BCACHE) }
+  let(:nfs_section) { double("nfs_section", type: :CT_NFS) }
+  let(:btrfs_section) { double("btrfs_section", type: :CT_BTRFS) }
+  let(:tmpfs0_section) do
+    Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(
+      "type" => :CT_TMPFS, "partitions" => [{ "mount" => "/srv" }]
+    )
+  end
+  let(:tmpfs1_section) do
+    Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(
+      "type" => :CT_TMPFS, "partitions" => [{ "mount" => "/var/tmp" }]
+    )
+  end
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -77,7 +86,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           bcaches:                       [bcache],
           nfs_mounts:                    [nfs],
           multidevice_btrfs_filesystems: [btrfs],
-          tmp_filesystems:               [tmpfs]
+          tmp_filesystems:               [tmpfs0, tmpfs1]
         )
       end
 
@@ -90,7 +99,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:bcache) { instance_double(Y2Storage::Bcache) }
       let(:nfs) { instance_double(Y2Storage::Filesystems::Nfs) }
       let(:btrfs) { instance_double(Y2Storage::Filesystems::Btrfs) }
-      let(:tmpfs) { instance_double(Y2Storage::Filesystems::Tmpfs) }
+      let(:tmpfs0) { instance_double(Y2Storage::Filesystems::Tmpfs) }
+      let(:tmpfs1) { instance_double(Y2Storage::Filesystems::Tmpfs) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -110,7 +120,9 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(btrfs).and_return(btrfs_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-          .with(tmpfs).and_return(tmpfs_section)
+          .with(tmpfs0).and_return(tmpfs0_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(tmpfs1).and_return(tmpfs1_section)
       end
 
       subject(:section) { described_class.new_from_storage(devicegraph) }
@@ -149,6 +161,12 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
       it "creates an entry in #drives for every relevant Btrfs" do
         expect(section.drives).to include(btrfs_section)
+      end
+
+      it "creates a single entry in #drives grouping all tmpfs filesystems" do
+        tmpfs = section.drives.select { |d| d.type == :CT_TMPFS }
+        expect(tmpfs.size).to eq(1)
+        expect(tmpfs.first.partitions.map(&:mount)).to contain_exactly("/srv", "/var/tmp")
       end
 
       it "ignores irrelevant drives" do
