@@ -581,9 +581,9 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.resize).to be_nil
       end
 
-      it "initializes mount options" do
+      it "initializes mount options except the mountby attribute" do
         expect(section.mount).to eq(dev.mount_path)
-        expect(section.mountby).to eq(dev.mount_by.to_sym)
+        expect(section.mountby).to be_nil
         expect(section.fstab_options).to eq(dev.mount_options)
       end
     end

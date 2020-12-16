@@ -447,6 +447,7 @@ module Y2Storage
         @create = nil
         @resize = nil
         init_mount_options(device)
+        @mountby = nil
       end
 
       # Whether the given existing partition should be reported as GRUB (GPT
