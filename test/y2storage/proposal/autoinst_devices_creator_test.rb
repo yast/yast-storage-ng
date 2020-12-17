@@ -529,6 +529,24 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
     end
 
+    describe "using Tmpfs" do
+      let(:tmpfs0) do
+        planned_tmpfs("/srv", fstab_options: ["size=2GB"])
+      end
+
+      let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([tmpfs0]) }
+
+      it "adds the tmpfs filesystem" do
+        result = creator.populated_devicegraph(planned_devices, [])
+        devicegraph = result.devicegraph
+        tmpfs = devicegraph.tmp_filesystems.first
+
+        expect(tmpfs).to be_a(Y2Storage::Filesystems::Tmpfs)
+        expect(tmpfs.mount_path).to eq("/srv")
+        expect(tmpfs.mount_options).to eq(["size=2GB"])
+      end
+    end
+
     describe "resizing partitions" do
       let(:root) do
         Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|

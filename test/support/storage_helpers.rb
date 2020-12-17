@@ -153,6 +153,11 @@ module Yast
         add_planned_attributes(btrfs, attrs)
       end
 
+      def planned_tmpfs(mount, attrs = {})
+        tmpfs = Y2Storage::Planned::Tmpfs.new(mount, [])
+        add_planned_attributes(tmpfs, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 

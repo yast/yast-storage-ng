@@ -334,6 +334,8 @@ module Y2Storage
           init_disk_device_fields(device)
         elsif device.is?(:nfs)
           init_nfs_fields(device)
+        elsif device.is?(:tmpfs)
+          init_tmpfs_fields(device)
         elsif device.is?(:blk_filesystem)
           init_blk_filesystem_fields(device)
         else
@@ -439,6 +441,13 @@ module Y2Storage
       def init_nfs_fields(device)
         @create = false
         init_mount_options(device)
+      end
+
+      def init_tmpfs_fields(device)
+        @create = nil
+        @resize = nil
+        init_mount_options(device)
+        @mountby = nil
       end
 
       # Whether the given existing partition should be reported as GRUB (GPT

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,6 +26,7 @@ require "y2storage/proposal/autoinst_bcache_creator"
 require "y2storage/proposal/lvm_creator"
 require "y2storage/proposal/btrfs_creator"
 require "y2storage/proposal/nfs_creator"
+require "y2storage/proposal/tmpfs_creator"
 require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
 
@@ -62,7 +63,9 @@ module Y2Storage
     # when it is not possible to place the devices in the given free space. But
     # we would also need to do further changes, like skipping some checks when
     # running in this flexible mode.
-    class AutoinstDevicesCreator
+    #
+    # FIXME: class too long, refactoring needed.
+    class AutoinstDevicesCreator # rubocop:disable Metrics/ClassLength
       include Yast::Logger
       include AutoinstPartitionSize
 
@@ -171,6 +174,7 @@ module Y2Storage
         process_bcaches
         process_btrfs_filesystems
         process_nfs_filesystems
+        process_tmpfs_filesystems
 
         Y2Storage::Proposal::AutoinstCreatorResult.new(creator_result, devices_to_create)
       end
@@ -251,6 +255,12 @@ module Y2Storage
       def process_nfs_filesystems
         add_devices_to_create(planned_devices.nfs_filesystems)
         self.creator_result = create_nfs_filesystems(planned_devices.nfs_filesystems)
+      end
+
+      # Process planned Tmpfs filesystems
+      def process_tmpfs_filesystems
+        add_devices_to_create(planned_devices.tmpfs_filesystems)
+        self.creator_result = create_tmpfs_filesystems(planned_devices.tmpfs_filesystems)
       end
 
       # Reuses a partitionable device
@@ -423,6 +433,17 @@ module Y2Storage
         end
       end
 
+      # Creates Tmpfs filesystems
+      #
+      # @param tmpfs_filesystems [Array<Planned::Tmpfs>] List of planned Tmpfs filesystems
+      # @return [Proposal::CreatorResult] Result containing the specified Tmpfs filesystems
+      def create_tmpfs_filesystems(tmpfs_filesystems)
+        tmpfs_filesystems.reduce(creator_result) do |result, planned_tmpfs|
+          new_result = create_tmpfs_filesystem(result.devicegraph, planned_tmpfs)
+          result.merge(new_result)
+        end
+      end
+
       # Creates a MD RAID in the given devicegraph
       #
       # @param devicegraph [Devicegraph] Starting devicegraph
@@ -490,6 +511,17 @@ module Y2Storage
       def create_nfs_filesystem(devicegraph, planned_nfs)
         nfs_creator = Proposal::NfsCreator.new(devicegraph)
         nfs_creator.create_nfs(planned_nfs)
+      end
+
+      # Creates a Tmpfs filesystem in the given devicegraph
+      #
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param planned_tmpfs [Planned::Tmpfs]
+      #
+      # @return [Proposal::CreatorResult] Result containing the specified Tmpfs
+      def create_tmpfs_filesystem(devicegraph, planned_tmpfs)
+        tmpfs_creator = Proposal::TmpfsCreator.new(devicegraph)
+        tmpfs_creator.create_tmpfs(planned_tmpfs)
       end
 
       # Finds the Bcache member in the previous result and in the list of devices to use

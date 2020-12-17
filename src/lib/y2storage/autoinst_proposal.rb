@@ -40,7 +40,7 @@ module Y2Storage
   #   proposal.devices              # => Proposed layout
   #
   class AutoinstProposal < Proposal::Base
-    # @return [Hash] Partitioning layout from an AutoYaST profile
+    # @return [AutoinstProfile::PartitioningSection] Partitioning layout from an AutoYaST profile
     attr_reader :partitioning
 
     # @return [AutoinstIssues::List] List of found AutoYaST issues

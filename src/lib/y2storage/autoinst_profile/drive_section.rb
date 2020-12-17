@@ -215,6 +215,8 @@ module Y2Storage
           init_from_btrfs(device)
         elsif device.is?(:nfs)
           init_from_nfs(device)
+        elsif device.is?(:tmpfs)
+          init_from_tmpfs(device)
         else
           init_from_disk(device)
         end
@@ -461,6 +463,17 @@ module Y2Storage
         @device = device.share
         @use = "all"
         @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(device, self)]
+
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when cloning a tmpfs
+      #
+      # @param device [Y2Storage::Filesystems::Tmpfs]
+      # @return [Boolean]
+      def init_from_tmpfs(device)
+        @type = :CT_TMPFS
         @partitions = [PartitionSection.new_from_storage(device, self)]
 
         true

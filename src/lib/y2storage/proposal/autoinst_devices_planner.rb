@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2020] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,6 +26,7 @@ require "y2storage/proposal/autoinst_md_planner"
 require "y2storage/proposal/autoinst_bcache_planner"
 require "y2storage/proposal/autoinst_nfs_planner"
 require "y2storage/proposal/autoinst_btrfs_planner"
+require "y2storage/proposal/autoinst_tmpfs_planner"
 require "y2storage/planned"
 
 module Y2Storage
@@ -73,9 +74,6 @@ module Y2Storage
       # @return [AutoinstIssues::List] List of AutoYaST issues to register them
       attr_reader :issues_list
 
-      # FIXME: Disabling rubocop. Not sure how to improve this method without making it less readable.
-      # rubocop:disable Metrics/CyclomaticComplexity
-      #
       # Returns a list of planned devices according to an AutoYaST specification
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the device
@@ -83,22 +81,28 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>, nil] nil if the device cannot be planned
       def planned_for_drive(drive, disk_name)
+        handlers = {
+          CT_DISK:        :planned_for_disk_device,
+          CT_DMMULTIPATH: :planned_for_disk_device,
+          CT_LVM:         :planned_for_vg,
+          CT_MD:          :planned_for_md,
+          CT_BCACHE:      :planned_for_bcache,
+          CT_NFS:         :planned_for_nfs,
+          CT_BTRFS:       :planned_for_btrfs,
+          CT_TMPFS:       :planned_for_tmpfs
+        }
+
+        handler = handlers[drive.type]
+
+        return unless handler
+
         case drive.type
         when :CT_DISK, :CT_DMMULTIPATH
-          planned_for_disk_device(drive, disk_name)
-        when :CT_LVM
-          planned_for_vg(drive)
-        when :CT_MD
-          planned_for_md(drive)
-        when :CT_BCACHE
-          planned_for_bcache(drive)
-        when :CT_NFS
-          planned_for_nfs(drive)
-        when :CT_BTRFS
-          planned_for_btrfs(drive)
+          send(handler, drive, disk_name)
+        else
+          send(handler, drive)
         end
       end
-      # rubocop:enable all
 
       # Returns a list of planned partitions (or disks) according to an AutoYaST specification
       #
@@ -154,6 +158,15 @@ module Y2Storage
       # @return [Array<Planned::Btrfs>]
       def planned_for_btrfs(drive)
         planner = Y2Storage::Proposal::AutoinstBtrfsPlanner.new(devicegraph, issues_list)
+        planner.planned_devices(drive)
+      end
+
+      # Returns a list of planned Tmpfs filesystems according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the Tmpfs
+      # @return [Array<Planned::Tmpfs>]
+      def planned_for_tmpfs(drive)
+        planner = Y2Storage::Proposal::AutoinstTmpfsPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
       end
 

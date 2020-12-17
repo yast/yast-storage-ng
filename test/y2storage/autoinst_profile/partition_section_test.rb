@@ -567,6 +567,27 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
+    context "given a tmpfs" do
+      let(:scenario) { "tmpfs1-devicegraph.xml" }
+
+      let(:dev) do
+        fake_devicegraph.tmp_filesystems.find { |d| d.mount_path == "/test1" }
+      end
+
+      subject(:section) { described_class.new_from_storage(dev) }
+
+      it "initializes #create and #resize to nil" do
+        expect(section.create).to be_nil
+        expect(section.resize).to be_nil
+      end
+
+      it "initializes mount options except the mountby attribute" do
+        expect(section.mount).to eq(dev.mount_path)
+        expect(section.mountby).to be_nil
+        expect(section.fstab_options).to eq(dev.mount_options)
+      end
+    end
+
     context "given a partition which is part of a Btrfs multidevice" do
       let(:scenario) { "btrfs2-devicegraph.xml" }
 
