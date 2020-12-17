@@ -306,6 +306,8 @@ describe Y2Storage::GuidedProposal do
       before do
         allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new).and_return dev_generator
         settings.root_device = "/dev/sda"
+
+        allow(Yast::Execute).to receive(:locally!).and_return uuidgen_output
       end
 
       let(:scenario) { "swaps" }
@@ -321,6 +323,8 @@ describe Y2Storage::GuidedProposal do
       let(:dev_generator) do
         instance_double("Y2Storage::Proposal::DevicesPlanner", planned_devices: all_volumes)
       end
+      let(:uuidgen) { "12345678-9abc-def1-2345-67890abcdef0" }
+      let(:uuidgen_output) { "#{uuidgen}\n" }
 
       def sda(num)
         proposal.devices.find_by_name("/dev/sda#{num}")
@@ -352,7 +356,15 @@ describe Y2Storage::GuidedProposal do
         )
       end
 
-      it "does not enforce any particular UUID or label for additional swaps" do
+      it "uses an UUID generated with uuidgen and a blank label for additional swaps" do
+        proposal.propose
+        expect(sda(6)).to have_attributes(
+          filesystem_mountpoint: "swap", filesystem_uuid: uuidgen, filesystem_label: ""
+        )
+      end
+
+      it "does not enforce any particular UUID or label for additional swaps if uuidgen failed" do
+        allow(Yast::Execute).to receive(:locally!).and_raise Cheetah::ExecutionFailed.new("", "", "", "")
         proposal.propose
         expect(sda(6)).to have_attributes(
           filesystem_mountpoint: "swap", filesystem_uuid: "", filesystem_label: ""
