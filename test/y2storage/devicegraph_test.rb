@@ -809,6 +809,36 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#remove_btrfs_subvolume" do
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    before do
+      fake_scenario("mixed_disks_btrfs")
+      btrfs.quota = true
+    end
+
+    let(:btrfs) { devicegraph.find_by_name("/dev/sda2").filesystem }
+
+    it "removes the given subvolume" do
+      subvol = btrfs.find_btrfs_subvolume_by_path("@/srv")
+      expect(subvol).to_not be_nil
+
+      devicegraph.remove_btrfs_subvolume(subvol)
+
+      subvol = btrfs.find_btrfs_subvolume_by_path("@/srv")
+      expect(subvol).to be_nil
+    end
+
+    it "removes the corresponding qgroup" do
+      subvol = btrfs.find_btrfs_subvolume_by_path("@/srv")
+      qgroups = btrfs.btrfs_qgroups.size
+
+      devicegraph.remove_btrfs_subvolume(subvol)
+
+      expect(btrfs.btrfs_qgroups.size).to eq(qgroups - 1)
+    end
+  end
+
   describe "#remove_md" do
     subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
