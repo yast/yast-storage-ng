@@ -73,32 +73,7 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
       subject.subvolume_nocow = false
     end
 
-    context "when the subvolume does not exist on disk yet" do
-      let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", true) }
-
-      it "removes the subvolume" do
-        sid = subvolume.sid
-
-        subject.update_subvolume
-
-        expect(current_graph.find_device(sid)).to be_nil
-      end
-
-      it "creates a new subvolume with the given attributes" do
-        subject.update_subvolume
-
-        expect(subject.subvolume.path).to eq("@/bar")
-        expect(subject.subvolume.nocow?).to eq(false)
-      end
-    end
-
-    context "when the subvolume exists on disk" do
-      let(:subvolume) { filesystem.btrfs_subvolumes.find { |s| s.path == "@/home" } }
-
-      before do
-        subvolume.nocow = true
-      end
-
+    shared_examples "updates subvolume" do
       it "does not remove the subvolume" do
         sid = subvolume.sid
 
@@ -115,11 +90,42 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
         expect(subvolume.nocow?).to eq(false)
       end
 
+      describe "and quotas are active in the filesystem" do
+        let(:quota) { Y2Storage::DiskSize.MiB(300) }
+
+        before do
+          filesystem.quota = true
+        end
+
+        it "updates the subvolume referenced limit" do
+          expect(subvolume.referenced_limit).to eq(Y2Storage::DiskSize.unlimited)
+
+          subject.subvolume_referenced_limit = quota
+          subject.update_subvolume
+
+          expect(subvolume.referenced_limit).to eq(quota)
+        end
+      end
+
       it "does not modify the subvolume path" do
+        path = subvolume.path
+
         subject.update_subvolume
 
-        expect(subvolume.path).to eq("@/home")
+        expect(subvolume.path).to eq(path)
       end
+    end
+
+    context "when the subvolume does not exist on disk yet" do
+      let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", true) }
+
+      include_examples "updates subvolume"
+    end
+
+    context "when the subvolume exists on disk" do
+      let(:subvolume) { filesystem.btrfs_subvolumes.find { |s| s.path == "@/var/lib/mysql" } }
+
+      include_examples "updates subvolume"
     end
   end
 
