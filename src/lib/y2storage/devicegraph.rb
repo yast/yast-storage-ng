@@ -607,10 +607,10 @@ module Y2Storage
       raise(ArgumentError, "No device provided") if device.nil?
       raise(ArgumentError, "Device not found") unless device.exists_in_devicegraph?(self)
 
-      children = device.children
+      children = device.children(View::REMOVE)
       until children.empty?
         remove_with_dependants(children.first, keep: keep + [device])
-        children = device.children
+        children = device.children(View::REMOVE)
       end
 
       orphans = device.respond_to?(:potential_orphans) ? device.potential_orphans : []
