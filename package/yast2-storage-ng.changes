@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Dec 18 12:35:39 UTC 2020 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- AutoYaST: setting the 'quotas' element to 'false' disables
+  subvolumes quotas, no matter whether the 'referenced_limit'
+  was specified or not (related to jsc#SLE-7742).
+- 4.3.33
+
+-------------------------------------------------------------------
 Thu Dec 17 11:31:34 UTC 2020 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Fixed deletion of dependant devicegraph nodes (bsc#1179590)

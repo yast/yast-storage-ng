@@ -245,18 +245,21 @@ module Y2Storage
 
       # Sets the Btrfs quotas according to the section and the subvolumes
       #
+      # If `section.quotas` is nil, it inspect whether quotas are needed for any
+      # of the subvolumes. In that case, it sets `device.quota` to true.
+      #
       # @param device  [Planned::Device] Planned device
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def configure_btrfs_quotas(device, section)
-        if section.quotas
-          device.quota = true
+        if !section.quotas.nil?
+          device.quota = section.quotas
           return
         end
 
         subvols_with_quotas = device.subvolumes.select do |subvol|
           subvol.referenced_limit && !subvol.referenced_limit.unlimited?
         end
-        return if subvols_with_quotas.empty? || device.quota?
+        return if subvols_with_quotas.empty?
 
         device.quota = true
         issues_list.add(

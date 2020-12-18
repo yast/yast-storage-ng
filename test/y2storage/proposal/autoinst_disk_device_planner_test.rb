@@ -771,21 +771,13 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           expect(planned_root.quota?).to eq(false)
         end
 
-        context "but a subvolume requires quotas" do
+        context "and a subvolume requires quotas" do
           let(:subvolumes) do
             [{ "path" => "@/tmp", "referenced_limit" => "1GiB" }]
           end
 
-          it "plans for quotas" do
-            expect(planned_root.quota?).to eq(true)
-          end
-
-          it "reports an issue" do
-            planner.planned_devices(drive)
-            issue = planner.issues_list.find do |i|
-              i.is_a?(Y2Storage::AutoinstIssues::MissingBtrfsQuotas)
-            end
-            expect(issue).to_not be_nil
+          it "does not plan for quotas" do
+            expect(planned_root.quota?).to eq(false)
           end
         end
       end
