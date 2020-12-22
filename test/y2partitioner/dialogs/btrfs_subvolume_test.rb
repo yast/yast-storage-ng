@@ -78,6 +78,38 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
     include_examples "CWM::AbstractWidget"
 
+    describe "#init" do
+      context "when creating a subvolume" do
+        it "does not disable the widget" do
+          allow(Yast::UI).to receive(:SetFocus)
+          expect(subject).to_not receive(:disable)
+          subject.init
+        end
+      end
+
+      context "when editing a subvolume" do
+        context "that exists on disk" do
+          let(:subvolume) { filesystem.btrfs_subvolumes.first }
+
+          # See bsc#1180182
+          it "disables the widget" do
+            expect(subject).to receive(:disable)
+            subject.init
+          end
+        end
+
+        context "that does not exist on disk yet" do
+          let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", false) }
+
+          # See bsc#1180182
+          it "disables the widget" do
+            expect(subject).to receive(:disable)
+            subject.init
+          end
+        end
+      end
+    end
+
     describe "#store" do
       let(:value) { "@/foo" }
 

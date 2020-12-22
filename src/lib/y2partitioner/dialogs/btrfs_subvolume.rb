@@ -80,16 +80,20 @@ module Y2Partitioner
           @controller = controller
         end
 
+        # @macro seeAbstractWidget
         def label
           _("Path")
         end
 
+        # @macro seeAbstractWidget
         def store
           controller.subvolume_path = value
         end
 
+        # @macro seeAbstractWidget
         def init
-          controller.exist_subvolume? ? disable : focus
+          # The path must not be modified once the subvolume is in the devicegraph (bsc#1180182)
+          controller.subvolume ? disable : focus
 
           self.value = controller.subvolume_path
         end
@@ -138,6 +142,7 @@ module Y2Partitioner
         # @return [Actions::Controllers::BtrfsSubvolume]
         attr_reader :controller
 
+        # Sets the input focus on this widget
         def focus
           Yast::UI.SetFocus(Id(widget_id))
         end

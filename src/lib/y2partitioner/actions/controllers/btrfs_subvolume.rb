@@ -78,11 +78,6 @@ module Y2Partitioner
         def update_subvolume
           return unless subvolume
 
-          if !exist_subvolume?
-            filesystem.delete_btrfs_subvolume(subvolume.path)
-            create_subvolume(subvolume_path)
-          end
-
           subvolume.nocow = subvolume_nocow
           subvolume.referenced_limit = subvolume_referenced_limit
         end
