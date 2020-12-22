@@ -42,7 +42,6 @@ describe Y2Partitioner::Actions::EditBtrfsSubvolume do
 
       allow(Y2Partitioner::Actions::Controllers::BtrfsSubvolume).to receive(:new).and_return(controller)
 
-      controller.subvolume_path = "@/bar"
       controller.subvolume_nocow = false
     end
 
@@ -72,7 +71,7 @@ describe Y2Partitioner::Actions::EditBtrfsSubvolume do
       it "modifies the Btrfs subvolume with the given attributes" do
         subject.run
 
-        subvolume = filesystem.btrfs_subvolumes.find { |s| s.path == "@/bar" }
+        subvolume = filesystem.btrfs_subvolumes.find { |s| s.path == "@/foo" }
         expect(subvolume.nocow?).to eq(false)
       end
 

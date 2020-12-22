@@ -73,32 +73,7 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
       subject.subvolume_nocow = false
     end
 
-    context "when the subvolume does not exist on disk yet" do
-      let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", true) }
-
-      it "removes the subvolume" do
-        sid = subvolume.sid
-
-        subject.update_subvolume
-
-        expect(current_graph.find_device(sid)).to be_nil
-      end
-
-      it "creates a new subvolume with the given attributes" do
-        subject.update_subvolume
-
-        expect(subject.subvolume.path).to eq("@/bar")
-        expect(subject.subvolume.nocow?).to eq(false)
-      end
-    end
-
-    context "when the subvolume exists on disk" do
-      let(:subvolume) { filesystem.btrfs_subvolumes.find { |s| s.path == "@/home" } }
-
-      before do
-        subvolume.nocow = true
-      end
-
+    RSpec.shared_examples "updates subvolume" do
       it "does not remove the subvolume" do
         sid = subvolume.sid
 
@@ -116,10 +91,25 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
       end
 
       it "does not modify the subvolume path" do
+        path = subvolume.path
+
         subject.update_subvolume
 
-        expect(subvolume.path).to eq("@/home")
+        expect(subvolume.path).to eq(path)
       end
+    end
+
+    context "when the subvolume does not exist on disk yet" do
+      let(:subvolume) { filesystem.create_btrfs_subvolume("@/foo", true) }
+
+      include_examples "updates subvolume"
+    end
+
+    context "when the subvolume exists on disk" do
+      let(:subvolume) { filesystem.btrfs_subvolumes.find { |s| s.path == "@/home" } }
+      before { subvolume.nocow = true }
+
+      include_examples "updates subvolume"
     end
   end
 
