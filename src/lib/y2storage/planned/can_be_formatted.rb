@@ -171,7 +171,11 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem]
       def setup_filesystem(filesystem)
         filesystem.label = label if label
-        filesystem.uuid = uuid if uuid
+        if uuid.nil? || uuid.empty?
+          filesystem.init_uuid
+        else
+          filesystem.uuid = uuid
+        end
         filesystem.mkfs_options = mkfs_options if mkfs_options
         # Note that a good reason for this to be the last step is that the
         # previous properties can affect the suitable mount_by, so they must be

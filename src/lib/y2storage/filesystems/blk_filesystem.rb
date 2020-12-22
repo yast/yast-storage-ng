@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast/i18n"
+require "yast2/execute"
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
 require "y2storage/volume_specification"
@@ -31,6 +32,10 @@ module Y2Storage
       include Yast::I18n
 
       wrap_class Storage::BlkFilesystem, downcast_to: ["Filesystems::Btrfs"]
+
+      # Binary of the command uuidgen. See #{init_uuid}.
+      UUIDGEN = "/usr/bin/uuidgen".freeze
+      private_constant :UUIDGEN
 
       # @!method self.all(devicegraph)
       #   @param devicegraph [Devicegraph]
@@ -293,6 +298,29 @@ module Y2Storage
         Y2Storage::VolumeSpecification.for(mount_point.path)
       end
 
+      # If the current UUID is blank, generates a valid one if possible
+      #
+      # Enforcing the presence of an UUID that is already known for each swap in the
+      # devicegraph (before committing changes) is convenient for other installer
+      # proposals, like the bootloader one (see bug#1177926, bug#1169874 and
+      # jsc#SLE-17081).
+      #
+      # Due to libstorage-ng limitations in the commit phase, this only works for
+      # filesystems of type swap.
+      #
+      # Apart from the mentioned limitation, it's not always possible to generate a
+      # valid uuid in all systems. Thus, executing this method does not guarantee
+      # a not blank value for {#uuid}.
+      def init_uuid
+        # In libstorage-ng, setting the uuid for a newly created filesystem only works in
+        # the swap case (which is the only BlkFilesystem type which implements the set_uuid
+        # action). It produces an error in any other case
+        return unless type.is?(:swap)
+        return unless uuid.empty?
+
+        self.uuid = uuidgen
+      end
+
       protected
 
       # Whether the network-related mount options (e.g. _netdev) should be part
@@ -308,6 +336,15 @@ module Y2Storage
       # @see Device#is?
       def types_for_is
         super << :blk_filesystem
+      end
+
+      # Executes the uuidgen command and returns the generated UUID
+      #
+      # @return [String] empty string if there was any problem executing the command
+      def uuidgen
+        Yast::Execute.locally!(UUIDGEN, stdout: :capture).chomp
+      rescue Cheetah::ExecutionFailed
+        ""
       end
     end
   end

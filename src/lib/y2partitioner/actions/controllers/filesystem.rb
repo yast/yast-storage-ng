@@ -520,6 +520,7 @@ module Y2Partitioner
 
         def create_filesystem(type, label: nil)
           filesystem_parent.create_blk_filesystem(type)
+          filesystem.init_uuid
           filesystem.label = label unless label.nil?
         end
 
