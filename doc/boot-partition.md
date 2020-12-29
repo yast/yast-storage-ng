@@ -28,7 +28,7 @@ Boot Partition Layout / Restrictions For Storage Proposal
 
 ### Grub2 and disk abstractions
 
-- Grub natively suppors lvm raid 0/1/4/5/6, encryption with or without lvm
+- Grub natively supports lvm raid 0/1/4/5/6, encryption with or without lvm
 - The problem with disk abstractions like lvm or raid is not exactly about
   booting. The system will boot fine but some features have an additional
   requirement - having a pre-boot environment block writable by grub-once.
@@ -65,7 +65,7 @@ Boot Partition Layout / Restrictions For Storage Proposal
  * generic boot loader installed into mbr
  * we have generic boot code for both dos/gpt partition table
  * stage1 installed into /boot or / partition (if possible, note: not on xfs)
- * **OR** separate grub boot partition for embdding stage1 (like prep on ppc)
+ * **OR** separate grub boot partition for embedding stage1 (like prep on ppc)
 
      > *[mchang]* gpt has bios_grub partition but only if you instruct grub2-install to
 install stage1 on mbr then it will search bios_grub to embed stage2
