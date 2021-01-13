@@ -445,7 +445,7 @@ module Y2Storage
       mount_point
     end
 
-    # @see #suitable_mount_by
+    # @see #suitable_mount_bys
     #
     # @param candidates [Array<Filesystems::MountByType>]
     # @param label [Boolean]
