@@ -231,6 +231,50 @@ describe Y2Storage::MountPoint do
           expect(types).to_not include(Y2Storage::Filesystems::MountByType::PATH)
         end
       end
+
+      context "if we take the UUID for granted" do
+        let(:assume_uuid) { true }
+
+        context "and the UUID is already known" do
+          before { filesystem.uuid = "12345678-90ab-cdef-1234-567890abcdef" }
+
+          it "includes MountByType::UUID" do
+            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+              .to include(Y2Storage::Filesystems::MountByType::UUID)
+          end
+        end
+
+        context "and the filesystem has no UUID in the devicegraph" do
+          before { filesystem.uuid = "" }
+
+          it "includes MountByType::UUID" do
+            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+              .to include(Y2Storage::Filesystems::MountByType::UUID)
+          end
+        end
+      end
+
+      context "if we do not take the UUID for granted" do
+        let(:assume_uuid) { false }
+
+        context "and the UUID is already known" do
+          before { filesystem.uuid = "12345678-90ab-cdef-1234-567890abcdef" }
+
+          it "includes MountByType::UUID" do
+            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+              .to include(Y2Storage::Filesystems::MountByType::UUID)
+          end
+        end
+
+        context "and the filesystem has no UUID in the devicegraph" do
+          before { filesystem.uuid = "" }
+
+          it "does not include MountByType::UUID" do
+            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+              .to_not include(Y2Storage::Filesystems::MountByType::UUID)
+          end
+        end
+      end
     end
 
     context "for an encrypted device" do

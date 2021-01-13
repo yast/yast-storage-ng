@@ -290,9 +290,16 @@ module Y2Storage
     # @param encryption [Boolean, nil] whether the filesystem sits on top of an
     #   encrypted device. Regarding the possible values (nil, true and false) it
     #   behaves like the label argument.
+    # @param assume_uuid [Boolean] whether it can be safely assumed that the
+    #   filesystem has a known UUID (as long as UUIDs are supported for that
+    #   filesystem type). True by default because most filesystems will get an
+    #   UUID assigned to them in the moment they are created in the real system,
+    #   even if that UUID is still not known by the devicegraph. If set to false,
+    #   mounting by UUID will only be considered suitable if the UUID is already
+    #   known in the devicegraph.
     #
     # @return [Array<Filesystems::MountByType>]
-    def suitable_mount_bys(label: nil, encryption: nil)
+    def suitable_mount_bys(label: nil, encryption: nil, assume_uuid: true)
       with_mount_point_for_suitable(encryption) do |mount_point|
         fs = mount_point.filesystem
 
@@ -308,7 +315,9 @@ module Y2Storage
         return candidates unless fs.is?(:blk_filesystem)
 
         label = (fs.label.size > 0) if label.nil?
-        candidates.delete(Filesystems::MountByType::LABEL) unless label
+        uuid = assume_uuid ? true : !fs.uuid.empty?
+
+        filter_mount_bys(candidates, label, uuid)
         candidates
       end
     end
@@ -434,6 +443,16 @@ module Y2Storage
       end
 
       mount_point
+    end
+
+    # @see #suitable_mount_bys
+    #
+    # @param candidates [Array<Filesystems::MountByType>]
+    # @param label [Boolean]
+    # @param uuid [Boolean]
+    def filter_mount_bys(candidates, label, uuid)
+      candidates.delete(Filesystems::MountByType::LABEL) unless label
+      candidates.delete(Filesystems::MountByType::UUID) unless uuid
     end
   end
 end

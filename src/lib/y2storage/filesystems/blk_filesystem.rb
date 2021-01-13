@@ -321,6 +321,45 @@ module Y2Storage
         self.uuid = uuidgen
       end
 
+      # Most convenient file path to reference the filesystem
+      #
+      # If possible, the path is chosen based on the {#mount_by} attribute of the filesystem.
+      # If the filesystem is not mounted or the path for the specified mount_by cannot be
+      # calculated from the information present in the devicegraph, an alternative name
+      # based on {Filesystems::MountByType.best_for} (which already takes
+      # {Configuration#default_mount_by} into account) is calculated.
+      #
+      # This method always return a valid full-path filename that can be inferred from the
+      # information already available in the devicegraph
+      #
+      # @return [String]
+      def preferred_name
+        path_for_mount_by(preferred_mount_by)
+      end
+
+      # File path to reference the filesystem based on the current mount by option
+      #
+      # @see #mount_by
+      #
+      # @return [String, nil] nil if the name cannot be determined for the current mount by option
+      def mount_by_name
+        return nil unless mount_by
+
+        path_for_mount_by(mount_by)
+      end
+
+      # Name (full path) that can be used to reference the filesystem for the given mount by option
+      #
+      # @return [String, nil] nil if the name cannot be determined for the given mount by option
+      def path_for_mount_by(mount_by)
+        if mount_by.is?(:label, :uuid)
+          attr_value = public_send(mount_by.to_sym)
+          mount_by.udev_name(attr_value)
+        else
+          blk_devices.first.path_for_mount_by(mount_by)
+        end
+      end
+
       protected
 
       # Whether the network-related mount options (e.g. _netdev) should be part
@@ -345,6 +384,21 @@ module Y2Storage
         Yast::Execute.locally!(UUIDGEN, stdout: :capture).chomp
       rescue Cheetah::ExecutionFailed
         ""
+      end
+
+      # Most convenient mount_by option to reference the filesystem
+      #
+      # @see #preferred_name
+      #
+      # This method always returns an option that can be safely used by
+      # {#path_for_mount_by} to construct a valid filename.
+      #
+      # @return [Filesystems::MountByType]
+      def preferred_mount_by
+        mount_bys = with_mount_point { |mp| mp.suitable_mount_bys(assume_uuid: false) }
+        return mount_by if mount_bys.include?(mount_by)
+
+        Filesystems::MountByType.best_for(self, mount_bys)
       end
     end
   end
