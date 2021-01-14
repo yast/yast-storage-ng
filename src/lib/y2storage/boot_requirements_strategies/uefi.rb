@@ -59,7 +59,7 @@ module Y2Storage
 
         # Missing EFI does not need to be a fatal (e.g. when boot from network).
         # User just has to not select grub2-efi bootloader.
-        res_new << esp_missing_warning if res_new.empty? && missing_partition_for?(efi_volume)
+        res_new << esp_missing_warning if res_new.empty? && !valid_esp_configured?
 
         res + res_new
       end
@@ -88,12 +88,27 @@ module Y2Storage
         SetupError.new(message: msg)
       end
 
+      # Error about missing EFI system partition
+      #
+      # @return [SetupError]
       def esp_missing_warning
         SetupError.new(missing_volume: efi_volume)
       end
 
       def efi_missing?
         free_mountpoint?("/boot/efi")
+      end
+
+      # Whether the devicegraph contains a partition mounted at /boot/efi and
+      # that looks like a valid EFI system partition
+      #
+      # @return [boolean]
+      def valid_esp_configured?
+        # The user may have configured an ESP that is smaller than the one the proposal
+        # would have suggested, so let's exclude the size from the check (a user who sets
+        # the correct partition id, filesystem and mount point deserves some trust).
+        # https://github.com/yast/yast-storage-ng/issues/1194#issuecomment-756165860
+        !missing_partition_for?(efi_volume, exclude: :size)
       end
 
       # @return [VolumeSpecification]

@@ -203,9 +203,10 @@ module Y2Storage
       # Whether there is no partition that matches the volume
       #
       # @param volume [VolumeSpecification]
+      # @param exclude [Array<Symbol>, Symbol] see {MatchVolumeSpec#match_volume?}
       # @return [Boolean] true if there is no partition; false otherwise.
-      def missing_partition_for?(volume)
-        Partition.all(devicegraph).none? { |p| p.match_volume?(volume) }
+      def missing_partition_for?(volume, exclude: [])
+        Partition.all(devicegraph).none? { |p| p.match_volume?(volume, exclude: exclude) }
       end
 
       # Specific error when the boot disk cannot be detected
