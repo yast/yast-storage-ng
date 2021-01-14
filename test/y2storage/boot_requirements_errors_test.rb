@@ -302,7 +302,21 @@ describe Y2Storage::BootRequirementsChecker do
       context "when there is a /boot/efi partition in the system" do
         let(:scenario) { "efi" }
 
-        include_examples("no warnings")
+        context "and the partition is as big as the ones the proposal suggests" do
+          include_examples("no warnings")
+        end
+
+        context "but the partition is smaller than the proposal would have suggested" do
+          before do
+            esp = fake_devicegraph.find_by_name("/dev/sda1")
+            allow(esp).to receive(:resize_info).and_return(
+              double("ResizeInfo", resize_ok?: true, min_size: 1.MiB, max_size: 8.GiB)
+            )
+            esp.resize(16.MiB)
+          end
+
+          include_examples("no warnings")
+        end
       end
     end
 

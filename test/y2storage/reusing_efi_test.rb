@@ -128,7 +128,17 @@ describe Y2Storage::BootRequirementsChecker do
     context "and it is smaller than the proposal min" do
       let(:size) { 32.MiB }
 
-      include_examples "not_reuse_partition_id"
+      context "and the id is ESP" do
+        let(:partition_id) { Y2Storage::PartitionId::ESP }
+
+        include_examples "reuse_efi"
+      end
+
+      context "and the id is not ESP" do
+        let(:partition_id) { Y2Storage::PartitionId::LINUX }
+
+        include_examples "not_reuse_efi"
+      end
     end
 
     context "and it is bigger than the proposal max" do
