@@ -196,7 +196,29 @@ module Y2Storage
       # @param partition [Y2Storage::Partition]
       # @return [Boolean]
       def suitable_efi_partition?(partition)
-        partition.match_volume?(efi_volume, exclude: :mount_point) && partition.id == PartitionId::ESP
+        # Note that checking the partition id is needed because #efi_volume does not
+        # include that id as part of the mandatory specification
+        suitable_id?(partition) && suitable_filesystem?(partition)
+      end
+
+      # @see #suitable_efi_partition?
+      #
+      # @return [Boolean]
+      def suitable_id?(partition)
+        partition.id == PartitionId::ESP
+      end
+
+      # @see #suitable_efi_partition?
+      #
+      # @return [Boolean]
+      def suitable_filesystem?(partition)
+        # The size is excluded from the check because it makes no sense to discard an ESP that
+        # already exists and looks sane just because it's smaller than what we would have proposed.
+        #
+        # We considered to add a check to verify whether there is enough free space in the partition
+        # to locate our booting information. But we concluded that would be overdoing, we may be
+        # replacing information instead of adding more (eg. during a reinstallation).
+        partition.match_volume?(efi_volume, exclude: [:mount_point, :size])
       end
 
       def biggest_partition(partitions)
