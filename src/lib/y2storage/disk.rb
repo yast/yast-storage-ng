@@ -76,6 +76,25 @@ module Y2Storage
       transport.network?
     end
 
+    # @see #systemd_remote?
+    SYSTEMD_REMOTE_DRIVERS = ["iscsi-tcp", "bnx2i", "qedi", "fcoe", "bnx2fc", "qedf"].freeze
+    private_constant :SYSTEMD_REMOTE_DRIVERS
+
+    # @see BlkDevice#systemd_remote?
+    def systemd_remote?
+      # For local devices we don't need to check the driver from the hwinfo data
+      return false unless in_network?
+
+      # Some iSCSI and FCoE disk are accessible to systemd without any need to wait for systemd
+      # to initialize the network. For example, those using drivers like qla4xxx, be2iscsi, cxgbi,
+      # fnic and csiostor keep all the configuration within the HBA NVRAM and will start
+      # presenting devices once the driver is loaded. Thus, this method only returns true if the
+      # disk uses a driver that is known to require a daemon to be started in order to make the
+      # device available. See bsc#1176140.
+      log.info "systemd_remote?: checking driver - #{driver}"
+      (SYSTEMD_REMOTE_DRIVERS & driver).any?
+    end
+
     # Default partition table type for newly created partition tables
     # @see Partitionable#default_ptable_type
     #

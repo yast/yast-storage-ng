@@ -611,6 +611,17 @@ module Y2Storage
       hwinfo.bus
     end
 
+    # Kernel drivers used by this device
+    #
+    # @see #hwinfo
+    #
+    # @return [Array<String>] empty if the driver is unknown
+    def driver
+      return [] if hwinfo.nil?
+
+      hwinfo.driver
+    end
+
     # Size of the space that could be theoretically reclaimed by shrinking the
     # device
     #
@@ -642,6 +653,19 @@ module Y2Storage
     # @return [Boolean] true if this is a network-based disk or depends on one
     def in_network?
       false
+    end
+
+    # Whether the block device must be considered remote regarding how and when
+    # things are mounted during the systemd boot process
+    #
+    # Remote mount units have dependencies on some systemd targets like
+    # remote-fs-pre, remote-fs, network and network-online.
+    #
+    # See bsc#1176140
+    #
+    # @return [Boolean]
+    def systemd_remote?
+      in_network?
     end
 
     # Whether the block device fulfills conditions to be used for a Windows system

@@ -159,6 +159,13 @@ module Y2Storage
       lvm_vg.lvm_pvs.map(&:blk_device).any?(&:in_network?)
     end
 
+    # @see BlkDevice#systemd_remote?
+    #
+    # @return [Boolean]
+    def systemd_remote?
+      lvm_vg.lvm_pvs.map(&:blk_device).any?(&:systemd_remote?)
+    end
+
     protected
 
     def types_for_is
