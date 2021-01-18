@@ -279,6 +279,11 @@ module Y2Storage
       partitionable.in_network?
     end
 
+    # @see BlkDevice#systemd_remote?
+    def systemd_remote?
+      partitionable.systemd_remote?
+    end
+
     # Whether the partition fulfills conditions to be used for a Windows system
     #
     # @return [Boolean]
