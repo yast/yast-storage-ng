@@ -329,16 +329,6 @@ module Y2Storage
       self.mount_by = Filesystems::MountByType.best_for(blk_device, suitable_mount_bys)
     end
 
-    # @see BlkDevice#in_network?
-    def in_network?
-      blk_device.in_network?
-    end
-
-    # @see BlkDevice#systemd_remote?
-    def systemd_remote?
-      blk_device.systemd_remote?
-    end
-
     # Options that must be propagated from the fstab entries of the mount points
     # to the crypttab entries of the corresponding device
     OPTIONS_TO_PROPAGATE = ["_netdev", "noauto", "nofail"]

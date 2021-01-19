@@ -371,6 +371,30 @@ module Y2Storage
       filesystem.mount_point
     end
 
+    # Whether this block device is at the top of the hierarchy of block devices
+    # in the devicegraph
+    #
+    # This should only return true for disks, DASDs and stray block devices
+    #
+    # @return [Boolean] false if this is a descendant of any other block device
+    def root_blk_device?
+      ancestors.none? { |i| i.is?(:blk_device) }
+    end
+
+    # Block devices that are at the top of the list of ancestors for the current one
+    #
+    # For block devices that are already at the top of their own hierarchy, this
+    # returns an array with the device as only element.
+    #
+    # @return [Array<BlkDevice>] a list of disks, DASD and stray block devices
+    def root_blk_devices
+      if root_blk_device?
+        [self]
+      else
+        ancestors.select { |i| i.is?(:blk_device) && i.root_blk_device? }
+      end
+    end
+
     # LVM physical volume defined on top of the device, either directly or
     # through an encryption layer.
     #
@@ -652,7 +676,11 @@ module Y2Storage
     #
     # @return [Boolean] true if this is a network-based disk or depends on one
     def in_network?
-      false
+      if root_blk_device?
+        false
+      else
+        root_blk_devices.any?(&:in_network?)
+      end
     end
 
     # Whether the block device must be considered remote regarding how and when
@@ -665,7 +693,11 @@ module Y2Storage
     #
     # @return [Boolean]
     def systemd_remote?
-      in_network?
+      if root_blk_device?
+        in_network?
+      else
+        root_blk_devices.any?(&:systemd_remote?)
+      end
     end
 
     # Whether the block device fulfills conditions to be used for a Windows system
