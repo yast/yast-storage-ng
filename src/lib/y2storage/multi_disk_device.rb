@@ -28,13 +28,6 @@ module Y2Storage
   # Mixin for devices that, from the libstorage point of view, are basically
   # an aggregation of several disks. I.e. Multipath I/O or BIOS RAID.
   module MultiDiskDevice
-    # Checks whether this is a network device.
-    #
-    # @return [Boolean] true if any of disks is network-based
-    def in_network?
-      any_parent?(:in_network?)
-    end
-
     # Checks whether some of the disks of the device are connected through USB.
     #
     # Although that is obviously very unlikely, this method is offered for
@@ -44,13 +37,6 @@ module Y2Storage
     # @return [Boolean]
     def usb?
       any_parent?(:usb?)
-    end
-
-    # @see BlkDevice#systemd_remote?
-    #
-    # @return [Boolean]
-    def systemd_remote?
-      any_parent?(:systemd_remote?)
     end
 
     # Default partition table type for newly created partition tables
