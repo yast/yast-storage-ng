@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -59,15 +59,13 @@ module Y2Partitioner
           set_default_values
         end
 
-        # Adds a new Btrfs subvolume
+        # Creates a new Btrfs subvolume according to the values stored in the controller
         #
         # Note that the new added subvolume could be shadowed. In that case, the mount point of the
         # subvolume is removed, see {Y2Storage::Shadower#refresh_shadowing}.
-        #
-        # @param path [String]
-        # @param nocow [Booelan]
-        def create_subvolume(path, nocow = false)
-          @subvolume = filesystem.create_btrfs_subvolume(path, nocow)
+        def create_subvolume
+          @subvolume = filesystem.create_btrfs_subvolume(subvolume_path, subvolume_nocow)
+          subvolume.referenced_limit = subvolume_referenced_limit
 
           Y2Storage::Shadower.new(current_graph, filesystems: [filesystem]).refresh_shadowing
 
