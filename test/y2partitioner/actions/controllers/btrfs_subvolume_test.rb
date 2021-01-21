@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -46,15 +46,26 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
   describe "#create_subvolume" do
     let(:shadower) { instance_double(Y2Storage::Shadower) }
 
-    it "creates a new subvolume with the given attributes" do
+    let(:limit_size) { Y2Storage::DiskSize.new("5 GiB") }
+
+    before do
+      filesystem.quota = true
+
+      subject.subvolume_path = "@/foo"
+      subject.subvolume_nocow = true
+      subject.subvolume_referenced_limit = limit_size
+    end
+
+    it "creates a new subvolume with the currently stored attributes" do
       foo_subvolume = filesystem.btrfs_subvolumes.find { |s| s.path == "@/foo" }
       expect(foo_subvolume).to be_nil
 
-      subject.create_subvolume("@/foo", true)
+      subject.create_subvolume
 
       expect(subject.subvolume).to_not be_nil
       expect(subject.subvolume.path).to eq("@/foo")
       expect(subject.subvolume.nocow?).to eq(true)
+      expect(subject.subvolume.referenced_limit).to eq(limit_size)
     end
 
     it "refreshes the shadowing of the subvolumes from the current filesystem" do
@@ -63,15 +74,20 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
 
       expect(shadower).to receive(:refresh_shadowing)
 
-      subject.create_subvolume("@/foo", true)
+      subject.create_subvolume
     end
   end
 
   describe "#update_subvolume" do
     before do
+      filesystem.quota = true
+
       subject.subvolume_path = "@/bar"
       subject.subvolume_nocow = false
+      subject.subvolume_referenced_limit = limit_size
     end
+
+    let(:limit_size) { Y2Storage::DiskSize.new("5 GiB") }
 
     RSpec.shared_examples "updates subvolume" do
       it "does not remove the subvolume" do
@@ -88,6 +104,14 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
         subject.update_subvolume
 
         expect(subvolume.nocow?).to eq(false)
+      end
+
+      it "updates the referenced limit subvolume attribute" do
+        expect(subvolume.referenced_limit).to_not eq(limit_size)
+
+        subject.update_subvolume
+
+        expect(subvolume.referenced_limit).to eq(limit_size)
       end
 
       it "does not modify the subvolume path" do
