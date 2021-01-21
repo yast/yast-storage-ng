@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,7 +50,7 @@ module Y2Partitioner
 
         return unless dialog.run == :next
 
-        controller.create_subvolume(controller.subvolume_path, controller.subvolume_nocow)
+        controller.create_subvolume
         UIState.instance.select_row(controller.subvolume.sid)
 
         :finish
