@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -79,7 +79,13 @@ module Y2Partitioner
       class DiskUsedDevicesTab < UsedDevicesTab
         # @see UsedDevicesTab#used_devices
         def used_devices
-          device.is?(:multipath, :dm_raid) ? device.parents : []
+          if device.is?(:multipath, :dm_raid)
+            device.parents
+          elsif device.is?(:md)
+            device.devices
+          else
+            []
+          end
         end
       end
     end

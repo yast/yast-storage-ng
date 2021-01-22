@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jan 22 15:37:00 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: show used devices for MD BIOS RAID (bsc#1181300).
+- 4.3.39
+
+-------------------------------------------------------------------
 Thu Jan 21 12:20:34 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: properly set subvolume limit when creating a new

@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -106,18 +106,34 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     describe "#contents" do
       let(:items) { column_values(table, 0) }
 
-      context "when the device is a BIOS RAID" do
+      context "when the device is a DM RAID" do
         let(:scenario) { "empty-dm_raids.xml" }
 
         let(:device) { current_graph.find_by_name("/dev/mapper/isw_ddgdcbibhd_test1") }
 
-        it "shows a table with the BIOS RAID and its devices" do
+        it "shows a table with the MD RAID and its devices" do
           expect(table).to_not be_nil
 
           expect(remove_sort_keys(items)).to contain_exactly(
             "/dev/mapper/isw_ddgdcbibhd_test1",
             "/dev/sdb",
             "/dev/sdc"
+          )
+        end
+      end
+
+      context "when the device is a MD BIOS RAID" do
+        let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+        let(:device) { current_graph.find_by_name("/dev/md/a") }
+
+        it "shows a table with the MD BIOS RAID and its devices" do
+          expect(table).to_not be_nil
+
+          expect(remove_sort_keys(items)).to contain_exactly(
+            "/dev/md/a",
+            "/dev/sdb",
+            "/dev/sdd"
           )
         end
       end
