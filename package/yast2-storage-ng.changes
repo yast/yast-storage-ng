@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jan 25 11:52:18 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: fix typo calling to popup (bsc#1181348).
+- 4.3.40
+
+-------------------------------------------------------------------
 Fri Jan 22 15:37:00 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: show used devices for MD BIOS RAID (bsc#1181300).
