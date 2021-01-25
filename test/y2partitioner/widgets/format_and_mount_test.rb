@@ -488,7 +488,7 @@ describe Y2Partitioner::Widgets do
         end
 
         it "shows an error popup" do
-          expect(Yast2::Popup).to receive(:show)
+          expect(Yast2::Popup).to receive(:show).with(anything, headline: :error)
 
           subject.validate
         end

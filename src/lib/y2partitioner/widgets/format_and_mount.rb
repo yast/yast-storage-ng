@@ -716,7 +716,7 @@ module Y2Partitioner
         # size number is from bsc1065071#c5
         return true if @controller.blk_device.size > ::Y2Storage::DiskSize.MiB(2)
 
-        Yast2::Popup.show(_("Only devices bigger than 2 MiB can be encrypted."), heading: :error)
+        Yast2::Popup.show(_("Only devices bigger than 2 MiB can be encrypted."), headline: :error)
         false
       end
 
