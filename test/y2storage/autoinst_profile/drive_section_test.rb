@@ -1053,13 +1053,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
 
     let(:home_spec) { Y2Storage::AutoinstProfile::PartitionSection.new }
 
-    before do
-      section.partitions = [home_spec, part0_spec]
-    end
-
     context "when diskabel is set to 'none'" do
       before do
         section.disklabel = "none"
+        section.partitions = [home_spec, part0_spec]
       end
 
       it "returns the partition which partition_nr is set to '0'" do
@@ -1088,6 +1085,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "when a partition section has the partition_nr set to '0'" do
+      before do
+        section.partitions = [home_spec, part0_spec]
+      end
+
       it "returns that partition section" do
         expect(section.master_partition).to eq(part0_spec)
       end
@@ -1100,6 +1101,26 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         it "still returns the partition section which has the partition_nr set to '0'" do
           expect(section.master_partition).to eq(part0_spec)
         end
+      end
+    end
+
+    context "for a drive describing a multi-device btrfs" do
+      let(:scenario) { "btrfs2-devicegraph.xml" }
+      let(:section) { described_class.new_from_storage(filesystem) }
+      let(:filesystem) { device("sdb1").filesystem }
+
+      before do
+        # The disklabel attribute is irrelevant here. Even if it's omitted, everything should work
+        section.disklabel = nil
+      end
+
+      it "returns the first partition section" do
+        expect(section.master_partition.mount).to eq "/test"
+      end
+
+      it "returns nil if there are no partitions" do
+        section.partitions = []
+        expect(section.master_partition).to be_nil
       end
     end
   end

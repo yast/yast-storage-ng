@@ -264,6 +264,10 @@ module Y2Storage
 
       # Determine whether the partition table is explicitly not wanted
       #
+      # This method only makes sense for drive sections describing block devices that could be
+      # partitioned or not (like disks, RAIDs, etc.). For a more general method see
+      # {#master_partition_drive?}.
+      #
       # @note When the disklabel is set to 'none', a partition table should not be created.
       #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
       #   When no disklabel is set, this method returns false.
@@ -287,12 +291,12 @@ module Y2Storage
 
       # Returns the partition which contains the configuration for the whole disk
       #
-      # @return [PartitionSection,nil] Partition section for the whole disk; it returns
-      #   nil if the device will use a partition table.
+      # @return [PartitionSection,nil] Partition section for the whole disk; it returns nil if
+      #   the device will use a partition table or if the drive contains no partition sections
       #
       # @see #partition_table?
       def master_partition
-        return unless unwanted_partitions?
+        return unless master_partition_drive?
 
         partitions.find { |i| i.partition_nr == 0 } || partitions.first
       end
@@ -326,6 +330,21 @@ module Y2Storage
       # @return [Boolean]
       def nfs_name?(device_name)
         device_name == "/dev/nfs"
+      end
+
+      # Whether this drive section is expected to contain only one partition subsection
+      # containing the configuration of the whole disk
+      #
+      # @return [Boolean] true for non-partitioned block devices and also for drives
+      #   describing a concrete filesystem
+      def master_partition_drive?
+        # In the old undocumented format, NFS mounts were represented by partition sections
+        return false if nfs_name?(device)
+
+        # In the new NFS format and in btrfs, only one partition section makes sense
+        return true if [:CT_NFS, :CT_BTRFS].include?(type)
+
+        unwanted_partitions?
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
