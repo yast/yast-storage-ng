@@ -1,270 +1,53 @@
-# Storage proposal: old (legacy) and new (ng) approach
+# Storage proposal: current (yast-storage-ng) and old (yast-storage) approach
 
-This document covers the differences between the storage proposals of
-yast-storage and yast-storage-ng, with a brief explanation of how they work and
-how both can/must be influenced by the settings coming from `control.xml` and
-other sources.
+This document describes the storage proposals of both yast-storage and
+yast-storage-ng (mainly focusing on the latter), with a brief
+explanation of how they work and how both can/must be influenced by the settings
+coming from `control.xml` and other sources.
 
-It also includes an overview of the corresponding `partitioning` section in
-`control.xml`.
+## Current proposal (yast-storage-ng) - overview
 
-## Legacy proposal (yast-storage)
-
-Most settings used to influence the behavior of the old yast-storage are read
-from the `partitioning` section of `control.xml`, with some settings having a
-fallback in `/etc/sysconfig`.
-
-This chapter presents a brief summary of the structure of that
-`partitioning` section. More detailed information can be found at:
-  * the [control.rnc](https://github.com/yast/yast-installation-control/blob/master/control/control.rnc)
-    specification,
-  * the [corresponding
-    section](https://github.com/yast/yast-installation/blob/master/doc/control-file.md#partitioning)
-    of the official control.xml documentation,
-  * the [yast-storage/doc/config.xml.description](https://github.com/yast/yast-storage/blob/master/doc/config.xml.description)
-    document which details the settings understood by the proposal.
+The settings used to influence the behavior of the storage proposal are read from
+the `partitioning` section of `control.xml`. Based on those settings, the
+algorithm described below will setup the partitions and LVM volumes in the
+system disks.
 
 ### Storage proposal settings
 
-The exact meaning of each of the following options can be found in the last of
-the above-mentioned documents. The explanation on how every option relates to
-the others (which is far from being straightforward) can be found below, in the
-section titled "How the old proposal distributes the space".
-
-#### Proposal-specific options
-
-  * `try_separate_home`
-  * `limit_try_home`
-  * `home_path`
-  * `home_fs`
-  * `root_fs`
-  * `root_space_percent`
-  * `root_base_size`
-  * `root_max_size`
-  * `proposal_lvm`
-  * `vm_desired_size`
-  * `vm_home_max_size`
-  * `vm_keep_unpartitioned_region`
-  * `btrfs_increase_percentage`
-
-#### Proposal and partitioner options
-
-In addition to the list above, there are two options, related to the usage of
-Btrfs for the root filesystem, that are used by the proposal and also by the
-expert partitioner when suggesting the default configuration for such
-filesystem.
-
-  * `subvolumes`
-    Optional list of Btrfs subvolumes. If it is missing, a
-    hard-coded list is used. If the section is there but empty, no subvolumes
-    are created. Each subvolume section has a mandatory `path` and optional
-    `copy_on_write` and `archs` elements.
-  * `btrfs_default_subvolume`
-    The default subvolume is not represented by an
-    entry in the `subvolumes` list, but with a separate option that specifies only
-    its path. The path of the default subvolume is prepended to the path of all
-    the other subvolumes in the filesystem, no matter if they come from the
-    previous list or are manually added by the user of the partitioner.
-
-#### Other general options
-
-The `partitioning` section of `control.xml` goes beyond the configuration of
-the proposal's behavior. It also contains some options to influence other
-aspect of YaST, mainly the installer.
-
-  * `expert_partitioner_warning`
-    Whether an extra warning pop-up should be
-    displayed if the user enters the expert partitioner during installation.
-  * `use_separate_multipath_module`
-    Whether to call the `multipath` client
-    from the yast2-multipath package. If false, the `multipath-simple` client
-    from yast2-storage is used.
-
-#### Obsolete options
-
-The following options were used by the not longer supported "flexible
-partitioning" feature:
-  * `prefer_remove`
-  * `remove_special_partitions`
-  * `partitions`
-
-### How the old proposal distributes the space
-
-This part of the document explains how the storage proposal works in
-yast-storage. The content of this section is inferred from the existing
-documentation, some inspection of `StorageProposal.rb` and quite some manual
-tests. It may not be 100% accurate, specially since many changes have been
-introduced over time.
-
-The explanations are intentionally simplified to keep the focus on the main
-topic: the influence of the settings in the behavior of the proposal
-in the most common and simple scenarios.
-
-For clarity reasons, the logic used to assign space to swap or the special
-partitions needed for booting is not covered in this section. Those values are
-decided and fixed at the beginning of the process, so they have relatively
-small influence on how the space is reclaimed or distributed.
-
-There are two parameters to decide if a separate home partition or logical
-volume should be proposed: `try_separate_home` (boolean) and
-`limit_try_home` (size). A separate home will be proposed if `try_separate_home`
-is true and the available space is greater than or equal to `limit_try_home`.
-
-That being said, the space is distributed in a different way with and without
-LVM.
-
-#### Partition-based distribution
-
-The old proposal tries to use all the available free space. There are
-settings to influence the minimum size of the partitions but not to limit the
-maximum free space reclaimed for the system.
-
-Interestingly enough, if there is not enough free space, the old proposal tries
-to reformat the found Linux partitions instead of deleting them and creating new
-partitions with the desired sizes.
-
-As mentioned, the proposal tries to use all the existing free space. If a
-separate home is proposed, the space is distributed among home and root, based on
-the ratio expressed by `root_space_percent`. There is a limitation to that
-distribution - if root reaches `root_max_size`, it will not grow further and the
-rest of the space is assigned to home.
-
-If there is no separate home, `root_max_size` has no effect and root grows until
-filling all the available space.
-
-#### LVM-based distribution
-
-Again for clarity reasons, reusing preexisting VGs is left out of this section,
-that will focus on the situation in which the proposal needs to create a VG.
-
-The base and maximum sizes for root or home are not taken in consideration when
-deciding the size of the created VG. There are independent settings for that.
-
-If `vm_keep_unpartitioned_region` is false, the created VG will be as big as
-possible. That means the proposal will create PVs completely filling the
-available spaces. In addition all preexisting Linux partitions will be turned
-into PVs and added to the VG.
-
-If `vm_keep_unpartitioned_region` is true, a PV of `vm_desired_size` will be
-created (this is the only case in which the proposal can be forced to leave
-some unused free space). Again, all preexisting Linux partitions will be turned
-into PVs and also added to the VG.
-
-After creating the VG, its space is distributed among home and root following
-slightly different rules than in the partition-based approach.
-`root_space_percent` is also used to decide the ratio but root is never
-proposed to be bigger than `root_max_size`, no matter if there is a separate
-home or not. If a separate home is desired, it is never proposed to be bigger
-than `vm_home_max_size`.
-
-As a result, it's very likely that the resulting VG will contain a lot of
-unassigned space, especially if `vm_keep_unpartitioned_region` is false (which is
-the default).
-
-## NG proposal (yast-storage-ng) - overview
-
-Settings used to influence the behavior of the new storage code are read
-from the `partitioning` section of `control.xml`.
-
-> Note: You can either use the old legacy entries described in the last chapter or the
-new settings.
-> But: **Mixing old and new elements is not allowed.**
-
-To use the new settings put a `proposal` *and* a `volumes` subsection into
-`partitioning` in `control.xml`.
-
-
-This chapter presents a brief summary of the new elements in the
-`partitioning` section. More detailed information can be found at:
+This chapter presents a brief summary of the elements in the mentioned `partitioning`
+section. More detailed information can be found at:
   * the [control.rnc](https://github.com/yast/yast-installation-control/blob/master/control/control.rnc)
     specification,
-  * the [corresponding
-    section](https://github.com/yast/yast-installation/blob/master/doc/control-file.md#partitioning)
-    of the official control.xml documentation,
+  * the [corresponding section](https://github.com/yast/yast-installation/blob/master/doc/control-file.md#partitioning)
+    of the official control.xml documentation
 
-### Storage proposal settings
-
-Most settings are grouped into two subsections of the `partitioning` section:
+Most settings are grouped into two subsections of that `partitioning` section:
   * `proposal`
     Holds general settings for the proposal.
   * `volumes`
-    A list of `volume` elements holding specific settings for each volume that should be created. Note
-    that you really must add one section for each volume. There are no defaults.
+    A list of `volume` elements holding specific settings for each volume that should be created,
+    including the root (`/`) file-system and any other separate mount point, like `swap` or
+    `/home`.
 
-Besides these, there is another element:
-  * `expert_partitioner_warning` *(boolean, default: `false`)*
+### How the proposal distributes the space
 
-#### Global settings in `proposal` section
-
-  * `lvm` *(boolean, default: `false`)*
-  * `allocate_volume_mode` *(`auto`, `device`, default: `auto`)*
-  * `multidisk_first` *(boolean, default: `false`)*
-  * `delete_resize_configurable` *(boolean, default: `true`)*
-  * `resize_windows` *(boolean, default: `true`)*
-  * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
-  * `linux_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
-  * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
-  * (**FIXME - `use_vg_size` is not done yet**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_available`)*
-  * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
-  * `separate_vgs` *(boolean, default: `false`)*
-
-#### Volume-specific settings in `volume` sections
-
-  * `mount_point` *(string, default: no mountpoint)*
-  * `proposed` *(boolean, default: `true`)*
-  * `proposed_configurable` *(boolean, default: `false`)*
-  * `fs_types` *(string, default: internal fallback list for '/' and '/home' volumes, empty list otherwise. In addition, the value of 'fs_type' is always included in the list )*
-  * `fs_type` *(string, default: no type)*
-  * `desired_size` *(disksize, default: `0 B`)*
-  * `min_size` *(disksize, default: `0 B`)*
-  * `max_size` *(disksize, default: `unlimited`)*
-  * `max_size_lvm` *(disksize, default: `0 B`)*
-  * `weight` *(integer, default: `0`, so extra size is not assigned)*
-  * `adjust_by_ram` *(boolean, default: `false`)*
-  * `adjust_by_ram_configurable` *(boolean, default: `false`)*
-  * `fallback_for_min_size` *(string, default: no fallback)*
-  * `fallback_for_max_size` *(string, default: no fallback)*
-  * `fallback_for_max_size_lvm` *(string, default: no fallback)*
-  * `fallback_for_weight` *(string, default: no fallback)*
-  * `snapshots` *(boolean, default: `false`)*
-  * `snapshots_configurable` *(boolean, default: `false`)*
-  * `snapshots_size` *(disksize, default: `0 B`)*
-  * `snapshots_percentage` *(integer, default: `0`)*
-  * `subvolumes` *(subsection, default: either empty list or internal fallback list for '/' volume)*
-  * `btrfs_default_subvolume` *(string, default: no special default subvolume)*
-  * `disable_order` *(integer, default: never disabled)*
-  * `separate_vg_name` *(string, default: no vg_name)*
-
-The `subvolumes` section holds a list of elements describing Btrfs
-subsections. The section uses the same format as in the legacy code.
-
-> Note: If `btrfs_default_subvolume` is set it is implicitly added to the `subvolumes` list.
-
-### How the new proposal distributes the space
-
-The new proposal uses the following two-steps approach when
-deciding which partitions should be created/deleted/resized and how much
-space to assign to every new partition or logical volume.
+The current proposal uses the following two-steps approach when deciding which
+partitions should be created/deleted/resized and how much space to assign to
+every new partition or logical volume.
 
 #### First step
 
 A first step decides which volumes will be needed. Each volume will originate a
 partition or a LV in the second step.
 
-If the new format is used in the `partitioning` section in `control.xml`
-the basic list of planned volumes will be
-taken from the `volumes` subsection, except for those
-the user explicitly disables. If the legacy format is used, there are always at
-least two planned volumes (one for swap and one for root) and potentially
-another one for home, based on the user's proposal settings.
+The basic list of planned volumes will be taken from the `volumes` subsection in
+`control.xml`, except for those the user explicitly disables. In addition to
+those initial volumes, the proposal can plan more for extra partitions needed to
+boot the system.
 
-In addition to those initial volumes, the proposal can plan more for extra
-partitions needed to boot the system.
-
-For each volume, three sizes are specified - minimum, desired, and
-maximum. The maximum size can have the special value `unlimited`. In
-addition, every volume gets a "weight" (so far, based on the
-`root_space_percent` setting).
+For each volume, three sizes are specified - minimum, desired, and maximum. The
+maximum size can have the special value `unlimited`. In addition, every volume
+gets a weight.
 
 #### Second Step
 
@@ -298,8 +81,8 @@ configurable by the user in every proposal run.
       the proposal possible.
     * `all`: Delete all Windows partitions, even if not needed.
   * `linux_delete_mode`
-    The same but for partitions that are part of a
-    Linux installation (partition id linux, swap, lvm or raid).
+    The same but for partitions that are part of a Linux installation (partition
+    id linux, swap, lvm or raid).
   * `other_delete_mode`
     For all other partitions that don't fit into the former two groups.
   * `resize_windows`
@@ -307,50 +90,44 @@ configurable by the user in every proposal run.
 
 #### Creation of LVM structures
 
-> Note: this section describes some optional behavior that is still not
-implemented in yast-storage-ng, although it would be very easy to add to the
-current codebase.
-
 As said before, using LVM doesn't make a big difference on how the proposal
 works. It simply allocates LVM logical volumes instead of partitions. To
 allocate such LVs, the proposal first needs to create (or reuse) a volume
 group that is big enough, which usually means creating one or several physical
 volumes.
 
-In the current implementation, the VG is created to perfectly fit the sizes of
-all the created LVs, with no extra unused space. It would be easy to add an
-configuration option to force the proposal to take more space than strictly
-needed by adding two possibilities: one for using all the available space
-(after deleting partitions according to the settings explained above) and
-another to use a fixed size for the VG (which must be, of course, equal or
-bigger than the sum of the max sizes of all the volumes).
+If `lvm_vg_strategy` is set to "use_needed", the VG is created to perfectly fit
+the sizes of all the created LVs, with no extra unused space. If that setting is
+set to "use_available", the VG created by the proposal will use all the space
+that has become available after deleting partitions according to the settings
+explained above. A third value of the setting was planned in order to use a
+fixed size for the VG (which should be, of course, equal or bigger than the sum
+of the max sizes of all the volumes), but that has not been implemented so far
+because the original use-case seems to not be relevant nowadays.
 
-## NG proposal - by example
+## Current proposal (yast-storage-ng) - by example
 
-The redesign in the approach and code of the storage proposal explained above
-also deserves a revamp of the corresponding section in the `control.xml` file.
-This document presents a possible alternative for the `partitioning` section of
-the control file. The goal is to provide more flexibility defining the products
-behavior and better access to all the features of the new storage proposal.
+The configuration of the storage proposal for a given product or system role is
+much more powerful and flexible than it used to be with the old (yast-storage)
+system, but it's also more complex. Since explaining complex stuff is usually
+best addressed via examples, this section shows how the behavior of the old
+proposal can be reproduced in the current one by setting the right configuration
+in `control.xml` for several example products.  It also illustrates how
+easy it is to accommodate changes and new use cases that were impossible to
+achieve with the old system.
 
-But flexibility usually comes with the cost of complexity, and explaining
-complex stuff is usually best addressed via examples. So this section shows how
-it would be possible to reproduce the current behavior of several products via
-the new proposal and the new format for `control.xml`. It also
-illustrates how easy it would be to accommodate changes and new use cases that are
-currently very hard or impossible to achieve.
-
-The section after the examples dives into the new format in a more formal
-and descriptive way, for all the details that are not included or
-self-explanatory in the examples.
+For details that are not self-explanatory in the examples (or that are omitted
+for simplicity), remember to check the
+[partitioning section](https://github.com/yast/yast-installation/blob/master/doc/control-file.md#partitioning)
+of the main control.xml documentation.
 
 ### Example: SLES
 
-This `partitioning` section would emulate quite closely the current SLES
-behavior, proposing always `/` and swap partitions (or logical volumes, if the
-user decides to use LVM). In addition, it will give the user the opportunity to
-have a separate `/home` partition/volume. That option will be enabled by default
-if there is enough space to create a home of at least 5 GiB.
+This `partitioning` section would emulate quite closely the behavior of SLES-12,
+proposing always `/` and swap partitions (or logical volumes, if the user
+decides to use LVM). In addition, it will give the user the opportunity to have
+a separate `/home` partition/volume. That option will be enabled by default if
+there is enough space to create a home of at least 5 GiB.
 
 Some values are a direct translation of the legacy `control.xml` and others
 (like the relationship with Windows partitions) are inferred from the typical SLES
@@ -436,9 +213,9 @@ use case.
 
 ### Example: openSUSE
 
-In the case of openSUSE, the `volumes` subsection wouldn't be much different
-from SLES, with the exception of some sizes. But the `proposal` one would
-probably look like this (more MS Windows friendly).
+In the case of emulating the openSUSE Leap 42 proposal, the `volumes` subsection
+wouldn't be much different from SLES-12, with the exception of some sizes. But the
+`proposal` one would probably look like this (more MS Windows friendly).
 
 ```xml
 <proposal>
@@ -453,8 +230,8 @@ probably look like this (more MS Windows friendly).
 
 ### Example: SLES4SAP
 
-Just a tentative to show the possibilities of the new proposal and serve as an
-inspiration. Maybe some aspects don't fit the SAP requirements exactly.
+Just a tentative to show some possibilities, although maybe some aspects
+don't fit the current SAP requirements exactly.
 
 Although the users would still be able to change the proposal settings, they
 wouldn't be able to change the filesystem type for `/` (Btrfs) or to disable the
@@ -613,302 +390,146 @@ proposal to:
 </partitioning>
 ```
 
-## NG proposal - the details
+## The old proposal (yast-storage)
 
-As explained in the previous examples section, a new format for the
-`partitioning` section of `control.xml` is needed in order for the products to
-take full advantage of the revamped proposal.
+Most settings used to influence the behavior of the old yast-storage were read
+from the `partitioning` section of `control.xml`, with some settings having a
+fallback in `/etc/sysconfig`.
 
-The proposed format is explained in reasonable depth in this section. The new
-format aims to be very extensible for future requirements. As a result, it makes
-very few assumptions which implies is more verbose than the old one.
+This chapter presents a brief summary of the structure of that old
+`partitioning` section.
 
-In order to fully understand this section and its implications is important to
-have read and understood the above section titled "How the new proposal
-distributes the space".
+### Storage proposal settings
 
-### General structure
+The explanation on how every option relates to the others (which is far from
+being straightforward) can be found below, in the section titled "How the old
+proposal distributed the space".
 
-The new `partitioning` section contains
-  * `expert_partitioner_warning`
-    If `true`, an extra warning pop-up is
-    displayed if the user enters the expert partitioner.
+#### Proposal-specific options
 
-In addition to that, there are two new subsections: `proposal` and `volumes`.
-
-### The `proposal` subsection
-
-The `proposal` subsection is used to configure some general aspects of the
-storage proposal (referenced as "guided setup" in the UI) and contains the
-following options.
-
-  * `lvm`
-    Whether LVM should be used by default.
-  * `separate_vgs`
-    Whether every volume specifying a separate_vg_name should be created as
-    isolated LVM Volume Group instead include them in the "system" group.
-  * `allocate_volume_mode`
-    When set to `auto`, the proposal expects a set of candidate disks in which it
-    will distribute the volumes automatically as needed. If set to `device`, the
-    proposal needs to know in which disk must place each volume. As a
-    consequence, the interface presented to the user by default will be
-    different (containing different questions) depending of the value of this
-    property.
-  * `multidisk_first`
-    When set to `true`, the initial proposal considers all disks as possible
-    destination for the volumes to allocate. If set to `false`, the proposal
-    tries to use individual disks to allocate the volumes, and it only uses all
-    disks together when the volumes cannot be allocated in any individual disk.
-  * ~~`encrypt`
-    Whether encryption should be used by default.~~
-  * `delete_resize_configurable`
-    Whether the user can modify the options related to delete or resize partitions.
-    When this option is set to `false`, the user cannot change the value of
-    `windows_delete_mode`, `linux_delete_mode`, `other_delete_mode` and `resize_windows`.
-  * `windows_delete_mode`
-    Default value for the automatic delete mode for
-    Windows partitions. It can be `none`, `all` or `ondemand`. For more
-    information, see the description of the new proposal above.
-  * `linux_delete_mode`
-    Default value for the automatic delete mode for
-    Linux partitions. Again, it can be `none`, `all` or `ondemand`.
-  * `other_delete_mode`
-    Default value for the automatic delete mode for
-    other partitions. Once again, it can be `none`, `all` or `ondemand`.
-  * `resize_windows`
-    Default value for the user setting deciding whether to
-    resize Windows systems if needed.
-  * `lvm_vg_strategy`
-    If the user decides to use LVM, strategy to decide the
-    size of the volume group (and, thus, the number and size of created physical
-    volumes). There are three possible values.
-    * `use_available`
-      The VG will be created to use all the available space,
-      thus the VG size could be greater than the sum of LVs sizes.
-    * `use_needed`
-      The created VG will match the requirements 1:1, so its size
-      will be exactly the sum of all the LVs sizes.
-    * `use_vg_size`
-      The VG will have exactly the size specified in `lvm_vg_size`.
-  * `lvm_vg_size`
-    Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
-
-### The `volumes` subsection
-
-The `volumes` subsection is responsible of specifying the
-partitions (or logical volumes if LVM is chosen) to create during the proposal
-and also the behavior of the expert partitioner regarding them.
-
-It is a collection of `volume` subsections, each of them with the
-options listed here. Having read the "How the new proposal distributes the
-space" may be important to fully understand some of them.
-
-  * `mount_point`
-    Directory where the volume will be mounted in the system.
-  * `proposed`
-    Default value of the user setting deciding whether this volume
-    should be created or skipped.
-  * `proposed_configurable`
-    Whether the user can change the previous setting
-    in the UI. I.e. whether the user can activate/deactivate the volume. Of
-    course, setting `proposed` to false and `proposed_configurable` also to
-    false has the same effect than deleting the whole `<volume>` entry.
-  * `fs_types`
-    A collection of acceptable file system types. If no list is
-    given, YaST will use a fallback based on the mount point.
-  * `fs_type`
-    Default file system type to format the volume.
-  * `desired_size`
-    Initial size to use in the first proposal attempt.
-  * `min_size`
-    Initial size to use in the second proposal attempt.
-  * `max_size`
-    Maximum size to assign to the volume. It can also contain the
-    value `unlimited` (meaning as big as possible). This will be considered the
-    default value if the option is not present.
-  * `max_size_lvm`
-    When LVM is used, this option can be used to override the
-    value at `max_size`.
-  * `weight`
-    Value used to distribute the extra space (after assigning the
-    initial ones) among the volumes.
-  * `adjust_by_ram`
-    Default value for the user setting deciding whether the
-    initial and max sizes of each attempt should be adjusted based in the RAM
-    size. So far the adaptation consists in ensuring all the sizes are, at
-    least, as big as the RAM. In the future, an extra `adjust_by_ram_mode`
-    option could be added to allow other approaches. Note that this setting has
-    an special behavior for Z Systems. The option to resume from RAM is not available
-    for this kind of systems. And for this reason, in s390 the default value of `adjust_by_ram`
-    is forced to `false` for the swap volume (mount point is "swap"), even when it was
-    set to `true` in the control file.
-  * `adjust_by_ram_configurable`
-    Whether the user can change the previous setting in the UI.
-  * `fallback_for_min_size`
-    Mount point of another volume. If the volume being
-    defined is disabled, the `min_size` of that another volume will be increased
-    by the `min_size` of this disabled volume.
-  * `fallback_for_desired_size`
-    Same than before, but for `desired_size`.
-  * `fallback_for_max_size`
-    Same than before, but for `max_size`.
-  * `fallback_for_max_size_lvm`
-    Same than before, but for `max_size_lvm`.
-  * `fallback_for_weight`
-    Same than before, but for the volume weight.
-  * `separate_vg_name`
-    Name of the separate LVM volume group that will be created to host only this
-    volume when the option separate_vgs is active in the settings.
-
-Some options only apply if the chosen filesystem type for the volume is
-Btrfs, in some cases with the same name and meaning as in the old
-`control.xml` format. The main difference is that now the setting will apply to
-the volume in which it's included, not necessarily to the root ("/") one. In the
-expert partitioner, if a Btrfs filesystem is created and assigned to the mount
-point of the volume, these settings will also be used to suggest the filesystem
-options.
-
-  * `snapshots`
-    Default value for the user setting deciding whether snapshots
-    should be activated.
-  * `snapshots_configurable`
-    Whether the user can change the previous setting
-    in the UI.
-  * `snapshots_size`
-    The initial
-    and maximum sizes for the volume will be increased accordingly if snapshots
-    are being used.
-  * `snapshots_percentage`
-    Like `snapshots_size` but as a percentage of the
-    original sizes (just like the original `btrfs_increase_percentage`).
-  * `subvolumes`
-    Equivalent to the previous option that used to apply only to "/".
-  * `btrfs_default_subvolume`
-    Same than before.
-  * `btrfs_read_only`
-    Whether the root subvolume should be mounted read-only in /etc/fstab and
-    its 'ro' Btrfs property should be set to _true_. This works only for Btrfs
-    root filesystems. If another root filesystem type is chosen, this property
-    is ignored. Its default value is _false_.
-
-And finally there is an option that deserves a slightly more detailed
-explanation.
-
-  * `disable_order`
-    Volumes with some value here will be disabled (or snapshots
-    deactivated) if needed to make the initial proposal. See detailed
-    explanation below.
-
-Before any user interaction, an initial proposal with the default settings is
-calculated. If YaST is not able to make space for all the volumes required by
-those default settings, it will perform new attempts altering the settings. For
-that, it will follow the `disable_order` for each volume with that field.
-
-In the first iteration, it will look for the lowest number there. If
-`adjust_by_ram_configurable` is true in that volume, it will disable `adjust_by_ram`. If
-that is not enough and snapshots are optional but enabled, it will disable them
-and try again (assuming Btrfs is being used). If that's still not enough, it
-will disable the whole volume if it's optional.
-
-If that's not enough, it will keep those settings and look for the next volume
-with some value in `disable_order` to perform the same operation in a cumulative
-fashion.
-
-## Compatibility: using the new proposal with the old control.xml format
-
-As explained before, the old and new proposals follow different philosophies.
-The new one consistently follows the approach of trying to accommodate a
-group of planned volumes with minimum, desired and maximum sizes. On the other
-hand, the behavior of the old proposal may look sometimes like a set of several
-algorithms designed ad-hoc for different scenarios. As a result, the exact
-meaning of most settings is different based on the value of the other ones.
-
-Fortunately, the new proposal is flexible enough to somehow _emulate_ the
-behavior of the old one to a big extend. This section shows the current status
-of that compatibility and suggests ways to define the planned volumes in a form
-that tries to honor the legacy behavior and settings.
-
-### Legacy options read by the new proposal code
-
-The following settings are currently read by the new proposal and used with
-exactly the same meaning.
-  * `proposal_lvm`
   * `try_separate_home`
   * `limit_try_home`
-  * `proposal_snapshots`
+  * `home_path`
+  * `home_fs`
+  * `root_fs`
   * `root_space_percent`
-  * `btrfs_increase_percentage`
-  * `btrfs_default_subvolume`
-  * `subvolumes`
-  * `swap_for_suspend`
-
-The following settings are read and used in a slightly different way.
- * `root_base_size`
-   Used to set the min size for the root planned volume.
- * `root_max_size`
-   Used to set the max size for the root planned volume. That
-   is different from the old proposal because that maximum size is always
-   honored in the new proposal, while in the old one the setting only applies to
-   some scenarios (LVM and partition-based with a separate home).
- * `vm_home_max_size`
-   Used to set the max size for the home planned volume.
-   Again, that means the setting is always honored, in contrast to the old
-   proposal that only uses it if LVM is proposed.
-
-The following settings are not read because, as can be inferred from the
-sections above, they don't fit the new algorithm. But they
-could be honoured after implementing the alternative modes presented in the
-section "Creation of LVM structures".
-  * `vm_keep_unpartitioned_region`
+  * `root_base_size`
+  * `root_max_size`
+  * `proposal_lvm`
   * `vm_desired_size`
+  * `vm_home_max_size`
+  * `vm_keep_unpartitioned_region`
+  * `btrfs_increase_percentage`
 
-### RFC: emulating the partition-based old proposal with the old settings
+#### Proposal and partitioner options
 
-> NOTE: to be reviewed and refined
+In addition to the list above, there were two options, related to the usage of
+Btrfs for the root filesystem, that were used by the proposal and also by the
+expert partitioner when suggesting the default configuration for such
+filesystem.
 
-* Root volume
-  * Max size: `root_max_size` if a separate home is proposed, unlimited otherwise.
-  * Desired size: (`root_base_size` + `root_max_size`) / 2
-  * Min size: `root_base_size`
+  * `subvolumes`
+    Optional list of Btrfs subvolumes. If it is missing, a
+    hard-coded list is used.
+  * `btrfs_default_subvolume`
+    The default subvolume is not represented by an
+    entry in the `subvolumes` list, but with a separate option that specifies only
+    its path.
 
-* Home volume
-  * Max size: unlimited
-  * Desired and min sizes: same values than for the root volume.
+#### Other general options
 
-### RFC: Emulating the LVM-based old proposal with the old settings
+The `partitioning` section of `control.xml` for yast-storage went beyond the
+configuration of the proposal's behavior. It also contained some options to
+influence other aspect of YaST, mainly the installer.
 
-> NOTE: to be reviewed and refined
+  * `expert_partitioner_warning`
+    Whether an extra warning pop-up should be
+    displayed if the user enters the expert partitioner during installation.
+  * `use_separate_multipath_module`
+    Whether to call the `multipath` client
+    from the yast2-multipath package. If false, the `multipath-simple` client
+    from yast2-storage is used.
 
-The behavior of the old proposal is completely different depending on the value
-of `vm_keep_unpartitioned_region`. If that setting evaluates to true, an
-acceptable way to emulate the behavior with no modifications in the current
-code would be:
+#### Obsolete options
 
-* Root volume
-  * Max size: `root_max_size`
-  * Desired size: (`root_base_size` + `root_max_size`) / 2
-  * Min size: `root_base_size`
+The following options were used by the so-called "flexible partitioning"
+feature, that was dropped in SLE-12 already: 
+  * `prefer_remove`
+  * `remove_special_partitions`
+  * `partitions`
 
-* Home volume
-  * Max size: the smallest of these two values
-    * `vm_home_max_size`
-    * `vm_desired_size` - `root_max_size`
-  * Desired and min sizes: the smallest of these two values
-    * The corresponding value for the root size
-    * `vm_desired_size` - X, where X is the corresponding value for the root size
+### How the old proposal distributed the space
 
-On the other hand, to fully emulate the behavior of the old proposal with
-`vm_keep_unpartitioned_region` set to false two things would be needed. First,
-to set the planned volume sizes like this:
+This part of the document explains how the storage proposal works in
+yast-storage. The content of this section is inferred from the existing
+documentation, some inspection of `StorageProposal.rb` and quite some manual
+tests. It may not be 100% accurate, specially since many changes have been
+introduced over time.
 
-* Root volume
-  * Max size: `root_max_size`
-  * Desired size: (`root_base_size` + `root_max_size`) / 2
-  * Min size: `root_base_size`
+The explanations are intentionally simplified to keep the focus on the main
+topic: the influence of the settings in the behavior of the proposal
+in the most common and simple scenarios.
 
-* Home volume
-  * Max size: `vm_home_max_size`
-  * Desired and min sizes: same values than for the root volume.
+For clarity reasons, the logic used to assign space to swap or the special
+partitions needed for booting is not covered in this section. Those values are
+decided and fixed at the beginning of the process, so they have relatively
+small influence on how the space is reclaimed or distributed.
+
+There are two parameters to decide if a separate home partition or logical
+volume should be proposed: `try_separate_home` (boolean) and
+`limit_try_home` (size). A separate home will be proposed if `try_separate_home`
+is true and the available space is greater than or equal to `limit_try_home`.
+
+That being said, the space is distributed in a different way with and without
+LVM.
+
+#### Partition-based distribution
+
+The old proposal tries to use all the available free space. There are
+settings to influence the minimum size of the partitions but not to limit the
+maximum free space reclaimed for the system.
+
+Interestingly enough, if there is not enough free space, the old proposal tries
+to reformat the found Linux partitions instead of deleting them and creating new
+partitions with the desired sizes.
+
+As mentioned, the proposal tries to use all the existing free space. If a
+separate home is proposed, the space is distributed among home and root, based on
+the ratio expressed by `root_space_percent`. There is a limitation to that
+distribution - if root reaches `root_max_size`, it will not grow further and the
+rest of the space is assigned to home.
+
+If there is no separate home, `root_max_size` has no effect and root grows until
+filling all the available space.
+
+#### LVM-based distribution
+
+Again for clarity reasons, reusing preexisting VGs is left out of this section,
+that will focus on the situation in which the proposal needs to create a VG.
+
+The base and maximum sizes for root or home are not taken in consideration when
+deciding the size of the created VG. There are independent settings for that.
+
+If `vm_keep_unpartitioned_region` is false, the created VG will be as big as
+possible. That means the proposal will create PVs completely filling the
+available spaces. In addition all preexisting Linux partitions will be turned
+into PVs and added to the VG.
+
+If `vm_keep_unpartitioned_region` is true, a PV of `vm_desired_size` will be
+created (this is the only case in which the proposal can be forced to leave
+some unused free space). Again, all preexisting Linux partitions will be turned
+into PVs and also added to the VG.
+
+After creating the VG, its space is distributed among home and root following
+slightly different rules than in the partition-based approach.
+`root_space_percent` is also used to decide the ratio but root is never
+proposed to be bigger than `root_max_size`, no matter if there is a separate
+home or not. If a separate home is desired, it is never proposed to be bigger
+than `vm_home_max_size`.
+
+As a result, it's very likely that the resulting VG will contain a lot of
+unassigned space, especially if `vm_keep_unpartitioned_region` is false (which is
+the default).
 
 ## References
 
