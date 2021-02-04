@@ -308,6 +308,42 @@ describe Y2Partitioner::Actions::Controllers::BtrfsDevices do
         end
       end
     end
+
+    context "when the device is an unmounted normal LV" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "includes the device" do
+        expect(subject.available_devices).to include(device)
+      end
+    end
+
+    context "when the device is an unmounted thin LV" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:device_name) { "/dev/vg0/thinvol1" }
+
+      it "includes the device" do
+        expect(subject.available_devices).to include(device)
+      end
+    end
+
+    context "when the device is a thin-pool LV" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:device_name) { "/dev/vg0/thinpool0" }
+
+      it "does not include the device" do
+        expect(subject.available_devices).to_not include(device)
+      end
+    end
+
+    context "when the device is a cache-pool LV" do
+      let(:scenario) { "lvm-types1.xml" }
+      let(:device_name) { "/dev/vg0/unused_cache_pool" }
+
+      it "does not include the device" do
+        expect(subject.available_devices).to_not include(device)
+      end
+    end
   end
 
   describe "#selected_devices" do

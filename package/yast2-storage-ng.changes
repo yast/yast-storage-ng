@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb  4 14:17:09 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: stop offering LVM pools as possible base devices
+  for bcache devices and for multi-device btrfs (bsc#1170044).
+- 4.3.42
+
+-------------------------------------------------------------------
 Thu Jan 28 17:07:25 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - AutoYaST UI: improved visualization of some partition sections

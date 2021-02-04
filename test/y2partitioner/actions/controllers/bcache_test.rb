@@ -162,6 +162,41 @@ describe Y2Partitioner::Actions::Controllers::Bcache do
         expect(name_of_devices).to_not include("/dev/sdb1")
       end
     end
+
+    context "when there are several types of LVM volume groups" do
+      let(:scenario) { "lvm-types1.xml" }
+
+      let(:cache) { ["/dev/vg0/cached1", "/dev/vg0/cached2"] }
+      let(:raid) { ["/dev/vg0/mirror_lv1", "/dev/vg0/raid1_lv1"] }
+      let(:snapshot) { ["/dev/vg0/snap_normal1"] }
+      let(:thin_pool) { ["/dev/vg0/thinpool0"] }
+      let(:cache_pool) { ["/dev/vg0/unused_cache_pool"] }
+      let(:thin) do
+        [
+          "/dev/vg0/snap_snap_thinvol1", "/dev/vg0/snap_thinvol1", "/dev/vg0/thin_snap_normal2",
+          "/dev/vg0/thinvol1", "/dev/vg0/thinvol2"
+        ]
+      end
+      let(:normal) do
+        [
+          "/dev/vg0/normal1", "/dev/vg0/normal2", "/dev/vg0/normal3",
+          "/dev/vg0/striped1", "/dev/vg0/striped2"
+        ]
+      end
+
+      it "includes logical volumes of type normal, thin, raid, snapshot and cache" do
+        expect(name_of_devices).to include(*normal)
+        expect(name_of_devices).to include(*thin)
+        expect(name_of_devices).to include(*raid)
+        expect(name_of_devices).to include(*snapshot)
+        expect(name_of_devices).to include(*cache)
+      end
+
+      it "excludes logical volumes of type thin-pool and chache-pool" do
+        expect(name_of_devices).to_not include(*thin_pool)
+        expect(name_of_devices).to_not include(*cache_pool)
+      end
+    end
   end
 
   describe "#suitable_backing_devices" do
