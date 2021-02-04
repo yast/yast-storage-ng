@@ -202,7 +202,7 @@ module Y2Partitioner
         # @param device [Y2Storage::BlkDevice]
         # @return [Boolean]
         def valid_device?(device)
-          !device.is?(:encryption) && !selected_device?(device)
+          !device.is?(:encryption) && device.usable_as_blk_device? && !selected_device?(device)
         end
 
         # Whether the device is already selected for being used by the Btrfs
