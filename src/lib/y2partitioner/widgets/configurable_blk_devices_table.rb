@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -189,6 +189,28 @@ module Y2Partitioner
 
       def default_columns
         DEFAULT_COLUMNS
+      end
+
+      # @see BlkDevicesTable#open_by_default?
+      #
+      # @param entry [DeviceTableEntry]
+      # @return [Boolean]
+      def open_by_default?(entry)
+        return true unless entry_with_subvols?(entry)
+
+        entry.children.none? { |c| c.device.snapshot? }
+      end
+
+      # Whether the children of the given entry are Btrfs subvolumes
+      #
+      # @return [Boolean]
+      def entry_with_subvols?(entry)
+        # We never mix subvolumes and other kind of devices in the same level of
+        # a branch, so checking the first child is enough
+        child = entry.children.first
+        return false unless child
+
+        child.device.is?(:btrfs_subvolume)
       end
 
       # Table entry to select initially when the table is rendered

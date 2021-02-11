@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -441,10 +441,12 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   end
 
   describe "#open_items" do
-    let(:devices) { [sda] }
+    let(:devices) { [sda, sde] }
 
     let(:sda) { device_graph.find_by_name("/dev/sda") }
     let(:sda2) { device_graph.find_by_name("/dev/sda2") }
+    let(:sde) { device_graph.find_by_name("/dev/sde") }
+    let(:sde1) { device_graph.find_by_name("/dev/sde1") }
 
     before do
       subject.open_items = open_items
@@ -453,17 +455,20 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     context "when #open_items has not been set" do
       let(:open_items) { nil }
 
-      it "reports true for items with 10 children at most" do
+      it "reports true for items with partitions as children" do
         result = subject.open_items
-        result.reject! { |k, _| k == "table:device:#{sda2.sid}" }
-
-        expect(result.values).to all(eq(true))
+        expect(result["table:device:#{sda.sid}"]).to eq(true)
+        expect(result["table:device:#{sde.sid}"]).to eq(true)
       end
 
-      it "reports false for items with more than 10 children" do
+      it "reports true for items with regular subvolumes as children" do
         result = subject.open_items
+        expect(result["table:device:#{sda2.sid}"]).to eq(true)
+      end
 
-        expect(result["table:device:#{sda2.sid}"]).to eq(false)
+      it "reports false for items with some btrfs snapshot as child" do
+        result = subject.open_items
+        expect(result["table:device:#{sde1.sid}"]).to eq(false)
       end
     end
 
@@ -471,11 +476,11 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       let(:open_items) { { "table:device:888" => true, "table:device:999" => false } }
 
       it "returns the set values plus the missing ones" do
-        values = [false] * 2 + [true] * 15
+        values = [false] * 2 + [true] * 19
         expect(subject.open_items.values).to contain_exactly(*values)
         expect(subject.open_items["table:device:888"]).to eq(true)
         expect(subject.open_items["table:device:999"]).to eq(false)
-        expect(subject.open_items["table:device:#{sda2.sid}"]).to eq(false)
+        expect(subject.open_items["table:device:#{sde1.sid}"]).to eq(false)
       end
     end
   end

@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -53,6 +53,29 @@ describe Y2Partitioner::Widgets::BtrfsFilesystemsTable do
     it "returns array of CWM table items" do
       expect(subject.items).to be_a(::Array)
       expect(subject.items.first).to be_a(CWM::TableItem)
+    end
+  end
+
+  describe "#open_items" do
+    context "when #open_items has not been set" do
+      before { subject.open_items = nil }
+
+      let(:sids_with_snapshots) { filesystems.select(&:snapshots?).map(&:sid) }
+      let(:sids_without_snapshots) { filesystems.reject(&:snapshots?).map(&:sid) }
+
+      it "reports true for items with only regular subvolumes as children" do
+        result = subject.open_items
+        sids_without_snapshots.each do |sid|
+          expect(result["table:device:#{sid}"]).to eq true
+        end
+      end
+
+      it "reports true for items with some btrfs snapshot as child" do
+        result = subject.open_items
+        sids_with_snapshots.each do |sid|
+          expect(result["table:device:#{sid}"]).to eq true
+        end
+      end
     end
   end
 end
