@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,6 +50,13 @@ module Y2Partitioner
           Columns::BtrfsExclusive,
           Columns::MountPoint
         ]
+      end
+
+      # @see BlkDevicesTable#open_by_default?
+      def open_by_default?(_entry)
+        # Restores the base BlkDevicesTable behavior (everything open by default) to avoid
+        # collapsing the Btrfs subvolumes (we are in the Btrfs section, after all)
+        true
       end
     end
   end

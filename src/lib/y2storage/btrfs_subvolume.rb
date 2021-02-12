@@ -226,6 +226,13 @@ module Y2Storage
       path == filesystem.subvolumes_prefix
     end
 
+    # Whether the subvolume is a snapshot
+    #
+    # @return [Boolean]
+    def snapshot?
+      path.start_with?(filesystem.snapshots_root + "/")
+    end
+
     protected
 
     # Whether the subvolume requires a default mount point
@@ -256,9 +263,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def for_snapshots?
-      snapshots_root = filesystem.snapshots_root
-
-      path == snapshots_root || path.start_with?(snapshots_root + "/")
+      path == filesystem.snapshots_root || snapshot?
     end
 
     # Parent subvolume

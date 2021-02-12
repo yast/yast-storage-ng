@@ -24,6 +24,7 @@ describe Y2Storage::BootRequirementsStrategies::ZIPL do
   subject { described_class.new(fake_devicegraph, [], "/dev/dasdc") }
 
   before do
+    allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args)
     fake_scenario("s390_luks2")
     allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:new).and_return(analyzer)
     allow(analyzer).to receive(:device_for_zipl).and_return(device_for_zipl)

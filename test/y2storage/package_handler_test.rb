@@ -56,13 +56,16 @@ describe Y2Storage::PackageHandler do
   describe "#set_proposal_packages" do
     let(:installation) { true }
 
+    before do
+      allow(Yast::PackagesProposal).to receive(:SetResolvables).and_return true
+    end
+
     it "sets the proposal packages" do
       expect(Yast::PackagesProposal).to receive(:SetResolvables)
       subject.set_proposal_packages
     end
 
     it "does not try to install the packages" do
-      allow(Yast::PackagesProposal).to receive(:SetResolvables)
       expect(Yast::Package).to_not receive(:DoInstall)
       subject.set_proposal_packages
     end
@@ -74,14 +77,16 @@ describe Y2Storage::PackageHandler do
     end
 
     it "does not check for already installed packages" do
-      allow(Yast::PackagesProposal).to receive(:SetResolvables)
       expect(Yast::Package).to_not receive(:Installed)
       subject.set_proposal_packages
     end
   end
 
   describe "#install" do
-    before { allow(Yast::Package).to receive(:Installed).and_return false }
+    before do
+      allow(Yast::Package).to receive(:Installed).and_return false
+      allow(Yast::Package).to receive(:DoInstall).and_return true
+    end
     let(:installation) { false }
 
     context "with :ask set to false" do
@@ -106,6 +111,10 @@ describe Y2Storage::PackageHandler do
     end
 
     context "by default (:ask is true)" do
+      before do
+        allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return true
+      end
+
       it "installs packages directly in the installed system" do
         expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages).with(subject.pkg_list)
         subject.install

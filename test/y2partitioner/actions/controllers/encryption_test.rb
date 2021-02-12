@@ -89,6 +89,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       let(:dev_name) { "/dev/dasdb1" }
 
       before do
+        allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args)
         device.encrypt(method: Y2Storage::EncryptionMethod::PERVASIVE_LUKS2, apqns: apqns)
       end
 

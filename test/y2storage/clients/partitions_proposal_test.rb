@@ -312,6 +312,7 @@ describe Y2Storage::Clients::PartitionsProposal do
         end
 
         it "returns a hash with :back for 'workflow_sequence' key" do
+          allow(Yast::Report).to receive(:Warning)
           result = subject.ask_user(param)
           expect(result).to be_a(Hash)
           expect(result["workflow_sequence"]).to eq :back

@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -107,10 +107,6 @@ module Y2Partitioner
 
       private
 
-      # Children limit to decide whether an entry is open/close by default
-      OPEN_CHILDREN_LIMIT = 10
-      private_constant :OPEN_CHILDREN_LIMIT
-
       # @see #helptext_for
       def columns_help
         cols.map { |column| helptext_for(column.id) }.join("\n")
@@ -145,15 +141,23 @@ module Y2Partitioner
 
       # Items to be open by default
       #
-      # Items with more than {OPEN_CHILDREN_LIMIT} children are closed by default.
-      #
       # @see #open_items
       #
       # @return [Hash{String => Boolean}]
       def default_open_items
         all_entries.each_with_object({}) do |entry, result|
-          result[entry.row_id] = (entry.children.size <= OPEN_CHILDREN_LIMIT)
+          result[entry.row_id] = open_by_default?(entry)
         end
+      end
+
+      # Whether the given table entry should be expanded by default
+      #
+      # @see #default_open_items
+      #
+      # @param _entry [DeviceTableEntry]
+      # @return [Boolean] false if the list of entry children should be collapsed
+      def open_by_default?(_entry)
+        true
       end
 
       # Plain collection including the first level entries and all its descendants

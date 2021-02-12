@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 11 14:16:57 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: in general, collapse branches of the tables only if
+  they contain Btrfs snapshots (related to bsc#1181464).
+- 4.3.43
+
+-------------------------------------------------------------------
 Thu Feb  4 14:17:09 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: stop offering LVM pools as possible base devices
