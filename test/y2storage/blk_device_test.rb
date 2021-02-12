@@ -1347,6 +1347,8 @@ describe Y2Storage::BlkDevice do
       include_examples "given method"
 
       context "and the method is pervasive encryption" do
+        before { allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args) }
+
         let(:method) { Y2Storage::EncryptionMethod::PERVASIVE_LUKS2 }
 
         let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }

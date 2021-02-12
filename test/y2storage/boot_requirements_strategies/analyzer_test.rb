@@ -222,7 +222,12 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
   let(:planned_boot) { planned_partition(mount_point: "/boot") }
   let(:planned_devs) { [planned_boot, planned_root] }
 
-  before { fake_scenario(scenario) }
+  before do
+    # Needed for the s390_luks2 scenario
+    allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args)
+
+    fake_scenario(scenario)
+  end
 
   describe ".new" do
     # There was such a bug, test added to avoid regression"

@@ -30,7 +30,7 @@ describe Y2Partitioner::Widgets::EncryptPassword do
 
   let(:controller) { double("FilesystemController", password: "secret123") }
   let(:pw1) { "password1" }
-  let(:pw2) { "password2" }
+  let(:pw2) { "password1" }
   let(:password_checker) { Y2Storage::EncryptPasswordChecker.new }
   let(:enabled) { true }
 
@@ -86,6 +86,7 @@ describe Y2Partitioner::Widgets::EncryptPassword do
         let(:enabled) { true }
 
         it "returns false" do
+          allow(Yast::Report).to receive(:Error)
           expect(widget.validate).to eq(false)
         end
 

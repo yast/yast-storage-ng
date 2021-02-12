@@ -158,6 +158,8 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
       before do
         allow(Y2Partitioner::Widgets::ApqnSelector).to receive(:new).and_return(apqn_widget)
 
+        allow(controller).to receive(:secure_key)
+
         allow(controller).to receive(:online_apqns).and_return(apqns)
 
         allow(controller).to receive(:test_secure_key_generation).and_return(generation_test_error)
