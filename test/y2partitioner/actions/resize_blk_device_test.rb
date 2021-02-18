@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2020] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -49,8 +50,12 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   let(:max_size) { 1.GiB }
 
   RSpec.shared_examples "resize_error" do
+    before do
+      allow(Yast2::Popup).to receive(:show)
+    end
+
     it "shows an error popup" do
-      expect(Yast::Popup).to receive(:Error)
+      expect(Yast2::Popup).to receive(:show).with(anything, headline: :error)
       action.run
     end
 
@@ -117,7 +122,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
     shared_examples "do not unmount" do
       it "does not ask for unmounting the device" do
-        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+        expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
 
         action.run
       end
@@ -142,6 +147,10 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
       context "and it is not currently formatted" do
         let(:device_name) { "/dev/sdb7" }
+
+        before do
+          allow(Yast2::Popup).to receive(:show).and_return(:yes)
+        end
 
         include_examples "do not unmount"
       end
@@ -199,26 +208,24 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
               context "and it is mounted in the system" do
                 let(:mounted) { true }
 
-                it "asks for unmounting the device" do
-                  expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-                    .and_return(:cancel)
-
-                  action.run
+                before do
+                  allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
                 end
 
-                it "shows a specific note for unmounting NTFS" do
-                  expect(Yast2::Popup).to receive(:show)
-                    .with(/check whether a NTFS/, anything)
-                    .and_return(:cancel)
+                let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: :finish) }
+
+                it "asks for unmounting the device" do
+                  expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |filesystem, _|
+                    expect(filesystem.sid).to eq(device.filesystem.sid)
+                  end.and_return(unmount_dialog)
 
                   subject.run
                 end
 
                 it "does not allow to continue without unmounting" do
-                  expect(Yast2::Popup).to_not receive(:show)
-                    .with(/continue without unmounting/, anything)
-
-                  expect(Yast2::Popup).to receive(:show).and_return(:cancel)
+                  expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |_, options|
+                    expect(options[:allow_continue]).to eq(false)
+                  end.and_return(unmount_dialog)
 
                   action.run
                 end
@@ -300,14 +307,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       context "when the volume cannot be resized" do
         let(:can_resize) { false }
 
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          action.run
-        end
-
-        it "returns :back" do
-          expect(action.run).to eq(:back)
-        end
+        include_examples "resize_error"
       end
 
       context "when the volume can be resized" do

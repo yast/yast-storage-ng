@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,21 +18,18 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "yast/i18n"
+require "yast2/popup"
 require "y2partitioner/dialogs/blk_device_resize"
 require "y2partitioner/ui_state"
-require "y2partitioner/immediate_unmount"
+require "y2partitioner/dialogs/unmount"
+require "y2partitioner/actions/base"
 require "y2partitioner/actions/controllers/blk_device"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
     # Action for resizing a partition or an LVM logical volume
-    class ResizeBlkDevice
+    class ResizeBlkDevice < Base
       include Yast::Logger
-      include Yast::I18n
-      include ImmediateUnmount
 
       # Constructor
       #
@@ -46,26 +43,6 @@ module Y2Partitioner
         UIState.instance.select_row(device.sid)
       end
 
-      # Checks whether it is possible to resize the device, and if so, the action is performed
-      #
-      # It also warns the user before continue when
-      #
-      #   * the device seems to be empty (see #confirm_empty)
-      #   * the device is an LVM thin snapshot (see #confirm_thin_snapshot_resize)
-      #   * the device needs to be unmounted before resizing (e.g., NTFS), offering the option for
-      #     unmounting it.
-      #
-      # @note An error popup is shown when the device cannot be resized or seems empty.
-      #
-      # @return [Symbol, nil]
-      def run
-        return :back unless confirm_empty
-        return :back unless try_unmount && validate
-        return :back unless confirm_thin_snapshot_resize
-
-        resize
-      end
-
       private
 
       # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
@@ -74,10 +51,30 @@ module Y2Partitioner
       # @return [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
       attr_reader :controller
 
+      # Checks whether it is possible to resize the device
+      #
+      # It also warns the user before continue when
+      #
+      #   * the device seems to be empty (see #confirm_empty)
+      #   * the device is an LVM thin snapshot (see #confirm_thin_snapshot_resize)
+      #   * the device needs to be unmounted before resizing (i.e., NTFS), offering the option for
+      #     unmounting it.
+      #
+      # @see Base#run?
+      def run?
+        return false unless confirm_empty
+        return false unless unmount && validate
+        return false unless confirm_thin_snapshot_resize
+
+        true
+      end
+
       # Runs the dialog to resize the device
       #
+      # @see Base#perform_action
+      #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
-      def resize
+      def perform_action
         result = Dialogs::BlkDeviceResize.run(controller)
 
         (result == :next) ? :finish : result
@@ -87,7 +84,6 @@ module Y2Partitioner
       # the high risk of data loss.
       #
       # @return [Boolean] true if there is no high risk or the user has accepted it
-      #
       def confirm_empty
         # If the device has descendants now resizing is ok even if
         # nothing was probed on the device since the user already made
@@ -125,19 +121,6 @@ module Y2Partitioner
         message = _("Selected device is an LVM Thin Snapshot. Do you really want to resize it?")
 
         Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
-      end
-
-      # Checks whether the resize action can be performed
-      #
-      # @see Y2Storage::ResizeInfo#resize_ok?
-      #
-      # @return [Boolean] true if the resize action can be performed; false otherwise.
-      def validate
-        return true if errors.empty?
-
-        # Only first error is shown
-        Yast::Popup.Error(errors.first)
-        false
       end
 
       # Errors when trying to resize a device
@@ -194,28 +177,26 @@ module Y2Partitioner
         msg_lines.join("\n")
       end
 
-      # Tries to unmount the device, if it is required.
+      # Asks for unmounting the device, if required.
       #
-      # It asks the user for immediate unmount the device, see {#immediate_unmount}.
+      # NTFS tools require the filesystem to be unmounted.
       #
       # @return [Boolean] true if it is not required to unmount or the device was correctly
       #   unmounted; false when user cancels.
-      def try_unmount
-        return true unless need_try_unmount?
+      def unmount
+        return true unless mounted_ntfs?
 
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It is not possible to check whether a NTFS\ncan be resized while it is mounted.")
 
-        immediate_unmount(controller.committed_device, note: note, allow_continue: false)
+        ntfs = controller.committed_filesystem
+        Dialogs::Unmount.new(ntfs, note: note, allow_continue: false).run == :finish
       end
 
-      # Whether it is necessary to try unmount
-      #
-      # Unmount is needed when the current filesystem is NTFS, it exists on disk and it is mounted.
-      # NTFS tools require the filesystem be unmounted.
+      # Checks whether the current filesystem is NTFS, it exists on disk and it is mounted.
       #
       # @return [Boolean]
-      def need_try_unmount?
+      def mounted_ntfs?
         controller.committed_current_filesystem? &&
           controller.mounted_committed_filesystem? &&
           controller.committed_filesystem.type.is?(:ntfs)
