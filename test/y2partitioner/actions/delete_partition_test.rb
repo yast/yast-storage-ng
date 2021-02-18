@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -41,7 +42,7 @@ describe Y2Partitioner::Actions::DeletePartition do
 
     let(:accept) { nil }
 
-    shared_examples "do not remove partition" do
+    shared_examples "do not delete partition" do
       it "does not delete the partition" do
         subject.run
         expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
@@ -52,36 +53,19 @@ describe Y2Partitioner::Actions::DeletePartition do
       end
     end
 
-    shared_examples "confirm" do
-      it "shows a confirm message" do
-        expect(Yast2::Popup).to receive(:show).with(/Really delete/, anything)
-          .and_return(:no)
+    shared_examples "delete partition" do
+      it "deletes the partition" do
+        subject.run
+        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
+      end
 
+      it "refreshes btrfs subvolumes shadowing" do
+        expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
         subject.run
       end
 
-      context "when the confirm message is not accepted" do
-        let(:accept) { :no }
-
-        include_examples "do not remove partition"
-      end
-
-      context "when the confirm message is accepted" do
-        let(:accept) { :yes }
-
-        it "deletes the partition" do
-          subject.run
-          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
-        end
-
-        it "refreshes btrfs subvolumes shadowing" do
-          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-          subject.run
-        end
-
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
-        end
+      it "returns :finish" do
+        expect(subject.run).to eq(:finish)
       end
     end
 
@@ -101,113 +85,117 @@ describe Y2Partitioner::Actions::DeletePartition do
       end
     end
 
-    context "when deleting a partition that is not mounted in the system" do
+    context "when deleting a partition from a non-implicit partition table" do
       let(:scenario) { "mixed_disks.yml" }
 
       let(:device_name) { "/dev/sda2" }
 
-      it "does not ask for unmounting the partition" do
-        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+      before do
+        allow(Yast2::Popup).to receive(:show).with(/Really delete/, anything).and_return(accept)
+      end
+
+      let(:accept) { :no }
+
+      it "shows a confirm message" do
+        expect(Yast2::Popup).to receive(:show).with(/Really delete/, anything)
 
         subject.run
       end
 
-      include_examples "confirm"
+      context "when the confirm message is not accepted" do
+        let(:accept) { :no }
+
+        include_examples "do not delete partition"
+      end
+
+      context "when the confirm message is accepted" do
+        let(:accept) { :yes }
+
+        context "and the partition is not mounted in the system" do
+          let(:device_name) { "/dev/sda2" }
+
+          it "does not ask for unmounting the partition" do
+            expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+
+            subject.run
+          end
+
+          include_examples "delete partition"
+        end
+
+        context "and the partition is currently mounted in the system" do
+          let(:device_name) { "/dev/sdb2" }
+
+          before do
+            allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
+          end
+
+          let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: unmount_result) }
+
+          let(:unmount_result) { :cancel }
+
+          it "asks for unmounting the partition" do
+            expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
+              expect(devices).to contain_exactly(an_object_having_attributes(sid: device.filesystem.sid))
+            end.and_return(unmount_dialog)
+
+            subject.run
+          end
+
+          context "and the user decides to unmount or to continue" do
+            let(:unmount_result) { :finish }
+
+            include_examples "delete partition"
+          end
+
+          context "and the user decides to cancel" do
+            let(:unmount_result) { :cancel }
+
+            include_examples "do not delete partition"
+          end
+        end
+      end
     end
 
-    context "when deleting a partition that is mounted in the system" do
-      let(:scenario) { "mixed_disks.yml" }
+    context "when deleting a partition used by other device" do
+      let(:scenario) { "root_partitioned_md_raid.yml" }
 
-      let(:device_name) { "/dev/sdb2" }
+      let(:device_name) { "/dev/vda2" }
 
       before do
-        allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-          .and_return(*unmount_answer)
+        allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
       end
 
-      let(:unmount_answer) { [:cancel] }
+      let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: :finish) }
 
-      it "asks for unmounting the partition" do
-        expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-
-        subject.run
-      end
-
-      it "shows a specific note for deleting" do
-        expect(Yast2::Popup).to receive(:show)
-          .with(/cannot be deleted while mounted/, anything)
-          .and_return(:cancel)
-
-        subject.run
-      end
-
-      context "and the user decides to continue" do
-        let(:unmount_answer) { [:continue] }
-
-        include_examples "confirm"
-      end
-
-      context "and the user decides to cancel" do
-        let(:unmount_answer) { [:cancel] }
-
-        include_examples "do not remove partition"
-      end
-
-      context "and the user decides to unmount" do
-        let(:unmount_answer) { [:unmount, :cancel] }
-
-        context "and the partition can not be unmounted" do
-          before do
-            allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
-              .and_raise(Storage::Exception, "fail to unmount")
-          end
-
-          it "shows an error message" do
-            expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
-
-            subject.run
-          end
-
-          it "asks for trying to unmount again" do
-            expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything).twice
-
-            subject.run
-          end
-        end
-
-        context "and the partition can be unmounted" do
-          before do
-            allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
-          end
-
-          include_examples "confirm"
-        end
-      end
-    end
-
-    context "when deleting a partition used by LVM" do
-      let(:scenario) { "lvm-two-vgs.yml" }
-
-      let(:device_name) { "/dev/sda5" }
-
-      it "shows a generic confirmation pop-up with a recursive list of devices" do
+      it "ask for deleting all the dependent devices" do
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(device, anything, anything, /sda5/)
+          .with(device, anything, anything, /vda2/)
           .and_call_original
 
         subject.run
       end
-    end
-
-    context "when deleting a partition used by MD Raid" do
-      let(:scenario) { "md_raid" }
-
-      let(:device_name) { "/dev/sda1" }
 
       it "shows a generic confirmation pop-up with a recursive list of devices" do
-        expect(subject).to receive(:confirm_recursive_delete)
-          .with(device, anything, anything, /sda1/)
-          .and_call_original
+        expect(Yast::HTML).to receive(:List).with(["/dev/md0", "/dev/md0p1", "/dev/md0p2"])
+
+        subject.run
+      end
+
+      it "ask for unmounting all the mounted dependent devices" do
+        allow(subject).to receive(:confirm_recursive_delete).and_return(true)
+
+        md0p1_fs = device_graph.find_by_name("/dev/md0p1").filesystem
+        md0p2_fs = device_graph.find_by_name("/dev/md0p2").filesystem
+        subvols = md0p1_fs.btrfs_subvolumes.reject { |s| s.mount_point.nil? }
+
+        mounted = [md0p1_fs, md0p2_fs] + subvols
+
+        expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
+          expected = mounted.map { |d| an_object_having_attributes(sid: d.sid) }
+
+          expect(devices).to contain_exactly(*expected)
+        end.and_return(unmount_dialog)
 
         subject.run
       end

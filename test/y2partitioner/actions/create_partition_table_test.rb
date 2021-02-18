@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-18] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -38,7 +39,9 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
   describe "#run" do
     before do
       allow(action).to receive(:confirm_recursive_delete).and_return confirmed
+      allow_any_instance_of(Y2Partitioner::Dialogs::Unmount).to receive(:run).and_return(:finish)
     end
+
     let(:confirmed) { false }
 
     context "for a disk with some partitions" do
@@ -61,6 +64,12 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
           expect(disk.partitions.map(&:name).sort).to eq original_partitions
         end
 
+        it "does not ask for unmounting devices" do
+          expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+
+          action.run
+        end
+
         it "returns :back" do
           expect(action.run).to eq :back
         end
@@ -70,9 +79,34 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         let(:confirmed) { true }
 
         before do
-          allow(dialog_class).to receive(:new).and_return dialog
+          allow(dialog_class).to receive(:new).and_return(dialog)
+
+          allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
         end
+
         let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+        let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: :finish) }
+
+        it "asks for unmounting all the currently mounted devices from the partition table" do
+          expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
+            sdb1_fs = current_graph.find_by_name("/dev/sdb1").filesystem
+            sdb2_fs = current_graph.find_by_name("/dev/sdb2").filesystem
+            sdb5_fs = current_graph.find_by_name("/dev/sdb5").filesystem
+            sdb6_fs = current_graph.find_by_name("/dev/sdb6").filesystem
+
+            expect(devices).to contain_exactly(
+              an_object_having_attributes(sid: sdb1_fs.sid),
+              an_object_having_attributes(sid: sdb2_fs.sid),
+              an_object_having_attributes(sid: sdb5_fs.sid),
+              an_object_having_attributes(sid: sdb6_fs.sid)
+            )
+          end.and_return(unmount_dialog)
+
+          allow(dialog).to receive(:run)
+
+          action.run
+        end
 
         it "displays a dialog to select the partition table type" do
           expect(dialog_class).to receive(:new).with(disk, [type_gpt, type_msdos], type_gpt)
@@ -194,6 +228,14 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         allow(dialog).to receive(:run)
 
         expect(action).to_not receive(:confirm_recursive_delete)
+        action.run
+      end
+
+      it "does not ask for unmounting devices" do
+        expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+
+        allow(dialog).to receive(:run)
+
         action.run
       end
 
@@ -351,8 +393,8 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
     end
 
     context "for a directly formatted device" do
-      let(:scenario) { "multipath-formatted.xml" }
-      let(:disk_name) { "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1" }
+      let(:scenario) { "formatted_md" }
+      let(:disk_name) { "/dev/md0" }
 
       before do
         allow(Yast2::Popup).to receive(:show).and_return popup_result
@@ -382,26 +424,46 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         end
       end
 
-      context "if the user confirms and selects a type" do
+      context "if the user confirms" do
         let(:popup_result) { :yes }
 
         before do
-          allow(dialog).to receive(:run).and_return :next
-          allow(dialog).to receive(:selected_type).and_return type_gpt
+          allow(dialog).to receive(:run).and_return :back
+
+          allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
         end
 
-        it "deletes the filesystem" do
+        let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: :finish) }
+
+        it "asks for unmounting all the currently mounted devices from the partition table" do
+          sid = disk.filesystem.sid
+
+          expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
+            expect(devices).to contain_exactly(an_object_having_attributes(sid: sid))
+          end.and_return(unmount_dialog)
+
           action.run
-          expect(disk.filesystem).to be_nil
         end
 
-        it "adds a new partition table to the disk" do
-          action.run
-          expect(disk.partition_table.type).to eq type_gpt
-        end
+        context "if the user selects a type" do
+          before do
+            allow(dialog).to receive(:run).and_return :next
+            allow(dialog).to receive(:selected_type).and_return type_gpt
+          end
 
-        it "returns :finish" do
-          expect(action.run).to eq :finish
+          it "deletes the filesystem" do
+            action.run
+            expect(disk.filesystem).to be_nil
+          end
+
+          it "adds a new partition table to the disk" do
+            action.run
+            expect(disk.partition_table.type).to eq type_gpt
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
         end
       end
     end
@@ -410,7 +472,7 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
       let(:scenario) { "unformatted-eckd-dasd" }
       let(:disk_name) { "/dev/dasda" }
 
-      before { allow(Yast::Popup).to receive(:Error) }
+      before { allow(Yast2::Popup).to receive(:show) }
 
       it "does not display any confirmation dialog" do
         expect(action).to_not receive(:confirm_recursive_delete)
@@ -422,8 +484,13 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         action.run
       end
 
+      it "does not ask for unmounting devices" do
+        expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+        action.run
+      end
+
       it "displays an error popup" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show).with(anything, headline: :error)
         action.run
       end
 

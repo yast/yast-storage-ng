@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -58,81 +58,78 @@ describe Y2Partitioner::Actions::DeleteTmpfs do
       end
     end
 
-    shared_examples "confirm and delete" do
-      it "shows a confirm message" do
-        expect(Yast2::Popup).to receive(:show).with(/delete the temporary file system/, anything)
+    shared_examples "delete" do
+      it "deletes the filesystem" do
         subject.run
+
+        fs = device_graph.tmp_filesystems.find { |f| f.mount_path == mount_path }
+
+        expect(fs).to be_nil
       end
 
-      context "when the confirm message is not accepted" do
-        let(:accept) { :no }
-
-        include_examples "do not delete"
+      it "returns :finish" do
+        expect(subject.run).to eq(:finish)
       end
+    end
 
-      context "when the confirm message is accepted" do
-        let(:accept) { :yes }
+    let(:mount_path) { "/test2" }
 
-        it "deletes the filesystem" do
+    it "shows a confirm message" do
+      expect(Yast2::Popup).to receive(:show).with(/delete the temporary file system/, anything)
+      subject.run
+    end
+
+    context "when the confirm message is not accepted" do
+      let(:accept) { :no }
+
+      include_examples "do not delete"
+    end
+
+    context "when the confirm message is accepted" do
+      let(:accept) { :yes }
+
+      context "when the filesystem is not mounted in the system" do
+        let(:mount_path) { "/test2" }
+
+        it "does not ask for unmounting the filesystem" do
+          expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+
           subject.run
-
-          fs = device_graph.tmp_filesystems.find { |f| f.mount_path == mount_path }
-
-          expect(fs).to be_nil
         end
 
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
+        include_examples "delete"
+      end
+
+      context "when the filesystem is mounted in the system" do
+        let(:mount_path) { "/test1" }
+
+        before do
+          allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
         end
-      end
-    end
 
-    context "when the filesystem is not mounted in the system" do
-      let(:mount_path) { "/test2" }
+        let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: unmount_result) }
 
-      it "does not ask for unmounting the partition" do
-        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+        let(:unmount_result) { :cancel }
 
-        subject.run
-      end
+        it "asks for unmounting the filesystem" do
+          expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
+            expect(devices).to contain_exactly(an_object_having_attributes(sid: filesystem.sid))
+          end.and_return(unmount_dialog)
 
-      include_examples "confirm and delete"
-    end
+          subject.run
+        end
 
-    context "when the filesystem is mounted in the system" do
-      let(:mount_path) { "/test1" }
+        context "and the user decides to unmount or to continue" do
+          let(:unmount_result) { :finish }
 
-      before do
-        allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-          .and_return(*unmount_answer)
-      end
+          include_examples "delete"
+        end
 
-      let(:unmount_answer) { [:cancel] }
+        context "and the user decides to cancel" do
+          let(:unmount_result) { :cancel }
 
-      it "asks for unmounting the filesystem" do
-        expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-
-        subject.run
-      end
-
-      it "shows a specific note for deleting" do
-        expect(Yast2::Popup).to receive(:show)
-          .with(/cannot be deleted while mounted/, anything)
-          .and_return(:cancel)
-
-        subject.run
-      end
-
-      context "and the user decides to continue" do
-        let(:unmount_answer) { [:continue] }
-
-        include_examples "confirm and delete"
-      end
-
-      context "and the user decides to cancel" do
-        let(:unmount_answer) { [:cancel] }
-
-        include_examples "do not delete"
+          include_examples "do not delete"
+        end
       end
     end
   end

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,14 +18,14 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/ui_state"
-require "y2partitioner/actions/delete_blk_device"
+require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
   module Actions
     # Action for deleting a logical volume
     #
-    # @see DeleteBlkDevice
-    class DeleteLvmLv < DeleteBlkDevice
+    # @see DeleteDevice
+    class DeleteLvmLv < DeleteDevice
       def initialize(*args)
         super
         textdomain "storage"
@@ -38,9 +38,9 @@ module Y2Partitioner
       # @note When the device is a thin pool, all thin volumes over the pool
       #   are automatically deleted.
       def delete
-        log.info "deleting logical volume #{device}"
         vg = device.lvm_vg
         vg.delete_lvm_lv(device)
+
         UIState.instance.select_row(vg.sid)
       end
 
@@ -72,6 +72,8 @@ module Y2Partitioner
             _("Confirm Deleting of LVM Logical Volume")
           end
 
+        # FIXME: unify message for recursive deleting devices instead of having one specific message for
+        #   each case.
         confirm_recursive_delete(
           device,
           title,

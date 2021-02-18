@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2019] SUSE LLC
+
+# Copyright (c) [2019-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -45,6 +46,8 @@ describe Y2Partitioner::Actions::DeleteBtrfs do
 
     let(:accept) { nil }
 
+    let(:blk_device_name) { "/dev/sdb1" }
+
     shared_examples "do not delete" do
       it "does not delete the filesystem" do
         subject.run
@@ -57,113 +60,117 @@ describe Y2Partitioner::Actions::DeleteBtrfs do
       end
     end
 
-    shared_examples "confirm and delete" do
-      it "shows a confirm message" do
-        expect(Yast2::Popup).to receive(:show)
+    shared_examples "delete" do
+      it "deletes the filesystem" do
+        subject.run
+        fs = Y2Storage::BlkDevice.find_by_name(device_graph, blk_device_name).filesystem
+        expect(fs).to be_nil
+      end
+
+      it "does not delete the associated block devices" do
+        blk_devs = filesystem.blk_devices.map(&:sid)
+
+        subject.run
+
+        blk_devs_after = blk_devs.map { |sid| device_graph.find_device(sid) }
+        expect(blk_devs_after).to_not include(nil)
+      end
+
+      it "refresh btrfs subvolumes shadowing" do
+        expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
         subject.run
       end
 
-      context "when the confirm message is not accepted" do
-        let(:accept) { :no }
-
-        include_examples "do not delete"
-      end
-
-      context "when the confirm message is accepted" do
-        let(:accept) { :yes }
-
-        it "deletes the filesystem" do
-          subject.run
-          fs = Y2Storage::BlkDevice.find_by_name(device_graph, blk_device_name).filesystem
-          expect(fs).to be_nil
-        end
-
-        it "does not delete the associated block devices" do
-          blk_devs = filesystem.blk_devices.map(&:sid)
-
-          subject.run
-
-          blk_devs_after = blk_devs.map { |sid| device_graph.find_device(sid) }
-          expect(blk_devs_after).to_not include(nil)
-        end
-
-        it "refresh btrfs subvolumes shadowing" do
-          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-          subject.run
-        end
-
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
-        end
+      it "returns :finish" do
+        expect(subject.run).to eq(:finish)
       end
     end
 
-    context "when the filesystem is not mounted in the system" do
-      before do
-        allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return false
-      end
+    it "shows a confirm message" do
+      expect(Yast2::Popup).to receive(:show)
+      subject.run
+    end
 
-      context "when deleting a regular btrfs" do
-        let(:blk_device_name) { "/dev/sda2" }
+    context "when the confirm message is not accepted" do
+      let(:accept) { :no }
 
-        it "does not ask for unmounting the partition" do
+      include_examples "do not delete"
+    end
+
+    context "when the confirm message is accepted" do
+      let(:accept) { :yes }
+
+      context "when the filesystem is not mounted in the system" do
+        before do
+          allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return false
+        end
+
+        it "does not ask for unmounting the device" do
           expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
 
           subject.run
         end
 
-        include_examples "confirm and delete"
+        include_examples "delete"
       end
 
-      context "when deleting a multi-device btrfs" do
+      context "when the filesystem is mounted in the system" do
+        # All btrfs filesystems are mounted in this scenario, no need to mock #active?, just pick any
+        # btrfs
         let(:blk_device_name) { "/dev/sdb1" }
 
-        it "does not ask for unmounting the partition" do
-          expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+        before do
+          allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+            .and_return(*unmount_answer)
+        end
+
+        let(:unmount_answer) { [:cancel] }
+
+        it "asks for unmounting the device" do
+          expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
 
           subject.run
         end
 
-        include_examples "confirm and delete"
-      end
-    end
+        it "shows a specific note for deleting" do
+          expect(Yast2::Popup).to receive(:show)
+            .with(/cannot be deleted while mounted/, anything)
+            .and_return(:cancel)
 
-    context "when the filesystem is mounted in the system" do
-      # All btrfs filesystems are mounted in this scenario, no need to mock
-      # #active?, just pick any btrfs
-      let(:blk_device_name) { "/dev/sdb1" }
+          subject.run
+        end
 
-      before do
-        allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-          .and_return(*unmount_answer)
-      end
+        context "and the filesystem is a multidevice Btrfs" do
+          it "uses the name of the filesystem" do
+            expect(Yast2::Popup).to receive(:show).with(/Btrfs.*\(sdb1.*mounted/, anything)
 
-      let(:unmount_answer) { [:cancel] }
+            subject.run
+          end
+        end
 
-      it "asks for unmounting the partition" do
-        expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+        context "and the filesystem is not a multidevice Btrfs" do
+          let(:scenario) { "mixed_disks_btrfs" }
 
-        subject.run
-      end
+          let(:blk_device_name) { "/dev/sdb2" }
 
-      it "shows a specific note for deleting" do
-        expect(Yast2::Popup).to receive(:show)
-          .with(/cannot be deleted while mounted/, anything)
-          .and_return(:cancel)
+          it "uses the name of the block device" do
+            expect(Yast2::Popup).to receive(:show).with(/sdb2 mounted/, anything)
 
-        subject.run
-      end
+            subject.run
+          end
+        end
 
-      context "and the user decides to continue" do
-        let(:unmount_answer) { [:continue] }
+        context "and the user decides to continue" do
+          let(:unmount_answer) { [:continue] }
 
-        include_examples "confirm and delete"
-      end
+          include_examples "delete"
+        end
 
-      context "and the user decides to cancel" do
-        let(:unmount_answer) { [:cancel] }
+        context "and the user decides to cancel" do
+          let(:unmount_answer) { [:cancel] }
 
-        include_examples "do not delete"
+          include_examples "do not delete"
+        end
       end
     end
   end
