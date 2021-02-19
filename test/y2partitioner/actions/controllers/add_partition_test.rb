@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -310,6 +311,93 @@ describe Y2Partitioner::Actions::Controllers::AddPartition do
 
       it "returns true" do
         expect(subject.device_formatted?).to eq(true)
+      end
+    end
+  end
+
+  describe "#device_mounted?" do
+    let(:scenario) { "mixed_disks" }
+
+    context "when the device is not currently formatted" do
+      let(:device_name) { "/dev/sdc" }
+
+      it "returns false" do
+        expect(controller.device_mounted?).to eq(false)
+      end
+    end
+
+    context "when the device is currently formatted" do
+      let(:device_name) { "/dev/sdb2" }
+
+      context "and the filesystem exists on the system" do
+        before do
+          subject.committed_filesystem.mount_point.active = active
+        end
+
+        context "and the filesystem is currently mounted" do
+          let(:active) { true }
+
+          it "returns true" do
+            expect(controller.device_mounted?).to eq(true)
+          end
+        end
+
+        context "and the filesystem is not currently mounted" do
+          let(:active) { false }
+
+          it "returns false" do
+            expect(controller.device_mounted?).to eq(false)
+          end
+        end
+      end
+
+      context "and the filesystem does not exist on the system" do
+        before do
+          subject.device.remove_descendants
+          subject.device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+          subject.device.filesystem.mount_path = "/"
+        end
+
+        it "returns false" do
+          expect(controller.device_mounted?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#committed_filesystem" do
+    let(:scenario) { "mixed_disks" }
+
+    context "when the device is not currently formatted" do
+      let(:device_name) { "/dev/sdc" }
+
+      it "returns nil" do
+        expect(controller.committed_filesystem).to be_nil
+      end
+    end
+
+    context "when the device is currently formatted" do
+      let(:device_name) { "/dev/sda2" }
+
+      context "and the filesystem exists on the system" do
+        it "returns the filesystem on the system" do
+          expect(controller.committed_filesystem).to eq(subject.device.filesystem)
+
+          system_devicegraph = Y2Storage::StorageManager.instance.system
+
+          expect(controller.committed_filesystem.devicegraph).to eq(system_devicegraph)
+        end
+      end
+
+      context "and the filesystem does not exist on the system" do
+        before do
+          subject.device.remove_descendants
+          subject.device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns nil" do
+          expect(controller.committed_filesystem).to be_nil
+        end
       end
     end
   end

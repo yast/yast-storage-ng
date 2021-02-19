@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,6 +24,7 @@ require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/filesystem_steps"
 require "y2partitioner/dialogs/partition_type"
 require "y2partitioner/dialogs/partition_size"
+require "y2partitioner/dialogs/unmount"
 
 module Y2Partitioner
   module Actions
@@ -140,17 +141,17 @@ module Y2Partitioner
 
       # Checks whether the device is not formatted
       #
-      # @see Controllers::Partition#device_formatted?
+      # A confirm popup to delete the filesystem is shown when the device is directly formatted.
+      # Moreover, the user is asked to unmount the filesystem, if required.
       #
-      # @note A confirm popup to delete the filesystem is shown when the device
-      #   is directly formatted.
+      # @see Controllers::Partition#device_formatted?
       #
       # @return [Boolean] true if device is not formatted or confirm popup is
       #   accepted; false otherwise.
       def not_formatted_validation
         return true unless controller.device_formatted?
 
-        Yast::Popup.YesNo(
+        accept = Yast::Popup.YesNo(
           # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
           format(
             _("The device %{name} is directly formatted.\n"\
@@ -158,6 +159,8 @@ module Y2Partitioner
             name: device_name
           )
         )
+
+        accept && unmount
       end
 
       # Checks whether it is possible to create a new partition.
@@ -186,6 +189,19 @@ module Y2Partitioner
             name: device_name
           )
         )
+      end
+
+      # Asks for unmounting the current filesystem, if required.
+      #
+      # @return [Boolean] true whether unmounting is not required or the filesystem was correctly
+      #   unmounted or the user accepts to continue without unmounting; false if the user cancels.
+      def unmount
+        return true unless controller.device_mounted?
+
+        # TRANSLATORS: Note added to the dialog for trying to unmount devices
+        note = _("A new partition cannot be created while the file system is mounted.")
+
+        Dialogs::Unmount.new(controller.committed_filesystem, note: note).run == :finish
       end
 
       # Convenience method for returning the device available partition types
