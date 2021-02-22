@@ -157,8 +157,7 @@ module Y2Partitioner
         text = format(_("The following devices are currently mounted:\n\n%{mount_sentences}\n\n"),
           mount_sentences: mount_sentences)
 
-        # TRANSLATORS: %{note} is replaced by a text. Try to keep line breaks.
-        text << format(_("%{note}\n\n"), note: note) if note
+        text << note + "\n\n" if note
 
         text <<
           if allow_continue?
