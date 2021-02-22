@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,32 +21,23 @@ require "yast"
 require "y2partitioner/device_graphs"
 require "y2partitioner/dialogs/partition_table_type"
 require "y2partitioner/confirm_recursive_delete"
+require "y2partitioner/recursive_unmount"
+require "y2partitioner/actions/base"
 
 Yast.import "Label"
 
 module Y2Partitioner
   module Actions
     # Action for creating a new partition table
-    class CreatePartitionTable
-      include Yast::I18n
+    class CreatePartitionTable < Base
       include Yast::Logger
       include ConfirmRecursiveDelete
+      include RecursiveUnmount
 
       # @param disk [Y2Storage::Partitionable]
       def initialize(disk)
         textdomain "storage"
         @disk = disk
-      end
-
-      # Checks whether the action can be performed, displays a confirmation
-      # popup and, if everything goes fine so far, performs the action.
-      #
-      # @return [Symbol]
-      def run
-        return :back unless validate && confirm
-
-        perform_action
-        :finish
       end
 
       protected
@@ -60,14 +51,30 @@ module Y2Partitioner
         disk.name
       end
 
+      # Checks whether the action can be performed. If so, a confirmation popup is shown.
+      # It also asks for unmounting devices when any of the affected devices is currently mounted in the
+      # system.
+      #
+      # @see Actions::Base#run?
+      #
+      # @return [Boolean]
+      def run?
+        validate && confirm && unmount
+      end
+
       # Creates the new partition table, asking the user for the type if needed
       #
       # Does nothing if the user cancels the action when asked for the type
+      #
+      # @see Base#perform_action
+      #
+      # @return [Symbol, nil]
       def perform_action
         type = (possible_types.size > 1) ? selected_type : default_type
-        return if type.nil?
 
-        create_partition_table(type)
+        create_partition_table(type) unless type.nil?
+
+        :finish
       end
 
       # Creates the new partition table
@@ -86,18 +93,23 @@ module Y2Partitioner
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
-      # Checks if a partition table can be created on the disk, displaying an
-      # informative popup if it's not possible.
+      # Errors that avoid to create a new partition table
+      #
+      # @see Base#errors
       #
       # @return [Boolean]
-      def validate
-        return true if possible_types.size > 0
+      def errors
+        [types_error].compact
+      end
 
-        Yast::Popup.Error(
-          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
-          _("It is not possible to create a new partition table on %s.") % disk_name
-        )
-        false
+      # Error when there is no suitable type for creating a new partition table
+      #
+      # @return [String, nil] nil if there are suitable types
+      def types_error
+        return nil if possible_types.size > 0
+
+        # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
+        format(_("It is not possible to create a new partition table on %s."), disk_name)
       end
 
       # If the operation have destructive consequences, ask for confirmation
@@ -187,6 +199,16 @@ module Y2Partitioner
       # Return the default partition table types for this disk.
       def default_type
         @default_type ||= disk.preferred_ptable_type || possible_types.first
+      end
+
+      # Asks for unmounting the affected devices, if required.
+      #
+      # @return [Boolean] see {#recursive_unmount}
+      def unmount
+        # TRANSLATORS: Note added to the dialog for trying to unmount devices
+        note = _("A new partition table cannot be created while the devices are mounted.")
+
+        recursive_unmount(disk, note: note)
       end
 
       # Current devicegraph

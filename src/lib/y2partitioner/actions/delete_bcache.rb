@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,14 +17,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/actions/delete_blk_device"
+require "y2partitioner/actions/delete_device"
 require "y2partitioner/actions/controllers/bcache"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
-    # Action for deleting a Bcache, see {Actions::DeleteBlkDevice}
-    class DeleteBcache < DeleteBlkDevice
+    # Action for deleting a Bcache, see {Actions::DeleteDevice}
+    class DeleteBcache < DeleteDevice
       # Constructor
       #
       # @param bcache [Y2Storage::Bcache]

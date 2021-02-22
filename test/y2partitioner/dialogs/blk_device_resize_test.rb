@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -203,7 +203,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
     shared_examples "do not unmount" do
       it "does not ask for unmounting the device" do
-        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+        expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
 
         subject.next_handler
       end
@@ -300,65 +300,38 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             shared_examples "do unmount" do
               before do
-                allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
-                  .and_return(*unmount_answer)
+                allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
               end
 
-              let(:unmount_answer) { [:cancel] }
+              let(:unmount_dialog) do
+                instance_double(Y2Partitioner::Dialogs::Unmount, run: unmount_result)
+              end
+
+              let(:unmount_result) { :cancel }
 
               it "asks for unmounting the device" do
-                expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+                sid = device.filesystem.sid
+
+                expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |filesystem, _|
+                  expect(filesystem.sid).to eq(sid)
+                end.and_return(unmount_dialog)
 
                 subject.next_handler
               end
 
-              context "and the user decides to cancel" do
-                let(:unmount_answer) { [:cancel] }
-
-                it "returns false" do
-                  expect(subject.next_handler).to eq(false)
-                end
-              end
-
-              context "and the user decides to continue" do
-                let(:unmount_answer) { [:continue] }
+              context "and the user decides to unmount or to continue" do
+                let(:unmount_result) { :finish }
 
                 it "returns true" do
                   expect(subject.next_handler).to eq(true)
                 end
               end
 
-              context "and the user decides to unmount" do
-                let(:unmount_answer) { [:unmount, :cancel] }
+              context "and the user decides to cancel" do
+                let(:unmount_result) { :cancel }
 
-                context "and the partition can not be unmounted" do
-                  before do
-                    allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
-                      .and_raise(Storage::Exception, "fail to unmount")
-                  end
-
-                  it "shows an error message" do
-                    expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
-
-                    subject.next_handler
-                  end
-
-                  it "asks for trying to unmount again" do
-                    expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
-                    expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything).twice
-
-                    subject.next_handler
-                  end
-                end
-
-                context "and the partition can be unmounted" do
-                  before do
-                    allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
-                  end
-
-                  it "returns true" do
-                    expect(subject.next_handler).to eq(true)
-                  end
+                it "returns false" do
+                  expect(subject.next_handler).to eq(false)
                 end
               end
             end
@@ -374,13 +347,6 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
               context "and the device does not support to shrink being mounted" do
                 let(:mounted_shrink) { false }
-
-                it "shows a specific note for shrinking the device" do
-                  expect(Yast2::Popup).to receive(:show)
-                    .with(/not possible to shrink/, anything)
-
-                  subject.next_handler
-                end
 
                 include_examples "do unmount"
               end
@@ -399,26 +365,12 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
                 context "and the device is going to be extended more than 50 GiB" do
                   let(:selected_size) { 150.GiB } # current size is 60 GiB
 
-                  it "shows a specific note for extending the device too much" do
-                    expect(Yast2::Popup).to receive(:show)
-                      .with(/may be quite slow/, anything)
-
-                    subject.next_handler
-                  end
-
                   include_examples "do unmount"
                 end
               end
 
               context "and the device does not support to extend being mounted" do
                 let(:mounted_grow) { false }
-
-                it "shows a specific note for extending the device" do
-                  expect(Yast2::Popup).to receive(:show)
-                    .with(/not possible to extend/, anything)
-
-                  subject.next_handler
-                end
 
                 include_examples "do unmount"
               end

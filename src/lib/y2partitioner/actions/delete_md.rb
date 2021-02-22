@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,19 +17,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/actions/delete_blk_device"
+require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
   module Actions
     # Action for deleting a Md Raid
     #
     # @see DeleteBlkDevice
-    class DeleteMd < DeleteBlkDevice
+    class DeleteMd < DeleteDevice
       private
 
       # Deletes the indicated md raid (see {DeleteDevice#device})
       def delete
-        log.info "deleting md raid #{device}"
         device_graph.remove_md(device)
       end
     end

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Feb 19 13:21:35 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: ask for recursively unmounting affected devices when
+  deleting a device (bsc#1171310).
+- 4.3.44
+
+-------------------------------------------------------------------
 Thu Feb 11 14:16:57 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: in general, collapse branches of the tables only if

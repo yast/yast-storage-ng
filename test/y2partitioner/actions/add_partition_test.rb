@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -147,18 +148,22 @@ describe Y2Partitioner::Actions::AddPartition do
 
       before do
         disk.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        disk.filesystem.mount_path = "/"
+
+        allow(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new).with(disk_name)
+          .and_return(controller)
+
+        allow(controller).to receive(:committed_filesystem).and_return(disk.filesystem)
       end
+
+      let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
 
       it "shows an confirm popup" do
         expect(Yast::Popup).to receive(:YesNo)
         action.run
       end
 
-      context "when the confirm popup is not accepted" do
-        before do
-          allow(Yast::Popup).to receive(:YesNo).and_return(false)
-        end
-
+      shared_examples "do not create partition" do
         it "quits returning :back" do
           expect(action.run).to eq(:back)
         end
@@ -171,23 +176,65 @@ describe Y2Partitioner::Actions::AddPartition do
         end
       end
 
+      context "when the confirm popup is not accepted" do
+        before do
+          allow(Yast::Popup).to receive(:YesNo).and_return(false)
+        end
+
+        it "does not ask for unmounting the device" do
+          expect_any_instance_of(Y2Partitioner::Dialogs::Unmount).to_not receive(:run)
+
+          action.run
+        end
+
+        include_examples "do not create partition"
+      end
+
       context "when the confirm popup is accepted" do
         before do
           allow(Yast::Popup).to receive(:YesNo).and_return(true)
-
-          allow(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new).with(disk_name)
-            .and_return(controller)
           # Only to finish
           allow(Y2Partitioner::Dialogs::PartitionType).to receive(:run).and_return(:abort)
           allow(controller).to receive(:available_partition_types).and_return(available_types)
+
+          controller.committed_filesystem.mount_point.active = active
         end
 
-        let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
         let(:available_types) { Y2Storage::PartitionType.all }
 
-        it "removes the filesystem" do
-          expect(controller).to receive(:delete_filesystem)
-          action.run
+        context "and the device is currently mounted" do
+          let(:active) { true }
+
+          before do
+            allow(Y2Partitioner::Dialogs::Unmount).to receive(:new).and_return(unmount_dialog)
+          end
+
+          let(:unmount_dialog) { instance_double(Y2Partitioner::Dialogs::Unmount, run: unmount_result) }
+
+          let(:unmount_result) { :cancel }
+
+          it "asks for unmounting the device" do
+            expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |filesystem, _|
+              expect(filesystem.sid).to eq(disk.filesystem.sid)
+            end.and_return(unmount_dialog)
+
+            subject.run
+          end
+
+          context "and the user decides to unmount or to continue" do
+            let(:unmount_result) { :finish }
+
+            it "removes the filesystem" do
+              expect(controller).to receive(:delete_filesystem)
+              action.run
+            end
+          end
+
+          context "and the user decides to cancel" do
+            let(:unmount_result) { :cancel }
+
+            include_examples "do not create partition"
+          end
         end
       end
     end

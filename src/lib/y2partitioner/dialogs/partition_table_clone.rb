@@ -169,7 +169,7 @@ module Y2Partitioner
           selected_devices.any? { |d| !d.partitions.empty? }
         end
 
-        # Asks whether to remove devices holded by the selected devices
+        # Asks whether to remove devices held by the selected devices
         #
         # @see ConfirmRecursiveDelete
         #

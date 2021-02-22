@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,7 +35,6 @@ module Y2Partitioner
 
       # Deletes the indicated filesystem (see {DeleteDevice#device})
       def delete
-        log.info "deleting btrfs #{device}"
         device.blk_devices.first.delete_filesystem
       end
 

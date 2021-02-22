@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,6 +29,7 @@ module Y2Partitioner
     class DeleteBtrfsSubvolume < DeleteDevice
       def initialize(*args)
         textdomain "storage"
+
         super
       end
 
@@ -36,8 +37,6 @@ module Y2Partitioner
 
       # Deletes the indicated Btrfs subvolume (see {DeleteDevice#device})
       def delete
-        log.info "deleting btrfs subvolume #{device}"
-
         fs = filesystem
 
         fs.delete_btrfs_subvolume(device.path)

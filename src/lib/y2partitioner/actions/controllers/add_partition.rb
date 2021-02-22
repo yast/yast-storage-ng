@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -158,6 +158,25 @@ module Y2Partitioner
         # @return [Boolean]
         def device_formatted?
           device.formatted?
+        end
+
+        # Whether the device is currently mounted in the system
+        #
+        # @return [Boolean]
+        def device_mounted?
+          return false unless committed_filesystem
+
+          committed_filesystem.active_mount_point?
+        end
+
+        # Committed version of the current filesystem
+        #
+        # @return [Y2Storage::BlkFilesystem, nil] nil if the device is not currently formatted or the
+        #   the current filesystem does not exist on disk yet.
+        def committed_filesystem
+          return nil unless device.formatted?
+
+          system_devicegraph.find_device(device.filesystem.sid)
         end
 
         # Whether is possible to create any new partition in the device
@@ -323,6 +342,18 @@ module Y2Partitioner
         def too_small_custom_region?(start_blk, end_blk)
           size = block_size * (end_blk - start_blk + 1)
           size < required_grain
+        end
+
+        # Devicegraph that represents the current version of the devices in the system
+        #
+        # @note This is not the same than {Base#system_graph}. To check whether a
+        #   filesystem is currently mounted, it must be checked in the real system
+        #   devicegraph. When a mount point is "immediate deactivated", the
+        #   mount point is set as inactive only in the system devicegraph.
+        #
+        # @return [Y2Storage::Devicegraph]
+        def system_devicegraph
+          Y2Storage::StorageManager.instance.system
         end
       end
     end

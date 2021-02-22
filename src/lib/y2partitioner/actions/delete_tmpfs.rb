@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,6 +28,7 @@ module Y2Partitioner
     class DeleteTmpfs < DeleteDevice
       def initialize(*args)
         textdomain "storage"
+
         super
       end
 
@@ -35,7 +36,6 @@ module Y2Partitioner
 
       # Deletes the indicated filesystem (see {DeleteDevice#device})
       def delete
-        log.info "deleting tmpfs #{device}"
         device_graph.remove_tmpfs(device)
       end
 

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,7 +18,6 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/actions/delete_device"
-require "y2partitioner/confirm_recursive_delete"
 
 module Y2Partitioner
   module Actions
@@ -26,27 +25,18 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteLvmVg < DeleteDevice
-      include ConfirmRecursiveDelete
-
       def initialize(*args)
         super
+
         textdomain "storage"
       end
 
       private
 
-      # A Volume Group cannot be mounted
-      #
-      # @see DeleteDevice#try_umount?
-      def try_unmount?
-        false
-      end
-
       # Deletes the indicated LVM volume group
       #
       # @see DeleteDevice#delete
       def delete
-        log.info "deleting vg #{device}"
         device_graph.remove_lvm_vg(device)
       end
 
@@ -65,6 +55,8 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def confirm_for_used
+        # FIXME: unify message for recursive deleting devices instead of having one specific message for
+        #   each case.
         confirm_recursive_delete(
           device,
           _("Confirm Deleting of Volume Group"),
