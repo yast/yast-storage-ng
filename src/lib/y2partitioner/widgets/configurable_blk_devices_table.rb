@@ -152,7 +152,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       # @see #columns_help
       def help
-        "<p>Table containing the selected list of devices, where:</p>" + columns_help
+        _("<p>The table contains the following columns:</p>") + columns_help
       end
 
       private

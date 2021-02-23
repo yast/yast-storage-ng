@@ -162,6 +162,22 @@ module Y2Partitioner
         valid_setup? && packages_installed?
       end
 
+      # @macro seeAbstractWidget
+      # @return [String] localized help text
+      def help
+        _(
+          # TRANSLATORS: html text of the Partitioner Help. Please make sure the menu
+          # names actually match the ones in the menubar widget
+          "<p>Below the menu bar, the main element of the interface is the table\n" \
+          "that represents the available devices, with some buttons to provide quick\n" \
+          "access to the most common actions. Additionally, the <b>Add</b> and \n" \
+          "<b>Device</b> menus can be used to perform any action on the device\n" \
+          "selected in the table.</p>\n" \
+          "<p>The left tree can be used to navigate through the list of devices,\n" \
+          "focusing on a particular device or type of devices.</p>"
+        )
+      end
+
       private
 
       attr_reader :tree

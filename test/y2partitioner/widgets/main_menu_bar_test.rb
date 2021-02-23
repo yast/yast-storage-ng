@@ -148,4 +148,19 @@ describe Y2Partitioner::Widgets::MainMenuBar do
       end
     end
   end
+
+  describe "#help" do
+    before { widget.select_page }
+
+    it "includes some content about each menu" do
+      menus = widget.contents.params[1]
+      titles = menus.map { |m| m.params[0].gsub("&", "") }
+      expect(titles.size).to be > 1
+
+      help = widget.help
+      titles.each do |title|
+        expect(help).to include title
+      end
+    end
+  end
 end
