@@ -641,9 +641,7 @@ module Y2Storage
     #
     # @return [String, nil] nil if vendor is unknown
     def vendor
-      return nil if hwinfo.nil?
-
-      hwinfo.vendor
+      hwinfo&.vendor
     end
 
     # Device model
@@ -652,9 +650,7 @@ module Y2Storage
     #
     # @return [String, nil] nil if model is unknown
     def model
-      return nil if hwinfo.nil?
-
-      hwinfo.model
+      hwinfo&.model
     end
 
     # Device bus (IDE, SATA, etc)
@@ -663,9 +659,7 @@ module Y2Storage
     #
     # @return [String, nil] nil if bus is unknown
     def bus
-      return nil if hwinfo.nil?
-
-      hwinfo.bus
+      hwinfo&.bus
     end
 
     # Kernel drivers used by this device
