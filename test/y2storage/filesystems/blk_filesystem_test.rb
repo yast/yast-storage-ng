@@ -377,6 +377,32 @@ describe Y2Storage::Filesystems::BlkFilesystem do
         expect(filesystem.in_network?).to eq true
       end
     end
+
+    context "when the filesystem is in a logical volume of an encrypted LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:dev_name) { "/dev/vg0/lv1" }
+      let(:disk) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sdd") }
+
+      before do
+        allow(disk.transport).to receive(:network?).and_return network_transport
+      end
+
+      context "and the underlying disk is in the network" do
+        let(:network_transport) { true }
+
+        it "returns true" do
+          expect(filesystem.in_network?).to eq true
+        end
+      end
+
+      context "and the underlying disk is local" do
+        let(:network_transport) { false }
+
+        it "returns false" do
+          expect(filesystem.in_network?).to eq false
+        end
+      end
+    end
   end
 
   describe "#match_fstab_spec?" do

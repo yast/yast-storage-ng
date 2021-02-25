@@ -274,11 +274,6 @@ module Y2Storage
       id.is?(:esp) && formatted_as?(:vfat)
     end
 
-    # @see BlkDevice#in_network?
-    def in_network?
-      partitionable.in_network?
-    end
-
     # Whether the partition fulfills conditions to be used for a Windows system
     #
     # @return [Boolean]

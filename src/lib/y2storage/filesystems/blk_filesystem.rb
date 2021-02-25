@@ -212,6 +212,13 @@ module Y2Storage
         blk_devices.any?(&:in_network?)
       end
 
+      # @see BlkDevice#systemd_remote?
+      #
+      # @return [Boolean]
+      def systemd_remote?
+        blk_devices.any?(&:systemd_remote?)
+      end
+
       # Option used in the fstab file for devices that require network
       NETWORK_OPTION = "_netdev".freeze
       private_constant :NETWORK_OPTION
@@ -369,7 +376,7 @@ module Y2Storage
       def needs_network_mount_options?
         # Adding "_netdev" and similar options in fstab for / should not be necessary
         # and it confuses (or used to confuse) systemd. See bsc#1165937.
-        in_network? && !root?
+        systemd_remote? && !root?
       end
 
       # @see Device#is?

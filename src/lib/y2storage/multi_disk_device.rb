@@ -28,13 +28,6 @@ module Y2Storage
   # Mixin for devices that, from the libstorage point of view, are basically
   # an aggregation of several disks. I.e. Multipath I/O or BIOS RAID.
   module MultiDiskDevice
-    # Checks whether this is a network device.
-    #
-    # @return [Boolean] true if any of disks is network-based
-    def in_network?
-      parents.any? { |i| i.respond_to?(:in_network?) && i.in_network? }
-    end
-
     # Checks whether some of the disks of the device are connected through USB.
     #
     # Although that is obviously very unlikely, this method is offered for
@@ -43,7 +36,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def usb?
-      parents.any? { |i| i.respond_to?(:usb?) && i.usb? }
+      any_parent?(:usb?)
     end
 
     # Default partition table type for newly created partition tables
@@ -55,6 +48,14 @@ module Y2Storage
     def default_ptable_type
       # We always suggest GPT
       PartitionTables::Type::GPT
+    end
+
+    # Checks whether any of the parent devices returns true for the given method
+    #
+    # @param method [Symbol] name of the method to be checked in all parents
+    # @return [Boolean]
+    def any_parent?(method)
+      parents.any? { |i| i.respond_to?(method) && i.send(method) }
     end
   end
 end
