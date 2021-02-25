@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 25 09:20:13 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Partitioner: extended the text of the help to cover the new menu
+  and the general navigation (related to bsc#1181590).
+- 4.3.45
+
+-------------------------------------------------------------------
 Fri Feb 19 13:21:35 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: ask for recursively unmounting affected devices when

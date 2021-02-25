@@ -47,6 +47,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
   # FIXME: default tests check that all column headers are strings, but they also can be a Yast::Term
   # include_examples "CWM::Table"
+  include_examples "CWM::AbstractWidget"
 
   describe "#header" do
     it "returns array" do

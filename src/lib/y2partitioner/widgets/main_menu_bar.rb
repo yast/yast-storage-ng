@@ -29,6 +29,7 @@ module Y2Partitioner
   module Widgets
     # Main menu bar of the partitioner
     class MainMenuBar < CWM::CustomWidget
+      include Yast::I18n
       Yast.import "UI"
 
       # @return [Array<Menus::Base>]
@@ -36,6 +37,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize
+        textdomain "storage"
         self.handle_all_events = true
         @device = nil
         @menus = []
@@ -77,6 +79,34 @@ module Y2Partitioner
           result = menu.handle(id)
         end
         result
+      end
+
+      # @macro seeAbstractWidget
+      # @return [String] localized help text
+      def help
+        _(
+          # TRANSLATORS: html text containing the help for the Partitioner menubar, make
+          # sure the titles match the menu names
+          "<p>All the possible Partitioner actions are represented in the\n" \
+          "menu bar at the top:</p>\n" \
+          "<ul>\n" \
+          "<li><b>System</b>\n" \
+          "contains global actions that affect the storage setup as a whole.\n" \
+          "</li>\n" \
+          "<li><b>Add</b>\n" \
+          "allows to create new virtual devices and also to divide the device\n" \
+          "selected below into logical units like partitions or subvolumes.\n" \
+          "</li>\n" \
+          "<li><b>Device</b>\n" \
+          "gathers all the actions that can be performed on the entry currently\n" \
+          "selected in the table below.\n" \
+          "</li>\n" \
+          "<li><b>View</b>\n" \
+          "grants access to special sections of the Partitioner not strictly related\n" \
+          "to the current selected device.\n" \
+          "</li>\n" \
+          "</ul>"
+        )
       end
 
       private
