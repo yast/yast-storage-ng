@@ -185,15 +185,32 @@ describe Y2Storage::Encryption do
     let(:scenario) { "encrypted_partition.xml" }
     let(:disk) { devicegraph.find_by_name("/dev/sda") }
     let(:partition) { devicegraph.find_by_name(partition_name) }
+    let(:hwinfo) { OpenStruct.new }
 
-    before { allow(disk.transport).to receive(:network?).and_return network }
+    before do
+      allow(disk.transport).to receive(:network?).and_return network
+      allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
+    end
 
     RSpec.shared_examples "netdev for network device" do
       context "within a network disk" do
         let(:network) { true }
 
-        it "makes sure #crypt_options include _netdev" do
-          expect(encryption.crypt_options).to include("_netdev")
+        context "which uses a driver that needs an extra systemd service" do
+          let(:hwinfo) { OpenStruct.new(driver: ["sg", "bnx2i"]) }
+
+          it "makes sure #crypt_options include _netdev" do
+            expect(encryption.crypt_options).to include("_netdev")
+          end
+        end
+
+        context "which does not demand any extra systemd service in order to be used" do
+          # Test with fnic, based on what happened at bsc#1176140
+          let(:hwinfo) { OpenStruct.new(driver: ["sg", "fnic"]) }
+
+          it "makes no changes to #crypt_options" do
+            expect(encryption.crypt_options).to be_empty
+          end
         end
       end
 

@@ -507,7 +507,7 @@ describe Y2Storage::MountPoint do
       end
     end
 
-    context "in a local disk" do
+    context "in a network disk" do
       let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
       let(:mountable) { blk_device.filesystem }
 
@@ -555,14 +555,28 @@ describe Y2Storage::MountPoint do
       context "for a non-root filesystem" do
         before do
           mount_point.path = "/home"
+          allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
         end
+
+        let(:hwinfo) { OpenStruct.new }
 
         context "for a Btrfs file-system" do
           let(:dev_name) { "/dev/sda2" }
 
-          it "sets #mount_options to an array containing only '_netdev'" do
-            mount_point.set_default_mount_options
-            expect(mount_point.mount_options).to eq ["_netdev"]
+          context "if the disk uses a driver that depends on a systemd service" do
+            let(:hwinfo) { OpenStruct.new(driver: ["fcoe"]) }
+
+            it "sets #mount_options to an array containing only '_netdev'" do
+              mount_point.set_default_mount_options
+              expect(mount_point.mount_options).to eq ["_netdev"]
+            end
+          end
+
+          context "if the disk driver does not depend on any systemd service" do
+            it "sets #mount_options to an empty array" do
+              mount_point.set_default_mount_options
+              expect(mount_point.mount_options).to eq []
+            end
           end
         end
 
@@ -581,9 +595,22 @@ describe Y2Storage::MountPoint do
         context "for an Ext3 file-system " do
           let(:dev_name) { "/dev/sda3" }
 
-          it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
-            mount_point.set_default_mount_options
-            expect(mount_point.mount_options).to contain_exactly("data=ordered", "_netdev")
+          context "if the disk uses a driver that depends on a systemd service" do
+            let(:hwinfo) { OpenStruct.new(driver: ["iscsi-tcp"]) }
+
+            it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
+              mount_point.set_default_mount_options
+              expect(mount_point.mount_options).to contain_exactly("data=ordered", "_netdev")
+            end
+          end
+
+          context "if the disk driver does not depend on any systemd service" do
+            let(:hwinfo) { OpenStruct.new(driver: ["qla4xxx"]) }
+
+            it "sets #mount_options to an array containing only the data option" do
+              mount_point.set_default_mount_options
+              expect(mount_point.mount_options).to eq ["data=ordered"]
+            end
           end
         end
       end
