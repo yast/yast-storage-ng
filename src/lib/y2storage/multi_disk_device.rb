@@ -32,7 +32,7 @@ module Y2Storage
     #
     # @return [Boolean] true if any of disks is network-based
     def in_network?
-      parents.any? { |i| i.respond_to?(:in_network?) && i.in_network? }
+      any_parent?(:in_network?)
     end
 
     # Checks whether some of the disks of the device are connected through USB.
@@ -43,7 +43,14 @@ module Y2Storage
     #
     # @return [Boolean]
     def usb?
-      parents.any? { |i| i.respond_to?(:usb?) && i.usb? }
+      any_parent?(:usb?)
+    end
+
+    # @see BlkDevice#systemd_remote?
+    #
+    # @return [Boolean]
+    def systemd_remote?
+      any_parent?(:systemd_remote?)
     end
 
     # Default partition table type for newly created partition tables
@@ -55,6 +62,14 @@ module Y2Storage
     def default_ptable_type
       # We always suggest GPT
       PartitionTables::Type::GPT
+    end
+
+    # Checks whether any of the parent devices returns true for the given method
+    #
+    # @param method [Symbol] name of the method to be checked in all parents
+    # @return [Boolean]
+    def any_parent?(method)
+      parents.any? { |i| i.respond_to?(method) && i.send(method) }
     end
   end
 end
