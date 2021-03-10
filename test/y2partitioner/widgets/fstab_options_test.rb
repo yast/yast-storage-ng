@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017-2020] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -100,6 +101,30 @@ describe Y2Partitioner::Widgets do
     subject { described_class.new(controller, parent_widget) }
 
     include_examples "InputField"
+
+    describe "#supported_by_filesystem?" do
+      before do
+        filesystem = device.filesystem
+        allow(controller).to receive(:filesystem).and_return(filesystem)
+        allow(filesystem).to receive(:supports_label?).and_return(supported)
+      end
+
+      context "when the filesystem supports a label" do
+        let(:supported) { true }
+
+        it "returns true" do
+          expect(subject.supported_by_filesystem?).to eq(true)
+        end
+      end
+
+      context "when the filesystem does not support a label" do
+        let(:supported) { false }
+
+        it "returns false" do
+          expect(subject.supported_by_filesystem?).to eq(false)
+        end
+      end
+    end
 
     describe "#validate" do
       RSpec.shared_examples "given_label" do

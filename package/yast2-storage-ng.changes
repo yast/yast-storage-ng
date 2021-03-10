@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Mar  9 16:40:38 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Partitioner: allow to define the file system label (bsc#1183220).
+- 4.3.47
+
+-------------------------------------------------------------------
 Wed Feb 25 16:26:55 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Improved mechanism to detect whether _netdev is needed for a

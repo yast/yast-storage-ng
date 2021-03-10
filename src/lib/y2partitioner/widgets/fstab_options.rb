@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -259,9 +259,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def supported_by_filesystem?
-        return false unless filesystem.supports_label?
-
-        super
+        filesystem.supports_label?
       end
 
       # @macro seeAbstractWidget
