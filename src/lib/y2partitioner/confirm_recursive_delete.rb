@@ -59,21 +59,18 @@ module Y2Partitioner
     # @param button_term [Yast::UI::Term]
     # @return [Boolean]
     def fancy_question(headline, label_before, rich_text, label_after, button_term)
-      layout = VBox(
-        VSpacing(0.4),
-        HBox(
-          Top(Yast::Icon.Simple("question")),
-          HSpacing(1),
-          VBox(
-            Left(Heading(headline)),
-            VSpacing(0.2),
-            Left(Label(label_before)),
-            VSpacing(0.2),
-            Left(RichText(rich_text)),
-            VSpacing(0.2),
-            Left(Label(label_after)),
-            button_term
-          )
+      layout = MarginBox(
+        1.45,
+        0.5,
+        VBox(
+          Left(Heading(headline)),
+          VSpacing(0.2),
+          Left(Label(label_before)),
+          VSpacing(0.2),
+          Left(RichText(rich_text)),
+          VSpacing(0.2),
+          Left(Label(label_after)),
+          button_term
         )
       )
 

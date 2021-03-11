@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar 11 00:01:59 UTC 2021 - David Diaz <dgonzalez@suse.com>
+
+- Stop using the question mark icon in the recursive deletion
+  confirm dialog (bsc#1183088).
+- 4.3.48
+
+-------------------------------------------------------------------
 Tue Mar  9 16:40:38 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Partitioner: allow to define the file system label (bsc#1183220).
