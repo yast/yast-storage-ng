@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,8 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/devices_selection"
-
-Yast.import "Popup"
+require "yast2/popup"
 
 module Y2Partitioner
   module Widgets
@@ -92,16 +91,17 @@ module Y2Partitioner
       end
 
       # Validates the selected physical volumes
-      # @macro seeAbstractWidget
       #
-      # @see #selected_devices_validation
-      # @see #size_validation
-      #
-      # @note An error popup is shown when there is some error in selected devices.
+      # An error popup is shown when there is some error.
       #
       # @return [Boolean]
       def validate
-        selected_devices_validation && size_validation
+        errors = self.errors
+
+        return true if errors.none?
+
+        Yast2::Popup.show(errors.first, headline: :error)
+        false
       end
 
       private
@@ -109,36 +109,58 @@ module Y2Partitioner
       # @return [Actions::Controllers::LvmVg]
       attr_reader :controller
 
-      # Validates that at least one physical volume was added to the volume group
+      # Errors when selecting physical volumes
       #
-      # @note An error popup is shown when no physical volume was added.
-      #
-      # @return [Boolean]
-      def selected_devices_validation
-        return true if controller.devices_in_vg.size > 0
-
-        # TRANSLATORS: Error message when no device is selected
-        Yast::Popup.Error(_("Select at least one device."))
-        false
+      # @return [Array<String>]
+      def errors
+        [devices_error, size_error, striped_lvs_devices_error, striped_lvs_size_error].compact
       end
 
-      # Validates that the volume group size is enough for all its logical volumes
+      # Error when no physical volume is selected
       #
-      # @note An error popup is shown when the size is not enough.
-      #
-      # @return [Boolean]
-      def size_validation
-        return true if controller.vg_size >= controller.lvs_size
+      # @return [String, nil] nil if physical volumes are selected
+      def devices_error
+        return nil if controller.devices_in_vg.size > 0
 
-        Yast::Popup.Error(
-          # TRANSLATORS: Error message when the resulting volume group size is not
-          # enough. %s is replaced by a size (e.g., 4 GiB).
-          format(
-            _("The volume group size cannot be less than %s."), controller.lvs_size
-          )
+        # TRANSLATORS: Error message
+        _("Select at least one device.")
+      end
+
+      # Error when the volume group size is not big enough to allocate all its logical volumes
+      #
+      # @return [String, nil] nil if the volume group is big enough
+      def size_error
+        return nil if controller.vg_size >= controller.lvs_size
+
+        # TRANSLATORS: Error message where %s is replaced by a size (e.g., 4 GiB).
+        format(_("The volume group size cannot be less than %s."), controller.lvs_size)
+      end
+
+      # Error message when the selected physical volumes cannot allocate the striped volumes
+      #
+      # @return [String, nil]
+      def striped_lvs_devices_error
+        return nil if controller.devices_in_vg.size >= controller.max_stripes
+
+        format(
+          # TRANSLATORS: Error message, where %{max_stripes} is replaced by a number (e.g., 3).
+          _("The number of physcal volumes is not enough. The volume group contains striped logical " \
+            "volumes. Please, select at least %{max_stripes} devices in order to satisfy the number " \
+            "of stripes of the current volumes."),
+          max_stripes: controller.max_stripes
         )
+      end
 
-        false
+      # Error message when the volume group has no enough size to allocate each striped volume
+      #
+      # @return [String, nil]
+      def striped_lvs_size_error
+        return nil if controller.size_for_striped_lvs?
+
+        # TRANSLATORS: Error message
+        _("The volume group contains striped logical volumes and the selected devices are too small " \
+          "to allocate them. Note that the size of a striped volume is limited by its number of " \
+          "stripes and the size of the physical volumes.")
       end
 
       # Checks whether committed devices have been selected for removing, showing an error
@@ -168,7 +190,7 @@ module Y2Partitioner
         pvs = committed_devices.map(&:name).join(", ")
         vg = controller.vg.vg_name
 
-        Yast::Popup.Error(format(error_message, pvs: pvs, vg: vg))
+        Yast2::Popup.show(format(error_message, pvs: pvs, vg: vg), headline: :error)
       end
 
       # Finds devices by sid
