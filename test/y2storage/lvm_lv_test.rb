@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,10 +26,12 @@ describe Y2Storage::LvmLv do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("lvm-types1.xml")
+    fake_scenario(scenario)
   end
 
   subject(:lv) { fake_devicegraph.find_by_name(device_name) }
+
+  let(:scenario) { "lvm-types1.xml" }
 
   describe "#is?" do
     before do
@@ -194,6 +197,24 @@ describe Y2Storage::LvmLv do
     end
   end
 
+  describe "#striped?" do
+    context "when the volume has stripes" do
+      let(:device_name) { "/dev/vg0/striped1" }
+
+      it "returns true" do
+        expect(subject.striped?).to eq(true)
+      end
+    end
+
+    context "when the volume has no stripes" do
+      let(:device_name) { "/dev/vg0/normal1" }
+
+      it "returns false" do
+        expect(subject.striped?).to eq(false)
+      end
+    end
+  end
+
   describe "#origin" do
     context "when called over a snapshot volume" do
       let(:original_volume) { fake_devicegraph.find_by_name("/dev/vg0/normal1") }
@@ -252,9 +273,8 @@ describe Y2Storage::LvmLv do
   end
 
   describe "#overcommitted?" do
+    let(:scenario) { "complex-lvm-encrypt" }
     before do
-      fake_scenario("complex-lvm-encrypt")
-
       vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")
       pool = vg.create_lvm_lv("pool", Y2Storage::LvType::THIN_POOL, pool_size)
       pool.create_lvm_lv("thin", Y2Storage::LvType::THIN, thin_size)
@@ -393,12 +413,57 @@ describe Y2Storage::LvmLv do
         end
       end
 
-      context "and divisible by the extent size" do
-        let(:new_size) { 2.5.GiB }
+  describe "#rounded_size" do
+    let(:scenario) { "complex-lvm-encrypt" }
 
-        it "sets the size of the volume to the requested size" do
-          lv.resize(new_size)
-          expect(lv.size).to eq new_size
+    let(:device_name) { "/dev/vg0/lv1" }
+
+    before do
+      lv.stripes = stripes
+      lv.size = size
+    end
+
+    let(:extent_size) { lv.lvm_vg.extent_size }
+
+    let(:lv_extents) { lv.size.to_i / extent_size.to_i }
+
+    let(:lv_rounded_extents) { lv.rounded_size.to_i / extent_size.to_i }
+
+    context "if the volume is not a striped volume" do
+      let(:stripes) { 1 }
+
+      let(:size) { extent_size * 3 }
+
+      it "returns its current size" do
+        expect(lv.rounded_size).to eq(lv.size)
+      end
+    end
+
+    context "if the volume is a striped volume" do
+      let(:stripes) { 2 }
+
+      context "and its number of extents is divible by the number of stripes" do
+        let(:size) { extent_size * 100 * stripes }
+
+        it "returns its current size" do
+          expect(lv.rounded_size).to eq(lv.size)
+        end
+      end
+
+      context "and its number of extents is not divible by the number of stripes" do
+        let(:size) { extent_size * 100 * stripes + extent_size  }
+
+        it "returns a number of extents divisible by the number of stripes" do
+          expect(lv_extents % lv.stripes).to_not eq(0)
+          expect(lv_rounded_extents % lv.stripes).to eq(0)
+        end
+
+        it "returns a size smaller than the current size" do
+          expect(lv.rounded_size).to be < lv.size
+        end
+
+        it "returns the closest possible size" do
+          expect(lv.size - lv.rounded_size).to be < extent_size * stripes
         end
       end
     end
