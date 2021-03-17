@@ -1,4 +1,6 @@
-# Copyright (c) [2017-2021] SUSE LLC
+#!/usr/bin/env rspec
+
+# Copyright (c) [2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,9 +19,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/callbacks/initialize"
-require "y2storage/callbacks/activate"
-require "y2storage/callbacks/probe"
-require "y2storage/callbacks/sanitize"
-require "y2storage/callbacks/commit"
+require_relative "../spec_helper"
 require "y2storage/callbacks/check"
+
+describe Y2Storage::Callbacks::Check do
+  subject(:callbacks) { described_class.new }
+
+  include Yast::Logger
+
+  describe "#error" do
+    it "logs the error" do
+      expect(log).to receive(:error).with(/error message/)
+
+      subject.error("error message")
+    end
+  end
+end

@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -65,6 +65,34 @@ describe Y2Storage::Devicegraph do
 
       it "returns true" do
         expect(subject.safe_copy(other_devicegraph)).to eq(true)
+      end
+    end
+  end
+
+  describe "#check" do
+    include Yast::Logger
+
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject { fake_devicegraph }
+
+    it "runs the library checks with the corresping callbacks" do
+      expect(subject).to receive(:storage_check).with(instance_of(Y2Storage::Callbacks::Check))
+
+      subject.check
+    end
+
+    context "when the check raises an error" do
+      before do
+        allow(subject).to receive(:storage_check).and_raise(Storage::Exception, "check error")
+      end
+
+      it "logs the error" do
+        expect(log).to receive(:error).with(/check error/)
+
+        subject.check
       end
     end
   end

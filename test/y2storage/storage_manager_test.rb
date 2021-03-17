@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -526,12 +527,18 @@ describe Y2Storage::StorageManager do
       allow(manager.storage).to receive(:commit)
       allow(Yast::Mode).to receive(:installation).and_return(mode == :installation)
       allow(Yast::Stage).to receive(:initial).and_return(mode == :installation)
+      allow(manager.staging).to receive(:check)
     end
 
     let(:mode) { :normal }
 
     it "delegates calculation of the needed actions to libstorage" do
       expect(manager.storage).to receive(:calculate_actiongraph)
+      manager.commit
+    end
+
+    it "runs the libstorage checks" do
+      expect(manager.staging).to receive(:check)
       manager.commit
     end
 
@@ -565,7 +572,9 @@ describe Y2Storage::StorageManager do
 
     context "during installation" do
       let(:mode) { :installation }
-      let(:staging) { double("Y2Storage::Devicegraph", filesystems: filesystems, to_xml: "xml") }
+      let(:staging) do
+        instance_double(Y2Storage::Devicegraph, filesystems: filesystems, to_xml: "xml", check: nil)
+      end
       let(:filesystems) { [root_fs, another_fs] }
       let(:root_fs) { double("Y2Storage::BlkFilesystem", root?: true) }
       let(:another_fs) { double("Y2Storage::BlkFilesystem", root?: false) }

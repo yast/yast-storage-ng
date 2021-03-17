@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -76,10 +76,23 @@ module Y2Storage
     #   Removes all devices
     storage_forward :clear
 
-    # @!method check
-    #   @raise [Exception] if the devicegraph contains logic errors
-    #     (like, for example, a duplicated id)
-    storage_forward :check
+    # @!method check(callbacks)
+    #
+    #   Checks the devicegraph
+    #
+    #   There are two types of errors that can be found:
+    #
+    #   * Errors that indicate a problem inside the library or a severe misuse of the library,
+    #     e.g. attaching a BlkFilesystem directly to a PartitionTable. For these errors an exception is
+    #     thrown.
+    #
+    #   * Errors that can be easily fixed by the user, e.g. an over-committed volume group. For these
+    #     errors CheckCallbacks::error() is called.
+    #
+    #   @param callbacks [Storage::CheckCallbacks]
+    #   @raise [Exception]
+    storage_forward :storage_check, to: :check
+    private :storage_check
 
     # @!method storage_used_features(dependency_type)
     #   @param dependency_type [Integer] value of Storage::UsedFeaturesDependencyType
@@ -144,6 +157,16 @@ module Y2Storage
 
       copy(devicegraph)
       true
+    end
+
+    # Checks the devicegraph and logs the errors
+    #
+    # Note that the errors reported as exception are logged too.
+    def check
+      log.info("devicegraph checks:")
+      storage_check(Callbacks::Check.new)
+    rescue Storage::Exception => e
+      log.error(e.what.force_encoding("UTF-8"))
     end
 
     # Set of actions needed to get this devicegraph
