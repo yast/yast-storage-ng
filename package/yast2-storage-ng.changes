@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Mar 17 16:21:09 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Round-down the number of physical extends according to the
+  stripes of the logical volume (bsc#1180723).
+- Add extra validations when creating a striped volume and when
+  editing the physical volumes.
+- 4.3.49
+
+-------------------------------------------------------------------
 Thu Mar 11 00:01:59 UTC 2021 - David Diaz <dgonzalez@suse.com>
 
 - Stop using the question mark icon in the recursive deletion
