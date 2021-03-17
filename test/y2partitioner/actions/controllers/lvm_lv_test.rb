@@ -64,7 +64,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
     let(:size) { 3.GiB }
 
-    let(:stripes_number) { 2 }
+    let(:stripes_number) { 5 }
 
     let(:stripes_size) { 16.KiB }
 
@@ -82,7 +82,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
       expect(lv.lv_name).to eq(lv_name)
       expect(lv.lv_type).to eq(lv_type)
-      expect(lv.size).to eq(size)
+      expect(lv.size).to eq(size - 12.MiB)
       expect(lv.stripes).to eq(stripes_number)
       expect(lv.stripe_size).to eq(stripes_size)
     end

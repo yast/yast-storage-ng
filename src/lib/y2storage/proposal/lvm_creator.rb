@@ -1,8 +1,4 @@
-#!/usr/bin/env ruby
-#
-# encoding: utf-8
-
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -319,6 +315,10 @@ module Y2Storage
       def add_stripes_config(lv, planned_lv)
         lv.stripes = planned_lv.stripes if planned_lv.stripes
         lv.stripe_size = planned_lv.stripe_size if planned_lv.stripe_size
+
+        # The size of the new LV is rounded-down according to the extent size and the number of stripes,
+        # see bsc#1180723.
+        lv.size = lv.rounded_size
       end
     end
   end

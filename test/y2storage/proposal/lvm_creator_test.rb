@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2016] SUSE LLC
+
+# Copyright (c) [2016-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -251,7 +252,7 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_having_attributes(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "one", size: 15.GiB - 16.MiB),
           an_object_having_attributes(lv_name: "two", size: 5.GiB - 4.MiB)
         )
       end
@@ -276,7 +277,7 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_having_attributes(lv_name: "one", size: 9.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "one", size: 9.GiB - 16.MiB),
           an_object_having_attributes(lv_name: "two", size: 9.GiB - 4.MiB),
           an_object_having_attributes(lv_name: "three", size: 2.GiB)
         )
@@ -288,7 +289,7 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = system_vg.lvm_lvs
         lvs_size = lvs.reduce(Y2Storage::DiskSize.zero) { |sum, lv| sum + lv.size }
 
-        expect(system_vg.size).to eq lvs_size
+        expect(system_vg.size >= lvs_size).to eq(true)
       end
     end
 
@@ -330,7 +331,7 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_having_attributes(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "one", size: 15.GiB - 16.MiB),
           an_object_having_attributes(lv_name: "two", size: 15.GiB)
         )
       end
