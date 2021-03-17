@@ -325,10 +325,12 @@ describe Y2Storage::LvmLv do
   end
 
   describe "#resize" do
-    before do
-      fake_scenario("complex-lvm-encrypt")
+    let(:scenario) { "complex-lvm-encrypt" }
 
+    before do
       allow(lv).to receive(:detect_resize_info).and_return resize_info
+
+      lv.stripes = stripes
     end
 
     let(:resize_info) do
@@ -342,6 +344,12 @@ describe Y2Storage::LvmLv do
 
     let(:device_name) { "/dev/vg0/lv1" }
 
+    let(:extent_size) { lv.lvm_vg.extent_size }
+
+    let(:stripes) { 1 }
+
+    let(:lv_extents) { lv.size.to_i / extent_size.to_i }
+
     context "if the volume cannot be resized" do
       let(:ok) { false }
 
@@ -353,8 +361,10 @@ describe Y2Storage::LvmLv do
     end
 
     context "if the new size is bigger than the max resizing size" do
-      context "and not divisible by the extent size" do
-        let(:new_size) { 5.5.GiB - 1.MiB }
+      let(:new_size) { 10.GiB }
+
+      context "and the volume is not a striped volume" do
+        let(:stripes) { 1 }
 
         it "sets the size of the volume to the max" do
           lv.resize(new_size)
@@ -362,19 +372,48 @@ describe Y2Storage::LvmLv do
         end
       end
 
-      context "and divisible by the extent size" do
-        let(:new_size) { 5.5.GiB }
+      context "and the volume is a striped volume" do
+        let(:stripes) { 2 }
 
-        it "sets the size of the volume to the max" do
-          lv.resize(new_size)
-          expect(lv.size).to eq max
+        context "and the max number of extents is divisible by the number of stripes" do
+          let(:max) { extent_size * (5.GiB.to_i / extent_size.to_i) * stripes }
+
+          it "sets the size of the volume to the max" do
+            lv.resize(new_size)
+
+            expect(lv.size).to eq max
+          end
+        end
+
+        context "and the max number of extents is not divisible by the number of stripes" do
+          let(:max) { extent_size * (5.GiB.to_i / extent_size.to_i) * stripes + extent_size }
+
+          it "sets a number of extents divisible by the number of stripes" do
+            lv.resize(new_size)
+
+            expect(lv_extents % lv.stripes).to eq(0)
+          end
+
+          it "sets the size to a value smaller than the max value" do
+            lv.resize(new_size)
+
+            expect(lv.size).to be < max
+          end
+
+          it "sets the size to the closest possible value to the max" do
+            lv.resize(new_size)
+
+            expect(max - lv.size).to be < extent_size * stripes
+          end
         end
       end
     end
 
     context "if the new size is smaller than the min resizing size" do
-      context "and not divisible by the extent size" do
-        let(:new_size) { 0.5.GiB - 1.MiB }
+      let(:new_size) { 0.5.GiB }
+
+      context "and the volume is not a striped volume" do
+        let(:stripes) { 1 }
 
         it "sets the size of the volume to the min" do
           lv.resize(new_size)
@@ -382,36 +421,99 @@ describe Y2Storage::LvmLv do
         end
       end
 
-      context "and divisible by the extent size" do
-        let(:new_size) { 0.5.GiB }
+      context "and the volume is a striped volume" do
+        let(:stripes) { 2 }
 
-        it "sets the size of the volume to the min" do
-          lv.resize(new_size)
-          expect(lv.size).to eq min
+        context "and the min number of extents is divisible by the number of stripes" do
+          let(:min) { extent_size * (1.GiB.to_i / extent_size.to_i) * stripes }
+
+          it "sets the size of the volume to the min" do
+            lv.resize(new_size)
+            expect(lv.size).to eq min
+          end
+        end
+
+        context "and the min number of extents is not divisible by the number of stripes" do
+          let(:min) { extent_size * (1.GiB.to_i / extent_size.to_i) * stripes + extent_size }
+
+          it "sets the size of the volume to the min" do
+            lv.resize(new_size)
+            expect(lv.size).to eq min
+          end
+
+          it "does not round the size according the number of stripes" do
+            lv.resize(new_size)
+
+            expect(lv_extents % lv.stripes).to_not eq(0)
+          end
         end
       end
     end
 
     context "if the new size is within the resizing limits" do
-      context "and not divisible by the extent size" do
-        let(:new_size) { 2.5.GiB - 1.MiB }
-        let(:extent_size) { lv.lvm_vg.extent_size }
+      context "and the volume is not a striped volume" do
+        let(:stripes) { 1 }
 
-        it "sets the size to a value divisible by the extent size" do
-          expect(new_size.to_i.to_f % extent_size.to_i).to_not be_zero
-          expect(lv.size.to_i.to_f % extent_size.to_i).to be_zero
+        context "and the new size is divisible by the extent size" do
+          let(:new_size) { 2.5.GiB }
+
+          it "sets the size of the volume to the requested size" do
+            lv.resize(new_size)
+            expect(lv.size).to eq new_size
+          end
         end
 
-        it "sets the size to a value smaller than the requested" do
+        context "and the new size is not divisible by the extent size" do
+          let(:new_size) { 2.5.GiB - 1.MiB }
+
+          it "sets the size to a value divisible by the extent size" do
+            expect(new_size.to_i.to_f % extent_size.to_i).to_not be_zero
+            expect(lv.size.to_i.to_f % extent_size.to_i).to be_zero
+          end
+
+          it "sets the size to a value smaller than the requested size" do
+            lv.resize(new_size)
+            expect(lv.size).to be < new_size
+          end
+
+          it "sets the size to closest possible value" do
+            lv.resize(new_size)
+            expect(new_size - lv.size).to be < extent_size
+          end
+        end
+      end
+
+      context "and the volume is a striped volume" do
+        let(:stripes) { 3 }
+
+        let(:new_size) { 2.5.GiB - 1.MiB }
+
+        it "sets the size to a value divisible by the extent size" do
           lv.resize(new_size)
+
+          expect(lv.size.to_i % extent_size.to_i).to eq(0)
+        end
+
+        it "sets a number of extents divisible by the number of stripes" do
+          lv.resize(new_size)
+
+          expect(lv_extents % lv.stripes).to eq(0)
+        end
+
+        it "sets the size to a value smaller than the requested size" do
+          lv.resize(new_size)
+
           expect(lv.size).to be < new_size
         end
 
-        it "sets the size to closest possible value" do
+        it "sets the size to the closest possible value" do
           lv.resize(new_size)
-          expect(new_size - lv.size).to be < extent_size
+
+          expect(new_size - lv.size).to be < extent_size * stripes
         end
       end
+    end
+  end
 
   describe "#rounded_size" do
     let(:scenario) { "complex-lvm-encrypt" }

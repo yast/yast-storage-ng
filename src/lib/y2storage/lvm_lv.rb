@@ -174,7 +174,7 @@ module Y2Storage
       size < DiskSize.sum(lvm_lvs.map(&:size))
     end
 
-    # Resizes the volume, taking resizing limits and extent size into account.
+    # Resizes the volume, taking resizing limits, extent size and stripes into account.
     #
     # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).
     # Otherwise, it sets the size of the LV based on the requested size.
@@ -186,7 +186,11 @@ module Y2Storage
     # closest valid (i.e. divisible by the extent size) value, rounding down if
     # needed.
     #
-    # @param new_size [DiskSize] temptative new size of the volume, take into
+    # The resulting size is also rounded down according to the number of stripes,
+    # except when setting the minimum size. Note that lvcreate command will round
+    # it up anyway.
+    #
+    # @param new_size [DiskSize] tentative new size of the volume, take into
     #   account that the result may be slightly smaller after rounding it down
     #   based on the extent size
     def resize(new_size)
@@ -202,6 +206,9 @@ module Y2Storage
         else
           new_size
         end
+
+      self.size = rounded_size if size != resize_info.min_size
+
       log.info "Size of #{name} set to #{size}"
     end
 
