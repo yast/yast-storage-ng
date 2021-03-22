@@ -615,14 +615,14 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     end
   end
 
-  describe "#max_stripes" do
+  describe "#lvs_stripes" do
     let(:scenario) { "lvm_several_pvs" }
 
     let(:vg) { current_graph.find_by_name("/dev/vg0") }
 
     context "if the volume group does not contain striped volumes" do
       it "returns 0" do
-        expect(controller.max_stripes).to eq(0)
+        expect(controller.lvs_stripes).to eq(0)
       end
     end
 
@@ -636,7 +636,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       end
 
       it "returns the maximum number of stripes used by its logical volumnes" do
-        expect(controller.max_stripes).to eq(3)
+        expect(controller.lvs_stripes).to eq(3)
       end
     end
   end

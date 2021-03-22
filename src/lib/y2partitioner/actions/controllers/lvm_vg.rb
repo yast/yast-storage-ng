@@ -218,7 +218,7 @@ module Y2Partitioner
         # Maximum number of stripes used by the striped logical volumes of the volume group
         #
         # @return [Integer] 0 if no striped volumes
-        def max_stripes
+        def lvs_stripes
           return 0 if striped_lvs.none?
 
           striped_lvs.map(&:stripes).max

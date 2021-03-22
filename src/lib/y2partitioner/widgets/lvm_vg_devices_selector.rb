@@ -140,14 +140,14 @@ module Y2Partitioner
       #
       # @return [String, nil]
       def striped_lvs_devices_error
-        return nil if controller.devices_in_vg.size >= controller.max_stripes
+        return nil if controller.devices_in_vg.size >= controller.lvs_stripes
 
         format(
-          # TRANSLATORS: Error message, where %{max_stripes} is replaced by a number (e.g., 3).
+          # TRANSLATORS: Error message, where %s is replaced by a number (e.g., 3).
           _("The number of physcal volumes is not enough. The volume group contains striped logical " \
-            "volumes. Please, select at least %{max_stripes} devices in order to satisfy the number " \
-            "of stripes of the current volumes."),
-          max_stripes: controller.max_stripes
+            "volumes. Please, select at least %s devices in order to satisfy the number of stripes of " \
+            "the current volumes."),
+          controller.lvs_stripes
         )
       end
 
