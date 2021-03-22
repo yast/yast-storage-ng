@@ -186,9 +186,11 @@ module Y2Storage
     # closest valid (i.e. divisible by the extent size) value, rounding down if
     # needed.
     #
-    # The resulting size is also rounded down according to the number of stripes,
-    # except when setting the minimum size. Note that lvcreate command will round
-    # it up anyway.
+    # The resulting size is also rounded down according to the number of stripes. In
+    # case of setting the minimum possible size, this method does not round the size
+    # down in order to avoid sizes below the minimum. Anyway, lvcreate command always
+    # tries to round the number of extents up. So, even though the minimum size is not
+    # rounded here, it will be correctly rounded by lvcreate.
     #
     # @param new_size [DiskSize] tentative new size of the volume, take into
     #   account that the result may be slightly smaller after rounding it down
