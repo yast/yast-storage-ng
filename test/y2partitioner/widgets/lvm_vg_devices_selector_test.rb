@@ -461,8 +461,8 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
 
       before do
         controller.vg.create_lvm_lv("test1", 1.GiB)
-        test2 = controller.vg.create_lvm_lv("test2", 3.GiB)
-        test2.stripes = 3 # max size is limited by /dev/sda2 (1 GiB)
+        test2 = controller.vg.create_lvm_lv("test2", 2.9.GiB)
+        test2.stripes = 3 # max size is limited by /dev/sda2 (~1 GiB)
       end
 
       it "does not show an error popup" do

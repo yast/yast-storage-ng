@@ -590,8 +590,8 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
     context "if the volume group contains striped volumes" do
       before do
-        lv2 = vg.create_lvm_lv("lv2", Y2Storage::LvType::NORMAL, 3.GiB)
-        lv3 = vg.create_lvm_lv("lv3", Y2Storage::LvType::NORMAL, 4.GiB)
+        lv2 = vg.create_lvm_lv("lv2", Y2Storage::LvType::NORMAL, 2.9.GiB)
+        lv3 = vg.create_lvm_lv("lv3", Y2Storage::LvType::NORMAL, 3.9.GiB)
 
         lv2.stripes = stripes
         lv3.stripes = stripes
