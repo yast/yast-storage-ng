@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -153,6 +153,13 @@ module Y2Storage
       thin_pool ? thin_pool.stripe_size : storage_stripe_size
     end
 
+    # Whether the logical volume is striped
+    #
+    # @return [Boolean]
+    def striped?
+      stripes > 1
+    end
+
     # Whether the thin pool is overcommitted
     #
     # @note Overcommitting means that a thin pool has not enough size to cover
@@ -167,7 +174,7 @@ module Y2Storage
       size < DiskSize.sum(lvm_lvs.map(&:size))
     end
 
-    # Resizes the volume, taking resizing limits and extent size into account.
+    # Resizes the volume, taking resizing limits, extent size and stripes into account.
     #
     # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).
     # Otherwise, it sets the size of the LV based on the requested size.
@@ -179,7 +186,13 @@ module Y2Storage
     # closest valid (i.e. divisible by the extent size) value, rounding down if
     # needed.
     #
-    # @param new_size [DiskSize] temptative new size of the volume, take into
+    # The resulting size is also rounded down according to the number of stripes. In
+    # case of setting the minimum possible size, this method does not round the size
+    # down in order to avoid sizes below the minimum. Anyway, lvcreate command always
+    # tries to round the number of extents up. So, even though the minimum size is not
+    # rounded here, it will be correctly rounded by lvcreate.
+    #
+    # @param new_size [DiskSize] tentative new size of the volume, take into
     #   account that the result may be slightly smaller after rounding it down
     #   based on the extent size
     def resize(new_size)
@@ -195,7 +208,27 @@ module Y2Storage
         else
           new_size
         end
+
+      self.size = rounded_size if size != resize_info.min_size
+
       log.info "Size of #{name} set to #{size}"
+    end
+
+    # Rounded-down size according to the extent size and the number of stripes
+    #
+    # When a logical volume is created, libstorage-ng calculates the number of extents for the new
+    # logical volume. As result, the size is rounded-down to the extent size. But then, lvcreate command
+    # rounds up the number of extents to make it multiple of the number of stripes. This could lead to a
+    # number of extents that exceeds the total number of extents from the volume group.
+    #
+    # @return [DiskSize]
+    def rounded_size
+      return size if size.zero? || !striped?
+
+      extends = size.to_i / lvm_vg.extent_size.to_i
+      extends -= (extends % stripes)
+
+      lvm_vg.extent_size * extends
     end
 
     protected

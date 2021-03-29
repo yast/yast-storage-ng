@@ -673,6 +673,22 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
         include_examples "error"
       end
 
+      context "when the device is a striped logical volume" do
+        let(:scenario) { "lvm_several_pvs" }
+
+        let(:device) { current_graph.find_by_name("/dev/vg0/lv1") }
+
+        before do
+          device.stripes = 2
+        end
+
+        context "and the given value is bigger than the max size for a striped volume" do
+          let(:custom_size) { 5.GiB  }
+
+          include_examples "error"
+        end
+      end
+
       context "when the given value is bigger than min and less than max" do
         let(:custom_size) { 10.GiB }
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,6 +28,7 @@ describe Y2Storage::LvmVg do
   before do
     fake_scenario(scenario)
   end
+
   let(:scenario) { "complex-lvm-encrypt" }
 
   subject(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, vg_name) }
@@ -131,6 +133,111 @@ describe Y2Storage::LvmVg do
         vg.delete_lvm_lv(normal1)
         expect(vg.lvm_lvs.map(&:lv_name)).to_not include "normal1"
         expect(vg.lvm_lvs.map(&:lv_name)).to_not include "snap_normal1"
+      end
+    end
+  end
+
+  describe "#max_size_for_striped_lv" do
+    let(:scenario) { "lvm_several_pvs" }
+
+    # Pv sizes are 2 GiB, 1 GiB and 5 GiB
+    let(:vg_name) { "vg0" }
+
+    let(:pv1) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda1" } } # 2 GiB
+    let(:pv2) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda2" } } # 1 GiB
+    let(:pv3) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda3" } } # 1 GiB
+
+    it "returns a disk size" do
+      expect(vg.max_size_for_striped_lv(2)).to be_a(Y2Storage::DiskSize)
+    end
+
+    it "returns the maximum size for a stripped volume with the given number of stripes" do
+      expect(vg.max_size_for_striped_lv(2)).to eq(pv1.usable_size * 2)
+      expect(vg.max_size_for_striped_lv(3)).to eq(pv2.usable_size * 3)
+    end
+
+    context "when the given number of stripes is not valid" do
+      it "raises an error" do
+        expect { vg.max_size_for_striped_lv(1) }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "when the given number of stripes is bigger than the number of physical volumes" do
+      it "returns nil" do
+        expect(vg.max_size_for_striped_lv(10)).to be_nil
+      end
+    end
+  end
+
+  describe "#size_for_striped_lv?" do
+    let(:scenario) { "lvm_several_pvs" }
+
+    # Pv sizes are 1 GiB, 2 GiB and 5 GiB
+    let(:vg_name) { "vg0" }
+
+    context "when the given size is bigger than the volume group size" do
+      it "returns false" do
+        expect(vg.size_for_striped_lv?(10.GiB, 2)).to eq(false)
+      end
+    end
+
+    context "when the given number of stripes is not valid" do
+      it "raises an error" do
+        expect { vg.size_for_striped_lv?(1.GiB, 1) }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "when the given number of stripes is bigger than the number of physcial volumes" do
+      it "returns false" do
+        expect(vg.size_for_striped_lv?(4.GiB, 4)).to eq(false)
+      end
+    end
+
+    context "when the given number of stripes is not bigger than the number of physcial volumes" do
+      context "and the physical volumes are big enough to allocate the required size" do
+        it "returns true" do
+          expect(vg.size_for_striped_lv?(3.5.GiB, 2)).to eq(true)
+          expect(vg.size_for_striped_lv?(1.5.GiB, 3)).to eq(true)
+        end
+      end
+
+      context "and the physical volumes are not big enough to allocate the required size" do
+        it "returns false" do
+          expect(vg.size_for_striped_lv?(5.GiB, 2)).to eq(false)
+          expect(vg.size_for_striped_lv?(4.GiB, 3)).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#pv_size_for_striped_lv" do
+    let(:scenario) { "lvm_several_pvs" }
+
+    # Pv sizes are 2 GiB, 1 GiB and 5 GiB
+    let(:vg_name) { "vg0" }
+
+    let(:pv1) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda1" } } # 2 GiB
+    let(:pv2) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda2" } } # 1 GiB
+    let(:pv3) { vg.lvm_pvs.find { |p| p.blk_device.name == "/dev/sda3" } } # 1 GiB
+
+    it "returns a disk size" do
+      expect(vg.pv_size_for_striped_lv(2)).to be_a(Y2Storage::DiskSize)
+    end
+
+    it "returns the usable size of the n-th biggest pv according to the given number of stripes" do
+      expect(vg.pv_size_for_striped_lv(2)).to eq(pv1.usable_size)
+      expect(vg.pv_size_for_striped_lv(3)).to eq(pv2.usable_size)
+    end
+
+    context "when the given number of stripes is not valid" do
+      it "raises an error" do
+        expect { vg.pv_size_for_striped_lv(1) }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "when the given number of stripes is bigger than the number of physical volumes" do
+      it "returns nil" do
+        expect(vg.pv_size_for_striped_lv(10)).to be_nil
       end
     end
   end

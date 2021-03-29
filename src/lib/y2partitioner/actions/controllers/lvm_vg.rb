@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -203,6 +203,27 @@ module Y2Partitioner
           BlkDeviceRestorer.new(device.plain_device).restore_from_checkpoint
         end
 
+        # Whether the volume group can allocate each striped logical volume.
+        #
+        # Note that this method only checks that the volume group has the necessary physical volumes to
+        # allocate each striped volume individually. Checking that the volume group can allocate all the
+        # striped volumes at the same time would be very tricky. Such a check requires to know how the
+        # volumes are distributed in the physical volumes.
+        #
+        # @return [Boolean]
+        def size_for_striped_lvs?
+          striped_lvs.all? { |l| vg.size_for_striped_lv?(l.size, l.stripes) }
+        end
+
+        # Maximum number of stripes used by the striped logical volumes of the volume group
+        #
+        # @return [Integer] 0 if no striped volumes
+        def lvs_stripes
+          return 0 if striped_lvs.none?
+
+          striped_lvs.map(&:stripes).max
+        end
+
         private
 
         # Current action to perform
@@ -379,6 +400,13 @@ module Y2Partitioner
         # @return [Boolean]
         def valid_device_for_vg?(device)
           device.is?(:disk, :multipath, :bios_raid, :md)
+        end
+
+        # Striped logical volumes from the volume group
+        #
+        # @return [Array<Y2Storage::LvmLv>]
+        def striped_lvs
+          vg.lvm_lvs.select(&:striped?)
         end
       end
     end

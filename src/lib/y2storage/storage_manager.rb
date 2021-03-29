@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2020] SUSE LLC
+# Copyright (c) [2015-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -309,6 +309,9 @@ module Y2Storage
       # Save committed devicegraph into logs
       log.info("Committed devicegraph\n#{staging.to_xml}")
       DumpManager.dump(staging, "committed")
+
+      # Log libstorage-ng checks
+      staging.check
 
       storage.commit(commit_options, callbacks)
       staging.post_commit

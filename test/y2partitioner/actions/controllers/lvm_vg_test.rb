@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,12 +34,14 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
   end
 
   before do
-    devicegraph_stub("complex-lvm-encrypt.yml")
+    devicegraph_stub(scenario)
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject(:controller) { described_class.new(vg: vg) }
+
+  let(:scenario) { "complex-lvm-encrypt.yml" }
 
   let(:vg) { nil }
 
@@ -571,6 +574,70 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     it "raises an exception if trying to remove a device that is not in the vg physical volumes" do
       controller.remove_device(sda2)
       expect { controller.remove_device(sda2) }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe "#size_for_striped_lvs?" do
+    let(:scenario) { "lvm_several_pvs" }
+
+    let(:vg) { current_graph.find_by_name("/dev/vg0") }
+
+    context "if the volume group does not contain striped volumes" do
+      it "returns true" do
+        expect(controller.size_for_striped_lvs?).to eq(true)
+      end
+    end
+
+    context "if the volume group contains striped volumes" do
+      before do
+        lv2 = vg.create_lvm_lv("lv2", Y2Storage::LvType::NORMAL, 2.9.GiB)
+        lv3 = vg.create_lvm_lv("lv3", Y2Storage::LvType::NORMAL, 3.9.GiB)
+
+        lv2.stripes = stripes
+        lv3.stripes = stripes
+      end
+
+      context "and the physical volumes are big enough to allocate the volumes" do
+        let(:stripes) { 2 }
+
+        it "returns true" do
+          expect(controller.size_for_striped_lvs?).to eq(true)
+        end
+      end
+
+      context "and the physical volumes are not big enough to allocate the volumes" do
+        let(:stripes) { 3 }
+
+        it "returns false" do
+          expect(controller.size_for_striped_lvs?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#lvs_stripes" do
+    let(:scenario) { "lvm_several_pvs" }
+
+    let(:vg) { current_graph.find_by_name("/dev/vg0") }
+
+    context "if the volume group does not contain striped volumes" do
+      it "returns 0" do
+        expect(controller.lvs_stripes).to eq(0)
+      end
+    end
+
+    context "if the volume group contains striped volumes" do
+      before do
+        lv2 = vg.create_lvm_lv("lv2", Y2Storage::LvType::NORMAL, 3.GiB)
+        lv3 = vg.create_lvm_lv("lv3", Y2Storage::LvType::NORMAL, 4.GiB)
+
+        lv2.stripes = 3
+        lv3.stripes = 2
+      end
+
+      it "returns the maximum number of stripes used by its logical volumnes" do
+        expect(controller.lvs_stripes).to eq(3)
+      end
     end
   end
 end

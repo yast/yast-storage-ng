@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,9 +17,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/callbacks/initialize"
-require "y2storage/callbacks/activate"
-require "y2storage/callbacks/probe"
-require "y2storage/callbacks/sanitize"
-require "y2storage/callbacks/commit"
-require "y2storage/callbacks/check"
+require "yast"
+
+module Y2Storage
+  module Callbacks
+    # Class to implement callbacks used during libstorage-ng checks
+    class Check < Storage::CheckCallbacks
+      include Yast::Logger
+
+      # Method called when there is an error
+      #
+      # @param message [String]
+      def error(message)
+        log.error(message.force_encoding("UTF-8"))
+      end
+    end
+  end
+end

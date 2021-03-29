@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -92,8 +92,12 @@ module Y2Partitioner
         end
 
         # Creates the LV in the VG according to the controller attributes
+        #
+        # The size of the new LV is rounded-down according to the extent size and the number of stripes,
+        # see bsc#1180723.
         def create_lv
           @lv = lv_type.is?(:thin) ? create_thin_lv : create_normal_or_pool_lv
+          @lv.size = @lv.rounded_size
         end
 
         # Removes the previously created logical volume
@@ -304,7 +308,7 @@ module Y2Partitioner
         def create_normal_or_pool_lv
           lv = vg.create_lvm_lv(lv_name, lv_type, size)
           lv.stripes = stripes_number if stripes_number
-          lv.stripe_size = stripes_size  if stripes_size
+          lv.stripe_size = stripes_size if stripes_size
           lv
         end
 

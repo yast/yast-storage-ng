@@ -403,6 +403,13 @@ module Y2Partitioner
         # @return [Y2Storage::Partition, Y2Storage::LvmLv]
         attr_reader :device
 
+        # Whether the device is a striped logical volume
+        #
+        # @return [Boolean]
+        def striped_lv?
+          device.is?(:lvm_lv) && device.striped?
+        end
+
         # Resize information of the device to be resized
         #
         # @return [Y2Storage::ResizeInfo]
@@ -427,7 +434,17 @@ module Y2Partitioner
         #
         # @return [Y2Storage::DiskSize]
         def max_size
-          resize_info.max_size
+          striped_lv? ? max_size_for_striped_lv : resize_info.max_size
+        end
+
+        # Max size for a striped logical volume
+        #
+        # This is the maximum possible size, but nothing guarantees that the assigned physical volumes
+        # have enough free extends to allocate it.
+        #
+        # @return [Y2Storage::DiskSize]
+        def max_size_for_striped_lv
+          [device.lvm_vg.max_size_for_striped_lv(device.stripes), resize_info.max_size].compact.min
         end
 
         # Current device size

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,18 +30,132 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
 
   subject { described_class.new(controller) }
 
   let(:controller) { Y2Partitioner::Actions::Controllers::LvmLv.new(vg) }
 
-  let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+  let(:vg) { current_graph.find_by_name("/dev/vg0") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
+  let(:scenario) { "lvm-two-vgs" }
+
   include_examples "CWM::Dialog"
+
+  describe Y2Partitioner::Dialogs::LvmLvSize::LvSizeWidget do
+    before do
+      allow(Y2Partitioner::Dialogs::LvmLvSize::SizeWidget)
+        .to receive(:new).and_return(size_widget)
+
+      allow(Y2Partitioner::Dialogs::LvmLvSize::StripesWidget)
+        .to receive(:new).and_return(stripes_widget)
+
+      allow(size_widget).to receive(:size).and_return(size)
+
+      allow(stripes_widget).to receive(:stripes_number).and_return(stripes)
+    end
+
+    let(:size_widget) { instance_double(Y2Partitioner::Dialogs::LvmLvSize::SizeWidget) }
+
+    let(:stripes_widget) { instance_double(Y2Partitioner::Dialogs::LvmLvSize::StripesWidget) }
+
+    let(:scenario) { "lvm_several_pvs" }
+
+    let(:vg) { current_graph.find_by_name("/dev/vg0") }
+
+    let(:size) { 4.GiB }
+
+    let(:stripes) { 1 }
+
+    include_examples "CWM::CustomWidget"
+
+    describe "#validate" do
+      before do
+        allow(Yast2::Popup).to receive(:show)
+
+        allow(size_widget).to receive(:focus)
+      end
+
+      shared_examples "size error" do
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
+
+        it "shows an error popup" do
+          expect(Yast2::Popup).to receive(:show).with(/size entered is invalid/, anything)
+
+          subject.validate
+        end
+      end
+
+      context "when the given size in not valid" do
+        let(:size) { nil }
+
+        include_examples "size error"
+      end
+
+      context "when the given size is less than min size" do
+        let(:size) { 1.KiB }
+
+        include_examples "size error"
+      end
+
+      context "when the given size in bigger than max size" do
+        let(:size) { 10.GiB }
+
+        include_examples "size error"
+      end
+
+      context "when the given size in between min and max sizes" do
+        let(:size) { 4.GiB }
+
+        it "returns true" do
+          expect(subject.validate).to eq(true)
+        end
+
+        it "does not show an error popup" do
+          expect(Yast2::Popup).to_not receive(:show)
+
+          subject.validate
+        end
+
+        context "and the given stripes is bigger than 1" do
+          let(:stripes) { 3 }
+
+          context "and the striped volume can be allocated" do
+            let(:size) { 2.GiB }
+
+            it "returns true" do
+              expect(subject.validate).to eq(true)
+            end
+
+            it "does not show an error popup" do
+              expect(Yast2::Popup).to_not receive(:show)
+
+              subject.validate
+            end
+          end
+
+          context "and the striped volume cannot be allocated" do
+            let(:size) { 4.GiB }
+
+            it "returns false" do
+              expect(subject.validate).to eq(false)
+            end
+
+            it "shows an error popup" do
+              expect(Yast2::Popup).to receive(:show).with(/size of a striped volume/, anything)
+
+              subject.validate
+            end
+          end
+        end
+      end
+    end
+  end
 
   describe Y2Partitioner::Dialogs::LvmLvSize::SizeWidget do
     subject(:widget) { described_class.new(controller) }
@@ -116,69 +231,9 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
   end
 
   describe Y2Partitioner::Dialogs::LvmLvSize::CustomSizeInput do
-    subject(:widget) { described_class.new(5.GiB, 1.GiB, 10.GiB) }
+    subject(:widget) { described_class.new(5.GiB) }
 
     include_examples "CWM::AbstractWidget"
-
-    describe "#validate" do
-      before do
-        allow(widget).to receive(:value).and_return(value)
-      end
-
-      let(:value) { nil }
-
-      context "when given value in not a valid size" do
-        let(:value) { nil }
-
-        it "returns false" do
-          expect(widget.validate).to eq(false)
-        end
-
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          widget.validate
-        end
-      end
-
-      context "when given value is less than min size" do
-        let(:value) { 1.KiB }
-
-        it "returns false" do
-          expect(widget.validate).to eq(false)
-        end
-
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          widget.validate
-        end
-      end
-
-      context "when given value in bigger than max size" do
-        let(:value) { 100.GiB }
-
-        it "returns false" do
-          expect(widget.validate).to eq(false)
-        end
-
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          widget.validate
-        end
-      end
-
-      context "when given value in between min and max sizes" do
-        let(:value) { 6.GiB }
-
-        it "returns true" do
-          expect(widget.validate).to eq(true)
-        end
-
-        it "does not show an error popup" do
-          expect(Yast::Popup).to_not receive(:Error)
-          widget.validate
-        end
-      end
-    end
 
     describe "#value" do
       before do

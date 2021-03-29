@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -45,6 +45,12 @@ module Y2Storage
     #
     #   @return [BlkDevice]
     storage_forward :blk_device, as: "BlkDevice", check_with: :has_blk_device
+
+    # @!method usable_size
+    #   Returns the size of the PV usable for extents.
+    #
+    #   @return [DiskSize]
+    storage_forward :usable_size, as: "DiskSize"
 
     # Raw (non encrypted) version of the device hosting the PV.
     #

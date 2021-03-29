@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -39,13 +40,16 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   subject(:widget) { described_class.new(controller) }
 
   before do
-    devicegraph_stub("complex-lvm-encrypt.yml")
+    devicegraph_stub(scenario)
 
     allow_any_instance_of(Y2Storage::BlkDevice).to receive(:hwinfo).and_return(nil)
 
-    controller.add_device(dev("/dev/sdc"))
-    controller.add_device(dev("/dev/sda2"))
+    initial_selected_devices.map { |d| controller.add_device(dev(d)) }
   end
+
+  let(:scenario) { "complex-lvm-encrypt" }
+
+  let(:initial_selected_devices) { ["/dev/sdc", "/dev/sda2"] }
 
   include_examples "CWM::CustomWidget"
 
@@ -179,6 +183,10 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   context "pushing the 'Remove All' button" do
     let(:event) { { "ID" => :remove_all } }
 
+    before do
+      allow(Yast2::Popup).to receive(:show)
+    end
+
     describe "#handle" do
       context "when there is no committed pv in the vg" do
         it "removes all devices from the vg" do
@@ -198,7 +206,7 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
         let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
         it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
+          expect(Yast2::Popup).to receive(:show)
           widget.handle(event)
         end
 
@@ -247,6 +255,8 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
 
     before do
       allow(selected_table).to receive(:value).and_return selection
+
+      allow(Yast2::Popup).to receive(:show)
     end
 
     context "if there is no selected item in the 'selected' table" do
@@ -327,7 +337,7 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
 
         describe "#handle" do
           it "shows an error popup" do
-            expect(Yast::Popup).to receive(:Error)
+            expect(Yast2::Popup).to receive(:show)
             widget.handle(event)
           end
 
@@ -366,67 +376,103 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   end
 
   describe "#validate" do
-    context "if there are selected devices" do
-      before do
-        # sdc + sda2 = 510 GiB
-        controller.vg.create_lvm_lv("lvm-test", lv_size)
-      end
+    let(:scenario) { "lvm_several_pvs" }
 
-      context "if the vg size is bigger than the logical volumes size" do
-        let(:lv_size) { 500.GiB }
-
-        it "does not show an error popup" do
-          expect(Yast::Popup).to_not receive(:Error)
-          widget.validate
-        end
-
-        it "returns true" do
-          expect(widget.validate).to eq(true)
-        end
-      end
-
-      context "if the vg size is equal than the logical volumes size" do
-        let(:lv_size) { controller.vg.size }
-
-        it "does not show an error popup" do
-          expect(Yast::Popup).to_not receive(:Error)
-          widget.validate
-        end
-
-        it "returns true" do
-          expect(widget.validate).to eq(true)
-        end
-      end
-
-      context "if the vg size is less than the logical volumes size" do
-        let(:lv_size) { 600.GiB }
-
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          widget.validate
-        end
-
-        it "returns false" do
-          allow(Yast::Popup).to receive(:Error)
-          expect(widget.validate).to eq(false)
-        end
-      end
+    before do
+      allow(Yast2::Popup).to receive(:show)
     end
 
-    context "if there are not selected devices" do
-      before do
-        controller.remove_device(dev("/dev/sdc"))
-        controller.remove_device(dev("/dev/sda2"))
-      end
+    context "if there are no selected devices" do
+      let(:initial_selected_devices) { [] }
 
       it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show).with(/at least one/, anything)
+
         widget.validate
       end
 
       it "returns false" do
-        allow(Yast::Popup).to receive(:Error)
         expect(widget.validate).to eq(false)
+      end
+    end
+
+    context "if the vg size is less than the logical volumes size" do
+      let(:initial_selected_devices) { ["/dev/sda1"] } # 2 GiB
+
+      before do
+        controller.vg.create_lvm_lv("test1", 1.GiB)
+        controller.vg.create_lvm_lv("test2", 3.GiB)
+      end
+
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show).with(/size cannot be less than/, anything)
+
+        widget.validate
+      end
+
+      it "returns false" do
+        expect(widget.validate).to eq(false)
+      end
+    end
+
+    context "if the number of physical volumes is less than max stripes" do
+      let(:initial_selected_devices) { ["/dev/sda1", "/dev/sda3"] }
+
+      before do
+        test1 = controller.vg.create_lvm_lv("test1", 1.GiB)
+        test2 = controller.vg.create_lvm_lv("test2", 1.GiB)
+        test1.stripes = 2
+        test2.stripes = 3
+      end
+
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show).with(/number of physcal volumes is not enough/, anything)
+
+        widget.validate
+      end
+
+      it "returns false" do
+        expect(widget.validate).to eq(false)
+      end
+    end
+
+    context "if the physical volumes are not big enough to allocate the striped volumes" do
+      let(:initial_selected_devices) { ["/dev/sda1", "/dev/sda2", "/dev/sda3"] }
+
+      before do
+        controller.vg.create_lvm_lv("test1", 1.GiB)
+        test2 = controller.vg.create_lvm_lv("test2", 4.GiB)
+        test2.stripes = 3 # max size is limited by /dev/sda2 (1 GiB)
+      end
+
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show).with(/selected devices are too small/, anything)
+
+        widget.validate
+      end
+
+      it "returns false" do
+        expect(widget.validate).to eq(false)
+      end
+    end
+
+    context "if the logical volumes can be allocated" do
+      let(:initial_selected_devices) { ["/dev/sda1", "/dev/sda2", "/dev/sda3"] }
+
+      before do
+        controller.vg.create_lvm_lv("test1", 1.GiB)
+        test2 = controller.vg.create_lvm_lv("test2", 2.9.GiB)
+        test2.stripes = 3 # max size is limited by /dev/sda2 (~1 GiB)
+      end
+
+      it "does not show an error popup" do
+        expect(Yast2::Popup).to_not receive(:show)
+
+        widget.validate
+      end
+
+      it "returns true" do
+        expect(widget.validate).to eq(true)
       end
     end
   end

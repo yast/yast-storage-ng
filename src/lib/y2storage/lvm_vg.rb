@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -214,6 +214,64 @@ module Y2Storage
     # @return [Array<Device>]
     def potential_orphans
       lvm_pvs
+    end
+
+    # Maximum size for a striped logical volume
+    #
+    # @see #pv_size_for_striped_lv
+    #
+    # @param stripes [Integer] number of stripes. It must be bigger than 1
+    # @raise [ArgumentError] @see #pv_size_for_striped_lv
+    # @return [DiskSize, nil] nil if no enough physical volumes for the given number of stripes
+    def max_size_for_striped_lv(stripes)
+      pv_size = pv_size_for_striped_lv(stripes)
+
+      return nil unless pv_size
+
+      pv_size * stripes
+    end
+
+    # Whether the volume group has enough size to allocate a striped logical volume
+    #
+    # Note that for allocating a striped volume, the volume group must have as many physical volumes as
+    # the number of required stripes. Moreover, the physical volumes should be big enough to allocate
+    # the required size.
+    #
+    # @see #pv_size_for_striped_lv
+    #
+    # @param size [DiskSize] required size for the striped volume
+    # @param stripes [Integer] number of stripes. It must be bigger than 1
+    # @raise [ArgumentError] @see #pv_size_for_striped_lv
+    # @return [Boolean]
+    def size_for_striped_lv?(size, stripes)
+      pv_size = pv_size_for_striped_lv(stripes)
+
+      return false unless pv_size
+
+      required_pv_size = size / stripes
+
+      pv_size >= required_pv_size
+    end
+
+    # Usable size of the physical volume that limits the maximum size of a new striped logical volume
+    #
+    # The maximum size of a striped logical volume is limited by the n-th physical volume with biggest
+    # usable size. For example, let's say we have a volume group with 3 physical volumes with the
+    # following usable sizes: pv1 (2 GiB), pv2 (50 GiB) and pv3 (1 GiB). For a striped volume with 2
+    # stripes, the second physical volume (pv1) restricts its maximum size. In this case, the maximum
+    # size would be: 2 (stripes) * 2 GiB (pv1 usable size) = 4 GiB. If the number of stripes is 3, then
+    # the maximum size is limited by the third physical volume with biggest usable size (pv3), so the
+    # maximum size would be: 3 (stripes) * 1 GiB (pv3 usable size) = 3 GiB.
+    #
+    # @param stripes [Integer] number of stripes. It must be bigger than 1
+    # @raise [ArgumentError] when the given number of stripes is incorrect (i.e., less than 1)
+    # @return [DiskSize, nil] nil if no enough physical volumes for the given number of stripes
+    def pv_size_for_striped_lv(stripes)
+      raise(ArgumentError, "stripes must be bigger than 1") unless stripes > 1
+
+      return nil if stripes > lvm_pvs.size
+
+      lvm_pvs.map(&:usable_size).sort[-stripes]
     end
 
     protected
