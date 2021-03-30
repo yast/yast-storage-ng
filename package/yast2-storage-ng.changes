@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Mar 30 10:31:55 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Avoid to call private methods over self because it raises an
+  exception with ruby < 2.7 (related to bsc#1180723).
+- 4.3.50
+
+-------------------------------------------------------------------
 Wed Mar 17 16:21:09 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Round-down the number of physical extends according to the
