@@ -96,7 +96,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def validate
-        errors = self.errors
+        errors = send(:errors)
 
         return true if errors.none?
 
