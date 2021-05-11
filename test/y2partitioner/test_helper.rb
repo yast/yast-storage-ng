@@ -19,7 +19,7 @@
 # find current contact information at www.suse.com
 
 require_relative "../spec_helper"
-require "y2partitioner/bidi"
+require "bidi_markup"
 
 # Removes the :sortKey term from a :cell term, possibly returning only
 # the single param of the term.
@@ -32,7 +32,7 @@ def remove_sort_key(term)
   term.params.delete_if { |param| param.is_a?(Yast::Term) && param.value == :sortKey }
   return term if term.params.size > 1
 
-  Bidi.bidi_strip(term.params[0])
+  BidiMarkup.bidi_strip(term.params[0])
 end
 
 # Removes the :sortKey term from :cell terms somewhere inside (to the

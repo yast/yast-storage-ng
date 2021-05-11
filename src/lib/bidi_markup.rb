@@ -1,7 +1,7 @@
 # Bidirectional Text: Left-to-right (Latin) and right-to-left (Arabic).
 #
 # See https://en.wikipedia.org/wiki/Bidirectional_text
-module Bidi
+module BidiMarkup
   LRE = "\u{202A}".freeze
   RLE = "\u{202B}".freeze
   PDF = "\u{202C}".freeze

@@ -19,8 +19,8 @@
 
 require "yast"
 require "abstract_method"
+require "bidi_markup"
 require "y2partitioner/device_graphs"
-require "y2partitioner/bidi"
 
 module Y2Partitioner
   module Widgets
@@ -116,7 +116,7 @@ module Y2Partitioner
           return path_string unless bidi_supported?
 
           pn = Pathname.new(path_string)
-          Bidi.pathname_bidi_to_s(pn)
+          BidiMarkup.pathname_bidi_to_s(pn)
         end
 
         # In ncurses the bidi characters would mess up columns,

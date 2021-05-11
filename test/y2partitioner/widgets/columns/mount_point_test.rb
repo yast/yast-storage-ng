@@ -43,7 +43,7 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       let(:home_fstab_entry) { fstab_entry("/dev/sda2", "/home", btrfs, ["subvol=@/home"], 0, 0) }
 
       it "returns its mount point" do
-        expect(Bidi.bidi_strip(subject.value_for(home_fstab_entry))).to eq("/home")
+        expect(BidiMarkup.bidi_strip(subject.value_for(home_fstab_entry))).to eq("/home")
       end
     end
 
@@ -95,7 +95,7 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
 
       it "returns the mount path without an asterisk sign" do
-        expect(Bidi.bidi_strip(subject.value_for(device))).to eq("/test2")
+        expect(BidiMarkup.bidi_strip(subject.value_for(device))).to eq("/test2")
       end
     end
 
@@ -106,7 +106,7 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
 
       it "returns the mount path including an asterisk sign" do
-        expect(Bidi.bidi_strip(subject.value_for(device))).to eq("/test1 *")
+        expect(BidiMarkup.bidi_strip(subject.value_for(device))).to eq("/test1 *")
       end
     end
 
