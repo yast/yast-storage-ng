@@ -19,6 +19,11 @@
 require "yast/rake"
 
 Yast::Tasks.configuration do |conf|
-  conf.skip_license_check << /.*/
+  conf.skip_license_check << /\.pdf$/ # binary
+  conf.skip_license_check << /\.desktop$/
+  conf.skip_license_check << /\.scr$/
+  # conf file template, you don't want licenses in your config files
+  conf.skip_license_check << /\/fillup\//
+
   conf.documentation_minimal = 91
 end
