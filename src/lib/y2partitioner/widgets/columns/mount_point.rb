@@ -38,13 +38,13 @@ module Y2Partitioner
 
         # @see Columns::Base#value_for
         def value_for(device)
-          return device.mount_point if fstab_entry?(device)
+          return left_to_right(device.mount_point) if fstab_entry?(device)
 
           mount_point = mount_point_for(device)
 
           return "" unless mount_point
 
-          path = mount_point.path
+          path = left_to_right(mount_point.path)
           path += " *" unless mount_point.active?
 
           path

@@ -56,6 +56,15 @@ describe Y2Partitioner::Widgets::Columns::Device do
       it "uses the sort key provided by libstorage-ng" do
         expect(sort_key).to eq(device.name_sort_key)
       end
+
+      it "wraps the value with bidi control characters" do
+        allow(subject).to receive(:bidi_supported?).and_return(true)
+
+        expect(subject.value_for(device)).to satisfy do |term|
+          term.value == :cell &&
+            term.params[0] == "\u2066/\u2068dev\u2069/\u2068sdb1\u2069\u2069"
+        end
+      end
     end
 
     shared_examples "filesystem" do
