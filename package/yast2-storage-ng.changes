@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu May 20 08:42:54 UTC 2021 - Knut Anderssen <kanderssen@suse.com>
+
+- Make the 'Change Used Devices' menu item translatable
+  (bsc#1185060).
+- 4.3.51
+
+-------------------------------------------------------------------
 Tue Mar 30 10:31:55 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Avoid to call private methods over self because it raises an
