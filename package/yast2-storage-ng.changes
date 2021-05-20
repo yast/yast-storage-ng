@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu May 20 08:42:54 UTC 2021 - Knut Anderssen <kanderssen@suse.com>
+
+- Make the 'Change Used Devices' menu item translatable
+  (bsc#1185060).
+- 4.4.3
+
+-------------------------------------------------------------------
 Sun May 16 08:11:46 UTC 2021 - Dirk Müller <dmueller@suse.com>
 
 - only list specific files installed in common directories (metainfo,
