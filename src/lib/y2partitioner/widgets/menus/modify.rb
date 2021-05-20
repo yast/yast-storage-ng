@@ -68,7 +68,7 @@ module Y2Partitioner
             Item("---"),
             Item(Id(:menu_resize), _("&Resize...")),
             Item(Id(:menu_move), _("&Move...")),
-            Item(Id(:menu_change_devs), "Change &Used Devices..."),
+            Item(Id(:menu_change_devs), _("Change &Used Devices...")),
             Item("---"),
             Item(Id(:menu_create_ptable), _("Create New &Partition Table...")),
             Item(Id(:menu_clone_ptable), _("&Clone Partitions to Another Device..."))
