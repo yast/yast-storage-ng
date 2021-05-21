@@ -237,9 +237,8 @@ module Y2Storage
           return !Regexp.last_match(1).empty? && label == Regexp.last_match(1)
         end
 
-        blk_devices.any? do |dev|
-          dev.name == spec || dev.udev_full_all.include?(spec)
-        end
+        named_device = devicegraph.find_by_any_name(spec)
+        blk_devices.include?(named_device)
       end
 
       # Whether it makes sense modify the attribute about snapper configuration
