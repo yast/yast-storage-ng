@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri May 21 10:50:11 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- try harder matching device names (bsc#1186268
+- 4.2.116
+
+-------------------------------------------------------------------
 Wed Jan 20 07:26:55 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Improved mechanism to detect whether _netdev is needed for a
