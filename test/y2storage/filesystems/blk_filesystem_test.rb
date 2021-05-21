@@ -447,5 +447,21 @@ describe Y2Storage::Filesystems::BlkFilesystem do
         end
       end
     end
+
+    context "when the udev name has to be looked up externally" do
+      let(:scenario) { "lvm-disk-as-pv.xml" }
+      let(:dev_name) { "/dev/system/boot" }
+      let(:dev_name_alternative) { "/dev/mapper/system-boot" }
+
+      before do
+        allow(Y2Storage::BlkDevice).to receive(:find_by_any_name)
+          .with(fake_devicegraph, dev_name_alternative)
+          .and_return(Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name))
+      end
+
+      it "returns true if the udev name matches" do
+        expect(filesystem.match_fstab_spec?(dev_name_alternative)).to eq true
+      end
+    end
   end
 end
