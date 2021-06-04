@@ -208,7 +208,7 @@ module Y2Storage
             []
           end
         options.push("ro") if read_only && !options.include?("rw")
-        options
+        options.uniq
       end
 
       # Creates subvolumes in the previously created filesystem that is placed
