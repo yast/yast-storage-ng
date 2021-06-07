@@ -87,9 +87,20 @@ describe Y2Storage::Planned::CanBeFormatted do
         planned.read_only = true
       end
 
-      it "sets the 'ro' option" do
+      it "sets the 'ro' option exactly once" do
         planned.format!(blk_device)
-        expect(blk_device.filesystem.mount_options).to include("ro")
+        expect(blk_device.filesystem.mount_options.count { |x| x == "ro" }).to eq(1)
+      end
+
+      context "and fstab options also include the 'ro' flag" do
+        before do
+          planned.fstab_options = ["ro"]
+        end
+
+        it "sets the 'ro' option exactly once" do
+          planned.format!(blk_device)
+          expect(blk_device.filesystem.mount_options.count { |x| x == "ro" }).to eq(1)
+        end
       end
 
       context "but fstab options include the 'rw' flag" do
