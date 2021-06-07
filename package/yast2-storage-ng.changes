@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jun  4 12:07:22 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- try harder matching device names (bsc#1186268)
+- 4.3.52
+
+-------------------------------------------------------------------
 Thu May 20 08:42:54 UTC 2021 - Knut Anderssen <kanderssen@suse.com>
 
 - Make the 'Change Used Devices' menu item translatable
