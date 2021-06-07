@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun  7 09:26:58 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- ensure mount options are not doubled (bsc#1186298)
+- 4.4.5
+
+-------------------------------------------------------------------
 Fri Jun  4 12:12:49 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
 
 - try harder matching device names (bsc#1186268)
