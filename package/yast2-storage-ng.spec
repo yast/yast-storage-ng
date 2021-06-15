@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        4.3.53
+Version:        4.3.54
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
