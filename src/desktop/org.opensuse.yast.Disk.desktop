@@ -19,5 +19,5 @@ Exec=xdg-su -c "/sbin/yast2 partitioner"
 
 Name=YaST Partitioner
 GenericName=Partitioner
-Comment=Partition hard disks (including RAID, LVM, and encrypted file systems)
+Comment="Partition hard disks (including RAID, LVM, and encrypted file systems)"
 StartupNotify=true
