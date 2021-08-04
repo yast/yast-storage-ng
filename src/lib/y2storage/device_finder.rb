@@ -182,7 +182,7 @@ module Y2Storage
       !StorageManager.instance.committed?
     end
 
-    # Alternative versions of the name to be also considered in searchs
+    # Alternative versions of the name to be also considered in searches
     #
     # @param device_name [String] a kernel name, udev name or any other device name
     # @return [Array<String>]
