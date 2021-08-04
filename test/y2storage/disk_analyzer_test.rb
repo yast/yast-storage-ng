@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2016-2019] SUSE LLC
+
+# Copyright (c) [2016-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -685,6 +686,21 @@ describe Y2Storage::DiskAnalyzer do
 
         it "does not include the disk devices used by the MD RAID" do
           expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
+        end
+      end
+
+      context "when the url of an installation repository points to an udev symlink" do
+        before do
+          allow(Y2Storage::BlkDevice).to receive(:find_by_any_name)
+            .with(fake_devicegraph, udev_name).and_return(sda1)
+        end
+
+        let(:udev_name) { "/dev/disk/by-id/111-222-3333" }
+
+        let(:repository_url) { "dvd:/?devices=#{udev_name}" }
+
+        it "does not include the disk device" do
+          expect(candidate_disks).to_not include("/dev/sda1")
         end
       end
     end
