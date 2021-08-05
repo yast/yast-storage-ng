@@ -315,11 +315,9 @@ module Y2Storage
 
     # Checks whether a device contains an installation repository
     #
-    # A device contains an installation repository if its kernel name or the kernel name of any of
-    # its descendant devices (see #{all_devices_from_device}) matches with the kernel name of the
-    # device included in the URI of an installation repository. Note that the device name indicated
-    # in the URI of a repository might not be a kernel name. The devices pointed by a repository are
-    # found by all its possible names, see #{repositories_devices}.
+    # A device contains an installation repository if the device or any of its descendant devices
+    # is included in the list of devices from the installation repository URI. For example, if the
+    # URI is "hd:/subdir?device=/dev/sda1", then "/dev/sda" contains an installation repository.
     #
     # @param device [BlkDevice]
     # @return [Boolean]
@@ -360,7 +358,7 @@ module Y2Storage
     def repositories_device_names
       return @repositories_device_names if @repositories_device_names
 
-      names = local_repositories.map { |r| repository_device_names(r) }.flatten.uniq
+      names = local_repositories.flat_map { |r| repository_device_names(r) }.uniq
 
       @repositories_device_names = names
     end
