@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2019] SUSE LLC
+# Copyright (c) [2015-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -315,34 +315,16 @@ module Y2Storage
 
     # Checks whether a device contains an installation repository
     #
-    # For all possible names of the given device, it is checked if any of that
-    # names is included in the URI of an installation repository (see
-    # {#repositories_devices}). Note that the names of all devices inside the
-    # given device are considered as names of the given device (see #{device_names}),
-    # (e.g., when a disk contains a partition being used as LVM PV, the names of the
-    # LVM LVs are considered as names of the disk).
+    # A device contains an installation repository if the device or any of its descendant devices
+    # is included in the list of devices from the installation repository URI. For example, if the
+    # URI is "hd:/subdir?device=/dev/sda1", then "/dev/sda" contains an installation repository.
     #
     # @param device [BlkDevice]
     # @return [Boolean]
     def contain_installation_repository?(device)
-      device_names(device).any? { |n| repositories_devices.include?(n) }
-    end
+      repositories_names = repositories_devices.map(&:name)
 
-    # All possible device names of a device
-    #
-    # Device names includes the kernel name and all udev names given by libstorage-ng.
-    # Moreover, it includes the names of all devices inside the given device
-    # (e.g., names of partitions inside a disk). Note that when a device contains a
-    # partition being used as LVM PV, the names of the LVM LVs are considered as names
-    # of the device.
-    #
-    # @param device [BlkDevice]
-    # @return [Array<String>]
-    def device_names(device)
-      devices = all_devices_from_device(device)
-
-      names = devices.map { |d| d.udev_full_all.prepend(d.name) }
-      names.flatten.compact.uniq
+      all_devices_from_device(device).any? { |d| repositories_names.include?(d.name) }
     end
 
     # All blk devices defined from a device, including the given device
@@ -357,13 +339,28 @@ module Y2Storage
       devices.prepend(device)
     end
 
+    # Devices whose name is indicated in the URI of the installation repositories
+    #
+    # @return [Array<BlkDevice>]
+    def repositories_devices
+      return @repositories_devices if @repositories_devices
+
+      devices = repositories_device_names.map { |n| devicegraph.find_by_any_name(n) }.compact
+
+      @repositories_devices = devices
+    end
+
     # Device names indicated in the URI of the installation repositories
     #
     # @see #local_repositories
     #
     # @return [Array<String>]
-    def repositories_devices
-      @repositories_devices ||= local_repositories.map { |r| repository_devices(r) }.flatten
+    def repositories_device_names
+      return @repositories_device_names if @repositories_device_names
+
+      names = local_repositories.flat_map { |r| repository_device_names(r) }.uniq
+
+      @repositories_device_names = names
     end
 
     # TODO: This method should be moved to Y2Packager::Repository class
@@ -376,7 +373,7 @@ module Y2Storage
     #
     # @param repository [Y2Packager::Repository]
     # @return [Array<String>]
-    def repository_devices(repository)
+    def repository_device_names(repository)
       match_data = repository.url.to_s.match(/.*device[s]?=([^&]*)/)
       return [] unless match_data
 

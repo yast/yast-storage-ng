@@ -146,7 +146,7 @@ module Y2Storage
     #
     # Take into account that libstorage-ng intentionally filter outs many udev
     # paths and ids, so the list is expected to be incomplete. If you need to
-    # lookup a device by its udev name, check {.find_by_all_names}.
+    # lookup a device by its udev name, check {.find_by_any_name}.
     #
     # @see #udev_full_paths
     # @see #udev_full_ids
