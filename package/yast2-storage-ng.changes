@@ -14,7 +14,7 @@ Fri Jun  4 09:51:58 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
 -------------------------------------------------------------------
 Fri May 21 10:50:11 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
 
-- try harder matching device names (bsc#1186268
+- try harder matching device names (bsc#1186268)
 - 4.2.116
 
 -------------------------------------------------------------------
