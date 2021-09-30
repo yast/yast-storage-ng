@@ -61,6 +61,8 @@ Requires:       yast2-ycp-ui-bindings >= 4.3.4
 Requires:       rubygem(%{rb_default_ruby_abi}:ruby-dbus)
 Requires(post): %fillup_prereq
 
+Recommends:	(libyui-qt-graph if libyui-qt)
+
 Obsoletes:      yast2-storage
 
 %description
