@@ -1,11 +1,4 @@
 -------------------------------------------------------------------
-Fri Oct  1 16:43:29 UTC 2021 - José Iván López González <jlopez@suse.com>
-
-- Recommend to install libyui-qt-graph package (bsc#1191109) in
-  order to offer the View/Device Graphs menu option.
-- 4.3.55
-
--------------------------------------------------------------------
 Tue Jun 15 10:21:16 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Fix the Comment entry in the desktop file so the tooltip
