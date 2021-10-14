@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct 14 14:19:03 UTC 2021 - David Diaz <dgonzalez@suse.com>
+
+- Fix (un)masking systemd units by using the systemctl --plain
+  flag for getting an output without status glyphs (bsc#1191347).
+- 4.3.56
+
+-------------------------------------------------------------------
 Fri Oct  1 16:43:29 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Recommend to install libyui-qt-graph package (bsc#1191109) in
