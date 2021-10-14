@@ -32,7 +32,7 @@
 
 query_units()
 {
-    /usr/bin/systemctl list-units --full --all --type mount,swap --no-legend | while read -r unit dummy ; do
+    /usr/bin/systemctl list-units --full --all --type mount,swap --no-legend --plain | while read -r unit dummy ; do
 
 	# skip root and sysroot
 	if [[ $unit == -.mount || $unit == sysroot.mount ]] ; then
