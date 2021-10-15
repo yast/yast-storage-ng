@@ -673,6 +673,19 @@ module Y2Storage
       hwinfo.driver || []
     end
 
+    # @see #boss?
+    BOSS_REGEXP = Regexp.new("dellboss", Regexp::IGNORECASE).freeze
+    private_constant :BOSS_REGEXP
+
+    # Whether this device is a Dell BOSS (Boot Optimized Storage Solution)
+    #
+    # See https://jira.suse.com/browse/SLE-17578
+    #
+    # @return [Boolean]
+    def boss?
+      !!model&.match?(BOSS_REGEXP)
+    end
+
     # Size of the space that could be theoretically reclaimed by shrinking the
     # device
     #

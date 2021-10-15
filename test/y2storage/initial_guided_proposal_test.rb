@@ -117,22 +117,47 @@ describe Y2Storage::InitialGuidedProposal do
       let(:sda_usb) { true }
 
       shared_examples "no candidate devices" do
-        it "uses the first non USB device to make the proposal" do
-          proposal.propose
+        context "and there are no Dell BOSS drives" do
+          it "uses the first non USB device to make the proposal" do
+            proposal.propose
 
-          expect(used_devices).to contain_exactly("/dev/sdb")
-        end
-
-        context "and a proposal is not possible with the current device" do
-          before do
-            # root requires at least 8 GiB and home 10 GiB
-            sdb.size = 5.GiB
+            expect(used_devices).to contain_exactly("/dev/sdb")
           end
 
-          it "uses the next non USB device to make the proposal" do
+          context "and a proposal is not possible with the current device" do
+            before do
+              # root requires at least 8 GiB and home 10 GiB
+              sdb.size = 5.GiB
+            end
+
+            it "uses the next non USB device to make the proposal" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdc")
+            end
+          end
+        end
+
+        context "and there is a Dell BOSS drive" do
+          before { allow(sdc).to receive(:model).and_return "DELLBOSS-1234" }
+
+          it "uses the BOSS device to make the proposal" do
             proposal.propose
 
             expect(used_devices).to contain_exactly("/dev/sdc")
+          end
+
+          context "and a proposal is not possible in the BOSS drive" do
+            before do
+              # root requires at least 8 GiB and home 10 GiB
+              sdc.size = 5.GiB
+            end
+
+            it "uses the first non-USB non-BOSS device to make the proposal" do
+              proposal.propose
+
+              expect(used_devices).to contain_exactly("/dev/sdb")
+            end
           end
         end
       end
