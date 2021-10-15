@@ -292,9 +292,11 @@ module Y2Storage
       # NOTE: sort_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
-      # in two groups and moving one of them to the end.
+      # in three groups and arranging those groups.
       candidates = disk_analyzer.candidate_disks
-      candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
+      high_prio, rest = candidates.partition { |d| d.respond_to?(:boss?) && d.boss? }
+      low_prio, rest = rest.partition { |d| maybe_removable?(d) }
+      candidates = high_prio + rest + low_prio
       candidates.first(fallback_candidates_size).map(&:name)
     end
 
@@ -313,6 +315,13 @@ module Y2Storage
       return disks unless settings.allocate_mode?(:device)
 
       [disks, proposed_volumes_sets.size].max
+    end
+
+    def maybe_removable?(device)
+      return true if device.respond_to?(:usb?) && device.usb?
+      return true if device.respond_to?(:sd_card?) && device.sd_card?
+
+      false
     end
 
     # All proposed volumes sets from the settings

@@ -104,6 +104,13 @@ module Y2Storage
       PartitionTables::Type.find(:gpt)
     end
 
+    SD_CARD_DRIVER = "mmcblk".freeze
+    private_constant :SD_CARD_DRIVER
+
+    def sd_card?
+      driver&.include?(SD_CARD_DRIVER)
+    end
+
     protected
 
     def types_for_is

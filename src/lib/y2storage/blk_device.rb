@@ -673,6 +673,14 @@ module Y2Storage
       hwinfo.driver || []
     end
 
+    BOSS_REGEXP = Regexp.new("dellboss", Regexp::IGNORECASE).freeze
+    private_constant :BOSS_REGEXP
+
+    # Maybe a more generic method name?
+    def boss?
+      !!model&.match?(BOSS_REGEXP)
+    end
+
     # Size of the space that could be theoretically reclaimed by shrinking the
     # device
     #
