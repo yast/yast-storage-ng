@@ -55,9 +55,9 @@ describe "default mount_by when creating a mount point" do
       let(:mount_by_type) { Y2Storage::Filesystems::MountByType::UUID }
 
       context "mounting an encrypted partition" do
-        it "mounts by uuid" do
+        it "mounts by device name" do
           mp = filesystem.create_mount_point("/foo")
-          expect(mp.mount_by.is?(:uuid)).to eq true
+          expect(mp.mount_by.is?(:device)).to eq true
         end
 
         it "uses uuid in crypttab" do
@@ -71,9 +71,9 @@ describe "default mount_by when creating a mount point" do
       let(:mount_by_type) { Y2Storage::Filesystems::MountByType::LABEL }
 
       context "mounting an encrypted partition" do
-        it "mounts by label" do
+        it "mounts by device name" do
           mp = filesystem.create_mount_point("/foo")
-          expect(mp.mount_by.is?(:label)).to eq true
+          expect(mp.mount_by.is?(:device)).to eq true
         end
 
         it "uses uuid in crypttab" do

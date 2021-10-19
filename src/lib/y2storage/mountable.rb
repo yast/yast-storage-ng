@@ -120,20 +120,10 @@ module Y2Storage
       mp.path = path
       # Recalculate etc status for the parent devices
       update_etc_status
-      # Recalculate the crypt_options for parent encryption devices
-      adjust_crypt_options
+      # Recalculate the crypt_options and mount_by for parent encryption devices
+      adjust_crypt_devices
       # Ensure the mount_by makes sense
       mp.ensure_suitable_mount_by
-      # Adjust mount_by for encryption layer: try to use the same mount_by
-      # type as for the filesystem
-      if mp.filesystem.encrypted?
-        mp.filesystem.blk_devices.each do |dev|
-          next unless dev.respond_to?(:mount_by)
-
-          dev.mount_by = mp.mount_by
-          dev.ensure_suitable_mount_by
-        end
-      end
       mp
     end
 
@@ -142,7 +132,7 @@ module Y2Storage
     # @raise [Storage::Exception] if the mountable has no mount point
     def remove_mount_point
       storage_remove_mount_point
-      adjust_crypt_options
+      adjust_crypt_devices
       update_etc_status
     end
 
@@ -158,6 +148,18 @@ module Y2Storage
     # @see Encryption#adjust_crypt_options
     def adjust_crypt_options
       ancestors.select { |d| d.is?(:encryption) }.each(&:adjust_crypt_options)
+    end
+
+    # Updates the crypttab options and the mount_by value for all the associated
+    # encryption devices
+    #
+    # @see Encryption#adjust_crypt_options
+    # @see Encryption#adjust_mount_by
+    def adjust_crypt_devices
+      ancestors.select { |d| d.is?(:encryption) }.each do |enc|
+        enc.adjust_mount_by
+        enc.adjust_crypt_options
+      end
     end
 
     # Mount options proposed by YaST for mount points associated to this device,

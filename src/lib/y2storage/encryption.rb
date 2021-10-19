@@ -98,6 +98,10 @@ module Y2Storage
     storage_forward :storage_in_etc_crypttab=, to: :in_etc_crypttab=
     private :storage_in_etc_crypttab=
 
+    # @!method set_default_mount_by
+    #   Set the mount-by method to the global default, see Storage::get_default_mount_by()
+    storage_forward :set_default_mount_by, to: :default_mount_by=
+
     # @see BlkDevice#plain_device
     def plain_device
       blk_device
@@ -365,6 +369,30 @@ module Y2Storage
       end
     end
 
+    # Sets {#mount_by} to a value that makes sense
+    #
+    # Generally, that means simply ensuring a suitable mount_by value. But it also may imply
+    # correcting the surprising value set by libstorage-ng when probing an already existing
+    # encryption device.
+    #
+    # During probing, libstorage-ng sets Encryption#mount_by for all the found encryption devices.
+    # If the device is listed in /etc/crypttab, libstorage-ng sets the mount_by value based on the
+    # value on that file. If that's not the case, libstorage-ng sets Encryption#mount_by to a
+    # hardcoded value of DEVICE, completely ignoring the default mount_by value that is configured
+    # for the system. That leads to problems like the one described in bsc#1165702.
+    # See https://github.com/yast/yast-storage-ng/pull/1095 for more details.
+    #
+    # For devices affected by that problem, this method first tries to re-initialize mount_by to
+    # a value aligned with the storage-ng configuration and, thus, with user expectations.
+    def adjust_mount_by
+      # It may be more correct to do this only once (since it's fixing a wrong initialization).
+      # But since there is no way in the UI or AutoYaST to explicitly modify (even to display) the
+      # value of Encryption#mount_by, it's safe (even maybe expected) to re-evaluate it.
+      set_default_mount_by if probed_without_crypttab?
+
+      ensure_suitable_mount_by
+    end
+
     # @see Device#update_etc_attributes
     def assign_etc_attribute(value)
       self.storage_in_etc_crypttab = value
@@ -438,6 +466,19 @@ module Y2Storage
 
       # Removes trailing slashes and replaces internal slashes by underscore
       mount_point.path.gsub(/^\/|\/$/, "").gsub("/", "_")
+    end
+
+    # Checks whether the initial value of mount_by was forced to DEVICE by libstorage-ng due to lack
+    # of information or whether is the result of a proper initialization during normal operation
+    #
+    # @see #adjust_mount_by
+    #
+    # @return [Boolean]
+    def probed_without_crypttab?
+      return false unless exists_in_probed?
+      return !in_etc_crypttab? if in_etc_initial.nil?
+
+      !in_etc_initial
     end
 
     class << self
