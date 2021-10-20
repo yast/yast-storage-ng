@@ -36,14 +36,18 @@ describe Y2Storage::Dialogs::Proposal do
   let(:excluded_buttons) { [] }
 
   describe "#run" do
-    let(:devicegraph0) { double("Storage::Devicegraph", actiongraph: actiongraph0) }
+    let(:devicegraph0) do
+      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices: blk_devices)
+    end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
       double(Y2Storage::ActionsPresenter, to_html: presenter_content0)
     end
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
-    let(:devicegraph1) { double("Storage::Devicegraph", actiongraph: actiongraph1) }
+    let(:devicegraph1) do
+      double("Storage::Devicegraph", actiongraph: actiongraph1, blk_devices: blk_devices)
+    end
     let(:actiongraph1) { double("Storage::Actiongraph") }
     let(:actions_presenter1) do
       double(Y2Storage::ActionsPresenter, to_html: presenter_content1)
@@ -51,6 +55,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content1) { "<li>Action 3</li><li>Action 4</li>" }
 
     let(:actions_presenter2) { double(Y2Storage::ActionsPresenter, to_html: nil) }
+
+    let(:blk_devices) { [] }
 
     before do
       Y2Storage::StorageManager.create_test_instance
@@ -114,6 +120,56 @@ describe Y2Storage::Dialogs::Proposal do
         it "does not display an option to run the partitioner from the current devicegraph" do
           expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
             expect(menu_button_item_with_id(:expert_from_proposal, content)).to be_nil
+          end
+          dialog.run
+        end
+      end
+    end
+
+    shared_examples "BOSS information" do
+      context "if there are no BOSS drives in the system" do
+        let(:blk_devices) do
+          [
+            double("Y2Storage::Disk", boss?: false, name: "/dev/sda"),
+            double("Y2Storage::Disk", boss?: false, name: "/dev/sdb")
+          ]
+        end
+
+        it "displays no information about BOSS" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to_not include "BOSS"
+          end
+          dialog.run
+        end
+      end
+
+      context "if there is a BOSS drive in the system" do
+        let(:blk_devices) do
+          [
+            double("Y2Storage::Disk", boss?: false, name: "/dev/sda"),
+            double("Y2Storage::Disk", boss?: true, name: "/dev/sdb")
+          ]
+        end
+
+        it "displays a note pointing which disk is BOSS" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to include "device /dev/sdb is a Dell BOSS"
+          end
+          dialog.run
+        end
+      end
+
+      context "if there are several BOSS drives in the system" do
+        let(:blk_devices) do
+          [
+            double("Y2Storage::Disk", boss?: true, name: "/dev/sda"),
+            double("Y2Storage::Disk", boss?: true, name: "/dev/sdb")
+          ]
+        end
+
+        it "displays a note enumerating the BOSS drives" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to include "devices are Dell BOSS drives: /dev/sda, /dev/sdb"
           end
           dialog.run
         end
@@ -193,6 +249,8 @@ describe Y2Storage::Dialogs::Proposal do
           end
           dialog.run
         end
+
+        include_examples "BOSS information"
 
         it "sets #proposal to the provided proposal" do
           dialog.run
@@ -358,6 +416,8 @@ describe Y2Storage::Dialogs::Proposal do
           end
         end
       end
+
+      include_examples "BOSS information"
 
       it "sets #proposal to the provided proposal" do
         dialog.run
