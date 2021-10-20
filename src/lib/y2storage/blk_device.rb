@@ -580,17 +580,13 @@ module Y2Storage
     # Type of the filesystem, if any
     # @return [Filesystems::Type, nil]
     def filesystem_type
-      return nil unless blk_filesystem
-
-      blk_filesystem.type
+      blk_filesystem&.type
     end
 
     # Mount point of the filesystem, if any
     # @return [String, nil]
     def filesystem_mountpoint
-      return nil unless blk_filesystem
-
-      blk_filesystem.mount_path
+      blk_filesystem&.mount_path
     end
 
     # Non encrypted version of this device
@@ -668,9 +664,7 @@ module Y2Storage
     #
     # @return [Array<String>] empty if the driver is unknown
     def driver
-      return [] if hwinfo.nil?
-
-      hwinfo.driver || []
+      hwinfo&.driver || []
     end
 
     # @see #boss?
@@ -716,11 +710,9 @@ module Y2Storage
     #
     # @return [Boolean] true if this is a network-based disk or depends on one
     def in_network?
-      if root_blk_device?
-        false
-      else
-        root_blk_devices.any?(&:in_network?)
-      end
+      return false if root_blk_device?
+
+      root_blk_devices.any?(&:in_network?)
     end
 
     # Whether the block device must be considered remote regarding how and when
