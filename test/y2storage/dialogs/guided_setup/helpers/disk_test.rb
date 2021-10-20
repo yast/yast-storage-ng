@@ -35,6 +35,8 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
       allow(disk).to receive(:respond_to?).with(anything)
       allow(disk).to receive(:respond_to?).with(:transport).and_return(true)
       allow(disk).to receive(:transport).and_return(transport)
+      allow(disk).to receive(:is?).with(:sd_card).and_return(sd_card)
+      allow(disk).to receive(:boss?).and_return(boss)
 
       allow(transport).to receive(:is?).with(:usb).and_return(usb)
       allow(transport).to receive(:is?).with(:sbp).and_return(sbp)
@@ -49,10 +51,28 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
     let(:name) { "/dev/sda" }
     let(:usb) { false }
     let(:sbp) { false }
+    let(:sd_card) { false }
+    let(:boss) { false }
     let(:installed_systems) { [] }
 
     it "contains the disk name and the size" do
       expect(subject.label(disk)).to match(/\/dev\/sda, 20.00 GiB/)
+    end
+
+    context "when the disk is a MMC/SDCard" do
+      let(:sd_card) { true }
+
+      it "includes the 'SD Card' label" do
+        expect(subject.label(disk)).to match(/SD Card/)
+      end
+    end
+
+    context "when the disk is a Dell BOSS drive" do
+      let(:boss) { true }
+
+      it "includes the 'Dell BOSS' label" do
+        expect(subject.label(disk)).to match(/Dell BOSS/)
+      end
     end
 
     context "when the disk transport is usb" do

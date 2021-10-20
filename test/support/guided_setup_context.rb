@@ -36,15 +36,28 @@ RSpec.shared_context "guided setup requirements" do
     (all_disks - disks).each { |d| not_select_widget(d) }
   end
 
-  def disk(name, partitions = {})
-    disk = instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
+  # Builds and returns a Disk double
+  #
+  # @param name [String] device name of the disk
+  # @param args [Hash] the key :partitions is turned into a collection of Partition doubles to mock
+  #   Disk#partitions, the rest are passed to the double instance as mocked messages
+  def disk(name, args = {})
+    defaults = { size: Y2Storage::DiskSize.new(0), boss?: false, partitions: {} }
+    args = defaults.merge(args)
+    args[:name] = name
+
+    partitions = args.delete(:partitions)
     parts =
       if partitions && partitions[name]
         partitions[name].map { |pname| partition_double(pname) }
       else
         []
       end
+
+    disk = instance_double(Y2Storage::Disk, **args)
     allow(disk).to receive(:partitions).and_return parts
+    allow(disk).to receive(:is?).with(:sd_card).and_return false
+
     disk
   end
 
@@ -66,9 +79,9 @@ RSpec.shared_context "guided setup requirements" do
     allow(guided_setup).to receive(:settings).and_return(settings)
 
     allow(analyzer).to receive(:candidate_disks)
-      .and_return(all_disks.map { |d| disk(d, partitions) })
+      .and_return(all_disks.map { |d| disk(d, partitions: partitions) })
 
-    allow(analyzer).to receive(:device_by_name) { |d| disk(d, partitions) }
+    allow(analyzer).to receive(:device_by_name) { |d| disk(d, partitions: partitions) }
 
     allow(analyzer).to receive(:installed_systems)
       .and_return(windows_systems + linux_systems)
