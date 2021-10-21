@@ -135,8 +135,27 @@ module Y2Storage
       #
       # @return [String] HTML-formatted text
       def actions_html
-        # Reuse the exact string "Changes to partitioning" from the partitioner
-        actions_source_html + _("<p>Changes to partitioning:</p>") + @actions_presenter.to_html
+        actions_source_html +
+          boss_html +
+          # Reuse the exact string "Changes to partitioning" from the partitioner
+          _("<p>Changes to partitioning:</p>") +
+          @actions_presenter.to_html
+      end
+
+      def boss_html
+        return "" if boss_devices.empty?
+
+        n_(
+          # TRANSLATORS: %s is a linux device name (eg. /dev/sda)
+          "<p>The device %s is a Dell BOSS drive.</p>",
+          # TRANSLATORS: %s is a list of comma-separated device names (eg. "/dev/sda, /dev/sdb")
+          "<p>The following devices are Dell BOSS drives: %s.</p>",
+          boss_devices.size
+        ) % boss_devices.map(&:name).join(", ")
+      end
+
+      def boss_devices
+        @boss_devices ||= devicegraph.blk_devices.select(&:boss?)
       end
 
       # @see #actions_html

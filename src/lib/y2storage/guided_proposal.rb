@@ -285,16 +285,19 @@ module Y2Storage
     # Candidate devices to use when the current settings do not specify any, i.e. in the initial
     # attempt, before the user has had any opportunity to select the candidate devices
     #
-    # The possible candidate devices are sorted, placing USB devices at the end.
+    # The possible candidate devices are sorted, placing boot-optimized devices at the beginning and
+    # removable devices (like USB) at the end.
     #
     # @return [Array<String>] e.g. ["/dev/sda", "/dev/sdc"]
     def fallback_candidates
       # NOTE: sort_by it is not being used here because "the result is not guaranteed to be stable"
       # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
       # In addition, a partition makes more sense here since we only are "grouping" available disks
-      # in two groups and moving one of them to the end.
+      # in three groups and arranging those groups.
       candidates = disk_analyzer.candidate_disks
-      candidates = candidates.partition { |d| d.respond_to?(:usb?) && !d.usb? }.flatten
+      high_prio, rest = candidates.partition(&:boss?)
+      low_prio, rest = rest.partition { |d| maybe_removable?(d) }
+      candidates = high_prio + rest + low_prio
       candidates.first(fallback_candidates_size).map(&:name)
     end
 
@@ -313,6 +316,23 @@ module Y2Storage
       return disks unless settings.allocate_mode?(:device)
 
       [disks, proposed_volumes_sets.size].max
+    end
+
+    # Whether the given device is potentially a removable disk
+    #
+    # It's not always possible to detect whether a given device is physically removable or not (eg.
+    # a fixed device may be connected to the USB bus or an SD card may be internal), but this
+    # returns true if the device is suspicious enough so it's better to avoid it in the automatic
+    # proposal if possible.
+    #
+    # @param device [BlkDevice]
+    # @return [boolean]
+    def maybe_removable?(device)
+      return true if device.is?(:sd_card)
+      return true if device.respond_to?(:usb?) && device.usb?
+      return true if device.respond_to?(:firewire?) && device.firewire?
+
+      false
     end
 
     # All proposed volumes sets from the settings

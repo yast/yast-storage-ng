@@ -69,6 +69,13 @@ module Y2Storage
       transport.to_sym == :usb
     end
 
+    # Checks if it's a IEEE 1394 disk
+    #
+    # @return [Boolean]
+    def firewire?
+      transport.to_sym == :sbp
+    end
+
     # Checks if it's in network
     #
     # @return [Boolean]
@@ -106,8 +113,16 @@ module Y2Storage
 
     protected
 
+    # @see #types_for_is
+    SD_CARD_DRIVER = "mmcblk".freeze
+    private_constant :SD_CARD_DRIVER
+
     def types_for_is
-      super << :disk
+      types = super
+      types << :disk
+      # Check whether this is a MMC (MultiMedia Card) or a SD (Secure Digital) card
+      types << :sd_card if driver&.include?(SD_CARD_DRIVER)
+      types
     end
 
     # Whether this device can be in general treated like a disk for YaST

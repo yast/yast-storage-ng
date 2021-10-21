@@ -134,10 +134,10 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
 
       let(:first_disks) do
         [
-          double("Disk", name: "/dev/sda", size: 10.GiB, transport: usb),
-          double("Disk", name: "/dev/sdb", size: 20.GiB, transport: sbp),
-          double("Disk", name: "/dev/sdc", size: 30.GiB, transport: ata),
-          double("Disk", name: "/dev/sdd", size: 40.GiB)
+          disk("/dev/sda", size: 10.GiB, transport: usb),
+          disk("/dev/sdb", size: 20.GiB, transport: sbp),
+          disk("/dev/sdc", size: 30.GiB, transport: ata),
+          disk("/dev/sdd", size: 40.GiB)
         ]
       end
 

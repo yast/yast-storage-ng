@@ -118,7 +118,8 @@ module Y2Storage
         end
 
         def all_disks
-          analyzer.candidate_disks
+          # Let's place the boot-optimized disks at the top of the list
+          @all_disks ||= analyzer.candidate_disks.partition(&:boss?).flatten
         end
 
         # Widget used to display and select the list of disks

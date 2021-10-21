@@ -178,10 +178,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
     let(:hwinfo) { OpenStruct.new(bios_id: "0x80", driver: ["ahci"], unknown: "value") }
 
     before do
-      allow(disk).to receive(:hwinfo).and_return(
-        bios_id: "0x80",
-        driver:  ["ahci"]
-      )
+      allow(disk).to receive(:hwinfo).and_return hwinfo
     end
 
     it "returns a hash containing supported keys and values" do

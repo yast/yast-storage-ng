@@ -66,10 +66,25 @@ module Y2Storage
           # @param disk [BlkDevice]
           # @return [Array<String>]
           def type_labels(disk)
-            return [] unless disk.respond_to?(:transport)
+            [boss_label(disk), sd_label(disk), transport_label(disk)].reject(&:empty?)
+          end
 
-            trans = transport_label(disk.transport)
-            trans.empty? ? [] : [trans]
+          def boss_label(disk)
+            return "" unless disk.boss?
+
+            _("Dell BOSS")
+          end
+
+          def sd_label(disk)
+            return "" unless disk.is?(:sd_card)
+
+            _("SD Card")
+          end
+
+          def transport_label(disk)
+            return "" unless disk.respond_to?(:transport)
+
+            label_for_transport(disk.transport)
           end
 
           # Label for the given transport to be displayed in the dialogs
@@ -78,7 +93,7 @@ module Y2Storage
           #
           # @param transport [DataTransport]
           # @return [String] empty string if the transport is not worth mentioning
-          def transport_label(transport)
+          def label_for_transport(transport)
             if transport.is?(:usb)
               _("USB")
             elsif transport.is?(:sbp)

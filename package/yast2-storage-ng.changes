@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Oct 21 11:50:04 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Install by default to any available Dell BOSS drive and identify
+  such drives more clearly in the Guided Setup (jsc#SLE-17578).
+- Try to avoid by default to install into SD Cards if a fixed disk
+  is available (bsc#1187438).
+- 4.4.11
+
+-------------------------------------------------------------------
 Tue Oct 19 11:22:52 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Do not force the same mount_by method in fstab and in crypttab
