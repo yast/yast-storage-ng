@@ -22,7 +22,7 @@
 require_relative "../../../spec_helper.rb"
 require "y2storage/dialogs/guided_setup"
 
-describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
+describe Y2Storage::Dialogs::GuidedSetup::Widgets::Volume do
   # Convenience method to inspect the tree of terms for the UI
   def term_with_id(regexp, content)
     content.nested_find do |param|

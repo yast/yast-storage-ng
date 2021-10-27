@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,9 +20,9 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/proposal/settings_generator/ng"
+require "y2storage/proposal/settings_generator"
 
-describe Y2Storage::Proposal::SettingsGenerator::Ng do
+describe Y2Storage::Proposal::SettingsGenerator do
   subject { described_class.new(settings) }
 
   def volume_from_settings(settings, mount_point)

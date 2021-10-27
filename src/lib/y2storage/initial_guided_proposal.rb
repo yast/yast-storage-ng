@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,7 +50,7 @@ module Y2Storage
     # @return [ProposalSettings]
     attr_reader :initial_settings
 
-    # @return [Proposal::SettingsGenerator::Base]
+    # @return [Proposal::SettingsGenerator]
     attr_reader :settings_generator
 
     # Tries to perform the initial proposal
@@ -102,15 +102,13 @@ module Y2Storage
     #
     # It stops once a valid proposal is calculated.
     #
-    # @see #create_settings_generator
-    #
     # @raise [Error, NoDiskSpaceError] when the proposal cannot be calculated
     #
     # @return [true]
     def try_with_different_settings
       error = default_proposal_error
 
-      create_settings_generator
+      @settings_generator = Proposal::SettingsGenerator.new(settings)
 
       loop do
         break unless assign_next_settings
@@ -236,22 +234,6 @@ module Y2Storage
     # Resets the settings by assigning the initial settings
     def reset_settings
       self.settings = initial_settings
-    end
-
-    # Creates a generator of settings
-    #
-    # It is used to get the new settings to use for each proposal attempt.
-    #
-    # @see Proposal::SettingsGenerator::Legacy
-    # @see Proposal::SettingsGenerator::Ng
-    #
-    # @return [Proposal::SettingsGenerator::Base]
-    def create_settings_generator
-      @settings_generator = if settings.ng_format?
-        Proposal::SettingsGenerator::Ng.new(settings)
-      else
-        Proposal::SettingsGenerator::Legacy.new(settings)
-      end
     end
 
     # Assigns the settings to use for the current proposal attempt

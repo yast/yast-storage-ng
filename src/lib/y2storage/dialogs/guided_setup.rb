@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -67,7 +67,7 @@ module Y2Storage
           "select_volumes_disks"     => -> { run_dialog(SelectVolumesDisks) },
           "select_root_disk"         => -> { run_dialog(SelectRootDisk) },
           "select_scheme"            => -> { run_dialog(SelectScheme) },
-          "select_filesystem"        => -> { run_dialog(select_filesystem_class) },
+          "select_filesystem"        => -> { run_dialog(SelectFilesystem) },
           "select_partition_actions" => -> { run_dialog(SelectPartitionActions) }
         }
       end
@@ -119,11 +119,6 @@ module Y2Storage
           result = dialog.run
         end
         result || :next
-      end
-
-      # Subclass of {SelectFilesystem::Base} that must be used
-      def select_filesystem_class
-        settings.ng_format? ? SelectFilesystem::Ng : SelectFilesystem::Legacy
       end
     end
   end

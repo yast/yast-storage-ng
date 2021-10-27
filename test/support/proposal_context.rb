@@ -65,26 +65,13 @@ RSpec.shared_context "proposal" do
       reasons: 0, reason_texts: [])
   end
 
-  let(:settings_format) { :legacy }
-
-  let(:settings) { (settings_format == :legacy) ? legacy_settings : ng_settings }
-
   let(:separate_home) { false }
   let(:lvm) { false }
   let(:lvm_strategy) { nil }
   let(:encrypt) { false }
   let(:test_with_subvolumes) { false }
-  let(:legacy_settings) do
-    settings = Y2Storage::ProposalSettings.new_for_current_product
-    settings.use_separate_home = separate_home
-    settings.use_lvm = lvm
-    settings.encryption_password = encrypt ? "12345678" : nil
-    # If subvolumes are not tested, override the subvolume fallbacks list
-    settings.subvolumes = nil unless test_with_subvolumes
-    settings
-  end
 
-  let(:ng_settings) do
+  let(:settings) do
     settings = Y2Storage::ProposalSettings.new_for_current_product
     home = settings.volumes.find { |v| v.mount_point == "/home" }
     home.proposed = separate_home if home
