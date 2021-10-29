@@ -31,8 +31,6 @@ describe Y2Storage::GuidedProposal do
 
     let(:architecture) { :x86 }
 
-    let(:settings_format) { :ng }
-
     let(:control_file) { "kvm-role-like.xml" }
 
     # Test representing an scenario found during the development of SLE15.

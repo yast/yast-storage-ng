@@ -37,20 +37,19 @@ describe Y2Storage::GuidedProposal do
     let(:original_irst) { fake_devicegraph.find_by_name("/dev/sda1") }
     let(:original_win) { fake_devicegraph.find_by_name("/dev/sda2") }
 
+    # As straightforward as possible to simplify calculations
+    let(:control_file_content) { { "partitioning" => { "volumes" => volumes_spec } } }
+    let(:volumes_spec) do
+      [{ "mount_point" => "/", "fs_type" => "ext4", "desired_size" => root_size }]
+    end
+
     before do
       allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
         .and_return resize_info
-
-      settings.root_base_size = root_size
-
-      # Let's remove limits and simplify calculations
-      settings.root_max_size = Y2Storage::DiskSize.unlimited
-      settings.use_snapshots = false
-      settings.use_separate_home = false
     end
 
     context "when it needs to resize windows and delete everything else" do
-      let(:root_size) { 100.GiB }
+      let(:root_size) { "100GiB" }
 
       it "keeps the IRST partition" do
         proposal.propose
@@ -61,7 +60,7 @@ describe Y2Storage::GuidedProposal do
     end
 
     context "when it needs to delete all windows and Linux partitions" do
-      let(:root_size) { 400.GiB }
+      let(:root_size) { "400GiB" }
 
       it "keeps the IRST partition if possible" do
         proposal.propose
@@ -72,7 +71,7 @@ describe Y2Storage::GuidedProposal do
     end
 
     context "when it really needs to delete all partitions" do
-      let(:root_size) { 493.GiB }
+      let(:root_size) { "493GiB" }
 
       it "deletes the IRST partition" do
         proposal.propose
@@ -83,7 +82,7 @@ describe Y2Storage::GuidedProposal do
     context "when other_delete_mode is set to 'all'" do
       # Let's set this to a low value, we are just interested in deletions
       # forced by the settings
-      let(:root_size) { 5.GiB }
+      let(:root_size) { "5GiB" }
 
       before do
         settings.other_delete_mode = :all

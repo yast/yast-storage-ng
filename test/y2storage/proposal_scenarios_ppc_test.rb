@@ -31,6 +31,7 @@ describe Y2Storage::GuidedProposal do
     subject(:proposal) { described_class.new(settings: settings) }
     let(:architecture) { :ppc }
     let(:scenario) { "empty_hard_disk_50GiB" }
+    let(:control_file) { "legacy_settings.xml" }
 
     context "in a PPC64 bare metal (PowerNV)" do
       let(:ppc_power_nv) { true }

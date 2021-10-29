@@ -30,6 +30,7 @@ describe Y2Storage::GuidedProposal do
 
     subject(:proposal) { described_class.new(settings: settings) }
     let(:architecture) { :x86 }
+    let(:control_file) { "legacy_settings.xml" }
 
     context "in a PC with a small (25GiB) disk" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }

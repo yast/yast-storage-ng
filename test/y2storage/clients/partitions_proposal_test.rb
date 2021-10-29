@@ -332,9 +332,14 @@ describe Y2Storage::Clients::PartitionsProposal do
   context "with a very small (128 MiB) disk" do
     let(:actions_presenter) { described_class.actions_presenter }
     let(:storage_manager) { Y2Storage::StorageManager.instance }
+    let(:control_file_content) do
+      file = File.join(DATA_PATH, "control_files", "legacy_settings.xml")
+      Yast::XML.XMLToYCPFile(file)
+    end
 
     before do
       fake_scenario("empty_hard_disk_128MiB")
+      Yast::ProductFeatures.Import(control_file_content)
       allow(storage_manager).to receive(:staging_changed?).and_return false
 
       # To generate a new PartitionsProposal.actions_presenter for each test

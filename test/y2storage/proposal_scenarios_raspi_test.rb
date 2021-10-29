@@ -30,6 +30,7 @@ describe Y2Storage::GuidedProposal do
 
     subject(:proposal) { described_class.new(settings: settings) }
     let(:architecture) { :aarch64 }
+    let(:control_file) { "legacy_settings.xml" }
 
     before do
       allow(File).to receive(:exist?).and_call_original
