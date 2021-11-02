@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov  2 15:46:24 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Change the API to avoid the performance penalty introduced by
+  the original check for SD Cards (related to bsc#1187438).
+
+-------------------------------------------------------------------
 Thu Oct 21 11:50:04 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Install by default to any available Dell BOSS drive and identify
