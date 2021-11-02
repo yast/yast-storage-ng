@@ -35,7 +35,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
       allow(disk).to receive(:respond_to?).with(anything)
       allow(disk).to receive(:respond_to?).with(:transport).and_return(true)
       allow(disk).to receive(:transport).and_return(transport)
-      allow(disk).to receive(:is?).with(:sd_card).and_return(sd_card)
+      allow(disk).to receive(:sd_card?).and_return(sd_card)
       allow(disk).to receive(:boss?).and_return(boss)
 
       allow(transport).to receive(:is?).with(:usb).and_return(usb)

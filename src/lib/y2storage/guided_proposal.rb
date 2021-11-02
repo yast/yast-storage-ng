@@ -328,11 +328,24 @@ module Y2Storage
     # @param device [BlkDevice]
     # @return [boolean]
     def maybe_removable?(device)
-      return true if device.is?(:sd_card)
-      return true if device.respond_to?(:usb?) && device.usb?
-      return true if device.respond_to?(:firewire?) && device.firewire?
+      return true if dev_is?(device, :sd_card?)
+      return true if dev_is?(device, :usb?)
+      return true if dev_is?(device, :firewire?)
 
       false
+    end
+
+    # Checks whether the given device returns true for the given method
+    #
+    # @see #maybe_removable?
+    #
+    # @param device [BlkDevice]
+    # @param method [Symbol]
+    # @return [boolean]
+    def dev_is?(device, method)
+      return false unless device.respond_to?(method)
+
+      device.public_send(method)
     end
 
     # All proposed volumes sets from the settings

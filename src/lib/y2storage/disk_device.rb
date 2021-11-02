@@ -47,6 +47,19 @@ module Y2Storage
       descendants.any? { |d| d.is?(:bios_raid) }
     end
 
+    # @see #sd_card?
+    SD_CARD_DRIVER = "mmcblk".freeze
+    private_constant :SD_CARD_DRIVER
+
+    # Check if this is a MMC (MultiMedia Card) or a SD (Secure Digital) card
+    #
+    # @return [Boolean]
+    def sd_card?
+      return false unless respond_to?(:driver)
+
+      driver&.include?(SD_CARD_DRIVER)
+    end
+
     protected
 
     def types_for_is

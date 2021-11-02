@@ -76,7 +76,7 @@ module Y2Storage
           end
 
           def sd_label(disk)
-            return "" unless disk.is?(:sd_card)
+            return "" unless disk.sd_card?
 
             _("SD Card")
           end

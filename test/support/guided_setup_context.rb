@@ -42,7 +42,7 @@ RSpec.shared_context "guided setup requirements" do
   # @param args [Hash] the key :partitions is turned into a collection of Partition doubles to mock
   #   Disk#partitions, the rest are passed to the double instance as mocked messages
   def disk(name, args = {})
-    defaults = { size: Y2Storage::DiskSize.new(0), boss?: false, partitions: {} }
+    defaults = { size: Y2Storage::DiskSize.new(0), boss?: false, sd_card?: false, partitions: {} }
     args = defaults.merge(args)
     args[:name] = name
 
