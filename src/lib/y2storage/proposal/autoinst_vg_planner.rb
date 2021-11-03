@@ -34,6 +34,10 @@ module Y2Storage
       def planned_devices(drive)
         planned_vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(drive.device))
 
+        if drive.pesize
+          planned_vg.extent_size = DiskSize.parse(drive.pesize, legacy_units: true)
+        end
+
         pools, regular = drive.partitions.partition(&:pool)
         (pools + regular).each_with_object(planned_vg.lvs) do |lv_section, planned_lvs|
           planned_lv = planned_for_lv(drive, planned_vg, lv_section)
