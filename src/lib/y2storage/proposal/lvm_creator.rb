@@ -106,7 +106,9 @@ module Y2Storage
       # @return [Devicegraph] New devicegraph containing the new volume group
       def create_volume_group(planned_vg, devicegraph)
         name = available_name(planned_vg.volume_group_name, devicegraph)
-        LvmVg.create(devicegraph, name)
+        vg = LvmVg.create(devicegraph, name)
+        vg.extent_size = planned_vg.extent_size if planned_vg.extent_size
+        vg
       end
 
       # Extends the given volume group by adding as physical volumes the
