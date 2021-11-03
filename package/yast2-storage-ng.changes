@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Set the volume group extent size according to the AutoYaST
+  profile (bsc#1192124).
+- 4.1.98
+
+-------------------------------------------------------------------
 Tue Oct 20 15:36:03 UTC 2020 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Added $LIBSTORAGE_IGNORE_PROBE_ERRORS environment variable
