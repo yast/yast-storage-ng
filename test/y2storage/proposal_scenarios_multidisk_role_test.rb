@@ -29,7 +29,6 @@ describe Y2Storage::GuidedProposal do
 
     subject(:proposal) { described_class.initial(settings: settings) }
 
-    let(:settings_format) { :ng }
     let(:architecture) { :x86 }
 
     # Although this test obviously ensures the right behavior, it was actually added to

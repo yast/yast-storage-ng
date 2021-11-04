@@ -37,6 +37,7 @@ describe Y2Storage::GuidedProposal do
 
     context "with an MD RAID which is big enough and completely empty" do
       let(:scenario) { "empty-md_raid" }
+      let(:control_file) { "legacy_settings.xml" }
 
       # For SLE-15-SP1 this works as described in this test. Although assuming
       # the system can boot from EFI partitions located inside a software RAID

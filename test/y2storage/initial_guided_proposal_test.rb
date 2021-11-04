@@ -49,7 +49,7 @@ describe Y2Storage::InitialGuidedProposal do
   end
 
   describe "#propose" do
-    let(:ng_partitioning_section) do
+    let(:control_file_content) do
       {
         "partitioning" => {
           "proposal" => { "allocate_volume_mode" => allocate_mode },
@@ -88,31 +88,12 @@ describe Y2Storage::InitialGuidedProposal do
     end
 
     let(:swap_optional) { true }
-
-    context "when settings has legacy format" do
-      it "uses the legacy settings generator to calculate the settings" do
-        expect(Y2Storage::Proposal::SettingsGenerator::Legacy).to receive(:new).and_call_original
-
-        proposal.propose
-      end
-    end
-
-    context "when settings has ng format" do
-      let(:control_file_content) { ng_partitioning_section }
-
-      it "uses the ng settings generator to calculate the settings" do
-        expect(Y2Storage::Proposal::SettingsGenerator::Ng).to receive(:new).and_call_original
-
-        proposal.propose
-      end
-    end
+    let(:separate_home) { true }
 
     context "when no candidate devices are given" do
       include_context "candidate devices"
 
       let(:candidate_devices) { nil }
-
-      let(:control_file_content) { ng_partitioning_section }
 
       let(:sda_usb) { true }
 
@@ -310,8 +291,6 @@ describe Y2Storage::InitialGuidedProposal do
 
       let(:candidate_devices) { ["/dev/sda", "/dev/sdb"] }
 
-      let(:control_file_content) { ng_partitioning_section }
-
       let(:sda_usb) { true }
 
       shared_examples "proposal in two devices" do
@@ -354,8 +333,6 @@ describe Y2Storage::InitialGuidedProposal do
 
       let(:candidate_devices) { ["/dev/sda"] }
 
-      let(:control_file_content) { ng_partitioning_section }
-
       before do
         sda.size = 18.5.GiB
       end
@@ -382,8 +359,6 @@ describe Y2Storage::InitialGuidedProposal do
 
       let(:candidate_devices) { ["/dev/sda", "/dev/sdb"] }
 
-      let(:control_file_content) { ng_partitioning_section }
-
       before do
         sda.size = 2.GiB
       end
@@ -406,8 +381,6 @@ describe Y2Storage::InitialGuidedProposal do
       include_context "candidate devices"
 
       let(:candidate_devices) { ["/dev/sda"] }
-
-      let(:control_file_content) { ng_partitioning_section }
 
       before do
         # root requires at least 8 GiB and home 10 GiB

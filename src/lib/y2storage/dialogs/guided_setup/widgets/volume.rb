@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,13 +23,13 @@ require "y2storage"
 module Y2Storage
   module Dialogs
     class GuidedSetup
-      module SelectFilesystem
-        # Class used in {SelectFilesystem::Ng} to draw each widget representing
+      module Widgets
+        # Class used in {SelectFilesystem} to draw each widget representing
         # a single volume and to handle its UI events.
         #
         # That dialog is basically a collection of such widgets, one for every
         # volume that can be configured.
-        class VolumeWidget
+        class Volume
           include Yast::UIShortcuts
           include Yast::I18n
 

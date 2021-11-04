@@ -31,8 +31,6 @@ describe Y2Storage::GuidedProposal do
 
     let(:architecture) { :x86 }
 
-    let(:settings_format) { :ng }
-
     let(:control_file) { "caasp.xml" }
 
     context "CaaSP in a PC with a big disk" do

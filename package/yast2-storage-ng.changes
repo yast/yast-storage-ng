@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov  4 12:54:16 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Dropped support for legacy format of the proposal settings
+  (related to fate#318196).
+- 4.4.13
+
+-------------------------------------------------------------------
 Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Set the volume group extent size according to the AutoYaST

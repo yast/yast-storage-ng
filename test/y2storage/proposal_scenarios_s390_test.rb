@@ -35,6 +35,7 @@ describe Y2Storage::GuidedProposal do
 
   subject(:proposal) { described_class.new(settings: settings) }
   let(:architecture) { :s390 }
+  let(:control_file) { "legacy_settings.xml" }
 
   describe "#propose" do
     before do

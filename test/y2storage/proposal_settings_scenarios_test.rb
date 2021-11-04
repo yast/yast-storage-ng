@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -42,12 +42,6 @@ describe Y2Storage::ProposalSettings do
   context "In a CaaSP configuration with root and separate /var/lib/docker" do
     let(:control_file) { "control.CAASP.xml" }
 
-    describe "#ng_format?" do
-      it "returns true" do
-        expect(settings.ng_format?).to eq true
-      end
-    end
-
     describe "#volumes" do
       it "contains two volume specifications" do
         expect(settings.volumes.size).to eq 2
@@ -84,12 +78,6 @@ describe Y2Storage::ProposalSettings do
   context "In a standard SLE-like configuration with root, swap and separate /home" do
     let(:control_file) { "control.SLE-like.xml" }
 
-    describe "#ng_format?" do
-      it "returns true" do
-        expect(settings.ng_format?).to eq true
-      end
-    end
-
     describe "#volumes" do
       it "contains three volume specifications" do
         expect(settings.volumes.size).to eq 3
@@ -121,12 +109,6 @@ describe Y2Storage::ProposalSettings do
 
   context "In an extended SLE-like configuration with an additional /data volume" do
     let(:control_file) { "control.SLE-with-data.xml" }
-
-    describe "#ng_format?" do
-      it "returns true" do
-        expect(settings.ng_format?).to eq true
-      end
-    end
 
     describe "#volumes" do
       it "contains four volume specifications" do

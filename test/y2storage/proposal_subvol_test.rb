@@ -30,16 +30,19 @@ describe Y2Storage::GuidedProposal do
 
   describe "#propose" do
     let(:scenario) { "empty_hard_disk_50GiB" }
+    let(:control_file) { "default_subvolumes.xml" }
 
     def root_filesystem
       subject.devices.filesystems.detect { |f| f.mount_path == "/" }
     end
 
-    context "when root filesystem is BtrFS" do
-      before do
-        settings.root_filesystem_type = Y2Storage::Filesystems::Type::BTRFS
-      end
+    # Use a method instead of a let because we need to make sure we evaluate the current
+    # up-to-date values (in case they change during the test execution)
+    def root_volume
+      settings.volumes.find(&:root?)
+    end
 
+    context "when root filesystem is BtrFS" do
       let(:subvolumes) { root_filesystem.btrfs_subvolumes }
       let(:x86_subvolumes) { ["@/boot/grub2/i386-pc", "@/boot/grub2/x86_64-efi"] }
       let(:s390_subvolumes) { ["@/boot/grub2/s390x-emu"] }
@@ -53,7 +56,7 @@ describe Y2Storage::GuidedProposal do
       end
 
       context "and there is not a default subvolume" do
-        before { settings.btrfs_default_subvolume = nil }
+        before { root_volume.btrfs_default_subvolume = nil }
 
         it "proposes top level subvolume as default subvolume" do
           subject.propose
@@ -65,7 +68,7 @@ describe Y2Storage::GuidedProposal do
 
       context "and there is a default subvolume" do
         it "proposes as default the correct subvolume" do
-          settings.btrfs_default_subvolume = "@@@"
+          root_volume.btrfs_default_subvolume = "@@@"
 
           subject.propose
           default_subvol = subvolumes.detect(&:default_btrfs_subvolume?)
@@ -77,7 +80,7 @@ describe Y2Storage::GuidedProposal do
 
       context "and there are planned subvolumes" do
         before do
-          settings.subvolumes = [
+          root_volume.subvolumes = [
             Y2Storage::SubvolSpecification.new("myhome", copy_on_write: true),
             Y2Storage::SubvolSpecification.new("myopt", copy_on_write: false)
           ]
@@ -94,45 +97,44 @@ describe Y2Storage::GuidedProposal do
           subject.propose
           expect(subvolumes.map(&:path)).not_to include("@/opt")
         end
+      end
 
-        context "using the ng settings format with a @/home subvolume" do
-          let(:settings_format) { :ng }
-          let(:control_file) { "volumes_ng/control.SLE-like.xml" }
+      context "with a @/home subvolume" do
+        let(:control_file) { "volumes_ng/control.SLE-like.xml" }
 
-          context "and no separate home" do
-            let(:separate_home) { false }
+        context "and no separate home" do
+          let(:separate_home) { false }
 
-            it "proposes the @/home subvolume" do
-              subject.propose
-              expect(subvolumes.detect { |s| s.path == "@/home" }).to_not be_nil
-            end
-
-            it "does not modify the list of subvolumes in the settings" do
-              root_spec = settings.volumes.find { |v| v.mount_point == "/" }
-              pre_list = root_spec.subvolumes.dup
-              subject.propose
-              expect(root_spec.subvolumes).to eq pre_list
-            end
+          it "proposes the @/home subvolume" do
+            subject.propose
+            expect(subvolumes.detect { |s| s.path == "@/home" }).to_not be_nil
           end
 
-          context "and a separate home" do
-            let(:separate_home) { true }
+          it "does not modify the list of subvolumes in the settings" do
+            root_spec = settings.volumes.find { |v| v.mount_point == "/" }
+            pre_list = root_spec.subvolumes.dup
+            subject.propose
+            expect(root_spec.subvolumes).to eq pre_list
+          end
+        end
 
-            it "does not propose the @/home subvolume" do
-              subject.propose
-              expect(subvolumes.detect { |s| s.path == "@/home" }).to be_nil
-            end
+        context "and a separate home" do
+          let(:separate_home) { true }
 
-            # Regression test for bsc#1084213 and bsc#1084261, the shadowed
-            # @/home subvolume was not being removed only from the planned
-            # device, but also from the original settings. So subsequent
-            # attempts with the same ProposalSettings object were wrong.
-            it "does not modify the list of subvolumes in the settings" do
-              root_spec = settings.volumes.find { |v| v.mount_point == "/" }
-              pre_list = root_spec.subvolumes.dup
-              subject.propose
-              expect(root_spec.subvolumes).to eq pre_list
-            end
+          it "does not propose the @/home subvolume" do
+            subject.propose
+            expect(subvolumes.detect { |s| s.path == "@/home" }).to be_nil
+          end
+
+          # Regression test for bsc#1084213 and bsc#1084261, the shadowed
+          # @/home subvolume was not being removed only from the planned
+          # device, but also from the original settings. So subsequent
+          # attempts with the same ProposalSettings object were wrong.
+          it "does not modify the list of subvolumes in the settings" do
+            root_spec = settings.volumes.find { |v| v.mount_point == "/" }
+            pre_list = root_spec.subvolumes.dup
+            subject.propose
+            expect(root_spec.subvolumes).to eq pre_list
           end
         end
       end
@@ -189,9 +191,9 @@ describe Y2Storage::GuidedProposal do
         # used for the settings. See details above, in the corresponding test
         # with NG settings.
         it "does not modify the list of subvolumes in the settings" do
-          pre_list = settings.subvolumes.dup
+          pre_list = root_volume.subvolumes.dup
           subject.propose
-          expect(settings.subvolumes).to eq pre_list
+          expect(root_volume.subvolumes).to eq pre_list
         end
       end
 
@@ -224,7 +226,7 @@ describe Y2Storage::GuidedProposal do
       end
 
       context "when snapshots are enabled in the settings" do
-        before { settings.use_snapshots = true }
+        before { root_volume.snapshots = true }
 
         it "enables snapshots for the root filesystem" do
           subject.propose
@@ -233,7 +235,7 @@ describe Y2Storage::GuidedProposal do
       end
 
       context "when snapshots are disabled in the settings" do
-        before { settings.use_snapshots = false }
+        before { root_volume.snapshots = false }
 
         it "does not enable snapshots for the root filesystem" do
           subject.propose
@@ -244,8 +246,8 @@ describe Y2Storage::GuidedProposal do
 
     context "when snapshots are enabled in the settings but root filesystem is not BtrFS" do
       before do
-        settings.root_filesystem_type = Y2Storage::Filesystems::Type::EXT4
-        settings.use_snapshots = true
+        root_volume.fs_type = Y2Storage::Filesystems::Type::EXT4
+        root_volume.snapshots = true
       end
 
       it "does not try to enable snapshots" do

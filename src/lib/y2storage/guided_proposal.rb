@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2018] SUSE LLC
+# Copyright (c) [2016-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -363,8 +363,6 @@ module Y2Storage
     # @return [Boolean] true if there is some disk that is supposed to allocate volumes
     #   that are bigger than the size of the disk
     def useless_volumes_sets?
-      return false unless settings.ng_format?
-
       candidate_objects.any? do |disk|
         total = DiskSize.sum(proposed_volumes_sets.select { |s| s.device == disk.name }.map(&:min_size))
         # We use ">=" because the whole space of the disk can never be used to allocate

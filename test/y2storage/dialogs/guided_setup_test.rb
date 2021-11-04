@@ -39,7 +39,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
   end
 
   def allow_run_select_filesystem(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng, :run, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, :run, &block)
   end
 
   def allow_run_select_volumes_disks(&block)
@@ -72,7 +72,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme)
-    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectVolumesDisks)
   end
 

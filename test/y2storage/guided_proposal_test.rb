@@ -32,6 +32,7 @@ describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
   let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+  let(:control_file) { "legacy_settings.xml" }
 
   describe ".initial" do
     it "generates a proposal" do
