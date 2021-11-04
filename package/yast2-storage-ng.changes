@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Set the volume group extent size according to the AutoYaST
+  profile (bsc#1192124).
+- 4.4.12
+
+-------------------------------------------------------------------
 Tue Nov  2 15:46:24 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Change the API to avoid the performance penalty introduced by
