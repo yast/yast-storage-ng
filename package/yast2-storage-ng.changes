@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Set the volume group extent size according to the AutoYaST
+  profile (bsc#1192124).
+- 4.3.57
+
+-------------------------------------------------------------------
 Thu Oct 14 14:19:03 UTC 2021 - David Diaz <dgonzalez@suse.com>
 
 - Fix (un)masking systemd units by using the systemctl --plain
