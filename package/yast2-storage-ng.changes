@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Set the volume group extent size according to the AutoYaST
+  profile (bsc#1192124).
+- 4.2.119
+
+-------------------------------------------------------------------
 Tue Jun 15 10:21:16 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Fix the Comment entry in the desktop file so the tooltip

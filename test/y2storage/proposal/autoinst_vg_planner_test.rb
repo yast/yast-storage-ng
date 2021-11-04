@@ -41,7 +41,8 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(vg) }
 
     let(:vg) do
-      { "device" => "/dev/#{lvm_group}", "partitions" => partitions, "type" => :CT_LVM }
+      { "device" => "/dev/#{lvm_group}", "partitions" => partitions,
+        "type" => :CT_LVM, "pesize" => "8M" }
     end
 
     let(:root_spec) do
@@ -62,7 +63,8 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
       expect(vg).to be_a(Y2Storage::Planned::LvmVg)
       expect(vg).to have_attributes(
         "volume_group_name" => lvm_group,
-        "reuse_name"        => nil
+        "reuse_name"        => nil,
+        "extent_size"       => 8.MiB
       )
       expect(vg.lvs).to contain_exactly(
         an_object_having_attributes(

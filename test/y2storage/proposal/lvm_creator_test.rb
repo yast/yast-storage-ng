@@ -59,6 +59,18 @@ describe Y2Storage::Proposal::LvmCreator do
         expect(vgs.map(&:vg_name)).to include "system"
       end
 
+      context "and an extent size is given" do
+        before do
+          vg.extent_size = 8.MiB
+        end
+
+        it "sets the volume group extent size to the given size" do
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+          real_vg = devicegraph.lvm_vgs.find { |vg| vg.vg_name == "system" }
+          expect(real_vg.extent_size).to eq(vg.extent_size)
+        end
+      end
+
       it "adds the new physical volumes to the new volume group" do
         devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
@@ -142,6 +154,19 @@ describe Y2Storage::Proposal::LvmCreator do
         reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
         pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq ["/dev/sda1", "/dev/sda2", "/dev/sda3"]
+      end
+
+      context "and an extent size is given" do
+        before do
+          vg.extent_size = reused_vg.extent_size * 2
+        end
+
+        it "does not change the original extent size" do
+          original_extent_size = reused_vg.extent_size
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+          real_vg = devicegraph.lvm_vgs.find { |vg| vg.vg_name == reused_vg.vg_name }
+          expect(real_vg.extent_size).to eq(original_extent_size)
+        end
       end
 
       context "when a physical volume is already part of the volume group" do
