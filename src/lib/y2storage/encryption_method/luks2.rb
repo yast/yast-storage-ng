@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -16,60 +16,49 @@
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
-# Copyright (c) [2019] SUSE LLC
 
 require "y2storage/encryption_method/base"
-require "y2storage/encryption_processes/pervasive"
-require "y2storage/encryption_processes/secure_key"
+require "y2storage/encryption_method/pervasive_luks2"
+require "y2storage/encryption_processes/luks"
 
 module Y2Storage
   module EncryptionMethod
-    # Encryption method that allows to create and identify a volume encrypted
-    # with Pervasive Encryption.
-    class PervasiveLuks2 < Base
-      # Cipher used for pervasive encryption
-      CIPHER = "paes-xts-plain64".freeze
-      private_constant :CIPHER
-
-      # Cipher used for pervasive encryption
-      #
-      # @return [String]
-      def self.cipher
-        CIPHER.dup
-      end
-
+    # The encryption method that allows to create and identify an encrypted device using regular
+    # LUKS2 (with no pervasive encryption or any other advanced method)
+    class Luks2 < Base
+      # Constructor, see {Base}
       def initialize
         textdomain "storage"
-
-        super(:pervasive_luks2, _("Pervasive Volume Encryption"))
+        super(:luks2, _("Regular LUKS2"))
       end
 
-      # @see Base#used_for?
+      # Whether the process was used for the given encryption device
+      #
+      # @param encryption [Y2Storage::Encryption] the encryption device to check
+      # @return [Boolean] true when the encryption type is LUKS2; false otherwise
       def used_for?(encryption)
-        encryption.type.is?(:luks2) && encryption.cipher == CIPHER
-      end
-
-      # @see Base#available?
-      def available?
-        EncryptionProcesses::SecureKey.available?
+        # Maybe we could check if this uses the default cipher for LUKS (which is always
+        # aes-xts-plain64) or check with a given list of known ciphers. For the time being, let's
+        # discard only the ones with the PervasiveLuks cipher.
+        encryption.type.is?(:luks2) && encryption.cipher != PervasiveLuks2.cipher
       end
 
       # Creates an encryption device for the given block device
       #
       # @param blk_device [Y2Storage::BlkDevice]
       # @param dm_name [String]
-      # @param apqns [Array<EncryptionProcesses::Apqn>] APQNs to use when generating a secure key.
+      # @param label [String] optional LUKS label
       #
       # @return [Y2Storage::Encryption]
-      def create_device(blk_device, dm_name, apqns: [])
-        encryption_process.create_device(blk_device, dm_name, apqns: apqns)
+      def create_device(blk_device, dm_name, label: "")
+        encryption_process.create_device(blk_device, dm_name, label: label)
       end
 
       private
 
       # @see Base#encryption_process
       def encryption_process
-        EncryptionProcesses::Pervasive.new(self)
+        EncryptionProcesses::Luks.new(self, :luks2)
       end
     end
   end

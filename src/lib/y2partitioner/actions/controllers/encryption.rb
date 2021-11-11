@@ -55,6 +55,9 @@ module Y2Partitioner
         # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
         attr_accessor :apqns
 
+        # @return [String] Label for the encryption device if the method supports setting one
+        attr_accessor :label
+
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
@@ -67,6 +70,7 @@ module Y2Partitioner
           @password = encryption&.password || ""
           @method = initial_method
           @apqns = initial_apqns
+          @label = initial_label
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -222,6 +226,16 @@ module Y2Partitioner
           process.apqns
         end
 
+        # Currently used label when the device is encrypted with an encryption method that
+        # supports setting such a label
+        #
+        # @return [String, nil] nil if the method does not support setting a label
+        def initial_label
+          return nil unless encryption&.respond_to?(:label)
+
+          encryption.label
+        end
+
         # Calculate actions that make sense for the block device
         #
         # @see #actions
@@ -339,7 +353,7 @@ module Y2Partitioner
         # @see #finish
         def finish_encrypt
           blk_device.remove_encryption if blk_device.encrypted?
-          blk_device.encrypt(method: method, password: password, apqns: apqns)
+          blk_device.encrypt(method: method, password: password, apqns: apqns, label: label)
         end
 
         # Whether the block device is associated to an encryption device that

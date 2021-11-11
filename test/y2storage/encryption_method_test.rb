@@ -28,6 +28,10 @@ describe Y2Storage::EncryptionMethod do
       expect(described_class.all.map(&:to_sym)).to include(:luks1)
     end
 
+    it "contains a method for regular Luks2" do
+      expect(described_class.all.map(&:to_sym)).to include(:luks2)
+    end
+
     it "contains a method for pervasive Luks2" do
       expect(described_class.all.map(&:to_sym)).to include(:pervasive_luks2)
     end
@@ -63,27 +67,27 @@ describe Y2Storage::EncryptionMethod do
     context "if there are online Crypto Express CCA coprocessors" do
       let(:lszcrypt) { lszcrypt_output("ok") }
 
-      it "returns methods for LUKS1, pervasive LUKS2 and random swap" do
+      it "returns methods for LUKS1, LUKS2, pervasive LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :pervasive_luks2, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :pervasive_luks2, :random_swap)
       end
     end
 
     context "if no Crypto Express CCA coprocessor is available (online)" do
       let(:lszcrypt) { lszcrypt_output("no_devs") }
 
-      it "returns methods for LUKS1 and random swap" do
+      it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap)
       end
     end
 
     context "if secure AES keys are not supported" do
       let(:lszcrypt) { "" }
 
-      it "returns methods for LUKS1 and random swap" do
+      it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap)
       end
     end
 
@@ -93,9 +97,9 @@ describe Y2Storage::EncryptionMethod do
           .and_raise Cheetah::ExecutionFailed.new("", "", "", "")
       end
 
-      it "returns methods for LUKS1 and random swap" do
+      it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap)
       end
     end
 
@@ -199,6 +203,33 @@ describe Y2Storage::EncryptionMethod do
 
         expect(device.encrypted?).to eq(true)
         expect(device.encryption.type.is?(:luks1)).to eq(true)
+      end
+    end
+
+    context "when using :luks2 method" do
+      let(:method) { :luks2 }
+
+      it "returns an encryption device" do
+        result = subject.create_device(device, "cr_dev")
+
+        expect(result.is?(:encryption)).to eq(true)
+      end
+
+      it "encrypts the given device with LUKS2 encryption" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev")
+
+        expect(device.encrypted?).to eq(true)
+        expect(device.encryption.type.is?(:luks2)).to eq(true)
+      end
+
+      it "sets the given label for the LUKS2 device" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev", label: "cool_luks")
+
+        expect(device.encryption.label).to eq "cool_luks"
       end
     end
 

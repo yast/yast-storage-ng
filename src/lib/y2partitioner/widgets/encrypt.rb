@@ -191,6 +191,23 @@ module Y2Partitioner
         )
       end
 
+      # Help text for the Regular Luks2 encryption method
+      #
+      # @return [String]
+      def help_for_luks2
+        encrypt_method = Y2Storage::EncryptionMethod.find(:luks2)
+
+        format(
+          # TRANSLATORS: help text for Regular Luks2 encryption method
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2. A variant of LUKS " \
+            "(Linux Unified Key Setup) that uses a newer version of the header format. That " \
+            "allows further possibilities like specifying a different PBKDF algorithm or " \
+            "setting a label to reference the LUKS device (for example, in the crypttab file). " \
+            "You have to provide the encryption password.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
       # Help text for the Random Swap encryption method
       #
       # @return [String]

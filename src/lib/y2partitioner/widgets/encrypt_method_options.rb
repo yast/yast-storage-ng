@@ -21,6 +21,7 @@ require "yast"
 require "cwm"
 require "yast2/popup"
 require "y2partitioner/widgets/encrypt_password"
+require "y2partitioner/widgets/encrypt_label"
 require "y2partitioner/widgets/apqn_selector"
 
 module Y2Partitioner
@@ -80,6 +81,8 @@ module Y2Partitioner
           SwapOptions.new(controller)
         when :luks1
           LuksOptions.new(controller, enable: enabled?)
+        when :luks2
+          Luks2Options.new(controller, enable: enabled?)
         when :pervasive_luks2
           PervasiveOptions.new(controller, enable: enabled?)
         end
@@ -175,6 +178,23 @@ module Y2Partitioner
       # @return [Widgets::EncryptPassword]
       def password_widget
         @password_widget ||= Widgets::EncryptPassword.new(@controller, enable: enable_on_init)
+      end
+    end
+
+    # Internal widget to display the LUKS2 encryption options
+    class Luks2Options < LuksOptions
+      private
+
+      # @see LuksOptions#widgets
+      def widgets
+        super << label_widget
+      end
+
+      # Widget to set the label of the LUKS2 device
+      #
+      # @return [Widgets::EncryptLabel]
+      def label_widget
+        @label_widget ||= Widgets::EncryptLabel.new(@controller, enable: enable_on_init)
       end
     end
 
