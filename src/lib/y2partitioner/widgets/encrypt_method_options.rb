@@ -22,6 +22,7 @@ require "cwm"
 require "yast2/popup"
 require "y2partitioner/widgets/encrypt_password"
 require "y2partitioner/widgets/encrypt_label"
+require "y2partitioner/widgets/pbkdf_selector"
 require "y2partitioner/widgets/apqn_selector"
 
 module Y2Partitioner
@@ -187,7 +188,14 @@ module Y2Partitioner
 
       # @see LuksOptions#widgets
       def widgets
-        super << label_widget
+        super.concat([pbkdf_widget, label_widget])
+      end
+
+      # Widget to set the password-based key derivation function
+      #
+      # @return [Widgets::EncryptPbkdf]
+      def pbkdf_widget
+        @pbkdf_widget ||= Widgets::PbkdfSelector.new(@controller, enable: enable_on_init)
       end
 
       # Widget to set the label of the LUKS2 device

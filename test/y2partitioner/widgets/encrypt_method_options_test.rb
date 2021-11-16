@@ -37,6 +37,7 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
   let(:controller) { Y2Partitioner::Actions::Controllers::Encryption.new(fs_controller) }
   let(:random_swap) { Y2Storage::EncryptionMethod.find(:random_swap) }
   let(:luks1) { Y2Storage::EncryptionMethod.find(:luks1) }
+  let(:luks2) { Y2Storage::EncryptionMethod.find(:luks2) }
   let(:pervasive) { Y2Storage::EncryptionMethod.find(:pervasive_luks2) }
 
   before do
@@ -48,11 +49,13 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
   describe "#refresh" do
     let(:fake_random_swap_options) { CWM::Empty.new("__fake_plain_options__") }
     let(:fake_luks1_options) { CWM::Empty.new("__fake_luks1_options__") }
+    let(:fake_luks2_options) { CWM::Empty.new("__fake_luks2_options__") }
     let(:fake_pervasive_options) { CWM::Empty.new("__fake_pervasive_options__") }
 
     before do
       allow(Y2Partitioner::Widgets::SwapOptions).to receive(:new).and_return(fake_random_swap_options)
       allow(Y2Partitioner::Widgets::LuksOptions).to receive(:new).and_return(fake_luks1_options)
+      allow(Y2Partitioner::Widgets::Luks2Options).to receive(:new).and_return(fake_luks2_options)
       allow(Y2Partitioner::Widgets::PervasiveOptions).to receive(:new).and_return(fake_pervasive_options)
     end
 
@@ -65,6 +68,9 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
       expect(Y2Partitioner::Widgets::PervasiveOptions).to receive(:new)
       subject.refresh(pervasive)
+
+      expect(Y2Partitioner::Widgets::Luks2Options).to receive(:new)
+      subject.refresh(luks2)
     end
 
     it "replaces the content using the new generated content" do
@@ -76,6 +82,9 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
       expect(subject).to receive(:replace).with(fake_pervasive_options)
       subject.refresh(pervasive)
+
+      expect(subject).to receive(:replace).with(fake_luks2_options)
+      subject.refresh(luks2)
     end
   end
 
@@ -103,6 +112,22 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
         widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::EncryptPassword) }
 
         expect(widget).to_not be_nil
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Luks2Options do
+    subject { described_class.new(controller) }
+
+    include_examples "CWM::CustomWidget"
+
+    describe "#contents" do
+      it "displays widgets for the password, the PBKDF and the LUKS2 label" do
+        passwd = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::EncryptPassword) }
+        pbkdf = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::PbkdfSelector) }
+        label = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::EncryptLabel) }
+
+        expect([passwd, pbkdf, label]).to_not include nil
       end
     end
   end

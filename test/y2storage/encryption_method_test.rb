@@ -224,12 +224,13 @@ describe Y2Storage::EncryptionMethod do
         expect(device.encryption.type.is?(:luks2)).to eq(true)
       end
 
-      it "sets the given label for the LUKS2 device" do
+      it "sets the given label and PBKDF for the LUKS2 device" do
         expect(device.encrypted?).to eq(false)
 
-        subject.create_device(device, "cr_dev", label: "cool_luks")
+        subject.create_device(device, "cr_dev", label: "cool_luks", pbkdf: "argon2i")
 
         expect(device.encryption.label).to eq "cool_luks"
+        expect(device.encryption.pbkdf).to eq "argon2i"
       end
     end
 

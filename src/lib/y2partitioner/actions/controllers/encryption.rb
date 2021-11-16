@@ -58,6 +58,9 @@ module Y2Partitioner
         # @return [String] Label for the encryption device if the method supports setting one
         attr_accessor :label
 
+        # @return [String] PBKDF for the LUKS2 device
+        attr_accessor :pbkdf
+
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
@@ -68,6 +71,7 @@ module Y2Partitioner
           @fs_controller = fs_controller
           @action = actions.first
           @password = encryption&.password || ""
+          @pbkdf = encryption&.pbkdf || ""
           @method = initial_method
           @apqns = initial_apqns
           @label = initial_label
@@ -353,7 +357,9 @@ module Y2Partitioner
         # @see #finish
         def finish_encrypt
           blk_device.remove_encryption if blk_device.encrypted?
-          blk_device.encrypt(method: method, password: password, apqns: apqns, label: label)
+          blk_device.encrypt(
+            method: method, password: password, apqns: apqns, label: label, pbkdf: pbkdf
+          )
         end
 
         # Whether the block device is associated to an encryption device that

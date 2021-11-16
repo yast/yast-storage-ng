@@ -150,7 +150,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
           let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
           let(:encryption) do
             double("Encryption",
-              method: method, password: "123456", active?: true, encryption_process: nil)
+              method: method, password: "123456", active?: true, pbkdf: "", encryption_process: nil)
           end
 
           before do

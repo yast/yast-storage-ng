@@ -67,6 +67,16 @@ module Y2Storage
     storage_forward :cipher
     storage_forward :cipher=
 
+    # @!attribute pbkdf
+    #   PBKDF (Password-Based Key Derivation Function), currently only supported for LUKS2 where
+    #   this attribute corresponds to the PBKDF of the first used keyslot.
+    #
+    #   If is set to empty, during the commit phase the default of cryptsetup will be used.
+    #
+    #   @return [String]
+    storage_forward :pbkdf
+    storage_forward :pbkdf=
+
     # @!attribute crypt_options
     #   Options in the fourth field of /etc/crypttab
     #
