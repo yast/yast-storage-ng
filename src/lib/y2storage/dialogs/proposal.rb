@@ -145,10 +145,10 @@ module Y2Storage
       def boss_html
         return "" if boss_devices.empty?
 
+        # TRANSLATORS: %s is a linux device name (eg. /dev/sda) (singular),
+        #  or a list of comma-separated device names (eg. "/dev/sda, /dev/sdb") (plural)
         n_(
-          # TRANSLATORS: %s is a linux device name (eg. /dev/sda)
           "<p>The device %s is a Dell BOSS drive.</p>",
-          # TRANSLATORS: %s is a list of comma-separated device names (eg. "/dev/sda, /dev/sdb")
           "<p>The following devices are Dell BOSS drives: %s.</p>",
           boss_devices.size
         ) % boss_devices.map(&:name).join(", ")
