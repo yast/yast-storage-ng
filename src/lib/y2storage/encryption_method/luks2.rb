@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/storage_env"
 require "y2storage/encryption_method/base"
 require "y2storage/encryption_method/pervasive_luks2"
 require "y2storage/encryption_processes/luks"
@@ -54,6 +55,11 @@ module Y2Storage
       # @return [Y2Storage::Encryption]
       def create_device(blk_device, dm_name, pbkdf: "", label: "")
         encryption_process.create_device(blk_device, dm_name, pbkdf: pbkdf, label: label)
+      end
+
+      # @see Base#available?
+      def available?
+        StorageEnv.instance.luks2_available?
       end
 
       private
