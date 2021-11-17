@@ -118,7 +118,7 @@ module Y2Storage
       # @param what [String] details coming from libstorage-ng
       # @return [String]
       def error_description(what)
-        if what.match?(/WARNING: PV .* was already found on .*/i)
+        if what.match?(/Cannot activate LVs in VG .* while PVs appear on duplicate devices/i)
           duplicated_pv_description
         else
           _("Unexpected situation found in the system.")
