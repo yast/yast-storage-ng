@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov 16 16:38:49 UTC 2021 - David Diaz <dgonzalez@suse.com>
+
+- Fix duplicate PV error detection with disabled multipath
+  (related to bsc#1170216).
+- 4.2.120
+
+-------------------------------------------------------------------
 Wed Nov  3 11:46:26 UTC 2021 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Set the volume group extent size according to the AutoYaST
