@@ -67,7 +67,7 @@ describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
         end
 
         it "does not include any entry about LUKS2-specific attributes" do
-          expect(subject.value).to_not match(/LUKS2 Label/)
+          expect(subject.value).to_not match(/LUKS Label/)
           expect(subject.value).to_not match(/Derivation Function/)
         end
       end
@@ -80,8 +80,8 @@ describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
           expect(subject.value).to match(/LUKS2/)
         end
 
-        it "does not include any entry about LUKS2-specific attributes" do
-          expect(subject.value).to match(/LUKS2 Label: something/)
+        it "includes entries for LUKS label and PBKDF" do
+          expect(subject.value).to match(/LUKS Label: something/)
           expect(subject.value).to match(/Derivation Function \(PBKDF\): Argon2i/)
         end
       end

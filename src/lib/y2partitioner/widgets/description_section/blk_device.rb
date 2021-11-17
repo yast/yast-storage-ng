@@ -107,12 +107,12 @@ module Y2Partitioner
           format(_("Key Derivation Function (PBKDF): %s"), pbkdf.name)
         end
 
-        # Entry data about the LUKS2 label
+        # Entry data about the LUKS label
         #
         # @return [String]
         def encryption_label_value
           # TRANSLATORS: %s is replaced by the value of the label of the LUKS2 device
-          format(_("LUKS2 Label: %s"), blk_device.encryption.label)
+          format(_("LUKS Label: %s"), blk_device.encryption.label)
         end
 
         # @see #entries

@@ -58,7 +58,7 @@ module Y2Partitioner
         # @return [String] Label for the encryption device if the method supports setting one
         attr_accessor :label
 
-        # @return [String] PBKDF for the LUKS2 device
+        # @return [String] Password-based key derivation function (PBKDF) for the LUKS2 device
         attr_accessor :pbkdf
 
         # Contructor

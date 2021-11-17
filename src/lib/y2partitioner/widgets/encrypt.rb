@@ -218,7 +218,7 @@ module Y2Partitioner
             "support to boot from devices encrypted with LUKS2, but only if PBKDF2 is used. So " \
             "you cannot use Argon2 in a file system that contains the /boot directory. Note that " \
             "some manual Grub2 configuration may be needed to boot from a LUKS2 device, even if " \
-            "PBKDF2 is used.<p>"),
+            "PBKDF2 is used.</p>"),
           label: encrypt_method.to_human_string
         )
       end
