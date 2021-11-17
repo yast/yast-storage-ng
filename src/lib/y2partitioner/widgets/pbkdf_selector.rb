@@ -19,13 +19,12 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/pbkd_function"
 
 module Y2Partitioner
   module Widgets
     # PBKDF for a {Y2Storage::Encryption} device using LUKS2
     class PbkdfSelector < CWM::ComboBox
-      extend Yast::I18n
-
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]
@@ -48,20 +47,9 @@ module Y2Partitioner
         self.value = @controller.pbkdf
       end
 
-      # All possible options
-      FUNCTIONS = [
-        # TRANSLATORS: name of a key derivation function used by LUKS
-        ["argon2id", N_("Argon2id")],
-        # TRANSLATORS: name of a key derivation function used by LUKS
-        ["argon2i",  N_("Argon2i")],
-        # TRANSLATORS: name of a key derivation function used by LUKS
-        ["pbkdf2",   N_("PBKDF2")]
-      ].freeze
-      private_constant :FUNCTIONS
-
       # @macro seeItemsSelection
       def items
-        FUNCTIONS.map { |opt| [opt.first, _(opt.last)] }
+        PbkdFunction.all.map { |opt| [opt.value, opt.name] }
       end
 
       # @macro seeAbstractWidget

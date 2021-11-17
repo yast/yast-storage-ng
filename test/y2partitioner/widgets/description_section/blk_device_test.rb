@@ -60,9 +60,30 @@ describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
     context "for an encrypted device" do
       let(:scenario) { "encrypted_with_bios_boot" }
 
-      it "includes an entry about the encryption including the encryption type" do
-        expect(subject.value).to match(/Encrypted: Yes/)
-        expect(subject.value).to match(/LUKS1/)
+      context "with most of the encryption types" do
+        it "includes an entry about the encryption including the encryption type" do
+          expect(subject.value).to match(/Encrypted: Yes/)
+          expect(subject.value).to match(/LUKS1/)
+        end
+
+        it "does not include any entry about LUKS2-specific attributes" do
+          expect(subject.value).to_not match(/LUKS2 Label/)
+          expect(subject.value).to_not match(/Derivation Function/)
+        end
+      end
+
+      context "if LUKS2 is used as encryption type" do
+        before { device.encrypt(method: :luks2, label: "something", pbkdf: "argon2i") }
+
+        it "includes an entry about the encryption including the encryption type" do
+          expect(subject.value).to match(/Encrypted: Yes/)
+          expect(subject.value).to match(/LUKS2/)
+        end
+
+        it "does not include any entry about LUKS2-specific attributes" do
+          expect(subject.value).to match(/LUKS2 Label: something/)
+          expect(subject.value).to match(/Derivation Function \(PBKDF\): Argon2i/)
+        end
       end
     end
 
