@@ -48,9 +48,10 @@ module Y2Storage
     storage_forward :format_options
     storage_forward :format_options=
 
-    # @!method label
+    # @!attribute label
     #   @return [String] LUKS label, only available in LUKS version 2
     storage_forward :label
+    storage_forward :label=
 
     # Whether the LUKS encryption device matches with a given crypttab spec
     #

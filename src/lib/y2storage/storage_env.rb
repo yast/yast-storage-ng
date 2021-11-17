@@ -32,9 +32,11 @@ module Y2Storage
 
     ENV_ACTIVATE_LUKS = "YAST_ACTIVATE_LUKS".freeze
 
+    ENV_LUKS2_AVAILABLE = "YAST_LUKS2_AVAILABLE".freeze
+
     ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS = "LIBSTORAGE_IGNORE_PROBE_ERRORS".freeze
 
-    private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS
+    private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS, :ENV_LUKS2_AVAILABLE
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
 
     def initialize
@@ -68,6 +70,16 @@ module Y2Storage
     #
     def activate_luks?
       active?(ENV_ACTIVATE_LUKS, true)
+    end
+
+    # Whether YaST should offer the encryption method for regular LUKS2
+    #
+    # See jsc#SLE-21309 where is stated that YaST support to setup LUKS2 devices should be
+    # "available only via a special Linuxrc option and communicated as a tech preview".
+    #
+    # @return [Boolean]
+    def luks2_available?
+      active?(ENV_LUKS2_AVAILABLE, false)
     end
 
     # Whether errors during libstorage probing should be ignored.

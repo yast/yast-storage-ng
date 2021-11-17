@@ -146,6 +146,16 @@ describe Y2Partitioner::Widgets::Encrypt do
       end
     end
 
+    context "when :luks2 encryption method is availabale" do
+      let(:encrypt_methods) { [luks2] }
+
+      let(:luks2) { Y2Storage::EncryptionMethod.find(:luks2) }
+
+      it "includes help for :luks2 encryption method" do
+        expect(subject.help).to include(luks2.to_human_string)
+      end
+    end
+
     context "when :pervasive_luks2 encryption method is availabale" do
       let(:encrypt_methods) { [pervasive_luks2] }
 

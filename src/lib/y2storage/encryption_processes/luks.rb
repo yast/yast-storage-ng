@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,12 +23,41 @@ require "y2storage/encryption_processes/base"
 module Y2Storage
   module EncryptionProcesses
     # The encryption process that allows to create and identify an encrypted
-    # device using LUKS1
-    class Luks1 < Base
+    # device using LUKS
+    class Luks < Base
+      # @return [Symbol] version of LUKS (:luks1 or :luks2)
+      attr_reader :version
+
+      # Constructor
+      #
+      # @param method [Y2Storage::EncryptionMethod]
+      # @param version [Symbol] see {#version}
+      def initialize(method, version = :luks1)
+        super(method)
+        @version = version
+      end
+
+      # Creates an encryption layer over the given block device
+      #
+      # @param blk_device [Y2Storage::BlkDevice]
+      # @param dm_name [String]
+      # @param pbkdf [String, nil] PBKDF of the LUKS device, only relevant for LUKS2
+      # @param label [String, nil] label of the LUKS device, only relevant for LUKS2
+      #
+      # @return [Encryption]
+      def create_device(blk_device, dm_name, pbkdf: nil, label: nil)
+        enc = super(blk_device, dm_name)
+        enc.label = label if label
+        enc.pbkdf = pbkdf if pbkdf
+        enc
+      end
+
       private
 
       # @see EncryptionProcesses::Base#encryption_type
       def encryption_type
+        return EncryptionType::LUKS2 if version == :luks2
+
         EncryptionType::LUKS1
       end
     end

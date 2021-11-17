@@ -73,6 +73,9 @@ module Y2Storage
         master_key_file = @secure_key.filename
         sector_size = sector_size_for(device.blk_device)
 
+        # NOTE: The options cipher and key-size could also be influenced by setting
+        # Encryption#cipher and Encryption#key_size. If those attributes have any value, the
+        # correspoding format options are prepended to Encryption#format_options by libstorage-ng.
         device.format_options = "--master-key-file #{master_key_file.shellescape} --key-size 1024 "\
                                 "--cipher paes-xts-plain64"
         device.format_options += " --sector-size #{sector_size}" if sector_size

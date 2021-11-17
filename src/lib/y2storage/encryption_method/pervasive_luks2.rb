@@ -31,6 +31,13 @@ module Y2Storage
       CIPHER = "paes-xts-plain64".freeze
       private_constant :CIPHER
 
+      # Cipher used for pervasive encryption
+      #
+      # @return [String]
+      def self.cipher
+        CIPHER.dup
+      end
+
       def initialize
         textdomain "storage"
 

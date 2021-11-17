@@ -313,18 +313,12 @@ module Y2Storage
     # @param method [EncryptionMethod, Symbol] encryption method to create the new device
     # @param dm_name [String, nil] DeviceMapper table name of the new device
     # @param password [String, nil] password of the new device
-    # @param apqns [Array<EncryptionProcesses::Apqn>] APQNs to use when generating a secure key for
-    #   pervasive encryption.
+    # @param method_args [Hash] extra arguments that are specific to the encryption method, check
+    #   the documentation of the create_device method of the corresponding class
     #
     # @return [Encryption]
-    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, apqns: [])
-      method = EncryptionMethod.find(method) if method.is_a?(Symbol)
-
-      enc = if method.is_a?(EncryptionMethod::PervasiveLuks2)
-        method.create_device(self, dm_name, apqns: apqns)
-      else
-        method.create_device(self, dm_name)
-      end
+    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, **method_args)
+      enc = encrypt_with_method(method, dm_name, **method_args)
 
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
@@ -770,6 +764,17 @@ module Y2Storage
         fs_type:      filesystem_type,
         partition_id: nil
       }
+    end
+
+    # @see #encrypt
+    def encrypt_with_method(method, dm_name, **method_args)
+      method = EncryptionMethod.find(method) if method.is_a?(Symbol)
+
+      # We only pass arguments that are present at #create_device for the given encryption method
+      create_device_args = method.method(:create_device).parameters.map(&:last)
+      method_args = method_args.select { |k, _v| create_device_args.include?(k.to_sym) }
+
+      method.create_device(self, dm_name, **method_args)
     end
 
     # Most convenient mount_by option to reference the block device itself,

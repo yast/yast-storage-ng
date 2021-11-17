@@ -18,7 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/encryption_method/base"
-require "y2storage/encryption_processes/luks1"
+require "y2storage/encryption_processes/luks"
 
 module Y2Storage
   module EncryptionMethod
@@ -42,7 +42,7 @@ module Y2Storage
 
       # @see Base#encryption_process
       def encryption_process
-        EncryptionProcesses::Luks1.new(self)
+        EncryptionProcesses::Luks.new(self)
       end
     end
   end

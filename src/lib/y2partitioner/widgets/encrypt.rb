@@ -191,6 +191,38 @@ module Y2Partitioner
         )
       end
 
+      # Help text for the Regular Luks2 encryption method
+      #
+      # @return [String]
+      def help_for_luks2
+        encrypt_method = Y2Storage::EncryptionMethod.find(:luks2)
+
+        format(
+          # TRANSLATORS: help text for Regular Luks2 encryption method
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2. A variant of LUKS " \
+            "(Linux Unified Key Setup) that uses a newer version of the header format. That " \
+            "allows further possibilities like setting a label to reference the LUKS device " \
+            "(for example, in the crypttab file). You have to provide the encryption password " \
+            "and the password-based key derivation function (PBKDF) that will be used to protect " \
+            "that passphrase.</p>" \
+            "<p>The function to use depends on the context, the hardware capabilities and the " \
+            "needed level of compatibility with other system components (see below).<p>" \
+            "<p><b>PBKDF2</b> refers to the function of that name, according to RFC2898. Is the " \
+            "function that LUKS1 uses.</p>" \
+            "<p><b>Argon2id</b> and <b>Argon2i</b> refer to two variants of a function designed " \
+            "to be more secure and to require a lot of memory to be computed.</p>" \
+            "<p>Argon2 is more secure so it should be used if possible. But the large amount of " \
+            "memory it uses (which is an intentional security feature) may result in problems " \
+            "in some systems. If the strength of the password can be fully assured, then using " \
+            "PBKDF2 may still be secure and save memory. On the other hand, Grub2 offers limited " \
+            "support to boot from devices encrypted with LUKS2, but only if PBKDF2 is used. So " \
+            "you cannot use Argon2 in a file system that contains the /boot directory. Note that " \
+            "some manual Grub2 configuration may be needed to boot from a LUKS2 device, even if " \
+            "PBKDF2 is used.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
       # Help text for the Random Swap encryption method
       #
       # @return [String]
