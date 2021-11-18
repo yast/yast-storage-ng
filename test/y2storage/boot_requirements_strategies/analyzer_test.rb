@@ -851,7 +851,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       end
     end
 
-    context "if '/boot' is a planned encrypted partition" do
+    context "if '/boot' is a planned partition to be encrypted with LUKS1" do
       let(:planned_boot) { planned_partition(mount_point: "/boot", encryption_password: "12345678") }
 
       it "returns type luks1" do
@@ -864,6 +864,18 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
       it "returns type luks1" do
         expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS1
+      end
+    end
+
+    context "if '/boot' is a planned partition to be encrypted with pervasive encryption" do
+      let(:planned_boot) do
+        planned_partition(
+          mount_point: "/boot", encryption_method: Y2Storage::EncryptionMethod::PERVASIVE_LUKS2
+        )
+      end
+
+      it "returns type luks1" do
+        expect(analyzer.boot_encryption_type).to eq Y2Storage::EncryptionType::LUKS2
       end
     end
 

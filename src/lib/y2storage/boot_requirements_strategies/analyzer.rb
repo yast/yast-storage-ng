@@ -226,6 +226,8 @@ module Y2Storage
       end
 
       # Whether grub can be embedded into the boot (/boot) filesystem
+      # FIXME: not sure this belongs to the Analyzer, which should know nothing about Grub
+      # capabilities
       #
       # @return [Boolean] true if grub can be embedded into the boot filesystem.
       #   False if the boot filesystem is unknown (not in the planned devices
@@ -236,6 +238,8 @@ module Y2Storage
       end
 
       # Whether grub can be embedded into the root (/) filesystem
+      # FIXME: not sure this belongs to the Analyzer, which should know nothing about Grub
+      # capabilities
       #
       # @return [Boolean] true if grub can be embedded into the root filesystem.
       #   False if the root filesystem is unknown (not in the planned devices
@@ -591,16 +595,26 @@ module Y2Storage
       #
       # The device can be a planned one or filesystem from the devicegraph.
       #
-      # Note: returns EncryptionType::LUKS1 for Planned::Device as there's no encryption type.
-      #
       # @param device [Filesystems::Base, Planned::Device, nil]
       # @return [Y2Storage::EncryptionType] Encryption type
       def encryption_type(device)
+        # FIXME: the implementation of this method (and others) would be much simpler if the API
+        # offered by Planned::Device and Device would be more consistent which each other
         if device.is_a?(Planned::Device)
-          (device.respond_to?(:encrypt?) && device.encrypt?) ? Y2Storage::EncryptionType::LUKS1 : nil
+          planned_encryption_type(device)
         elsif device.respond_to?(:plain_blk_devices)
           device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
         end || Y2Storage::EncryptionType::NONE
+      end
+
+      # @see #encryption_type
+      #
+      # @param planned [Planned::Device]
+      # @return [Y2Storage::EncryptionType] Encryption type
+      def planned_encryption_type(planned)
+        return Y2Storage::EncryptionType::NONE unless planned.respond_to?(:encrypt?) && planned.encrypt?
+
+        planned.encryption_method&.encryption_type || Y2Storage::EncryptionType::LUKS1
       end
 
       # Whether the device is in a software RAID
