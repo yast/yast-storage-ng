@@ -281,12 +281,12 @@
 					- **requires a new GRUB partition**
 		- with an AutoYaST profile that places '/' in a LUKS2 device
 			- if there is no GRUB partition
-				- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2**
+				- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
 			- if there is already a GRUB partition
 				- and it is on the boot disk
 					- **requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
 				- and it is not on the boot disk
-					- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2**
+					- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
 	- with a MS-DOS partition table
 		- if the MBR gap is big enough to embed Grub
 			- in a partitions-based proposal

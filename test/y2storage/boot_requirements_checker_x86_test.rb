@@ -147,7 +147,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
 
           RSpec.shared_examples "needs grub and /boot" do
-            it "requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2" do
+            it "requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)" do
               expect(checker.needed_partitions).to contain_exactly(
                 an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil),
                 an_object_having_attributes(mount_point: "/boot")
