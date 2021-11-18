@@ -95,7 +95,7 @@ RSpec.shared_examples "general #error examples" do
 
         stderr:
           WARNING: Failed to connect to lvmetad. Falling back to device scanning.
-          WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a on /dev/sda4 was already found on /dev/sda2.
+          WARNING: Not using device /dev/sda4 for PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a.
           WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a prefers device /dev/sda2 because device size is correct.
           Cannot activate LVs in VG vg0 while PVs appear on duplicate devices.
 
