@@ -31,12 +31,20 @@ describe Y2Storage::BootRequirementsChecker do
     end
   end
 
-  RSpec.shared_examples "needs /boot partition" do
+  RSpec.shared_examples "needs /boot partition in MBR" do
     it "requires a new /boot partition to install Grub into it" do
       expect(checker.needed_partitions).to contain_exactly(
         an_object_having_attributes(
           mount_point: "/boot", filesystem_type: Y2Storage::Filesystems::Type::EXT4
         )
+      )
+    end
+  end
+
+  RSpec.shared_examples "needs /boot partition for LUKS2" do
+    it "requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)" do
+      expect(checker.needed_partitions).to contain_exactly(
+        an_object_having_attributes(mount_point: "/boot")
       )
     end
   end
@@ -131,6 +139,44 @@ describe Y2Storage::BootRequirementsChecker do
 
           include_context "BIOS GRUB partition"
         end
+
+        # See https://lists.opensuse.org/archives/list/factory@lists.opensuse.org/message/5L6XAYM2JFBP5RJOIFKFM34D3BK7VHWS/
+        context "with an AutoYaST profile that places '/' in a LUKS2 device" do
+          let(:use_lvm) { false }
+          let(:use_encryption) { true }
+          let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
+
+          RSpec.shared_examples "needs grub and /boot" do
+            it "requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil),
+                an_object_having_attributes(mount_point: "/boot")
+              )
+            end
+          end
+
+          context "if there is no GRUB partition" do
+            let(:grub_partitions) { [] }
+
+            include_examples("needs grub and /boot")
+          end
+
+          context "if there is already a GRUB partition" do
+            let(:grub_partitions) { [grub_partition] }
+
+            context "and it is on the boot disk" do
+              let(:boot_disk) { dev_sda }
+
+              include_examples("needs /boot partition for LUKS2")
+            end
+
+            context "and it is not on the boot disk" do
+              let(:boot_disk) { dev_sdb }
+
+              include_examples("needs grub and /boot")
+            end
+          end
+        end
       end
 
       context "with a MS-DOS partition table" do
@@ -160,12 +206,12 @@ describe Y2Storage::BootRequirementsChecker do
             include_examples("needs no volume")
           end
 
-          context "in an encrypted proposal using LUKS2" do
+          context "with an AutoYaST profile that places '/' in a LUKS2 device" do
             let(:use_lvm) { false }
             let(:use_encryption) { true }
             let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
 
-            include_examples("needs /boot partition")
+            include_examples("needs /boot partition for LUKS2")
           end
         end
 
@@ -184,7 +230,7 @@ describe Y2Storage::BootRequirementsChecker do
             context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples "needs /boot partition"
+              include_examples "needs /boot partition in MBR"
             end
           end
 
@@ -194,13 +240,13 @@ describe Y2Storage::BootRequirementsChecker do
             context "if the file-system selected for / can embed grub (ext2/3/4 or btrfs)" do
               let(:embed_grub) { true }
 
-              include_examples "needs /boot partition"
+              include_examples "needs /boot partition in MBR"
             end
 
             context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples "needs /boot partition"
+              include_examples "needs /boot partition in MBR"
             end
           end
 
@@ -211,13 +257,13 @@ describe Y2Storage::BootRequirementsChecker do
             context "if the file-system selected for / can embed grub (ext2/3/4 or btrfs)" do
               let(:embed_grub) { true }
 
-              include_examples "needs /boot partition"
+              include_examples "needs /boot partition in MBR"
             end
 
             context "if the file-system selected for / cannot embed grub (eg. XFS)" do
               let(:embed_grub) { false }
 
-              include_examples "needs /boot partition"
+              include_examples "needs /boot partition in MBR"
             end
           end
         end
