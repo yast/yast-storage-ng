@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov 18 10:22:49 UTC 2021 - David Diaz <dgonzalez@suse.com>
+
+- Fix duplicate PV error detection with disabled multipath
+  (related to bsc#1170216).
+- 4.4.14
+
+-------------------------------------------------------------------
 Wed Nov 17 13:31:47 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: initial support for regular LUKS2 encryption, if env
