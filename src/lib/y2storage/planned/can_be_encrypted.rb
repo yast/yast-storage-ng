@@ -38,9 +38,9 @@ module Y2Storage
       private_constant :ENCRYPTION_OVERHEAD
 
       # @!attribute encryption_method
-      #   @return [String, nil] method used to encrypt the device. If is nil,
+      #   @return [EncryptionMethod::Base, nil] method used to encrypt the device. If is nil,
       #     it means the device will not be encrypted
-      secret_attr :encryption_method
+      attr_accessor :encryption_method
 
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the device.

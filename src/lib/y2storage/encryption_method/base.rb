@@ -124,6 +124,13 @@ module Y2Storage
         encryption_process.create_device(blk_device, dm_name)
       end
 
+      # Returns the encryption type to be used
+      #
+      # @return [Y2Storage::EncryptionType]
+      def encryption_type
+        encryption_process.encryption_type
+      end
+
       private
 
       # Returns an instance of the encryption process (e.g. EncryptionProcesses::Luks1)

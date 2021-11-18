@@ -96,4 +96,40 @@ RSpec.shared_context "plain UEFI" do
 
     include_context "UEFI partition"
   end
+
+  # See https://lists.opensuse.org/archives/list/factory@lists.opensuse.org/message/5L6XAYM2JFBP5RJOIFKFM34D3BK7VHWS/
+  context "with an AutoYaST profile that places '/' in a LUKS2 device" do
+    let(:use_lvm) { false }
+    let(:use_encryption) { true }
+    let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
+
+    context "if there are no EFI partitions" do
+      let(:efi_partitions) { [] }
+
+      it "requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)" do
+        expect(checker.needed_partitions).to contain_exactly(
+          an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil),
+          an_object_having_attributes(mount_point: "/boot")
+        )
+      end
+    end
+
+    context "if there is already a suitable EFI partition in the boot disk" do
+      let(:efi_partitions) { [efi_partition] }
+      let(:efi_partition) { partition_double("/dev/sda1") }
+      let(:boot_disk) { dev_sda }
+
+      before do
+        allow(efi_partition).to receive(:match_volume?).and_return(true)
+        allow(efi_partition).to receive(:id).and_return(Y2Storage::PartitionId::ESP)
+      end
+
+      it "requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)" do
+        expect(checker.needed_partitions).to contain_exactly(
+          an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1"),
+          an_object_having_attributes(mount_point: "/boot")
+        )
+      end
+    end
+  end
 end

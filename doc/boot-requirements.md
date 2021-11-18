@@ -36,6 +36,11 @@
 				- **only requires to use the existing EFI partition**
 			- and it is not on the boot disk
 				- **requires only a new /boot/efi partition**
+- with an AutoYaST profile that places '/' in a LUKS2 device
+	- if there are no EFI partitions
+		- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+	- if there is already a suitable EFI partition in the boot disk
+		- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
 
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
@@ -66,14 +71,14 @@
 				- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
 			- and it is not on the boot disk
 				- **requires only a new PReP partition (to allocate Grub2)**
-	- with an encrypted proposal using LUKS2
+	- with an AutoYaST profile that places '/' in a LUKS2 device
 		- if there are no suitable PReP partitions in the target disk
-			- **requires a new PReP and a new /boot partition**
+			- **requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
 		- if there is already a suitable PReP partition in the disk
 			- and it is on the boot disk
-				- **requires a /boot partition**
+				- **requires a separate /boot partition (Grub2 auto-config cannot handle LUKS2)**
 			- and it is not on the boot disk
-				- **requires a new PReP and a new /boot partition**
+				- **requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
 - in bare metal (PowerNV)
 	- with a partitions-based proposal
 		- **does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)**
@@ -164,21 +169,25 @@
 		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
 			- **does not require additional partitions (the firmware can find the kernel)**
 		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+			- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 	- with an encrypted proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 - trying to install in a zFCP disk (no DASD)
 	- with a partitions-based proposal
 		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
 			- **does not require additional partitions (the firmware can find the kernel)**
 		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+			- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 	- with an encrypted proposal
-		- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 - trying to install in a (E)CKD DASD disk
 	- if the disk is formatted as LDL
 		- **raises an error (no proposal possible in such disk) - FIXME: why?**
@@ -187,11 +196,13 @@
 			- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
 				- **does not require additional partitions (the firmware can find the kernel)**
 			- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
-				- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+				- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 		- with a LVM-based proposal
-			- **requires only a /boot/zipl partition (to allocate Grub2)**
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 		- with an encrypted proposal
-			- **requires only a /boot/zipl partition (to allocate Grub2)**
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+		- with an AutoYaST profile that places '/' in a LUKS2 device
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
 - when proposing a /boot/zipl partition
 	- **requires /boot/zipl to be on the boot disk**
 	- **requires /boot/zipl to be a non-encrypted partition**
@@ -237,6 +248,11 @@
 					- **only requires to use the existing EFI partition**
 				- and it is not on the boot disk
 					- **requires only a new /boot/efi partition**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- if there are no EFI partitions
+			- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+		- if there is already a suitable EFI partition in the boot disk
+			- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
 - not using UEFI (legacy PC)
 	- with GPT partition table
 		- in a partitions-based proposal
@@ -263,6 +279,14 @@
 					- **does not require any particular volume**
 				- and it is not on the boot disk
 					- **requires a new GRUB partition**
+		- with an AutoYaST profile that places '/' in a LUKS2 device
+			- if there is no GRUB partition
+				- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
+			- if there is already a GRUB partition
+				- and it is on the boot disk
+					- **requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
+				- and it is not on the boot disk
+					- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
 	- with a MS-DOS partition table
 		- if the MBR gap is big enough to embed Grub
 			- in a partitions-based proposal
@@ -271,8 +295,8 @@
 				- **does not require any particular volume**
 			- in an encrypted proposal
 				- **does not require any particular volume**
-			- in an encrypted proposal using LUKS2
-				- **requires a new /boot partition to install Grub into it**
+			- with an AutoYaST profile that places '/' in a LUKS2 device
+				- **requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
 		- with a MBR gap too small to accommodate Grub
 			- in a partitions-based proposal
 				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)

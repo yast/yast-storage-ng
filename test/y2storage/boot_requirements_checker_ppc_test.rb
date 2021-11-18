@@ -83,11 +83,12 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
+    # See https://lists.opensuse.org/archives/list/factory@lists.opensuse.org/message/5L6XAYM2JFBP5RJOIFKFM34D3BK7VHWS/
     RSpec.shared_examples "PReP + /boot partition" do
       context "if there are no suitable PReP partitions in the target disk" do
         let(:prep_partitions) { [] }
 
-        it "requires a new PReP and a new /boot partition" do
+        it "requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: nil, partition_id: prep_id),
             an_object_having_attributes(mount_point: "/boot")
@@ -101,7 +102,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "and it is on the boot disk" do
           let(:boot_disk) { dev_sda }
 
-          it "requires a /boot partition" do
+          it "requires a separate /boot partition (Grub2 auto-config cannot handle LUKS2)" do
             expect(checker.needed_partitions).to contain_exactly(
               an_object_having_attributes(mount_point: "/boot")
             )
@@ -111,7 +112,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "and it is not on the boot disk" do
           let(:boot_disk) { dev_sdb }
 
-          it "requires a new PReP and a new /boot partition" do
+          it "requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)" do
             expect(checker.needed_partitions).to contain_exactly(
               an_object_having_attributes(mount_point: nil, partition_id: prep_id),
               an_object_having_attributes(mount_point: "/boot")
@@ -140,7 +141,7 @@ describe Y2Storage::BootRequirementsChecker do
         include_examples "PReP partition"
       end
 
-      context "with an encrypted proposal using LUKS2" do
+      context "with an AutoYaST profile that places '/' in a LUKS2 device" do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
         let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }

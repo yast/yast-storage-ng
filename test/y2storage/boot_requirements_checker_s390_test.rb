@@ -54,7 +54,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "using Btrfs (i.e. /boot is not in XFS or ext2/3/4)" do
           let(:use_btrfs) { true }
 
-          it "requires only a separate /boot/zipl partition (to allocate Grub2)" do
+          it "requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)" do
             expect(checker.needed_partitions).to contain_exactly(
               an_object_having_attributes(mount_point: "/boot/zipl")
             )
@@ -65,7 +65,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
 
-        it "requires only a /boot/zipl partition (to allocate Grub2)" do
+        it "requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot/zipl")
           )
@@ -76,7 +76,19 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
 
-        it "requires only a /boot/zipl partition (to allocate Grub2)" do
+        it "requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_having_attributes(mount_point: "/boot/zipl")
+          )
+        end
+      end
+
+      context "with an AutoYaST profile that places '/' in a LUKS2 device" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
+        let(:boot_enc_type) { Y2Storage::EncryptionType::LUKS2 }
+
+        it "requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot/zipl")
           )
