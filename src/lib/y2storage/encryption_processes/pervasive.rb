@@ -122,6 +122,11 @@ module Y2Storage
         def record_stdin(_stdin); end
       end
 
+      # @see Base#encryption_type
+      def encryption_type
+        EncryptionType::LUKS2
+      end
+
       private
 
       # @return [SecureKey] master key used to encrypt the device
@@ -130,11 +135,6 @@ module Y2Storage
       # @return [Array<String>] lines of the output of the "zkey cryptsetup"
       #   command executed during the pre-commit phase
       attr_reader :zkey_cryptsetup_output
-
-      # @see Base#encryption_type
-      def encryption_type
-        EncryptionType::LUKS2
-      end
 
       # Custom Cheetah recorder to prevent leaking the password to the logs
       #

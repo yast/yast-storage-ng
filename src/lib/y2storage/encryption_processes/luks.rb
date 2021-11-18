@@ -52,8 +52,6 @@ module Y2Storage
         enc
       end
 
-      private
-
       # @see EncryptionProcesses::Base#encryption_type
       def encryption_type
         return EncryptionType::LUKS2 if version == :luks2
