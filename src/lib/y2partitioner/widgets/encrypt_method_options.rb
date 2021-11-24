@@ -112,9 +112,9 @@ module Y2Partitioner
                 "encrypting swap with randomly generated keys.\n" \
                 "\n" \
                 "Moreover, using this with some kinds of devices\n" \
-                "may imply a certain risk of loosing data.\n" \
+                "may imply a certain risk of losing data.\n" \
                 "\n" \
-                "Please, read Help for more information.")
+                "Read the help for more information.")
             )
           )
         )
