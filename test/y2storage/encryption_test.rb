@@ -193,6 +193,7 @@ describe Y2Storage::Encryption do
       # To have full effect, this must be done after creating the mount point
       fs.add_btrfs_subvolumes(Y2Storage::SubvolSpecification.fallback_list)
       fs.mount_point.set_default_mount_options
+      fs.mount_point.adjust_mount_options
       fs
     end
 
@@ -200,6 +201,7 @@ describe Y2Storage::Encryption do
       fs = encryption.filesystem
       fs.create_mount_point(mountpoint)
       fs.mount_point.set_default_mount_options
+      fs.mount_point.adjust_mount_options
       fs.mount_point.mount_options |= mount_options
     end
 

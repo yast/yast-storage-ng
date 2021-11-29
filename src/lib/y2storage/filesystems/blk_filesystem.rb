@@ -223,18 +223,33 @@ module Y2Storage
       NETWORK_OPTION = "_netdev".freeze
       private_constant :NETWORK_OPTION
 
-      # @see Mountable#extra_default_mount_options
+      # @see Mountable#missing_mount_options
+      #
+      # Detecting missing or unwanted occurrences of _netdev is implemented in BlkFilesystem so far.
+      #  - Fully network-based filesystems like NFS do not need it because systemd always detect
+      #    those right, without the need of _netdev.
+      #  - We don't specify extra options for Btrfs subvolumes because the current libstorage-ng
+      #    implementation would ignore them (BtrfsSubvolume#mount_options is bypassed to only return
+      #    subvol=$path).
       #
       # @return [Array<String>]
-      def extra_default_mount_options
+      def missing_mount_options
         # Adding _netdev is implemented in BlkFilesystem so far.
-        #  - Fully network-based filesystems like NFS do not need it because systemd
-        #    always detect those right, without the need of _netdev.
-        #  - We don't specify extra options for Btrfs subvolumes because the current
-        #    libstorage-ng implementation would ignore them (BtrfsSubvolume#mount_options
-        #    is bypassed to only return subvol=$path).
-        if needs_network_mount_options?
+        if needs_network_mount_options? && included_network_mount_options.empty?
           (super + [NETWORK_OPTION]).uniq
+        else
+          super
+        end
+      end
+
+      # @see Mountable#unwanted_mount_options
+      #
+      # See note about _netdev at {#missing_mount_options}.
+      #
+      # @return [Array<String>]
+      def unwanted_mount_options
+        if !needs_network_mount_options?
+          (super + included_network_mount_options).uniq
         else
           super
         end
@@ -369,13 +384,20 @@ module Y2Storage
       protected
 
       # Whether the network-related mount options (e.g. _netdev) should be part
-      # of {#extra_default_mount_options}
+      # of the adjusted mount options
       #
       # @return [Boolean]
       def needs_network_mount_options?
         # Adding "_netdev" and similar options in fstab for / should not be necessary
         # and it confuses (or used to confuse) systemd. See bsc#1165937.
         systemd_remote? && !root?
+      end
+
+      # Network-related mount options (e.g. _netdev) in the current {#mount_options}
+      #
+      # @return [Array<String>]
+      def included_network_mount_options
+        mount_options.select { |opt| opt.casecmp(NETWORK_OPTION) == 0 }
       end
 
       # @see Device#is?

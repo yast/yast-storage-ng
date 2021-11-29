@@ -162,6 +162,14 @@ module Y2Storage
       mount_options
     end
 
+    # Adjusts the mount options as needed to avoid problems during booting
+    #
+    # See jsc#SLE-20535, bsc#1176140, bsc#1165937 and jsc#SLE-7687
+    def adjust_mount_options
+      self.mount_options =
+        mount_options + mountable.missing_mount_options - mountable.unwanted_mount_options
+    end
+
     # @!method set_default_mount_by
     #   Set the mount-by method to the global default, see Storage::get_default_mount_by()
     storage_forward :set_default_mount_by, to: :default_mount_by=
