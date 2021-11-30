@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 
 #
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,7 +37,7 @@ describe Y2Storage::HWInfoReader do
   describe "#for_device" do
     it "returns hardware information for the given device" do
       data = reader.for_device("/dev/sda")
-      expect(data).to be_a(OpenStruct)
+      expect(data).to be_a(Y2Storage::HWInfoDisk)
       expect(data.to_h)
         .to include(bus:              "IDE",
                     unique_id:        "3OOL.7kkY9irDFZ4",
@@ -68,9 +68,10 @@ describe Y2Storage::HWInfoReader do
       reader.for_device("/dev/sda")
     end
 
-    it "returns nil for non-existing device names" do
+    it "returns an empty object for non-existing device names" do
       data = reader.for_device("/dev/nothing")
-      expect(data).to be_nil
+      expect(data).to be_a(Y2Storage::HWInfoDisk)
+      expect(data).to be_empty
     end
 
     context "when the system contains some zFCP multipath device" do
@@ -83,7 +84,7 @@ describe Y2Storage::HWInfoReader do
 
       it "returns hardware information for the given device" do
         data = reader.for_device("/dev/sda")
-        expect(data).to be_a(OpenStruct)
+        expect(data).to be_a(Y2Storage::HWInfoDisk)
         expect(data.to_h)
           .to include(bus:              "SCSI",
                       driver_modules:   ["zfcp", "sd_mod"],
