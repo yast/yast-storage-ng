@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2017,2020] SUSE LLC
+
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,34 +20,18 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require_relative "callbacks_examples"
+require_relative "issues_callback_examples"
 require "y2storage/callbacks/probe"
 
 describe Y2Storage::Callbacks::Probe do
   subject(:callbacks) { described_class.new }
 
+  describe "#issues" do
+    include_examples "#issues"
+  end
+
   describe "#error" do
-    include_examples "general #error examples"
-    include_examples "default #error true examples"
-
-    context "without LIBSTORAGE_IGNORE_PROBE_ERRORS" do
-      before { mock_env(env_vars) }
-      let(:env_vars) { {} }
-      it "it displays an error pop-up" do
-        expect(Yast::Report).to receive(:yesno_popup)
-        subject.error("probing failed", "")
-      end
-    end
-
-    context "with LIBSTORAGE_IGNORE_PROBE_ERRORS set" do
-      before { mock_env(env_vars) }
-      after { mock_env({}) } # clean up for future tests
-      let(:env_vars) { { "LIBSTORAGE_IGNORE_PROBE_ERRORS" => "1" } }
-      it "does not display an error pop-up and returns true" do
-        expect(Yast::Report).not_to receive(:yesno_popup)
-        expect(subject.error("probing failed", "")).to be true
-      end
-    end
+    include_examples "#error"
   end
 
   describe "#begin" do
@@ -76,12 +61,13 @@ describe Y2Storage::Callbacks::Probe do
     let(:cmd) { "the command" }
 
     RSpec.shared_examples "generic error" do
-      it "just displays the error and the details" do
-        expect(Yast::Report).to receive(:yesno_popup) do |message, options|
-          expect(message).to include msg
-          expect(options[:details]).to eq what
-        end
+      it "just generates the issue with error and the details" do
         subject.missing_command(msg, what, cmd, features)
+
+        issue = subject.issues.first
+
+        expect(issue.message).to eq(msg)
+        expect(issue.details).to include(what)
       end
     end
 

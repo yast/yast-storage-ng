@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,15 +20,82 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require_relative "callbacks_examples"
+require_relative "issues_callback_examples"
 require "y2storage/callbacks/activate"
 
 describe Y2Storage::Callbacks::Activate do
   subject { described_class.new }
 
-  describe "#error" do
-    include_examples "general #error examples"
-    include_examples "default #error true examples"
+  describe "#issues" do
+    include_examples "#issues"
+  end
+
+  describe "#errors" do
+    include_examples "#error"
+
+    context "with an error produced by a duplicated PV" do
+      let(:what) do
+        <<~FAILED_CMD
+          What: command '/sbin/vgchange --activate y' failed:
+          stdout:
+          0 logical volume(s) in volume group "vg0" now active
+          stderr:
+          WARNING: Failed to connect to lvmetad. Falling back to device scanning.
+          WARNING: Not using device /dev/sda4 for PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a.
+          WARNING: PV uecMW2-1Qgu-b367-WBKL-uM2h-BRDB-nYva0a prefers device /dev/sda2 because device size is correct.
+          Cannot activate LVs in VG vg0 while PVs appear on duplicate devices.
+          exit code:
+          5.
+        FAILED_CMD
+      end
+
+      before { allow(Yast::Mode).to receive(:auto).and_return auto }
+
+      context "in a normal installation" do
+        let(:auto) { false }
+        before { mock_env(env_vars) }
+
+        context "if LIBSTORAGE_MULTIPATH_AUTOSTART was not used" do
+          let(:env_vars) { {} }
+
+          it "includes a tip about LIBSTORAGE_MULTIPATH_AUTOSTART into issue description" do
+            subject.error(msg, what)
+
+            issue = subject.issues.first
+
+            expect(issue.message).to include(msg)
+            expect(issue.description).to include("LIBSTORAGE_MULTIPATH_AUTOSTART")
+          end
+        end
+
+        context "if LIBSTORAGE_MULTIPATH_AUTOSTART was used" do
+          let(:env_vars) { { "LIBSTORAGE_MULTIPATH_AUTOSTART" => "on" } }
+
+          it "does not include a tip about the solution in the issue description" do
+            subject.error(msg, what)
+
+            issue = subject.issues.first
+
+            expect(issue.message).to include(msg)
+            expect(issue.description).to_not include("LIBSTORAGE_MULTIPATH_AUTOSTART")
+            expect(issue.description).to_not include("start_multipath")
+          end
+        end
+      end
+
+      context "in an AutoYaST installation" do
+        let(:auto) { true }
+
+        it "includes a tip into issue description about using start_multipath in the profile" do
+          subject.error(msg, what)
+
+          issue = subject.issues.first
+
+          expect(issue.message).to include(msg)
+          expect(issue.description).to include("start_multipath")
+        end
+      end
+    end
   end
 
   describe "#luks" do
