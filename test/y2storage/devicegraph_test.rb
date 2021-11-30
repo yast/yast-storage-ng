@@ -29,6 +29,54 @@ describe Y2Storage::Devicegraph do
     next_dev.nil? || device.compare_by_name(next_dev) < 0
   end
 
+  describe "#issues_manager" do
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject { fake_devicegraph }
+
+    it "returns its issues manager instance" do
+      expect(subject.issues_manager).to be_a(Y2Storage::IssuesManager)
+    end
+  end
+
+  describe "#copy" do
+    subject { fake_devicegraph }
+
+    before do
+      fake_scenario("mixed_disks")
+
+      subject.issues_manager.probing_issues = Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")])
+    end
+
+    let(:other_devicegraph) do
+      devicegraph = subject.dup
+      devicegraph.issues_manager.probing_issues = Y2Issues::List.new
+      disk = devicegraph.find_by_name("/dev/sda")
+      disk.delete_partition_table
+      devicegraph
+    end
+
+    it "copies the content into the given devicegraph" do
+      subject.copy(other_devicegraph)
+      expect(subject).to eq(other_devicegraph)
+    end
+
+    it "copies the issues into the given devicegraph" do
+      expect(subject.issues_manager.probing_issues)
+        .to_not eq(other_devicegraph.issues_manager.probing_issues)
+
+      subject.copy(other_devicegraph)
+
+      issues = other_devicegraph.issues_manager.probing_issues
+
+      expect(issues).to eq(subject.issues_manager.probing_issues)
+      expect(issues.to_a.size).to eq(1)
+      expect(issues.to_a.first.message).to eq("Issue 1")
+    end
+  end
+
   describe "#safe_copy" do
     before do
       fake_scenario("mixed_disks")
@@ -57,7 +105,7 @@ describe Y2Storage::Devicegraph do
         devicegraph
       end
 
-      it "copies the content into the given devicegraph" do
+      it "performs the copy" do
         expect(subject).to_not eq(other_devicegraph)
         subject.safe_copy(other_devicegraph)
         expect(subject).to eq(other_devicegraph)

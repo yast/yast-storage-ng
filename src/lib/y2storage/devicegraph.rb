@@ -39,6 +39,7 @@ require "y2storage/partition"
 require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
 require "y2storage/storage_features_list"
+require "y2storage/issues_manager"
 
 module Y2Storage
   # The master container of libstorage.
@@ -48,7 +49,7 @@ module Y2Storage
   # the inspected system) or a possible target state.
   #
   # This is a wrapper for Storage::Devicegraph
-  class Devicegraph
+  class Devicegraph # rubocop:disable Metrics/ClassLength
     include Yast::Logger
     include StorageClassWrapper
     wrap_class Storage::Devicegraph
@@ -100,11 +101,12 @@ module Y2Storage
     storage_forward :storage_used_features, to: :used_features
     private :storage_used_features
 
-    # @!method copy(dest)
+    # @!method storage_copy(dest)
     #   Copies content to another devicegraph
     #
     #   @param dest [Devicegraph] destination devicegraph
-    storage_forward :copy
+    storage_forward :storage_copy, to: :copy
+    private :storage_copy
 
     # @!method find_device(device)
     #   Find a device by its {Device#sid sid}
@@ -140,23 +142,36 @@ module Y2Storage
       new(devicegraph)
     end
 
+    # @return [IssuesManager]
+    def issues_manager
+      @issues_manager ||= IssuesManager.new(self)
+    end
+
     # @return [Devicegraph]
     def dup
       new_graph = ::Storage::Devicegraph.new(to_storage_value.storage)
-      copy(new_graph)
-      Devicegraph.new(new_graph)
+      copy(Devicegraph.new(new_graph))
     end
     alias_method :duplicate, :dup
 
     # Copies the devicegraph into another one, but avoiding to copy into itself
     #
-    # @return[Boolean] true if the devicegraph was copied; false otherwise.
+    # @return [Boolean] true if the devicegraph was copied; false otherwise.
     def safe_copy(devicegraph)
       # Never try to copy into itself. Bug#1069671
       return false if devicegraph.equal?(self)
 
       copy(devicegraph)
       true
+    end
+
+    # Copies the devigraph into another one
+    #
+    # @param devicegraph [Devicegraph]
+    def copy(devicegraph)
+      storage_copy(devicegraph)
+      devicegraph.issues_manager.probing_issues = issues_manager.probing_issues
+      devicegraph
     end
 
     # Checks the devicegraph and logs the errors
