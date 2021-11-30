@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 
 #
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -57,7 +57,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
   end
 
   describe "#method_missing" do
-    let(:hwinfo) { OpenStruct.new(driver: ["ahci"]) }
+    let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["ahci"]) }
 
     before do
       allow(disk).to receive(:hwinfo).and_return(hwinfo)
@@ -175,7 +175,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
   end
 
   describe "#to_hash" do
-    let(:hwinfo) { OpenStruct.new(bios_id: "0x80", driver: ["ahci"], unknown: "value") }
+    let(:hwinfo) { Y2Storage::HWInfoDisk.new(bios_id: "0x80", driver: ["ahci"], unknown: "value") }
 
     before do
       allow(disk).to receive(:hwinfo).and_return hwinfo

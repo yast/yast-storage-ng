@@ -42,7 +42,7 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   before do
     devicegraph_stub(scenario)
 
-    allow_any_instance_of(Y2Storage::BlkDevice).to receive(:hwinfo).and_return(nil)
+    allow_any_instance_of(Y2Storage::BlkDevice).to receive(:hwinfo).and_return(Y2Storage::HWInfoDisk.new)
 
     initial_selected_devices.map { |d| controller.add_device(dev(d)) }
   end

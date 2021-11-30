@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -1058,7 +1058,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is available" do
-      let(:hwinfo) { OpenStruct.new(driver_modules: ["ahci", "sd"]) }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver_modules: ["ahci", "sd"]) }
 
       it "returns the hardware info" do
         expect(device.hwinfo).to eq(hwinfo)
@@ -1084,7 +1084,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is available" do
-      let(:hwinfo) { OpenStruct.new(info) }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new(info) }
 
       context "and there is info about the vendor" do
         let(:info) { { vendor: vendor_name } }
@@ -1106,7 +1106,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is not available" do
-      let(:hwinfo) { nil }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new }
 
       it "returns nil" do
         expect(device.vendor).to be_nil
@@ -1124,7 +1124,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is available" do
-      let(:hwinfo) { OpenStruct.new(info) }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new(info) }
 
       context "and there is info about the model" do
         let(:info) { { model: device_model } }
@@ -1156,7 +1156,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is available" do
-      let(:hwinfo) { OpenStruct.new(info) }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new(info) }
 
       context "and there is info about the bus" do
         let(:info) { { bus: device_bus } }
@@ -1178,7 +1178,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when hardware info is not available" do
-      let(:hwinfo) { nil }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new }
 
       it "returns nil" do
         expect(device.bus).to be_nil

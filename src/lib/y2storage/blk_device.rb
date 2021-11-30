@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,7 @@ require "y2storage/hwinfo_reader"
 require "y2storage/comparable_by_name"
 require "y2storage/match_volume_spec"
 require "y2storage/encryption_method"
+require "forwardable"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -34,6 +35,7 @@ module Y2Storage
 
     include ComparableByName
     include MatchVolumeSpec
+    extend Forwardable
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
@@ -625,41 +627,35 @@ module Y2Storage
       Y2Storage::HWInfoReader.instance.for_device(name)
     end
 
-    # Device vendor
-    #
-    # @see #hwinfo
-    #
-    # @return [String, nil] nil if vendor is unknown
-    def vendor
-      hwinfo&.vendor
-    end
+    def_delegators :hwinfo, :vendor, :model, :bus, :driver
 
-    # Device model
+    # @!method vendor
+    #   Device vendor
     #
-    # @see #hwinfo
+    #   @see #hwinfo
     #
-    # @return [String, nil] nil if model is unknown
-    def model
-      hwinfo&.model
-    end
+    #   @return [String, nil] nil if vendor is unknown
 
-    # Device bus (IDE, SATA, etc)
+    # @!method model
+    #   Device model
     #
-    # @see #hwinfo
+    #   @see #hwinfo
     #
-    # @return [String, nil] nil if bus is unknown
-    def bus
-      hwinfo&.bus
-    end
+    #   @return [String, nil] nil if model is unknown
 
-    # Kernel drivers used by this device
+    # @!method hwinfo
+    #   Device bus (IDE, SATA, etc)
     #
-    # @see #hwinfo
+    #   @see #hwinfo
     #
-    # @return [Array<String>] empty if the driver is unknown
-    def driver
-      hwinfo&.driver || []
-    end
+    #   @return [String, nil] nil if bus is unknown
+
+    # @!method driver
+    #   Kernel drivers used by this device
+    #
+    #   @see #hwinfo
+    #
+    #   @return [Array<String>] empty if the driver is unknown
 
     # @see #boss?
     BOSS_REGEXP = Regexp.new("dellboss", Regexp::IGNORECASE).freeze

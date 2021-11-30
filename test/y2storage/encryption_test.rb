@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -185,7 +185,7 @@ describe Y2Storage::Encryption do
     let(:scenario) { "encrypted_partition.xml" }
     let(:disk) { devicegraph.find_by_name("/dev/sda") }
     let(:partition) { devicegraph.find_by_name(partition_name) }
-    let(:hwinfo) { OpenStruct.new }
+    let(:hwinfo) { Y2Storage::HWInfoDisk.new }
 
     def create_btrfs(blk_dev)
       fs = blk_dev.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
@@ -230,7 +230,7 @@ describe Y2Storage::Encryption do
         before { prepare_fs.call }
 
         context "which uses a driver that needs an extra systemd service" do
-          let(:hwinfo) { OpenStruct.new(driver: ["sg", "bnx2i"]) }
+          let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["sg", "bnx2i"]) }
 
           it "makes sure #crypt_options include _netdev" do
             expect(encryption.crypt_options).to include("_netdev")
@@ -239,7 +239,7 @@ describe Y2Storage::Encryption do
 
         context "which does not demand any extra systemd service in order to be used" do
           # Test with fnic, based on what happened at bsc#1176140
-          let(:hwinfo) { OpenStruct.new(driver: ["sg", "fnic"]) }
+          let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["sg", "fnic"]) }
 
           it "makes no changes to #crypt_options" do
             expect(encryption.crypt_options).to be_empty

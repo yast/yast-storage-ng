@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,7 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "ostruct"
+require "y2storage/hwinfo_disk"
 require "singleton"
 
 module Y2Storage
@@ -43,9 +43,9 @@ module Y2Storage
     # Return hardware info for the given device
     #
     # @param name [String] Device name (eg. "/dev/sda")
-    # @return [OpenStruct] Hardware information
+    # @return [HWInfoDisk] Hardware information
     def for_device(name)
-      data[name]
+      data[name] || HWInfoDisk.new
     end
 
     # Reset the cache
@@ -61,7 +61,7 @@ module Y2Storage
     #
     # The information is cached. It can be cleaned by calling #reset.
     #
-    # @return [Hash<String,OpenStruct>] Hardware information indexed by device name
+    # @return [Hash<String,HWInfoDisk>] Hardware information indexed by device name
     #
     # @see #data_from_hwinfo
     # @see #reset
@@ -77,7 +77,7 @@ module Y2Storage
 
     # Extract devices information from hwinfo
     #
-    # @return [Hash<String,OpenStruct>] Hardware information indexed by device name
+    # @return [Hash<String,HWInfoDisk>] Hardware information indexed by device name
     def data_from_hwinfo
       output = Yast::Execute.on_target!("/usr/sbin/hwinfo", "--disk", "--listmd", stdout: :capture)
 
@@ -92,16 +92,13 @@ module Y2Storage
       end
     end
 
-    # @return [Array<String>] List of multi-valued properties
-    MULTI_VALUED = ["driver", "driver_modules", "device_files"].freeze
-
-    # Converts information from hwinfo to an OpenStruct
+    # Converts information from hwinfo to an HWInfoDisk
     #
     # By the way, it convers multi-valued properties to arrays.
     #
-    # @return [OpenStruct] Sanitized hardware information
+    # @return [HWInfoDisk] Sanitized hardware information
     def data_from_body(body)
-      body.lines.map(&:strip).each_with_object(OpenStruct.new) do |line, data|
+      body.lines.map(&:strip).each_with_object(HWInfoDisk.new) do |line, data|
         key, value = line.split(":", 2)
         next if value.nil?
 
@@ -128,7 +125,7 @@ module Y2Storage
       handling_meth = "parse_key_#{key}"
       return send(handling_meth, value) if respond_to?(handling_meth, true)
 
-      MULTI_VALUED.include?(key) ? parse_multi(value) : parse_single(value)
+      HWInfoDisk.multi_valued?(key) ? parse_multi(value) : parse_single(value)
     end
 
     # Parse the device_file key
