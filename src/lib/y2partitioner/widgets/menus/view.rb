@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,11 +18,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/menus/base"
 require "y2partitioner/dialogs/summary_popup"
 require "y2partitioner/dialogs/device_graph"
 require "y2partitioner/dialogs/settings"
 require "y2partitioner/dialogs/bcache_csets"
+require "y2partitioner/dialogs/probing_issues"
 
 module Y2Partitioner
   module Widgets
@@ -55,8 +57,18 @@ module Y2Partitioner
           @items += [
             Item(Id(:installation_summary), _("Installation &Summary...")),
             Item(Id(:settings), _("Se&ttings...")),
-            Item(Id(:bcache_csets), _("&Bcache Caching Sets..."))
+            Item(Id(:bcache_csets), _("&Bcache Caching Sets...")),
+            Item(Id(:system_issues), _("&System Issues..."))
           ]
+        end
+
+        # @see Base
+        def disabled_items
+          default = super
+          return default if probing_issues?
+
+          # if there are no issues, then :system_issues is disabled
+          default + [:system_issues]
         end
 
         private
@@ -72,7 +84,13 @@ module Y2Partitioner
             Dialogs::Settings.new
           when :bcache_csets
             Dialogs::BcacheCsets.new
+          when :system_issues
+            Dialogs::ProbingIssues.new
           end
+        end
+
+        def probing_issues?
+          DeviceGraphs.instance.system.issues_manager.probing_issues.any?
         end
       end
     end
