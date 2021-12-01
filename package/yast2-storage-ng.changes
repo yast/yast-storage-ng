@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Dec  1 14:00:02 UTC 2021 - Josef Reidinger <jreidinger@suse.com>
+
+- Prepare code for ruby3 (bsc#1193192)
+- 4.4.16
+
+-------------------------------------------------------------------
 Tue Nov 30 13:12:33 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Changed the HWInfoReader API: now it always returns objects of
