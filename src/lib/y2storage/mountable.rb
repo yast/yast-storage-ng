@@ -130,6 +130,18 @@ module Y2Storage
       mount_point.root?
     end
 
+    # Whether the device contains a mount point that returns true for the given block or whether the
+    # device is based in the same disk than another device containing such a mount point
+    #
+    # @return [Boolean]
+    def disk_with_mount_point?(&block)
+      return true if mount_point && block.call(mount_point)
+
+      ([self] + ancestors).any? do |dev|
+        dev.is_a?(BlkDevice) && dev.contain_mount_point?(&block)
+      end
+    end
+
     # Creates a mount point object for the device
     #
     # @param path [String]

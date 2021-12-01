@@ -383,6 +383,19 @@ module Y2Storage
       self.mount_options = default_mount_options
     end
 
+    # @see #mounted_by_init?
+    INITRD_MOUNT_OPTION = "x-initrd.mount".freeze
+    private_constant :INITRD_MOUNT_OPTION
+
+    # Whether YaST expects this mount point to be already initialized in the initramfs
+    #
+    # @return [Boolean]
+    def mounted_by_init?
+      # Intentionally avoiding String#casecmp to check the mount option, turns out
+      # X-what.ever has a different semantic than x-what.ever (see "man -s8 mount")
+      root? || mount_options.include?(INITRD_MOUNT_OPTION)
+    end
+
     protected
 
     # @see Device#is?

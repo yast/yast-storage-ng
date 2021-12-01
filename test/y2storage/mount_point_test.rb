@@ -599,6 +599,14 @@ describe Y2Storage::MountPoint do
       end
     end
 
+    RSpec.shared_examples "add netdev" do
+      it "adds the _netdev option if it is not there" do
+        mount_point.mount_options = ["one", "two"]
+        mount_point.adjust_mount_options
+        expect(mount_point.mount_options).to eq ["one", "two", "_netdev"]
+      end
+    end
+
     context "in an NFS filesystem" do
       let(:mountable) { Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "path") }
       before { mountable.create_mount_point("/mnt") }
@@ -610,15 +618,87 @@ describe Y2Storage::MountPoint do
       end
     end
 
-    context "for a filesystem in a local disk (i.e. BlkDevice#in_network? returns false)" do
-      let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
+    context "for a filesystem directly on a local disk (i.e. BlkDevice#in_network? returns false)" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:dev_name) { "/dev/sda" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+      subject(:mount_point) { mountable.create_mount_point("/home") }
+
+      include_examples "remove netdev"
+    end
+
+    context "for a filesystem on a Xen virtual partition" do
+      let(:scenario) { "xen-partitions.xml" }
+      let(:dev_name) { "/dev/xvda1" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+      subject(:mount_point) { mountable.create_mount_point("/home") }
+
+      include_examples "remove netdev"
+    end
+
+    context "for a partition in a local disk (i.e. BlkDevice#in_network? returns false)" do
       let(:mountable) { blk_device.filesystem }
 
       include_examples "remove netdev"
     end
 
-    context "for a filesystem in a network disk (i.e. BlkDevice#in_network? returns true)" do
-      let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
+    context "for a filesystem directly on a network disk (i.e. BlkDevice#in_network? returns true)" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:dev_name) { "/dev/sda" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+
+      before do
+        allow(blk_device.transport).to receive(:network?).and_return true
+        allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
+      end
+
+      subject(:mount_point) { mountable.create_mount_point(path) }
+
+      context "if the disk uses a driver that depends on a systemd service" do
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi-tcp", "iscsi"]) }
+
+        context "and the filesystem is mounted at /" do
+          let(:path) { "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          let(:path) { "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          let(:path) { "/opt" }
+
+          include_examples "add netdev"
+        end
+      end
+
+      context "if the disk driver does not depend on any systemd service" do
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new }
+        context "and the filesystem is mounted at /" do
+          let(:path) { "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          let(:path) { "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          let(:path) { "/opt" }
+
+          include_examples "remove netdev"
+        end
+      end
+    end
+
+    context "for a partition in a network disk (i.e. BlkDevice#in_network? returns true)" do
       let(:mountable) { blk_device.filesystem }
       let(:hwinfo) { Y2Storage::HWInfoDisk.new }
 
@@ -632,31 +712,66 @@ describe Y2Storage::MountPoint do
       context "if the disk uses a driver that depends on a systemd service" do
         let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["fcoe"]) }
 
-        context "for the root filesystem" do
+        context "and the filesystem is mounted at /" do
           before { mount_point.path = "/" }
 
           include_examples "remove netdev"
         end
 
-        context "for a non-root filesystem" do
+        context "and the filesystem is mounted at /var" do
+          before { mount_point.path = "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
           before { mount_point.path = "/home" }
 
-          it "adds the _netdev option if it is not there" do
-            mount_point.mount_options = ["one", "two"]
-            mount_point.adjust_mount_options
-            expect(mount_point.mount_options).to eq ["one", "two", "_netdev"]
+          let(:disk_partitions) { blk_device.disk.partitions }
+
+          before do
+            disk_partitions.each do |part|
+              next if part.filesystem&.mount_point.nil?
+              next if part == blk_device
+
+              part.filesystem.mount_path = alt_mount_path
+            end
+          end
+
+          context "if the disk contains (directly or indirectly) the root filesystem" do
+            let(:alt_mount_path) { "/" }
+
+            include_examples "remove netdev"
+          end
+
+          context "if the disk contains (directly or indirectly) the /var filesystem" do
+            let(:alt_mount_path) { "/var" }
+
+            include_examples "remove netdev"
+          end
+
+          context "if the disk does not contain /var or /" do
+            let(:alt_mount_path) { "/opt" }
+
+            include_examples "add netdev"
           end
         end
       end
 
       context "if the disk driver does not depend on any systemd service" do
-        context "for the root filesystem" do
+        context "and the filesystem is mounted at /" do
           before { mount_point.path = "/" }
 
           include_examples "remove netdev"
         end
 
-        context "for a non-root filesystem" do
+        context "and the filesystem is mounted at /var" do
+          before { mount_point.path = "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
           before { mount_point.path = "/home" }
 
           include_examples "remove netdev"

@@ -226,7 +226,7 @@ describe Y2Storage::Encryption do
     RSpec.shared_examples "netdev for network device" do
       context "within a network disk" do
         let(:network) { true }
-        let(:mountpoint) { "/var" }
+        let(:mountpoint) { "/home" }
         let(:mount_options) { [] }
 
         before { prepare_fs.call }
@@ -251,7 +251,7 @@ describe Y2Storage::Encryption do
 
       context "within a local disk" do
         let(:network) { false }
-        let(:mountpoint) { "/var" }
+        let(:mountpoint) { "/home" }
         let(:mount_options) { [] }
 
         before { prepare_fs.call }

@@ -388,9 +388,13 @@ module Y2Storage
       #
       # @return [Boolean]
       def needs_network_mount_options?
-        # Adding "_netdev" and similar options in fstab for / should not be necessary
-        # and it confuses (or used to confuse) systemd. See bsc#1165937.
-        systemd_remote? && !root?
+        # Adding "_netdev" and similar options in fstab for /var, for / or for any mount point that
+        # is hosted in the same disk than / should not be necessary and it confuses systemd.
+        # See bsc#1165937, bsc#176140 and jsc#SLE-20535
+        return false if disk_with_mount_point?(&:mounted_by_init?)
+        return false if disk_with_mount_point? { |mp| mp.path == "/var" }
+
+        systemd_remote?
       end
 
       # Network-related mount options (e.g. _netdev) in the current {#mount_options}
