@@ -98,7 +98,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
           "--volume-type", "LUKS2", "--sector-size", "2048"
         )
 
-        described_class.send(testing_method, "YaST_cr", params)
+        described_class.send(testing_method, "YaST_cr", **params)
       end
     end
 
@@ -120,7 +120,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
           "--volume-type", "LUKS2", "--volumes", "/dev/dasdc1:cr_test"
         )
 
-        described_class.send(testing_method, "YaST_cr", params)
+        described_class.send(testing_method, "YaST_cr", **params)
       end
     end
 
@@ -136,7 +136,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
           "--volume-type", "LUKS2", "--apqns", "01.0001,01.0002"
         )
 
-        described_class.send(testing_method, "YaST_cr", params)
+        described_class.send(testing_method, "YaST_cr", **params)
       end
     end
   end
