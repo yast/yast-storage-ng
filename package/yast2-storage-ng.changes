@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Dec  2 15:16:17 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Improve probing errors handling: when there are several errors,
+  only one popup is shown, and Details button shows all the errors
+  (jsc#SLE-18430).
+- Partitioner: add menu option View/System Issues.
+- 4.4.18
+
+-------------------------------------------------------------------
 Thu Dec  2 14:44:24 UTC 2021 - Ladislav Slezák <lslezak@suse.cz>
 
 - Unify the Yes/No popup button IDs (bsc#1193326)
