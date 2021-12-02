@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,21 +26,29 @@ require_relative "matchers"
 require "y2partitioner/widgets/menus/view"
 
 describe Y2Partitioner::Widgets::Menus::View do
-  before do
-    allow(Y2Partitioner::Dialogs::DeviceGraph).to receive(:supported?).and_return(graphical)
-  end
-
   subject(:menu) { described_class.new }
 
   let(:graphical) { true }
 
+  let(:issues_manager) { instance_double(Y2Storage::IssuesManager, probing_issues: issues) }
+  let(:devicegraph) { instance_double(Y2Storage::Devicegraph, issues_manager: issues_manager) }
+  let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs, system: devicegraph) }
+
+  let(:issues) { Y2Issues::List.new }
+
+  before do
+    allow(Y2Partitioner::Dialogs::DeviceGraph).to receive(:supported?).and_return(graphical)
+    allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
+  end
+
   include_examples "Y2Partitioner::Widgets::Menus"
 
   describe "#items" do
-    it "includes entries for installation summary, settings and csets" do
+    it "includes entries for installation summary, settings, Bcache csets and system issues" do
       expect(subject.items).to include(item_with_id(:installation_summary))
       expect(subject.items).to include(item_with_id(:settings))
       expect(subject.items).to include(item_with_id(:bcache_csets))
+      expect(subject.items).to include(item_with_id(:system_issues))
     end
 
     context "in graphical mode" do
@@ -61,8 +69,20 @@ describe Y2Partitioner::Widgets::Menus::View do
   end
 
   describe "#disabled_items" do
-    it "returns an empty array, since all present entries are always enabled" do
-      expect(menu.disabled_items).to eq []
+    context "if there are issues" do
+      let(:issues) { Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")]) }
+
+      it "returns an empty array, since all present entries are enabled" do
+        expect(menu.disabled_items).to eq []
+      end
+    end
+
+    context "if there are no issues" do
+      let(:issues) { Y2Issues::List.new }
+
+      it "returns :system_issues" do
+        expect(menu.disabled_items).to contain_exactly(:system_issues)
+      end
     end
   end
 
@@ -121,6 +141,11 @@ describe Y2Partitioner::Widgets::Menus::View do
     context "when :bcache_csets was selected" do
       let(:id) { :bcache_csets }
       include_examples "handle dialog", Y2Partitioner::Dialogs::BcacheCsets
+    end
+
+    context "when :system_issues was selected" do
+      let(:id) { :system_issues }
+      include_examples "handle dialog", Y2Partitioner::Dialogs::ProbingIssues
     end
   end
 end

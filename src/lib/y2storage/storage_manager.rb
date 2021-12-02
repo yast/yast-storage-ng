@@ -22,6 +22,7 @@ require "storage"
 require "y2storage/arch"
 require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
+require "y2storage/probed_devicegraph_checker"
 require "y2storage/devicegraph_sanitizer"
 require "y2storage/disk_analyzer"
 require "y2storage/dump_manager"
@@ -29,6 +30,7 @@ require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/configuration"
 require "yast2/fs_snapshot"
+require "y2issues/list"
 
 Yast.import "Mode"
 Yast.import "Stage"
@@ -41,7 +43,7 @@ module Y2Storage
   # be extracted to a new place, mainly all stuff related to testing
   # (e.g., {#probe_from_yaml}).
   #
-  class StorageManager
+  class StorageManager # rubocop:disable Metrics/ClassLength
     include Yast::Logger
     extend Forwardable
 
@@ -89,6 +91,8 @@ module Y2Storage
       configuration.apply_defaults
 
       @probed = false
+      @activate_issues = Y2Issues::List.new
+      @probe_issues = Y2Issues::List.new
       reset_probed
       reset_staging
       reset_staging_revision
@@ -121,15 +125,14 @@ module Y2Storage
     #
     # With the default callbacks, every question about activating a given
     # technology is forwarded to the user using pop up dialogs. In addition,
-    # the user is asked whether to continue on errors reported by libstorage-ng.
+    # errors reported by libstorage-ng are stored in the {#activate_issues} list.
     #
-    # @param callbacks [Callbacks::Activate]
-    # @return [Boolean] whether activation was successful, false if
-    #   libstorage-ng found a problem and the corresponding callback returned
-    #   false (i.e. it was decided to abort due to the error)
+    # @param callbacks [Callbacks::Activate, nil]
+    # @return [Boolean] whether activation was successful
     def activate(callbacks = nil)
       activate_callbacks = callbacks || Callbacks::Activate.new
       @storage.activate(activate_callbacks)
+      @activate_issues = activate_callbacks.issues
       true
     rescue Storage::Exception
       false
@@ -150,22 +153,18 @@ module Y2Storage
     # Invalidates the probed and staging devicegraph. Real probing is
     # only performed when the instance is not for testing.
     #
-    # With the default probe callbacks, the user is asked whether to continue on
-    # each error reported by libstorage-ng.
-    #
-    # With the default sanitize callbacks, the user is asked whether to sanitize
-    # the raw probed devicegraph when it contains some error.
+    # With the default probe callbacks, the errors reported by libstorage-ng are stored in the
+    # {#probe_issues} list.
     #
     # If this method returns false, #staging and #probed could be in bad state
     # (or not be there at all) so they should not be trusted in the subsequent
     # code.
     #
-    # @param probe_callbacks [Callbacks::Activate]
-    # @param sanitize_callbacks [Callbacks::Sanitize]
+    # @param probe_callbacks [Callbacks::Probe, nil]
     # @return [Boolean] whether probing was successful, false if libstorage-ng
     #   found a problem and the corresponding callback returned false (i.e. it
     #   was decided to abort due to the error)
-    def probe(probe_callbacks: nil, sanitize_callbacks: nil)
+    def probe(probe_callbacks: nil)
       probe_callbacks ||= Callbacks::Probe.new
 
       begin
@@ -176,15 +175,17 @@ module Y2Storage
         raise
       end
 
-      probed_performed
-      sanitize_probed(sanitize_callbacks)
+      @probe_issues = probe_callbacks.issues
+
+      probe_performed
+      manage_probing_issues
       DumpManager.dump(@probed_graph)
       true
     rescue Storage::Exception, Error
       false
     end
 
-    # Probed devicegraph, after sanitizing it (see {#sanitize_probed})
+    # Probed devicegraph, after sanitizing it (see {#manage_probing_issues})
     #
     # @note This devicegraph is not exactly the same than the initial
     #   raw probed returned by libstorage-ng. The raw probed can contain
@@ -217,7 +218,7 @@ module Y2Storage
     #
     # @note The initial staging is not exactly the same than the initial staging
     #   returned by libstorage-ng. This staging is initialized from the sanitized
-    #   probed devicegraph (see {#sanitize_probed}).
+    #   probed devicegraph (see {#manage_probing_issues}).
     #
     # @return [Devicegraph]
     def staging
@@ -330,8 +331,8 @@ module Y2Storage
       fake_graph.to_storage_value.copy(storage.staging)
       fake_graph.to_storage_value.copy(storage.system)
 
-      probed_performed
-      sanitize_probed
+      probe_performed
+      manage_probing_issues
     ensure
       storage.remove_devicegraph("fake")
     end
@@ -341,8 +342,8 @@ module Y2Storage
       storage.probed.load(xml_file)
       storage.probed.copy(storage.staging)
       storage.probed.copy(storage.system)
-      probed_performed
-      sanitize_probed
+      probe_performed
+      manage_probing_issues
     end
 
     # Access mode in which the storage system was initialized (read-only or read-write)
@@ -394,6 +395,16 @@ module Y2Storage
     # @return [Integer]
     attr_reader :staging_revision_after_probing
 
+    # Issues detected while activating devices
+    #
+    # @return [Y2Issues::List<Issue>]
+    attr_reader :activate_issues
+
+    # Issues detected while probing the system
+    #
+    # @return [Y2Issues::List<Issue>]
+    attr_reader :probe_issues
+
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
     #
@@ -429,7 +440,7 @@ module Y2Storage
     end
 
     # Sets all necessary data after probing. To be executed always after probing.
-    def probed_performed
+    def probe_performed
       @probed = true
       probed_changed
       staging_changed
@@ -438,6 +449,13 @@ module Y2Storage
       log.info("Probed devicegraph\n#{raw_probed.to_xml}")
 
       @staging_revision_after_probing = staging_revision
+
+      # Probing issues will contain issues detected on activate and probe callbacks, and also issues
+      # detected after checking the probed devicegraph.
+      issues = activate_issues.concat(probe_issues)
+      issues.concat(ProbedDevicegraphChecker.new(raw_probed).issues)
+
+      raw_probed.issues_manager.probing_issues = issues
     end
 
     # Resets the #staging_revision
@@ -446,29 +464,22 @@ module Y2Storage
       @staging_revision_after_probing = 0
     end
 
-    # Sanitizes the raw probed devicegraph
+    # Manages issues detected during the probing phase
     #
-    # The raw probed devicegraph can contain some errors (e.g., incomplete LVM VGs).
-    # This method tries to fix all errors from raw probed.
+    # The raw probed devicegraph is sanitized in order to fix the issues (e.g., when there are incomplete
+    # LVM VGs).
     #
-    # With the default callbacks, the user is asked whether to sanitize the raw probed
-    # devicegraph when it contains some errors.
+    # The raw probed devicegraph remains untouched, and the new sanitized one is internally saved and
+    # copied into the staging devicegraph.
     #
-    # The raw probed devicegraph remains untouched, and the new sanitized one is internally
-    # saved and copied into the staging devicegraph.
-    #
-    # @raise [Y2Storage::Error] if the user decides to not sanitize. In that case, the
-    #   probed and staging devicegraphs also remain untouched, but they are useless
-    #   for proposal/partitioner.
-    #
-    # @param callbacks [Y2Storage::Callbacks::Sanitize]
-    def sanitize_probed(callbacks = nil)
-      callbacks ||= Callbacks::Sanitize.new
+    # @raise [Y2Storage::Error] if the user decides to not continue. In that case, the probed and staging
+    #   devicegraphs also remain untouched, but they are useless for proposal/partitioner.
+    def manage_probing_issues
+      continue = raw_probed.issues_manager.report_probing_issues
+
+      raise Error, "Probed devicegraph contains errors" unless continue
+
       sanitizer = DevicegraphSanitizer.new(raw_probed)
-
-      errors = sanitizer.errors.map(&:message)
-
-      raise Error, "Probed devicegraph is not sanitized" if errors.any? && !callbacks.sanitize?(errors)
 
       @probed_graph = sanitizer.sanitized_devicegraph
       @probed_graph.safe_copy(staging)

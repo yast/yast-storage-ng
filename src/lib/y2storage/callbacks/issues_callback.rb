@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,67 +18,61 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage"
-require "y2issues/list"
 require "y2storage/issue"
-require "y2storage/issues_reporter"
+require "y2issues/list"
 
 module Y2Storage
   module Callbacks
-    # Class to implement callbacks used during libstorage-ng commit
-    class Commit < Storage::CommitCallbacks
+    # Mixin for registering issues when libstorage-ng reports errors
+    module IssuesCallback
       include Yast::Logger
 
-      # Constructor
+      # List of issues from errors reported by libstorage-ng
       #
-      # @param widget [#add_action]
-      def initialize(widget: nil)
-        super()
+      # @return [Y2Issues::List]
+      attr_reader :issues
 
-        @widget = widget
+      def initialize
+        super
+
+        @issues = Y2Issues::List.new
       end
 
-      # Updates the widget (if any) with the given message
-      def message(message)
-        widget&.add_action(message)
-      end
-
-      # Callback for libstorage-ng to report an error to the user.
-      #
-      # In addition to displaying the error, it offers the user the possibility
-      # to ignore it and continue.
-      #
-      # @note If the user rejects to continue, the method will return false
-      # which implies libstorage-ng will raise the corresponding exception for
-      # the error.
+      # Callback for libstorage-ng to handle errors
       #
       # See Storage::Callbacks#error in libstorage-ng
+      #
+      # Errors are stored in the list of issues.
       #
       # @param message [String] error title coming from libstorage-ng
       #   (in the ASCII-8BIT encoding! see https://sourceforge.net/p/swig/feature-requests/89/)
       # @param what [String] details coming from libstorage-ng (in the ASCII-8BIT encoding!)
-      # @return [Boolean] true will make libstorage-ng ignore the error, false
-      #   will result in a libstorage-ng exception
+      #
+      # @return [true] makes libstorage-ng to ignore the error
       def error(message, what)
         # force the UTF-8 encoding to avoid Encoding::CompatibilityError exception (bsc#1096758)
         message.force_encoding("UTF-8")
         what.force_encoding("UTF-8")
 
-        log.info "libstorage-ng reported an error, asking the user whether to continue"
+        log.info "libstorage-ng reported an error, generating an issue"
         log.info "Error details. Message: #{message}. What: #{what}."
 
-        issues = Y2Issues::List.new([Issue.new(message, details: what)])
-        reporter = IssuesReporter.new(issues)
+        issues << create_issue(message, what)
 
-        result = reporter.report(focus: :no)
-
-        log.info "User answer: #{result}"
-        result
+        true
       end
 
       private
 
-      attr_reader :widget
+      # Creates a new issue from an error reported by libstorage-ng
+      #
+      # @param message [String]
+      # @param what [String]
+      #
+      # @return [Issue]
+      def create_issue(message, what)
+        Issue.new(message, details: what)
+      end
     end
   end
 end

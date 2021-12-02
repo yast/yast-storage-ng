@@ -724,39 +724,63 @@ describe Y2Storage::StorageManager do
       end
     end
 
-    context "if the probed devicegraph needs to be sanitized" do
-      let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
-
-      before do
-        allow(Y2Storage::Callbacks::Sanitize).to receive(:new).and_return(callbacks)
-      end
-
-      let(:callbacks) { instance_double(Y2Storage::Callbacks::Sanitize, sanitize?: sanitize) }
-
-      context "and the user decides to abort" do
-        let(:sanitize) { false }
-
-        it "returns false" do
-          expect(manager.probe).to eq(false)
-        end
-      end
-
-      context "and the user devices to continue" do
-        let(:sanitize) { true }
-
-        it "returns true" do
-          expect(manager.probe).to eq(true)
-        end
-
+    context "if there are probing issues" do
+      shared_examples "sanitize" do
         it "sanitizes the raw probed devicegraph" do
           manager.probe
           expect(manager.probed.disks).to_not be_empty
           expect(manager.probed.lvm_vgs).to be_empty
         end
 
-        it "copies sanitized probed into staging" do
+        it "copies the sanitized probed into staging" do
           manager.probe
           expect(manager.staging).to eq(manager.probed)
+        end
+      end
+
+      let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
+
+      before do
+        allow_any_instance_of(Y2Storage::IssuesManager)
+          .to receive(:report_probing_issues).and_return(continue)
+      end
+
+      let(:continue) { true }
+
+      it "stores the issues" do
+        manager.probe
+        issues_manager = manager.probed.issues_manager
+
+        expect(issues_manager.probing_issues).to be_a(Y2Issues::List)
+        expect(issues_manager.probing_issues).to_not be_empty
+      end
+
+      it "reports the probing issues" do
+        expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+
+        manager.probe
+      end
+
+      context "and the reporter reports to continue" do
+        let(:continue) { true }
+
+        include_examples "sanitize"
+
+        it "returns true" do
+          expect(manager.probe).to eq(true)
+        end
+      end
+
+      context "and the reporter reports to abort" do
+        let(:continue) { false }
+
+        it "does not sanitize the raw probed devicegraph" do
+          manager.probe
+          expect(manager.probed).to be_nil
+        end
+
+        it "returns false" do
+          expect(manager.probe).to eq(false)
         end
       end
     end
@@ -863,7 +887,7 @@ describe Y2Storage::StorageManager do
     end
 
     context "when callbacks are given" do
-      let(:custom_callbacks) { double("callbacks") }
+      let(:custom_callbacks) { Y2Storage::Callbacks::Activate.new }
 
       it "starts libstorage-ng activation using given callbacks" do
         expect(manager.storage).to receive(:activate).with(custom_callbacks)
