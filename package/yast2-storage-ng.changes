@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Dec  2 14:44:24 UTC 2021 - Ladislav Slezák <lslezak@suse.cz>
+
+- Unify the Yes/No popup button IDs (bsc#1193326)
+- 4.4.17
+
+-------------------------------------------------------------------
 Wed Dec  1 14:00:02 UTC 2021 - Josef Reidinger <jreidinger@suse.com>
 
 - Prepare code for ruby3 (bsc#1193192)

@@ -39,7 +39,7 @@ module Y2Partitioner
       button_box = ButtonBox(
         PushButton(Id(:yes), Opt(:okButton), recursive_delete_yes_label),
         PushButton(
-          Id(:no_button),
+          Id(:no),
           Opt(:default, :cancelButton),
           recursive_delete_no_label
         )
