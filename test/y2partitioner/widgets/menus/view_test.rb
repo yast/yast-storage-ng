@@ -44,7 +44,7 @@ describe Y2Partitioner::Widgets::Menus::View do
   include_examples "Y2Partitioner::Widgets::Menus"
 
   describe "#items" do
-    it "includes entries for installation summary, settings and csets" do
+    it "includes entries for installation summary, settings, Bcache csets and system issues" do
       expect(subject.items).to include(item_with_id(:installation_summary))
       expect(subject.items).to include(item_with_id(:settings))
       expect(subject.items).to include(item_with_id(:bcache_csets))

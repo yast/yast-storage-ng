@@ -80,26 +80,122 @@ describe Y2Storage::IssuesReporter do
       end
     end
 
-    context "when there is only an issue" do
-      let(:issues) { Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")]) }
-
-      it "shows a dialog for a single issue" do
-        expect(Y2Storage::Dialogs::Issue).to receive(:show).with(issues.first, anything)
+    shared_examples "headline" do |dialog|
+      it "does not include a headline" do
+        expect(dialog).to receive(:show) do |_, options|
+          expect(options[:headline]).to be_empty
+        end
 
         subject.report
       end
+    end
 
-      it "includes the footer for a single error" do
-        expect(Y2Storage::Dialogs::Issue).to receive(:show) do |_, options|
-          expect(options[:footer]).to match(/despite the error\?/)
+    context "when there is only an issue" do
+      let(:issues) do
+        Y2Issues::List.new([Y2Storage::Issue.new("Issue 1", description: description, details: details)])
+      end
+
+      let(:details) { nil }
+
+      let(:description) { nil }
+
+      it "shows the message for a single issue" do
+        expect(Yast2::Popup).to receive(:show) do |message, _|
+          expect(message).to match(/Issue 1/)
+          expect(message).to match(/despite the issue\?/)
         end
 
         subject.report
       end
 
-      include_examples "buttons", Y2Storage::Dialogs::Issue
+      context "and the issue has details" do
+        let(:details) { "Issue 1 details" }
 
-      include_examples "focus", Y2Storage::Dialogs::Issue
+        it "shows a hint about clicking on details" do
+          expect(Yast2::Popup).to receive(:show).with(/Click below/, anything)
+
+          subject.report
+        end
+
+        it "includes the details of the issue" do
+          expect(Yast2::Popup).to receive(:show) do |_, options|
+            expect(options[:details]).to match(/Issue 1 details/)
+          end
+
+          subject.report
+        end
+
+        # see https://bugzilla.suse.com/show_bug.cgi?id=1085468
+        context "and the details are too long" do
+          let(:max_length) { 80 }
+
+          let(:details) do
+            "command '/usr/sbin/parted --script '/dev/sda' mklabel gpt' failed:\n\n\n" \
+            "stderr:\n"\
+            "Error: Partition(s) 1 on /dev/sda have been written, but we have been unable to inform " \
+            "the kernel of the change, probably because it/they are in use.  As a result, the old " \
+            "partition(s) will remain in use.  You should reboot now before making further changes." \
+            "\n\n" \
+            "exit code:\n" \
+            "1"
+          end
+
+          it "wraps the details" do
+            expect(Yast2::Popup).to receive(:show) do |_, options|
+              max_line = options[:details].lines.max_by(&:size)
+              expect(max_line.size < max_length).to eq(true), "Line '#{max_line}' is too long"
+            end
+
+            subject.report
+          end
+        end
+      end
+
+      context "and the issue has no details" do
+        let(:details) { nil }
+
+        it "does not show a hint about clicking on details" do
+          expect(Yast2::Popup).to receive(:show) do |message, _|
+            expect(message).to_not include("Click below")
+          end
+
+          subject.report
+        end
+
+        it "does not include details" do
+          expect(Yast2::Popup).to receive(:show) do |_, options|
+            expect(options[:details]).to be_empty
+          end
+
+          subject.report
+        end
+      end
+
+      context "and the issue has a description" do
+        let(:description) { "Issue 1 description" }
+
+        it "shows the description of the issue" do
+          expect(Yast2::Popup).to receive(:show).with(/Issue 1 description/, anything)
+
+          subject.report
+        end
+      end
+
+      context "and the issue has no description" do
+        let(:description) { nil }
+
+        it "shows a default description" do
+          expect(Yast2::Popup).to receive(:show).with(/Unexpected situation/, anything)
+
+          subject.report
+        end
+      end
+
+      include_examples "buttons", Yast2::Popup
+
+      include_examples "focus", Yast2::Popup
+
+      include_examples "headline", Yast2::Popup
     end
 
     context "when there are several issues" do
@@ -112,31 +208,45 @@ describe Y2Storage::IssuesReporter do
         )
       end
 
-      it "shows a dialog for multiple issues" do
-        expect(Y2Storage::Dialogs::Issues).to receive(:show).with(issues, anything)
+      it "shows a hint about clicking on details" do
+        expect(Y2Storage::Dialogs::Issues).to receive(:show).with(/Click below/, anything)
 
         subject.report
       end
 
-      it "includes the given message" do
-        expect(Y2Storage::Dialogs::Issues).to receive(:show) do |_, options|
-          expect(options[:message]).to eq("List of issues")
+      context "and a message is given" do
+        it "shows the given message" do
+          expect(Y2Storage::Dialogs::Issues).to receive(:show).with(/issues message/, anything)
+
+          subject.report(message: "issues message")
         end
 
-        subject.report(message: "List of issues")
+        it "shows the question" do
+          expect(Y2Storage::Dialogs::Issues).to receive(:show).with(/despite the issues\?/, anything)
+
+          subject.report(message: "issues message")
+        end
       end
 
-      it "includes the footer for several errors" do
-        expect(Y2Storage::Dialogs::Issues).to receive(:show) do |_, options|
-          expect(options[:footer]).to match(/despite the errors\?/)
+      context "and no message is given" do
+        it "shows a default message" do
+          expect(Y2Storage::Dialogs::Issues).to receive(:show).with(/Issues found/, anything)
+
+          subject.report
         end
 
-        subject.report
+        it "shows the question" do
+          expect(Y2Storage::Dialogs::Issues).to receive(:show).with(/despite the issues\?/, anything)
+
+          subject.report(message: "issues message")
+        end
       end
 
       include_examples "buttons", Y2Storage::Dialogs::Issues
 
       include_examples "focus", Y2Storage::Dialogs::Issues
+
+      include_examples "headline", Y2Storage::Dialogs::Issues
     end
   end
 end

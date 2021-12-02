@@ -63,14 +63,14 @@ describe Y2Partitioner::Dialogs::ProbingIssues do
 
         table = contents.nested_find do |w|
           w.is_a?(Yast::Term) &&
-            w.value == :Table &&
+            w.value == :SelectionBox &&
             w.params.any? { |p| p.value == :id && p.params.first == "issues_test" }
         end
 
         details = contents.nested_find do |w|
           w.is_a?(Yast::Term) &&
             w.value == :RichText &&
-            w.params.any? { |p| p.value == :id && p.params.first == "issues_test-details" }
+            w.params.any? { |p| p.value == :id && p.params.first == "issues_test-information" }
         end
 
         expect(table).to_not be_nil

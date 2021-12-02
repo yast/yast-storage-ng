@@ -61,7 +61,7 @@ module Y2Storage
       sanitized
     end
 
-    # Fixes the error (if possible)
+    # Fixes the issue (if possible)
     #
     # @note The given devicegraph is modified.
     #

@@ -18,18 +18,24 @@
 # find current contact information at www.suse.com.
 
 require "yast2/popup"
-require "y2storage/widgets/issues"
+require "y2storage/dialogs/issues_details"
 
 module Y2Storage
   module Dialogs
     # Popup to show storage issues
     #
+    # This popup behavies like a regular Yast2::Popup, but it uses a {IssuesDetails} dialog to show the
+    # details of the issues.
+    #
     # TODO: The class Yast2::Popup only shows text. But sometimes it is needed to show other kind of
-    #   content, like tables, checboxes, etc. Ideally, Yast2::Popup should allow to render arbitrary
+    #   content, like tables, checkboxes, etc. Ideally, Yast2::Popup should allow to render arbitrary
     #   content. For example, it could receive a presenter and extract the content from it:
     #
-    #   presenter = StorageIssuesPresenter.new(issues)
-    #   Yast2::Popup.show_content(presenter, buttons: :yes_no, timeout: 10)
+    #   issues_presenter = IssuesPresenter.new(issues)
+    #   details_presenter = DetailsPresenter.new(issues)
+    #
+    #   Yast2::Popup.show_content(issues_presenter,
+    #     details: details_presenter, buttons: :yes_no, timeout: 10)
     #
     #   With that approach, this Y2Storage::Dialogs::Issues class would not be needed. Moreover, the
     #   Y2Issues::Reporter class would be easily reused by passing a presenter object:
@@ -43,79 +49,37 @@ module Y2Storage
         # @return [Y2Issues::List]
         attr_reader :issues
 
-        # Footer text
-        #
-        # @return [String, nil]
-        attr_reader :footer
-
         # Shows the dialog
         #
         # Only accepts parameters from Yast2::Popup.show that make sense for this dialog.
         #
         # @param issues [Y2Issues::List]
-        # @param message [String] this will be shown before the table of issues
-        # @param footer [String] this will be shown after the table of issues
         # rubocop:disable Metrics/ParameterLists
-        def show(issues,
-          headline: "", timeout: 0, focus: nil, buttons: :ok, style: :notice, message: nil, footer: nil)
+        def show(message, issues:, headline: "", timeout: 0, focus: nil, buttons: :ok, style: :notice)
           @issues = issues
-          @footer = footer
-
-          message ||= ""
 
           super(message,
             headline: headline, timeout: timeout, focus: focus, buttons: buttons, style: style)
         end
         # rubocop:enable Metrics/ParameterLists
 
-        # @see Yast2::Popup
-        def message_widget(message, *_args)
-          VBox(
-            intro_widget(message),
-            issues_widget.content,
-            footer_widget
-          )
-        end
-
-        # Widget to show the given message
-        #
-        # @return [Yast::Term]
-        def intro_widget(message)
-          return Empty() if message.to_s.empty?
-
-          VBox(
-            Left(Label(message)),
-            VSpacing(0.4)
-          )
-        end
-
-        # Widget to show the footer
-        #
-        # @return [Yast::Term]
-        def footer_widget
-          return Empty() if footer.to_s.empty?
-
-          VBox(
-            VSpacing(0.4),
-            Left(Label(footer))
-          )
-        end
-
-        # Widget to show the issues and their details
-        #
-        # @return [Widgets::Issues]
-        def issues_widget
-          @issues_widget ||= Widgets::Issues.new(id: "issues", issues: issues)
-        end
-
-        # Delegates the event handling to the widget, when needed
+        # Adds the details button if there are issues
         #
         # @see Yast2::Popup
-        def handle_event(*_args)
+        def generate_buttons(buttons)
           result = super
-          return result unless result == issues_widget.id
+          add_details_button(result) unless issues.empty?
 
-          issues_widget.handle_event
+          result
+        end
+
+        # Uses a {IssuesDetails} dialog to show the details
+        #
+        # @see Yast2::Popup
+        def handle_event(res, *_args)
+          return super unless res == :__details
+
+          IssuesDetails.new(issues).show
           nil
         end
       end

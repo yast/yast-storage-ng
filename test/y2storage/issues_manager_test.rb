@@ -92,7 +92,7 @@ describe Y2Storage::IssuesManager do
 
         it "reports the issues" do
           expect(reporter).to receive(:report) do |args|
-            expect(args[:message]).to include("errors were found")
+            expect(args[:message]).to include("Issues found")
           end
 
           subject.report_probing_issues

@@ -25,9 +25,8 @@ module Y2Storage
   module Widgets
     # Widget to show storage issues
     #
-    # This class implements a composed widget with a table at top and a richtext at the bottom. The
-    # issues are listed in the table, and the richtext box shows the details of the currently selected
-    # issue.
+    # This class implements a composed widget with a list of issues at top and a richtext at the bottom.
+    # The richtext shows the information of the currently selected issue.
     #
     # @example:
     #   widget = Issues.new(id: "issues-widget", issues: issues)
@@ -35,6 +34,7 @@ module Y2Storage
     #   widget.handle_event   #=> updates richtext content
     class Issues
       include Yast::UIShortcuts
+
       include Yast::I18n
 
       # Widget id
@@ -55,25 +55,21 @@ module Y2Storage
 
       # Content of the widget
       #
-      # The widget contains a table and a richtext box. The table is used to list the issues and the
-      # details of the selected issue are shown in the richtext box.
+      # The widget contains a selection box and a richtext. The selection box is used to list the issues
+      # and the information of the selected issue is shown in the richtext box.
       #
       # @return [Yast::Term]
       def content
-        text = _("Select an issue to see the details.")
-
         VBox(
-          Left(Label(text)),
-          VSpacing(0.4),
-          MinSize(70, 10, table_widget),
-          VSpacing(0.4),
-          MinSize(70, 12, details_widget)
+          MinSize(70, 6, issues_widget),
+          VSpacing(0.2),
+          MinSize(70, 11, information_widget)
         )
       end
 
-      # Updates the richtext with the details of the currently selected issue
+      # Updates the richtext with the information of the currently selected issue
       def handle_event
-        Yast::UI.ChangeWidget(Id("#{id}-details"), :Value, details(selected_issue))
+        Yast::UI.ChangeWidget(Id("#{id}-information"), :Value, information(selected_issue))
       end
 
       private
@@ -82,26 +78,25 @@ module Y2Storage
       attr_reader :issues
 
       # @return [Yast::Term]
-      def table_widget
-        Table(
+      def issues_widget
+        SelectionBox(
           Id(id),
           Opt(:notify, :immediate),
-          Header("#", _("Issue Message")),
+          _("Issues"),
           issues_items
         )
       end
 
       # @return [Yast::Term]
-      def details_widget
-        VBox(
-          Left(Label(_("Details:"))),
-          RichText(Id("#{id}-details"), details(issues.first))
-        )
+      def information_widget
+        default_text = issues.empty? ? "" : information(issues.first)
+
+        RichText(Id("#{id}-information"), default_text)
       end
 
       # @return [Array<Yast::Item>]
       def issues_items
-        issues.map.with_index { |issue, i| Item(Id("#{id}-#{i}"), i + 1, issue.message) }
+        issues.map.with_index { |issue, i| Item(Id("#{id}-#{i}"), issue.message) }
       end
 
       # Currently selected issue
@@ -113,19 +108,20 @@ module Y2Storage
         issues.to_a[index]
       end
 
-      # Details of the given issue
+      # Information of the given issue
       #
       # @param issue [Issue]
       # @return [String]
+      def information(issue)
+        text = [issue.message, issue.description, details(issue)].compact.join("\n\n")
+
+        richtext(text)
+      end
+
       def details(issue)
-        return _("No details") if !issue&.description && !issue&.details
+        return nil unless issue.details
 
-        details = [issue.description]
-        details += [_("Technical details (English only):"), issue.details] if issue.details
-
-        details = details.compact.join("\n\n")
-
-        richtext(details)
+        _("Technical details (English only):") + "\n\n" + issue.details
       end
 
       # Converts plain text into richtext

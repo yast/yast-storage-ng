@@ -62,11 +62,11 @@ module Y2Storage
     # @return [Devicegraph]
     attr_reader :devicegraph
 
-    # Message to include when reporting probing issues
+    # Message to show when reporting probing issues
     #
     # @return [String]
     def probing_issues_message
-      _("The following errors were found while analyzing the storage devices.")
+      _("Issues found while analyzing the storage devices.")
     end
   end
 end

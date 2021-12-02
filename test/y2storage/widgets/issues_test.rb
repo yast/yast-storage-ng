@@ -41,33 +41,33 @@ describe Y2Storage::Widgets::Issues do
     )
   end
 
-  let(:table) do
-    subject.content.nested_find { |i| i.is_a?(Yast::Term) && i.value == :Table }
+  let(:issues_widget) do
+    subject.content.nested_find { |i| i.is_a?(Yast::Term) && i.value == :SelectionBox }
   end
 
-  let(:rows) do
-    table.params.find { |item| item.is_a?(Array) }
+  let(:issues_items) do
+    issues_widget.params.find { |item| item.is_a?(Array) }
   end
 
   let(:details) do
     subject.content.nested_find { |i| i.is_a?(Yast::Term) && i.value == :RichText }
   end
 
-  def find_row(text)
-    rows.find { |row| row.params.include?(text) }
+  def find_item(text)
+    issues_items.find { |i| i.params.include?(text) }
   end
 
   describe "#content" do
-    it "contains a table for listing the issues" do
-      expect(table).to_not be_nil
+    it "contains a list of issues" do
+      expect(issues_widget).to_not be_nil
     end
 
-    it "displays the given issues in the table" do
-      expect(find_row("Issue 1")).to_not be_nil
-      expect(find_row("Issue 2")).to_not be_nil
+    it "displays the given issues" do
+      expect(find_item("Issue 1")).to_not be_nil
+      expect(find_item("Issue 2")).to_not be_nil
     end
 
-    it "contains a richtext for displaying the details of the selected issue" do
+    it "contains a richtext for displaying the information of the selected issue" do
       expect(details).to_not be_nil
     end
   end
@@ -75,13 +75,13 @@ describe Y2Storage::Widgets::Issues do
   describe "#handle_event" do
     before do
       # Let's mock the second issue as the selected row
-      row_id = find_row("Issue 2").params.first.params[0]
+      row_id = find_item("Issue 2").params.first.params[0]
       allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :CurrentItem).and_return(row_id)
     end
 
-    it "displays the description and details of the selected issue in the details section" do
+    it "displays the information of the selected issue in the richtext box" do
       expect(Yast::UI).to receive(:ChangeWidget)
-        .with(Id("#{id}-details"), :Value, /Description.*Technical details.*Details of issue 2/)
+        .with(Id("#{id}-information"), :Value, /Description.*Technical details.*Details of issue 2/)
 
       subject.handle_event
     end

@@ -165,7 +165,7 @@ module Y2Storage
       true
     end
 
-    # Copies the devigraph into another one
+    # Copies the devicegraph into another one
     #
     # @param devicegraph [Devicegraph]
     def copy(devicegraph)
