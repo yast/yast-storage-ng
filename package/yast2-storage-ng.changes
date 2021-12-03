@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Dec  3 12:21:14 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Fix regression for unit tests: mock the generation of Bcache
+  issues to avoid setting the architecture for every test (related
+  to jsc#SLE-18430).
+- 4.4.20
+
+-------------------------------------------------------------------
 Thu Dec  2 16:36:41 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Refined the criteria used to check whether a certain mount point
