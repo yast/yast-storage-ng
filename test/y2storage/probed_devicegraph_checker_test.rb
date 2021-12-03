@@ -60,6 +60,14 @@ describe Y2Storage::ProbedDevicegraphChecker do
     end
 
     context "when there is a bcache device" do
+      before do
+        # Unmock #unsupported_bcache?, see RSpec config at spec_helper.rb
+        allow_any_instance_of(Y2Storage::ProbedDevicegraphChecker)
+          .to receive(:unsupported_bcache?).and_call_original
+      end
+
+      # Note: the devicegraph is only loaded but not probed, see {#devicegraph_from}. If the devicegraph
+      # is probed, then the test would fail because a Bcache error is reported.
       let(:devicegraph) { devicegraph_from("bcache2.xml") }
 
       context "on an architecture that supports bcache (x86_64)" do
@@ -73,9 +81,8 @@ describe Y2Storage::ProbedDevicegraphChecker do
       context "on an architecture that does not support bcache (ppc)" do
         let(:architecture) { :ppc }
 
-        it "contains a unsupported bcache issues" do
+        it "contains an unsupported bcache issue" do
           issues = subject.issues
-
           expect(issues).not_to be_empty
           expect(issues).to include(be_a(Y2Storage::UnsupportedBcacheIssue))
         end
