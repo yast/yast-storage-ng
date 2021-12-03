@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Thu Dec  2 16:36:41 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Refined the criteria used to check whether a certain mount point
+  needs the _netdev mount option (jsc#SLE-20535).
+- Now _netdev is only added if needed at the end of the Guided
+  Proposal, is not longer suggested as part of the default mount
+  options for new mount points.
+- 4.4.19
+
+-------------------------------------------------------------------
 Thu Dec  2 15:16:17 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Improve probing errors handling: when there are several errors,

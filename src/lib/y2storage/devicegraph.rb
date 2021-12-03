@@ -318,6 +318,13 @@ module Y2Storage
       Filesystems::Base.all(self)
     end
 
+    # All mount points in the devicegraph, in no particular order
+    #
+    # @return [Array<MountPoint>]
+    def mount_points
+      MountPoint.all(self)
+    end
+
     # @param mountpoint [String] mountpoint of the filesystem (e.g. "/").
     # @return [Boolean]
     def filesystem_in_network?(mountpoint)

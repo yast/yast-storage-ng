@@ -73,6 +73,7 @@ module Y2Storage
           graph = lvm_helper.create_volumes(graph, new_pvs)
         end
 
+        graph.mount_points.each(&:adjust_mount_options)
         graph
       end
 

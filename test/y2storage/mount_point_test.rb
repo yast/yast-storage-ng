@@ -510,56 +510,16 @@ describe Y2Storage::MountPoint do
       end
     end
 
-    context "in a local disk" do
+    context "in a disk" do
       let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
       let(:mountable) { blk_device.filesystem }
-
-      context "for a Btrfs file-system" do
-        let(:dev_name) { "/dev/sda2" }
-
-        it "sets #mount_options to an empty array" do
-          mount_point.set_default_mount_options
-          expect(mount_point.mount_options).to be_empty
-        end
-      end
-
-      context "for a Btrfs subvolume" do
-        let(:dev_name) { "/dev/sda2" }
-        let(:mountable) { blk_device.filesystem.btrfs_subvolumes.last }
-
-        it "sets #mount_options to an array containing only the subvol option" do
-          mount_point.set_default_mount_options
-          options = mount_point.mount_options
-          expect(options.size).to eq 1
-          expect(options.first).to match(/^subvol=/)
-        end
-      end
-
-      context "for an Ext3 file-system " do
-        let(:dev_name) { "/dev/sda3" }
-
-        it "sets #mount_options to an array containing only the data option" do
-          mount_point.set_default_mount_options
-          expect(mount_point.mount_options).to eq ["data=ordered"]
-        end
-      end
-    end
-
-    context "in a network disk" do
-      let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
-      let(:mountable) { blk_device.filesystem }
-
-      before do
-        disk = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda")
-        allow(disk.transport).to receive(:network?).and_return true
-      end
 
       context "for the root filesystem" do
         before do
           mount_point.path = "/"
         end
 
-        context "for a Btrfs file-system" do
+        context "for a Btrfs file-system (the same applies to most file-system types)" do
           let(:dev_name) { "/dev/sda2" }
 
           it "sets #mount_options to an empty array" do
@@ -580,7 +540,7 @@ describe Y2Storage::MountPoint do
           end
         end
 
-        context "for an Ext3 file-system " do
+        context "for an Ext3 or Ext4 file-system" do
           let(:dev_name) { "/dev/sda3" }
 
           it "sets #mount_options to an empty array" do
@@ -593,28 +553,14 @@ describe Y2Storage::MountPoint do
       context "for a non-root filesystem" do
         before do
           mount_point.path = "/home"
-          allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
         end
 
-        let(:hwinfo) { Y2Storage::HWInfoDisk.new }
-
-        context "for a Btrfs file-system" do
+        context "for a Btrfs file-system (the same applies to most file-system types)" do
           let(:dev_name) { "/dev/sda2" }
 
-          context "if the disk uses a driver that depends on a systemd service" do
-            let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["fcoe"]) }
-
-            it "sets #mount_options to an array containing only '_netdev'" do
-              mount_point.set_default_mount_options
-              expect(mount_point.mount_options).to eq ["_netdev"]
-            end
-          end
-
-          context "if the disk driver does not depend on any systemd service" do
-            it "sets #mount_options to an empty array" do
-              mount_point.set_default_mount_options
-              expect(mount_point.mount_options).to eq []
-            end
+          it "sets #mount_options to an empty array" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to eq []
           end
         end
 
@@ -630,26 +576,205 @@ describe Y2Storage::MountPoint do
           end
         end
 
-        context "for an Ext3 file-system " do
+        context "for an Ext3 or Ext4 file-system" do
           let(:dev_name) { "/dev/sda3" }
 
-          context "if the disk uses a driver that depends on a systemd service" do
-            let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi-tcp"]) }
+          it "sets #mount_options to an array containing only the data option" do
+            mount_point.set_default_mount_options
+            expect(mount_point.mount_options).to eq ["data=ordered"]
+          end
+        end
+      end
+    end
+  end
 
-            it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
-              mount_point.set_default_mount_options
-              expect(mount_point.mount_options).to contain_exactly("data=ordered", "_netdev")
+  describe "#adjust_mount_options" do
+    subject(:mount_point) { mountable.mount_point }
+
+    RSpec.shared_examples "remove netdev" do
+      it "removes the _netdev option if it is there" do
+        mount_point.mount_options = ["one", "_netdev", "two"]
+        mount_point.adjust_mount_options
+        expect(mount_point.mount_options).to eq ["one", "two"]
+      end
+    end
+
+    RSpec.shared_examples "add netdev" do
+      it "adds the _netdev option if it is not there" do
+        mount_point.mount_options = ["one", "two"]
+        mount_point.adjust_mount_options
+        expect(mount_point.mount_options).to eq ["one", "two", "_netdev"]
+      end
+    end
+
+    context "in an NFS filesystem" do
+      let(:mountable) { Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "path") }
+      before { mountable.create_mount_point("/mnt") }
+
+      it "does not change #mount_options" do
+        mount_point.mount_options = ["one", "_netdev", "two"]
+        mount_point.adjust_mount_options
+        expect(mount_point.mount_options).to eq ["one", "_netdev", "two"]
+      end
+    end
+
+    context "for a filesystem directly on a local disk (i.e. BlkDevice#in_network? returns false)" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:dev_name) { "/dev/sda" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+      subject(:mount_point) { mountable.create_mount_point("/home") }
+
+      include_examples "remove netdev"
+    end
+
+    context "for a filesystem on a Xen virtual partition" do
+      let(:scenario) { "xen-partitions.xml" }
+      let(:dev_name) { "/dev/xvda1" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+      subject(:mount_point) { mountable.create_mount_point("/home") }
+
+      include_examples "remove netdev"
+    end
+
+    context "for a partition in a local disk (i.e. BlkDevice#in_network? returns false)" do
+      let(:mountable) { blk_device.filesystem }
+
+      include_examples "remove netdev"
+    end
+
+    context "for a filesystem directly on a network disk (i.e. BlkDevice#in_network? returns true)" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:dev_name) { "/dev/sda" }
+      let(:mountable) { blk_device.create_filesystem(Y2Storage::Filesystems::Type::XFS) }
+
+      before do
+        allow(blk_device.transport).to receive(:network?).and_return true
+        allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
+      end
+
+      subject(:mount_point) { mountable.create_mount_point(path) }
+
+      context "if the disk uses a driver that depends on a systemd service" do
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi-tcp", "iscsi"]) }
+
+        context "and the filesystem is mounted at /" do
+          let(:path) { "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          let(:path) { "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          let(:path) { "/opt" }
+
+          include_examples "add netdev"
+        end
+      end
+
+      context "if the disk driver does not depend on any systemd service" do
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new }
+        context "and the filesystem is mounted at /" do
+          let(:path) { "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          let(:path) { "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          let(:path) { "/opt" }
+
+          include_examples "remove netdev"
+        end
+      end
+    end
+
+    context "for a partition in a network disk (i.e. BlkDevice#in_network? returns true)" do
+      let(:mountable) { blk_device.filesystem }
+      let(:hwinfo) { Y2Storage::HWInfoDisk.new }
+
+      before do
+        disk = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda")
+        allow(disk.transport).to receive(:network?).and_return true
+
+        allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(hwinfo)
+      end
+
+      context "if the disk uses a driver that depends on a systemd service" do
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["fcoe"]) }
+
+        context "and the filesystem is mounted at /" do
+          before { mount_point.path = "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          before { mount_point.path = "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          before { mount_point.path = "/home" }
+
+          let(:disk_partitions) { blk_device.disk.partitions }
+
+          before do
+            disk_partitions.each do |part|
+              next if part.filesystem&.mount_point.nil?
+              next if part == blk_device
+
+              part.filesystem.mount_path = alt_mount_path
             end
           end
 
-          context "if the disk driver does not depend on any systemd service" do
-            let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["qla4xxx"]) }
+          context "if the disk contains (directly or indirectly) the root filesystem" do
+            let(:alt_mount_path) { "/" }
 
-            it "sets #mount_options to an array containing only the data option" do
-              mount_point.set_default_mount_options
-              expect(mount_point.mount_options).to eq ["data=ordered"]
-            end
+            include_examples "remove netdev"
           end
+
+          context "if the disk contains (directly or indirectly) the /var filesystem" do
+            let(:alt_mount_path) { "/var" }
+
+            include_examples "remove netdev"
+          end
+
+          context "if the disk does not contain /var or /" do
+            let(:alt_mount_path) { "/opt" }
+
+            include_examples "add netdev"
+          end
+        end
+      end
+
+      context "if the disk driver does not depend on any systemd service" do
+        context "and the filesystem is mounted at /" do
+          before { mount_point.path = "/" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at /var" do
+          before { mount_point.path = "/var" }
+
+          include_examples "remove netdev"
+        end
+
+        context "and the filesystem is mounted at a regular path (not / or /var)" do
+          before { mount_point.path = "/home" }
+
+          include_examples "remove netdev"
         end
       end
     end

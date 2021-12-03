@@ -162,6 +162,14 @@ module Y2Storage
       mount_options
     end
 
+    # Adjusts the mount options as needed to avoid problems during booting
+    #
+    # See jsc#SLE-20535, bsc#1176140, bsc#1165937 and jsc#SLE-7687
+    def adjust_mount_options
+      self.mount_options =
+        mount_options + mountable.missing_mount_options - mountable.unwanted_mount_options
+    end
+
     # @!method set_default_mount_by
     #   Set the mount-by method to the global default, see Storage::get_default_mount_by()
     storage_forward :set_default_mount_by, to: :default_mount_by=
@@ -373,6 +381,19 @@ module Y2Storage
     # calculated by the library, while this relies on {#default_mount_options}.
     def set_default_mount_options
       self.mount_options = default_mount_options
+    end
+
+    # @see #mounted_by_init?
+    INITRD_MOUNT_OPTION = "x-initrd.mount".freeze
+    private_constant :INITRD_MOUNT_OPTION
+
+    # Whether YaST expects this mount point to be already initialized in the initramfs
+    #
+    # @return [Boolean]
+    def mounted_by_init?
+      # Intentionally avoiding String#casecmp to check the mount option, turns out
+      # X-what.ever has a different semantic than x-what.ever (see "man -s8 mount")
+      root? || mount_options.include?(INITRD_MOUNT_OPTION)
     end
 
     protected

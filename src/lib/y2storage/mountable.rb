@@ -91,6 +91,26 @@ module Y2Storage
       mount_point.mount_options
     end
 
+    # Mount options that may be needed for the system to boot correctly, but that are not currently
+    # part of #{mount_options}
+    #
+    # @see MountPoint#adjust_mount_options
+    #
+    # @return [Array<String>]
+    def missing_mount_options
+      []
+    end
+
+    # Mount options that are currently part of #{mount_options} but that may prevent a correct
+    # system boot
+    #
+    # @see MountPoint#adjust_mount_options
+    #
+    # @return [Array<String>]
+    def unwanted_mount_options
+      []
+    end
+
     # Is the mount persistent?
     #
     # @return [Boolean] true if the mount point is saved to /etc/fstab
@@ -108,6 +128,18 @@ module Y2Storage
       return false if mount_point.nil?
 
       mount_point.root?
+    end
+
+    # Whether the device contains a mount point that returns true for the given block or whether the
+    # device is based in the same disk than another device containing such a mount point
+    #
+    # @return [Boolean]
+    def disk_with_mount_point?(&block)
+      return true if mount_point && block.call(mount_point)
+
+      ([self] + ancestors).any? do |dev|
+        dev.is_a?(BlkDevice) && dev.contain_mount_point?(&block)
+      end
     end
 
     # Creates a mount point object for the device

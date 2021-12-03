@@ -240,6 +240,50 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#mount_points" do
+    before do
+      fake_scenario("complex-lvm-encrypt")
+      fake_devicegraph.find_by_name("/dev/sda1").filesystem.create_mount_point("/mnt/windows")
+      fake_devicegraph.find_by_name("/dev/mapper/cr_sda4").filesystem.create_mount_point("/mnt/data")
+      fake_devicegraph.find_by_name("/dev/mapper/cr_vg1_lv2").filesystem.create_mount_point("/mnt/abc")
+    end
+
+    subject(:list) { fake_devicegraph.mount_points }
+    let(:paths) { list.map(&:path) }
+
+    it "returns a array of mount points" do
+      expect(list).to be_a Array
+      expect(list.map { |i| i.is?(:mount_point) }).to all(be(true))
+    end
+
+    it "finds the mount points on plain partitions" do
+      expect(paths).to include("/mnt/windows")
+    end
+
+    it "finds the filesystems on encrypted partitions" do
+      expect(paths).to include("/mnt/data")
+    end
+
+    it "finds the filesystems on plain LVs" do
+      expect(paths).to include("/")
+    end
+
+    it "finds the filesystems on encrypted LVs" do
+      expect(paths).to include("/mnt/abc")
+    end
+
+    context "in a btrfs setup" do
+      before do
+        fake_scenario("raid_efi")
+      end
+
+      it "finds the mount points on Btrfs subvolumes" do
+        expect(paths).to include("/var/lib/mariadb")
+        expect(paths).to include("/var/crash")
+      end
+    end
+  end
+
   describe "#multidevice_btrfs_filesystems" do
     before do
       fake_scenario("btrfs2-devicegraph.xml")
