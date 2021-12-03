@@ -109,15 +109,14 @@ RSpec.configure do |c|
       end
     end
 
-    # Bcache is only supported for x86_64 architecture. The sanitizer complains when
-    # Bcache is used with another architecture. Bcache errors are mocked here to avoid
-    # to have to indicate x86_84 architecture in every test using Bcache (which has
-    # demonstrated to be quite error prone).
+    # Bcache is only supported for x86_64 architecture. Probing the devicegraph complains if Bcache is
+    # used with another architecture. Bcache error is avoided here. Otherwise, x86_84 architecture must
+    # to be set for every test using Bcache (which has demonstrated to be quite error prone).
     #
-    # This should be properly unmocked in the tests where real Bcache checking needs
-    # to be performed (e.g., DevicegraphSanitizer tests).
-    allow_any_instance_of(Y2Storage::DevicegraphSanitizer)
-      .to receive(:bcaches_errors).and_return([])
+    # This should be properly unmocked in the tests where real Bcache checking needs to be performed
+    # (e.g., for ProbedDevicegraphChecker tests).
+    allow_any_instance_of(Y2Storage::ProbedDevicegraphChecker)
+      .to receive(:unsupported_bcache?).and_return(false)
   end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize
