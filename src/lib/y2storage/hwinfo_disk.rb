@@ -47,9 +47,9 @@ module Y2Storage
     def self.define_property(name, multi: false)
       define_method(name) do
         if multi
-          super() || []
+          self[name] || []
         else
-          super()
+          self[name]
         end
       end
     end
