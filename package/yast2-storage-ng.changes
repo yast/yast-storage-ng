@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Dec  9 13:25:29 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- use libstorage-ng to determine whether efibootmgr is available
+  (bsc#937067)
+- 4.4.22
+
+-------------------------------------------------------------------
 Wed Dec  8 10:01:35 UTC 2021 - Josef Reidinger <jreidinger@suse.com>
 
 - Prepare code for ruby3 - adapt openstruct usage (bsc#1193192)

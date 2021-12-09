@@ -23,11 +23,29 @@ require "y2storage/storage_class_wrapper"
 module Y2Storage
   # Hardware architecture
   #
-  # This is a wrapper for Storage::Arch
+  # This is a wrapper for Storage::Arch.
   class Arch
     include StorageClassWrapper
 
     wrap_class Storage::Arch
+
+    # Wraps the Storage::Arch object passed to it or creates a new
+    # Storage::Arch object and wraps that.
+    #
+    # This also adjusts {#efiboot?} according to the `/etc/install.inf::EFI` setting.
+    #
+    # @param storage_arch [Storage::Arch] Storage::Arch object to wrap.
+    #
+    # @return [Y2Storage::Arch]
+    def initialize(storage_arch = Storage::Arch.new)
+      super(storage_arch)
+
+      Yast.import "Linuxrc"
+
+      return if Yast::Linuxrc.InstallInf("EFI").nil?
+
+      storage_arch.efiboot = Yast::Linuxrc.InstallInf("EFI") == "1"
+    end
 
     # @!method x86?
     #   @return [Boolean] whether the architecture is x86
@@ -52,6 +70,23 @@ module Y2Storage
     # @!method page_size
     #   @return [Integer] the system page size
     storage_forward :page_size
+
+    # @!method efibootmgr?
+    #
+    # Whether the UEFI boot manager can write UEFI boot entries.
+    #
+    # Storage::Arch exports it as static function to not break the existing ABI.
+    # Make it available as instance method to have a consistent API
+    # in {Y2Storage::Arch}.
+    #
+    # @note This is entirely independent of {#efiboot?}. In particular
+    #   overriding {#efiboot?} with environment variables or config files will
+    #   have no effect on {#efibootmgr?}.
+    #
+    # @return [Boolean] whether the UEFI boot manager can write UEFI boot entries
+    def efibootmgr?
+      to_storage_value.class.efibootmgr?
+    end
 
     # Current RAM size in bytes
     #
