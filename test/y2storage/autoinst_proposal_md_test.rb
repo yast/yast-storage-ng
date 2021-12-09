@@ -40,6 +40,7 @@ describe Y2Storage::AutoinstProposal do
     before { fake_scenario(scenario) }
     let(:scenario) { "bug_1120979" }
 
+    let(:format_md) { create }
     let(:partitioning) do
       [
         {
@@ -48,7 +49,7 @@ describe Y2Storage::AutoinstProposal do
           "partitions" =>
             [
               {
-                "create" => create, "filesystem" => :xfs, "format" => create, "mount" => "/home",
+                "create" => create, "filesystem" => :xfs, "format" => format_md, "mount" => "/home",
                 "mountby" => :uuid, "partition_nr" => partition_nr,
                 "raid_options" => {
                   "raid_type"    => "raid1",
@@ -125,7 +126,33 @@ describe Y2Storage::AutoinstProposal do
         expect(raids.first.devices.map(&:name)).to contain_exactly("/dev/vdb1", "/dev/vdc1")
       end
 
-      include_examples "format MD with no issues"
+      context "if the RAID should be reformatted" do
+        let(:format_md) { true }
+
+        include_examples "format MD with no issues"
+      end
+
+      context "if the RAID should not be formatted" do
+        let(:format_md) { false }
+
+        it "does not register any issue" do
+          proposal.propose
+          expect(issues_list).to be_empty
+        end
+
+        it "mounts the existing RAID filesystem without destroying it" do
+          fs = fake_devicegraph.raids.first.filesystem
+          fs_sid = fs.sid
+          fs_type = fs.type
+
+          proposal.propose
+
+          raid = proposal.devices.raids.first
+          expect(raid.filesystem.sid).to eq fs_sid
+          expect(raid.filesystem.type).to eq fs_type
+          expect(raid.filesystem.mount_path).to eq "/home"
+        end
+      end
     end
 
     RSpec.shared_examples "missing Md" do

@@ -541,6 +541,7 @@ describe Y2Storage::AutoinstProposal do
 
           root_lv = devicegraph.lvm_lvs.find { |lv| lv.filesystem_mountpoint == "/" }
           expect(root_lv.sid).to eq lv2.sid
+          expect(root_lv.filesystem.sid).to eq lv2.filesystem.sid
         end
       end
 
