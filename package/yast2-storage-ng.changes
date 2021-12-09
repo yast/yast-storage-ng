@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Dec  8 10:01:35 UTC 2021 - Josef Reidinger <jreidinger@suse.com>
+
+- Prepare code for ruby3 - adapt openstruct usage (bsc#1193192)
+- 4.4.21
+
+-------------------------------------------------------------------
 Fri Dec  3 12:21:14 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Fix regression for unit tests: mock the generation of Bcache
