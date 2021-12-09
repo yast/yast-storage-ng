@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        4.4.21
+Version:        4.4.22
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# Encryption#pbkdf
-BuildRequires:	libstorage-ng-ruby >= 4.4.56
+# Storage::Arch.is_efibootmgr
+BuildRequires:	libstorage-ng-ruby >= 4.4.61
 BuildRequires:  update-desktop-files
 # Yast::Kernel.propose_hibernation?
 BuildRequires:  yast2 >= 4.3.41
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# Encryption#pbkdf
-Requires:       libstorage-ng-ruby >= 4.4.56
+# Storage::Arch.is_efibootmgr
+Requires:       libstorage-ng-ruby >= 4.4.61
 # Yast::Kernel.propose_hibernation?
 Requires:       yast2 >= 4.3.41
 # Y2Packager::Repository
