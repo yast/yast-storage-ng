@@ -131,7 +131,7 @@ module Y2Storage
       # Plans a device based on a <volume> section from control file
       #
       # @param volume [VolumeSpecification]
-      # @return [Planned::device]
+      # @return [Planned::Device]
       def planned_device(volume)
         if settings.separate_vgs && volume.separate_vg?
           planned_separate_vg(volume)
@@ -176,8 +176,9 @@ module Y2Storage
         adjust_sizes(planned_device, volume)
         adjust_btrfs(planned_device, volume)
         adjust_device(planned_device, volume)
-
         adjust_swap(planned_device, volume) if planned_device.swap?
+
+        planned_device.fstab_options = volume.mount_options&.split(",")
       end
 
       # Adjusts planned device weight according to settings
