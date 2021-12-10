@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -33,6 +33,9 @@ module Y2Storage
 
     # @return [String] directory where the volume will be mounted in the system
     attr_accessor :mount_point
+
+    # @return [String] mount options, separated by comma
+    attr_accessor :mount_options
 
     # @return [Boolean] whether this volume should be created or skipped
     attr_accessor :proposed
@@ -288,6 +291,7 @@ module Y2Storage
 
     FEATURES = {
       mount_point:                :string,
+      mount_options:              :string,
       proposed:                   :boolean,
       proposed_configurable:      :boolean,
       fs_types:                   :list,

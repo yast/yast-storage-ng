@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 10 10:18:05 UTC 2021 - José Iván López González <jlopez@suse.com>
+
+- Proposal: add support for mount options (related to fate#318196).
+- 4.4.23
+
+-------------------------------------------------------------------
 Thu Dec  9 13:25:29 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
 
 - use libstorage-ng to determine whether efibootmgr is available

@@ -57,6 +57,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
       {
         "proposed"        => proposed,
         "mount_point"     => mount_point,
+        "mount_options"   => mount_options,
         "fs_type"         => fs_type,
         "desired_size"    => desired_size.to_s,
         "min_size"        => min_size.to_s,
@@ -73,6 +74,8 @@ describe Y2Storage::Proposal::DevicesPlanner do
     let(:proposed) { true }
 
     let(:mount_point) { "/" }
+
+    let(:mount_options) { nil }
 
     let(:fs_type) { :ext3 }
 
@@ -126,6 +129,30 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
           it "plans a device for the <volume> entry" do
             expect(planned_devices).to include(an_object_having_attributes(mount_point: mount_point))
+          end
+
+          context "and the <volume> entry contains empty <mount_options>" do
+            let(:mount_options) { "" }
+
+            it "plans a device with empty mount options" do
+              expect(planned_device.fstab_options).to eq([])
+            end
+          end
+
+          context "and the <volume> entry contains <mount_options>" do
+            let(:mount_options) { "ro,defaults" }
+
+            it "plans a device with the indicated mount options" do
+              expect(planned_device.fstab_options).to eq(["ro", "defaults"])
+            end
+          end
+
+          context "and the <volume> entry does not contain <mount_options>" do
+            let(:mount_options) { nil }
+
+            it "plans a device without (default) mount options" do
+              expect(planned_device.fstab_options).to be_nil
+            end
           end
 
           context "and it is proposing a partition-based setup" do
@@ -401,6 +428,10 @@ describe Y2Storage::Proposal::DevicesPlanner do
           end
 
           context "when it is using adjust_by_ram" do
+            before do
+              allow(Yast::Linuxrc).to receive(:InstallInf)
+            end
+
             let(:adjust_by_ram) { true }
 
             let(:desired_size) { 1.GiB }

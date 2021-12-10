@@ -83,6 +83,7 @@ describe Y2Storage::VolumeSpecification do
     let(:volume_features) do
       {
         "mount_point"                => mount_point,
+        "mount_options"              => mount_options,
         "proposed"                   => proposed,
         "proposed_configurable"      => proposed_configurable,
         "desired_size"               => desired_size,
@@ -103,6 +104,7 @@ describe Y2Storage::VolumeSpecification do
     end
 
     let(:mount_point) { "/home" }
+    let(:mount_options) { "ro,defaults" }
     let(:proposed) { true }
     let(:proposed_configurable) { true }
     let(:desired_size) { "5 GiB" }
@@ -122,6 +124,7 @@ describe Y2Storage::VolumeSpecification do
 
     it "creates an object with the indicated features" do
       expect(subject.mount_point).to eq("/home")
+      expect(subject.mount_options).to eq("ro,defaults")
       expect(subject.proposed).to eq(true)
       expect(subject.proposed_configurable).to eq(true)
       expect(subject.desired_size).to eq(5.GiB)
