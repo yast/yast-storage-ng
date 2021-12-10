@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 10 15:29:16 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- document UEFI handling (bsc#937067)
+- 4.4.24
+
+-------------------------------------------------------------------
 Fri Dec 10 10:18:05 UTC 2021 - José Iván López González <jlopez@suse.com>
 
 - Proposal: add support for mount options (related to fate#318196).
