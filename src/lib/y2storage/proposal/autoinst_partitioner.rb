@@ -119,7 +119,7 @@ module Y2Storage
       # @param planned_device [Planned::Device] Planned device
       # @return [Proposal::CreatorResult] Result containing the formatted device
       def format_device(device, planned_device)
-        planned_device.format!(device)
+        planned_device.format!(device) if can_format?(planned_device)
         CreatorResult.new(devicegraph, device.name => planned_device)
       end
 
@@ -161,6 +161,19 @@ module Y2Storage
 
         # Second try with more flexible planned partitions
         calculator.best_distribution(flexible_partitions(planned_partitions), spaces)
+      end
+
+      # Checks whether (re)formatting the given device is acceptable
+      #
+      # @see #format_device
+      #
+      # @param planned [Planned::Device] planned device
+      # @return [Boolean]
+      def can_format?(planned)
+        # If the device is not going to be reused, #reformat? is irrelevant
+        return true unless planned.reuse?
+
+        planned.reformat?
       end
     end
   end
