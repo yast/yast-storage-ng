@@ -228,6 +228,20 @@ module Y2Storage
       end
     end
 
+    # Staging devicegraph
+    #
+    # @raise [Yast::AbortException] when {#probe} returns false
+    # @see #staging
+    #
+    # @return [Devicegraph]
+    def staging!
+      success = probed? ? true : probe
+
+      raise Yast::AbortException unless success
+
+      staging
+    end
+
     # Copies the manually-calculated (no proposal) devicegraph to staging.
     #
     # If the devicegraph was calculated by means of a proposal, use #proposal=

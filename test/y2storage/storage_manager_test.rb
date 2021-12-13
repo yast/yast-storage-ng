@@ -630,6 +630,49 @@ describe Y2Storage::StorageManager do
     end
   end
 
+  describe "#staging!" do
+    context "when system has not been probed yet" do
+      before do
+        allow(subject).to receive(:probed?).and_return(false)
+        allow(subject).to receive(:probe).and_return(probing_result)
+      end
+
+      context "and probing returns true" do
+        let(:probing_result) { true }
+
+        it "does not raise an error" do
+          expect { subject.staging! }.to_not raise_error
+        end
+
+        it "returns a devicegraph" do
+          expect(subject.staging!).to be_a(Y2Storage::Devicegraph)
+        end
+      end
+
+      context "and probing returns false" do
+        let(:probing_result) { false }
+
+        it "raises a Yast::AbortException" do
+          expect { subject.staging! }.to raise_error(Yast::AbortException)
+        end
+      end
+    end
+
+    context "when system has been already probed" do
+      before do
+        fake_scenario("gpt_and_msdos")
+      end
+
+      it "does not raise an error" do
+        expect { subject.staging! }.to_not raise_error
+      end
+
+      it "returns a devicegraph" do
+        expect(subject.staging!).to be_a(Y2Storage::Devicegraph)
+      end
+    end
+  end
+
   describe "#probe" do
     before do
       described_class.instance.probe_from_yaml(input_file_for("gpt_and_msdos"))
