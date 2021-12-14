@@ -277,6 +277,76 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
+      context "when the partition is encrypted" do
+        let(:scenario) { "gpt_encryption" }
+
+        context "and marked to be formatted with no encryption information" do
+          let(:root) do
+            { "mount" => "/", "partition_nr" => 4, "create" => false,
+              "format" => true, "filesystem" => :ext2 }
+          end
+
+          it "reuses the encrypted partition (keeping the LUKS) and formats it" do
+            initial_part = fake_devicegraph.find_by_name("/dev/sda4")
+            luks_sid = initial_part.encryption.sid
+
+            proposal.propose
+            devicegraph = proposal.devices
+            reused_part = devicegraph.find_by_name("/dev/sda4")
+
+            expect(reused_part.encryption.sid).to eq luks_sid
+            expect(reused_part).to have_attributes(
+              filesystem_type:       Y2Storage::Filesystems::Type::EXT2,
+              filesystem_mountpoint: "/"
+            )
+          end
+        end
+
+        context "and marked to be formatted with encryption" do
+          let(:root) do
+            { "mount" => "/", "partition_nr" => 4, "create" => false, "crypt_fs" => true,
+              "format" => true, "crypt_key" => "secret", "filesystem" => :ext2 }
+          end
+
+          it "encrypts the partition (replacing the previous LUKS) and formats it" do
+            initial_part = fake_devicegraph.find_by_name("/dev/sda4")
+            luks_sid = initial_part.encryption.sid
+
+            proposal.propose
+            devicegraph = proposal.devices
+            reused_part = devicegraph.find_by_name("/dev/sda4")
+
+            expect(reused_part.encrypted?).to eq true
+            expect(reused_part.encryption.sid).to_not eq luks_sid
+            expect(reused_part).to have_attributes(
+              filesystem_type:       Y2Storage::Filesystems::Type::EXT2,
+              filesystem_mountpoint: "/"
+            )
+            # At some point, AutoYaST used to wrongly add an extra LUKS layer
+            expect(reused_part.encryption.encrypted?).to eq false
+          end
+        end
+
+        context "and not marked to be re-formatted" do
+          let(:root) do
+            { "mount" => "/", "partition_nr" => 4, "create" => false, "crypt_fs" => true,
+              "format" => false, "crypt_key" => "secret", "filesystem" => :ext2 }
+          end
+
+          it "keeps the existing encryption and filesystem" do
+            proposal.propose
+            devicegraph = proposal.devices
+            reused_part = devicegraph.find_by_name("/dev/sda4")
+
+            expect(reused_part.encrypted?).to eq true
+            expect(reused_part).to have_attributes(
+              filesystem_type:       Y2Storage::Filesystems::Type::BTRFS,
+              filesystem_mountpoint: "/"
+            )
+          end
+        end
+      end
+
       context "when the reused partition is in a DASD" do
         let(:scenario) { "dasd_50GiB" }
 
