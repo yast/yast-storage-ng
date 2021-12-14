@@ -145,10 +145,7 @@ module Y2Storage
           return
         end
         md.reuse_name = md_to_reuse.name
-        return unless section.is_a?(AutoinstProfile::PartitionSection)
-
-        md.reformat = !!section.format
-        check_reusable_filesystem(md, md_to_reuse, section)
+        config_filesystem_reuse(md, md_to_reuse, section)
       end
 
       # Parses the user specified chunk size
