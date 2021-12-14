@@ -145,6 +145,7 @@ module Y2Storage
           return
         end
         md.reuse_name = md_to_reuse.name
+        config_filesystem_reuse(md, md_to_reuse, section)
       end
 
       # Parses the user specified chunk size
