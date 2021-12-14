@@ -47,8 +47,9 @@ describe Y2Storage::AutoinstProposal do
     let(:create) { true }
     let(:init) { true }
     let(:ptable_type) { "msdos" }
+    let(:format) { create }
     let(:root) do
-      { "create" => create, "filesystem" => :btrfs, "format" => create, "mount" => "/",
+      { "create" => create, "filesystem" => :btrfs, "format" => format, "mount" => "/",
         "partition_nr" => 1 }
     end
 
@@ -167,11 +168,51 @@ describe Y2Storage::AutoinstProposal do
       let(:init) { false }
       let(:create) { false }
 
-      it "does not create a new bcache" do
-        old_sid = fake_devicegraph.find_by_name("/dev/bcache0").sid
-        proposal.propose
-        bcache = proposal.devices.find_by_name("/dev/bcache0")
-        expect(bcache.sid).to eq(old_sid)
+      RSpec.shared_examples "reuse bcache" do
+        it "does not create a new bcache" do
+          old_sid = fake_devicegraph.find_by_name("/dev/bcache0").sid
+          proposal.propose
+          bcache = proposal.devices.find_by_name("/dev/bcache0")
+          expect(bcache.sid).to eq(old_sid)
+        end
+      end
+
+      include_examples "reuse bcache"
+
+      context "if the bcache is directly formatted" do
+        let(:ptable_type) { "none" }
+
+        before do
+          bcache0 = fake_devicegraph.find_by_name("/dev/bcache0")
+          bcache0.remove_descendants
+          bcache0.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        context "and the bcache should be reformatted" do
+          let(:format) { true }
+
+          include_examples "reuse bcache"
+
+          it "formats the bcache as specified in the profile" do
+            proposal.propose
+            bcache = proposal.devices.find_by_name("/dev/bcache0")
+            expect(bcache.filesystem.type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+            expect(bcache.filesystem.mount_point.path).to eq("/")
+          end
+        end
+
+        context "and the bcache should be not be formatted" do
+          let(:format) { false }
+
+          include_examples "reuse bcache"
+
+          it "mounts the existing bcache filesystem without destroying it" do
+            proposal.propose
+            bcache = proposal.devices.find_by_name("/dev/bcache0")
+            expect(bcache.filesystem.type).to eq(Y2Storage::Filesystems::Type::EXT4)
+            expect(bcache.filesystem.mount_point.path).to eq("/")
+          end
+        end
       end
     end
 
