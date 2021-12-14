@@ -98,6 +98,11 @@ module Y2Storage
           return
         end
         bcache.reuse_name = bcache_to_reuse.name
+
+        return unless section.is_a?(AutoinstProfile::PartitionSection)
+
+        bcache.reformat = !!section.format
+        check_reusable_filesystem(bcache, bcache_to_reuse, section)
       end
 
       # Finds the bcache to be reused by the given planned bcache
