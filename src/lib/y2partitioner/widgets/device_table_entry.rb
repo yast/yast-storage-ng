@@ -147,21 +147,12 @@ module Y2Partitioner
 
         private
 
+        # List of devices to show as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Array<Y2Storage::Device>] list of children devices or empty list
         def children(device)
-          return btrfs_subvolumes(device) if nesting_btrfs_subvolumes?(device)
-
-          if device.is?(:lvm_vg)
-            # All logical volumes, including thin pools and thin volumes
-            device.all_lvm_lvs
-          elsif device.respond_to?(:partitions)
-            # Logical partitions are not included because they are nested within the extended one
-            device.partitions.reject { |p| p.type.is?(:logical) }
-          elsif device.is?(:partition) && device.type.is?(:extended)
-            # All logical partitions
-            device.children
-          else
-            []
-          end
+          nesting_btrfs_subvolumes(device) + nesting_partitions(device) + nesting_lvm_lvs(device)
         end
 
         # Whether the given device should show Btrfs subvolumes as children devices
@@ -182,10 +173,60 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::Device]
         # @return [Array<Y2Storage::BtrfsSubvolume>]
-        def btrfs_subvolumes(device)
-          filesystem = device.is?(:filesystem) ? device : device.filesystem
+        def nesting_btrfs_subvolumes(device)
+          return [] unless nesting_btrfs_subvolumes?(device)
 
+          filesystem = device.is?(:filesystem) ? device : device.filesystem
           filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.prefix? }
+        end
+
+        # Whether the given device should show partitions as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def nesting_partitions?(device)
+          device.respond_to?(:partitions) || (device.is?(:partition) && device.type.is?(:extended))
+        end
+
+        # Partitions to show as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Array<Y2Storage::Partition>]
+        def nesting_partitions(device)
+          return [] unless nesting_partitions?(device)
+
+          # Logical partitions are not included because they are nested within the extended one
+          return device.partitions.reject { |p| p.type.is?(:logical) } if device.respond_to?(:partitions)
+
+          # All logical partitions
+          return device.children if device.is?(:partition) && device.type.is?(:extended)
+
+          []
+        end
+
+        # Whether the given volume group or logical volume should show
+        # logical volumes as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Boolean]
+        def nesting_lvm_lvs?(device)
+          device.is?(:lvm_vg, :lvm_lv)
+        end
+
+        # Logical volumes to show as children devices
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Array<Y2Storage::LvmLv>]
+        def nesting_lvm_lvs(device)
+          return [] unless nesting_lvm_lvs?(device)
+
+          # All logical volumes, including thin pools but excluding thin volumes
+          return device.all_lvm_lvs - device.thin_lvm_lvs if device.is?(:lvm_vg)
+
+          # Logical volumes in a thin pool, if any; empty for normal logical volumes
+          return device.lvm_lvs if device.is?(:lvm_lv)
+
+          []
         end
       end
     end
