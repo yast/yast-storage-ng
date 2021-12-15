@@ -98,6 +98,7 @@ module Y2Storage
           return
         end
         bcache.reuse_name = bcache_to_reuse.name
+        config_filesystem_reuse(bcache, bcache_to_reuse, section)
       end
 
       # Finds the bcache to be reused by the given planned bcache
