@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Dec 15 18:48:46 UTC 2021 - David Diaz <dgonzalez@suse.com>
+
+- Add support for improving the handling if the user decides to
+  abort when reporting probing issues (bsc#1193749).
+- 4.4.27
+
+-------------------------------------------------------------------
 Wed Dec 15 16:28:02 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
 
 - Partitioner: nest thin logical volumes below their thin pools (related to
