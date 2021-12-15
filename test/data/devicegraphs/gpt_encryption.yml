@@ -22,7 +22,6 @@
         name: "/dev/sda4"
         id: linux
         file_system: btrfs
-        mount_point: "/"
         encryption:
           type: luks
           name: "/dev/mapper/cr_sda4"
