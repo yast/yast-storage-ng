@@ -79,7 +79,7 @@ module Y2Storage
         result = super
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
-          result = result.encrypt(method: method, password: encryption_password)
+          result = plain_device.encrypt(method: method, password: encryption_password)
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"

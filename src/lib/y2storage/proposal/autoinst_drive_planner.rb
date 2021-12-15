@@ -313,14 +313,24 @@ module Y2Storage
         !!spec && spec.btrfs_read_only?
       end
 
-      # @param planned_device [Planned::Partition,Planned::LvmLV,Planned::Md] Planned device
+      # @param planned_device [Planned::Device] Planned device
       # @param device         [Y2Storage::Device] Device to reuse
       # @param section        [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_device_reuse(planned_device, device, section)
-        planned_device.uuid = section.uuid
         planned_device.reuse_name = device.is_a?(LvmVg) ? device.volume_group_name : device.name
-        planned_device.reformat = !!section.format
+        planned_device.uuid = section.uuid
         planned_device.resize = !!section.resize if planned_device.respond_to?(:resize=)
+        config_filesystem_reuse(planned_device, device, section)
+      end
+
+      # @param planned_device [Planned::Device] Planned device
+      # @param device         [Y2Storage::Device] Device to reuse
+      # @param section        [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] relevant section
+      #   of the AutoYaST specification
+      def config_filesystem_reuse(planned_device, device, section)
+        return unless section.is_a?(AutoinstProfile::PartitionSection)
+
+        planned_device.reformat = !!section.format
         check_reusable_filesystem(planned_device, device, section) if device.respond_to?(:filesystem)
       end
 
