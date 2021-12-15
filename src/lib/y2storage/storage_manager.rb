@@ -504,17 +504,17 @@ module Y2Storage
     def manage_probing_issues
       continue = raw_probed.issues_manager.report_probing_issues
 
-      if continue
-        sanitizer = DevicegraphSanitizer.new(raw_probed)
-
-        @probed_graph = sanitizer.sanitized_devicegraph
-        @probed_graph.safe_copy(staging)
-
-        # Save sanitized devicegraph into logs
-        log.info("Sanitized probed devicegraph\n#{probed.to_xml}")
-      else
+      if !continue
         raise Yast::AbortException, "User has aborted because probed devicegraph contains errors"
       end
+
+      sanitizer = DevicegraphSanitizer.new(raw_probed)
+
+      @probed_graph = sanitizer.sanitized_devicegraph
+      @probed_graph.safe_copy(staging)
+
+      # Save sanitized devicegraph into logs
+      log.info("Sanitized probed devicegraph\n#{probed.to_xml}")
     end
 
     # Whether the final steps to configure Snapper should be performed by YaST
