@@ -52,6 +52,9 @@ module Y2Storage
         reused_devices = reused_devices_by_disk(devicegraph, planned_devices)
         sid_map = partitions_sid_map(devicegraph)
 
+        # FIXME: if using the old syntax for RAIDs, with a single <drive> entry that describes several
+        # MDs, there is only one entry in the map for the first MD described by the drive section.
+        # Other MDs included as <partition> in the same <drive> will not be processed here.
         drives_map.each_pair do |disk_name, drive_spec|
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
           next unless disk
@@ -70,9 +73,10 @@ module Y2Storage
       # Deletes unwanted partitions for the given disk
       #
       # @param devicegraph    [Devicegraph]
-      # @param disk           [Disk]
+      # @param disk           [BlkDevice] the device referenced by the drive section, it's usually
+      #   a disk but it can also be an MD RAID, a bcache...
       # @param drive_spec     [AutoinstProfile::DriveSection]
-      # @param reused_devices [Array<String>,nil] Reused disks and partitions names
+      # @param reused_devices [Array<String>,nil] names of reused devices (disks, raids, partitions...)
       def delete_stuff(devicegraph, disk, drive_spec, reused_devices)
         reused_devices ||= []
         if drive_spec.initialize_attr && reused_devices.empty?
@@ -108,9 +112,14 @@ module Y2Storage
         end
       end
 
-      # Cleans up the disk according to the "use" element
+      # Cleans up the disk (or RAID, or bcache...) according to the "use" element
       #
-      # @param disk           [Disk]
+      # This premature cleanup was introduced because of bsc#1115749. It is not strictly needed for the
+      # proposal to work, but it helps to prevent LVM name collisions during the phase in which the VGs
+      # are being planned. Taking into account how (and when) those names are assigned, if there is a
+      # pre-existing volume group we don't plan to keep, the sooner we delete it the better.
+      #
+      # @param disk           [Disk] see {#delete_stuff}
       # @param drive_spec     [AutoinstProfile::DriveSection]
       # @param reused_devices [Array<String>] Reused disks and partitions names
       def clean_up_disk_by_use(disk, drive_spec, reused_devices)
@@ -178,17 +187,19 @@ module Y2Storage
         end
       end
 
-      # Return a map of reused partitions
+      # Return a map of reused devices
       #
-      # Calculates which partitions are meant to be reused and, as a consequence, should not
-      # be deleted.
+      # Calculates which partitions, disks, MDs, etc. are meant to be reused and, as a consequence,
+      # should not be deleted or wiped.
       #
       # @param devicegraph     [Devicegraph]               devicegraph
-      # @param planned_devices [Array<Planned::Partition>] set of partitions
-      # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
+      # @param planned_devices [Array<Planned::Device>] set of devices
+      # @return [Hash<String,Array<String>>] keys are names of a device typically represented by a drive
+      #   section (a disk, a RAID, etc.), values are lists of the corresponding reused devices which may
+      #   include the device itself or any of its partitions
       def reused_devices_by_disk(devicegraph, planned_devices)
         find_reused_devices(devicegraph, planned_devices).each_with_object({}) do |part, map|
-          disk_name = part.is?(:disk_device) ? part.name : part.partitionable.name
+          disk_name = part.is?(:partition) ? part.partitionable.name : part.name
           map[disk_name] ||= []
           map[disk_name] << part.name
         end
@@ -206,7 +217,20 @@ module Y2Storage
         end
 
         ancestors = reused_devices.map(&:ancestors).flatten
-        (reused_devices + ancestors).select { |p| p.is?(:disk_device, :partition) }
+        (reused_devices + ancestors).select { |dev| reusable?(dev) }
+      end
+
+      # Whether this kind of device needs to be included in the list of reused devices
+      #
+      # @see #find_reused_devices
+      #
+      # @param device [Device]
+      # @return [Boolean]
+      def reusable?(device)
+        return true if device.is?(:partition)
+
+        # Block devices typically described by a <drive> section
+        device.is?(:disk_device, :software_raid, :bcache)
       end
 
       # Real devices from the devicegraph that will be reused for the given planned device

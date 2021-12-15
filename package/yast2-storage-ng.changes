@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Dec 14 15:12:05 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- AutoYaST: fixes for reusing encrypted devices, RAIDs and bcache
+  devices (bsc#1193450).
+- 4.3.59
+
+-------------------------------------------------------------------
 Tue Nov 16 16:38:49 UTC 2021 - David Diaz <dgonzalez@suse.com>
 
 - Fix duplicate PV error detection with disabled multipath
