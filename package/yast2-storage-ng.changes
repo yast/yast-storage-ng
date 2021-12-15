@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Dec 15 16:28:02 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
+
+- Partitioner: nest thin logical volumes below their thin pools (related to
+  jsc#SLE-15283)
+- 4.4.26
+
+-------------------------------------------------------------------
 Tue Dec 14 15:12:05 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - AutoYaST: fixes for reusing encrypted devices, RAIDs and bcache

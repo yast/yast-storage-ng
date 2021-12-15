@@ -52,19 +52,52 @@ describe Y2Partitioner::Widgets::DeviceTableEntry do
       end
     end
 
-    context "when the given device is a LVM volume group" do
-      let(:scenario) { "lvm-two-vgs" }
+    context "when the given device is an LVM volume group" do
+      let(:scenario) { "lvm_with_nested_thin_lvs.xml" }
 
-      let(:device_name) { "/dev/vg0" }
+      let(:device_name) { "/dev/vg_a" }
 
       include_examples "create entry"
 
-      it "creates children entries for its LVM logical volumes" do
+      it "creates children entries for its LVM logical volumes and thin pools" do
         expect(entry.children).to all(be_a(described_class))
 
         children_devices = entry.children.map(&:device)
 
-        expect(children_devices.map(&:name)).to contain_exactly("/dev/vg0/lv1", "/dev/vg0/lv2")
+        expect(children_devices.map(&:name)).to contain_exactly(
+          "/dev/vg_a/lv_01", "/dev/vg_a/lv_02", "/dev/vg_a/lv_02_snap",
+          "/dev/vg_a/lvt_01", "/dev/vg_a/lvt_02"
+        )
+      end
+    end
+
+    context "when the given device is an LVM logical volume" do
+      let(:scenario) { "lvm_with_nested_thin_lvs.xml" }
+
+      let(:device_name) { "/dev/vg_a/lv_01" }
+      include_examples "create entry"
+
+      it "has no children" do
+        expect(entry.children).to all(be_a(described_class))
+
+        children_devices = entry.children.map(&:device)
+
+        expect(children_devices).to be_empty
+      end
+    end
+
+    context "when the given device is an LVM thin pool" do
+      let(:scenario) { "lvm_with_nested_thin_lvs.xml" }
+
+      let(:device_name) { "/dev/vg_a/lvt_01" }
+      include_examples "create entry"
+
+      it "creates children entries for its associated LVM logical volumes" do
+        expect(entry.children).to all(be_a(described_class))
+
+        children_devices = entry.children.map(&:device)
+
+        expect(children_devices.map(&:name)).to contain_exactly("/dev/vg_a/tv_01")
       end
     end
 
