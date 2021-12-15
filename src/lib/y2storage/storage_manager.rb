@@ -163,7 +163,7 @@ module Y2Storage
     def probe(probe_callbacks: nil)
       probe!(probe_callbacks: probe_callbacks)
       true
-    rescue Storage::Exception, Error
+    rescue Storage::Exception, Yast::AbortException
       false
     end
 
@@ -175,7 +175,7 @@ module Y2Storage
     # With the default probe callbacks, the errors reported by libstorage-ng are stored in the
     # {#probe_issues} list.
     #
-    # @raise [Storage::Exception, Y2Storage::Error] when probe fails
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @param probe_callbacks [Callbacks::Probe, nil]
     def probe!(probe_callbacks: nil)
@@ -245,7 +245,7 @@ module Y2Storage
     #
     # @see #staging
     #
-    # @raise [Storage::Exception, Y2Storage::Error] when probe fails
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @return [Devicegraph]
     def staging!
@@ -498,20 +498,23 @@ module Y2Storage
     # The raw probed devicegraph remains untouched, and the new sanitized one is internally saved and
     # copied into the staging devicegraph.
     #
-    # @raise [Y2Storage::Error] if the user decides to not continue. In that case, the probed and staging
-    #   devicegraphs also remain untouched, but they are useless for proposal/partitioner.
+    # @raise [Yast::AbortException] if the user decides to not continue. In that case, the probed
+    #   and staging devicegraphs also remain untouched, but they are useless for
+    #   proposal/partitioner.
     def manage_probing_issues
       continue = raw_probed.issues_manager.report_probing_issues
 
-      raise Error, "Probed devicegraph contains errors" unless continue
+      if continue
+        sanitizer = DevicegraphSanitizer.new(raw_probed)
 
-      sanitizer = DevicegraphSanitizer.new(raw_probed)
+        @probed_graph = sanitizer.sanitized_devicegraph
+        @probed_graph.safe_copy(staging)
 
-      @probed_graph = sanitizer.sanitized_devicegraph
-      @probed_graph.safe_copy(staging)
-
-      # Save sanitized devicegraph into logs
-      log.info("Sanitized probed devicegraph\n#{probed.to_xml}")
+        # Save sanitized devicegraph into logs
+        log.info("Sanitized probed devicegraph\n#{probed.to_xml}")
+      else
+        raise Yast::AbortException, "User has aborted because probed devicegraph contains errors"
+      end
     end
 
     # Whether the final steps to configure Snapper should be performed by YaST
