@@ -913,6 +913,16 @@ describe Y2Storage::StorageManager do
       expect(manager.probe!).to be_nil
     end
 
+    context "and libstorage-ng fails while probing" do
+      before do
+        allow(manager.storage).to receive(:probe).and_raise Storage::Exception
+      end
+
+      it "raises an exception" do
+        expect { manager.probe! }.to raise_error(Storage::Exception)
+      end
+    end
+
     context "and there are issues during probing" do
       before do
         allow(manager.storage).to receive(:probed).and_return st_probed
