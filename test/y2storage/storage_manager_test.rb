@@ -672,7 +672,7 @@ describe Y2Storage::StorageManager do
           manager.staging
         end
 
-        context "but the user decides continue" do
+        context "but the user decides to continue" do
           let(:continue) { true }
 
           it "does not raise an exception" do
@@ -684,7 +684,7 @@ describe Y2Storage::StorageManager do
           end
         end
 
-        context "and the user decides abort" do
+        context "and the user decides to abort" do
           let(:continue) { false }
 
           it "does not raise an exception" do
@@ -737,7 +737,7 @@ describe Y2Storage::StorageManager do
           manager.staging!
         end
 
-        context "but the user decides continue" do
+        context "but the user decides to continue" do
           let(:continue) { true }
 
           it "does not raise an exception" do
@@ -749,7 +749,7 @@ describe Y2Storage::StorageManager do
           end
         end
 
-        context "and the user decides abort" do
+        context "and the user decides to abort" do
           let(:continue) { false }
 
           it "raises a Yast::AbortException" do
@@ -810,7 +810,7 @@ describe Y2Storage::StorageManager do
           manager.probe
         end
 
-        context "but the user decides continue" do
+        context "but the user decides to continue" do
           let(:continue) { true }
 
           it "returns true" do
@@ -818,7 +818,7 @@ describe Y2Storage::StorageManager do
           end
         end
 
-        context "and the user decides abort" do
+        context "and the user decides to abort" do
           let(:continue) { false }
 
           it "returns false" do
@@ -948,7 +948,7 @@ describe Y2Storage::StorageManager do
         manager.probe!
       end
 
-      context "and the user decides continue" do
+      context "and the user decides to continue" do
         let(:continue) { true }
 
         it "does not raise an exception" do
@@ -956,7 +956,7 @@ describe Y2Storage::StorageManager do
         end
       end
 
-      context "and the user decides abort" do
+      context "and the user decides to abort" do
         let(:continue) { false }
 
         it "raises a Yast::AbortException" do
