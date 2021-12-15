@@ -3,7 +3,7 @@ Tue Dec 14 15:12:05 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - AutoYaST: fixes for reusing encrypted devices, RAIDs and bcache
   devices (bsc#1193450).
-- 4.3.59
+- 4.4.25
 
 -------------------------------------------------------------------
 Fri Dec 10 15:29:16 UTC 2021 - Steffen Winterfeldt <snwint@suse.com>
