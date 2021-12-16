@@ -89,15 +89,17 @@ module Y2Storage
       def luks(info, attempt)
         log.info("Trying to open luks UUID: #{info.uuid} (#{attempt} attempts)")
 
-        return Storage::PairBoolString.new(false, "") if !StorageEnv.instance.activate_luks?
+        return Storage::PairBoolString.new(false, "") if attempt == 1 && !activate_luks?
 
-        luks_error(attempt) if attempt > 1
+        luks_error(info, attempt) if attempt > 1
 
-        dialog = Dialogs::Callbacks::ActivateLuks.new(info, attempt)
+        dialog = Dialogs::Callbacks::ActivateLuks.new(info, attempt, always_skip: !activate_luks?)
         result = dialog.run
 
         activate = result == :accept
         password = activate ? dialog.encryption_password : ""
+
+        @skip_decrypt = dialog.always_skip?
 
         Storage::PairBoolString.new(activate, password)
       end
@@ -106,12 +108,17 @@ module Y2Storage
 
       # Error popup when the LUKS could not be activated
       #
+      # @param info [Storage::LuksInfo]
       # @param attempt [Numeric] current attempt
-      def luks_error(attempt)
+      def luks_error(info, attempt)
+        # TODO: inform about the size once libstorage-ng provides it
         message = format(
-          _("The encrypted volume could not be activated (attempt number %{attempt}).\n\n" \
+          _("The following encrypted volume could not be activated (attempt number %{attempt}):\n\n" \
+            "%{device} %{label}\n\n" \
             "Please, make sure you are entering the correct password."),
-          attempt: attempt - 1
+          attempt: attempt - 1,
+          device:  info.device_name,
+          label:   info.label
         )
 
         Yast2::Popup.show(message, headline: :error, buttons: :ok)
@@ -120,6 +127,8 @@ module Y2Storage
       end
 
       # Creates a new issue from an error reported by libstorage-ng
+      #
+      # @see IssuesCallback#error
       #
       # @param message [String]
       # @param what [String]
@@ -177,6 +186,13 @@ module Y2Storage
       # @return [Boolean]
       def forced_multipath?
         StorageEnv.instance.forced_multipath?
+      end
+
+      # Whether to try the LUKS activation
+      #
+      # @return [Boolean]
+      def activate_luks?
+        StorageEnv.instance.activate_luks? && !@skip_decrypt
       end
     end
   end

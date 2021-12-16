@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,16 +32,24 @@ module Y2Storage
 
         secret_attr :encryption_password
 
+        # Whether the user selects to not decrypt any more devices
+        #
+        # @return [Boolean]
+        attr_reader :always_skip
+        alias_method :always_skip?, :always_skip
+
         # Constructor
         #
         # @param info [Storage::LuksInfo]
         # @param attempt [Numeric]
-        def initialize(info, attempt)
+        # @param always_skip [Boolean] default value for skip decrypt checkbox
+        def initialize(info, attempt, always_skip: false)
           super()
 
           textdomain "storage"
           @info = info
           @attempt = attempt
+          @always_skip = always_skip
         end
 
         def password_handler
@@ -63,16 +71,18 @@ module Y2Storage
             HBox(
               HSpacing(1),
               VBox(
-                Left(Heading(_("Encrypted Volume Activation"))),
+                Left(Heading(_("Encrypted Device"))),
                 VSpacing(0.2),
-                *explanation_widgets,
+                Left(Label(_("The following device is encrypted:"))),
+                # TODO: inform about the size once libstorage-ng provides it
+                Left(Label("#{info.device_name} #{info.label}")),
+                Left(password_widget),
                 VSpacing(0.2),
-                Left(Label(_("Do you want to provide the encryption password?"))),
-                Left(Password(Id(:password), Opt(:notify), _("Enter Encryption Password"))),
-                ButtonBox(
-                  PushButton(Id(:cancel), Yast::Label.CancelButton),
-                  PushButton(Id(:accept), Yast::Label.OKButton)
-                )
+                HBox(
+                  HSpacing(0.8),
+                  Left(skip_decrypt_widget)
+                ),
+                buttons_widget
               )
             )
           )
@@ -88,35 +98,43 @@ module Y2Storage
           true
         end
 
+        def finish_dialog(value)
+          @always_skip = skip_decrypt?
+
+          super
+        end
+
+        def password_widget
+          Password(Id(:password), Opt(:notify), _("Encryption Password"))
+        end
+
+        def skip_decrypt_widget
+          CheckBox(Id(:skip_decrypt), _("Skip decryption for other devices"), always_skip?)
+        end
+
+        def buttons_widget
+          ButtonBox(
+            PushButton(Id(:accept), _("Decrypt")),
+            PushButton(Id(:cancel), _("Skip"))
+          )
+        end
+
+        # Entered password
+        #
+        # @return [String]
         def password
           Yast::UI.QueryWidget(Id(:password), :Value).to_s
         end
 
-        def activate_button
-          Yast::UI.ChangeWidget(Id(:accept), :Enabled, password.size > 0)
+        # Whether the checkbox for skipping decrypt was checked
+        #
+        # @return [Boolean]
+        def skip_decrypt?
+          Yast::UI.QueryWidget(Id(:skip_decrypt), :Value)
         end
 
-        def explanation_widgets
-          [
-            Left(
-              Label(
-                _("The following device contains an encryption signature but the\n" \
-                  "password is not yet known.")
-              )
-            ),
-            VSpacing(0.2),
-            # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1)
-            Left(Label(format(_("Device Name: %{name}"), name: info.device_name))),
-            # TRANSLATORS: %{uuid} is replaced by a device UUID (e.g., 111-2222-33333)
-            Left(Label(format(_("LUKS UUID: %{uuid}"), uuid: info.uuid))),
-            VSpacing(0.2),
-            Left(
-              Label(
-                _("The password is needed if the device contains a system to be\n" \
-                  "updated or belongs to an LVM to be used during installation.")
-              )
-            )
-          ]
+        def activate_button
+          Yast::UI.ChangeWidget(Id(:accept), :Enabled, password.size > 0)
         end
       end
     end
