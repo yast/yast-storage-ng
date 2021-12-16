@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -158,7 +158,10 @@ module Y2Storage
         v.min_size = DiskSize.MiB(2)
         v.desired_size = DiskSize.MiB(4)
         v.max_size = DiskSize.MiB(8)
-        # Maximum size firmware can handle (bsc#1081979)
+        # 8 MiB is the maximum recommended size, more than enough for the image (bsc#1081979).
+        # If the optimal I/O size of the disk is bigger than 8MiB, the alignment performed by YaST
+        # can result in a bigger PReP. That's ok - the firmware in machines with such disks can (and
+        # should) be configured to properly read such a partition (see bsc#1192448).
         v.max_size_limit = DiskSize.MiB(8)
         v.partition_id = PartitionId::PREP
       end
