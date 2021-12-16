@@ -29,11 +29,11 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
     allow(Yast::UI).to receive(:OpenDialog).and_return(true)
     allow(Yast::UI).to receive(:CloseDialog).and_return(true)
     allow(Yast::UI).to receive(:UserInput).and_return(action)
-    allow(Yast::UI).to receive(:QueryWidget).with(Id(:password), :Value)
-      .and_return(password)
+    allow(Yast::UI).to receive(:QueryWidget).with(Id(:password), :Value).and_return(password)
+    allow(Yast::UI).to receive(:QueryWidget).with(Id(:skip_decrypt), :Value).and_return(skip_decrypt)
   end
 
-  subject { described_class.new(info, attempts) }
+  subject { described_class.new(info, attempts, always_skip: always_skip) }
 
   let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
 
@@ -42,19 +42,21 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
   let(:label) { "" }
 
   let(:attempts) { 1 }
+  let(:always_skip) { false }
   let(:action) { :cancel }
   let(:password) { nil }
+  let(:skip_decrypt) { nil }
 
   describe "#run" do
     context "when a password is entered" do
       let(:password) { "123456" }
 
-      it "enables accept button" do
+      it "enables decrypt button" do
         expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:accept), :Enabled, true)
         subject.run
       end
 
-      context "and dialog is accepted" do
+      context "and decrypt is selected" do
         let(:action) { :accept }
 
         it "returns :accept" do
@@ -62,7 +64,7 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
         end
       end
 
-      context "and dialog is not accepted" do
+      context "and skip is selected" do
         let(:action) { :cancel }
 
         it "returns :cancel" do
@@ -74,12 +76,12 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
     context "when a password is not entered" do
       let(:password) { nil }
 
-      it "does not enable accept button" do
+      it "does not enable the decrypt button" do
         expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:accept), :Enabled, false)
         subject.run
       end
 
-      context "and dialog is not accepted" do
+      context "and skip is selected" do
         let(:action) { :cancel }
 
         it "returns :cancel" do
@@ -99,7 +101,7 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
     context "after running the dialog" do
       before { subject.run }
 
-      context "if dialog was accepted" do
+      context "if decrypt is selected" do
         let(:action) { :accept }
         let(:password) { "123456" }
 
@@ -108,12 +110,42 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
         end
       end
 
-      context "if dialog was not accepted" do
+      context "if skip is selected" do
         let(:action) { :cancel }
         let(:password) { "123456" }
 
         it "returns nil" do
           expect(subject.encryption_password).to be_nil
+        end
+      end
+    end
+  end
+
+  describe "#always_skip?" do
+    context "before running the dialog" do
+      let(:always_skip) { true }
+
+      it "returns the given value" do
+        expect(subject.always_skip?).to eq(true)
+      end
+    end
+
+    context "after running the dialog" do
+      before { subject.run }
+
+      context "if the option for always skip decrypt was selected" do
+        let(:skip_decrypt) { true }
+
+        it "returns true" do
+          expect(subject.always_skip?).to be(true)
+        end
+      end
+
+      context "if the option for always skip decrypt was not selected" do
+        let(:skip_decrypt) { false }
+
+        it "returns false" do
+          expect(subject.always_skip?).to be(false)
         end
       end
     end

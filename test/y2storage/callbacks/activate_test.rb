@@ -106,6 +106,7 @@ describe Y2Storage::Callbacks::Activate do
     before do
       allow(dialog).to receive(:run).and_return(action)
       allow(dialog).to receive(:encryption_password).and_return(encryption_password)
+      allow(dialog).to receive(:always_skip?).and_return(always_skip)
       allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return dialog
 
       allow(Yast2::Popup).to receive(:show)
@@ -120,6 +121,7 @@ describe Y2Storage::Callbacks::Activate do
     let(:attempts) { 1 }
     let(:action) { nil }
     let(:encryption_password) { "123456" }
+    let(:always_skip) { false }
     let(:env_vars) { {} }
 
     it "opens a dialog to request the password" do
@@ -167,7 +169,30 @@ describe Y2Storage::Callbacks::Activate do
       end
     end
 
-    context "and YAST_ACTIVATE_LUKS was deactivated on boot" do
+    context "when the option for skipping decrypt was selected in the dialog" do
+      let(:always_skip) { true }
+
+      context "and there is a new attempt" do
+        let(:attempts) { 2 }
+
+        it "opens a dialog to request the password" do
+          expect(dialog).to receive(:run).once
+
+          subject.luks(info, attempts)
+        end
+      end
+
+      context "and there are more encrypted devices" do
+        it "does not ask to the user for the rest of encrypted devices" do
+          expect(dialog).to receive(:run).once
+
+          subject.luks(info, attempts)
+          subject.luks(info, attempts)
+        end
+      end
+    end
+
+    context "when YAST_ACTIVATE_LUKS was deactivated on boot" do
       let(:env_vars) do
         { "YAST_ACTIVATE_LUKS" => "0" }
       end
