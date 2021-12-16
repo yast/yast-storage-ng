@@ -163,7 +163,9 @@ module Y2Storage
     def probe(probe_callbacks: nil)
       probe!(probe_callbacks: probe_callbacks)
       true
-    rescue Storage::Exception, Yast::AbortException
+    rescue Storage::Exception, Yast::AbortException => e
+      log.error("ERROR: #{e.message}")
+
       false
     end
 
@@ -491,9 +493,7 @@ module Y2Storage
     def manage_probing_issues
       continue = raw_probed.issues_manager.report_probing_issues
 
-      if !continue
-        raise Yast::AbortException, "User has aborted because probed devicegraph contains errors"
-      end
+      raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
       sanitizer = DevicegraphSanitizer.new(raw_probed)
 

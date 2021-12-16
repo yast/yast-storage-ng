@@ -25,6 +25,8 @@ require "y2storage"
 describe Y2Storage::StorageManager do
   subject(:manager) { described_class.instance }
 
+  include Yast::Logger
+
   before do
     described_class.create_test_instance
   end
@@ -670,6 +672,12 @@ describe Y2Storage::StorageManager do
         it "returns false" do
           expect(manager.probe).to eq(false)
         end
+
+        it "logs the error" do
+          expect(log).to receive(:error)
+
+          manager.probe
+        end
       end
 
       context "and there are issues during probing" do
@@ -701,6 +709,12 @@ describe Y2Storage::StorageManager do
 
           it "returns false" do
             expect(manager.probe).to eq(false)
+          end
+
+          it "logs an error" do
+            expect(log).to receive(:error).with(/Devicegraph contains errors/)
+
+            manager.probe
           end
         end
       end
