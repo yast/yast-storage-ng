@@ -233,25 +233,14 @@ module Y2Storage
     #   returned by libstorage-ng. This staging is initialized from the sanitized
     #   probed devicegraph (see {#manage_probing_issues}).
     #
-    # @return [Devicegraph]
-    def staging
-      @staging ||= begin
-        probe unless probed?
-        Devicegraph.new(storage.staging)
-      end
-    end
-
-    # Staging devicegraph
-    #
-    # @see #staging
-    #
     # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @return [Devicegraph]
-    def staging!
-      probe! unless probed?
-
-      staging
+    def staging
+      @staging ||= begin
+        probe! unless probed?
+        Devicegraph.new(storage.staging)
+      end
     end
 
     # Copies the manually-calculated (no proposal) devicegraph to staging.
