@@ -72,7 +72,7 @@ RSpec.shared_examples "proposed GRUB partition" do
       expect(grub_part.min).to eq 4.MiB
     end
 
-    it "requires it to be at most 8 MiB (anything bigger would mean wasting space)" do
+    it "requires it to be at most 8 MiB (or optimal I/O size, bsc#1192448) for firmware to load it" do
       expect(grub_part.max).to eq 8.MiB
     end
   end
@@ -84,7 +84,7 @@ RSpec.shared_examples "proposed GRUB partition" do
       expect(grub_part.min).to eq 2.MiB
     end
 
-    it "requires it to be at most 8 MiB (anything bigger would mean wasting space)" do
+    it "requires it to be at most 8 MiB (or optimal I/O size, bsc#1192448) for firmware to load it" do
       expect(grub_part.max).to eq 8.MiB
     end
   end
