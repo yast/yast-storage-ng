@@ -166,8 +166,17 @@ module Y2Storage
     #
     # See jsc#SLE-20535, bsc#1176140, bsc#1165937 and jsc#SLE-7687
     def adjust_mount_options
-      self.mount_options =
-        mount_options + mountable.missing_mount_options - mountable.unwanted_mount_options
+      self.mount_options = mount_options + missing_mount_options - unwanted_mount_options
+    end
+
+    # @see Mountable#missing_mount_options
+    def missing_mount_options
+      mountable.missing_mount_options
+    end
+
+    # @see Mountable#unwanted_mount_options
+    def unwanted_mount_options
+      mountable.unwanted_mount_options
     end
 
     # @!method set_default_mount_by

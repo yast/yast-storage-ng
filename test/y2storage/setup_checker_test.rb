@@ -50,6 +50,11 @@ describe Y2Storage::SetupChecker do
 
     allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product).and_return(settings)
     allow(settings).to receive(:volumes).and_return(product_volumes)
+
+    # We have to use allow_any_instance due to the nature of libstorage-ng bindings (they return
+    # a different object for each query to the devicegraph)
+    allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:missing_mount_options)
+      .and_return(missing_root_opts)
   end
 
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker) }
@@ -61,6 +66,8 @@ describe Y2Storage::SetupChecker do
   let(:fatal_errors) { [] }
 
   let(:product_volumes) { [] }
+
+  let(:missing_root_opts) { [] }
 
   let(:boot_error) { instance_double(Y2Storage::SetupError) }
 
@@ -115,6 +122,18 @@ describe Y2Storage::SetupChecker do
       end
     end
 
+    context "when there is some error in the mount options" do
+      before { create_root }
+
+      let(:product_volumes) { [] }
+      let(:boot_warnings) { [] }
+      let(:missing_root_opts) { ["_netdev"] }
+
+      it "returns false" do
+        expect(subject.valid?).to eq(false)
+      end
+    end
+
     context "when there is a fatal error" do
       let(:fatal_errors) { [boot_error] }
 
@@ -126,6 +145,7 @@ describe Y2Storage::SetupChecker do
     context "when all mandatory product volumes are present in the system and there is no boot error" do
       let(:product_volumes) { [root_volume, home_volume] }
       let(:boot_warnings) { [] }
+      let(:missing_root_opts) { [] }
 
       before do
         create_root
@@ -167,7 +187,7 @@ describe Y2Storage::SetupChecker do
       end
     end
 
-    context "when there is no boot error and all mandatory product volumes are present in the system" do
+    context "when there is no boot error, mount options are ok and all mandatory volumes are present" do
       let(:boot_warnings) { [] }
       let(:product_volumes) { [root_volume, home_volume] }
 
@@ -177,6 +197,16 @@ describe Y2Storage::SetupChecker do
 
       it "returns an empty list" do
         expect(subject.warnings).to be_empty
+      end
+    end
+
+    context "when a mount option is missing for some mount point" do
+      before { create_root }
+      let(:boot_warnings) { [] }
+      let(:missing_root_opts) { ["_netdev"] }
+
+      it "includes an error mentioning the missing option" do
+        expect(subject.warnings.map(&:message)).to include(an_object_matching(/_netdev/))
       end
     end
   end
@@ -271,6 +301,58 @@ describe Y2Storage::SetupChecker do
 
       it "returns an empty list" do
         expect(subject.product_warnings).to be_empty
+      end
+    end
+  end
+
+  describe "#mount_warnings" do
+    before { create_root }
+
+    let(:boot_error1) { instance_double(Y2Storage::SetupError) }
+    let(:boot_error2) { instance_double(Y2Storage::SetupError) }
+    let(:boot_warnings) { [boot_error1, boot_error2] }
+
+    context "if there are no missing mount options" do
+      let(:missing_root_opts) { [] }
+
+      it "returns an empty list" do
+        expect(subject.mount_warnings).to be_empty
+      end
+    end
+
+    context "if there is a missing mount option for a given mount point" do
+      let(:missing_root_opts) { ["extra_option"] }
+
+      it "returns a list of setup errors" do
+        expect(subject.product_warnings).to all(be_a(Y2Storage::SetupError))
+      end
+
+      it "does not include boot errors" do
+        expect(subject.product_warnings).to_not include(boot_error1, boot_error2)
+      end
+
+      it "includes an error for the affected mount point and missing option" do
+        warning = subject.mount_warnings.first
+        expect(warning.message).to include "/"
+        expect(warning.message).to include "extra_option"
+      end
+    end
+
+    context "if there are several missing mount options for the same mount point" do
+      let(:missing_root_opts) { ["one", "two"] }
+
+      it "returns a list of setup errors" do
+        expect(subject.product_warnings).to all(be_a(Y2Storage::SetupError))
+      end
+
+      it "does not include boot errors" do
+        expect(subject.product_warnings).to_not include(boot_error1, boot_error2)
+      end
+
+      it "includes an error for the affected mount point with all the missing options" do
+        warning = subject.mount_warnings.first
+        expect(warning.message).to include "/"
+        expect(warning.message).to include "one,two"
       end
     end
   end

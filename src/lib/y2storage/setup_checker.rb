@@ -40,6 +40,8 @@ module Y2Storage
   #   checker = SetupChecker.new(devicegraph)
   #   checker.valid? #=> true
   class SetupChecker
+    include Yast::I18n
+
     # @return [Devicegraph]
     attr_reader :devicegraph
 
@@ -47,6 +49,7 @@ module Y2Storage
     #
     # @param devicegraph [Devicegraph] setup to check
     def initialize(devicegraph)
+      textdomain "storage"
       @devicegraph = devicegraph
     end
 
@@ -71,7 +74,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings
+      boot_warnings + product_warnings + mount_warnings
     end
 
     # All boot errors detected in the setup
@@ -91,6 +94,15 @@ module Y2Storage
     # @return [Array<SetupError>]
     def product_warnings
       @product_warnings ||= missing_product_volumes.map { |v| SetupError.new(missing_volume: v) }
+    end
+
+    # All warnings related to the definition of the mount points in the setup
+    #
+    # This checks for example whether the mount options make sense.
+    #
+    # @return [Array<SetupError>]
+    def mount_warnings
+      devicegraph.mount_points.map { |mp| mount_warning(mp) }.compact
     end
 
     private
@@ -151,6 +163,31 @@ module Y2Storage
       devicegraph.nfs_mounts.any? do |nfs|
         nfs.mount_point&.path?(volume.mount_point)
       end
+    end
+
+    # @see #mount_warnings
+    #
+    # @param mount_point [MountPoint]
+    # @return [SetupError, nil]
+    def mount_warning(mount_point)
+      missing = mount_point.missing_mount_options
+      return if missing.empty?
+
+      # TRANSLATORS: do not translate %{opt} or %{path}. %{opt} is replaced by the name of a mount
+      # option in the singular sentence or a list of options separated by commas in the plural one.
+      # ${path} is replaced by the mount point.
+      msg = n_(
+        format(
+          "The fstab option %{opt} may be needed to properly mount %{path}.",
+          opt: missing.first, path: mount_point.path
+        ),
+        format(
+          "The following fstab options may be needed to propely mount %{path}: %{opt}",
+          opt: missing.join(","), path: mount_point.path
+        ),
+        missing.size
+      )
+      SetupError.new(message: msg)
     end
 
     # @return [BootRequirementsChecker] shortcut for boot requirements checker

@@ -54,7 +54,7 @@ module Y2Partitioner
     #
     # @return [String, nil] nil if there is no boot warning
     def warnings_html
-      warnings = [boot_warnings_html, product_warnings_html].compact
+      warnings = [boot_warnings_html, product_warnings_html, mount_warnings_html].compact
       return nil if warnings.empty?
 
       warnings.join(Yast::HTML.Newline)
@@ -65,7 +65,6 @@ module Y2Partitioner
     # @return [String, nil] nil if there is no boot warning
     def boot_warnings_html
       warnings = setup_checker.boot_warnings
-      # TRANSLATORS
       header = _("The system might not be able to boot:\n")
 
       create_html(header, warnings)
@@ -76,10 +75,21 @@ module Y2Partitioner
     # @return [String, nil] nil if there is no product warning
     def product_warnings_html
       warnings = setup_checker.product_warnings
-      # TRANSLATORS
       header = _(
         "The system could not work properly because the following product " \
           "requirements were not fulfilled:\n"
+      )
+
+      create_html(header, warnings)
+    end
+
+    # HTML representation for warnings about the mount points
+    #
+    # @return [String, nil] nil if there is no mount warning
+    def mount_warnings_html
+      warnings = setup_checker.mount_warnings
+      header = _(
+        "The system could fail to initialize some mount point during boot:\n"
       )
 
       create_html(header, warnings)
