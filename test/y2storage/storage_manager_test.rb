@@ -907,6 +907,67 @@ describe Y2Storage::StorageManager do
     end
   end
 
+  describe "#probed" do
+    context "when system has not been probed yet" do
+      it "performs probing" do
+        expect(manager).to receive(:probe!).and_call_original
+
+        manager.probed
+      end
+
+      it "returns a devicegraph" do
+        expect(manager.probed).to be_a(Y2Storage::Devicegraph)
+      end
+
+      context "and libstorage-ng fails while probing" do
+        before do
+          allow(manager.storage).to receive(:probe).and_raise Storage::Exception
+        end
+
+        it "raises an exception" do
+          expect { manager.probed }.to raise_error(Storage::Exception)
+        end
+      end
+
+      context "and there are issues during probing" do
+        before do
+          allow(manager.storage).to receive(:probed).and_return st_probed
+          allow_any_instance_of(Y2Storage::IssuesManager)
+            .to receive(:report_probing_issues).and_return(continue)
+        end
+
+        let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
+        let(:continue) { true }
+
+        it "reports the probing issues" do
+          expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+
+          manager.probed
+        end
+
+        context "but the user decides to continue" do
+          let(:continue) { true }
+
+          it "does not raise an exception" do
+            expect { manager.probed }.to_not raise_error
+          end
+
+          it "returns a devicegraph" do
+            expect(manager.probed).to be_a(Y2Storage::Devicegraph)
+          end
+        end
+
+        context "and the user decides to abort" do
+          let(:continue) { false }
+
+          it "raises a Yast::AbortException" do
+            expect { manager.probed }.to raise_error(Yast::AbortException)
+          end
+        end
+      end
+    end
+  end
+
   describe "#probe_from_yaml" do
     let(:st_devicegraph) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_devicegraph) }

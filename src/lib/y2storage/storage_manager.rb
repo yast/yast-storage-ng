@@ -205,13 +205,11 @@ module Y2Storage
     #   some errors (e.g., incomplete LVM VGs). This probed devicegraph
     #   is the result of sanitizing the initial raw probed.
     #
-    # @see #raw_probed
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @return [Devicegraph]
     def probed
-      return @probed_graph if @probed_graph
-
-      probe unless probed?
+      probe! unless probed?
       @probed_graph
     end
 
