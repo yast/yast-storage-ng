@@ -25,6 +25,8 @@ require "y2storage"
 describe Y2Storage::StorageManager do
   subject(:manager) { described_class.instance }
 
+  include Yast::Logger
+
   before do
     described_class.create_test_instance
   end
@@ -630,7 +632,96 @@ describe Y2Storage::StorageManager do
     end
   end
 
+  describe "#staging" do
+    it "uses #probe! for performing probing" do
+      expect(manager).to receive(:probe!)
+
+      manager.staging
+    end
+
+    it "returns a devicegraph" do
+      expect(manager.staging).to be_a(Y2Storage::Devicegraph)
+    end
+  end
+
+  describe "#probed" do
+    it "uses #probe! for performing probing" do
+      expect(manager).to receive(:probe!)
+
+      manager.probed
+    end
+
+    it "returns a devicegraph" do
+      expect(manager.probed).to be_a(Y2Storage::Devicegraph)
+    end
+  end
+
   describe "#probe" do
+    context "when system has not been probed yet" do
+      it "performs probing" do
+        expect(manager).to receive(:probe!).and_call_original
+
+        manager.probe
+      end
+
+      context "and libstorage-ng fails while probing" do
+        before do
+          allow(manager.storage).to receive(:probe).and_raise Storage::Exception
+        end
+
+        it "returns false" do
+          expect(manager.probe).to eq(false)
+        end
+
+        it "logs the error" do
+          expect(log).to receive(:error)
+
+          manager.probe
+        end
+      end
+
+      context "and there are issues during probing" do
+        before do
+          allow(manager.storage).to receive(:probed).and_return st_probed
+          allow_any_instance_of(Y2Storage::IssuesManager)
+            .to receive(:report_probing_issues).and_return(continue)
+        end
+
+        let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
+        let(:continue) { true }
+
+        it "reports the probing issues" do
+          expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+
+          manager.probe
+        end
+
+        context "but the user decides to continue" do
+          let(:continue) { true }
+
+          it "returns true" do
+            expect(manager.probe).to eq(true)
+          end
+        end
+
+        context "and the user decides to abort" do
+          let(:continue) { false }
+
+          it "returns false" do
+            expect(manager.probe).to eq(false)
+          end
+
+          it "logs an error" do
+            expect(log).to receive(:error).with(/Devicegraph contains errors/)
+
+            manager.probe
+          end
+        end
+      end
+    end
+  end
+
+  describe "#probe!" do
     before do
       described_class.instance.probe_from_yaml(input_file_for("gpt_and_msdos"))
       # Ensure old values have been queried at least once
@@ -659,7 +750,7 @@ describe Y2Storage::StorageManager do
       expect(manager.probed.disks.size).to eq 6
       expect(manager.probed.to_storage_value).to_not eq st_probed
 
-      manager.probe
+      manager.probe!
 
       expect(manager.probed.disks.size).to eq 0
       expect(manager.probed.to_storage_value).to eq st_probed
@@ -671,7 +762,7 @@ describe Y2Storage::StorageManager do
       expect(manager.probed.disks.size).to eq 6
       expect(manager.probed.to_storage_value).to_not eq st_staging
 
-      manager.probe
+      manager.probe!
 
       expect(manager.probed.disks.size).to eq 0
       expect(manager.probed.to_storage_value).to eq st_staging
@@ -683,7 +774,7 @@ describe Y2Storage::StorageManager do
       expect(manager.system.disks.size).to eq 6
       expect(manager.system.to_storage_value).to_not eq st_system
 
-      manager.probe
+      manager.probe!
 
       expect(manager.system.disks.size).to eq 0
       expect(manager.system.to_storage_value).to eq st_probed
@@ -691,7 +782,7 @@ describe Y2Storage::StorageManager do
 
     it "increments the staging revision" do
       pre = manager.staging_revision
-      manager.probe
+      manager.probe!
       expect(manager.staging_revision).to be > pre
     end
 
@@ -700,55 +791,53 @@ describe Y2Storage::StorageManager do
       # Calling twice (or more) does not result in a refresh
       expect(manager.probed_disk_analyzer).to eq pre
 
-      manager.probe
+      manager.probe!
       expect(manager.probed_disk_analyzer).to_not eq pre
     end
 
     it "sets #proposal to nil" do
       manager.proposal = proposal
-      manager.probe
+      manager.probe!
       expect(manager.proposal).to be_nil
     end
 
-    it "returns true if everything goes fine" do
-      expect(manager.probe).to eq true
+    it "returns nil if everything goes fine" do
+      expect(manager.probe!).to be_nil
     end
 
-    context "if libstorage-ng fails and the user decides to abort" do
+    context "and libstorage-ng fails while probing" do
       before do
         allow(manager.storage).to receive(:probe).and_raise Storage::Exception
       end
 
-      it "returns false" do
-        expect(manager.probe).to eq false
+      it "raises an exception" do
+        expect { manager.probe! }.to raise_error(Storage::Exception)
       end
     end
 
-    context "if there are probing issues" do
-      shared_examples "sanitize" do
-        it "sanitizes the raw probed devicegraph" do
-          manager.probe
-          expect(manager.probed.disks).to_not be_empty
-          expect(manager.probed.lvm_vgs).to be_empty
-        end
-
-        it "copies the sanitized probed into staging" do
-          manager.probe
-          expect(manager.staging).to eq(manager.probed)
-        end
-      end
-
-      let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
-
+    context "and there are issues during probing" do
       before do
+        allow(manager.storage).to receive(:probed).and_return st_probed
         allow_any_instance_of(Y2Storage::IssuesManager)
           .to receive(:report_probing_issues).and_return(continue)
       end
 
+      let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
       let(:continue) { true }
 
+      it "sanitizes the raw probed devicegraph" do
+        manager.probe!
+        expect(manager.probed.disks).to_not be_empty
+        expect(manager.probed.lvm_vgs).to be_empty
+      end
+
+      it "copies the sanitized probed into staging" do
+        manager.probe!
+        expect(manager.staging).to eq(manager.probed)
+      end
+
       it "stores the issues" do
-        manager.probe
+        manager.probe!
         issues_manager = manager.probed.issues_manager
 
         expect(issues_manager.probing_issues).to be_a(Y2Issues::List)
@@ -758,29 +847,22 @@ describe Y2Storage::StorageManager do
       it "reports the probing issues" do
         expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
 
-        manager.probe
+        manager.probe!
       end
 
-      context "and the reporter reports to continue" do
+      context "and the user decides to continue" do
         let(:continue) { true }
 
-        include_examples "sanitize"
-
-        it "returns true" do
-          expect(manager.probe).to eq(true)
+        it "does not raise an exception" do
+          expect { manager.probe! }.to_not raise_error
         end
       end
 
-      context "and the reporter reports to abort" do
+      context "and the user decides to abort" do
         let(:continue) { false }
 
-        it "does not sanitize the raw probed devicegraph" do
-          manager.probe
-          expect(manager.probed).to be_nil
-        end
-
-        it "returns false" do
-          expect(manager.probe).to eq(false)
+        it "raises a Yast::AbortException" do
+          expect { manager.probe! }.to raise_error(Yast::AbortException)
         end
       end
     end

@@ -148,7 +148,28 @@ module Y2Storage
       @storage.deactivate
     end
 
-    # Probes all storage devices.
+    # Probes all storage devices
+    #
+    # If this method returns false, #staging and #probed could be in bad state
+    # (or not be there at all) so they should not be trusted in the subsequent
+    # code.
+    #
+    # @see #probe!
+    #
+    # @param probe_callbacks [Callbacks::Probe, nil]
+    # @return [Boolean] whether probing was successful, false if libstorage-ng
+    #   found a problem and the corresponding callback returned false (i.e. it
+    #   was decided to abort due to the error)
+    def probe(probe_callbacks: nil)
+      probe!(probe_callbacks: probe_callbacks)
+      true
+    rescue Storage::Exception, Yast::AbortException => e
+      log.error("ERROR: #{e.message}")
+
+      false
+    end
+
+    # Probes all storage devices
     #
     # Invalidates the probed and staging devicegraph. Real probing is
     # only performed when the instance is not for testing.
@@ -156,15 +177,10 @@ module Y2Storage
     # With the default probe callbacks, the errors reported by libstorage-ng are stored in the
     # {#probe_issues} list.
     #
-    # If this method returns false, #staging and #probed could be in bad state
-    # (or not be there at all) so they should not be trusted in the subsequent
-    # code.
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @param probe_callbacks [Callbacks::Probe, nil]
-    # @return [Boolean] whether probing was successful, false if libstorage-ng
-    #   found a problem and the corresponding callback returned false (i.e. it
-    #   was decided to abort due to the error)
-    def probe(probe_callbacks: nil)
+    def probe!(probe_callbacks: nil)
       probe_callbacks ||= Callbacks::Probe.new
 
       begin
@@ -180,9 +196,8 @@ module Y2Storage
       probe_performed
       manage_probing_issues
       DumpManager.dump(@probed_graph)
-      true
-    rescue Storage::Exception, Error
-      false
+
+      nil
     end
 
     # Probed devicegraph, after sanitizing it (see {#manage_probing_issues})
@@ -192,13 +207,11 @@ module Y2Storage
     #   some errors (e.g., incomplete LVM VGs). This probed devicegraph
     #   is the result of sanitizing the initial raw probed.
     #
-    # @see #raw_probed
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
     # @return [Devicegraph]
     def probed
-      return @probed_graph if @probed_graph
-
-      probe unless probed?
+      probe! unless probed?
       @probed_graph
     end
 
@@ -220,10 +233,12 @@ module Y2Storage
     #   returned by libstorage-ng. This staging is initialized from the sanitized
     #   probed devicegraph (see {#manage_probing_issues}).
     #
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
+    #
     # @return [Devicegraph]
     def staging
       @staging ||= begin
-        probe unless probed?
+        probe! unless probed?
         Devicegraph.new(storage.staging)
       end
     end
@@ -472,12 +487,13 @@ module Y2Storage
     # The raw probed devicegraph remains untouched, and the new sanitized one is internally saved and
     # copied into the staging devicegraph.
     #
-    # @raise [Y2Storage::Error] if the user decides to not continue. In that case, the probed and staging
-    #   devicegraphs also remain untouched, but they are useless for proposal/partitioner.
+    # @raise [Yast::AbortException] if the user decides to not continue. In that case, the probed
+    #   and staging devicegraphs also remain untouched, but they are useless for
+    #   proposal/partitioner.
     def manage_probing_issues
       continue = raw_probed.issues_manager.report_probing_issues
 
-      raise Error, "Probed devicegraph contains errors" unless continue
+      raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
       sanitizer = DevicegraphSanitizer.new(raw_probed)
 
