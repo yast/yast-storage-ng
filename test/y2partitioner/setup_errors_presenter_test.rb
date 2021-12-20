@@ -31,6 +31,7 @@ describe Y2Partitioner::SetupErrorsPresenter do
     Y2Storage::StorageManager.create_test_instance
     allow(setup_checker).to receive(:boot_warnings).and_return(boot_errors)
     allow(setup_checker).to receive(:product_warnings).and_return(product_errors)
+    allow(setup_checker).to receive(:mount_warnings).and_return(mount_errors)
     allow(setup_checker).to receive(:errors).and_return(fatal_errors)
   end
 
@@ -42,10 +43,13 @@ describe Y2Partitioner::SetupErrorsPresenter do
 
   let(:product_errors) { [] }
 
+  let(:mount_errors) { [] }
+
   describe "#to_html" do
     context "when there is no error" do
       let(:boot_errors) { [] }
       let(:product_errors) { [] }
+      let(:mount_errors) { [] }
 
       it "returns an empty string" do
         expect(subject.to_html).to be_empty
@@ -66,17 +70,20 @@ describe Y2Partitioner::SetupErrorsPresenter do
       let(:product_error1) { instance_double(Y2Storage::SetupError, message: "product error 1") }
       let(:product_error2) { instance_double(Y2Storage::SetupError, message: "product error 2") }
       let(:product_error3) { instance_double(Y2Storage::SetupError, message: "product error 3") }
+      let(:mount_error1) { instance_double(Y2Storage::SetupError, message: "missing option 1") }
 
       let(:boot_errors) { [boot_error1, boot_error2] }
       let(:product_errors) { [product_error1, product_error2, product_error3] }
+      let(:mount_errors) { [mount_error1] }
 
       it "contains a message for each error" do
-        expect(subject.to_html.scan(/<li>/).size).to eq(5)
+        expect(subject.to_html.scan(/<li>/).size).to eq(6)
       end
 
       context "and there are boot errors" do
         let(:boot_errors) { [boot_error1] }
         let(:product_errors) { [] }
+        let(:mount_errors) { [] }
 
         it "contains a general error message for boot errors" do
           expect(subject.to_html).to match(/not be able to boot/)
@@ -85,11 +92,16 @@ describe Y2Partitioner::SetupErrorsPresenter do
         it "does not contain a general error message for product errors" do
           expect(subject.to_html).to_not match(/could not work/)
         end
+
+        it "does not contain a general error message for product errors" do
+          expect(subject.to_html).to_not match(/mount point during boot/)
+        end
       end
 
       context "and there are product errors" do
         let(:boot_errors) { [] }
         let(:product_errors) { [product_error1] }
+        let(:mount_errors) { [] }
 
         it "contains a general error message for product errors" do
           expect(subject.to_html).to match(/could not work/)
@@ -98,11 +110,34 @@ describe Y2Partitioner::SetupErrorsPresenter do
         it "does not contain a general error message for boot errors" do
           expect(subject.to_html).to_not match(/not be able to boot/)
         end
+
+        it "does not contain a general error message for mount errors" do
+          expect(subject.to_html).to_not match(/mount point during boot/)
+        end
       end
 
-      context "and there are boot and product errors" do
+      context "and there are mount errors" do
+        let(:boot_errors) { [] }
+        let(:product_errors) { [] }
+        let(:mount_errors) { [mount_error1] }
+
+        it "contains a general error message for mount errors" do
+          expect(subject.to_html).to match(/mount point during boot/)
+        end
+
+        it "does not contain a general error message for boot errors" do
+          expect(subject.to_html).to_not match(/not be able to boot/)
+        end
+
+        it "does not contain a general error message for product errors" do
+          expect(subject.to_html).to_not match(/could not work/)
+        end
+      end
+
+      context "and there are boot, product and mount errors" do
         let(:boot_errors) { [boot_error1] }
         let(:product_errors) { [product_error1] }
+        let(:mount_errors) { [mount_error1] }
 
         it "contains a general error message for boot errors" do
           expect(subject.to_html).to match(/not be able to boot/)
@@ -110,6 +145,10 @@ describe Y2Partitioner::SetupErrorsPresenter do
 
         it "contains a general error message for product errors" do
           expect(subject.to_html).to match(/could not work/)
+        end
+
+        it "contains a general error message for mount errors" do
+          expect(subject.to_html).to match(/mount point during boot/)
         end
       end
     end
