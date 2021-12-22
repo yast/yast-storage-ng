@@ -19,10 +19,17 @@
 
 require_relative "../../../spec_helper"
 
-# mock the "installation/console/menu_plugin" content (from yast2-installation)
-module Installation
-  module Console
-    class MenuPlugin
+begin
+  # in development or in GitHub Actions the file might be present,
+  # try loading the original file
+  old_require "installation/console/menu_plugin"
+rescue LoadError
+  # the file is missing, mock the "installation/console/menu_plugin" content,
+  # needed during RPM build
+  module Installation
+    module Console
+      class MenuPlugin
+      end
     end
   end
 end
