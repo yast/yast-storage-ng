@@ -29,7 +29,7 @@ ENV["LC_ALL"] = "en_US.UTF-8"
 # fail fast if a class does not declare textdomain (bsc#1130822)
 ENV["Y2STRICTTEXTDOMAIN"] = "1"
 
-LIBS_TO_SKIP = ["y2packager/repository"]
+LIBS_TO_SKIP = ["y2packager/repository", "installation/console/menu_plugin"]
 
 # Hack to avoid to require some files
 #

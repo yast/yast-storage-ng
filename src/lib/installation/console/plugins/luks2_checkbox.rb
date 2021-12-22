@@ -23,6 +23,7 @@ module Installation
       # define a checkbox for enabling the experimental LUKS2 support in the installer
       class LUKS2CheckBox < CWM::CheckBox
         include Yast::Logger
+
         def initialize
           textdomain "storage"
         end
