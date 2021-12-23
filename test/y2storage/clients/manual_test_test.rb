@@ -191,10 +191,9 @@ describe Y2Storage::Clients::ManualTest do
       let(:args) { ["autoinst", "/path/to/devicegraph.xml", "/the/profile.xml"] }
 
       before do
-        Yast.import "Profile"
         allow(Yast::Profile).to receive(:ReadXML)
-
-        Yast.import "AutoinstStorage"
+        allow(Yast::Profile).to receive(:current).and_return({})
+        allow(Yast::AutoinstConfig).to receive(:Confirm=)
         allow(Yast::AutoinstStorage).to receive(:Import)
         allow(Installation::ProposalRunner).to receive(:new).and_return runner
 
@@ -214,6 +213,7 @@ describe Y2Storage::Clients::ManualTest do
       end
 
       it "displays the proposal dialog" do
+        expect(Yast::AutoinstConfig).to receive(:Confirm=).with(true)
         expect(runner).to receive(:run)
         described_class.run
       end
