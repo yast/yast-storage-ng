@@ -75,7 +75,7 @@ module Y2Storage
         YAML.load_stream(yaml_file) { |doc| build_tree(doc) }
       else
         File.open(yaml_file) do |file|
-          block = Proc.new { |doc| build_tree(doc) }
+          block = proc { |doc| build_tree(doc) }
           old_ruby = RUBY_VERSION.start_with?("2.")
           if old_ruby
             YAML.load_stream(file, yaml_file, &block)

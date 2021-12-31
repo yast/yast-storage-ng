@@ -462,7 +462,7 @@ module Y2Storage
         YAML.load(serialized) # rubocop:disable Security/YAMLLoad # here it is our data, so safe
       else
         # ruby3 from 3.1 defaults load to safe_load, so need explicit unsafe_load
-        YAML.unsafe_load(serialized) # rubocop:disable Security/YAMLLoad # here it is our data, so safe
+        YAML.unsafe_load(serialized)
       end
     end
 
