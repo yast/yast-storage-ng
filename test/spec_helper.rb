@@ -29,7 +29,12 @@ ENV["LC_ALL"] = "en_US.UTF-8"
 # fail fast if a class does not declare textdomain (bsc#1130822)
 ENV["Y2STRICTTEXTDOMAIN"] = "1"
 
-LIBS_TO_SKIP = ["y2packager/repository", "installation/console/menu_plugin"]
+LIBS_TO_SKIP = [
+  "installation/console/menu_plugin",
+  "installation/proposal_runner",
+  "installation/proposal_store",
+  "y2packager/repository"
+]
 
 # Hack to avoid to require some files
 #
@@ -76,6 +81,13 @@ end
 
 require_relative "support/storage_helpers"
 
+module Installation
+  # The Installation::ProposalStore and Installation::ProposalRunner classes are not loaded in the
+  # tests to avoid cyclic dependencies with yast2-installation at build time.
+  class ProposalStore; end
+  class ProposalRunner; end
+end
+
 RSpec.configure do |c|
   c.include Yast::RSpec::StorageHelpers
 
@@ -85,6 +97,16 @@ RSpec.configure do |c|
     # is mocked.
     stub_const("Y2Packager::Repository", double("Y2Packager::Repository"))
     allow(Y2Packager::Repository).to receive(:all).and_return([])
+
+    allow(Yast).to receive(:import).and_call_original
+    # Yast::Profile, AutoinstStorage and AutoinstConfig are not loaded in the tests to avoid cyclic
+    # dependencies with the yast-installation package at build time.
+    allow(Yast).to receive(:import).with("Profile")
+    allow(Yast).to receive(:import).with("AutoinstStorage")
+    allow(Yast).to receive(:import).with("AutoinstConfig")
+    stub_const("Yast::Profile", double("Yast::Profile"))
+    stub_const("Yast::AutoinstStorage", double("Yast::AutoinstStorage"))
+    stub_const("Yast::AutoinstConfig", double("Yast::AutoinstConfig"))
 
     allow(Y2Storage::DumpManager.instance).to receive(:dump)
 

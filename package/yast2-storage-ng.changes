@@ -1,8 +1,14 @@
 -------------------------------------------------------------------
-Wed Dec 22 17:37:23 UTC 2021 - Ladislav Slezák <lslezak@suse.cz>
+Mon Jan  3 09:22:05 UTC 2022 - Ladislav Slezák <lslezak@suse.cz>
 
 - Display LUKS2 configuration checkbox in the installer console
   (related to jsc#SLE-21308)
+- 4.4.30
+
+-------------------------------------------------------------------
+Fri Dec 31 10:36:11 UTC 2021 - Josef Reidinger <jreidinger@suse.com>
+
+- Adapt for ruby 3.1 (bsc#1193192)
 - 4.4.29
 
 -------------------------------------------------------------------
