@@ -40,6 +40,13 @@ module Y2Storage
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
 
     def initialize
+      reset_cache
+    end
+
+    # Reset the cached values of the environment variables,
+    # call this after changing the value of any used environment variable
+    def reset_cache
+      log.debug "Resetting ENV values cache"
       @active_cache = {}
     end
 
