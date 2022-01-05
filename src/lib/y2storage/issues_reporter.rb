@@ -113,7 +113,7 @@ module Y2Storage
     def issue_popup(footer, options)
       presenter = IssuePresenter.new(issues.first, footer: footer)
 
-      Yast2::Popup.show(presenter.message, options.merge(details: presenter.details))
+      Yast2::Popup.show(presenter.message, **options.merge(details: presenter.details))
     end
 
     # Popup used when there are several issues
@@ -128,7 +128,7 @@ module Y2Storage
     def issues_popup(footer, options)
       presenter = IssuesPresenter.new(issues, intro: message, footer: footer)
 
-      Dialogs::Issues.show(presenter.message, options.merge(issues: issues))
+      Dialogs::Issues.show(presenter.message, **options.merge(issues: issues))
     end
 
     # Label for the abort button
