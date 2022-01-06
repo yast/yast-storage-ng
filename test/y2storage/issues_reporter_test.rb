@@ -100,7 +100,7 @@ describe Y2Storage::IssuesReporter do
       let(:description) { nil }
 
       it "shows the message for a single issue" do
-        expect(Yast2::Popup).to receive(:show) do |message, _|
+        expect(Yast2::Popup).to receive(:show) do |message, **_args|
           expect(message).to match(/Issue 1/)
           expect(message).to match(/despite the issue\?/)
         end
@@ -118,8 +118,8 @@ describe Y2Storage::IssuesReporter do
         end
 
         it "includes the details of the issue" do
-          expect(Yast2::Popup).to receive(:show) do |_, options|
-            expect(options[:details]).to match(/Issue 1 details/)
+          expect(Yast2::Popup).to receive(:show) do |_, details:, **_options|
+            expect(details).to match(/Issue 1 details/)
           end
 
           subject.report
@@ -141,8 +141,8 @@ describe Y2Storage::IssuesReporter do
           end
 
           it "wraps the details" do
-            expect(Yast2::Popup).to receive(:show) do |_, options|
-              max_line = options[:details].lines.max_by(&:size)
+            expect(Yast2::Popup).to receive(:show) do |_, details:, **_options|
+              max_line = details.lines.max_by(&:size)
               expect(max_line.size < max_length).to eq(true), "Line '#{max_line}' is too long"
             end
 
@@ -155,7 +155,7 @@ describe Y2Storage::IssuesReporter do
         let(:details) { nil }
 
         it "does not show a hint about clicking on details" do
-          expect(Yast2::Popup).to receive(:show) do |message, _|
+          expect(Yast2::Popup).to receive(:show) do |message, **_options|
             expect(message).to_not include("Click below")
           end
 
@@ -163,8 +163,8 @@ describe Y2Storage::IssuesReporter do
         end
 
         it "does not include details" do
-          expect(Yast2::Popup).to receive(:show) do |_, options|
-            expect(options[:details]).to be_empty
+          expect(Yast2::Popup).to receive(:show) do |_, details:, **_options|
+            expect(details).to be_empty
           end
 
           subject.report
