@@ -76,7 +76,7 @@ module Y2Storage
     # See bsc#1162545 for why this is needed and was added.
     #
     def activate_luks?
-      active?(ENV_ACTIVATE_LUKS, true)
+      active?(ENV_ACTIVATE_LUKS, default: true)
     end
 
     # Whether YaST should offer the encryption method for regular LUKS2
@@ -86,7 +86,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def luks2_available?
-      active?(ENV_LUKS2_AVAILABLE, false)
+      active?(ENV_LUKS2_AVAILABLE, default: false)
     end
 
     # Whether errors during libstorage probing should be ignored.
@@ -109,9 +109,9 @@ module Y2Storage
     # Whether the env variable is active
     #
     # @param variable [String]
-    # @param fallback [Boolean] Fallback value if env variable is not set
+    # @param default [Boolean] value if env variable is not set
     # @return [Boolean]
-    def active?(variable, fallback = false)
+    def active?(variable, default: false)
       return @active_cache[variable] if @active_cache.key?(variable)
 
       value = read(variable)
@@ -120,7 +120,7 @@ module Y2Storage
         # variable is used with no value or with "1"
         value.casecmp?("on") || value.empty? || value == "1"
       else
-        fallback
+        default
       end
       @active_cache[variable] = result
     end

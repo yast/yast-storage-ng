@@ -37,7 +37,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::LinuxPartitionActions do
     end
 
     it "selects the default option according to the settings" do
-      expect_select(:linux_actions, :ondemand)
+      expect_select(:linux_actions, value: :ondemand)
 
       subject.init
     end
@@ -65,7 +65,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::LinuxPartitionActions do
 
   describe "#store" do
     before do
-      select_widget(:linux_actions, :ondemand)
+      select_widget(:linux_actions, value: :ondemand)
     end
 
     it "sets settings.linux_delete_mode according to the selected value" do
