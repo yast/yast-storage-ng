@@ -453,8 +453,9 @@ describe Y2Storage::DiskSize do
     end
 
     it "should work with non-integral numbers and unit" do
-      expect(described_class.parse("43.456 GB").to_i).to be == 43.456 * (1000**3)
-      expect(described_class.parse("-43.456 GB").to_i).to be == -43.456 * (1000**3)
+      # avoid float rounding issues, so do not use ==
+      expect((described_class.parse("43.456 GB").to_i - (43.456 * (1000**3))).abs).to be < 1000
+      expect((described_class.parse("-43.456 GB").to_i + (43.456 * (1000**3))).abs).to be < 1000
     end
 
     it "should work with integer and unit without space between them" do
