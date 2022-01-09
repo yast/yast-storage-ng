@@ -268,7 +268,7 @@ module Y2Partitioner
 
         # @param size [Y2Storage::DiskSize]
         def initialize(size)
-          super()
+          super("__MaxSizeDummyWidget")
           @size = size
         end
       end

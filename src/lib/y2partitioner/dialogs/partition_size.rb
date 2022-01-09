@@ -143,7 +143,7 @@ module Y2Partitioner
 
         # @param region [Y2Storage::Region]
         def initialize(region)
-          super()
+          super("__MaxSizeDummy")
           @region = region
         end
 

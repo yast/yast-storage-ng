@@ -174,7 +174,7 @@ module Y2Partitioner
       SUPPORTED_FILESYSTEMS = [:btrfs, :ext2, :ext3, :ext4].freeze
 
       def initialize(controller)
-        super()
+        super # to pass controller to FstabCommon
         @controller = controller
 
         self.handle_all_events = true
@@ -688,7 +688,7 @@ module Y2Partitioner
       include FstabCommon
 
       def initialize(controller, parent_widget)
-        super()
+        super(controller) # pass controller to FstabCommon
         textdomain "storage"
         @controller = controller
         @parent_widget = parent_widget
