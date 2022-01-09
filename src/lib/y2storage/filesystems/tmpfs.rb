@@ -146,7 +146,7 @@ module Y2Storage
       def size_mount_options
         return [] unless mount_point
 
-        mount_point.mount_options.select { |opt| opt =~ /^(#{SIZE_OPT}|#{BLOCKS_OPT})=/ }
+        mount_point.mount_options.grep(/^(#{SIZE_OPT}|#{BLOCKS_OPT})=/)
       end
 
       # Parses the given size, in the format used by the size= and nr_blocks= mount options

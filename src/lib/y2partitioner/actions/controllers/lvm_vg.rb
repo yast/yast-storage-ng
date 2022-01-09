@@ -310,7 +310,7 @@ module Y2Partitioner
         # @return [Boolean] true if volume group name has illegal characters;
         #   false otherwise
         def illegal_vg_name?
-          vg_name.split(//).any? { |c| !ALLOWED_NAME_CHARS.include?(c) }
+          vg_name.chars.any? { |c| !ALLOWED_NAME_CHARS.include?(c) }
         end
 
         # Error message to show when the given volume group name contains illegal

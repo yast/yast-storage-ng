@@ -118,7 +118,7 @@ module Y2Storage
     end
 
     def allowed_chars?(password)
-      password.split(//).all? { |c| ALLOWED_CHARS.include?(c) }
+      password.chars.all? { |c| ALLOWED_CHARS.include?(c) }
     end
 
     # Loads the installation module containing the cracklib dictionary if it's

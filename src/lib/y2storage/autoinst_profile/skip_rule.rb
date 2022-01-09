@@ -146,9 +146,10 @@ module Y2Storage
       # @return [Hash]
       def to_profile_rule
         result = { "skip_key" => key, "skip_value" => raw_reference }
-        if predicate == :less_than
+        case predicate
+        when :less_than
           result["skip_if_less_than"] = true
-        elsif predicate == :more_than
+        when :more_than
           result["skip_if_more_than"] = true
         end
         result

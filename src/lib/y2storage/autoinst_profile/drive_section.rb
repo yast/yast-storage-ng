@@ -609,7 +609,7 @@ module Y2Storage
       def use_value_from_string(use)
         return use unless use =~ /(\d+,?)+/
 
-        use.split(",").select { |n| n =~ /\d+/ }.map(&:to_i)
+        use.split(",").grep(/\d+/).map(&:to_i)
       end
 
       # Determine whether snapshots are enabled

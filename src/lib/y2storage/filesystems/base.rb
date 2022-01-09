@@ -322,9 +322,10 @@ module Y2Storage
           file.write(file_content)
           file.rewind
 
-          if file_name == "fstab"
+          case file_name
+          when "fstab"
             file_object = Fstab.new(file.path, self)
-          elsif file_name == "crypttab"
+          when "crypttab"
             file_object = Crypttab.new(file.path, self)
           end
         end

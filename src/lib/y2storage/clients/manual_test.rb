@@ -59,10 +59,11 @@ module Y2Storage
         @devicegraph_path = args[1]
         return unless validate_devicegraph_path
 
-        if action == :autoinst
+        case action
+        when :autoinst
           @profile_path = args[2]
           @command_error = _("No AutoYaST profile provided") unless profile_path
-        elsif action == :proposal
+        when :proposal
           @control_file_path = args[2]
         end
       end

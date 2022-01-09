@@ -225,7 +225,7 @@ module Y2Partitioner
         def initial_apqns
           process = encryption&.encryption_process
 
-          return [] unless process&.respond_to?(:apqns)
+          return [] unless process.respond_to?(:apqns)
 
           process.apqns
         end
@@ -235,7 +235,7 @@ module Y2Partitioner
         #
         # @return [String, nil] nil if the method does not support setting a label
         def initial_label
-          return nil unless encryption&.respond_to?(:label)
+          return nil unless encryption.respond_to?(:label)
 
           encryption.label
         end

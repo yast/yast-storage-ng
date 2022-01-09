@@ -259,7 +259,7 @@ module Y2Storage
     # @return [Array<Symbol>] create methods
     #
     def factory_methods
-      @factory_methods ||= methods.select { |m| m =~ /^create_/ }
+      @factory_methods ||= methods.grep(/^create_/)
     end
 
     # Return the products this factory can create. This is derived from the

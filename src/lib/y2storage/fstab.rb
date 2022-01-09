@@ -57,7 +57,7 @@ module Y2Storage
     #
     # @return [BlkDevice, nil] nil if there is no filesystem or the filesystem is NFS.
     def device
-      return nil unless filesystem&.respond_to?(:blk_devices)
+      return nil unless filesystem.respond_to?(:blk_devices)
 
       filesystem.blk_devices.first
     end

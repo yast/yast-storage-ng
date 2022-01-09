@@ -82,7 +82,7 @@ module Y2Partitioner
       # Removes from the MountPoint object the options that not longer apply
       def delete_fstab_option!(option)
         # The options can only be modified using MountPoint#mount_options=
-        mount_point.mount_options = mount_point.mount_options.reject { |o| o =~ option }
+        mount_point.mount_options = mount_point.mount_options.grep_v(option)
       end
 
       # Adds new options to the MountPoint object
@@ -769,7 +769,7 @@ module Y2Partitioner
       # Return all values that are handled by other widgets in this widget tree.
       # @return [Array<String>]
       def other_values
-        return [] unless @parent_widget&.respond_to?(:values)
+        return [] unless @parent_widget.respond_to?(:values)
 
         @other_values ||= @parent_widget.values
       end
@@ -777,7 +777,7 @@ module Y2Partitioner
       # Return all regexps that are handled by other widgets in this widget tree.
       # @return [Array<Regexp>]
       def other_regexps
-        return [] unless @parent_widget&.respond_to?(:regexps)
+        return [] unless @parent_widget.respond_to?(:regexps)
 
         @other_regexps ||= @parent_widget.regexps
       end

@@ -85,9 +85,10 @@ module Y2Partitioner
 
         # @see Base
         def action_for(event)
-          if event == :rescan_devices
+          case event
+          when :rescan_devices
             Actions::RescanDevices.new
-          elsif event == :import_mount_points
+          when :import_mount_points
             Actions::ImportMountPoints.new
           end
         end

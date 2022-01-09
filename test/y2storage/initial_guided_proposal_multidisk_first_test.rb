@@ -42,9 +42,10 @@ describe Y2Storage::InitialGuidedProposal do
   end
 
   def device_used_by(element)
-    if element.is_a?(Y2Storage::Partition)
+    case element
+    when Y2Storage::Partition
       element.partitionable
-    elsif element.is_a?(Y2Storage::LvmVg)
+    when Y2Storage::LvmVg
       element.lvm_pvs.map(&:blk_device).map(&:partitionable)
     end
   end

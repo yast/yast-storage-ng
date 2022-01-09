@@ -119,7 +119,7 @@ module Y2Partitioner
     # those widgets (e.g. #widgets_with_state_info).
     def save_extra_info
       page = overview_tree_pager&.current_page
-      return unless page&.respond_to?(:state_info)
+      return unless page.respond_to?(:state_info)
 
       self.extra = page.state_info
     end

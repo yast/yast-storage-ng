@@ -39,11 +39,6 @@ module Y2Partitioner
           _("LVM Volume Groups")
         end
 
-        # Constructor
-        def initialize(*args)
-          super
-        end
-
         # @macro seeAbstractWidget
         def label
           self.class.label
