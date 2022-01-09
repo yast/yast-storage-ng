@@ -88,13 +88,16 @@ opt_to_yaml = true if dst&.match(/\.ya?ml$/i)
 storage = Storage::Storage.new(Storage::Environment.new(true))
 dg = Y2Storage::Devicegraph.new(storage.create_devicegraph("xxx"))
 
+error = nil
+
 if opt_from_yaml != false
   begin
     tried = true
     Y2Storage::FakeDeviceFactory.load_yaml_file(dg, src || $stdin)
     got_it = true
     opt_to_yaml = false if opt_to_yaml.nil?
-  rescue StandardError
+  rescue StandardError => e
+    error = e.message
   end
 end
 
@@ -104,11 +107,12 @@ if !got_it && (!tried || src)
     dg.load(src || "-")
     got_it = true
     opt_to_yaml = true if opt_to_yaml.nil?
-  rescue StandardError
+  rescue StandardError => e
+    error = e.message
   end
 end
 if !got_it
-  puts "invalid input format"
+  puts "invalid input format: #{error}"
   exit 1
 end
 
