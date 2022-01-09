@@ -29,6 +29,7 @@ module Y2Partitioner
     class MdOptions < Base
       # @param controller [Actions::Controllers::Md]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -59,6 +60,7 @@ module Y2Partitioner
       class ChunkSize < CWM::ComboBox
         # @param controller [Actions::Controllers::Md]
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -100,6 +102,7 @@ module Y2Partitioner
       class Parity < CWM::ComboBox
         # @param controller [Actions::Controllers::Md]
         def initialize(controller)
+          super()
           textdomain "storage"
 
           @controller = controller

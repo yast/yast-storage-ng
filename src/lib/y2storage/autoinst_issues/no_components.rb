@@ -34,6 +34,8 @@ module Y2Storage
       # @param planned [Planned::Bcache, Planned::Btrfs, Planned::LvmVg, Planned::RAID]
       #   Planned device
       def initialize(planned)
+        super()
+
         textdomain "storage"
 
         @planned = planned

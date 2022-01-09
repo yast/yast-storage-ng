@@ -25,6 +25,8 @@ module Y2Storage
     class CouldNotCreateBoot < ::Installation::AutoinstIssues::Issue
       # @param devices [Array<Planned::Devices>] see {#devices}
       def initialize(devices)
+        super()
+
         textdomain "storage"
         @devices = devices
       end

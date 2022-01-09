@@ -34,6 +34,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize
+        super
         textdomain "storage"
 
         # Needed to delegate events to the inner ActionsPresenter object

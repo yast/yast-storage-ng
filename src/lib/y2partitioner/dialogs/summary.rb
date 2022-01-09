@@ -32,6 +32,7 @@ module Y2Partitioner
       include Yast::I18n
 
       def initialize
+        super
         textdomain "storage"
       end
 

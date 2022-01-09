@@ -35,6 +35,8 @@ module Y2Storage
       # @param selected_attr [Symbol] Name of the attribute that will be used
       # @param ignored_attrs [Array<Symbol>] List of attributes to be ignored
       def initialize(section, selected_attr, ignored_attrs)
+        super()
+
         textdomain "storage"
 
         @section = section

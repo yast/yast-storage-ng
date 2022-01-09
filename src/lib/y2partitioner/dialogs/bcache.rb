@@ -34,6 +34,7 @@ module Y2Partitioner
       #
       # @param controller [Actions::Controllers::Bcache]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @caching = CachingDeviceSelector.new(controller.bcache, controller.suitable_caching_devices)
@@ -116,6 +117,7 @@ module Y2Partitioner
         # @param devices [Array<Y2Storage::BlkDevice, Y2Storage::BcacheCset>] possible devices
         #   that can be used as backing or caching device.
         def initialize(bcache, devices)
+          super()
           textdomain "storage"
 
           @bcache = bcache
@@ -307,6 +309,7 @@ module Y2Partitioner
         #
         # @param bcache [Y2Storage::Bcache, nil] existing bcache or nil if it is a new one
         def initialize(bcache)
+          super()
           textdomain "storage"
 
           @bcache = bcache

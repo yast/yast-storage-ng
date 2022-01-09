@@ -27,6 +27,7 @@ module Y2Partitioner
     # Dialog to show the probing issues detected in the system
     class ProbingIssues < Popup
       def initialize
+        super
         textdomain "storage"
       end
 

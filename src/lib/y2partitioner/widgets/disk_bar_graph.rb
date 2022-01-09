@@ -24,6 +24,7 @@ module Y2Partitioner
     # Widget that shows bar graph for given disk if UI support it
     class DiskBarGraph < CWM::CustomWidget
       def initialize(disk)
+        super()
         textdomain "storage"
         @disk = disk
       end

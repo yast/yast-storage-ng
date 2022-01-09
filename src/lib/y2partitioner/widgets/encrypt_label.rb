@@ -31,6 +31,7 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::Encryption]
       # @param enable [Boolean] whether the widget should be enabled on init
       def initialize(controller, enable: true)
+        super()
         textdomain "storage"
 
         @controller = controller

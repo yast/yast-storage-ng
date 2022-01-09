@@ -25,6 +25,7 @@ module Y2Partitioner
     # Dialog to show the summary of changes performed by the user
     class SummaryPopup < Popup
       def initialize
+        super
         textdomain "storage"
       end
 

@@ -39,6 +39,8 @@ module Y2Storage
 
       # @param error [StandardError]
       def initialize(error)
+        super()
+
         textdomain "storage"
 
         @error = error

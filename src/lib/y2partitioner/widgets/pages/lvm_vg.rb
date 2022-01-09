@@ -36,6 +36,7 @@ module Y2Partitioner
         # @param lvm_vg [Y2Storage::Lvm_vg]
         # @param pager [CWM::TreePager]
         def initialize(lvm_vg, pager)
+          super()
           textdomain "storage"
 
           @lvm_vg = lvm_vg

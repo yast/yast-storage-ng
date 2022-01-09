@@ -27,6 +27,7 @@ module Y2Partitioner
     class BtrfsMetadataRaidLevel < CWM::ComboBox
       # @param controller [Actions::Controllers::BtrfsDevices]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

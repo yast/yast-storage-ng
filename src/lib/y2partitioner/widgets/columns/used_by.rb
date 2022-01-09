@@ -28,6 +28,7 @@ module Y2Partitioner
       class UsedBy < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

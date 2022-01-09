@@ -34,6 +34,7 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::LvmLv] a LV controller, collecting data for a logical
       #   volume to be created
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -52,6 +53,7 @@ module Y2Partitioner
       class LvSizeWidget < CWM::CustomWidget
         # @param controller [Actions::Controllers::LvmLv]
         def initialize(controller)
+          super()
           textdomain "storage"
 
           @controller = controller
@@ -174,6 +176,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -265,6 +268,7 @@ module Y2Partitioner
 
         # @param size [Y2Storage::DiskSize]
         def initialize(size)
+          super()
           @size = size
         end
       end
@@ -275,6 +279,7 @@ module Y2Partitioner
 
         # @param initial [Y2Storage::DiskSize]
         def initialize(initial)
+          super()
           textdomain "storage"
           @initial = initial
         end
@@ -324,6 +329,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -394,6 +400,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -417,6 +424,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end

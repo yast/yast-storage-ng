@@ -29,6 +29,8 @@ describe Y2Storage::Planned::CanBeEncrypted do
     include Y2Storage::Planned::CanBeEncrypted
 
     def initialize(method = Y2Storage::EncryptionMethod::LUKS1, password = "")
+      super()
+
       initialize_can_be_encrypted
       self.encryption_method = method
       self.encryption_password = password

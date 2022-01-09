@@ -31,6 +31,7 @@ module Y2Partitioner
     class Encryption < Base
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -58,6 +59,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::Encryption]
         #   a controller collecting data for managing the encryption of a device
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end

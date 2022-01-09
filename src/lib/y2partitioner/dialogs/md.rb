@@ -42,6 +42,7 @@ module Y2Partitioner
     # Part of {Actions::AddMd}.
     class Md < Base
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
         @dev_selection = Widgets::MdDevicesSelector.new(controller)
@@ -81,6 +82,7 @@ module Y2Partitioner
         # @param devices_widget [#refresh_sizes] widget containing the lists of
         #   devices selected for the RAID
         def initialize(controller, devices_widget)
+          super()
           textdomain "storage"
           @controller = controller
           @devices_widget = devices_widget
@@ -212,6 +214,7 @@ module Y2Partitioner
       # Widget for MD array name
       class NameEntry < CWM::InputField
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end

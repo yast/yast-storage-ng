@@ -35,6 +35,7 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::LvmLv]
       #   a LV controller, collecting data for a logical volume to be created
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -111,6 +112,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -205,6 +207,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end

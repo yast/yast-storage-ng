@@ -39,6 +39,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize(device)
+        super()
         textdomain "storage"
         @device = device
       end

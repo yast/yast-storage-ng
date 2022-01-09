@@ -27,6 +27,7 @@ module Y2Partitioner
       class RaidType < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

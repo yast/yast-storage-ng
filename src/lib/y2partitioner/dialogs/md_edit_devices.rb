@@ -29,6 +29,7 @@ module Y2Partitioner
       #
       # @param controller [Actions::Controllers::Md]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

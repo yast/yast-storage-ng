@@ -26,6 +26,7 @@ module Y2Partitioner
       class Size < DiskSize
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

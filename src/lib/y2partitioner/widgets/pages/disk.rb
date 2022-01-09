@@ -39,6 +39,7 @@ module Y2Partitioner
         #              Y2Storage::MdMember, Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
+          super()
           textdomain "storage"
 
           @disk = disk

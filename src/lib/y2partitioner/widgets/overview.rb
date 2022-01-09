@@ -39,6 +39,7 @@ module Y2Partitioner
     # We need a tree whose items include Pages that point to the OverviewTreePager.
     class OverviewTree < CWM::Tree
       def initialize(items)
+        super()
         textdomain "storage"
         @items = items
       end

@@ -40,6 +40,7 @@ module Y2Partitioner
       # @param parent_widget [#refresh_others] container widget that must be
       #   notified after every relevant update to the controller information
       def initialize(controller, parent_widget)
+        super()
         textdomain "storage"
 
         @controller        = controller
@@ -165,6 +166,7 @@ module Y2Partitioner
       # @param parent_widget [#refresh_others] container widget that must be
       #   notified after every relevant update to the controller information
       def initialize(controller, parent_widget)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -446,6 +448,7 @@ module Y2Partitioner
 
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -515,6 +518,7 @@ module Y2Partitioner
     class FormatOptionsButton < CWM::PushButton
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -551,6 +555,7 @@ module Y2Partitioner
     class Snapshots < CWM::CheckBox
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -593,6 +598,7 @@ module Y2Partitioner
       # Constructor
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -684,6 +690,7 @@ module Y2Partitioner
     class EncryptBlkDevice < CWM::CheckBox
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end
@@ -732,6 +739,7 @@ module Y2Partitioner
       SIZES = ["auto", "512", "1024", "2048", "4096"].freeze
 
       def initialize(options)
+        super()
         textdomain "storage"
         @options = options
       end
@@ -750,6 +758,7 @@ module Y2Partitioner
       SIZES = ["auto", "512", "1024", "2048", "4096"].freeze
 
       def initialize(options)
+        super()
         textdomain "storage"
         @options = options
       end
@@ -775,6 +784,7 @@ module Y2Partitioner
     class PartitionId < CWM::CustomWidget
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
         @selector = PartitionIdComboBox.new(controller) if controller.partition_id_supported?
@@ -820,6 +830,7 @@ module Y2Partitioner
     class PartitionIdComboBox < CWM::ComboBox
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
       end

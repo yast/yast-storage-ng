@@ -75,6 +75,7 @@ module Y2Partitioner
 
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

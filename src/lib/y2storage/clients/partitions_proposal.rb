@@ -51,6 +51,8 @@ module Y2Storage
       include InstDialogMixin
 
       def initialize
+        super
+
         textdomain "storage"
         @failed = false
         @simple_mode = false

@@ -35,6 +35,7 @@ module Y2Partitioner
     class CommitActions < CWM::CustomWidget
       # Constructor
       def initialize
+        super
         self.handle_all_events = true
 
         @performed_actions = []

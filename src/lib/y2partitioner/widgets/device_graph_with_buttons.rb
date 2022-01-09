@@ -32,6 +32,7 @@ module Y2Partitioner
     class DeviceGraphWithButtons < CWM::CustomWidget
       # Constructor
       def initialize(device_graph)
+        super()
         textdomain "storage"
 
         @device_graph = device_graph
@@ -70,6 +71,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize(device_graph, format)
+        super()
         textdomain "storage"
 
         @device_graph = device_graph

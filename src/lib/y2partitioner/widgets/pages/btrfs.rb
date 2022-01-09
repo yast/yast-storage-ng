@@ -41,6 +41,7 @@ module Y2Partitioner
         # @param filesystem [Y2Storage::Filesystems::Btrfs]
         # @param pager [CWM::TreePager]
         def initialize(filesystem, pager)
+          super()
           textdomain "storage"
 
           @filesystem = filesystem

@@ -28,6 +28,7 @@ module Y2Partitioner
     class MkfsOptions < Popup
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

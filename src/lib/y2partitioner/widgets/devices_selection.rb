@@ -44,6 +44,7 @@ module Y2Partitioner
       abstract_method :unselected
 
       def initialize
+        super()
         textdomain "storage"
 
         @unselected_table = DevicesTable.new(unselected, "unselected")
@@ -257,6 +258,7 @@ module Y2Partitioner
         attr_reader :widget_id
 
         def initialize(devices, widget_id)
+          super()
           textdomain "storage"
           @widget_id = widget_id.to_s
           self.devices = devices

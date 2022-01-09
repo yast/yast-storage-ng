@@ -35,6 +35,7 @@ module Y2Partitioner
       #
       # @param controller [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -316,6 +317,7 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
         def initialize(device)
+          super()
           textdomain "storage"
 
           @device = device
@@ -555,6 +557,7 @@ module Y2Partitioner
         #
         # @param size [Y2Storage::DiskSize]
         def initialize(size)
+          super()
           @size = size
         end
 
@@ -585,6 +588,7 @@ module Y2Partitioner
         # @param max_size [Y2Storage::DiskSize]
         # @param current_size [Y2Storage::DiskSize]
         def initialize(min_size, max_size, current_size)
+          super()
           textdomain "storage"
 
           @min_size = min_size

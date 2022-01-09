@@ -32,6 +32,7 @@ module Y2Partitioner
       include Yast::Logger
 
       def initialize
+        super
         textdomain "storage"
       end
 

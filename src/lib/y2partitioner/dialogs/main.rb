@@ -45,6 +45,7 @@ module Y2Partitioner
       # @param initial [Y2Storage::Devicegraph] starting point (initial device graph
       #   to display)
       def initialize(system, initial)
+        super()
         textdomain "storage"
 
         UIState.create_instance

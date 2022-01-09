@@ -40,6 +40,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize(device_graph)
+        super()
         textdomain "storage"
 
         @device_graph = device_graph

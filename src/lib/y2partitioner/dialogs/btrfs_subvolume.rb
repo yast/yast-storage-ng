@@ -76,6 +76,7 @@ module Y2Partitioner
         #
         # @param controller [Actions::Controllers::BtrfsSubvolume]
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -235,6 +236,7 @@ module Y2Partitioner
       class SubvolumeNocow < CWM::CheckBox
         # @return [Actions::Controllers::BtrfsSubvolume]
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -285,6 +287,7 @@ module Y2Partitioner
         # @param controller [Actions::Controllers::BtrfsSubvolume]
         #   a controller collecting data for a subvolume to be created or edited
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
         end
@@ -402,6 +405,7 @@ module Y2Partitioner
         #
         # @param initial [Y2Storage::DiskSize] initial value
         def initialize(initial)
+          super()
           textdomain "storage"
           @initial = initial
         end
@@ -435,6 +439,7 @@ module Y2Partitioner
         # @param initial [Boolean] initial state of the checkbox
         # @param size_widget [SubvolumeRferLimitSize] see {#size_widget}
         def initialize(initial, size_widget)
+          super()
           textdomain "storage"
           @initial = initial
           @size_widget = size_widget

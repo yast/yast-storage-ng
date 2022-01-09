@@ -35,6 +35,8 @@ module Y2Storage
       #                (see {AutoinstProfile})
       # @param attr    [Symbol] Name of the missing attribute
       def initialize(section, attr)
+        super()
+
         textdomain "storage"
 
         @section = section

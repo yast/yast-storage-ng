@@ -24,6 +24,7 @@ module Y2Partitioner
     # Widget that shows bar graph for given LvmVg if UI support it
     class LvmVgBarGraph < CWM::CustomWidget
       def initialize(lvm_vg)
+        super()
         @lvm_vg = lvm_vg
       end
 

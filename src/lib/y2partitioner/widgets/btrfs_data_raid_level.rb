@@ -29,6 +29,7 @@ module Y2Partitioner
       #
       # @param controller [Actions::Controllers::BtrfsDevices]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
