@@ -515,7 +515,7 @@ module Y2Storage
         end
 
         # ...reassign them according to the current names of the block devices
-        encryptions.each do |enc|
+        encryptions.each do |enc| # rubocop:disable Style/CombinableLoops Cannot be combined
           enc.assign_dm_table_name(enc.auto_dm_table_name)
         end
       end
