@@ -35,7 +35,7 @@ module Y2Storage
     extend Yast::I18n
     wrap_class Storage::ResizeInfo
 
-    # rubocop:disable Metrics/LineLength
+    # rubocop:disable Layout/LineLength
     REASON_TEXTS =
       {
         RB_RESIZE_NOT_SUPPORTED_BY_DEVICE:                 N_("Resizing is not supported by this device."),
@@ -59,7 +59,7 @@ module Y2Storage
         RB_MAX_SIZE_FOR_LVM_LV_THIN:                       N_("The LVM thin logical volume already has the maximum size."),
         RB_PASSWORD_REQUIRED:                              N_("The encryption password is required.")
       }.freeze
-    # rubocop:enable Metrics/LineLength
+    # rubocop:enable Layout/LineLength
 
     # @!method resize_ok?
     #   @return [Boolean] whether is possible to resize the device

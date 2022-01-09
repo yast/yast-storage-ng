@@ -115,7 +115,7 @@ module Y2Storage
       #   @return [Boolean] whether an extended partition exists in the table
       storage_forward :has_extended?, to: :has_extended
 
-      # rubocop: disable Metrics/LineLength
+      # rubocop: disable Layout/LineLength
       # @!method unused_partition_slots(policy = AlignPolicy::ALIGN_START_KEEP_END, type = AlignType::OPTIMAL)
       #
       #   Slots that could be used to create new partitions following the
