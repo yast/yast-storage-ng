@@ -193,8 +193,9 @@ module Y2Partitioner
       # help texts that are appended to the common help only in Mode.normal
       NORMAL_MODE_TEXTS = {
         mount_by:        N_("A question mark (?) indicates that\n" \
-                            "the file system is not listed in <tt>/etc/fstab</tt>. It is either mounted\n" \
-                            "manually or by some automount system. When changing settings for this volume\n" \
+                            "the file system is not listed in <tt>/etc/fstab</tt>. It is either " \
+                            "mounted\nmanually or by some automount system. When changing " \
+                            "settings for this volume\n" \
                             "YaST will not update <tt>/etc/fstab</tt>.\n"),
 
         mount_point:     UNMOUNTED_TEXT,

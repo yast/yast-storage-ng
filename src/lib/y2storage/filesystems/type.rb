@@ -381,11 +381,9 @@ module Y2Storage
       # @return [Array<String>] changed fstab options
       #
       def special_path_fstab_options(opt, mount_path = nil)
-        if mount_path.nil?
-          opt
-        elsif mount_path == "/"
+        if mount_path == "/"
           root_fstab_options(opt)
-        elsif mount_path == "/boot" || mount_path.start_with?("/boot/")
+        elsif mount_path == "/boot" || mount_path&.start_with?("/boot/")
           boot_fstab_options(opt)
         else
           opt

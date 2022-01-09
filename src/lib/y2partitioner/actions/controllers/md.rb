@@ -303,15 +303,11 @@ module Y2Partitioner
 
         def default_chunk_size
           case md.md_level.to_sym
-          when :raid0
-            Y2Storage::DiskSize.KiB(64)
           when :raid1
             Y2Storage::DiskSize.KiB(4)
           when :raid5, :raid6
             Y2Storage::DiskSize.KiB(128)
-          when :raid10
-            Y2Storage::DiskSize.KiB(64)
-          else
+          else # including raid0 and raid10
             Y2Storage::DiskSize.KiB(64)
           end
         end

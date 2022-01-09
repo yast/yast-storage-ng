@@ -83,9 +83,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def handle(event)
         case event["ID"]
-        when :format_device
-          select_format
-        when @filesystem_widget.event_id
+        when :format_device, @filesystem_widget.event_id
           select_format
         when :no_format_device
           select_no_format

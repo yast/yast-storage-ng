@@ -372,12 +372,10 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::Volume do
     before do
       allow(Yast::UI).to receive(:QueryWidget) do |id, _attr|
         case id.params.first
-        when /_proposed/
+        when /_proposed/, /_snapshots/
           true
         when /_fs_type/
           :btrfs
-        when /_snapshots/
-          true
         when /_adjust_by_ram/
           false
         end

@@ -192,7 +192,6 @@ module Y2Storage
       end
 
       # FIXME: Disabling rubocop. Not sure how to improve this method without making it less readable.
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       #
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a device.
