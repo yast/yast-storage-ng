@@ -18,7 +18,10 @@ Metrics/BlockLength:
     - test/**/*
 
 Metrics/CyclomaticComplexity:
-  Max: 8
+  Max: 9
+
+Metrics/PerceivedComplexity:
+  Max: 9
 
 # some storage API have size method, but without empty? method
 # for details see https://github.com/yast/yast-storage-ng/pull/83

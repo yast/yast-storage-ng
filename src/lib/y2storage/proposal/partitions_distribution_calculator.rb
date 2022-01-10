@@ -154,8 +154,12 @@ module Y2Storage
         log.info "#impossible? - needed: #{needed}"
         return true if needed > available_space(free_spaces)
 
-        # Now do the check for partitions that need to be in a specific disk.
-        # For simplicity, partitions with no pre-assigned disk are left out
+        impossible_partitions?(planned_partitions, free_spaces)
+      end
+
+      # Check for partitions that need to be in a specific disk.
+      # For simplicity, partitions with no pre-assigned disk are left out
+      def impossible_partitions?(planned_partitions, free_spaces)
         planned_partitions.select(&:disk).group_by(&:disk).each do |disk, parts|
           needed = DiskSize.sum(parts.map(&:min))
           available = available_space(free_spaces.select { |s| s.disk_name == disk })
