@@ -17,18 +17,6 @@ Metrics/BlockLength:
   Exclude:
     - test/**/*
 
-# TODO: fix, but for now too much work
-Metrics/CyclomaticComplexity:
-  Max: 12
-
-# TODO: fix, but for now too much work
-Metrics/PerceivedComplexity:
-  Max: 12
-
-# TODO: fix, but for now too much work
-Metrics/AbcSize:
-  Max: 32
-
 # some storage API have size method, but without empty? method
 # for details see https://github.com/yast/yast-storage-ng/pull/83
 Style/ZeroLengthPredicate:

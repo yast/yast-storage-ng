@@ -191,8 +191,16 @@ module Y2Storage
         initialized ? result : nil
       end
 
-      # FIXME: Disabling rubocop. Not sure how to improve this method without making it less readable.
-      #
+      FACTORY_MAPPING = {
+        bcache:           :init_from_bcache,
+        btrfs:            :init_from_btrfs,
+        lvm_vg:           :init_from_vg,
+        nfs:              :init_from_nfs,
+        software_raid:    :init_from_md,
+        stray_blk_device: :init_from_stray_blk_device,
+        tmpfs:            :init_from_tmpfs
+      }
+      private_constant :FACTORY_MAPPING
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a device.
       #
@@ -203,23 +211,9 @@ module Y2Storage
       #   an LVM volume group, etc.
       # @return [Boolean] true if attributes were successfully read; false otherwise.
       def init_from_device(device)
-        if device.is?(:software_raid)
-          init_from_md(device)
-        elsif device.is?(:lvm_vg)
-          init_from_vg(device)
-        elsif device.is?(:stray_blk_device)
-          init_from_stray_blk_device(device)
-        elsif device.is?(:bcache)
-          init_from_bcache(device)
-        elsif device.is?(:btrfs)
-          init_from_btrfs(device)
-        elsif device.is?(:nfs)
-          init_from_nfs(device)
-        elsif device.is?(:tmpfs)
-          init_from_tmpfs(device)
-        else
-          init_from_disk(device)
-        end
+        _id, method = FACTORY_MAPPING.find { |k, _| device.is?(k) }
+        method ||= :init_from_disk
+        send(method, device)
       end
       # rubocop:enable all
 
