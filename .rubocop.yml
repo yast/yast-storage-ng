@@ -17,6 +17,9 @@ Metrics/BlockLength:
   Exclude:
     - test/**/*
 
+Metrics/CyclomaticComplexity:
+  Max: 8
+
 # some storage API have size method, but without empty? method
 # for details see https://github.com/yast/yast-storage-ng/pull/83
 Style/ZeroLengthPredicate:
