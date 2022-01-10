@@ -373,20 +373,26 @@ module Y2Storage
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
     private_constant :LVM_VG_STRATEGIES
 
+    DEFAULTS = {
+      allocate_volume_mode:       :auto,
+      delete_resize_configurable: true,
+      linux_delete_mode:          :ondemand,
+      lvm:                        false,
+      lvm_vg_strategy:            :use_available,
+      multidisk_first:            false,
+      other_delete_mode:          :ondemand,
+      resize_windows:             true,
+      separate_vgs:               false,
+      volumes:                    [],
+      windows_delete_mode:        :ondemand
+    }
+    private_constant :DEFAULTS
     # Sets default values for the settings.
     # These will be the final values when the setting is not specified in the control file
     def apply_defaults
-      self.lvm                        ||= false
-      self.separate_vgs               ||= false
-      self.resize_windows             ||= true
-      self.windows_delete_mode        ||= :ondemand
-      self.linux_delete_mode          ||= :ondemand
-      self.other_delete_mode          ||= :ondemand
-      self.delete_resize_configurable ||= true
-      self.lvm_vg_strategy            ||= :use_available
-      self.allocate_volume_mode       ||= :auto
-      self.multidisk_first            ||= false
-      self.volumes                    ||= []
+      DEFAULTS.each do |key, value|
+        send(:"#{key}=", value) if send(key).nil?
+      end
     end
 
     # Overrides the settings with values read from the YaST product features
