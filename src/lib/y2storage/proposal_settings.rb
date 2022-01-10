@@ -367,12 +367,17 @@ module Y2Storage
       volumes.find(&:root?)
     end
 
+    # List of possible delete strategies.
+    # TODO: enum?
     DELETE_MODES = [:none, :all, :ondemand]
     private_constant :DELETE_MODES
 
+    # List of possible VG strategies.
+    # TODO: enum?
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
     private_constant :LVM_VG_STRATEGIES
 
+    # Defaults when settings is not specified
     DEFAULTS = {
       allocate_volume_mode:       :auto,
       delete_resize_configurable: true,
@@ -387,6 +392,7 @@ module Y2Storage
       windows_delete_mode:        :ondemand
     }
     private_constant :DEFAULTS
+
     # Sets default values for the settings.
     # These will be the final values when the setting is not specified in the control file
     def apply_defaults

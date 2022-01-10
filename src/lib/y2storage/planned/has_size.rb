@@ -204,6 +204,8 @@ module Y2Storage
           devices.map(&:weight).reduce(0, :+)
         end
 
+        # Checks if there are eough space at all
+        # @raise RuntimeError if there is not enough space
         def check_size(devices, space_size)
           needed_size = DiskSize.sum(devices.map(&:min))
           return unless space_size < needed_size
@@ -212,6 +214,8 @@ module Y2Storage
           raise RuntimeError
         end
 
+        # counts minimal size for each device
+        # @return [Array] modified devices with size adjusted to rounded minimum size
         def count_sizes(devices, rounding)
           devices.map do |device|
             new_dev = device.dup

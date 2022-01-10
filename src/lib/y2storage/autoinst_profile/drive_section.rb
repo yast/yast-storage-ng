@@ -191,6 +191,7 @@ module Y2Storage
         initialized ? result : nil
       end
 
+      # Mapping of device to clone and method that read attributes of it
       FACTORY_MAPPING = {
         bcache:           :init_from_bcache,
         btrfs:            :init_from_btrfs,
@@ -201,6 +202,7 @@ module Y2Storage
         tmpfs:            :init_from_tmpfs
       }
       private_constant :FACTORY_MAPPING
+
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a device.
       #

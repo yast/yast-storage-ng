@@ -123,6 +123,8 @@ module Y2Storage
       build_tree_recursive(nil, name, content)
     end
 
+    # Builds tree from hashe
+    # @see #build_tree_recursive
     def build_tree_recursive_from_hash(parent, name, content)
       # Check if all the parameters we got belong to this factory product
       check_param(name, content.keys)
@@ -145,6 +147,8 @@ module Y2Storage
       end
     end
 
+    # Builds multiple trees from list of hashes
+    # @see #build_tree_recursive
     def build_tree_recursive_from_array(parent, name, content)
       content.each do |element|
         raise TypeError, "Expected Hash, not #{element}" unless element.is_a?(Hash)
