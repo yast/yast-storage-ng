@@ -12,11 +12,6 @@ Style/SingleLineBlockParams:
 Layout/LineLength:
   Max: 105
 
-Metrics/BlockLength:
-  # rspec is known as DSL with big blocks
-  Exclude:
-    - test/**/*
-
 Metrics/CyclomaticComplexity:
   Max: 9
 
