@@ -244,7 +244,7 @@ module Y2Storage
     # @return [Array<Hash>]
     #
     # FIXME: this method offends three different complexity cops!
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def yaml_disk_device_partitions(device)
       partition_end = 0
       partition_end_max = 0
