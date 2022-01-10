@@ -32,6 +32,14 @@ module Y2Storage
     #   @return [Array<Luks>] all the LUKS encryption devices in the given devicegraph
     storage_class_forward :all, as: "Luks"
 
+    # @!method self.reset_activation_infos
+    #
+    # While activating LUKSes, libstorage-ng caches the given passwords and also for which devices the
+    # activation was canceled.
+    #
+    # This method resets all that information.
+    storage_class_forward :reset_activation_infos
+
     # @!method uuid
     #   @return [String] UUID of the LUKS device
     storage_forward :uuid
