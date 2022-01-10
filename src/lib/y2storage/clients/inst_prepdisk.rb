@@ -82,8 +82,8 @@ module Y2Storage
       def mount_in_target(path, device, options)
         target_path = manager.prepend_rootprefix(path)
 
-        if !Yast::FileUtils.Exists(target_path)
-          raise ".target.mkdir failed" if !SCR.Execute(path(".target.mkdir"), target_path)
+        if !Yast::FileUtils.Exists(target_path) && !SCR.Execute(path(".target.mkdir"), target_path)
+          raise ".target.mkdir failed"
         end
 
         log.info "Cmd: mount #{options} #{device} #{target_path}"

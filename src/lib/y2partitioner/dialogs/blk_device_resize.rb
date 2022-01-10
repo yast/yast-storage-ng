@@ -106,8 +106,8 @@ module Y2Partitioner
         # TRANSLATORS: Warning message when the user wanted to resize a filesystem
         # and there was a problem getting information about that filesystem.
         msg = _("Obtaining information about free space on this filesystem failed.\n" \
-          "Resizing it might or might not work. If you continue, there is a risk\n" \
-          "of losing all data on this filesystem.")
+                "Resizing it might or might not work. If you continue, there is a risk\n" \
+                "of losing all data on this filesystem.")
         Yast2::Popup.show(msg, headline: :warning, details: err.what, buttons: :ok)
       end
 

@@ -89,7 +89,7 @@ module Y2Storage
     alias_method :eql?, :==
 
     def ===(other)
-      other.class == self.class && is?(other)
+      other.instance_of?(self.class) && is?(other)
     end
 
     # Class methods to be added

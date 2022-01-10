@@ -263,7 +263,7 @@ module Y2Storage
 
         # is there a gap before the partition?
         # note: gap might actually be negative sometimes!
-        gap = partition.region.start * partition.region.block_size.to_i - partition_end
+        gap = (partition.region.start * partition.region.block_size.to_i) - partition_end
         partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
 
         # show partition itself
@@ -290,7 +290,7 @@ module Y2Storage
 
       # see if there's space left at the end of the device
       # show also negative sizes so we know we've overstepped
-      gap = next_start(device.region) * device.region.block_size.to_i - partition_end_max
+      gap = (next_start(device.region) * device.region.block_size.to_i) - partition_end_max
       partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
 
       partitions

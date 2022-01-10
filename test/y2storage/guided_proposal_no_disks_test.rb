@@ -32,7 +32,7 @@ describe Y2Storage::GuidedProposal do
 
     context "with no disks at all" do
       it "raises no Error" do
-        expect { described_class.initial } .to_not raise_error
+        expect { described_class.initial }.to_not raise_error
       end
     end
   end

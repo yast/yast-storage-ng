@@ -341,7 +341,7 @@ module Y2Partitioner
           # TRANSLATORS: Error message when the name of the logical volume contains
           # illegal characters
           _("The name for the logical volume contains illegal characters.\n" \
-             "Allowed are alphanumeric characters, \".\", \"_\", \"-\" and \"+\".")
+            "Allowed are alphanumeric characters, \".\", \"_\", \"-\" and \"+\".")
         end
 
         # Error when the logical volume name is already used by other logical volume

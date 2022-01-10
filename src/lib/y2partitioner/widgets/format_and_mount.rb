@@ -97,7 +97,7 @@ module Y2Partitioner
 
       def help
         text = _("<p>First, choose whether the partition should be\n" \
-                "formatted and the desired file system type.</p>")
+                 "formatted and the desired file system type.</p>")
 
         text +=
           _(

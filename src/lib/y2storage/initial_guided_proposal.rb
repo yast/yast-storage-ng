@@ -323,11 +323,11 @@ module Y2Storage
 
         # Try first the combinations that expands over more devices, so the behavior
         # is more similar to mode :auto.
-        if dev1.size != dev2.size
-          dev2.size <=> dev1.size
-        else
+        if dev1.size == dev2.size
           # For equally big combinations, let's simply use any arbitrary stable sorting
           dev1.join <=> dev2.join
+        else
+          dev2.size <=> dev1.size
         end
       end
     end

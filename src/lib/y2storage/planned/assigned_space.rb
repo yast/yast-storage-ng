@@ -133,7 +133,7 @@ module Y2Storage
         # If this space is inside an already existing extended partition,
         # libstorage has already substracted the the overhead of the first EBR.
         logical -= 1 if partition_type == :logical
-        disk_size - overhead_of_logical * logical
+        disk_size - (overhead_of_logical * logical)
       end
 
       # Total size needed to actually allocate all the assigned planned partitions
@@ -148,7 +148,7 @@ module Y2Storage
         # by the library, it may be that in some corner cases we are requesting
         # 1 MiB more than strictly needed. For the time being, let's live with
         # that (not a big deal anyway).
-        result + overhead_of_logical * num_logical
+        result + (overhead_of_logical * num_logical)
       end
 
       # Missing size needed to actually allocate all the assigned planned

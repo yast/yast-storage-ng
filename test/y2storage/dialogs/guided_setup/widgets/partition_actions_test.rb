@@ -18,7 +18,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../../spec_helper.rb"
+require_relative "../../../spec_helper"
 require "y2storage/dialogs/guided_setup/widgets/partition_actions"
 
 describe Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions do

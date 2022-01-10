@@ -59,7 +59,7 @@ module Y2Partitioner
         chunk_size:                N_("<b>Chunk Size</b> shows the chunk size for RAID\ndevices."),
 
         cyl_size:                  N_("<b>Cylinder Size</b> shows the size of the\ncylinders " \
-          "of the hard disk."),
+                                      "of the hard disk."),
 
         sectors:                   N_("<b>Number of Sectors</b> shows how many sectors the hard " \
                                       "disk has."),
@@ -86,7 +86,7 @@ module Y2Partitioner
                                       "Fibre Channel disks."),
 
         file_path:                 N_("<b>File Path</b> shows the path of the file for\nan encrypted " \
-          "loop device."),
+                                      "loop device."),
 
         format:                    N_("<b>Format</b> shows some flags: <tt>F</tt>\n" \
                                       "means the device is selected to be formatted."),
@@ -187,15 +187,15 @@ module Y2Partitioner
       }.freeze
 
       UNMOUNTED_TEXT = N_("An asterisk (*) after the mount point\n" \
-      "indicates a file system that is currently not mounted (for example, " \
-      "because it\nhas the <tt>noauto</tt> option set in <tt>/etc/fstab</tt>).")
+                          "indicates a file system that is currently not mounted (for example, " \
+                          "because it\nhas the <tt>noauto</tt> option set in <tt>/etc/fstab</tt>).")
 
       # help texts that are appended to the common help only in Mode.normal
       NORMAL_MODE_TEXTS = {
         mount_by:        N_("A question mark (?) indicates that\n" \
-          "the file system is not listed in <tt>/etc/fstab</tt>. It is either mounted\n" \
-          "manually or by some automount system. When changing settings for this volume\n" \
-          "YaST will not update <tt>/etc/fstab</tt>.\n"),
+                            "the file system is not listed in <tt>/etc/fstab</tt>. It is either mounted\n" \
+                            "manually or by some automount system. When changing settings for this volume\n" \
+                            "YaST will not update <tt>/etc/fstab</tt>.\n"),
 
         mount_point:     UNMOUNTED_TEXT,
 

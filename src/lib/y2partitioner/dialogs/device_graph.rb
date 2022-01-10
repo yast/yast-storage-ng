@@ -20,7 +20,7 @@
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/device_graph_with_buttons"
-require "cwm/tabs.rb"
+require "cwm/tabs"
 
 module Y2Partitioner
   module Dialogs

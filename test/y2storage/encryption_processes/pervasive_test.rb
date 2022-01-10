@@ -148,7 +148,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
     it "sets LUKS format options" do
       subject.pre_commit(encryption)
       expect(encryption.format_options).to include("--master-key-file "\
-        "/etc/zkey/repository/secure_xtskey1.skey")
+                                                   "/etc/zkey/repository/secure_xtskey1.skey")
       expect(encryption.format_options).to include("--key-size 1024")
       expect(encryption.format_options).to include("--cipher paes-xts-plain64")
       expect(encryption.format_options).to include("--pbkdf pbkdf2")

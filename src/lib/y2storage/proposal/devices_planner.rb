@@ -271,7 +271,7 @@ module Y2Storage
           planned_device.min_size += volume.snapshots_size
           planned_device.max_size += volume.snapshots_size
         elsif volume.snapshots_percentage > 0
-          multiplicator = 1.0 + volume.snapshots_percentage / 100.0
+          multiplicator = 1.0 + (volume.snapshots_percentage / 100.0)
           planned_device.min_size *= multiplicator
           planned_device.max_size *= multiplicator
         end

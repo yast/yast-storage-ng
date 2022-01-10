@@ -72,11 +72,11 @@ module Y2Partitioner
       # return [Boolean]
       #
       def validate
-        if !@option.validate?(value)
+        if @option.validate?(value)
+          true
+        else
           Yast::Popup.Error(format(@option.error, value))
           false
-        else
-          true
         end
       end
 

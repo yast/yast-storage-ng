@@ -88,7 +88,6 @@ opt_to_yaml = true if dst&.match(/\.ya?ml$/i)
 storage = Storage::Storage.new(Storage::Environment.new(true))
 dg = Y2Storage::Devicegraph.new(storage.create_devicegraph("xxx"))
 
-# rubocop:disable Lint/HandleExceptions
 if opt_from_yaml != false
   begin
     tried = true
@@ -108,8 +107,6 @@ if !got_it && (!tried || src)
   rescue StandardError
   end
 end
-# rubocop:enable Lint/HandleExceptions
-
 if !got_it
   puts "invalid input format"
   exit 1

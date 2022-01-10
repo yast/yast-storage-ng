@@ -386,7 +386,7 @@ describe Y2Storage::LvmLv do
         end
 
         context "and the max number of extents is not divisible by the number of stripes" do
-          let(:max) { extent_size * (5.GiB.to_i / extent_size.to_i) * stripes + extent_size }
+          let(:max) { (extent_size * (5.GiB.to_i / extent_size.to_i) * stripes) + extent_size }
 
           it "sets a number of extents divisible by the number of stripes" do
             lv.resize(new_size)
@@ -434,7 +434,7 @@ describe Y2Storage::LvmLv do
         end
 
         context "and the min number of extents is not divisible by the number of stripes" do
-          let(:min) { extent_size * (1.GiB.to_i / extent_size.to_i) * stripes + extent_size }
+          let(:min) { (extent_size * (1.GiB.to_i / extent_size.to_i) * stripes) + extent_size }
 
           it "sets the size of the volume to the min" do
             lv.resize(new_size)
@@ -553,7 +553,7 @@ describe Y2Storage::LvmLv do
       end
 
       context "and its number of extents is not divible by the number of stripes" do
-        let(:size) { extent_size * 100 * stripes + extent_size  }
+        let(:size) { (extent_size * 100 * stripes) + extent_size }
 
         it "returns a number of extents divisible by the number of stripes" do
           expect(lv_extents % lv.stripes).to_not eq(0)

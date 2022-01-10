@@ -96,29 +96,29 @@ module Y2Storage
 
           REMOVE_ACTIONS_HELP = N_(
             "<p>" \
-              "You can choose what to do with existing partitions:" \
+            "You can choose what to do with existing partitions:" \
             "</p>" \
             "<p>" \
-              "<ul>" \
-                "<li>Do not modify (keep them as they are)</li>" \
-                "<li>Remove if needed</li>" \
-                "<li>Remove even if not needed (always remove)</li>" \
-              "</ul>" \
+            "<ul>" \
+            "<li>Do not modify (keep them as they are)</li>" \
+            "<li>Remove if needed</li>" \
+            "<li>Remove even if not needed (always remove)</li>" \
+            "</ul>" \
             "</p>"
           )
 
           WINDOWS_ACTIONS_HELP = N_(
             "<p>" \
-              "And for Windows partitions, the following options are also available:" \
-              "<ul>" \
-                "<li>Resize if needed (Windows partitions only)</li>" \
-                "<li>Resize or remove if needed (Windows partitions only)</li>" \
-              "</ul>" \
+            "And for Windows partitions, the following options are also available:" \
+            "<ul>" \
+            "<li>Resize if needed (Windows partitions only)</li>" \
+            "<li>Resize or remove if needed (Windows partitions only)</li>" \
+            "</ul>" \
             "<p>" \
             "<p>" \
-              "That last option means to try to resize the Windows partition(s) to " \
-              "make enough disk space available for Linux, but if that is not " \
-              "enough, completely delete the Windows partition." \
+            "That last option means to try to resize the Windows partition(s) to " \
+            "make enough disk space available for Linux, but if that is not " \
+            "enough, completely delete the Windows partition." \
             "</p>"
           )
 

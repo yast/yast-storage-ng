@@ -77,7 +77,7 @@ module Y2Partitioner
       warnings = setup_checker.product_warnings
       header = _(
         "The system could not work properly because the following product " \
-          "requirements were not fulfilled:\n"
+        "requirements were not fulfilled:\n"
       )
 
       create_html(header, warnings)

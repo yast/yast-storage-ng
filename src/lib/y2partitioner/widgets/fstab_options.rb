@@ -499,8 +499,8 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Mount Read-Only:</b>\n" \
-        "Writing to the file system is not possible. Default is false. During installation\n" \
-        "the file system is always mounted read-write.</p>")
+          "Writing to the file system is not possible. Default is false. During installation\n" \
+          "the file system is always mounted read-write.</p>")
       end
     end
 
@@ -518,7 +518,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Mountable by User:</b>\nThe file system may be " \
-        "mounted by an ordinary user. Default is false.</p>\n")
+          "mounted by an ordinary user. Default is false.</p>\n")
       end
     end
 
@@ -670,12 +670,12 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Data Journaling Mode:</b>\n" \
-        "Specifies the journaling mode for file data.\n" \
-        "<tt>journal</tt> -- All data is committed to the journal prior to being\n" \
-        "written into the main file system. Highest performance impact.<br>\n" \
-        "<tt>ordered</tt> -- All data is forced directly out to the main file system\n" \
-        "prior to its metadata being committed to the journal. Medium performance impact.<br>\n" \
-        "<tt>writeback</tt> -- Data ordering is not preserved. No performance impact.</p>\n")
+          "Specifies the journaling mode for file data.\n" \
+          "<tt>journal</tt> -- All data is committed to the journal prior to being\n" \
+          "written into the main file system. Highest performance impact.<br>\n" \
+          "<tt>ordered</tt> -- All data is forced directly out to the main file system\n" \
+          "prior to its metadata being committed to the journal. Medium performance impact.<br>\n" \
+          "<tt>writeback</tt> -- Data ordering is not preserved. No performance impact.</p>\n")
       end
     end
 
@@ -829,7 +829,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Swap Priority:</b>\nEnter the swap priority. " \
-        "Higher numbers mean higher priority.</p>\n")
+          "Higher numbers mean higher priority.</p>\n")
       end
     end
 
@@ -875,10 +875,10 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Max Size:</b>\nUpper limit on the size of the file system. " \
-        "The size is given in bytes by default, optionally followed by a <b>k</b>, <b>m</b> " \
-        "or <b>g</b> suffix to specify KiB, MiB or GiB. The size may also have a <b>% </b> " \
-        "suffix to limit this instance to a percentage of physical RAM. " \
-        "The default, when neither this option nor nr_blocks is specified, is 50%.</p>\n")
+          "The size is given in bytes by default, optionally followed by a <b>k</b>, <b>m</b> " \
+          "or <b>g</b> suffix to specify KiB, MiB or GiB. The size may also have a <b>% </b> " \
+          "suffix to limit this instance to a percentage of physical RAM. " \
+          "The default, when neither this option nor nr_blocks is specified, is 50%.</p>\n")
       end
     end
 
@@ -952,7 +952,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Codepage for Short FAT Names:</b>\nThis codepage is used for " \
-        "converting to shortname characters on FAT file systems.</p>\n")
+          "converting to shortname characters on FAT file systems.</p>\n")
       end
     end
   end

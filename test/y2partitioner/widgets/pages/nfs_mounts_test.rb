@@ -72,7 +72,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
       it "passes the list of NFS mounts to the YaST client in the expected format" do
         expect(Yast::WFM).to receive(:CallFunction)
-          .with(client_name, ["FromStorage", "shares" => legacy_shares])
+          .with(client_name, ["FromStorage", { "shares" => legacy_shares }])
         nfs_page.contents
       end
 
@@ -244,7 +244,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
       it "notifies the event to the YaST client" do
         expect(Yast::WFM).to receive(:CallFunction)
-          .with(client_name, ["HandleEvent", "widget_id" => :newbut])
+          .with(client_name, ["HandleEvent", { "widget_id" => :newbut }])
         nfs_page.handle(event)
       end
 
@@ -337,7 +337,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
       it "notifies the event to the YaST client" do
         expect(Yast::WFM).to receive(:CallFunction)
-          .with(client_name, ["HandleEvent", "widget_id" => :delbut])
+          .with(client_name, ["HandleEvent", { "widget_id" => :delbut }])
         nfs_page.handle(event)
       end
 
@@ -388,7 +388,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
       it "notifies the event to the YaST client" do
         expect(Yast::WFM).to receive(:CallFunction)
-          .with(client_name, ["HandleEvent", "widget_id" => :editbut])
+          .with(client_name, ["HandleEvent", { "widget_id" => :editbut }])
         nfs_page.handle(event)
       end
 

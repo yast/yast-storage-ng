@@ -30,7 +30,7 @@ Yast.import "Arch"
 
 # FIXME: class too long, refactoring needed.
 #
-# rubocop:disable ClassLength
+# rubocop:disable Metrics/ClassLength
 module Y2Storage
   module AutoinstProfile
     # Thin object oriented layer on top of a <drive> section of the

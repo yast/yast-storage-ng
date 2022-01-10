@@ -346,7 +346,7 @@ module Y2Partitioner
               #   fifth  -> 0.999 (same here)
               #   second -> 1     (original index, the other branch of the 'if')
               consecutive += 1
-              delta = consecutive + 0.1**consecutive
+              delta = consecutive + (0.1**consecutive)
               up ? idx - delta : idx + delta
             else
               consecutive = 0

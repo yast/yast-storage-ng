@@ -44,7 +44,7 @@ Yast.import "Stage"
 #
 # It could be splitted into different classes.
 
-# rubocop:disable ClassLength
+# rubocop:disable Metrics/ClassLength
 
 module Y2Partitioner
   module Actions
@@ -729,4 +729,4 @@ module Y2Partitioner
   end
 end
 
-# rubocop:enable ClassLength
+# rubocop:enable Metrics/ClassLength

@@ -21,6 +21,7 @@ module Y2Partitioner
   # Base class for Y2Partitioner exceptions
   class Error < RuntimeError
   end
+
   # Abort is forced
   class ForcedAbortError < Error
   end

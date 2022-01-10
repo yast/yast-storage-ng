@@ -302,7 +302,7 @@ module Y2Storage
         # Ensure same order
         arrays = keys.map { |key| hash[key] }
         product = arrays[0].product(*arrays[1..-1])
-        product.map { |p| Hash[keys.zip(p)] }
+        product.map { |p| keys.zip(p).to_h }
       end
 
       # Inverts keys and values of a hash
@@ -358,7 +358,7 @@ module Y2Storage
       # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes considering all free disk spaces.
       def add_unused_spaces(dist_hashes, spaces)
-        spaces_hash = Hash[spaces.product([[]])]
+        spaces_hash = spaces.product([[]]).to_h
         dist_hashes.map! { |d| spaces_hash.merge(d) }
       end
 

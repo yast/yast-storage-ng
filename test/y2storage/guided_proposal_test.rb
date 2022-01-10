@@ -595,7 +595,7 @@ describe Y2Storage::GuidedProposal do
         # The overhead of the last logical partition (previously existing) is
         # smaller (only 64KiB) because we do not enforce end alignment
         # before it
-        logical_overhead = 1.MiB * logical.size - 960.KiB
+        logical_overhead = (1.MiB * logical.size) - 960.KiB
         expect(logical_sum + logical_overhead).to eq extended.size
       end
     end

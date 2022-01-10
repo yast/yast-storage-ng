@@ -539,7 +539,7 @@ module Y2Storage
       # if no start has been specified, take free region into account
       if !start && @free_blob
         @free_regions.push(region.start)
-        start_block = region.start + @free_blob.to_i / region.block_size.to_i
+        start_block = region.start + (@free_blob.to_i / region.block_size.to_i)
       end
       @free_blob = nil
 

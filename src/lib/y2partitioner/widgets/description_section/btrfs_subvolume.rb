@@ -65,7 +65,7 @@ module Y2Partitioner
         #
         # @see Base#entries_values
         def mounted_value
-          mounted = (device.mount_point&.active?) ? _("Yes") : _("No")
+          mounted = device.mount_point&.active? ? _("Yes") : _("No")
 
           # TRANSLATORS: Mounted information, where %s is replaced by "Yes" or "No"
           format(_("Mounted: %s"), mounted)

@@ -190,7 +190,7 @@ module Y2Storage
     # @param grain [DiskSize]
     # @return [DiskSize]
     def end_overhead(grain)
-      (block_size * self.end + block_size) % grain
+      ((block_size * self.end) + block_size) % grain
     end
   end
 end

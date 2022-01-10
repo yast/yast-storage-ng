@@ -53,8 +53,8 @@ describe Y2Storage::DiskSize do
       it "creates a disk size with the number of bytes represented by the string" do
         expect(described_class.new("5").size).to eq(5)
         expect(described_class.new("15 KB").size).to eq(15 * 1000)
-        expect(described_class.new("15 MiB").size).to eq(15 * 1024**2)
-        expect(described_class.new("23 TiB").size).to eq(23 * 1024**4)
+        expect(described_class.new("15 MiB").size).to eq(15 * (1024**2))
+        expect(described_class.new("23 TiB").size).to eq(23 * (1024**4))
         expect(described_class.new("23.2 KiB").size).to eq((23.2 * 1024).round)
       end
     end
@@ -74,43 +74,43 @@ describe Y2Storage::DiskSize do
 
   describe ".MiB" do
     it "creates a disk size from a number of MiB" do
-      expect(described_class.MiB(5).size).to eq(5 * 1024**2)
+      expect(described_class.MiB(5).size).to eq(5 * (1024**2))
     end
   end
 
   describe ".GiB" do
     it "creates a disk size from a number of GiB" do
-      expect(described_class.GiB(5).size).to eq(5 * 1024**3)
+      expect(described_class.GiB(5).size).to eq(5 * (1024**3))
     end
   end
 
   describe ".TiB" do
     it "creates a disk size from a number of TiB" do
-      expect(described_class.TiB(5).size).to eq(5 * 1024**4)
+      expect(described_class.TiB(5).size).to eq(5 * (1024**4))
     end
   end
 
   describe ".PiB" do
     it "creates a disk size from a number of PiB" do
-      expect(described_class.PiB(5).size).to eq(5 * 1024**5)
+      expect(described_class.PiB(5).size).to eq(5 * (1024**5))
     end
   end
 
   describe ".EiB" do
     it "creates a disk size from a number of EiB" do
-      expect(described_class.EiB(5).size).to eq(5 * 1024**6)
+      expect(described_class.EiB(5).size).to eq(5 * (1024**6))
     end
   end
 
   describe ".ZiB" do
     it "creates a disk size from a number of ZiB" do
-      expect(described_class.ZiB(5).size).to eq(5 * 1024**7)
+      expect(described_class.ZiB(5).size).to eq(5 * (1024**7))
     end
   end
 
   describe ".YiB" do
     it "creates a disk size from a number of YiB" do
-      expect(described_class.YiB(5).size).to eq(5 * 1024**8)
+      expect(described_class.YiB(5).size).to eq(5 * (1024**8))
     end
   end
 
@@ -122,54 +122,54 @@ describe Y2Storage::DiskSize do
 
   describe ".MB" do
     it "creates a disk size from a number of MB" do
-      expect(described_class.MB(5).size).to eq(5 * 1000**2)
+      expect(described_class.MB(5).size).to eq(5 * (1000**2))
     end
   end
 
   describe ".GB" do
     it "creates a disk size from a number of GB" do
-      expect(described_class.GB(5).size).to eq(5 * 1000**3)
+      expect(described_class.GB(5).size).to eq(5 * (1000**3))
     end
   end
 
   describe ".TB" do
     it "creates a disk size from a number of TB" do
-      expect(described_class.TB(5).size).to eq(5 * 1000**4)
+      expect(described_class.TB(5).size).to eq(5 * (1000**4))
     end
   end
 
   describe ".PB" do
     it "creates a disk size from a number of PB" do
-      expect(described_class.PB(5).size).to eq(5 * 1000**5)
+      expect(described_class.PB(5).size).to eq(5 * (1000**5))
     end
   end
 
   describe ".EB" do
     it "creates a disk size from a number of EB" do
-      expect(described_class.EB(5).size).to eq(5 * 1000**6)
+      expect(described_class.EB(5).size).to eq(5 * (1000**6))
     end
   end
 
   describe ".ZB" do
     it "creates a disk size from a number of ZB" do
-      expect(described_class.ZB(5).size).to eq(5 * 1000**7)
+      expect(described_class.ZB(5).size).to eq(5 * (1000**7))
     end
   end
 
   describe ".YB" do
     it "creates a disk size from a number of YB" do
-      expect(described_class.YB(5).size).to eq(5 * 1000**8)
+      expect(described_class.YB(5).size).to eq(5 * (1000**8))
     end
   end
 
   describe ".to_human_string" do
     context "when has a specific size" do
       it("returns human-readable string represented in the biggest possible unit") do
-        expect(described_class.B(5 * 1024**0).to_human_string).to eq("5.00 B")
-        expect(described_class.B(5 * 1024**1).to_human_string).to eq("5.00 KiB")
-        expect(described_class.B(5 * 1024**3).to_human_string).to eq("5.00 GiB")
-        expect(described_class.B(5 * 1024**4).to_human_string).to eq("5.00 TiB")
-        expect(described_class.B(5 * 1024**7).to_human_string).to eq("5.00 ZiB")
+        expect(described_class.B(5 * (1024**0)).to_human_string).to eq("5.00 B")
+        expect(described_class.B(5 * (1024**1)).to_human_string).to eq("5.00 KiB")
+        expect(described_class.B(5 * (1024**3)).to_human_string).to eq("5.00 GiB")
+        expect(described_class.B(5 * (1024**4)).to_human_string).to eq("5.00 TiB")
+        expect(described_class.B(5 * (1024**7)).to_human_string).to eq("5.00 ZiB")
       end
     end
 
@@ -183,8 +183,8 @@ describe Y2Storage::DiskSize do
   describe ".human_floor" do
     context "when it has a specific size" do
       it("returns human-readable string not exceeding the actual size") do
-        expect(described_class.B(4095 * 1024**0).human_floor).to eq("3.99 KiB")
-        expect(described_class.B(4095 * 1024**3).human_floor).to eq("3.99 TiB")
+        expect(described_class.B(4095 * (1024**0)).human_floor).to eq("3.99 KiB")
+        expect(described_class.B(4095 * (1024**3)).human_floor).to eq("3.99 TiB")
       end
     end
 
@@ -198,8 +198,8 @@ describe Y2Storage::DiskSize do
   describe ".human_ceil" do
     context "when it has a specific size" do
       it("returns human-readable string not exceeding the actual size") do
-        expect(described_class.B(4097 * 1024**0).human_ceil).to eq("4.01 KiB")
-        expect(described_class.B(4097 * 1024**3).human_ceil).to eq("4.01 TiB")
+        expect(described_class.B(4097 * (1024**0)).human_ceil).to eq("4.01 KiB")
+        expect(described_class.B(4097 * (1024**3)).human_ceil).to eq("4.01 TiB")
       end
     end
 
@@ -213,15 +213,15 @@ describe Y2Storage::DiskSize do
   describe "#+" do
     it "should accept addition of another DiskSize" do
       disk_size = Y2Storage::DiskSize.GiB(10) + Y2Storage::DiskSize.GiB(20)
-      expect(disk_size.to_i).to be == 30 * 1024**3
+      expect(disk_size.to_i).to be == 30 * (1024**3)
     end
     it "should accept addition of an int" do
       disk_size = Y2Storage::DiskSize.MiB(20) + 512
-      expect(disk_size.to_i).to be == 20 * 1024**2 + 512
+      expect(disk_size.to_i).to be == (20 * (1024**2)) + 512
     end
     it "should accept addition of a string with a valid disk size spec" do
       disk_size = Y2Storage::DiskSize.MiB(20) + "512 KiB"
-      expect(disk_size.to_i).to be == 20 * 1024**2 + 512 * 1024
+      expect(disk_size.to_i).to be == (20 * (1024**2)) + (512 * 1024)
     end
     it "should refuse addition of a random string" do
       expect { Y2Storage::DiskSize.MiB(20) + "Foo Bar" }
@@ -236,7 +236,7 @@ describe Y2Storage::DiskSize do
   describe "#-" do
     it "should accept subtraction of another DiskSize" do
       disk_size = Y2Storage::DiskSize.GiB(20) - Y2Storage::DiskSize.GiB(5)
-      expect(disk_size.to_i).to be == 15 * 1024**3
+      expect(disk_size.to_i).to be == 15 * (1024**3)
     end
     it "should accept subtraction of an int" do
       disk_size = Y2Storage::DiskSize.KiB(3) - 1024
@@ -244,7 +244,7 @@ describe Y2Storage::DiskSize do
     end
     it "should accept subtraction of a string with a valid disk size spec" do
       disk_size = Y2Storage::DiskSize.MiB(20) - "512 KiB"
-      expect(disk_size.to_i).to be == 20 * 1024**2 - 512 * 1024
+      expect(disk_size.to_i).to be == (20 * (1024**2)) - (512 * 1024)
     end
     it "should refuse subtraction of a random string" do
       expect { Y2Storage::DiskSize.MiB(20) + "Foo Bar" }
@@ -267,7 +267,7 @@ describe Y2Storage::DiskSize do
     end
     it "should accept a string with a valid disk size spec" do
       disk_size = Y2Storage::DiskSize.MiB(20) % "100 KB"
-      expect(disk_size.to_i).to be == 20 * 1024**2 % (100 * 1000)
+      expect(disk_size.to_i).to be == 20 * (1024**2) % (100 * 1000)
     end
     it "should refuse a random string" do
       expect { Y2Storage::DiskSize.MiB(20) % "Foo Bar" }
@@ -282,7 +282,7 @@ describe Y2Storage::DiskSize do
   describe "#*" do
     it "should accept multiplication with an int" do
       disk_size = Y2Storage::DiskSize.MiB(12) * 3
-      expect(disk_size.to_i).to be == 12 * 1024**2 * 3
+      expect(disk_size.to_i).to be == 12 * (1024**2) * 3
     end
     it "should accept multiplication with a float" do
       disk_size = Y2Storage::DiskSize.B(10) * 4.5
@@ -301,7 +301,7 @@ describe Y2Storage::DiskSize do
   describe "#/" do
     it "should accept division by an int" do
       disk_size = Y2Storage::DiskSize.MiB(12) / 3
-      expect(disk_size.to_i).to be == 12 / 3 * 1024**2
+      expect(disk_size.to_i).to be == 12 / 3 * (1024**2)
     end
     it "should accept division by a float" do
       disk_size = Y2Storage::DiskSize.B(10) / 2.5
@@ -443,34 +443,34 @@ describe Y2Storage::DiskSize do
     end
 
     it "should work with integer and unit" do
-      expect(described_class.parse("42 GiB").to_i).to eq(42 * 1024**3)
-      expect(described_class.parse("-42 GiB").to_i).to eq(-42 * 1024**3)
+      expect(described_class.parse("42 GiB").to_i).to eq(42 * (1024**3))
+      expect(described_class.parse("-42 GiB").to_i).to eq(-42 * (1024**3))
     end
 
     it "should work with float and unit" do
-      expect(described_class.parse("43.00 GiB").to_i).to be == 43 * 1024**3
-      expect(described_class.parse("-43.00 GiB").to_i).to be == -43 * 1024**3
+      expect(described_class.parse("43.00 GiB").to_i).to be == 43 * (1024**3)
+      expect(described_class.parse("-43.00 GiB").to_i).to be == -43 * (1024**3)
     end
 
     it "should work with non-integral numbers and unit" do
-      expect(described_class.parse("43.456 GB").to_i).to be == 43.456 * 1000**3
-      expect(described_class.parse("-43.456 GB").to_i).to be == -43.456 * 1000**3
+      expect(described_class.parse("43.456 GB").to_i).to be == 43.456 * (1000**3)
+      expect(described_class.parse("-43.456 GB").to_i).to be == -43.456 * (1000**3)
     end
 
     it "should work with integer and unit without space between them" do
-      expect(described_class.parse("10MiB").to_i).to eq(10 * 1024**2)
+      expect(described_class.parse("10MiB").to_i).to eq(10 * (1024**2))
     end
 
     it "should work with float and unit without space between them" do
-      expect(described_class.parse("10.00MiB").to_i).to eq(10 * 1024**2)
+      expect(described_class.parse("10.00MiB").to_i).to eq(10 * (1024**2))
     end
 
     it "should tolerate more embedded whitespace" do
-      expect(described_class.parse("44   MiB").to_i).to eq(44 * 1024**2)
+      expect(described_class.parse("44   MiB").to_i).to eq(44 * (1024**2))
     end
 
     it "should tolerate more surrounding whitespace" do
-      expect(described_class.parse("   45   TiB  ").to_i).to eq(45 * 1024**4)
+      expect(described_class.parse("   45   TiB  ").to_i).to eq(45 * (1024**4))
       expect(described_class.parse("  46   ").to_i).to eq(46)
     end
 
@@ -484,13 +484,13 @@ describe Y2Storage::DiskSize do
 
     it "should accept International System units" do
       expect(described_class.parse("10 KB").to_i).to eq(10 * 1000)
-      expect(described_class.parse("10 MB").to_i).to eq(10 * 1000**2)
+      expect(described_class.parse("10 MB").to_i).to eq(10 * (1000**2))
     end
 
     it "should accept deprecated units" do
       expect(described_class.parse("10 K").to_i).to eq(10 * 1000)
-      expect(described_class.parse("10 M").to_i).to eq(10 * 1000**2)
-      expect(described_class.parse("10 G").to_i).to eq(10 * 1000**3)
+      expect(described_class.parse("10 M").to_i).to eq(10 * (1000**2))
+      expect(described_class.parse("10 G").to_i).to eq(10 * (1000**3))
     end
 
     it "should not be case sensitive" do
@@ -502,27 +502,27 @@ describe Y2Storage::DiskSize do
       let(:legacy) { true }
 
       it "considers international system units to be power of two" do
-        expect(described_class.parse("10 MB", legacy_units: legacy).size).to eq(10 * 1024**2)
+        expect(described_class.parse("10 MB", legacy_units: legacy).size).to eq(10 * (1024**2))
       end
 
       it "considers deprecated units to be power of two" do
-        expect(described_class.parse("10 M", legacy_units: legacy).to_i).to eq(10 * 1024**2)
+        expect(described_class.parse("10 M", legacy_units: legacy).to_i).to eq(10 * (1024**2))
       end
 
       it "reads units that are power of two in the usual way" do
-        expect(described_class.parse("10 MiB", legacy_units: legacy).size).to eq(10 * 1024**2)
+        expect(described_class.parse("10 MiB", legacy_units: legacy).size).to eq(10 * (1024**2))
       end
     end
 
     it "should accept #to_s output" do
-      expect(described_class.parse(described_class.GiB(42).to_s).to_i).to eq(42 * 1024**3)
+      expect(described_class.parse(described_class.GiB(42).to_s).to_i).to eq(42 * (1024**3))
       expect(described_class.parse(described_class.new(43).to_s).to_i).to eq(43)
       expect(described_class.parse(described_class.zero.to_s).to_i).to eq(0)
       expect(described_class.parse(described_class.unlimited.to_s).to_i).to eq(-1)
     end
 
     it "should accept #to_human_string output" do
-      expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to eq(42 * 1024**3)
+      expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to eq(42 * (1024**3))
       expect(described_class.parse(described_class.new(43).to_human_string).to_i).to eq(43)
       expect(described_class.parse(described_class.zero.to_human_string).to_i).to eq(0)
       expect(described_class.parse(described_class.unlimited.to_human_string).to_i).to eq(-1)

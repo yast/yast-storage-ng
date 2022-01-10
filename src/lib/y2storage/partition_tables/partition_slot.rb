@@ -84,7 +84,6 @@ module Y2Storage
 
       private
 
-      # rubocop:disable Metrics/CyclomaticComplexity
       def flags_string
         flags = ""
         flags << "P" if primary_slot?
@@ -95,7 +94,6 @@ module Y2Storage
         flags << "l" if logical_possible?
         flags
       end
-      # rubocop:enable all
     end
   end
 end

@@ -253,7 +253,7 @@ module Y2Storage
       if snapshots_size > DiskSize.zero
         min_size + snapshots_size
       elsif snapshots_percentage > 0
-        multiplicator = 1.0 + snapshots_percentage / 100.0
+        multiplicator = 1.0 + (snapshots_percentage / 100.0)
         min_size * multiplicator
       else
         min_size

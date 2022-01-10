@@ -129,9 +129,9 @@ module Y2Partitioner
           format(
             # TRANSLATORS: help text, where %{label} is replaced by a widget label (i.e., "Path")
             _("<p>" \
-                "<b>%{label}</b> is the path of the subvolume. Note that the path should be prefixed " \
-                "by the default subvolume path, typically @\\. The path cannot be modified for " \
-                "existing subvolumes." \
+              "<b>%{label}</b> is the path of the subvolume. Note that the path should be prefixed " \
+              "by the default subvolume path, typically @\\. The path cannot be modified for " \
+              "existing subvolumes." \
               "</p>"),
             label: label
           )
@@ -259,13 +259,13 @@ module Y2Partitioner
           format(
             # TRANSLATORS: help text, where %{label} is replaced by a widget label (i.e., "noCoW")
             _("<p>" \
-                "<b>%{label}</b> shows the subvolume noCoW attribute. " \
-                "If set, the subvolume explicitly does not use Btrfs copy on write feature. " \
-                "Copy on write means that when something is copied, the resource is shared without " \
-                "doing a real copy. The shared resource is actually copied when first write operation " \
-                "is performed. With noCoW, the resource is always copied during initialization. " \
-                "This is useful when runtime performace is required, so there is no risk for delaying " \
-                "copy when application is running." \
+              "<b>%{label}</b> shows the subvolume noCoW attribute. " \
+              "If set, the subvolume explicitly does not use Btrfs copy on write feature. " \
+              "Copy on write means that when something is copied, the resource is shared without " \
+              "doing a real copy. The shared resource is actually copied when first write operation " \
+              "is performed. With noCoW, the resource is always copied during initialization. " \
+              "This is useful when runtime performace is required, so there is no risk for delaying " \
+              "copy when application is running." \
               "</p>"),
             label: label
           )

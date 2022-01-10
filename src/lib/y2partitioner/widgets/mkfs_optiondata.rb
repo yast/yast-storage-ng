@@ -138,7 +138,7 @@ module Y2Partitioner
           widget:      :MkfsCheckBox,
           label:       N_("Enable Regular &Checks"),
           default:     false,
-          # Note: the default is 'off', so we have to come up with some values.
+          # NOTE: the default is 'off', so we have to come up with some values.
           # 30/180 is more or less what mke2fs would use on its own.
           # Remember to adjust the help text if you change this.
           tune_option: "-c 30 -i 180",

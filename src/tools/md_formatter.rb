@@ -71,7 +71,7 @@ class MdFormatter
     elsif @group_level == 1
       "## "
     else
-      "\t" * (@group_level - 2) + "- "
+      ("\t" * (@group_level - 2)) + "- "
     end
   end
 end

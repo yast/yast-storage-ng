@@ -374,7 +374,7 @@ module Y2Storage
     # @param repository [Y2Packager::Repository]
     # @return [Array<String>]
     def repository_device_names(repository)
-      match_data = repository.url.to_s.match(/.*device[s]?=([^&]*)/)
+      match_data = repository.url.to_s.match(/.*devices?=([^&]*)/)
       return [] unless match_data
 
       match_data[1].split(",").map(&:strip)

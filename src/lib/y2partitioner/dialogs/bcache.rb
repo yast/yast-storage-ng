@@ -204,9 +204,9 @@ module Y2Partitioner
           # TRANSLATORS: %{label} is replaced by the label of the option to select a backing device.
           format(
             _("<p>" \
-                "<b>%{label}</b> is the device that will be used as backing device for bcache. " \
-                "It will define the size of the resulting bcache device. " \
-                "The device will be formatted so any previous content will be wiped out." \
+              "<b>%{label}</b> is the device that will be used as backing device for bcache. " \
+              "It will define the size of the resulting bcache device. " \
+              "The device will be formatted so any previous content will be wiped out." \
               "</p>"),
             label: label
           )
@@ -267,15 +267,15 @@ module Y2Partitioner
           # TRANSLATORS: %{label} is replaced by the label of the option to select a caching device.
           format(
             _("<p>" \
-                "<b>%{label}</b> is the device that will be used as caching device for bcache." \
-                "It should be faster and usually is smaller than the backing device, " \
-                "but that is not strictly required. The device will be formatted so any previous " \
-                "content will be wiped out." \
+              "<b>%{label}</b> is the device that will be used as caching device for bcache." \
+              "It should be faster and usually is smaller than the backing device, " \
+              "but that is not strictly required. The device will be formatted so any previous " \
+              "content will be wiped out." \
               "</p>" \
               "<p>" \
-                "If you are thinking about using bcache later, it is recommended to setup " \
-                "your slow devices as bcache backing devices without a cache. You can " \
-                "add a caching device later." \
+              "If you are thinking about using bcache later, it is recommended to setup " \
+              "your slow devices as bcache backing devices without a cache. You can " \
+              "add a caching device later." \
               "</p>"),
             label: label
           )
@@ -331,19 +331,19 @@ module Y2Partitioner
           # TRANSLATORS: %{label} is replaced by the label of the option to select a cache mode.
           format(
             _("<p>" \
-                "<b>%{label}</b> is the operating mode for bcache. " \
-                "There are currently four supported modes.<ul> " \
-                "<li><i>Writethrough</i> reading operations are cached, writing is done " \
-                "in parallel to both devices. No data is lost in case of failure of " \
-                "the caching device. This is the default mode.</li>" \
-                "<li><i>Writeback</i> both reading and writing operations are cached. " \
-                "This result in better performance when writing.</li>" \
-                "<li><i>Writearound</i> reading is cached, new content is " \
-                "written only to the backing device.</li>" \
-                "<li><i>None</i> means cache is neither used for reading nor for writing. " \
-                "This is useful mainly for temporarily disabling the cache before any big " \
-                "sequential read or write, otherwise that would result in intensive " \
-                "overwriting on the cache device.</li>" \
+              "<b>%{label}</b> is the operating mode for bcache. " \
+              "There are currently four supported modes.<ul> " \
+              "<li><i>Writethrough</i> reading operations are cached, writing is done " \
+              "in parallel to both devices. No data is lost in case of failure of " \
+              "the caching device. This is the default mode.</li>" \
+              "<li><i>Writeback</i> both reading and writing operations are cached. " \
+              "This result in better performance when writing.</li>" \
+              "<li><i>Writearound</i> reading is cached, new content is " \
+              "written only to the backing device.</li>" \
+              "<li><i>None</i> means cache is neither used for reading nor for writing. " \
+              "This is useful mainly for temporarily disabling the cache before any big " \
+              "sequential read or write, otherwise that would result in intensive " \
+              "overwriting on the cache device.</li>" \
               "</p>"),
             label: label
           )
