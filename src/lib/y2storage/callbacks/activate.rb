@@ -23,6 +23,7 @@ require "y2storage/dialogs/callbacks/activate_luks"
 require "y2storage/callbacks/issues_callback"
 require "y2storage/storage_env"
 require "y2storage/issue"
+require "y2storage/disk_size"
 
 Yast.import "Mode"
 
@@ -91,9 +92,12 @@ module Y2Storage
 
         return Storage::PairBoolString.new(false, "") if attempt == 1 && !activate_luks?
 
-        luks_error(info, attempt) if attempt > 1
+        info_presenter = InfoPresenter.new(info)
 
-        dialog = Dialogs::Callbacks::ActivateLuks.new(info, attempt, always_skip: !activate_luks?)
+        luks_error(info_presenter, attempt) if attempt > 1
+
+        dialog = Dialogs::Callbacks::ActivateLuks.new(info_presenter, attempt,
+          always_skip: !activate_luks?)
         result = dialog.run
 
         activate = result == :accept
@@ -108,17 +112,15 @@ module Y2Storage
 
       # Error popup when the LUKS could not be activated
       #
-      # @param info [Storage::LuksInfo]
+      # @param info [InfoPresenter]
       # @param attempt [Numeric] current attempt
       def luks_error(info, attempt)
-        # TODO: inform about the size once libstorage-ng provides it
         message = format(
-          _("The following encrypted volume could not be activated (attempt number %{attempt}):\n\n" \
-            "%{device} %{label}\n\n" \
+          _("The following encrypted device could not be activated (attempt number %{attempt}):\n\n" \
+            "%{info}\n\n" \
             "Please, make sure you are entering the correct password."),
           attempt: attempt - 1,
-          device:  info.device_name,
-          label:   info.label
+          info:    info.to_text
         )
 
         Yast2::Popup.show(message, headline: :error, buttons: :ok)
@@ -193,6 +195,36 @@ module Y2Storage
       # @return [Boolean]
       def activate_luks?
         StorageEnv.instance.activate_luks? && !@skip_decrypt
+      end
+
+      # Auxiliary class to present LUKS info
+      class InfoPresenter
+        # Constructor
+        #
+        # @param info [Storage::LuksInfo]
+        def initialize(info)
+          @info = info
+        end
+
+        # Converts LUKS info into text
+        #
+        # @return [String] e.g., "/dev/sda1 System (20 GiB)"
+        def to_text
+          text = [info.device_name]
+          text << info.label unless info.label.empty?
+          text << "(#{size.to_human_string})"
+
+          text.join(" ")
+        end
+
+        private
+
+        attr_reader :info
+
+        # @return [DiskSize]
+        def size
+          @size ||= DiskSize.new(info.size)
+        end
       end
     end
   end

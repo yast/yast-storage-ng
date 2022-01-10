@@ -40,7 +40,7 @@ module Y2Storage
 
         # Constructor
         #
-        # @param info [Storage::LuksInfo]
+        # @param info [Callbacks::Activate::InfoPresenter]
         # @param attempt [Numeric]
         # @param always_skip [Boolean] default value for skip decrypt checkbox
         def initialize(info, attempt, always_skip: false)
@@ -74,8 +74,7 @@ module Y2Storage
                 Left(Heading(_("Encrypted Device"))),
                 VSpacing(0.2),
                 Left(Label(_("The following device is encrypted:"))),
-                # TODO: inform about the size once libstorage-ng provides it
-                Left(Label("#{info.device_name} #{info.label}")),
+                Left(Label(info.to_text)),
                 Left(password_widget),
                 VSpacing(0.2),
                 HBox(

@@ -107,16 +107,19 @@ describe Y2Storage::Callbacks::Activate do
       allow(dialog).to receive(:run).and_return(action)
       allow(dialog).to receive(:encryption_password).and_return(encryption_password)
       allow(dialog).to receive(:always_skip?).and_return(always_skip)
-      allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return dialog
+      allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return(dialog)
 
       allow(Yast2::Popup).to receive(:show)
     end
 
-    let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
+    let(:info) do
+      instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label, size: size)
+    end
 
     let(:device_name) { "/dev/sda1" }
     let(:uuid) { "11111111-1111-1111-1111-11111111" }
     let(:label) { "" }
+    let(:size) { 1024 }
 
     let(:attempts) { 1 }
     let(:action) { nil }
@@ -125,7 +128,12 @@ describe Y2Storage::Callbacks::Activate do
     let(:env_vars) { {} }
 
     it "opens a dialog to request the password" do
+      expect(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new) do |info, _, _|
+        expect(info).to be_a(Y2Storage::Callbacks::Activate::InfoPresenter)
+      end.and_return(dialog)
+
       expect(dialog).to receive(:run).once
+
       subject.luks(info, attempts)
     end
 
@@ -157,7 +165,10 @@ describe Y2Storage::Callbacks::Activate do
       let(:attempts) { 2 }
 
       it "shows an error popup" do
-        expect(Yast2::Popup).to receive(:show).with(/could not be activated/, anything)
+        expect(Yast2::Popup).to receive(:show) do |text, _|
+          expect(text).to match(/could not be activated/)
+          expect(text).to match(/sda1 \(1.00 KiB\)/)
+        end
 
         subject.luks(info, attempts)
       end
@@ -321,6 +332,32 @@ describe Y2Storage::Callbacks::Activate do
         let(:env_vars) { {} }
 
         include_examples "ask user about multipath"
+      end
+    end
+  end
+
+  describe Y2Storage::Callbacks::Activate::InfoPresenter do
+    subject { described_class.new(info) }
+
+    let(:info) { instance_double(Storage::LuksInfo, device_name: device, label: label, size: size) }
+    let(:device) { "/dev/sda1" }
+    let(:size) { 1024 }
+
+    describe "#to_text" do
+      context "when the LUKS info has no label" do
+        let(:label) { "" }
+
+        it "returns the name and size of the encrypted device" do
+          expect(subject.to_text).to match("/dev/sda1 (1.00 KiB)")
+        end
+      end
+
+      context "when the LUKS info has a label" do
+        let(:label) { "System" }
+
+        it "returns the name, label and size of the encrypted device" do
+          expect(subject.to_text).to match("/dev/sda1 System (1.00 KiB)")
+        end
       end
     end
   end

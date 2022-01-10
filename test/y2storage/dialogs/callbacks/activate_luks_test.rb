@@ -35,11 +35,7 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
 
   subject { described_class.new(info, attempts, always_skip: always_skip) }
 
-  let(:info) { instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label) }
-
-  let(:device_name) { "/dev/sda1" }
-  let(:uuid) { "11111111-1111-1111-1111-11111111" }
-  let(:label) { "" }
+  let(:info) { instance_double(Y2Storage::Callbacks::Activate::InfoPresenter, to_text: "/dev/sda1") }
 
   let(:attempts) { 1 }
   let(:always_skip) { false }
