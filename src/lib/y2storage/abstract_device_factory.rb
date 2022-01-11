@@ -123,7 +123,7 @@ module Y2Storage
       build_tree_recursive(nil, name, content)
     end
 
-    # Builds tree from hashe
+    # Builds tree from hash
     # @see #build_tree_recursive
     def build_tree_recursive_from_hash(parent, name, content)
       # Check if all the parameters we got belong to this factory product

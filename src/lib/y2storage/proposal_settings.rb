@@ -377,7 +377,7 @@ module Y2Storage
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
     private_constant :LVM_VG_STRATEGIES
 
-    # Defaults when settings is not specified
+    # Defaults when a setting is not specified
     DEFAULTS = {
       allocate_volume_mode:       :auto,
       delete_resize_configurable: true,

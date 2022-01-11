@@ -107,7 +107,7 @@ module Y2Storage
 
           rounding ||= align_grain || DiskSize.new(1)
 
-          new_list = count_sizes(devices, rounding)
+          new_list = init_sizes(devices, rounding)
           # The last space is extended until the end if we are working with partitions (align_grain is
           # not nil) and the partition table allows that (end_alignment is false)
           adjust_to_end = !align_grain.nil? && !end_alignment
@@ -214,9 +214,9 @@ module Y2Storage
           raise RuntimeError
         end
 
-        # counts minimal size for each device
-        # @return [Array] modified devices with size adjusted to rounded minimum size
-        def count_sizes(devices, rounding)
+        # Sets sizes of the given devices to their minimal valid value
+        # @return [Array<Planned::Device>] modified devices with size adjusted to rounded minimum size
+        def init_sizes(device, rounding)
           devices.map do |device|
             new_dev = device.dup
             new_dev.size = device.min_size.ceil(rounding)
