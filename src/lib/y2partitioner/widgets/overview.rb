@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -55,16 +55,6 @@ module Y2Partitioner
     #
     # It has replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
-      # Pages whose cached content should be considered outdated
-      #
-      # This is a hack introduced because the NFS page works in a completely
-      # different way in which triggering a full redraw every time something
-      # changes is not an option. This way, the NFS page can invalidate the
-      # cached contents of other pages supporting this mechanism.
-      #
-      # @return [Array<Symbol>] only :system supported so far
-      attr_accessor :invalidated_pages
-
       # Constructor
       #
       # @param [String] hostname of the system
@@ -72,7 +62,6 @@ module Y2Partitioner
         textdomain "storage"
 
         @hostname = hostname
-        @invalidated_pages = []
         super(OverviewTree.new(items))
       end
 
@@ -148,10 +137,6 @@ module Y2Partitioner
       # @param device [Y2Storage::Device]
       # @return [CWM::Page, nil]
       def device_page(device)
-        # NFS is a special case because NFS devices don't have individual
-        # pages, all NFS devices are managed directly in the NFS list
-        return @pages.find { |p| p.is_a?(Pages::NfsMounts) } if device.is?(:nfs)
-
         @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
       end
 
@@ -342,7 +327,15 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def nfs_section
         page = Pages::NfsMounts.new(self)
-        section_item(page, Icons::NFS)
+        children = device_graph.nfs_mounts.map { |f| nfs_item(f) }
+        section_item(page, Icons::NFS, children: children)
+      end
+
+      # @param nfs [Y2Storage::Filesystems::Nfs]
+      # @return [CWM::PagerTreeItem]
+      def nfs_item(nfs)
+        page = Pages::Nfs.new(nfs, self)
+        device_item(page)
       end
 
       # Generates a `section` tree item for given page

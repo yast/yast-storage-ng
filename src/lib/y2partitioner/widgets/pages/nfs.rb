@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2022] SUSE LLC
+# Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,28 +23,33 @@ require "y2partitioner/widgets/nfs_mounts_table"
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for NFS mounts
-      class NfsMounts < DevicesTable
+      # Page for an NFS mount
+      class Nfs < DevicesTable
+        # @return [Y2Storage::Filesystems::Nfs]
+        attr_reader :mount
+
+        # Needed for searching a device page, see {OverviewTreePager#device_page}
+        alias_method :device, :mount
+
         # Constructor
         #
         # @param pager [CWM::TreePager]
-        def initialize(pager)
+        def initialize(mount, pager)
           textdomain "storage"
 
-          super
+          super(pager)
+
+          @mount = mount
+          self.widget_id = "nfs:" + mount.sid.to_s
         end
 
         # @macro seeAbstractWidget
         def label
-          _("NFS")
+          # The name (server + remote path) is usually too long, better use something sorter
+          mount.mount_path
         end
 
         private
-
-        # @return [Array<Y2Storage::Filesystems::Nfs>]
-        def devices
-          device_graph.nfs_mounts
-        end
 
         # @return [ConfigurableBlkDevicesTable]
         def calculate_table
@@ -53,7 +58,7 @@ module Y2Partitioner
 
         # @return [Array<DeviceTableEntry>]
         def entries
-          devices.map { |d| DeviceTableEntry.new(d) }
+          [DeviceTableEntry.new(mount)]
         end
       end
     end

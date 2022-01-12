@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2022] SUSE LLC
+# Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,43 +17,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/pages/devices_table"
-require "y2partitioner/widgets/nfs_mounts_table"
+require "yast"
+require "y2partitioner/widgets/columns/base"
 
 module Y2Partitioner
   module Widgets
-    module Pages
-      # Page for NFS mounts
-      class NfsMounts < DevicesTable
+    module Columns
+      # Widget for displaying the `Mount Options` column
+      class MountOptions < Base
         # Constructor
-        #
-        # @param pager [CWM::TreePager]
-        def initialize(pager)
-          textdomain "storage"
-
+        def initialize
           super
+          textdomain "storage"
         end
 
-        # @macro seeAbstractWidget
-        def label
-          _("NFS")
+        # @see Columns::Base#title
+        def title
+          # TRANSLATORS: table header
+          _("Mount Options")
         end
 
-        private
+        # @see Columns::Base#value_for
+        def value_for(device)
+          return "" unless device.respond_to?(:mount_options)
 
-        # @return [Array<Y2Storage::Filesystems::Nfs>]
-        def devices
-          device_graph.nfs_mounts
-        end
-
-        # @return [ConfigurableBlkDevicesTable]
-        def calculate_table
-          NfsMountsTable.new(entries, pager, device_buttons)
-        end
-
-        # @return [Array<DeviceTableEntry>]
-        def entries
-          devices.map { |d| DeviceTableEntry.new(d) }
+          device.mount_options.join(",")
         end
       end
     end

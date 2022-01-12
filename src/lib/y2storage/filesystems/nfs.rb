@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -85,6 +85,16 @@ module Y2Storage
       # @return [Hash]
       def to_legacy_hash
         LegacyNfs.new_from_nfs(self).to_hash
+      end
+
+      # Whether the fstab entry uses old ways of configuring the NFS version that
+      # do not longer work in the way they used to.
+      #
+      # @return [Boolean]
+      def legacy_version?
+        return true if mount_point.mount_type == Y2Storage::Filesystems::Type::NFS4
+
+        Yast::NfsOptions.legacy?(mount_options.join(","))
       end
 
       # String representing the remote NFS share in the most common format (the

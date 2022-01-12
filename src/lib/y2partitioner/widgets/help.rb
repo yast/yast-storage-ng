@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -107,6 +107,9 @@ module Y2Partitioner
                                       "file system label, (UUID) by\n file system " \
                                       "UUID, (ID) by device ID, and (Path) by device path.\n"),
 
+        mount_options:             N_("<b>Mount Options</b> shows the options used to mount the " \
+                                      "volume, typically specified at <tt>/etc/fstab</tt>."),
+
         mount_point:               N_("<b>Mount Point</b> shows where the file system\nis mounted."),
 
         num_cyl:                   N_("<b>Number of Cylinders</b> shows how many\n" \
@@ -174,16 +177,15 @@ module Y2Partitioner
 
         btrfs_data_raid_level:     N_("<b>Data RAID Level</b> shows the RAID level for the Btrfs data."),
 
-        nfs_server:                N_("<b>Server</b> host name or IP address of the NFS server."),
-
-        nfs_directory:             N_("<b>Remote Directory</b> the directory on the NFS server."),
-
-        nfs_mount_point:           N_("<b>Mount Point</b> shows path in the local filesystem where the" \
-                                      "\n directory is mounted."),
-
-        nfs_type:                  N_("<b>NFS Type</b> the filesystem type; typically \"nfs\"."),
-
-        nfs_options:               N_("<b>Options</b> Mount options. See also \"man 5 nfs\".")
+        nfs_version:               N_("<b>NFS Version</b> shows the version of the protocol used to " \
+                                      "connect to the server. It may happen that some NFS share is " \
+                                      "mounted using an old method to specify the protocol version, " \
+                                      "like the usage of 'nfs4' as file system type or the usage of " \
+                                      "'minorversion' in the mount options. Those methods do not " \
+                                      "longer work as they used to. So if such circumstance is " \
+                                      "detected, the real used version is displayed next to a warning " \
+                                      "message. Those entries can be edited to make sure they use " \
+                                      "more current ways of specifying the version.")
       }.freeze
 
       UNMOUNTED_TEXT = N_("An asterisk (*) after the mount point\n" \
