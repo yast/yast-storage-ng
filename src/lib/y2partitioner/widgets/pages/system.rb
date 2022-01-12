@@ -38,6 +38,7 @@ module Y2Partitioner
         # @param [String] hostname of the system, to be displayed
         # @param pager [CWM::TreePager]
         def initialize(hostname, pager)
+          super()
           textdomain "storage"
 
           @pager = pager

@@ -30,6 +30,8 @@ module Y2Storage
       # @param section [#parent,#section_name] Section where it was detected
       #                (see {AutoinstProfile})
       def initialize(section)
+        super()
+
         textdomain "storage"
 
         @section = section

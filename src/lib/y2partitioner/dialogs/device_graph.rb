@@ -20,7 +20,7 @@
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/device_graph_with_buttons"
-require "cwm/tabs.rb"
+require "cwm/tabs"
 
 module Y2Partitioner
   module Dialogs
@@ -29,6 +29,7 @@ module Y2Partitioner
     class DeviceGraph < Popup
       # Constructor
       def initialize
+        super()
         textdomain "storage"
       end
 
@@ -131,6 +132,7 @@ module Y2Partitioner
 
       # Constructor
       def initialize(label, device_graph, description)
+        super()
         @label = label
         @device_graph = device_graph
         @widget_id = "#{widget_id}_#{device_graph.object_id}"

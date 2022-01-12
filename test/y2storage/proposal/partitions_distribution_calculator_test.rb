@@ -771,7 +771,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       it "ensures the end of the resized partition will be aligned" do
         expect(end_aligned?(partition.end)).to eq false
         result = calculator.resizing_size(partition, volumes, spaces)
-        new_end = partition.end - result.to_i / block_size
+        new_end = partition.end - (result.to_i / block_size)
         expect(end_aligned?(new_end)).to eq true
       end
 

@@ -40,7 +40,7 @@ module Y2Storage
       first:              N_("Parity first"),
       last:               N_("Parity last"),
 
-      # note parity with _6 suffix is for converting raid 5 to 6 and is only intermediate state
+      # NOTE: parity with _6 suffix is for converting raid 5 to 6 and is only intermediate state
       left_asymmetric_6:  N_("Left asymmetric RAID6"),
       left_symmetric_6:   N_("Left symmetric RAID6"),
       right_asymmetric_6: N_("Right asymmetric RAID6"),

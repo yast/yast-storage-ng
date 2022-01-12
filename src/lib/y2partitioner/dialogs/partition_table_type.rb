@@ -84,6 +84,7 @@ module Y2Partitioner
       # @param possible_types [Array<Y2Storage::PartitionTables::Type>]
       # @param default_type [Y2Storage::PartitionTables::Type]
       def initialize(disk, possible_types, default_type)
+        super()
         textdomain "storage"
 
         @disk = disk

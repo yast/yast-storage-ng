@@ -103,6 +103,7 @@ module Y2Partitioner
       class Configure < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
 
           @configure_entries = ConfigureEntry.visible

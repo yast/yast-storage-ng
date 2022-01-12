@@ -303,15 +303,11 @@ module Y2Partitioner
 
         def default_chunk_size
           case md.md_level.to_sym
-          when :raid0
-            Y2Storage::DiskSize.KiB(64)
           when :raid1
             Y2Storage::DiskSize.KiB(4)
           when :raid5, :raid6
             Y2Storage::DiskSize.KiB(128)
-          when :raid10
-            Y2Storage::DiskSize.KiB(64)
-          else
+          else # including raid0 and raid10
             Y2Storage::DiskSize.KiB(64)
           end
         end
@@ -346,7 +342,7 @@ module Y2Partitioner
               #   fifth  -> 0.999 (same here)
               #   second -> 1     (original index, the other branch of the 'if')
               consecutive += 1
-              delta = consecutive + 0.1**consecutive
+              delta = consecutive + (0.1**consecutive)
               up ? idx - delta : idx + delta
             else
               consecutive = 0

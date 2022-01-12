@@ -18,7 +18,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../spec_helper.rb"
+require_relative "../../spec_helper"
 require_relative "#{TEST_PATH}/support/guided_setup_context"
 
 RSpec.shared_examples "wrong password" do
@@ -193,8 +193,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
     context "when encryption is selected" do
       before do
         select_widget(:encryption)
-        select_widget(:password, password)
-        select_widget(:repeat_password, repeat_password)
+        select_widget(:password, value: password)
+        select_widget(:repeat_password, value: repeat_password)
         settings.encryption_password = nil
       end
 
@@ -293,8 +293,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       before do
         select_widget(:lvm)
         select_widget(:encryption)
-        select_widget(:password, password)
-        select_widget(:repeat_password, password)
+        select_widget(:password, value: password)
+        select_widget(:repeat_password, value: password)
       end
 
       let(:password) { "Val1d_pass" }

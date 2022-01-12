@@ -35,6 +35,7 @@ module Y2Partitioner
       #
       # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
       def initialize(device)
+        super()
         textdomain "storage"
 
         @device = device

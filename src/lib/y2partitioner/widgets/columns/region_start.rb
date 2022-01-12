@@ -27,6 +27,7 @@ module Y2Partitioner
       class RegionStart < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

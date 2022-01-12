@@ -248,10 +248,10 @@ module Y2Storage
       #
       # @return [Array<String>]
       def unwanted_mount_options
-        if !needs_network_mount_options?
-          (super + included_network_mount_options).uniq
-        else
+        if needs_network_mount_options?
           super
+        else
+          (super + included_network_mount_options).uniq
         end
       end
 

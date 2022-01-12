@@ -28,6 +28,7 @@ module Y2Partitioner
       class Encrypted < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

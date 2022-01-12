@@ -60,7 +60,8 @@ module Y2Storage
 
       # @param parent [#parent,#section_name] parent section
       def initialize(parent = nil)
-        @parent = parent
+        super
+
         @device_order = []
       end
 

@@ -201,12 +201,12 @@ module Y2Partitioner
       end
 
       method = :"#{widget_id}_handler"
-      if !respond_to?(method, true)
-        log.info "Unhandled event #{widget_id} from y2-nfs-client"
-      else
+      if respond_to?(method, true)
         legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_hash(client_result)
         legacy_nfs.default_devicegraph = current_graph
         send(method, legacy_nfs)
+      else
+        log.info "Unhandled event #{widget_id} from y2-nfs-client"
       end
     end
 

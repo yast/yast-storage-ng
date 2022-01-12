@@ -131,13 +131,13 @@ describe Y2Storage::IssuesReporter do
 
           let(:details) do
             "command '/usr/sbin/parted --script '/dev/sda' mklabel gpt' failed:\n\n\n" \
-            "stderr:\n"\
-            "Error: Partition(s) 1 on /dev/sda have been written, but we have been unable to inform " \
-            "the kernel of the change, probably because it/they are in use.  As a result, the old " \
-            "partition(s) will remain in use.  You should reboot now before making further changes." \
-            "\n\n" \
-            "exit code:\n" \
-            "1"
+              "stderr:\n"\
+              "Error: Partition(s) 1 on /dev/sda have been written, but we have been unable to inform " \
+              "the kernel of the change, probably because it/they are in use.  As a result, the old " \
+              "partition(s) will remain in use.  You should reboot now before making further changes." \
+              "\n\n" \
+              "exit code:\n" \
+              "1"
           end
 
           it "wraps the details" do

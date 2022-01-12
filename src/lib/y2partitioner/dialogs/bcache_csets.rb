@@ -28,6 +28,7 @@ module Y2Partitioner
     class BcacheCsets < Popup
       # Constructor
       def initialize
+        super
         textdomain "storage"
       end
 

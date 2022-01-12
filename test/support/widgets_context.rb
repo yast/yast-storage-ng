@@ -39,11 +39,11 @@ RSpec.shared_context "widgets" do
     end
   end
 
-  def expect_select(id, value = true)
+  def expect_select(id, value: true)
     expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Value, value)
   end
 
-  def expect_not_select(id, value = true)
+  def expect_not_select(id, value: true)
     expect(Yast::UI).not_to receive(:ChangeWidget).with(Id(id), :Value, value)
   end
 
@@ -59,7 +59,7 @@ RSpec.shared_context "widgets" do
     expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, false)
   end
 
-  def select_widget(id, value = true)
+  def select_widget(id, value: true)
     allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(value)
   end
 

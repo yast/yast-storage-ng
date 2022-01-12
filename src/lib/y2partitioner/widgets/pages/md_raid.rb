@@ -21,7 +21,6 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/pages/tabbed"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/overview_tab"
-require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/md_buttons"
 
 module Y2Partitioner
@@ -34,6 +33,7 @@ module Y2Partitioner
         # @param md [Y2Storage::Md]
         # @param pager [CWM::TreePager]
         def initialize(md, pager)
+          super()
           textdomain "storage"
 
           @md = md

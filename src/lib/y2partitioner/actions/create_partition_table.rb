@@ -36,6 +36,7 @@ module Y2Partitioner
 
       # @param disk [Y2Storage::Partitionable]
       def initialize(disk)
+        super()
         textdomain "storage"
         @disk = disk
       end

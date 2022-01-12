@@ -34,6 +34,7 @@ module Y2Partitioner
     module FstabCommon
       # @param controller [Y2Partitioner::Actions::Controllers:Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -82,7 +83,7 @@ module Y2Partitioner
       # Removes from the MountPoint object the options that not longer apply
       def delete_fstab_option!(option)
         # The options can only be modified using MountPoint#mount_options=
-        mount_point.mount_options = mount_point.mount_options.reject { |o| o =~ option }
+        mount_point.mount_options = mount_point.mount_options.grep_v(option)
       end
 
       # Adds new options to the MountPoint object
@@ -173,6 +174,7 @@ module Y2Partitioner
       SUPPORTED_FILESYSTEMS = [:btrfs, :ext2, :ext3, :ext4].freeze
 
       def initialize(controller)
+        super # to pass controller to FstabCommon
         @controller = controller
 
         self.handle_all_events = true
@@ -499,8 +501,8 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Mount Read-Only:</b>\n" \
-        "Writing to the file system is not possible. Default is false. During installation\n" \
-        "the file system is always mounted read-write.</p>")
+          "Writing to the file system is not possible. Default is false. During installation\n" \
+          "the file system is always mounted read-write.</p>")
       end
     end
 
@@ -518,7 +520,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Mountable by User:</b>\nThe file system may be " \
-        "mounted by an ordinary user. Default is false.</p>\n")
+          "mounted by an ordinary user. Default is false.</p>\n")
       end
     end
 
@@ -670,12 +672,12 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Data Journaling Mode:</b>\n" \
-        "Specifies the journaling mode for file data.\n" \
-        "<tt>journal</tt> -- All data is committed to the journal prior to being\n" \
-        "written into the main file system. Highest performance impact.<br>\n" \
-        "<tt>ordered</tt> -- All data is forced directly out to the main file system\n" \
-        "prior to its metadata being committed to the journal. Medium performance impact.<br>\n" \
-        "<tt>writeback</tt> -- Data ordering is not preserved. No performance impact.</p>\n")
+          "Specifies the journaling mode for file data.\n" \
+          "<tt>journal</tt> -- All data is committed to the journal prior to being\n" \
+          "written into the main file system. Highest performance impact.<br>\n" \
+          "<tt>ordered</tt> -- All data is forced directly out to the main file system\n" \
+          "prior to its metadata being committed to the journal. Medium performance impact.<br>\n" \
+          "<tt>writeback</tt> -- Data ordering is not preserved. No performance impact.</p>\n")
       end
     end
 
@@ -686,6 +688,7 @@ module Y2Partitioner
       include FstabCommon
 
       def initialize(controller, parent_widget)
+        super(controller) # pass controller to FstabCommon
         textdomain "storage"
         @controller = controller
         @parent_widget = parent_widget
@@ -769,7 +772,7 @@ module Y2Partitioner
       # Return all values that are handled by other widgets in this widget tree.
       # @return [Array<String>]
       def other_values
-        return [] unless @parent_widget&.respond_to?(:values)
+        return [] unless @parent_widget.respond_to?(:values)
 
         @other_values ||= @parent_widget.values
       end
@@ -777,7 +780,7 @@ module Y2Partitioner
       # Return all regexps that are handled by other widgets in this widget tree.
       # @return [Array<Regexp>]
       def other_regexps
-        return [] unless @parent_widget&.respond_to?(:regexps)
+        return [] unless @parent_widget.respond_to?(:regexps)
 
         @other_regexps ||= @parent_widget.regexps
       end
@@ -829,7 +832,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Swap Priority:</b>\nEnter the swap priority. " \
-        "Higher numbers mean higher priority.</p>\n")
+          "Higher numbers mean higher priority.</p>\n")
       end
     end
 
@@ -875,10 +878,10 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Max Size:</b>\nUpper limit on the size of the file system. " \
-        "The size is given in bytes by default, optionally followed by a <b>k</b>, <b>m</b> " \
-        "or <b>g</b> suffix to specify KiB, MiB or GiB. The size may also have a <b>% </b> " \
-        "suffix to limit this instance to a percentage of physical RAM. " \
-        "The default, when neither this option nor nr_blocks is specified, is 50%.</p>\n")
+          "The size is given in bytes by default, optionally followed by a <b>k</b>, <b>m</b> " \
+          "or <b>g</b> suffix to specify KiB, MiB or GiB. The size may also have a <b>% </b> " \
+          "suffix to limit this instance to a percentage of physical RAM. " \
+          "The default, when neither this option nor nr_blocks is specified, is 50%.</p>\n")
       end
     end
 
@@ -952,7 +955,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def help
         _("<p><b>Codepage for Short FAT Names:</b>\nThis codepage is used for " \
-        "converting to shortname characters on FAT file systems.</p>\n")
+          "converting to shortname characters on FAT file systems.</p>\n")
       end
     end
   end

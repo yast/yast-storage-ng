@@ -37,6 +37,7 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::AddPartition]
       #   a partition controller, collecting data for a partition to be created
       def initialize(controller)
+        super()
         textdomain "storage"
         @controller = controller
         type = controller.type
@@ -74,6 +75,7 @@ module Y2Partitioner
         #   regions with an optimally aligned start available to create
         #   a partition in
         def initialize(controller, regions, optimal_regions)
+          super()
           textdomain "storage"
           @controller = controller
           @regions = regions
@@ -141,6 +143,7 @@ module Y2Partitioner
 
         # @param region [Y2Storage::Region]
         def initialize(region)
+          super("__MaxSizeDummy")
           @region = region
         end
 
@@ -162,6 +165,7 @@ module Y2Partitioner
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
         def initialize(controller, regions)
+          super()
           textdomain "storage"
           @controller = controller
           @regions = regions
@@ -257,6 +261,7 @@ module Y2Partitioner
         #   region suggested initially if there is none, used to suggest an
         #   optimally aligned region (i.e. one not included in regions)
         def initialize(controller, regions, default_region)
+          super()
           textdomain "storage"
           @controller = controller
           @regions = regions

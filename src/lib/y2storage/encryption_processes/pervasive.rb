@@ -96,7 +96,7 @@ module Y2Storage
         return if commands.nil?
 
         commands.each do |command|
-          args = command.split(" ")
+          args = command.split
 
           if args.any? { |arg| "setvp".casecmp(arg) == 0 }
             args += ["--key-file", "-"]

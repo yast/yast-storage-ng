@@ -28,6 +28,7 @@ describe Y2Storage::SecretAttributes do
     include Y2Storage::SecretAttributes
 
     attr_accessor :name
+
     secret_attr :password
   end
 
@@ -36,6 +37,7 @@ describe Y2Storage::SecretAttributes do
     include Y2Storage::SecretAttributes
 
     attr_accessor :name
+
     secret_attr :data
   end
 

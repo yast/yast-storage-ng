@@ -39,6 +39,7 @@ module Y2Partitioner
       # @param partition [Y2Storage::Partition]
       # @param possible_movement [Symbol]
       def initialize(partition, possible_movement)
+        super()
         textdomain "storage"
 
         @partition = partition
@@ -97,6 +98,7 @@ module Y2Partitioner
         #
         # @param dialog [Y2Partitioner::Dialogs::PartitionMove]
         def initialize(dialog)
+          super()
           textdomain "storage"
 
           @dialog = dialog

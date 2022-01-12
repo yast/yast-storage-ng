@@ -29,6 +29,7 @@ module Y2Partitioner
     class Settings < Popup
       # Constructor
       def initialize
+        super
         textdomain "storage"
       end
 
@@ -66,6 +67,7 @@ module Y2Partitioner
       # Selector for the mount by option
       class MountBySelector < CWM::ComboBox
         def initialize
+          super
           textdomain "storage"
         end
 

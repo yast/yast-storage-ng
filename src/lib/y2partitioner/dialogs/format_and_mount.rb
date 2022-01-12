@@ -31,6 +31,7 @@ module Y2Partitioner
     class FormatAndMount < Base
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

@@ -32,6 +32,7 @@ module Y2Partitioner
       class TypeChoice < CWM::RadioButtons
         # @param controller [Actions::Controllers::AddPartition]
         def initialize(controller)
+          super()
           textdomain "storage"
           @controller = controller
           @available_types = controller.available_partition_types.map(&:to_s)
@@ -79,6 +80,7 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::AddPartition]
       #   partition controller collecting data for a partition to be created
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

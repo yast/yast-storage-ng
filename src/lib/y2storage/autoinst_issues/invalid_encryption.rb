@@ -50,6 +50,8 @@ module Y2Storage
       #   (:unknown when the method is unknown; :unavailable when the method is not available,
       #   :unsuitable when the method is not suitable for the device)
       def initialize(section, reason)
+        super()
+
         textdomain "storage"
 
         @section = section

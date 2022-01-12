@@ -93,7 +93,7 @@ module Y2Storage
     def popup(footer, btns, with_timeout: true)
       time = with_timeout ? @timeout : 0
 
-      # Note: the headline is omitted in order to keep the previous look when an error was reported
+      # NOTE: the headline is omitted in order to keep the previous look when an error was reported
       # with the Yast::Report module.
       options = { headline: "", buttons: btns, focus: focus, timeout: time }
 

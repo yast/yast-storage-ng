@@ -26,6 +26,8 @@ module Y2Storage
     # This is a fatal error.
     class UnsupportedDriveSection < ::Installation::AutoinstIssues::Issue
       def initialize(section)
+        super()
+
         textdomain "storage"
 
         @section = section

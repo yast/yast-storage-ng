@@ -33,17 +33,9 @@ module Y2Storage
       attr_accessor :drives
 
       def initialize
-        @drives = []
-      end
+        super() # use default nil parent
 
-      # Returns the parent section
-      #
-      # This method only exist to conform to other sections API (like classes
-      # derived from Installation::AutoinstProfile::SectionWithAttributes).
-      #
-      # @return [nil]
-      def parent
-        nil
+        @drives = []
       end
 
       # Creates an instance based on the profile representation used by the

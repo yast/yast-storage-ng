@@ -108,7 +108,7 @@ describe Y2Partitioner::DeviceGraphs do
 
     context "when a transaction was finished" do
       it "returns nil" do
-        subject.transaction {}
+        subject.transaction {} # empty trans is enough
 
         expect(subject.pre_transaction).to be_nil
       end

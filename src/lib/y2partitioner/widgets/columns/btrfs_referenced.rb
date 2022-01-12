@@ -26,6 +26,7 @@ module Y2Partitioner
       class BtrfsReferenced < DiskSize
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

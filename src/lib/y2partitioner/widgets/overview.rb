@@ -39,6 +39,7 @@ module Y2Partitioner
     # We need a tree whose items include Pages that point to the OverviewTreePager.
     class OverviewTree < CWM::Tree
       def initialize(items)
+        super()
         textdomain "storage"
         @items = items
       end
@@ -133,7 +134,7 @@ module Y2Partitioner
         items_with_children = with_children(tree.items)
         open_items = Yast::UI.QueryWidget(Id(tree.widget_id), :OpenItems).keys
 
-        Hash[items_with_children.map { |i| [i.to_s, open_items.include?(i)] }]
+        items_with_children.map { |i| [i.to_s, open_items.include?(i)] }.to_h
       end
 
       # Checks whether the current page is associated to a specific device

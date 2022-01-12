@@ -154,8 +154,12 @@ module Y2Storage
         log.info "#impossible? - needed: #{needed}"
         return true if needed > available_space(free_spaces)
 
-        # Now do the check for partitions that need to be in a specific disk.
-        # For simplicity, partitions with no pre-assigned disk are left out
+        impossible_partitions?(planned_partitions, free_spaces)
+      end
+
+      # Check for partitions that need to be in a specific disk.
+      # For simplicity, partitions with no pre-assigned disk are left out
+      def impossible_partitions?(planned_partitions, free_spaces)
         planned_partitions.select(&:disk).group_by(&:disk).each do |disk, parts|
           needed = DiskSize.sum(parts.map(&:min))
           available = available_space(free_spaces.select { |s| s.disk_name == disk })
@@ -302,7 +306,7 @@ module Y2Storage
         # Ensure same order
         arrays = keys.map { |key| hash[key] }
         product = arrays[0].product(*arrays[1..-1])
-        product.map { |p| Hash[keys.zip(p)] }
+        product.map { |p| keys.zip(p).to_h }
       end
 
       # Inverts keys and values of a hash
@@ -358,7 +362,7 @@ module Y2Storage
       # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
       #   Distribution hashes considering all free disk spaces.
       def add_unused_spaces(dist_hashes, spaces)
-        spaces_hash = Hash[spaces.product([[]])]
+        spaces_hash = spaces.product([[]]).to_h
         dist_hashes.map! { |d| spaces_hash.merge(d) }
       end
 

@@ -36,6 +36,7 @@ module Y2Partitioner
       #
       # @param controller [Actions::Controllers::Fstabs]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         self.handle_all_events = true
@@ -191,6 +192,7 @@ module Y2Partitioner
         #
         # @param fstab [Y2Storage::Fstab]
         def initialize(fstab)
+          super()
           textdomain "storage"
           @fstab = fstab
         end
@@ -236,6 +238,7 @@ module Y2Partitioner
         #
         # @param fstab [Y2Storage::Fstab]
         def initialize(fstab)
+          super()
           textdomain "storage"
           @fstab = fstab
         end

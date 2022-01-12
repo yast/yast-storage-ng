@@ -35,11 +35,6 @@ module Y2Storage
       # @!attribute cache_mode
       #   @return [String] Cache mode
 
-      # @param parent [#parent,#section_name] parent section
-      def initialize(parent = nil)
-        @parent = parent
-      end
-
       # Clones Bcache device options into an AutoYaST <bcache_options> profile section
       #
       # @param device [Bcache] bcache device

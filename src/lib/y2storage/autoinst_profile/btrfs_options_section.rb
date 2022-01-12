@@ -38,11 +38,6 @@ module Y2Storage
       # @!attribute metadata_raid_level
       #   @return [String] Metadata RAID level of a multi-device Btrfs
 
-      # @param parent [#parent, #section_name] parent section
-      def initialize(parent = nil)
-        @parent = parent
-      end
-
       # Clones Btrfs options into an AutoYaST <btrfs_options> profile section
       #
       # @param filesystem [Filesystems::Btrfs]

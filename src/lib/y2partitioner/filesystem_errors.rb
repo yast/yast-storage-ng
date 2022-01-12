@@ -106,7 +106,7 @@ module Y2Partitioner
     # @param filesystem [Y2Storage::Filesystems::Base, nil]
     # @return [Boolean]
     def filesystem_with_snapshots?(filesystem)
-      return false unless filesystem&.respond_to?(:configure_snapper)
+      return false unless filesystem.respond_to?(:configure_snapper)
 
       filesystem.configure_snapper
     end

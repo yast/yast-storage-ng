@@ -39,6 +39,7 @@ module Y2Partitioner
       # @param pager [CWM::TreePager]
       # @param buttons_set [DeviceButtonsSet]
       def initialize(entries, pager, buttons_set = nil)
+        super()
         textdomain "storage"
 
         @entries = entries

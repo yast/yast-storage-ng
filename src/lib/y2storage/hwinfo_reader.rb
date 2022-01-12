@@ -137,7 +137,7 @@ module Y2Storage
     # @param [String] value
     # @return [Array<String>] array containing all values
     def parse_key_device_file(value)
-      value.split(" ")
+      value.split
     end
 
     # Sanitizes a single-value property

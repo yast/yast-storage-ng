@@ -35,6 +35,7 @@ module Y2Partitioner
       #
       # @param controller [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -106,8 +107,8 @@ module Y2Partitioner
         # TRANSLATORS: Warning message when the user wanted to resize a filesystem
         # and there was a problem getting information about that filesystem.
         msg = _("Obtaining information about free space on this filesystem failed.\n" \
-          "Resizing it might or might not work. If you continue, there is a risk\n" \
-          "of losing all data on this filesystem.")
+                "Resizing it might or might not work. If you continue, there is a risk\n" \
+                "of losing all data on this filesystem.")
         Yast2::Popup.show(msg, headline: :warning, details: err.what, buttons: :ok)
       end
 
@@ -316,6 +317,7 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
         def initialize(device)
+          super()
           textdomain "storage"
 
           @device = device
@@ -555,6 +557,7 @@ module Y2Partitioner
         #
         # @param size [Y2Storage::DiskSize]
         def initialize(size)
+          super("__FixedSizeWidget")
           @size = size
         end
 
@@ -585,6 +588,7 @@ module Y2Partitioner
         # @param max_size [Y2Storage::DiskSize]
         # @param current_size [Y2Storage::DiskSize]
         def initialize(min_size, max_size, current_size)
+          super()
           textdomain "storage"
 
           @min_size = min_size

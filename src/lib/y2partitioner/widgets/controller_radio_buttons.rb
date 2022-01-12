@@ -28,6 +28,7 @@ module Y2Partitioner
     # Besides {#items} you need to define also {#widgets}.
     class ControllerRadioButtons < CWM::CustomWidget
       def initialize
+        super
         self.handle_all_events = true
       end
 

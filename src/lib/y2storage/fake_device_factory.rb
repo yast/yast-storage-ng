@@ -387,7 +387,7 @@ module Y2Storage
     #
     # FIXME: this method is too complex. It offends three different cops
     # related to complexity.
-    # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize
     def new_partitionable(partitionable_class, args)
       @volumes = Set.new
       @free_blob      = nil
@@ -539,7 +539,7 @@ module Y2Storage
       # if no start has been specified, take free region into account
       if !start && @free_blob
         @free_regions.push(region.start)
-        start_block = region.start + @free_blob.to_i / region.block_size.to_i
+        start_block = region.start + (@free_blob.to_i / region.block_size.to_i)
       end
       @free_blob = nil
 

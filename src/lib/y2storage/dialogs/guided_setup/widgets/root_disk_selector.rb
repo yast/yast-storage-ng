@@ -102,14 +102,14 @@ module Y2Storage
           def help
             _(
               "<p>" \
-                "Select the disk where to create the root filesystem. " \
+              "Select the disk where to create the root filesystem. " \
               "</p>" \
               "<p>" \
-                "This is also the disk where boot-related partitions " \
-                "will typically be created as necessary: /boot, ESP (EFI System " \
-                "Partition), BIOS-Grub. " \
-                "That means that this disk should be usable by the machine's " \
-                "BIOS / firmware." \
+              "This is also the disk where boot-related partitions " \
+              "will typically be created as necessary: /boot, ESP (EFI System " \
+              "Partition), BIOS-Grub. " \
+              "That means that this disk should be usable by the machine's " \
+              "BIOS / firmware." \
               "</p>"
             )
           end

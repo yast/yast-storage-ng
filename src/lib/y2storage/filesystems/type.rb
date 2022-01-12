@@ -30,7 +30,7 @@ module Y2Storage
     #
     # FIXME: this class contains several big hashes which triggered Rubocop's
     # ClassLength cop.
-    class Type # rubocop:disable ClassLength
+    class Type
       include StorageEnumWrapper
 
       wrap_enum "FsType"
@@ -368,8 +368,7 @@ module Y2Storage
         opt = properties[:default_fstab_options] || fallback
         opt = patch_codepage(opt)
         opt = patch_iocharset(opt)
-        opt = special_path_fstab_options(opt, mount_path)
-        opt
+        special_path_fstab_options(opt, mount_path)
       end
 
       alias_method :default_mount_options, :default_fstab_options
@@ -382,11 +381,9 @@ module Y2Storage
       # @return [Array<String>] changed fstab options
       #
       def special_path_fstab_options(opt, mount_path = nil)
-        if mount_path.nil?
-          opt
-        elsif mount_path == "/"
+        if mount_path == "/"
           root_fstab_options(opt)
-        elsif mount_path == "/boot" || mount_path.start_with?("/boot/")
+        elsif mount_path == "/boot" || mount_path&.start_with?("/boot/")
           boot_fstab_options(opt)
         else
           opt

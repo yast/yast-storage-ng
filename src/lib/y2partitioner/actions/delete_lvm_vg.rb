@@ -62,8 +62,8 @@ module Y2Partitioner
           _("Confirm Deleting of Volume Group"),
           # TRANSLATORS: %s is the name of the volume group (e.g. "system")
           format(_("The volume group \"%s\" contains at least one logical volume.\n" \
-            "If you proceed, the following volumes will be unmounted (if mounted)\n" \
-            "and deleted:"), device.vg_name),
+                   "If you proceed, the following volumes will be unmounted (if mounted)\n" \
+                   "and deleted:"), device.vg_name),
           # TRANSLATORS: %s is the name of the volume group (e.g. "system")
           format(
             _("Really delete volume group \"%s\" and all related logical volumes?"), device.vg_name

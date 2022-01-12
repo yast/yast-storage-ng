@@ -113,7 +113,7 @@ describe Y2Storage::VolumeSpecificationsSet do
       let(:var_vg_name) { "vg-var" }
 
       it "returns the first found" do
-        # Note: actually, all volumes in a volume set must have the same vg-name
+        # NOTE: actually, all volumes in a volume set must have the same vg-name
         expect(volumes_set.vg_name).to eq("vg-home")
       end
     end

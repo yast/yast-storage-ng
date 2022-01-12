@@ -40,11 +40,11 @@ describe Y2Storage::HWInfoReader do
       expect(data).to be_a(Y2Storage::HWInfoDisk)
       expect(data.to_h)
         .to include(bus:              "IDE",
-                    unique_id:        "3OOL.7kkY9irDFZ4",
-                    driver_modules:   ["ahci"],
-                    driver:           ["ahci", "sd"],
-                    io_ports:         "0xe000-0xefff rw",
-                    geometry_logical: "CHS 121601/255/63")
+          unique_id:        "3OOL.7kkY9irDFZ4",
+          driver_modules:   ["ahci"],
+          driver:           ["ahci", "sd"],
+          io_ports:         "0xe000-0xefff rw",
+          geometry_logical: "CHS 121601/255/63")
     end
 
     it "supports alternative devices names" do
@@ -87,9 +87,9 @@ describe Y2Storage::HWInfoReader do
         expect(data).to be_a(Y2Storage::HWInfoDisk)
         expect(data.to_h)
           .to include(bus:              "SCSI",
-                      driver_modules:   ["zfcp", "sd_mod"],
-                      driver:           ["zfcp", "sd"],
-                      geometry_logical: "CHS 20480/64/32")
+            driver_modules:   ["zfcp", "sd_mod"],
+            driver:           ["zfcp", "sd"],
+            geometry_logical: "CHS 20480/64/32")
       end
     end
   end

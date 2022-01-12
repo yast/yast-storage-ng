@@ -169,7 +169,7 @@ module Y2Storage
 
       try_with_each(target_sizes, error_proc: log_error) do |target_size|
         log.info "Trying to make a proposal with target size: #{target_size}\n" \
-          "using the following settings:\n#{settings}"
+                 "using the following settings:\n#{settings}"
 
         raise Error if useless_volumes_sets?
 

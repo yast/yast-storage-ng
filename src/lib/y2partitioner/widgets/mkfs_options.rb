@@ -36,6 +36,8 @@ module Y2Partitioner
       # @param option [MkfsOptiondata]
       #
       def initialize(controller, option)
+        super()
+
         @filesystem = controller.filesystem
         @option = option
         self.widget_id = "#{self.class}_#{object_id}"
@@ -72,11 +74,11 @@ module Y2Partitioner
       # return [Boolean]
       #
       def validate
-        if !@option.validate?(value)
+        if @option.validate?(value)
+          true
+        else
           Yast::Popup.Error(format(@option.error, value))
           false
-        else
-          true
         end
       end
 
@@ -93,6 +95,7 @@ module Y2Partitioner
     class MkfsOptions < CWM::CustomWidget
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         @controller = controller
         self.handle_all_events = true
       end

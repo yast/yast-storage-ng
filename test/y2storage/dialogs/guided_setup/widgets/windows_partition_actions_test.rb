@@ -18,7 +18,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../../spec_helper.rb"
+require_relative "../../../spec_helper"
 require_relative "#{TEST_PATH}/support/widgets_context"
 require "y2storage/dialogs/guided_setup/widgets/windows_partition_actions"
 
@@ -38,7 +38,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
       end
 
       it "sets the Windows action to :always_remove" do
-        expect_select(:windows_actions, :always_remove)
+        expect_select(:windows_actions, value: :always_remove)
 
         subject.init
       end
@@ -50,7 +50,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
       end
 
       it "sets the Windows action to :remove" do
-        expect_select(:windows_actions, :remove)
+        expect_select(:windows_actions, value: :remove)
 
         subject.init
       end
@@ -67,7 +67,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
         end
 
         it "sets the Windows action to :resize" do
-          expect_select(:windows_actions, :resize)
+          expect_select(:windows_actions, value: :resize)
 
           subject.init
         end
@@ -79,7 +79,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
         end
 
         it "sets the Windows action to :not_modify" do
-          expect_select(:windows_actions, :not_modify)
+          expect_select(:windows_actions, value: :not_modify)
 
           subject.init
         end
@@ -90,7 +90,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
   describe "#store" do
     context "when :not_modify option is selected" do
       before do
-        select_widget(:windows_actions, :not_modify)
+        select_widget(:windows_actions, value: :not_modify)
       end
 
       it "sets settings.windows_delete_mode to :none" do
@@ -108,7 +108,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
 
     context "if :resize option is selected" do
       before do
-        select_widget(:windows_actions, :resize)
+        select_widget(:windows_actions, value: :resize)
       end
 
       it "sets settings.windows_delete_mode to :none" do
@@ -126,7 +126,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
 
     context "if :remove option is selected" do
       before do
-        select_widget(:windows_actions, :remove)
+        select_widget(:windows_actions, value: :remove)
       end
 
       it "sets settings.windows_delete_mode to :ondemand" do
@@ -144,7 +144,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::WindowsPartitionActions do
 
     context "if :always_remove option is selected" do
       before do
-        select_widget(:windows_actions, :always_remove)
+        select_widget(:windows_actions, value: :always_remove)
       end
 
       it "sets settings.windows_delete_mode to :all" do

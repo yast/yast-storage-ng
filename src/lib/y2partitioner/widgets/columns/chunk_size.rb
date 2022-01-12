@@ -27,6 +27,7 @@ module Y2Partitioner
       class ChunkSize < Base
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

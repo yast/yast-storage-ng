@@ -36,6 +36,7 @@ module Y2Partitioner
     class PartitionRole < Base
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller
@@ -59,6 +60,7 @@ module Y2Partitioner
       class RoleChoice < CWM::RadioButtons
         # @param controller [Actions::Controllers::Filesystem]
         def initialize(controller)
+          super()
           textdomain "storage"
 
           @controller = controller

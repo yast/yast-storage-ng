@@ -31,6 +31,8 @@ module Y2Storage
       #                (see {AutoinstProfile})
       # @param subvolumes [Array<SubvolSpecification>]
       def initialize(section, subvolumes)
+        super()
+
         textdomain "storage"
         @section = section
         @subvolumes = subvolumes

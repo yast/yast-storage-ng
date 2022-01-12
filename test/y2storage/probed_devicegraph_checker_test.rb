@@ -66,7 +66,7 @@ describe Y2Storage::ProbedDevicegraphChecker do
           .to receive(:unsupported_bcache?).and_call_original
       end
 
-      # Note: the devicegraph is only loaded but not probed, see {#devicegraph_from}. If the devicegraph
+      # NOTE: the devicegraph is only loaded but not probed, see {#devicegraph_from}. If the devicegraph
       # is probed, then the test would fail because a Bcache error is reported.
       let(:devicegraph) { devicegraph_from("bcache2.xml") }
 

@@ -18,7 +18,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../../spec_helper.rb"
+require_relative "../../../spec_helper"
 require_relative "#{TEST_PATH}/support/widgets_context"
 require "y2storage/dialogs/guided_setup/widgets/other_partition_actions"
 
@@ -37,7 +37,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::OtherPartitionActions do
     end
 
     it "selects the default option according to the settings" do
-      expect_select(:other_actions, :ondemand)
+      expect_select(:other_actions, value: :ondemand)
 
       subject.init
     end
@@ -65,7 +65,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::OtherPartitionActions do
 
   describe "#store" do
     before do
-      select_widget(:other_actions, :ondemand)
+      select_widget(:other_actions, value: :ondemand)
     end
 
     it "sets settings.other_delete_mode according to the selected value" do

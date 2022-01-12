@@ -29,6 +29,7 @@ module Y2Partitioner
     class FstabOptions < Popup
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
+        super()
         textdomain "storage"
 
         @controller = controller

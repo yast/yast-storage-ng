@@ -66,12 +66,13 @@ class MdFormatter
   end
 
   def current_indentation
-    if @group_level == 0
+    case @group_level
+    when 0
       "# "
-    elsif @group_level == 1
+    when 1
       "## "
     else
-      "\t" * (@group_level - 2) + "- "
+      ("\t" * (@group_level - 2)) + "- "
     end
   end
 end

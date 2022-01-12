@@ -27,6 +27,8 @@ module Y2Storage
     class Finish < ::Installation::FinishClient
       # Constructor
       def initialize
+        super
+
         textdomain "storage"
         Yast.import "Service"
       end

@@ -26,6 +26,7 @@ module Y2Partitioner
       class BtrfsExclusive < DiskSize
         # Constructor
         def initialize
+          super
           textdomain "storage"
         end
 

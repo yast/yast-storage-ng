@@ -1,21 +1,22 @@
 # use the shared YaST defaults
 inherit_from:
-  /usr/share/YaST2/data/devtools/data/rubocop-0.71.0_yast_style.yml
+  /usr/share/YaST2/data/devtools/data/rubocop-1.24.1_yast_style.yml
 
 # Don't enforce any particular name for block params
-SingleLineBlockParams:
+Style/SingleLineBlockParams:
   Enabled: false
 
 # The general YaST agreement is 100 characters, so it fits into standard
 # resolutions and Github's pull request view. But let's open the threshold a
 # little bit
-Metrics/LineLength:
+Layout/LineLength:
   Max: 105
 
-Metrics/BlockLength:
-  # rspec is known as DSL with big blocks
-  Exclude:
-    - test/**/*
+Metrics/CyclomaticComplexity:
+  Max: 9
+
+Metrics/PerceivedComplexity:
+  Max: 9
 
 # some storage API have size method, but without empty? method
 # for details see https://github.com/yast/yast-storage-ng/pull/83
@@ -34,7 +35,7 @@ Style/FrozenStringLiteralComment:
 Layout/AccessModifierIndentation:
   EnforcedStyle: indent
 
-Naming/UncommunicativeMethodParamName:
+Naming/MethodParameterName:
   AllowedNames:
     - vg
     - md
@@ -43,3 +44,8 @@ Naming/UncommunicativeMethodParamName:
     - up
     - to
     - as
+
+# Empty classes are used in tests to avoid build dependencies, so ignore them there
+Lint/EmptyClass:
+  Exclude:
+    - test/**/*.rb

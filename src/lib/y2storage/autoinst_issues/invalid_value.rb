@@ -39,6 +39,8 @@ module Y2Storage
       # @param attr      [Symbol] Name of the invalid attribute
       # @param new_value [Integer,String,Symbol] New value or :skip to skip the section
       def initialize(section, attr, new_value = :skip)
+        super()
+
         textdomain "storage"
 
         @section = section

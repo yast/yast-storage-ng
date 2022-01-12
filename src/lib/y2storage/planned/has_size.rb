@@ -103,21 +103,11 @@ module Y2Storage
         # @return [Array] list containing devices with an adjusted value
         #     for Planned::HasSize#size
         def distribute_space(devices, space_size, rounding: nil, align_grain: nil, end_alignment: false)
-          needed_size = DiskSize.sum(devices.map(&:min))
-          if space_size < needed_size
-            log.error "not enough space: needed #{needed_size}, available #{space_size}"
-            raise RuntimeError
-          end
+          check_size(devices, space_size)
 
-          rounding ||= align_grain
-          rounding ||= DiskSize.new(1)
+          rounding ||= align_grain || DiskSize.new(1)
 
-          new_list = devices.map do |device|
-            new_dev = device.dup
-            new_dev.size = device.min_size.ceil(rounding)
-            new_dev
-          end
-
+          new_list = init_sizes(devices, rounding)
           # The last space is extended until the end if we are working with partitions (align_grain is
           # not nil) and the partition table allows that (end_alignment is false)
           adjust_to_end = !align_grain.nil? && !end_alignment
@@ -212,6 +202,26 @@ module Y2Storage
         # @return [Float]
         def total_weight(devices)
           devices.map(&:weight).reduce(0, :+)
+        end
+
+        # Checks if there are eough space at all
+        # @raise RuntimeError if there is not enough space
+        def check_size(devices, space_size)
+          needed_size = DiskSize.sum(devices.map(&:min))
+          return unless space_size < needed_size
+
+          log.error "not enough space: needed #{needed_size}, available #{space_size}"
+          raise RuntimeError
+        end
+
+        # Sets sizes of the given devices to their minimal valid value
+        # @return [Array<Planned::Device>] modified devices with size adjusted to rounded minimum size
+        def init_sizes(devices, rounding)
+          devices.map do |device|
+            new_dev = device.dup
+            new_dev.size = device.min_size.ceil(rounding)
+            new_dev
+          end
         end
       end
 

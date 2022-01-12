@@ -441,7 +441,7 @@ module Y2Storage
           raise TypeError, "Bad disk size unit: #{str}"
         end
         base = 1024 if legacy_units
-        number * base**exp
+        number * (base**exp)
       end
     end
 

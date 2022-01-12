@@ -223,6 +223,7 @@ module Y2Partitioner
         # @param buttons [Array<CWM::AbstractWidget>] set of buttons to enclose
         #   in the horizontal box
         def initialize(buttons)
+          super()
           @buttons = buttons
         end
 

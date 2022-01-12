@@ -37,6 +37,8 @@ module Y2Storage
         # @param info [Storage::LuksInfo]
         # @param attempt [Numeric]
         def initialize(info, attempt)
+          super()
+
           textdomain "storage"
           @info = info
           @attempt = attempt

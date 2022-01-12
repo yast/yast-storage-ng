@@ -254,7 +254,7 @@ describe Y2Storage::YamlWriter do
         sda.size = 256 * Storage.GiB
 
         ptable = sda.create_partition_table(Y2Storage::PartitionTables::Type::MSDOS)
-        blocks = sda.size.to_i / 512 - 2048
+        blocks = (sda.size.to_i / 512) - 2048
 
         sda1 = ptable.create_partition("/dev/sda1", Y2Storage::Region.create(2048, blocks, 512),
           Y2Storage::PartitionType::PRIMARY)
@@ -323,7 +323,7 @@ describe Y2Storage::YamlWriter do
         sda.size = 256 * Storage.GiB
 
         ptable = sda.create_partition_table(Y2Storage::PartitionTables::Type::MSDOS)
-        blocks = sda.size.to_i / 512 - 2048
+        blocks = (sda.size.to_i / 512) - 2048
 
         sda1 = ptable.create_partition("/dev/sda1", Y2Storage::Region.create(2048, blocks, 512),
           Y2Storage::PartitionType::PRIMARY)

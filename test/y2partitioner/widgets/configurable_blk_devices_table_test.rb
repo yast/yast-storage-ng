@@ -435,7 +435,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     end
 
     it "reports true for the open items and the items with no children, and false for the rest" do
-      values = [false] * 2 + [true] * 9
+      values = ([false] * 2) + ([true] * 9)
       expect(subject.ui_open_items.values).to contain_exactly(*values)
       expect(subject.ui_open_items["table:device:#{sdb4.sid}"]).to eq true
     end
@@ -477,7 +477,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       let(:open_items) { { "table:device:888" => true, "table:device:999" => false } }
 
       it "returns the set values plus the missing ones" do
-        values = [false] * 2 + [true] * 19
+        values = ([false] * 2) + ([true] * 19)
         expect(subject.open_items.values).to contain_exactly(*values)
         expect(subject.open_items["table:device:888"]).to eq(true)
         expect(subject.open_items["table:device:999"]).to eq(false)
