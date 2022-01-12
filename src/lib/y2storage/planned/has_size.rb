@@ -216,7 +216,7 @@ module Y2Storage
 
         # Sets sizes of the given devices to their minimal valid value
         # @return [Array<Planned::Device>] modified devices with size adjusted to rounded minimum size
-        def init_sizes(device, rounding)
+        def init_sizes(devices, rounding)
           devices.map do |device|
             new_dev = device.dup
             new_dev.size = device.min_size.ceil(rounding)
