@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -64,9 +64,27 @@ module Y2Partitioner
         return unless warning_accepted? && availability_ensured?
 
         Yast::WFM.call(client) if client
+        reset_activation if reset_activation?
         reprobe(activate: activate)
 
         :finish
+      end
+
+      # Resets the activation cached information
+      #
+      # libstorage-ng caches some information, for example which LUKS devices the activation was
+      # canceled for.
+      def reset_activation
+        Y2Storage::Luks.reset_activation_infos
+      end
+
+      # Whether the ctivation cached information should be reset
+      #
+      # @see #reset_activation
+      #
+      # @return [Boolean]
+      def reset_activation?
+        false
       end
 
       # Whether YaST is running in the initial stage of installation
@@ -180,6 +198,11 @@ module Y2Partitioner
 
       # @see ConfigureAction#activate
       def activate
+        true
+      end
+
+      # @see ConfigureAction#reset_activation?
+      def reset_activation?
         true
       end
     end

@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2021] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -47,6 +47,11 @@ describe Y2Partitioner::Actions::ConfigureAction do
         subject.run
       end
 
+      it "does not reset the activation cache" do
+        expect(Y2Storage::Luks).to_not receive(:reset_activation_infos)
+        subject.run
+      end
+
       it "does not run activation again" do
         expect(manager).to_not receive(:activate)
         subject.run
@@ -54,6 +59,23 @@ describe Y2Partitioner::Actions::ConfigureAction do
 
       it "does not probe again" do
         expect(manager).to_not receive(:probe)
+        subject.run
+      end
+    end
+
+    RSpec.shared_examples "configure with a separate client" do
+      it "calls the corresponding YaST client" do
+        expect(Yast::WFM).to receive(:call).with(client_name)
+        subject.run
+      end
+
+      it "does not reset the activation cache" do
+        expect(Y2Storage::Luks).to_not receive(:reset_activation_infos)
+        subject.run
+      end
+
+      it "probes again" do
+        expect(manager).to receive(:probe)
         subject.run
       end
     end
@@ -102,10 +124,7 @@ describe Y2Partitioner::Actions::ConfigureAction do
         context "if the user accepts the warning" do
           let(:accepted) { true }
 
-          it "calls the corresponding YaST client" do
-            expect(Yast::WFM).to receive(:call).with(client_name)
-            subject.run
-          end
+          include_examples "configure with a separate client"
         end
       end
 
@@ -122,10 +141,7 @@ describe Y2Partitioner::Actions::ConfigureAction do
           context "if the packages were installed or already there" do
             let(:installed_pkgs) { true }
 
-            it "calls the corresponding YaST client" do
-              expect(Yast::WFM).to receive(:call).with(client_name)
-              subject.run
-            end
+            include_examples "configure with a separate client"
           end
         end
       end
@@ -175,6 +191,23 @@ describe Y2Partitioner::Actions::ConfigureAction do
       let(:warning_regexp) { /crypt devices/ }
       let(:packages) { ["cryptsetup"] }
 
+      RSpec.shared_examples "configure provide passwords" do
+        it "does not call any additional YaST client" do
+          expect(Yast::WFM).to_not receive(:call)
+          subject.run
+        end
+
+        it "resets the activation cache" do
+          expect(Y2Storage::Luks).to receive(:reset_activation_infos)
+          subject.run
+        end
+
+        it "probes again" do
+          expect(manager).to receive(:probe)
+          subject.run
+        end
+      end
+
       context "during installation" do
         let(:install) { true }
         before { allow(manager).to receive(:activate).and_return true }
@@ -184,10 +217,7 @@ describe Y2Partitioner::Actions::ConfigureAction do
         context "if the user accepts the warning" do
           let(:accepted) { true }
 
-          it "does not call any additional YaST client" do
-            expect(Yast::WFM).to_not receive(:call)
-            subject.run
-          end
+          include_examples "configure provide passwords"
         end
       end
 
@@ -204,10 +234,7 @@ describe Y2Partitioner::Actions::ConfigureAction do
           context "if the packages were installed or already there" do
             let(:installed_pkgs) { true }
 
-            it "does not call any additional YaST client" do
-              expect(Yast::WFM).to_not receive(:call)
-              subject.run
-            end
+            include_examples "configure provide passwords"
           end
         end
       end
