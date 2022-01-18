@@ -27,6 +27,10 @@ require "y2partitioner/widgets/pages"
 describe Y2Partitioner::Widgets::Pages::NfsMounts do
   before do
     devicegraph_stub("nfs1.xml")
+
+    # do not read the real NFS settings (including the firewall) from the system
+    allow(Yast::WFM).to receive(:CallFunction).and_call_original
+    allow(Yast::WFM).to receive(:CallFunction).with("nfs-client4part", ["Read"])
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }

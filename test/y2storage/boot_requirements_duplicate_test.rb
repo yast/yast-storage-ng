@@ -162,6 +162,19 @@ describe Y2Storage::BootRequirementsChecker do
         let(:planned_prep_partition) { [planned_partition] }
 
         before do
+          # FIXME: removing this fails with
+          # NoMethodError:
+          # undefined method `match_volume?' for #<Array:0x000055cd3dcab6a0>
+          # ./src/lib/y2storage/boot_requirements_strategies/prep.rb:113:in
+          #   `block in prep_partition_missing?'
+          # ./src/lib/y2storage/boot_requirements_strategies/prep.rb:113:in `each'
+          # ./src/lib/y2storage/boot_requirements_strategies/prep.rb:113:in `none?'
+          # ./src/lib/y2storage/boot_requirements_strategies/prep.rb:113:in `prep_partition_missing?'
+          # ./src/lib/y2storage/boot_requirements_strategies/prep.rb:35:in `needed_partitions'
+          # ./src/lib/y2storage/boot_requirements_checker.rb:66:in `needed_partitions'
+          # ./test/y2storage/boot_requirements_duplicate_test.rb:165:in `block (5 levels) in
+          #    <top (required)>'
+
           allow(planned_prep_partition).to receive(:match_volume?).and_return(true)
         end
 

@@ -1,3 +1,7 @@
+-------------------------------------------------------------------
+Tue Jan 18 15:59:33 UTC 2022 - Ladislav Slezák <lslezak@suse.cz>
+
+- Enable RSpec verifying doubles (bsc#1194784)
 
 -------------------------------------------------------------------
 Wed Jan 12 11:12:13 UTC 2022 - José Iván López González <jlopez@suse.com>

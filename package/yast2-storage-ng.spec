@@ -31,8 +31,8 @@ BuildRequires:  update-desktop-files
 # Yast::Kernel.propose_hibernation?
 BuildRequires:  yast2 >= 4.3.41
 BuildRequires:  yast2-devtools >= 4.2.2
-# for AbortException and handle direct abort
-BuildRequires:  yast2-ruby-bindings >= 4.0.6
+# yast/rspec/helpers.rb
+BuildRequires:  yast2-ruby-bindings >= 4.4.7
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml

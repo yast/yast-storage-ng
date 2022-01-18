@@ -68,7 +68,7 @@ describe Y2Partitioner::Widgets::Columns::Size do
 
   describe "#value_for" do
     context "when no device is given" do
-      let(:device_name) { "unknonw" }
+      let(:device_name) { "unknown" }
 
       it "returns an empty string" do
         expect(subject.value_for(device)).to eq("")
@@ -97,6 +97,14 @@ describe Y2Partitioner::Widgets::Columns::Size do
       context "and the device is found in the system" do
         let(:device) { root_fstab_entry }
 
+        # FIXME: this fails with:
+        # Failure/Error: allow(device).to receive(:size).and_return(disk_size)
+        # #<Y2Storage::SimpleEtcFstabEntry:0x000055c60a5e21f0 @storage_object=
+        #   #<InstanceDouble(Storage::SimpleEtcFstabEntry) (anonymous)>> does not implement: size
+        # Shared Example Group: "value for size" called from
+        #   ./test/y2partitioner/widgets/columns/size_test.rb:100
+        # # ./test/y2partitioner/widgets/columns/size_test.rb:46:in `block (3 levels) in
+        #   <top (required)>'
         include_examples "value for size"
       end
 
