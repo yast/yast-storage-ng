@@ -236,14 +236,14 @@ describe Y2Partitioner::Widgets::BtrfsDevicesSelector do
 
   describe "#contents" do
     it "does not display the selected size" do
-      expect(Yast).to_not receive(:Id).with(:selected_size)
+      expect(subject).to_not receive(:Id).with(:selected_size)
       expect(Yast::UI).to_not receive(:ReplaceWidget)
 
       subject.refresh
     end
 
     it "does not display the unselected size" do
-      expect(Yast).to_not receive(:Id).with(:unselected_size)
+      expect(subject).to_not receive(:Id).with(:unselected_size)
       expect(Yast::UI).to_not receive(:ReplaceWidget)
 
       subject.refresh

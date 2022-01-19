@@ -85,10 +85,25 @@ module Installation
   # The Installation::ProposalStore and Installation::ProposalRunner classes are not loaded in the
   # tests to avoid cyclic dependencies with yast2-installation at build time.
   class ProposalStore; end
-  class ProposalRunner; end
+
+  class ProposalRunner
+    def initialize(_runner); end
+    def run; end
+  end
 end
 
+# Yast::Profile, AutoinstStorage and AutoinstConfig might be missing in RPM
+# build to avoid cyclic dependencies with the autoyast2-installation package at build time.
+Yast::RSpec::Helpers.define_yast_module("Profile", methods: [:current, :ReadXML])
+Yast::RSpec::Helpers.define_yast_module("AutoinstStorage", methods: [:Import])
+Yast::RSpec::Helpers.define_yast_module("AutoinstConfig", methods: [:Confirm=])
+
 RSpec.configure do |c|
+  c.mock_with :rspec do |config|
+    # verify that the mocked methods actually exist
+    config.verify_partial_doubles = true
+  end
+
   c.include Yast::RSpec::StorageHelpers
 
   c.before do
@@ -97,16 +112,6 @@ RSpec.configure do |c|
     # is mocked.
     stub_const("Y2Packager::Repository", double("Y2Packager::Repository"))
     allow(Y2Packager::Repository).to receive(:all).and_return([])
-
-    allow(Yast).to receive(:import).and_call_original
-    # Yast::Profile, AutoinstStorage and AutoinstConfig are not loaded in the tests to avoid cyclic
-    # dependencies with the yast-installation package at build time.
-    allow(Yast).to receive(:import).with("Profile")
-    allow(Yast).to receive(:import).with("AutoinstStorage")
-    allow(Yast).to receive(:import).with("AutoinstConfig")
-    stub_const("Yast::Profile", double("Yast::Profile"))
-    stub_const("Yast::AutoinstStorage", double("Yast::AutoinstStorage"))
-    stub_const("Yast::AutoinstConfig", double("Yast::AutoinstConfig"))
 
     allow(Y2Storage::DumpManager.instance).to receive(:dump)
 
@@ -146,8 +151,8 @@ RSpec.configure do |c|
   # imported features (i.e., when control.xml is not found).
   #
   # The product features could be modified during testing. Due to there are
-  # tests reling on settings with pristine default values, it is necessary to
-  # reset the product features to not interfer in the results.
+  # tests relying on settings with pristine default values, it is necessary to
+  # reset the product features to not interfere in the results.
   c.after(:all) do
     Yast::ProductFeatures.Import({})
   end

@@ -159,7 +159,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "and a suitable PReP is already in the list of planned partitions" do
         let(:planned_prep_partitions) { [planned_prep_partition] }
 
-        let(:planned_prep_partition) { [planned_partition] }
+        let(:planned_prep_partition) { planned_partition }
 
         before do
           allow(planned_prep_partition).to receive(:match_volume?).and_return(true)

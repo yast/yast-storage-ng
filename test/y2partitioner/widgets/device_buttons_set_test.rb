@@ -46,7 +46,9 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
   describe "#device=" do
     before do
-      allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
+      if device.respond_to?(:formatted_as?)
+        allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
+      end
     end
 
     let(:btrfs) { false }
