@@ -19,6 +19,7 @@
 
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/nfs_mounts_table"
+require "y2partitioner/widgets/nfs_buttons"
 
 module Y2Partitioner
   module Widgets
@@ -49,6 +50,11 @@ module Y2Partitioner
         # @return [ConfigurableBlkDevicesTable]
         def calculate_table
           NfsMountsTable.new(entries, pager, device_buttons)
+        end
+
+        # @see DevicesTable
+        def table_buttons
+          NfsAddButton.new
         end
 
         # @return [Array<DeviceTableEntry>]

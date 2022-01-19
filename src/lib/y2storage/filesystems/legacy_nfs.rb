@@ -36,11 +36,11 @@ module Y2Storage
 
       # Server name or IP address of the NFS share
       # @return [String]
-      attr_reader :server
+      attr_accessor :server
 
       # Remote path of the NFS share
       # @return [String]
-      attr_reader :path
+      attr_accessor :path
 
       # Previous server name or IP, used when the remote share is changed
       # (which strictly speaking means replacing the NFS mount with a new one)
@@ -60,11 +60,11 @@ module Y2Storage
 
       # Local mount point path
       # @return [String]
-      attr_reader :mountpoint
+      attr_accessor :mountpoint
 
       # Options field for fstab
       # @return [String]
-      attr_reader :fstopt
+      attr_accessor :fstopt
 
       # Filesystem type used in fstab
       # @return [Type] possible values are Type::NFS and Type::NFS4
