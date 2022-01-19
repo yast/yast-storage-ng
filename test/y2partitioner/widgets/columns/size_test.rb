@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2020] SUSE LLC
 #
 # All Rights Reserved.
@@ -40,12 +41,6 @@ describe Y2Partitioner::Widgets::Columns::Size do
   end
 
   shared_examples "value for size" do
-    let(:disk_size) { Y2Storage::DiskSize.new(60.GiB) }
-
-    before do
-      allow(device).to receive(:size).and_return(disk_size)
-    end
-
     it "returns a Yast::Term" do
       expect(subject.value_for(device)).to be_a(Yast::Term)
     end
@@ -67,6 +62,8 @@ describe Y2Partitioner::Widgets::Columns::Size do
   end
 
   describe "#value_for" do
+    let(:disk_size) { Y2Storage::DiskSize.new(60.GiB) }
+
     context "when no device is given" do
       let(:device_name) { "unknown" }
 
@@ -76,6 +73,10 @@ describe Y2Partitioner::Widgets::Columns::Size do
     end
 
     context "when the device responds to #size method" do
+      before do
+        allow(device).to receive(:size).and_return(disk_size)
+      end
+
       include_examples "value for size"
     end
 
@@ -90,26 +91,30 @@ describe Y2Partitioner::Widgets::Columns::Size do
     end
 
     context "when a fstab entry is given" do
+      let(:device) { fstab }
+
+      let(:fstab) { fstab_entry(fstab_device_name, "/", btrfs, ["subvol=@/"], 0, 0) }
+
+      let(:fstab_device) { devicegraph.find_by_name(fstab_device_name) }
+
       let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
-      let(:root_fstab_entry) { fstab_entry("/dev/sdb2", "/", btrfs, ["subvol=@/"], 0, 0) }
-      let(:unknown_fstab_entry) { fstab_entry("/dev/vdz", "/home", btrfs, [], 0, 0) }
 
-      context "and the device is found in the system" do
-        let(:device) { root_fstab_entry }
+      before do
+        allow(fstab).to receive(:device).and_return(fstab_device)
+      end
 
-        # FIXME: this fails with:
-        # Failure/Error: allow(device).to receive(:size).and_return(disk_size)
-        # #<Y2Storage::SimpleEtcFstabEntry:0x000055c60a5e21f0 @storage_object=
-        #   #<InstanceDouble(Storage::SimpleEtcFstabEntry) (anonymous)>> does not implement: size
-        # Shared Example Group: "value for size" called from
-        #   ./test/y2partitioner/widgets/columns/size_test.rb:100
-        # # ./test/y2partitioner/widgets/columns/size_test.rb:46:in `block (3 levels) in
-        #   <top (required)>'
+      context "and the device in the fstab entry is found in the system" do
+        let(:fstab_device_name) { "/dev/sdb2" }
+
+        before do
+          allow(fstab_device).to receive(:size).and_return(disk_size)
+        end
+
         include_examples "value for size"
       end
 
       context "but the device is not found in the system" do
-        let(:device) { unknown_fstab_entry }
+        let(:fstab_device_name) { "/dev/vdz" }
 
         it "returns an empty string" do
           expect(subject.value_for(device)).to eq("")

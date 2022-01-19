@@ -46,12 +46,9 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
 
   describe "#device=" do
     before do
-      # FIXME: this fails with
-      # Failure/Error: allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
-      # #<Y2Storage::Filesystems::BlkFilesystem:0x000055edf405af40 @storage_object=
-      # #<Storage::BlkFilesystem:0x000055edf405ae50 @__swigtype__="_p_storage__BlkFilesystem">>
-      #   does not implement: formatted_as?
-      allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
+      if device.respond_to?(:formatted_as?)
+        allow(device).to receive(:formatted_as?).with(:btrfs).and_return(btrfs)
+      end
     end
 
     let(:btrfs) { false }
