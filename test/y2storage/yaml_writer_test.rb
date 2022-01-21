@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) 2016 SUSE LLC
 #
 # All Rights Reserved.
@@ -673,7 +674,7 @@ describe Y2Storage::YamlWriter do
                   type: primary
                   id: linux
               - free:
-                  size: 19659744 KiB (18.75 GiB)
+                  size: 19637506 KiB (18.73 GiB)
                   start: 1025 MiB (1.00 GiB)
               md_devices:
               - md_device:
