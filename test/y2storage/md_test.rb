@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -184,7 +185,7 @@ describe Y2Storage::Md do
   describe "#inspect" do
 
     it "inspects a MD object" do
-      expect(md.inspect).to eq "<Md /dev/md0 15875 MiB (15.50 GiB) raid0>"
+      expect(md.inspect).to eq "<Md /dev/md0 16220688 KiB (15.47 GiB) raid0>"
     end
 
   end
