@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# Storage::Luks.reset_activation_infos
-BuildRequires:	libstorage-ng-ruby >= 4.4.69
+# New Md size calculation
+BuildRequires:	libstorage-ng-ruby >= 4.4.76
 BuildRequires:  update-desktop-files
 # Yast::Kernel.propose_hibernation?
 BuildRequires:  yast2 >= 4.3.41
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# Storage::Luks.reset_activation_infos
-Requires:       libstorage-ng-ruby >= 4.4.69
+# New Md size calculation
+Requires:       libstorage-ng-ruby >= 4.4.76
 # Yast::Kernel.propose_hibernation?
 Requires:       yast2 >= 4.3.41
 # Y2Packager::Repository
