@@ -30,7 +30,6 @@ require "y2storage/package_handler"
 require "y2storage/bcache"
 
 Yast.import "UI"
-Yast.import "PackageSystem"
 Yast.import "Mode"
 
 module Y2Partitioner

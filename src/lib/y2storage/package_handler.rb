@@ -24,7 +24,6 @@
 require "yast"
 
 Yast.import "Package"
-Yast.import "PackageSystem"
 Yast.import "PackagesProposal"
 Yast.import "Mode"
 Yast.import "Report"
@@ -86,7 +85,7 @@ module Y2Storage
       log.info("Installing #{pkg_list} (ask: #{ask}")
       success =
         if ask
-          Yast::PackageSystem.CheckAndInstallPackages(@pkg_list)
+          Yast::Package.CheckAndInstallPackages(@pkg_list)
         else
           Yast::Package.DoInstall(@pkg_list)
         end

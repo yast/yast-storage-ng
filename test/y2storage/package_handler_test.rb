@@ -112,11 +112,11 @@ describe Y2Storage::PackageHandler do
 
     context "by default (:ask is true)" do
       before do
-        allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return true
+        allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return true
       end
 
       it "installs packages directly in the installed system" do
-        expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages).with(subject.pkg_list)
+        expect(Yast::Package).to receive(:CheckAndInstallPackages).with(subject.pkg_list)
         subject.install
       end
 
@@ -124,12 +124,12 @@ describe Y2Storage::PackageHandler do
         # Let's simulate the first package is already installed
         allow(Yast::Package).to receive(:Installed).with(feature_pkg[0]).and_return true
 
-        expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages).with(feature_pkg[1..-1])
+        expect(Yast::Package).to receive(:CheckAndInstallPackages).with(feature_pkg[1..-1])
         subject.install
       end
 
       it "pops up an error dialog if package installation failed" do
-        allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return(false)
+        allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return(false)
         expect(Yast::Report).to receive(:Error)
         subject.install
       end
