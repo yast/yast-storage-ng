@@ -21,13 +21,13 @@ require "yast"
 require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/nfs"
 require "y2nfs_client/widgets/nfs_form"
-require "y2nfs_client/actions"
 
 module Y2Partitioner
   module Actions
     # Action for creating a new NFS mount
     class AddNfs < Base
       include Yast::Logger
+      Yast.import "Popup"
 
       # Constructor
       def initialize
@@ -36,8 +36,6 @@ module Y2Partitioner
       end
 
       private
-
-      attr_reader :nfs_action
 
       # Only step of the wizard
       #
@@ -48,15 +46,18 @@ module Y2Partitioner
         result = Dialogs::Nfs.run(form, title)
         return unless result == :next
 
-        nfs_action = Y2NfsClient::Actions::AddNfs.new(form.nfs, devicegraph)
-        nfs = nfs_action.create_reachable_device { |confirm_msg| Yast::Popup.YesNo(confirm_msg) }
+        nfs = create_reachable_device(form.nfs)
         UIState.instance.select_row(nfs.sid) if nfs
 
         :finish
       end
 
       def form
-        @form ||= Y2NfsClient::Widgets::NfsForm.new(devicegraph)
+        @form ||= Y2NfsClient::Widgets::NfsForm.new(Y2Storage::Filesystems::LegacyNfs.new, nfs_entries)
+      end
+
+      def nfs_entries
+        devicegraph.nfs_mounts.map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
       end
 
       # Wizard title
@@ -65,6 +66,25 @@ module Y2Partitioner
       def title
         # TRANSLATORS: wizard title
         _("Add NFS mount")
+      end
+
+      def create_reachable_device(legacy)
+        nfs = legacy.create_nfs_device(devicegraph)
+        return nfs if nfs.reachable?
+
+        # Rollback only if user does not want to save (bsc#450060)
+        keep = save_unreachable_nfs?(nfs)
+        log.warn "Test mount of NFS share #{nfs.inspect} failed. Save anyway?: #{keep}"
+        return nfs if keep
+
+        devicegraph.remove_nfs(nfs)
+        nil
+      end
+
+      def save_unreachable_nfs?(nfs)
+        # TRANSLATORS: pop-up message. %s is replaced for something like 'server:/path'
+        msg = _("Test mount of NFS share '%s' failed.\nSave it anyway?") % nfs.name
+        Yast::Popup.YesNo(msg)
       end
 
       def devicegraph
