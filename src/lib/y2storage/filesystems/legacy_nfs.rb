@@ -237,7 +237,7 @@ module Y2Storage
       def legacy_version?
         return true if fs_type == Y2Storage::Filesystems::Type::NFS4
 
-        Yast::NfsOptions.legacy?(fstopt)
+        Yast::NfsOptions.legacy?(fstopt || "")
       end
 
       # @return [String]
