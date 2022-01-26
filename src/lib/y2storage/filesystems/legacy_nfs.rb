@@ -105,6 +105,7 @@ module Y2Storage
       def initialize
         @active = true
         @in_etc_fstab = true
+        @fs_type = Type.find(:nfs)
       end
 
       # Whether the share should be mounted
