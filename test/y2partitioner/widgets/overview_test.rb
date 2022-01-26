@@ -328,7 +328,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(Y2Storage::StorageFeaturesList).to receive(:from_bitfield).and_return(used_features)
       allow(used_features).to receive(:pkg_list).and_return(["xfsprogs"])
       allow(Yast::Package).to receive(:Installed).and_return false
-      allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+      allow(Yast::Package).to receive(:CheckAndInstallPackages)
         .and_return(installed_packages)
       allow(Yast::Mode).to receive(:installation).and_return(installation)
     end
@@ -365,7 +365,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         end
 
         it "does not check for missing packages" do
-          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
           subject.validate
         end
       end
@@ -386,7 +386,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
           end
 
           it "checks for needed packages" do
-            expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+            expect(Yast::Package).to receive(:CheckAndInstallPackages)
               .with(["xfsprogs"])
             subject.validate
           end
@@ -403,7 +403,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
             let(:installation) { true }
 
             it "does not check for missing packages" do
-              expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+              expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
               subject.validate
             end
           end
@@ -417,7 +417,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
           end
 
           it "does not check for missing packages" do
-            expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+            expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
             subject.validate
           end
         end
@@ -448,7 +448,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       end
 
       it "checks whether the needed packages are installed" do
-        expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+        expect(Yast::Package).to receive(:CheckAndInstallPackages)
           .with(["xfsprogs"])
         subject.validate
       end
@@ -465,7 +465,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         let(:installation) { true }
 
         it "does not check for missing packages" do
-          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
           subject.validate
         end
       end

@@ -24,7 +24,7 @@ require "y2partitioner/device_graphs"
 Yast.import "Event"
 Yast.import "Stage"
 Yast.import "PackageCallbacks"
-Yast.import "PackageSystem"
+Yast.import "Package"
 Yast.import "Popup"
 
 module Y2Partitioner
@@ -148,7 +148,7 @@ module Y2Partitioner
       pkgs = [package_name]
       log.info "Trying to install #{pkgs}"
       Yast::PackageCallbacks.RegisterEmptyProgressCallbacks
-      res = Yast::PackageSystem.CheckAndInstallPackages(pkgs)
+      res = Yast::Package.CheckAndInstallPackages(pkgs)
       Yast::PackageCallbacks.RestorePreviousProgressCallbacks
       log.info "Installation result: #{res}"
       res

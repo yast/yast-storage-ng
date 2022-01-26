@@ -27,7 +27,7 @@ Yast.import "Stage"
 Yast.import "Popup"
 Yast.import "Arch"
 Yast.import "PackageCallbacks"
-Yast.import "PackageSystem"
+Yast.import "Package"
 
 module Y2Partitioner
   module Actions
@@ -141,7 +141,7 @@ module Y2Partitioner
         # switch off pkg-mgmt loading progress dialogs,
         # because it just plain sucks
         Yast::PackageCallbacks.RegisterEmptyProgressCallbacks
-        ret = Yast::PackageSystem.CheckAndInstallPackages(pkgs)
+        ret = Yast::Package.CheckAndInstallPackages(pkgs)
         Yast::PackageCallbacks.RestorePreviousProgressCallbacks
         ret
       end

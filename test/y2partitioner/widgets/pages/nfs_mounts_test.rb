@@ -101,7 +101,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         end
 
         it "does not try to install any package" do
-          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
           nfs_page.contents
         end
 
@@ -117,7 +117,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         let(:client_exists) { false }
 
         it "does not try to install any package" do
-          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
           nfs_page.contents
         end
 
@@ -153,7 +153,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         end
 
         it "does not try to install any package" do
-          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to_not receive(:CheckAndInstallPackages)
           nfs_page.contents
         end
 
@@ -169,14 +169,14 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
         let(:client_exists) { false }
 
         it "tries to install yast2-nfs-client" do
-          expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+          expect(Yast::Package).to receive(:CheckAndInstallPackages)
             .with(["yast2-nfs-client"])
           nfs_page.contents
         end
 
         context "and installation of yast2-nfs-client suceeds" do
           before do
-            allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return true
+            allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return true
             allow(Yast::WFM).to receive(:CallFunction).with(client_name, anything)
           end
 
@@ -190,7 +190,7 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
 
         context "and it does not manage to install yast2-nfs-client" do
           before do
-            allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return false
+            allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return false
           end
 
           it "does not read the NFS system configuration" do

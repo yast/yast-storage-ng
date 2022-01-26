@@ -97,12 +97,12 @@ describe Y2Partitioner::Actions::ConfigureAction do
       before do
         allow(Yast::PackageCallbacks).to receive(:RegisterEmptyProgressCallbacks)
         allow(Yast::PackageCallbacks).to receive(:RestorePreviousProgressCallbacks)
-        allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages).and_return installed_pkgs
+        allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return installed_pkgs
       end
       let(:installed_pkgs) { false }
 
       it "checks for the corresponding packages and tries to installs them if needed" do
-        expect(Yast::PackageSystem)
+        expect(Yast::Package)
           .to receive(:CheckAndInstallPackages).with(packages)
         subject.run
       end
