@@ -230,6 +230,16 @@ module Y2Storage
         !old_server.nil?
       end
 
+      # Whether the fstab entry uses old ways of configuring the NFS version that
+      # do not longer work in the way they used to.
+      #
+      # @return [Boolean]
+      def legacy_version?
+        return true if fs_type == Y2Storage::Filesystems::Type::NFS4
+
+        Yast::NfsOptions.legacy?(fstopt)
+      end
+
       # @return [String]
       def inspect
         "<LegacyNfs attributes=#{to_hash}>"

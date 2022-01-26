@@ -87,14 +87,11 @@ module Y2Storage
         LegacyNfs.new_from_nfs(self).to_hash
       end
 
-      # Whether the fstab entry uses old ways of configuring the NFS version that
-      # do not longer work in the way they used to.
+      # @see LegacyNfs#legacy_version?
       #
       # @return [Boolean]
       def legacy_version?
-        return true if mount_point.mount_type == Y2Storage::Filesystems::Type::NFS4
-
-        Yast::NfsOptions.legacy?(mount_options.join(","))
+        LegacyNfs.new_from_nfs(self).legacy_version?
       end
 
       # String representing the remote NFS share in the most common format (the
