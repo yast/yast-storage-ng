@@ -37,6 +37,8 @@ module Y2Partitioner
         end
 
         # @see Columns::Base#value_for
+        #
+        # @param device [Y2Storage::Filesystems::Nfs, Y2Storage::Filesystems::LegacyNfs]
         def value_for(device)
           device.path
         end

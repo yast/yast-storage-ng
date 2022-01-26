@@ -38,7 +38,11 @@ module Y2Partitioner
         end
 
         # @see Columns::Base#value_for
+        #
+        # @param device [Y2Storage::Device, Y2Storage::Filesystems::LegacyNfs]
         def value_for(device)
+          return device.fstopt if legacy_nfs?(device)
+
           return "" unless device.respond_to?(:mount_options)
 
           device.mount_options.join(",")

@@ -94,6 +94,10 @@ module Y2Storage
         LegacyNfs.new_from_nfs(self).legacy_version?
       end
 
+      def version
+        LegacyNfs.new_from_nfs(self).version
+      end
+
       # String representing the remote NFS share in the most common format (the
       # "server:/path/in/server" one used in /etc/fstab)
       #

@@ -17,7 +17,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "y2partitioner/widgets/columns/base"
 
 module Y2Partitioner
@@ -29,9 +28,6 @@ module Y2Partitioner
         def initialize
           super
           textdomain "storage"
-
-          # Done in the constructor to ensure this is imported only if really used
-          Yast.import "NfsOptions"
         end
 
         # @see Columns::Base#title
@@ -41,9 +37,10 @@ module Y2Partitioner
         end
 
         # @see Columns::Base#value_for
+        #
+        # @param device [Y2Storage::Filesystems::Nfs, Y2Storage::Filesystems::LegacyNfs]
         def value_for(device)
-          mntops = device.mount_options.join(",") || ""
-          version = Yast::NfsOptions.nfs_version(mntops)
+          version = device.version
 
           if device.legacy_version?
             # TRANSLATORS: %s is a string representing the NFS version used, but

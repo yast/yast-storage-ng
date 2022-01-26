@@ -240,6 +240,10 @@ module Y2Storage
         Yast::NfsOptions.legacy?(fstopt || "")
       end
 
+      def version
+        Yast::NfsOptions.nfs_version(fstopt)
+      end
+
       # @return [String]
       def inspect
         "<LegacyNfs attributes=#{to_hash}>"

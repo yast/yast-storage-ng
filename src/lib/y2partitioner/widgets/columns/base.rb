@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,6 +21,8 @@ require "yast"
 require "abstract_method"
 require "bidi_markup"
 require "y2partitioner/device_graphs"
+require "y2storage/simple_etc_fstab_entry"
+require "y2storage/filesystems/legacy_nfs"
 
 module Y2Partitioner
   module Widgets
@@ -171,11 +173,18 @@ module Y2Partitioner
           filesystem.multidevice?
         end
 
-        # Determines if given device is actually an fstab entry
+        # Determines if the given device is actually an fstab entry
         #
         # @return [Boolean]
         def fstab_entry?(device)
           device.is_a?(Y2Storage::SimpleEtcFstabEntry)
+        end
+
+        # Determines if the given device is actually a legacy nfs
+        #
+        # @return [Boolean]
+        def legacy_nfs?(device)
+          device.is_a?(Y2Storage::Filesystems::LegacyNfs)
         end
       end
     end
