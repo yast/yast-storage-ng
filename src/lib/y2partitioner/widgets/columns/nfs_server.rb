@@ -18,38 +18,28 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/columns"
+require "y2partitioner/widgets/columns/base"
 
 module Y2Partitioner
   module Widgets
-    # Table for NFS mounts
-    class NfsMountsTable < ConfigurableBlkDevicesTable
-      # Constructor
-      #
-      # @param entries [Array<DeviceTableEntry>]
-      # @param pager [CWM::Pager]
-      # @param buttons_set [DeviceButtonsSet]
-      def initialize(entries, pager, buttons_set = nil)
-        textdomain "storage"
+    module Columns
+      # Widget for displaying the `Server` column of NFS mounts
+      class NfsServer < Base
+        # Constructor
+        def initialize
+          super
+          textdomain "storage"
+        end
 
-        super
-        show_columns(*fs_columns)
-      end
+        # @see Columns::Base#title
+        def title
+          _("Server")
+        end
 
-      private
-
-      # Table columns
-      #
-      # @return [Array<#new>]
-      def fs_columns
-        [
-          Columns::NfsServer,
-          Columns::NfsPath,
-          Columns::MountPoint,
-          Columns::NfsVersion,
-          Columns::MountOptions
-        ]
+        # @see Columns::Base#value_for
+        def value_for(device)
+          device.server
+        end
       end
     end
   end

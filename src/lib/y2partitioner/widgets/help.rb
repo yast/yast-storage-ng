@@ -177,6 +177,10 @@ module Y2Partitioner
 
         btrfs_data_raid_level:     N_("<b>Data RAID Level</b> shows the RAID level for the Btrfs data."),
 
+        nfs_server:                N_("<b>Server</b> shows host name or IP address of the NFS server."),
+
+        nfs_path:                  N_("<b>Remote Directory</b> shows the directory on the NFS server."),
+
         nfs_version:               N_("<b>NFS Version</b> shows the version of the protocol used to " \
                                       "connect to the server. It may happen that some NFS share is " \
                                       "mounted using an old method to specify the protocol version, " \
