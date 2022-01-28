@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -241,10 +241,16 @@ module Y2Storage
         nfs_options.legacy?
       end
 
+      # Nfs options from the options fstab field
+      #
+      # @return [NfsOptions]
       def nfs_options
         NfsOptions.create_from_fstab(fstopt || "")
       end
 
+      # Nfs version obtained from the fstab options field
+      #
+      # @return [NfsVersion]
       def version
         nfs_options.version
       end

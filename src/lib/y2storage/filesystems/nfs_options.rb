@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,40 +21,60 @@ require "y2storage/filesystems/nfs_version"
 
 module Y2Storage
   module Filesystems
+    # This class represents the fstab options field for a NFS entry
     class NfsOptions
+      # List of Nfs options
+      #
+      # @return [Array<String>]
       attr_reader :options
 
-      # Parse to an internal representation:
-      # Simply split by commas, but "defaults" is represented by the empty list
-      # @param [String] options a fstab option string
-      # @return [Array<String>] of individual options
+      # Creates a {NfsOptions} from a fstab options string
+      #
+      # If simply splits by commas, but "defaults" is represented by the empty list.
+      #
+      # @param fstab_options [String] fstab option
+      # @return [NfsOptions]
       def self.create_from_fstab(fstab_options)
         return new if fstab_options == "defaults"
 
         new(fstab_options.split(/[\s,]+/))
       end
 
+      # Constructor
+      #
+      # @param options [Array<String>] list of options
       def initialize(options = [])
         @options = options
       end
 
-      # Convert list of individual options to a fstab option string
-      # @param [Array<String>] option_list list of individual options
-      # @return [String] a fstab option string
+      # Generates a fstab options string
+      #
+      # @return [String]
       def to_fstab
         return "defaults" if options.empty?
 
         options.join(",")
       end
 
+      # Version from the fstab options
+      #
+      # This method can handle situations in which 'nfsvers' and 'vers' (the two equivalent options to
+      # specify the protocol) are used more than once (which is wrong but recoverable).
+      #
+      # @return [NfsVersion]
       def version
         option = version_option || ""
 
-        value = option.split("=")[1]
+        value = option.split("=")[1] || "any"
 
-        NfsVersion.new(value)
+        NfsVersion.find_by_value(value)
       end
 
+      # Modifies the options to set the given version
+      #
+      # The existing 'nfsvers' or 'vers' options are deleted (deleting always the surplus options). If no
+      # option is present and one must be added, 'nfsvers' is used.
+      #
       # @param version [Y2Storage::Filesystems::NfsVersion]
       def version=(version)
         # Cleanup minorversion, it should never be used
@@ -75,10 +95,10 @@ module Y2Storage
         self
       end
 
-      # Checks whether some of the old options that used to work to configure
-      # the NFS version (but do not longer work now) is used.
+      # Checks whether some of the old options that used to work to configure the NFS version (but do not
+      # longer work now) is used.
       #
-      # Basically, this checks for the presence of minorversion
+      # Basically, this checks for the presence of minorversion.
       #
       # @return [Boolean]
       def legacy?
@@ -89,11 +109,10 @@ module Y2Storage
 
       # Option used to set the NFS protocol version
       #
-      # @param option_list [Array<String>]
       # @return [String, nil] contains the whole 'option=value' string
       def version_option
         # According to manual tests and documentation, none of the forms has higher precedence.
-        # Use #reverse_each because in case of conflicting options, the latest one is used by mount
+        # Use #reverse_each because in case of conflicting options, the latest one is used by mount.
         options.reverse_each.find { |o| version_option?(o) }
       end
 

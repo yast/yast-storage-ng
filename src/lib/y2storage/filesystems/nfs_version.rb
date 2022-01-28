@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,16 +22,16 @@ require "yast2/equatable"
 
 module Y2Storage
   module Filesystems
+    # This class represents the version of a NFS device
     class NfsVersion
       extend Yast::I18n
-      include Yast::I18n
       include Yast2::Equatable
 
       textdomain "storage"
 
       # Properties for each NFS version
       VERSIONS = {
-        nil   => {
+        "any" => {
           name: N_("Any")
         },
         "3"   => {
@@ -54,33 +54,53 @@ module Y2Storage
 
       eql_attr :value
 
+      # All known versions
+      #
+      # @return [Array<NfsVersion>]
       def self.all
-        VERSIONS.keys.map { |v| new(v) }
+        @all ||= VERSIONS.keys.map { |v| new(v) }
       end
 
-      def initialize(value = nil)
-        textdomain "storage"
-
+      # Find a version by the given value
+      #
+      # @param value [String] e.g., "4.1", "any", etc
+      # @return [NfsVersion, nil]
+      def self.find_by_value(value)
         value = "4" if value == "4.0"
-        @value = value
+
+        all.find { |v| v.value == value }
       end
 
+      # Name of the version
+      #
+      # @return [String]
       def name
         VERSIONS[value][:name]
       end
 
+      # Whether the version represents any version
+      #
+      # @return [Boolean]
       def any?
-        value.nil?
+        value == "any"
       end
 
-      # Whether the system infrastructure associated to NFSv4 (e.g. enabled
-      # NFS4_SUPPORT in sysconfig/nfs) is needed in order to use this version of
-      # the protocol.
+      # Whether the system infrastructure associated to NFSv4 (e.g. enabled NFS4_SUPPORT in
+      # sysconfig/nfs) is needed in order to use this version of the protocol.
       #
       # @return [Boolean]
       def need_v4_support?
         return false if value.nil?
         value.start_with?("4")
+      end
+
+      private
+
+      # Constructor
+      #
+      # @param value [string] e.g., "3", "4.1", etc.
+      def initialize(value = "any")
+        @value = value
       end
     end
   end
