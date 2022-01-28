@@ -45,9 +45,9 @@ module Y2Partitioner
           if device.legacy_version?
             # TRANSLATORS: %s is a string representing the NFS version used, but
             # maybe it's not the one the user wanted.
-            _("%s (Please Check)") % version.label
+            _("%s (Please Check)") % version.name
           else
-            version.label
+            version.name
           end
         end
       end

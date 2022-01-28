@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage/filesystems/nfs"
 require "y2storage/filesystems/type"
+require "y2storage/filesystems/nfs_options"
 
 module Y2Storage
   module Filesystems
@@ -155,7 +156,7 @@ module Y2Storage
         return nfs if mountpoint.nil? || mountpoint.empty?
 
         nfs.mount_path = mountpoint
-        nfs.mount_point.mount_options = (fstopt == "defaults") ? [] : fstopt.split(/[\s,]+/)
+        nfs.mount_point.mount_options = nfs_options.options
         nfs.mount_point.active = active?
         nfs.mount_point.in_etc_fstab = in_etc_fstab?
 
@@ -193,7 +194,7 @@ module Y2Storage
         else
           nfs.mount_path = mountpoint
           nfs.mount_point.mount_type = fs_type
-          nfs.mount_point.mount_options = fstopt.split(/[\s,]+/)
+          nfs.mount_point.mount_options = nfs_options.options
         end
       end
 
@@ -237,11 +238,15 @@ module Y2Storage
       def legacy_version?
         return true if fs_type == Y2Storage::Filesystems::Type::NFS4
 
-        Yast::NfsOptions.legacy?(fstopt || "")
+        nfs_options.legacy?
+      end
+
+      def nfs_options
+        NfsOptions.create_from_fstab(fstopt || "")
       end
 
       def version
-        Yast::NfsOptions.nfs_version(fstopt)
+        nfs_options.version
       end
 
       # @return [String]
