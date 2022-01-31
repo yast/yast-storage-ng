@@ -32,7 +32,7 @@ module Y2Storage
 
     # Constructor
     #
-    # @param filesystem [Filesystems::Base]
+    # @param filesystem [Filesystems::Base, Filesystems::LegacyNfs]
     # @param mount_point [String]
     def initialize(filesystem, mount_point = "/mnt")
       @filesystem = filesystem
@@ -79,6 +79,12 @@ module Y2Storage
     # @return [Crypttab, nil] nil if the crypttab file cannot be read
     def crypttab
       fs_attribute(:crypttab)
+    end
+
+    def reachable?
+      return true unless filesystem.is?(:nfs) || filesystem.is?(:legacy_nfs)
+
+      mountable?
     end
 
     private
@@ -176,6 +182,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def windows_system?
+      return false if filesystem.is?(:legacy_nfs)
       return false unless filesystem.windows_suitable?
 
       filesystem.detect_content_info.windows?
@@ -290,6 +297,21 @@ module Y2Storage
       raise "umount failed for #{mount_point}" unless execute(*cmd)
     end
 
+    def umount_if_possible
+      umount
+    rescue RuntimeError
+      nil
+    end
+
+    def mountable?
+      mount
+      true
+    rescue RuntimeError
+      false
+    ensure
+      umount_if_possible
+    end
+
     # Device name to use when mounting a filesystem
     #
     # Note that the filesystem must exist on disk, so it should have an UUID.
@@ -297,6 +319,7 @@ module Y2Storage
     # @return [String]
     def mount_name
       return filesystem.name if filesystem.is?(:nfs)
+      return filesystem.share if filesystem.is?(:legacy_nfs)
 
       "UUID=#{filesystem.uuid}"
     end
