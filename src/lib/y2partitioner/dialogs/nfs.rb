@@ -35,7 +35,60 @@ module Y2Partitioner
 
       # @macro seeDialog
       def contents
-        HVSquash(@form)
+        HVSquash(
+          VBox(@form, form_validator)
+        )
+      end
+
+      private
+
+      def form_validator
+        FormValidator.new(@form)
+      end
+
+      class FormValidator < CWM::CustomWidget
+        Yast.import "Popup"
+
+        def initialize(form)
+          textdomain "storage"
+
+          @form = form
+          @initial_share = nfs.share
+        end
+
+        def contents
+          Empty()
+        end
+
+        def validate
+          @form.store
+          return true unless validate_reachable?
+          return true if nfs.reachable?
+
+          # TRANSLATORS: pop-up message. %s is replaced for something like 'server:/path'
+          msg = _("Test mount of NFS share '%s' failed.\nSave it anyway?") % nfs.share
+          keep = Yast::Popup.YesNo(msg)
+          # Save only if user confirms (bsc#450060)
+          log.warn "Test mount of NFS share #{nfs.inspect} failed. Save anyway?: #{keep}"
+          keep
+        end
+
+      private
+
+        def nfs
+          @form.nfs
+        end
+
+        NEW_DEVICE_SHARE = ":".freeze
+        private_constant :NEW_DEVICE_SHARE
+
+        def validate_reachable?
+          # Always validate new NFS entries
+          return true if @initial_share == NEW_DEVICE_SHARE
+
+          # For pre-existing entries, check only if the connection information changed
+          nfs.share_changed?
+        end
       end
     end
   end

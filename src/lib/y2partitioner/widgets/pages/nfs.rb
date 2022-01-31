@@ -56,6 +56,13 @@ module Y2Partitioner
           NfsMountsTable.new(entries, pager, device_buttons)
         end
 
+        # Widget with the dynamic set of buttons for the selected row
+        #
+        # @return [DeviceButtonsSet]
+        def device_buttons
+          @device_buttons ||= DeviceButtonsSet.new(pager)
+        end
+
         # @return [Array<DeviceTableEntry>]
         def entries
           [DeviceTableEntry.new(mount)]

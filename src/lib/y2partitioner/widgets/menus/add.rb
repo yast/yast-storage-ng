@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,6 +27,7 @@ require "y2partitioner/actions/add_partition"
 require "y2partitioner/actions/add_lvm_lv"
 require "y2partitioner/actions/add_btrfs_subvolume"
 require "y2partitioner/actions/add_tmpfs"
+require "y2partitioner/actions/add_nfs"
 
 module Y2Partitioner
   module Widgets
@@ -53,6 +54,7 @@ module Y2Partitioner
             Item(Id(:menu_add_btrfs), _("&Btrfs...")),
             Item(Id(:menu_add_bcache), _("B&cache...")),
             Item(Id(:menu_add_tmpfs), _("&Tmpfs...")),
+            Item(Id(:menu_add_nfs), _("&Nfs...")),
             Item("---"),
             Item(Id(:menu_add_partition), _("&Partition...")),
             Item(Id(:menu_add_lv), _("&Logical Volume...")),
@@ -99,6 +101,11 @@ module Y2Partitioner
         # @see Device#action_for
         def menu_add_tmpfs_action
           Actions::AddTmpfs.new
+        end
+
+        # @see Device#action_for
+        def menu_add_nfs_action
+          Actions::AddNfs.new
         end
 
         # @see Device#action_for

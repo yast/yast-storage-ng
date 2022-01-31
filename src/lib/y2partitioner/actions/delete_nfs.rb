@@ -17,42 +17,34 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/action_button"
-require "y2partitioner/actions/add_nfs"
-require "y2partitioner/actions/edit_nfs"
-require "y2partitioner/actions/delete_nfs"
+require "yast2/popup"
+require "y2partitioner/actions/delete_device"
 
 module Y2Partitioner
-  module Widgets
-    # Button for opening a wizard to add a new NFS mount
-    class NfsAddButton < ActionButton
-      # @macro seeAbstractWidget
-      def label
+  module Actions
+    # Action for deleting an NFS mount
+    #
+    # @see DeleteDevice
+    class DeleteNfs < DeleteDevice
+      def initialize(*args)
         textdomain "storage"
 
-        # TRANSLATORS: button label
-        _("Add NFS...")
+        super
       end
 
-      # @see ActionButton#action
-      def action
-        Actions::AddNfs.new
-      end
-    end
+      private
 
-    # Button for editing an NFS mount
-    class NfsEditButton < DeviceEditButton
-      # @see ActionButton#action
-      def action
-        Actions::EditNfs.new(device)
+      # Deletes the indicated filesystem (see {DeleteDevice#device})
+      def delete
+        device_graph.remove_nfs(device)
       end
-    end
 
-    # Button for deleting an NFS mount
-    class NfsDeleteButton < DeviceDeleteButton
-      # @see ActionButton#action
-      def action
-        Actions::DeleteNfs.new(device)
+      # @see DeleteDevice#confirm
+      def confirm
+        # TRANSLATORS: Confirmation to delete an NFS mount, %s is replaced by
+        # something like 'server:/path'
+        text = _("Really delete %s?") % device.name
+        Yast2::Popup.show(text, buttons: :yes_no) == :yes
       end
     end
   end

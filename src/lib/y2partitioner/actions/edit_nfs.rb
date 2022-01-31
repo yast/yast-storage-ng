@@ -25,21 +25,24 @@ require "y2nfs_client/widgets/nfs_form"
 module Y2Partitioner
   module Actions
     # Action for creating a new NFS mount
-    class AddNfs < Base
+    class EditNfs < Base
       include Yast::Logger
 
       # Constructor
-      def initialize
-        super
+      def initialize(nfs)
+        super()
         textdomain "storage"
 
-        @initial_legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new
-        @initial_legacy_nfs.fstopt = "defaults"
+        @nfs = nfs
+        @initial_legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs)
+        @nfs_entries = (current_graph.nfs_mounts - [nfs]).map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
       end
 
       private
 
       attr_reader :initial_legacy_nfs
+      attr_reader :nfs_entries
+      attr_reader :nfs
 
       # Only step of the wizard
       #
@@ -50,7 +53,7 @@ module Y2Partitioner
         result = Dialogs::Nfs.run(form, title)
         return unless result == :next
 
-        nfs = form.nfs.create_nfs_device(devicegraph)
+        update_device(form.nfs)
         UIState.instance.select_row(nfs.sid)
 
         :finish
@@ -60,21 +63,48 @@ module Y2Partitioner
         @form ||= Y2NfsClient::Widgets::NfsForm.new(initial_legacy_nfs, nfs_entries)
       end
 
-      def nfs_entries
-        devicegraph.nfs_mounts.map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
-      end
-
       # Wizard title
       #
       # @return [String]
       def title
         # TRANSLATORS: wizard title
-        _("Add NFS mount")
+        _("Edit NFS mount")
       end
 
-      def devicegraph
-        DeviceGraphs.instance.current
-      end
-    end
+			# Note that the Nfs share is re-created when either the server or the path changes.
+			def update_device(legacy)
+#				legacy.default_devicegraph = current_graph
+
+				if !legacy.share_changed?
+					log.info "Updating NFS based on #{legacy.inspect}"
+					return legacy.update_nfs_device(nfs: nfs)
+				end
+
+				probed_nfs = system_graph.find_device(nfs.sid)
+
+				# Due to this share is going to be re-created, the configuration of the probed share should be
+				# copied to apply it to the new share. Basically, this ensures to keep the probed mount point
+				# status (i.e., if the mount point is active and written in the fstab file).
+				legacy.configure_from(probed_nfs) if probed_nfs
+
+				log.info "Removing NFS from current graph, it will be replaced: #{nfs.inspect}"
+				current_graph.remove_nfs(nfs)
+        @nfs = legacy.create_nfs_device(current_graph)
+			end
+
+			# Devicegraph representing the current status
+			#
+			# @return [Y2Storage::Devicegraph]
+			def current_graph
+				DeviceGraphs.instance.current
+			end
+
+			# Devicegraph representing the system status
+			#
+			# @return [Y2Storage::Devicegraph]
+			def system_graph
+				DeviceGraphs.instance.system
+			end
+		end
   end
 end
