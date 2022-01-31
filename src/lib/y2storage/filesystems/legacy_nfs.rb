@@ -21,6 +21,7 @@ require "yast"
 require "y2storage/filesystems/nfs"
 require "y2storage/filesystems/type"
 require "y2storage/filesystems/nfs_options"
+require "y2storage/filesystem_reader"
 
 module Y2Storage
   module Filesystems
@@ -184,10 +185,12 @@ module Y2Storage
       #   defined.
       #
       # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
-      def update_nfs_device(devicegraph = nil)
-        graph = check_devicegraph_argument(devicegraph)
-
-        nfs = find_nfs_device(graph)
+      # @return [Nfs] the updated object
+      def update_nfs_device(devicegraph = nil, nfs: nil)
+        if !nfs
+          graph = check_devicegraph_argument(devicegraph)
+          nfs = find_nfs_device(graph)
+        end
 
         if mountpoint.nil? || mountpoint.empty?
           nfs.remove_mount_point unless nfs.mount_point.nil?
@@ -196,6 +199,8 @@ module Y2Storage
           nfs.mount_point.mount_type = fs_type
           nfs.mount_point.mount_options = nfs_options.options
         end
+
+        nfs
       end
 
       # Finds the equivalent {Nfs} object in the devicegraph
@@ -229,6 +234,10 @@ module Y2Storage
       # @return [Boolean]
       def share_changed?
         !old_server.nil?
+      end
+
+      def reachable?
+        FilesystemReader.new(self).reachable?
       end
 
       # Whether the fstab entry uses old ways of configuring the NFS version that
@@ -296,7 +305,28 @@ module Y2Storage
         share_string(server, path)
       end
 
+      def update_share(server, path)
+        if update_old_share?(server, path)
+          @old_server = @server
+          @old_path = @path
+        end
+
+        @server = server
+        @path = path
+      end
+
+      def is?(*types)
+        types.map(&:to_sym).include?(:legacy_nfs)
+      end
+
       protected
+
+      def update_old_share?(server, path)
+        # We don't want to overwrite a previous change
+        return false if share_changed?
+
+        @server != server || @path != path
+      end
 
       # Breaks a string representing a share, in the format used in fstab, into
       # its two components (server and path)
