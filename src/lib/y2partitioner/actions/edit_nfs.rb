@@ -71,40 +71,31 @@ module Y2Partitioner
         _("Edit NFS mount")
       end
 
-			# Note that the Nfs share is re-created when either the server or the path changes.
-			def update_device(legacy)
-#				legacy.default_devicegraph = current_graph
+      private
 
-				if !legacy.share_changed?
-					log.info "Updating NFS based on #{legacy.inspect}"
-					return legacy.update_nfs_device(nfs: nfs)
-				end
+      # Note that the Nfs share is re-created when either the server or the path changes.
+      def update_device(legacy)
+        if !legacy.share_changed?
+          log.info "Updating NFS based on #{legacy.inspect}"
+          return legacy.update_nfs_device(nfs: nfs)
+        end
 
-				probed_nfs = system_graph.find_device(nfs.sid)
+        # Due to this share is going to be re-created, the configuration of the former share should be
+        # copied to apply it to the new share. Basically, this ensures to keep the mount point
+        # status (i.e., if the mount point is active and written in the fstab file).
+        legacy.configure_from(nfs)
 
-				# Due to this share is going to be re-created, the configuration of the probed share should be
-				# copied to apply it to the new share. Basically, this ensures to keep the probed mount point
-				# status (i.e., if the mount point is active and written in the fstab file).
-				legacy.configure_from(probed_nfs) if probed_nfs
-
-				log.info "Removing NFS from current graph, it will be replaced: #{nfs.inspect}"
-				current_graph.remove_nfs(nfs)
+        log.info "Removing NFS from current graph, it will be replaced: #{nfs.inspect}"
+        current_graph.remove_nfs(nfs)
         @nfs = legacy.create_nfs_device(current_graph)
-			end
+      end
 
-			# Devicegraph representing the current status
-			#
-			# @return [Y2Storage::Devicegraph]
-			def current_graph
-				DeviceGraphs.instance.current
-			end
-
-			# Devicegraph representing the system status
-			#
-			# @return [Y2Storage::Devicegraph]
-			def system_graph
-				DeviceGraphs.instance.system
-			end
-		end
+      # Devicegraph representing the current status
+      #
+      # @return [Y2Storage::Devicegraph]
+      def current_graph
+        DeviceGraphs.instance.current
+      end
+    end
   end
 end
