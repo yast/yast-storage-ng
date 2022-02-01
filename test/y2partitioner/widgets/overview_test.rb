@@ -88,10 +88,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       let(:scenario) { "nfs1.xml" }
       let(:device) { current_graph.nfs_mounts.first }
 
-      it "returns the general NFS page" do
+      it "returns the corresponding page for that NFS device" do
         page = subject.device_page(device)
         expect(page).to be_a(CWM::Page)
-        expect(page).to be_a(Y2Partitioner::Widgets::Pages::NfsMounts)
+        expect(page).to be_a(Y2Partitioner::Widgets::Pages::Nfs)
+        expect(page.device).to eq(device)
       end
     end
   end
