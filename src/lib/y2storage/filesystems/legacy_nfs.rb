@@ -44,21 +44,6 @@ module Y2Storage
       # @return [String]
       attr_accessor :path
 
-      # Previous server name or IP, used when the remote share is changed
-      # (which strictly speaking means replacing the NFS mount with a new one)
-      #
-      # @see #server
-      #
-      # @return [String]
-      attr_reader :old_server
-
-      # Previous share path
-      #
-      # @see #old_server
-      # @see #path
-      #
-      # @return [String]
-      attr_reader :old_path
 
       # Local mount point path
       # @return [String]
@@ -129,17 +114,17 @@ module Y2Storage
       #
       # @return [Hash]
       def to_hash
-        hash = {
-          "device"  => share_string(server, path),
-          "mount"   => mountpoint,
-          "fstopt"  => fstopt,
+        {
+          "device"       => share_string(server, path),
+          "mount"        => mountpoint,
+          "active"       => active?,
+          "in_etc_fstab" => in_etc_fstab?,
+          "fstopt"       => fstopt,
           # Weird enough, yast2-nfs-client provides this value in the field
           # "vfstype" (see #initialize_from_hash), but it expects to get it in
           # the "used_fs" one. Asymmetry for the win!
-          "used_fs" => fs_type.to_sym
+          "used_fs"      => fs_type.to_sym
         }
-        hash["old_device"] = share_string(old_server, old_path) if share_changed?
-        hash
       end
 
       # Creates an {Nfs} object, equivalent to this one, in the devicegraph
@@ -151,102 +136,24 @@ module Y2Storage
       # @return [Nfs] the new device
       def create_nfs_device(devicegraph = nil)
         graph = check_devicegraph_argument(devicegraph)
-
         nfs = Nfs.create(graph, server, path)
-
         return nfs if mountpoint.nil? || mountpoint.empty?
 
-        nfs.mount_path = mountpoint
-        nfs.mount_point.mount_options = nfs_options.options
-        nfs.mount_point.active = active?
-        nfs.mount_point.in_etc_fstab = in_etc_fstab?
-
+        configure_nfs_mount_point(nfs)
         nfs
       end
 
-      # Copies properties from a Nfs share
-      #
-      # Right now, this method only copies the required properties to keep the same mount point status
-      # as the given Nfs share.
-      #
-      # @param nfs [Nfs]
-      def configure_from(nfs)
-        return if mountpoint.nil? || mountpoint.empty?
-
-        return unless nfs.mount_point
-
-        self.active = nfs.mount_point.active?
-        self.in_etc_fstab = nfs.mount_point.in_etc_fstab?
-      end
-
-      # Updates the equivalent {Nfs} object in the given devicegraph
-      #
-      # @raise [ArgumentError] if no devicegraph is given and no default devicegraph has been previously
-      #   defined.
-      #
-      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
-      # @return [Nfs] the updated object
-      def update_nfs_device(devicegraph = nil, nfs: nil)
-        if !nfs
-          graph = check_devicegraph_argument(devicegraph)
-          nfs = find_nfs_device(graph)
+      # Note that the Nfs share is re-created when either the server or the path changes.
+      def update_or_replace(nfs)
+        if share == nfs.name
+          log.info "Updating NFS based on #{inspect}"
+          return update_nfs_device(nfs)
         end
 
-        if mountpoint.nil? || mountpoint.empty?
-          nfs.remove_mount_point unless nfs.mount_point.nil?
-        else
-          nfs.mount_path = mountpoint
-          nfs.mount_point.mount_type = fs_type
-          nfs.mount_point.mount_options = nfs_options.options
-        end
-
-        nfs
-      end
-
-      # Finds the equivalent {Nfs} object in the devicegraph
-      #
-      # It first tries to match the object by #old_server and #old_path and, if
-      # that fails, by #server and #path.
-      #
-      # @raise [ArgumentError] if no devicegraph is given and no default
-      #   devicegraph has been previously defined
-      #
-      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph
-      #   will be used
-      # @return [Nfs, nil] found device or nil if no device matches
-      def find_nfs_device(devicegraph = nil)
-        graph = check_devicegraph_argument(devicegraph)
-
-        find_old_nfs_device(graph) || Nfs.find_by_server_and_path(graph, server, path)
-      end
-
-      # Find the {Nfs} object in the devicegraph, according to the values of #old_server and #old_path
-      #
-      # @raise [ArgumentError] if no devicegraph is given and no default devicegraph has been previously
-      #   defined
-      #
-      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
-      # @return [Nfs, nil] found device or nil if no device matches
-      def find_old_nfs_device(devicegraph = nil)
-        return nil unless share_changed?
-
-        graph = check_devicegraph_argument(devicegraph)
-
-        Nfs.find_by_server_and_path(graph, old_server, old_path)
-      end
-
-      # Whether this represents an NFS mount in which the remote share (server
-      # and/or remote path) has changed
-      #
-      # In fact, changing the connection information implies replacing the
-      # NFS mount with a new different one.
-      #
-      # @see #old_server
-      # @see #old_path
-      #
-      # @return [Boolean]
-      def share_changed?
-        !old_server.nil?
+        log.info "Removing NFS #{nfs.sid} (#{nfs.name}) from devicegraph, replaced by: #{nfs.inspect}"
+        graph = nfs.devicegraph
+        graph.remove_nfs(nfs)
+        create_nfs_device(graph)
       end
 
       def reachable?
@@ -289,11 +196,8 @@ module Y2Storage
         @fstopt = attributes["fstopt"]
         vfstype = attributes.fetch("vfstype", :nfs)
         @fs_type = Type.find(vfstype)
-
-        old_share = attributes["old_device"]
-        return if old_share.nil? || old_share.empty?
-
-        @old_server, @old_path = split_share(old_share)
+        @active = attributes["active"] unless attributes["active"].nil?
+        @in_etc_fstab = attributes["in_etc_fstab"] unless attributes["in_etc_fstab"].nil?
       end
 
       # @see .new_from_nfs
@@ -304,13 +208,13 @@ module Y2Storage
         if nfs.mount_point
           mount_options = nfs.mount_point.mount_options
           @fs_type = nfs.mount_point.mount_type
+          @active = nfs.mount_point.active?
+          @in_etc_fstab = nfs.mount_point.in_etc_fstab?
         else
           mount_options = []
           @fs_type = Type::NFS
         end
         @fstopt = mount_options.empty? ? "defaults" : mount_options.join(",")
-        @old_server = nfs.server
-        @old_path = nfs.path
       end
 
       # String representing the remote NFS share, as specified in fstab
@@ -325,6 +229,28 @@ module Y2Storage
       end
 
       protected
+
+      # Updates the equivalent {Nfs} object in the given devicegraph
+      #
+      # @param XXXevicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
+      # @return [Nfs] the updated object
+      def update_nfs_device(nfs)
+        if mountpoint.nil? || mountpoint.empty?
+          nfs.remove_mount_point unless nfs.mount_point.nil?
+        else
+          configure_nfs_mount_point(nfs)
+        end
+
+        nfs
+      end
+
+      def configure_nfs_mount_point(nfs)
+        nfs.mount_path = mountpoint
+        nfs.mount_point.mount_type = fs_type
+        nfs.mount_point.mount_options = nfs_options.options
+        nfs.mount_point.active = active?
+        nfs.mount_point.in_etc_fstab = in_etc_fstab?
+      end
 
       # Breaks a string representing a share, in the format used in fstab, into
       # its two components (server and path)

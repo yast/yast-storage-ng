@@ -87,7 +87,7 @@ module Y2Partitioner
           return true if @initial_share == NEW_DEVICE_SHARE
 
           # For pre-existing entries, check only if the connection information changed
-          nfs.share_changed?
+          nfs.share != @initial_share
         end
       end
     end

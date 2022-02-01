@@ -35,7 +35,9 @@ module Y2Partitioner
 
         @nfs = nfs
         @initial_legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs)
-        @nfs_entries = (current_graph.nfs_mounts - [nfs]).map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
+        @nfs_entries = (nfs.devicegraph.nfs_mounts - [nfs]).map do |mount|
+          Y2Storage::Filesystems::LegacyNfs.new_from_nfs(mount)
+        end
       end
 
       private
@@ -53,7 +55,7 @@ module Y2Partitioner
         result = Dialogs::Nfs.run(form, title)
         return unless result == :next
 
-        update_device(form.nfs)
+        @nfs = form.nfs.update_or_replace(nfs)
         UIState.instance.select_row(nfs.sid)
 
         :finish
@@ -69,32 +71,6 @@ module Y2Partitioner
       def title
         # TRANSLATORS: wizard title
         _("Edit NFS mount")
-      end
-
-      private
-
-      # Note that the Nfs share is re-created when either the server or the path changes.
-      def update_device(legacy)
-        if !legacy.share_changed?
-          log.info "Updating NFS based on #{legacy.inspect}"
-          return legacy.update_nfs_device(nfs: nfs)
-        end
-
-        # Due to this share is going to be re-created, the configuration of the former share should be
-        # copied to apply it to the new share. Basically, this ensures to keep the mount point
-        # status (i.e., if the mount point is active and written in the fstab file).
-        legacy.configure_from(nfs)
-
-        log.info "Removing NFS from current graph, it will be replaced: #{nfs.inspect}"
-        current_graph.remove_nfs(nfs)
-        @nfs = legacy.create_nfs_device(current_graph)
-      end
-
-      # Devicegraph representing the current status
-      #
-      # @return [Y2Storage::Devicegraph]
-      def current_graph
-        DeviceGraphs.instance.current
       end
     end
   end
