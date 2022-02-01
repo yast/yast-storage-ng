@@ -26,6 +26,7 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteNfs < DeleteDevice
+      # Constructor
       def initialize(*args)
         textdomain "storage"
 

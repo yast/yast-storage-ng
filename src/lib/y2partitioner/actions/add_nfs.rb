@@ -33,13 +33,16 @@ module Y2Partitioner
         super
         textdomain "storage"
 
-        @initial_legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new
-        @initial_legacy_nfs.fstopt = "defaults"
+        @legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new
+        @legacy_nfs.fstopt = "defaults"
       end
 
       private
 
-      attr_reader :initial_legacy_nfs
+      # Template for the new NFS object to be created
+      #
+      # @return [Y2Storage::Filesystems::LegacyNfs]
+      attr_reader :legacy_nfs
 
       # Only step of the wizard
       #
@@ -50,16 +53,20 @@ module Y2Partitioner
         result = Dialogs::Nfs.run(form, title)
         return unless result == :next
 
-        nfs = form.nfs.create_nfs_device(devicegraph)
+        nfs = legacy_nfs.create_nfs_device(devicegraph)
         UIState.instance.select_row(nfs.sid)
 
         :finish
       end
 
+      # Widget from nfs-client to collect information to create the new NFS mount
       def form
-        @form ||= Y2NfsClient::Widgets::NfsForm.new(initial_legacy_nfs, nfs_entries)
+        @form ||= Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
       end
 
+      # Entries used by the NfsForm to check for duplicate mount points
+      #
+      # @return [Array<Y2Storage::Filesystems::LegacyNfs>]
       def nfs_entries
         devicegraph.nfs_mounts.map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
       end
@@ -72,6 +79,9 @@ module Y2Partitioner
         _("Add NFS mount")
       end
 
+      # Devicegraph to create the new NFS object
+      #
+      # @return [Y2Storage::Devicegraph]
       def devicegraph
         DeviceGraphs.instance.current
       end

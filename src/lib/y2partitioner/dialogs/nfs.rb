@@ -23,9 +23,12 @@ module Y2Partitioner
   module Dialogs
     # Dialog to create and edit an NFS mount
     class Nfs < SingleStep
+      # @return [String] form title
       attr_reader :title
 
-      # @param form [CWM::CustomWidget]
+      # @param form [CWM::CustomWidget] widget from yast2-nfs-client to collect information of an
+      #   NFS mount (using a {Y2Storage::Filesystems::LegacyNfs} object).
+      # @param title [String] see {#title}
       def initialize(form, title)
         super()
         textdomain "storage"
@@ -42,13 +45,19 @@ module Y2Partitioner
 
       private
 
+      # @return [FormValidator]
       def form_validator
         FormValidator.new(@form)
       end
 
+      # Empty widget to add validations on top of the ones already performed by the
+      # yast2-nfs-client widget
       class FormValidator < CWM::CustomWidget
         Yast.import "Popup"
 
+        # Constructor
+        #
+        # @param form [CWM::CustomWidget] 
         def initialize(form)
           textdomain "storage"
 
@@ -56,10 +65,17 @@ module Y2Partitioner
           @initial_share = nfs.share
         end
 
+        # @macro seeCustomWidget
         def contents
           Empty()
         end
 
+        # Extra validations to perform for the LegacyNfs object handled by the yast2-nfs-client form
+        #
+        # Note this method triggers the store of the yast2-nfs-client widget, so the LegacyNfs
+        # object is updated even if these extra validations fail
+        #
+        # @return [Boolean]
         def validate
           @form.store
           return true unless validate_reachable?
@@ -73,15 +89,20 @@ module Y2Partitioner
           keep
         end
 
-      private
-
+        private
+        
+        # @return [Y2Storage::Filesystems::LegacyNfs]
         def nfs
           @form.nfs
         end
 
+        # Value of {Y2Storage::Filesystems::LegacyNfs#share} for a new (empty) object
         NEW_DEVICE_SHARE = ":".freeze
         private_constant :NEW_DEVICE_SHARE
 
+        # Whether to check if the NFS share is reachable
+        #
+        # @return [Boolean]
         def validate_reachable?
           # Always validate new NFS entries
           return true if @initial_share == NEW_DEVICE_SHARE

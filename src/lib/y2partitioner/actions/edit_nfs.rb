@@ -24,17 +24,19 @@ require "y2nfs_client/widgets/nfs_form"
 
 module Y2Partitioner
   module Actions
-    # Action for creating a new NFS mount
+    # Action for modifying an existing NFS mount
     class EditNfs < Base
       include Yast::Logger
 
       # Constructor
+      #
+      # @param nfs [Y2Storage::Nfs] device to modify
       def initialize(nfs)
         super()
         textdomain "storage"
 
         @nfs = nfs
-        @initial_legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs)
+        @legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs)
         @nfs_entries = (nfs.devicegraph.nfs_mounts - [nfs]).map do |mount|
           Y2Storage::Filesystems::LegacyNfs.new_from_nfs(mount)
         end
@@ -42,9 +44,18 @@ module Y2Partitioner
 
       private
 
-      attr_reader :initial_legacy_nfs
-      attr_reader :nfs_entries
+      # @return [Y2Storage::Nfs] device to modify
       attr_reader :nfs
+
+      # Representation of {#nfs} in the format used to communicate with yast2-nfs-client
+      #
+      # @return [Y2Storage::Filesystems::LegacyNfs]
+      attr_reader :legacy_nfs
+
+      # Entries used by the NfsForm to check for duplicate mount points
+      #
+      # @return [Array<Y2Storage::Filesystems::LegacyNfs>]
+      attr_reader :nfs_entries
 
       # Only step of the wizard
       #
@@ -55,14 +66,15 @@ module Y2Partitioner
         result = Dialogs::Nfs.run(form, title)
         return unless result == :next
 
-        @nfs = form.nfs.update_or_replace(nfs)
+        @nfs = legacy_nfs.update_or_replace(nfs)
         UIState.instance.select_row(nfs.sid)
 
         :finish
       end
 
+      # Widget from yast2-nfs-client to edit the information about {#nfs}
       def form
-        @form ||= Y2NfsClient::Widgets::NfsForm.new(initial_legacy_nfs, nfs_entries)
+        @form ||= Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
       end
 
       # Wizard title

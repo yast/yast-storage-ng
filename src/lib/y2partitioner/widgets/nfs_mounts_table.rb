@@ -29,7 +29,7 @@ module Y2Partitioner
       #
       # @param entries [Array<DeviceTableEntry>]
       # @param pager [CWM::Pager]
-      # @param buttons_set [DeviceButtonsSet]
+      # @param buttons_set [DeviceButtonsSet, nil]
       def initialize(entries, pager, buttons_set = nil)
         textdomain "storage"
 
