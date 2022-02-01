@@ -217,9 +217,22 @@ module Y2Storage
       def find_nfs_device(devicegraph = nil)
         graph = check_devicegraph_argument(devicegraph)
 
-        old = nil
-        old = Nfs.find_by_server_and_path(graph, old_server, old_path) if share_changed?
-        old || Nfs.find_by_server_and_path(graph, server, path)
+        find_old_nfs_device(graph) || Nfs.find_by_server_and_path(graph, server, path)
+      end
+
+      # Find the {Nfs} object in the devicegraph, according to the values of #old_server and #old_path
+      #
+      # @raise [ArgumentError] if no devicegraph is given and no default devicegraph has been previously
+      #   defined
+      #
+      # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
+      # @return [Nfs, nil] found device or nil if no device matches
+      def find_old_nfs_device(devicegraph = nil)
+        return nil unless share_changed?
+
+        graph = check_devicegraph_argument(devicegraph)
+
+        Nfs.find_by_server_and_path(graph, old_server, old_path)
       end
 
       # Whether this represents an NFS mount in which the remote share (server
@@ -296,6 +309,8 @@ module Y2Storage
           @fs_type = Type::NFS
         end
         @fstopt = mount_options.empty? ? "defaults" : mount_options.join(",")
+        @old_server = nfs.server
+        @old_path = nfs.path
       end
 
       # String representing the remote NFS share, as specified in fstab
@@ -305,28 +320,11 @@ module Y2Storage
         share_string(server, path)
       end
 
-      def update_share(server, path)
-        if update_old_share?(server, path)
-          @old_server = @server
-          @old_path = @path
-        end
-
-        @server = server
-        @path = path
-      end
-
       def is?(*types)
         types.map(&:to_sym).include?(:legacy_nfs)
       end
 
       protected
-
-      def update_old_share?(server, path)
-        # We don't want to overwrite a previous change
-        return false if share_changed?
-
-        @server != server || @path != path
-      end
 
       # Breaks a string representing a share, in the format used in fstab, into
       # its two components (server and path)
