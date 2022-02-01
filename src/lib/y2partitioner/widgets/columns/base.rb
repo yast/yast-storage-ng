@@ -163,6 +163,20 @@ module Y2Partitioner
           end
         end
 
+        # Mount point for the given device
+        #
+        # @param device [Y2Storage::Device]
+        # @return [Y2Storage::MountPoint, nil]
+        def mount_point_for(device)
+          return device.mount_point if device.is?(:btrfs_subvolume)
+
+          filesystem = filesystem_for(device)
+
+          return nil if !filesystem || part_of_multidevice?(device, filesystem)
+
+          filesystem.mount_point
+        end
+
         # Whether the device belongs to a multi-device filesystem
         #
         # @param device [Device]
