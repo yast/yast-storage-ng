@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,7 @@ require_relative "../../test_helper"
 require_relative "./shared_examples"
 
 require "y2partitioner/widgets/columns/mount_point"
+require "y2storage/filesystems/legacy_nfs"
 
 describe Y2Partitioner::Widgets::Columns::MountPoint do
   subject { described_class.new }
@@ -38,7 +39,73 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
   end
 
   describe "#value_for" do
-    context "when given device is a fstab entry" do
+    shared_examples "device mount point" do |mount_path|
+      it "returns its mount point" do
+        expect(subject.value_for(device)).to eq(mount_path)
+      end
+
+      context "when the mount point is active" do
+        before do
+          allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return(true)
+        end
+
+        it "returns the mount path without an asterisk sign" do
+          value = BidiMarkup.bidi_strip(subject.value_for(device))
+
+          expect(value).to eq(mount_path)
+          expect(value).to_not include("*")
+        end
+      end
+
+      context "when the mount point is not active" do
+        before do
+          allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return(false)
+        end
+
+        it "returns the mount path including an asterisk sign" do
+          value = BidiMarkup.bidi_strip(subject.value_for(device))
+
+          expect(value).to eq("#{mount_path} *")
+        end
+      end
+    end
+
+    context "when the given device is formatted and mounted" do
+      let(:device_name) { "/dev/sda3" }
+
+      include_examples "device mount point", "swap"
+    end
+
+    context "when the given device is a filesystem" do
+      let(:device) { devicegraph.find_by_name("/dev/sdb1").filesystem }
+
+      include_examples "device mount point", "/test"
+    end
+
+    context "when the given device is a Btrfs subvolume" do
+      let(:filesystem) { devicegraph.find_by_name("/dev/sdb1").filesystem }
+      let(:device) { filesystem.btrfs_subvolumes.find { |s| s.path == "sub1" } }
+
+      include_examples "device mount point", "/test/sub1"
+    end
+
+    context "when the given device is not mounted" do
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns an empty string" do
+        expect(subject.value_for(device)).to eq("")
+      end
+    end
+
+    context "when the given device is part of a multidevice filesystem" do
+      let(:device_name) { "/dev/sdb1" }
+
+      it "returns an empty string" do
+        expect(subject.value_for(device)).to eq("")
+      end
+    end
+
+    context "when the given device is a fstab entry" do
       let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
       let(:home_fstab_entry) { fstab_entry("/dev/sda2", "/home", btrfs, ["subvol=@/home"], 0, 0) }
 
@@ -47,66 +114,28 @@ describe Y2Partitioner::Widgets::Columns::MountPoint do
       end
     end
 
-    context "when given device is formatted and mounted" do
-      let(:device_name) { "/dev/sda3" }
+    context "when the given device is a legacy NFS" do
+      let(:device) { Y2Storage::Filesystems::LegacyNfs.new }
+
+      before do
+        device.server = "test"
+        device.path = "/test"
+        device.mountpoint = "/mnt/test"
+        device.active = active
+      end
+
+      let(:active) { true }
 
       it "returns its mount point" do
-        expect(subject.value_for(device)).to eq("swap")
-      end
-    end
-
-    context "when given device is not mounted" do
-      let(:device_name) { "/dev/sda1" }
-
-      it "returns an empty string" do
-        expect(subject.value_for(device)).to eq("")
-      end
-    end
-
-    context "when given device is part of a multidevice filesystem" do
-      let(:device_name) { "/dev/sdb1" }
-
-      it "returns an empty string" do
-        expect(subject.value_for(device)).to eq("")
-      end
-    end
-
-    context "when given device is a filesystem" do
-      let(:device) { devicegraph.find_by_name("/dev/sdb1").filesystem }
-
-      it "returns its mount point" do
-        expect(subject.value_for(device)).to eq("/test")
-      end
-    end
-
-    context "when given device is a Btrfs subvolume" do
-      let(:filesystem) { devicegraph.find_by_name("/dev/sdb1").filesystem }
-      let(:device) { filesystem.btrfs_subvolumes.find { |s| s.path == "sub1" } }
-
-      it "returns its mount point" do
-        expect(subject.value_for(device)).to eq("/test/sub1")
-      end
-    end
-
-    context "when the mount point is active" do
-      let(:scenario) { "nfs1.xml" }
-      let(:device) do
-        Y2Storage::Filesystems::Nfs.find_by_server_and_path(devicegraph, "srv2", "/home/b")
+        expect(subject.value_for(device)).to eq("/mnt/test")
       end
 
-      it "returns the mount path without an asterisk sign" do
-        expect(BidiMarkup.bidi_strip(subject.value_for(device))).to eq("/test2")
-      end
-    end
+      context "when the mount point is not active" do
+        let(:active) { false }
 
-    context "when the mount point is not active" do
-      let(:scenario) { "nfs1.xml" }
-      let(:device) do
-        Y2Storage::Filesystems::Nfs.find_by_server_and_path(devicegraph, "srv", "/home/a")
-      end
-
-      it "returns the mount path including an asterisk sign" do
-        expect(BidiMarkup.bidi_strip(subject.value_for(device))).to eq("/test1 *")
+        it "returns its mount point including an asterisk sign" do
+          expect(subject.value_for(device)).to eq("/mnt/test *")
+        end
       end
     end
 

@@ -27,7 +27,8 @@ module Y2Partitioner
       class MountOptions < Base
         # Constructor
         def initialize
-          super
+          super()
+
           textdomain "storage"
         end
 
@@ -43,9 +44,11 @@ module Y2Partitioner
         def value_for(device)
           return device.fstopt if legacy_nfs?(device)
 
-          return "" unless device.respond_to?(:mount_options)
+          mount_point = mount_point_for(device)
 
-          device.mount_options.join(",")
+          return "" unless mount_point
+
+          mount_point.mount_options.join(",")
         end
       end
     end

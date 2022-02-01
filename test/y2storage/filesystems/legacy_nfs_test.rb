@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018-2022] SUSE LLC
+# Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,47 +20,43 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require "y2storage"
+require "y2storage/filesystems/legacy_nfs"
 
-describe Y2Storage::Filesystems::Nfs do
+describe Y2Storage::Filesystems::LegacyNfs do
+  subject(:filesystem) { described_class.new }
 
-  before do
-    fake_scenario("nfs1.xml")
-  end
-
-  subject(:filesystem) { fake_devicegraph.find_device(42) }
-
-  describe "#match_fstab_spec?" do
-    it "returns true for the correct NFS spec" do
-      expect(filesystem.match_fstab_spec?("srv:/home/a")).to eq true
+  describe "#nfs_options" do
+    before do
+      subject.fstopt = fstopt
     end
 
-    it "returns true if the spec contains a trailing slash" do
-      expect(filesystem.match_fstab_spec?("srv:/home/a/")).to eq true
+    let(:fstopt) { nil }
+
+    it "returns a NfsOptions object" do
+      expect(subject.nfs_options).to be_a(Y2Storage::Filesystems::NfsOptions)
     end
 
-    it "returns false for any other NFS spec" do
-      expect(filesystem.match_fstab_spec?("srv2:/home/b")).to eq false
+    context "if there is no fstab options" do
+      let(:fstopt) { nil }
+
+      it "returns a NfsOptions with defaults options" do
+        expect(subject.nfs_options.to_fstab).to eq("defaults")
+      end
     end
 
-    it "returns false for any spec starting with LABEL=" do
-      expect(filesystem.match_fstab_spec?("LABEL=label")).to eq false
-    end
+    context "if there are fstab options" do
+      let(:fstopt) { "rw,fsck" }
 
-    it "returns false for any spec starting with UUID=" do
-      expect(filesystem.match_fstab_spec?("UUID=0000-00-00")).to eq false
-    end
-
-    it "returns false for any device name" do
-      expect(filesystem.match_fstab_spec?("/dev/sda1")).to eq false
-      expect(filesystem.match_fstab_spec?("/dev/disk/by-label/whatever")).to eq false
+      it "returns a NfsOptions with the options" do
+        expect(subject.nfs_options.options).to contain_exactly("rw", "fsck")
+      end
     end
   end
 
   describe "#legacy_version?" do
     context "when the filesystem type is NFS4" do
       before do
-        subject.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS4
+        allow(subject).to receive(:fs_type).and_return(Y2Storage::Filesystems::Type::NFS4)
       end
 
       it "returns true" do
@@ -70,12 +66,12 @@ describe Y2Storage::Filesystems::Nfs do
 
     context "when the filesystem type is NFS" do
       before do
-        subject.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS
+        allow(subject).to receive(:fs_type).and_return(Y2Storage::Filesystems::Type::NFS)
       end
 
       context "and it has legacy options" do
         before do
-          subject.mount_point.mount_options = ["minorversion=1"]
+          subject.fstopt = "minorversion=1"
         end
 
         it "returns true" do
@@ -85,7 +81,7 @@ describe Y2Storage::Filesystems::Nfs do
 
       context "and it has no legacy options" do
         before do
-          subject.mount_point.mount_options = ["rw"]
+          subject.fstopt = "rw"
         end
 
         it "returns false" do
@@ -100,8 +96,8 @@ describe Y2Storage::Filesystems::Nfs do
       expect(subject.version).to be_a(Y2Storage::Filesystems::NfsVersion)
     end
 
-    it "returns the version according to the mount options" do
-      subject.mount_point.mount_options = ["vers=4.1"]
+    it "returns the version according to the fstab options" do
+      subject.fstopt = "vers=4.1"
 
       expect(subject.version.value).to eq("4.1")
     end

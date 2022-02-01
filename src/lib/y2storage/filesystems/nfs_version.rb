@@ -50,6 +50,9 @@ module Y2Storage
 
       private_constant :VERSIONS
 
+      # Version value
+      #
+      # @return [string]
       attr_reader :value
 
       eql_attr :value
@@ -90,7 +93,6 @@ module Y2Storage
       #
       # @return [Boolean]
       def need_v4_support?
-        return false if value.nil?
         value.start_with?("4")
       end
 

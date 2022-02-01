@@ -27,7 +27,8 @@ module Y2Partitioner
       class MountPoint < Base
         # Constructor
         def initialize
-          super
+          super()
+
           textdomain "storage"
         end
 

@@ -26,7 +26,8 @@ module Y2Partitioner
       class NfsVersion < Base
         # Constructor
         def initialize
-          super
+          super()
+
           textdomain "storage"
         end
 
