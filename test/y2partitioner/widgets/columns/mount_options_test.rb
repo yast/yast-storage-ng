@@ -90,6 +90,55 @@ describe Y2Partitioner::Widgets::Columns::MountOptions do
       include_examples "device mount options"
     end
 
+    context "when the given device is a NFS" do
+      let(:scenario) { "nfs1.xml" }
+
+      let(:device) { Y2Storage::Filesystems::Nfs.all(devicegraph).first }
+
+      before do
+        device.mount_point.mount_options = ["rw", "fsck"]
+      end
+
+      it "returns its mount options separated by comma" do
+        expect(subject.value_for(device)).to eq("rw,fsck")
+      end
+
+      context "and it has no mount options" do
+        before do
+          device.mount_point.mount_options = []
+        end
+
+        it "returns 'defaults'" do
+          expect(subject.value_for(device)).to eq("defaults")
+        end
+      end
+    end
+
+    context "when the given device is a legacy NFS" do
+      let(:device) { Y2Storage::Filesystems::LegacyNfs.new }
+
+      before do
+        device.server = "test"
+        device.path = "/test"
+        device.mountpoint = "/mnt/test"
+        device.fstopt = "rw,fsck"
+      end
+
+      it "returns its mount options separated by comma" do
+        expect(subject.value_for(device)).to eq("rw,fsck")
+      end
+
+      context "and it has no mount options" do
+        before do
+          device.fstopt = nil
+        end
+
+        it "returns 'defaults'" do
+          expect(subject.value_for(device)).to eq("defaults")
+        end
+      end
+    end
+
     context "when the given device is not formatted" do
       let(:device_name) { "/dev/sda3" }
 
@@ -107,21 +156,6 @@ describe Y2Partitioner::Widgets::Columns::MountOptions do
 
       it "returns an empty string" do
         expect(subject.value_for(device)).to eq("")
-      end
-    end
-
-    context "when the given device is a legacy NFS" do
-      let(:device) { Y2Storage::Filesystems::LegacyNfs.new }
-
-      before do
-        device.server = "test"
-        device.path = "/test"
-        device.mountpoint = "/mnt/test"
-        device.fstopt = "rw,fsck"
-      end
-
-      it "returns its mount options separated by comma" do
-        expect(subject.value_for(device)).to eq("rw,fsck")
       end
     end
   end

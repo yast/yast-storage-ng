@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/columns/base"
+require "y2storage/filesystems/nfs_options"
 
 module Y2Partitioner
   module Widgets
@@ -42,13 +43,15 @@ module Y2Partitioner
         #
         # @param device [Y2Storage::Device, Y2Storage::Filesystems::LegacyNfs]
         def value_for(device)
-          return device.fstopt if legacy_nfs?(device)
+          return device.nfs_options.to_fstab if legacy_nfs?(device)
 
           mount_point = mount_point_for(device)
-
           return "" unless mount_point
 
-          mount_point.mount_options.join(",")
+          options = mount_point.mount_options.join(",")
+          return options unless device.is?(:nfs)
+
+          Y2Storage::Filesystems::NfsOptions.new(mount_point.mount_options).to_fstab
         end
       end
     end
