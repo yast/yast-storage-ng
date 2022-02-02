@@ -17,7 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/dialogs/base"
+require "cwm"
+require "y2partitioner/dialogs/single_step"
 
 module Y2Partitioner
   module Dialogs
