@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,7 +32,7 @@ module Y2Storage
 
     # Constructor
     #
-    # @param filesystem [Filesystems::Base]
+    # @param filesystem [Filesystems::Base, Filesystems::LegacyNfs]
     # @param mount_point [String]
     def initialize(filesystem, mount_point = "/mnt")
       @filesystem = filesystem
@@ -79,6 +79,18 @@ module Y2Storage
     # @return [Crypttab, nil] nil if the crypttab file cannot be read
     def crypttab
       fs_attribute(:crypttab)
+    end
+
+    # Whether the device is accessible
+    #
+    # This is only checked for NFS filesystems, filesystems on top of a block device are always
+    # reachable by definition (otherwise, the block device wouldn't be in the devicegraph).
+    #
+    # @return [Boolean]
+    def reachable?
+      return true unless filesystem.is?(:nfs) || filesystem.is?(:legacy_nfs)
+
+      mountable?
     end
 
     private
@@ -176,6 +188,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def windows_system?
+      return false if filesystem.is?(:legacy_nfs)
       return false unless filesystem.windows_suitable?
 
       filesystem.detect_content_info.windows?
@@ -290,6 +303,28 @@ module Y2Storage
       raise "umount failed for #{mount_point}" unless execute(*cmd)
     end
 
+    # Silently unmounts the filesystem if it is mounted, this method raises no error if something
+    # goes wrong
+    #
+    # @see #mountable?
+    def umount_if_possible
+      umount
+    rescue RuntimeError
+      nil
+    end
+
+    # Checks whether it's possible to perform a test mount of the filesystem
+    #
+    # @return [Boolean] true if it was possible to mount the filesystem
+    def mountable?
+      mount
+      true
+    rescue RuntimeError
+      false
+    ensure
+      umount_if_possible
+    end
+
     # Device name to use when mounting a filesystem
     #
     # Note that the filesystem must exist on disk, so it should have an UUID.
@@ -297,6 +332,7 @@ module Y2Storage
     # @return [String]
     def mount_name
       return filesystem.name if filesystem.is?(:nfs)
+      return filesystem.share if filesystem.is?(:legacy_nfs)
 
       "UUID=#{filesystem.uuid}"
     end

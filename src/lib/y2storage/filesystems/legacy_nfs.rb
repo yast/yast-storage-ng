@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage/filesystems/nfs"
 require "y2storage/filesystems/type"
+require "y2storage/filesystem_reader"
 
 module Y2Storage
   module Filesystems
@@ -229,6 +230,13 @@ module Y2Storage
         !old_server.nil?
       end
 
+      # Whether the remote share is currently accessible
+      #
+      # @return [Boolean]
+      def reachable?
+        FilesystemReader.new(self).reachable?
+      end
+
       # @return [String]
       def inspect
         "<LegacyNfs attributes=#{to_hash}>"
@@ -268,6 +276,16 @@ module Y2Storage
       # @return [String]
       def share
         share_string(server, path)
+      end
+
+      # Checks whether the device is a concrete kind(s) of device
+      #
+      # This method mimics the signature of {Device#is?} and is provided to make it possible to use
+      # a {LegacyNfs} object in places that expect an object with an API similar to {Device}
+      #
+      # @return [Boolean]
+      def is?(*types)
+        types.map(&:to_sym).include?(:legacy_nfs)
       end
 
       protected
