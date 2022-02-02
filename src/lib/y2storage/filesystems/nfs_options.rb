@@ -84,15 +84,13 @@ module Y2Storage
         option_to_keep = version.any? ? nil : version_option
         options.delete_if { |o| version_option?(o) && !o.equal?(option_to_keep) }
 
-        return self if version.any?
+        return if version.any?
 
         if option_to_keep
           option_to_keep.gsub!(/=.*$/, "=#{version.value}")
         else
           options << "nfsvers=#{version.value}"
         end
-
-        self
       end
 
       # Checks whether some of the old options that used to work to configure the NFS version (but do not

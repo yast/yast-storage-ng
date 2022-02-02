@@ -44,7 +44,6 @@ module Y2Storage
       # @return [String]
       attr_accessor :path
 
-
       # Local mount point path
       # @return [String]
       attr_accessor :mountpoint

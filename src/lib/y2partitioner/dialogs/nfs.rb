@@ -57,8 +57,9 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @param form [CWM::CustomWidget] 
+        # @param form [CWM::CustomWidget]
         def initialize(form)
+          super()
           textdomain "storage"
 
           @form = form
@@ -90,7 +91,7 @@ module Y2Partitioner
         end
 
         private
-        
+
         # @return [Y2Storage::Filesystems::LegacyNfs]
         def nfs
           @form.nfs
