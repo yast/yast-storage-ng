@@ -22,18 +22,18 @@
 require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages/nfs_mounts"
+require "y2partitioner/widgets/pages/nfs"
 
-describe Y2Partitioner::Widgets::Pages::NfsMounts do
+describe Y2Partitioner::Widgets::Pages::Nfs do
   before do
     devicegraph_stub("nfs1.xml")
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:nfs_mounts) { current_graph.nfs_mounts }
+  let(:nfs) { current_graph.nfs_mounts.first }
 
-  subject { described_class.new(pager) }
+  subject { described_class.new(nfs, pager) }
 
   let(:pager) { double("OverviewTreePager") }
 
@@ -42,15 +42,12 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-    it "shows a table with all the NFS mounts" do
+    it "shows a table with the current NFS" do
       table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::NfsMountsTable) }
-
       expect(table).to_not be_nil
 
-      id_values = nfs_mounts.map(&:server)
       first_column = column_values(table, 0)
-
-      expect(first_column).to include(*id_values)
+      expect(first_column).to contain_exactly(nfs.server)
     end
 
     it "shows a buttons set" do
@@ -58,9 +55,9 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
       expect(button).to_not be_nil
     end
 
-    it "shows a button to add a new NFS" do
+    it "does not show a button to add a new Nfs filesystem" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::NfsAddButton) }
-      expect(button).to_not be_nil
+      expect(button).to be_nil
     end
   end
 end

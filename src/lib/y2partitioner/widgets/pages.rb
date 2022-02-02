@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,6 +36,7 @@ require "y2partitioner/widgets/pages/lvm_vg"
 require "y2partitioner/widgets/pages/md_raids"
 require "y2partitioner/widgets/pages/md_raid"
 require "y2partitioner/widgets/pages/nfs_mounts"
+require "y2partitioner/widgets/pages/nfs"
 require "y2partitioner/widgets/pages/bcache"
 require "y2partitioner/widgets/pages/bcaches"
 require "y2partitioner/widgets/pages/btrfs_filesystems"

@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -168,9 +168,7 @@ module Y2Partitioner
           elsif device.is?(:lvm_vg)
             [:menu_edit]
           elsif device.is?(:nfs)
-            # For NFS we are using an embedded version of the NFS client module
-            # which relies on its own buttons; menu actions won't work there.
-            [:menu_edit, :menu_description, :menu_delete]
+            [:menu_edit, :menu_delete]
           else
             []
           end
