@@ -63,12 +63,14 @@ module Y2Storage
       false
     end
 
+    # return [String]
     def inspect
       "<DmRaid #{name} parents=#{parents}>"
     end
 
     protected
 
+    # @see Device#is?
     def types_for_is
       types = super
       types << :dm_raid

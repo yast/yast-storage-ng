@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,6 +27,7 @@ require "y2partitioner/actions/delete_bcache"
 require "y2partitioner/actions/delete_btrfs"
 require "y2partitioner/actions/delete_btrfs_subvolume"
 require "y2partitioner/actions/delete_tmpfs"
+require "y2partitioner/actions/delete_nfs"
 require "y2partitioner/actions/edit_md_devices"
 require "y2partitioner/actions/edit_btrfs_devices"
 require "y2partitioner/actions/edit_bcache"
@@ -35,6 +36,7 @@ require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/actions/edit_btrfs"
 require "y2partitioner/actions/edit_btrfs_subvolume"
 require "y2partitioner/actions/edit_tmpfs"
+require "y2partitioner/actions/edit_nfs"
 require "y2partitioner/actions/resize_blk_device"
 require "y2partitioner/actions/move_partition"
 require "y2partitioner/actions/create_partition_table"
@@ -105,6 +107,8 @@ module Y2Partitioner
             Actions::EditBtrfsSubvolume.new(device)
           elsif device.is?(:tmpfs)
             Actions::EditTmpfs.new(device)
+          elsif device.is?(:nfs)
+            Actions::EditNfs.new(device)
           end
         end
 
@@ -167,10 +171,6 @@ module Y2Partitioner
             [:menu_delete]
           elsif device.is?(:lvm_vg)
             [:menu_edit]
-          elsif device.is?(:nfs)
-            # For NFS we are using an embedded version of the NFS client module
-            # which relies on its own buttons; menu actions won't work there.
-            [:menu_edit, :menu_description, :menu_delete]
           else
             []
           end

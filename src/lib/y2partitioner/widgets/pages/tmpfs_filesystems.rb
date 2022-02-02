@@ -59,13 +59,6 @@ module Y2Partitioner
           TmpfsFilesystemsTable.new(entries, pager, device_buttons)
         end
 
-        # Widget with the dynamic set of buttons for the selected row
-        #
-        # @return [DeviceButtonsSet]
-        def device_buttons
-          @device_buttons ||= DeviceButtonsSet.new(pager)
-        end
-
         # @return [Array<DeviceTableEntry>]
         def entries
           devices.map { |d| DeviceTableEntry.new(d) }

@@ -233,6 +233,7 @@ module Y2Storage
 
     protected
 
+    # @see Device#is?
     def types_for_is
       types = super
       types << :lvm_lv

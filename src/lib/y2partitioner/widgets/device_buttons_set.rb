@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,6 +24,7 @@ require "y2partitioner/widgets/lvm_buttons"
 require "y2partitioner/widgets/bcache_buttons"
 require "y2partitioner/widgets/btrfs_buttons"
 require "y2partitioner/widgets/tmpfs_buttons"
+require "y2partitioner/widgets/nfs_buttons"
 require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
@@ -42,7 +43,7 @@ module Y2Partitioner
       # @return [Array<Symbol>]
       SUPPORTED_TYPES = [
         :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device, :btrfs,
-        :btrfs_subvolume, :tmpfs
+        :btrfs_subvolume, :tmpfs, :nfs
       ]
       private_constant :SUPPORTED_TYPES
 
@@ -203,6 +204,14 @@ module Y2Partitioner
         [
           TmpfsEditButton.new(device: device),
           TmpfsDeleteButton.new(pager: pager, device: device)
+        ]
+      end
+
+      # Buttons to display if {#device} is an Nfs mount
+      def nfs_buttons
+        [
+          NfsEditButton.new(device: device),
+          NfsDeleteButton.new(pager: pager, device: device)
         ]
       end
 

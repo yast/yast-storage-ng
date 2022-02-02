@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2020] SUSE LLC
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,30 +17,22 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/pages/base"
-require "y2partitioner/widgets/help"
-require "y2partitioner/yast_nfs_client"
+require "y2partitioner/widgets/pages/devices_table"
+require "y2partitioner/widgets/nfs_mounts_table"
+require "y2partitioner/widgets/nfs_buttons"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for NFS handling. It relies in the dialog content provided
-      # by yast2-nfs-client
-      #
-      # @see YastNfsClient
-      class NfsMounts < Base
-        include Yast::I18n
-
-        include Help
-
+      # Page for NFS mounts
+      class NfsMounts < DevicesTable
         # Constructor
         #
         # @param pager [CWM::TreePager]
         def initialize(pager)
-          super()
           textdomain "storage"
 
-          @pager = pager
+          super
         end
 
         # @macro seeAbstractWidget
@@ -48,68 +40,26 @@ module Y2Partitioner
           _("NFS")
         end
 
-        # @macro seeCustomWidget
-        def contents
-          # The CWM machinery calls #contents several times on each page switch,
-          # so some caching is required
-          return @contents if @contents
-
-          @contents = VBox(
-            nfs_client.init_ui || fallback_ui
-          )
-        end
-
-        def help
-          columns = [:nfs_server, :nfs_directory, :nfs_mount_point, :nfs_type, :nfs_options]
-
-          help_text = columns.map { |c| helptext_for(c) }
-
-          help_text.join
-        end
-
-        # @macro seeAbstractWidget
-        def store
-          # Invalidate the cache when abandoning the page, so the content gets
-          # refreshed (but only calculated once) everytime the NFS page is visited
-          @contents = nil
-
-          # Invalidate also the cached content of other pages listing NFS
-          # devices, even if that breaks encapsulation a bit
-          pager.invalidated_pages << :system unless pager.invalidated_pages.include?(:system)
-        end
-
-        # @macro seeAbstractWidget
-        def handle(event)
-          nfs_client.handle_input(event)
-          nil
-        end
-
         private
 
-        # @return [CWM::TreePager]
-        attr_reader :pager
-
-        # User interface to display if the NFS client is not available
-        #
-        # @return [Yast::Term]
-        def fallback_ui
-          pkg = nfs_client.package_name
-
-          VBox(
-            VSpacing(0.6),
-            Left(
-              Label(
-                # TRANSLATORS: %s is the name of a package (i.g. 'yast2-nfs-client')
-                _("NFS configuration is not available. Check %s package installation.") % pkg
-              )
-            ),
-            VStretch()
-          )
+        # @return [Array<Y2Storage::Filesystems::Nfs>]
+        def devices
+          device_graph.nfs_mounts
         end
 
-        # @return [NfsClient]
-        def nfs_client
-          @nfs_client ||= YastNfsClient.new
+        # @return [ConfigurableBlkDevicesTable]
+        def calculate_table
+          NfsMountsTable.new(entries, pager, device_buttons)
+        end
+
+        # @see DevicesTable
+        def table_buttons
+          NfsAddButton.new
+        end
+
+        # @return [Array<DeviceTableEntry>]
+        def entries
+          devices.map { |d| DeviceTableEntry.new(d) }
         end
       end
     end

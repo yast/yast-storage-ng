@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,43 +27,62 @@ module Y2Partitioner
       class MountPoint < Base
         # Constructor
         def initialize
-          super
+          super()
+
           textdomain "storage"
         end
 
         # @see Columns::Base#title
         def title
-          # TRANSLATORS: table header, where is device mounted. Can be empty. E.g. "/" or "/home"
+          # TRANSLATORS: table header, where the device is mounted.
           _("Mount Point")
         end
 
         # @see Columns::Base#value_for
+        #
+        # @param device
+        #   [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry, Y2Storage::Filesystems::LegacyNfs]
         def value_for(device)
-          return left_to_right(device.mount_point) if fstab_entry?(device)
+          path = left_to_right(mount_path(device))
 
-          mount_point = mount_point_for(device)
-
-          return "" unless mount_point
-
-          path = left_to_right(mount_point.path)
-          path += " *" unless mount_point.active?
+          path += " *" if mark_as_inactive?(device)
 
           path
         end
 
         private
 
-        # Mount point for the given device
+        # Mount path of the given device or empty if the device has no mount point
         #
-        # @return [Y2Storage::MountPoint, nil]
-        def mount_point_for(device)
-          return device.mount_point if device.is?(:btrfs_subvolume)
+        # @param device
+        #   [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry, Y2Storage::Filesystems::LegacyNfs]
+        # @return [String]
+        def mount_path(device)
+          path =
+            if fstab_entry?(device)
+              device.mount_point
+            elsif legacy_nfs?(device)
+              device.mountpoint
+            else
+              mount_point_for(device)&.path
+            end
 
-          filesystem = filesystem_for(device)
+          path || ""
+        end
 
-          return nil if !filesystem || part_of_multidevice?(device, filesystem)
+        # Whether the mount point of the device should be marked as inactive
+        #
+        # @param device
+        #   [Y2Storage::Device, Y2Storage::SimpleEtcFstabEntry, Y2Storage::Filesystems::LegacyNfs]
+        # @return [Boolean]
+        def mark_as_inactive?(device)
+          return false if fstab_entry?(device)
 
-          filesystem.mount_point
+          return !device.active? if legacy_nfs?(device)
+
+          mount_point = mount_point_for(device)
+
+          mount_point.nil? ? false : !mount_point.active?
         end
       end
     end

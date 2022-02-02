@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -77,7 +77,8 @@ module Y2Partitioner
         bcache:           Widgets::BcacheDescription,
         stray_blk_device: Widgets::StrayBlkDeviceDescription,
         btrfs_subvolume:  Widgets::BtrfsSubvolumeDescription,
-        tmpfs:            Widgets::FilesystemDescription
+        tmpfs:            Widgets::FilesystemDescription,
+        nfs:              Widgets::FilesystemDescription
       }
       private_constant :WIDGETS
 

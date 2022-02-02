@@ -63,6 +63,10 @@ describe Y2Partitioner::Widgets::Menus::Add do
       expect(subject.items).to include(item_with_id(:menu_add_tmpfs))
     end
 
+    it "includes 'NFS'" do
+      expect(subject.items).to include(item_with_id(:menu_add_nfs))
+    end
+
     it "includes 'Partition'" do
       expect(subject.items).to include(item_with_id(:menu_add_partition))
     end
@@ -267,6 +271,16 @@ describe Y2Partitioner::Widgets::Menus::Add do
 
       it "calls an action to add a Tmpfs" do
         expect(Y2Partitioner::Actions::AddTmpfs).to receive(:new)
+
+        subject.handle(event)
+      end
+    end
+
+    context "when 'NFS' is selected" do
+      let(:event) { :menu_add_nfs }
+
+      it "calls an action to add an NFS mount" do
+        expect(Y2Partitioner::Actions::AddNfs).to receive(:new)
 
         subject.handle(event)
       end

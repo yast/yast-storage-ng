@@ -513,6 +513,7 @@ module Y2Storage
         subvolume_path.gsub(subvolumes_prefix, "")
       end
 
+      # @see Device#is?
       def types_for_is
         super << :btrfs
       end

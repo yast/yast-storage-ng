@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -35,6 +35,10 @@ require "y2partitioner/widgets/columns/encrypted"
 require "y2partitioner/widgets/columns/filesystem_label"
 require "y2partitioner/widgets/columns/format"
 require "y2partitioner/widgets/columns/mount_point"
+require "y2partitioner/widgets/columns/mount_options"
+require "y2partitioner/widgets/columns/nfs_path"
+require "y2partitioner/widgets/columns/nfs_server"
+require "y2partitioner/widgets/columns/nfs_version"
 require "y2partitioner/widgets/columns/pe_size"
 require "y2partitioner/widgets/columns/raid_type"
 require "y2partitioner/widgets/columns/region_end"

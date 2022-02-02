@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,6 +27,7 @@ describe Y2Storage::Filesystems::Nfs do
   before do
     fake_scenario("nfs1.xml")
   end
+
   subject(:filesystem) { fake_devicegraph.find_device(42) }
 
   describe "#match_fstab_spec?" do
@@ -52,6 +54,56 @@ describe Y2Storage::Filesystems::Nfs do
     it "returns false for any device name" do
       expect(filesystem.match_fstab_spec?("/dev/sda1")).to eq false
       expect(filesystem.match_fstab_spec?("/dev/disk/by-label/whatever")).to eq false
+    end
+  end
+
+  describe "#legacy_version?" do
+    context "when the filesystem type is NFS4" do
+      before do
+        subject.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS4
+      end
+
+      it "returns true" do
+        expect(subject.legacy_version?).to eq(true)
+      end
+    end
+
+    context "when the filesystem type is NFS" do
+      before do
+        subject.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS
+      end
+
+      context "and it has legacy options" do
+        before do
+          subject.mount_point.mount_options = ["minorversion=1"]
+        end
+
+        it "returns true" do
+          expect(subject.legacy_version?).to eq(true)
+        end
+      end
+
+      context "and it has no legacy options" do
+        before do
+          subject.mount_point.mount_options = ["rw"]
+        end
+
+        it "returns false" do
+          expect(subject.legacy_version?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#version" do
+    it "returns a NfsVersion object" do
+      expect(subject.version).to be_a(Y2Storage::Filesystems::NfsVersion)
+    end
+
+    it "returns the version according to the mount options" do
+      subject.mount_point.mount_options = ["vers=4.1"]
+
+      expect(subject.version.value).to eq("4.1")
     end
   end
 end

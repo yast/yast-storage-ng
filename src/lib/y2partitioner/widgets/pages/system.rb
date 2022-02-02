@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -53,8 +53,6 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          invalidate_cached_widgets
-
           VBox(
             table,
             Left(device_buttons)
@@ -73,14 +71,6 @@ module Y2Partitioner
 
         # @return [CWM::TreePager]
         attr_reader :pager
-
-        # Invalidates cached content if needed according to
-        # {OverviewTreePager#invalidated_views}
-        def invalidate_cached_widgets
-          return unless pager.invalidated_pages.delete(:system)
-
-          @table = nil
-        end
 
         # The table contains all storage devices, including Software RAIDs and LVM Vgs
         #
