@@ -23,17 +23,23 @@ module Y2Partitioner
   module Dialogs
     # Dialog to create and edit an NFS mount
     class Nfs < SingleStep
-      # @return [String] form title
-      attr_reader :title
+      # Value of {Y2Storage::Filesystems::LegacyNfs#share} for a new (empty) object
+      NEW_DEVICE_SHARE = ":".freeze
+      private_constant :NEW_DEVICE_SHARE
 
-      # @param form [CWM::CustomWidget] widget from yast2-nfs-client to collect information of an
-      #   NFS mount (using a {Y2Storage::Filesystems::LegacyNfs} object).
-      # @param title [String] see {#title}
-      def initialize(form, title)
+      # Constructor
+      #
+      # @param legacy_nfs [Y2Storage::Filesystems::LegacyNfs] representation of the NFS mount to add
+      #   or edit
+      # @param nfs_entries [Array<Y2Storage::Filesystems::LegacyNfs>] entries used by the NfsForm to check for
+      #   duplicate mount points
+      def initialize(legacy_nfs, nfs_entries)
         super()
         textdomain "storage"
-        @form = form
-        @title = title
+
+        require "y2nfs_client/widgets/nfs_form"
+        @form = Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
+        @action = legacy_nfs.share == NEW_DEVICE_SHARE ? :add : :edit
       end
 
       # @macro seeDialog
@@ -43,7 +49,24 @@ module Y2Partitioner
         )
       end
 
+      # Form title
+      #
+      # @return [String]
+      def title
+        if @action == :add
+          # TRANSLATORS: wizard title
+          _("Add NFS mount")
+        else
+          # TRANSLATORS: wizard title
+          _("Edit NFS mount")
+        end
+      end
+
       private
+
+      # @return [CWM::CustomWidget] widget from yast2-nfs-client to collect information about the
+      #   NFS mount (using a {Y2Storage::Filesystems::LegacyNfs} object).
+      attr_reader :form
 
       # @return [FormValidator]
       def form_validator
@@ -96,10 +119,6 @@ module Y2Partitioner
         def nfs
           @form.nfs
         end
-
-        # Value of {Y2Storage::Filesystems::LegacyNfs#share} for a new (empty) object
-        NEW_DEVICE_SHARE = ":".freeze
-        private_constant :NEW_DEVICE_SHARE
 
         # Whether to check if the NFS share is reachable
         #

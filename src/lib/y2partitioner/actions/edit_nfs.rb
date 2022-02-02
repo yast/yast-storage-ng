@@ -20,7 +20,6 @@
 require "yast"
 require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/nfs"
-require "y2nfs_client/widgets/nfs_form"
 
 module Y2Partitioner
   module Actions
@@ -33,7 +32,6 @@ module Y2Partitioner
       # @param nfs [Y2Storage::Nfs] device to modify
       def initialize(nfs)
         super()
-        textdomain "storage"
 
         @nfs = nfs
         @legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs)
@@ -63,26 +61,13 @@ module Y2Partitioner
       #
       # @return [Symbol] :finish when the dialog successes
       def perform_action
-        result = Dialogs::Nfs.run(form, title)
+        result = Dialogs::Nfs.run(legacy_nfs, nfs_entries)
         return unless result == :next
 
         @nfs = legacy_nfs.update_or_replace(nfs)
         UIState.instance.select_row(nfs.sid)
 
         :finish
-      end
-
-      # Widget from yast2-nfs-client to edit the information about {#nfs}
-      def form
-        @form ||= Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
-      end
-
-      # Wizard title
-      #
-      # @return [String]
-      def title
-        # TRANSLATORS: wizard title
-        _("Edit NFS mount")
       end
     end
   end

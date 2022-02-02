@@ -20,7 +20,6 @@
 require "yast"
 require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/nfs"
-require "y2nfs_client/widgets/nfs_form"
 
 module Y2Partitioner
   module Actions
@@ -31,7 +30,6 @@ module Y2Partitioner
       # Constructor
       def initialize
         super
-        textdomain "storage"
 
         @legacy_nfs = Y2Storage::Filesystems::LegacyNfs.new
         @legacy_nfs.fstopt = "defaults"
@@ -50,7 +48,7 @@ module Y2Partitioner
       #
       # @return [Symbol] :finish when the dialog successes
       def perform_action
-        result = Dialogs::Nfs.run(form, title)
+        result = Dialogs::Nfs.run(legacy_nfs, nfs_entries)
         return unless result == :next
 
         nfs = legacy_nfs.create_nfs_device(devicegraph)
@@ -59,24 +57,11 @@ module Y2Partitioner
         :finish
       end
 
-      # Widget from nfs-client to collect information to create the new NFS mount
-      def form
-        @form ||= Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
-      end
-
       # Entries used by the NfsForm to check for duplicate mount points
       #
       # @return [Array<Y2Storage::Filesystems::LegacyNfs>]
       def nfs_entries
         devicegraph.nfs_mounts.map { |i| Y2Storage::Filesystems::LegacyNfs.new_from_nfs(i) }
-      end
-
-      # Wizard title
-      #
-      # @return [String]
-      def title
-        # TRANSLATORS: wizard title
-        _("Add NFS mount")
       end
 
       # Devicegraph to create the new NFS object
