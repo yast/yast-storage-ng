@@ -54,12 +54,14 @@ module Y2Storage
     #   @return [Multipath] nil if there is no such device
     storage_class_forward :find_by_name, as: "Multipath"
 
+    # @return [String]
     def inspect
       "<Multipath #{name} parents=#{parents}>"
     end
 
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :multipath
     end

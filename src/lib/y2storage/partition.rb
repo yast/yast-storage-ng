@@ -290,6 +290,7 @@ module Y2Storage
       super.merge(partition_id: id)
     end
 
+    # @see Device#is?
     def types_for_is
       super << :partition
     end

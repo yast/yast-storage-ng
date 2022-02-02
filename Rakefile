@@ -25,5 +25,5 @@ Yast::Tasks.configuration do |conf|
   # conf file template, you don't want licenses in your config files
   conf.skip_license_check << /\/fillup\//
 
-  conf.documentation_minimal = 91
+  conf.documentation_minimal = 92
 end

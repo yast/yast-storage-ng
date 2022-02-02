@@ -24,74 +24,82 @@ Yast.import "Directory"
 module Y2Partitioner
   # Icons used by partitioner
   module Icons
-    # icon
+    # Name of the icon
     ALL = "computer".freeze
 
-    # icon
+    # Name of the icon
     HD = "drive-harddisk".freeze
 
-    # icon
+    # Name of the icon
     HD_PART = "drive-partition".freeze
 
-    # icon
+    # Name of the icon
     LVM = "drive-multipartition".freeze
-    # icon
+
+    # Name of the icon
     LVM_LV = HD_PART
 
-    # icon
+    # Name of the icon
     RAID = "drive-multidisk".freeze
 
-    # icon
+    # Name of the icon
     LOOP = HD
 
-    # icon
+    # Name of the icon
     DM = "view-list-tree".freeze
 
-    # icon
+    # Name of the icon
     MULTIPATH = DM
 
-    # icon
+    # Name of the icon
     NFS = "folder-remote".freeze
 
-    # icon
+    # Name of the icon
     BTRFS = LVM
 
+    # Name of the icon
     TMPFS = "folder-temp".freeze
 
-    # icon
+    # Name of the icon
     UNUSED = "emblem-warning".freeze
 
-    # icon
+    # Name of the icon
     GRAPH = DM
 
-    # icon
+    # Name of the icon
     SUMMARY = "view-list".freeze
 
-    # icon
+    # Name of the icon
     SETTINGS = "configure".freeze
 
-    # icon
+    # Name of the icon
     LOG = "view-list-text".freeze
 
-    # icon
+    # Name of the icon
     ENCRYPTED = "drive-harddisk-encrypted".freeze
 
     # Default device icon
     DEFAULT_DEVICE = "media-removable".freeze
 
-    # icon
+    # Name of the icon
     BCACHE = HD
 
+    # Name of the icon
     LOCK = "lock".freeze
 
+    # Name of the icon
     ISCSI = "drive-iscsi".freeze
 
+    # Name of the icon
     FCOE = "drive-fcoe".freeze
 
+    # Name of the icon
     DASD = "drive-dasd".freeze
 
+    # Name of the icon
     ZFCP = "drive-zfcp".freeze
 
+    # Name of the icon
     XPRAM = "drive-xpram".freeze
   end
 end

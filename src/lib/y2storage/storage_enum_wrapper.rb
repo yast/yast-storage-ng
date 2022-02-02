@@ -54,18 +54,22 @@ module Y2Storage
       @storage_value
     end
 
+    # @return [Integer]
     def to_i
       to_storage_value
     end
 
+    # @return [Symbol]
     def to_sym
       self.class.value_to_sym(to_storage_value)
     end
 
+    # @return [String]
     def to_s
       to_sym.to_s
     end
 
+    # @return [String]
     def inspect
       "#<#{self.class} #{self}>"
     end
@@ -82,12 +86,14 @@ module Y2Storage
       names.any? { |n| n.to_sym == to_sym }
     end
 
+    # @return [Boolean]
     def ==(other)
       other.class == self.class && other.to_storage_value == to_storage_value
     end
 
     alias_method :eql?, :==
 
+    # @return [Boolean]
     def ===(other)
       other.instance_of?(self.class) && is?(other)
     end
@@ -153,10 +159,12 @@ module Y2Storage
         @storage_objects[value]
       end
 
+      # Name of the original enum from the Storage namespace
       def storage_enum
         @storage_enum
       end
 
+      # @return [Symbol]
       def value_to_sym(value)
         @storage_symbols[value]
       end

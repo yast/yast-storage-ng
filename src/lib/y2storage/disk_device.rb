@@ -62,6 +62,7 @@ module Y2Storage
 
     protected
 
+    # @see Device#is?
     def types_for_is
       types = super
       @disk_device = disk_device? if @disk_device.nil?
