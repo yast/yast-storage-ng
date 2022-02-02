@@ -60,7 +60,7 @@ describe Y2Partitioner::Actions::EditNfs do
       end
     end
 
-    context "if yast2-nfs-client is available" do
+    xcontext "if yast2-nfs-client is available" do
       let(:can_run_dialog) { true }
 
       context "and the user goes forward in the dialog" do
