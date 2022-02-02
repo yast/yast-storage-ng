@@ -17,13 +17,24 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "cwm"
 require "y2partitioner/dialogs/single_step"
+
+Yast.import "Stage"
+Yast.import "PackageCallbacks"
+Yast.import "Package"
 
 module Y2Partitioner
   module Dialogs
     # Dialog to create and edit an NFS mount
     class Nfs < SingleStep
+      include Yast::Logger
+
+      # Name of the yast2-nfs-client package
+      PACKAGE = "yast2-nfs-client".freeze
+      private_constant :PACKAGE
+
       # Value of {Y2Storage::Filesystems::LegacyNfs#share} for a new (empty) object
       NEW_DEVICE_SHARE = ":".freeze
       private_constant :NEW_DEVICE_SHARE
@@ -38,8 +49,7 @@ module Y2Partitioner
         super()
         textdomain "storage"
 
-        require "y2nfs_client/widgets/nfs_form"
-        @form = Y2NfsClient::Widgets::NfsForm.new(legacy_nfs, nfs_entries)
+        @form = self.class.nfs_form_class.new(legacy_nfs, nfs_entries)
         @action = legacy_nfs.share == NEW_DEVICE_SHARE ? :add : :edit
       end
 
@@ -60,6 +70,62 @@ module Y2Partitioner
         else
           # TRANSLATORS: wizard title
           _("Edit NFS mount")
+        end
+      end
+
+      class << self
+        # Whether to show the dialog
+        #
+        # The package yast2-nfs-client must be installed in order to properly show the dialog.
+        #
+        # @return [Boolean]
+        def run?
+          widget_exists? || install_widget
+        end
+
+        # Checks whether the NfsForm class provided by yast2-nfs-client is available
+        #
+        # @return [Boolean]
+        def widget_exists?
+          nfs_form_class
+          true
+        rescue LoadError, NameError
+          false
+        end
+
+        # Form class provided by yast2-nfs-client
+        def nfs_form_class
+          require "y2nfs_client/widgets/nfs_form"
+          Y2NfsClient::Widgets::NfsForm
+        end
+
+        # Installs the package that provides the required widget, if possible
+        #
+        # The installation requires confirmation from the user.
+        #
+        # @return [Boolean] true if installation succeeded, false if it was not
+        #   possible to install the package or the user rejected to do it.
+        def install_widget
+          if in_inst_sys?
+            log.info "Is not possible to install nfs-client"
+            return false
+          end
+
+          pkgs = [PACKAGE]
+          log.info "Trying to install #{pkgs}"
+          Yast::PackageCallbacks.RegisterEmptyProgressCallbacks
+          res = Yast::Package.CheckAndInstallPackages(pkgs)
+          Yast::PackageCallbacks.RestorePreviousProgressCallbacks
+          log.info "Installation result: #{res}"
+          res
+        end
+
+        # Checks whether the partitioner is being executed in the inst-sys (i.e.
+        # during system installation)
+        #
+        # @return [Boolean]
+        def in_inst_sys?
+          Yast::Stage.initial
         end
       end
 

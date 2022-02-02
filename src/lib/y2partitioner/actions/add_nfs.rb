@@ -43,6 +43,13 @@ module Y2Partitioner
       # @return [Y2Storage::Filesystems::LegacyNfs]
       attr_reader :legacy_nfs
 
+      # Only runs the action if yast2-nfs-client is installed, see {Dialogs::Nfs}.
+      #
+      # @see Base#run?
+      def run?
+        super && Dialogs::Nfs.run?
+      end
+
       # Only step of the wizard
       #
       # @see Dialogs::Nfs

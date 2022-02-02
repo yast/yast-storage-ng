@@ -42,68 +42,92 @@ describe Y2Partitioner::Actions::EditNfs do
   let(:new_mount_path) { "/the/local" }
 
   describe "#run" do
-    context "if the user goes forward in the dialog" do
-      let(:dialog_result) { :next }
+    before do
+      allow(Y2Partitioner::Dialogs::Nfs).to receive(:run?).and_return(can_run_dialog)
+    end
 
-      context "and the connection information for the NFS mount is not changed" do
-        let(:new_server) { nfs.server }
-        let(:new_remote_path) { nfs.path }
+    context "if yast2-nfs-client is not available" do
+      let(:can_run_dialog) { false }
 
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
-        end
+      it "does not run the dialog" do
+        expect(Y2Partitioner::Dialogs::Nfs).to_not receive(:run)
 
-        it "updates the NFS object with the corresponding data" do
-          expect(nfs.mount_path).to_not eq new_mount_path
-          subject.run
-          expect(nfs.mount_path).to eq new_mount_path
-        end
+        subject.run
       end
 
-      context "and the connection information for the NFS mount is changed" do
-        let(:new_server) { "the_server" }
-        let(:new_remote_path) { "/the/remote" }
-
-        it "returns :finish" do
-          expect(subject.run).to eq(:finish)
-        end
-
-        it "replaces the NFS object with another one with the correct data" do
-          sid = nfs.sid
-          options = nfs.mount_options
-          active = nfs.mount_point.active?
-          expect(options).to_not be_empty
-
-          subject.run
-
-          expect(graph.find_device(sid)).to eq nil
-          new_nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(
-            graph, new_server, new_remote_path
-          )
-          expect(new_nfs.mount_path).to eq new_mount_path
-          expect(new_nfs.mount_options).to eq(options)
-          expect(new_nfs.mount_point.active?).to eq(active)
-        end
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
       end
     end
 
-    context "if the dialog is discarded" do
-      let(:dialog_result) { :back }
+    context "if yast2-nfs-client is available" do
+      let(:can_run_dialog) { true }
 
-      let(:new_server) { "the_server" }
-      let(:new_remote_path) { "/the/remote" }
+      context "and the user goes forward in the dialog" do
+        let(:dialog_result) { :next }
 
-      it "does not modify or add any NFS" do
-        original_path = nfs.mount_path
+        context "and the connection information for the NFS mount is not changed" do
+          let(:new_server) { nfs.server }
+          let(:new_remote_path) { nfs.path }
 
-        subject.run
-        new_nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, new_server, new_remote_path)
-        expect(new_nfs).to be_nil
-        expect(nfs.mount_path).to eq original_path
+          it "returns :finish" do
+            expect(subject.run).to eq(:finish)
+          end
+
+          it "updates the NFS object with the corresponding data" do
+            expect(nfs.mount_path).to_not eq new_mount_path
+            subject.run
+            expect(nfs.mount_path).to eq new_mount_path
+          end
+        end
+
+        context "and the connection information for the NFS mount is changed" do
+          let(:new_server) { "the_server" }
+          let(:new_remote_path) { "/the/remote" }
+
+          it "returns :finish" do
+            expect(subject.run).to eq(:finish)
+          end
+
+          it "replaces the NFS object with another one with the correct data" do
+            sid = nfs.sid
+            options = nfs.mount_options
+            active = nfs.mount_point.active?
+            expect(options).to_not be_empty
+
+            subject.run
+
+            expect(graph.find_device(sid)).to eq nil
+            new_nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(
+              graph, new_server, new_remote_path
+            )
+            expect(new_nfs.mount_path).to eq new_mount_path
+            expect(new_nfs.mount_options).to eq(options)
+            expect(new_nfs.mount_point.active?).to eq(active)
+          end
+        end
       end
 
-      it "returns nil" do
-        expect(subject.run).to be_nil
+      context "and the dialog is discarded" do
+        let(:dialog_result) { :back }
+
+        let(:new_server) { "the_server" }
+        let(:new_remote_path) { "/the/remote" }
+
+        it "does not modify or add any NFS" do
+          original_path = nfs.mount_path
+
+          subject.run
+          new_nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(
+            graph, new_server, new_remote_path
+          )
+          expect(new_nfs).to be_nil
+          expect(nfs.mount_path).to eq original_path
+        end
+
+        it "returns nil" do
+          expect(subject.run).to be_nil
+        end
       end
     end
   end

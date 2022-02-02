@@ -43,38 +43,60 @@ describe Y2Partitioner::Actions::AddNfs do
   let(:graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   describe "#run" do
-    context "if the user goes forward in the dialog" do
-      let(:dialog_result) { :next }
+    before do
+      allow(Y2Partitioner::Dialogs::Nfs).to receive(:run?).and_return(can_run_dialog)
+    end
 
-      it "returns :finish" do
-        expect(subject.run).to eq(:finish)
-      end
+    context "if yast2-nfs-client is not available" do
+      let(:can_run_dialog) { false }
 
-      it "creates the new NFS with the proper attributes" do
-        nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, new_server, new_remote_path)
-        expect(nfs).to be_nil
+      it "does not run the dialog" do
+        expect(Y2Partitioner::Dialogs::Nfs).to_not receive(:run)
 
         subject.run
+      end
 
-        nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, new_server, new_remote_path)
-        expect(nfs).to be_a(Y2Storage::Filesystems::Nfs)
-        expect(nfs.mount_path).to eq new_mount_path
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
       end
     end
 
-    context "if the dialog is discarded" do
-      let(:dialog_result) { :back }
+    context "if yast2-nfs-client is available" do
+      let(:can_run_dialog) { true }
 
-      it "does not create a new NFS" do
-        before = graph.nfs_mounts.size
-        subject.run
-        after = graph.nfs_mounts.size
+      context "if the user goes forward in the dialog" do
+        let(:dialog_result) { :next }
 
-        expect(before).to eq after
+        it "returns :finish" do
+          expect(subject.run).to eq(:finish)
+        end
+
+        it "creates the new NFS with the proper attributes" do
+          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, new_server, new_remote_path)
+          expect(nfs).to be_nil
+
+          subject.run
+
+          nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, new_server, new_remote_path)
+          expect(nfs).to be_a(Y2Storage::Filesystems::Nfs)
+          expect(nfs.mount_path).to eq new_mount_path
+        end
       end
 
-      it "returns nil" do
-        expect(subject.run).to be_nil
+      context "if the dialog is discarded" do
+        let(:dialog_result) { :back }
+
+        it "does not create a new NFS" do
+          before = graph.nfs_mounts.size
+          subject.run
+          after = graph.nfs_mounts.size
+
+          expect(before).to eq after
+        end
+
+        it "returns nil" do
+          expect(subject.run).to be_nil
+        end
       end
     end
   end
