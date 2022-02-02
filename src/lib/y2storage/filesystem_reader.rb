@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -81,6 +81,12 @@ module Y2Storage
       fs_attribute(:crypttab)
     end
 
+    # Whether the device is accessible
+    #
+    # This is only checked for NFS filesystems, filesystems on top of a block device are always
+    # reachable by definition (otherwise, the block device wouldn't be in the devicegraph).
+    #
+    # @return [Boolean]
     def reachable?
       return true unless filesystem.is?(:nfs) || filesystem.is?(:legacy_nfs)
 
@@ -297,12 +303,19 @@ module Y2Storage
       raise "umount failed for #{mount_point}" unless execute(*cmd)
     end
 
+    # Silently unmounts the filesystem if it is mounted, this method raises no error if something
+    # goes wrong
+    #
+    # @see #mountable?
     def umount_if_possible
       umount
     rescue RuntimeError
       nil
     end
 
+    # Checks whether it's possible to perform a test mount of the filesystem
+    #
+    # @return [Boolean] true if it was possible to mount the filesystem
     def mountable?
       mount
       true

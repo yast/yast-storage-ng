@@ -55,12 +55,14 @@ module Y2Storage
     #   @return [StrayBlkDevice] nil if there is no such stray device
     storage_class_forward :find_by_name, as: "Dasd"
 
+    # @return [String]
     def inspect
       "<StrayBlkDevice #{name} #{size}>"
     end
 
     protected
 
+    # @see Device#is?
     def types_for_is
       types = super
       types << :stray_blk_device

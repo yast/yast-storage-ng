@@ -501,6 +501,7 @@ module Y2Storage
       save_userdata(:in_etc_initial, value)
     end
 
+    # @see #is?
     def types_for_is
       []
     end

@@ -118,7 +118,7 @@ module Y2Storage
 
       # Checks if a given option is used to configure the NFS protocol version
       #
-      # @param [String]
+      # @param option [String]
       # @return [Boolean]
       def version_option?(option)
         option.start_with?("nfsvers=", "vers=")

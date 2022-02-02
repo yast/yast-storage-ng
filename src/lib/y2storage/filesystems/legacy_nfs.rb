@@ -143,7 +143,15 @@ module Y2Storage
         nfs
       end
 
+      # Updates the given {Nfs} object with information coming from this legacy NFS specification or
+      # substitutes the object by a new one
+      #
       # Note that the Nfs share is re-created when either the server or the path changes.
+      #
+      # This modifies (or even deletes) the object given as argument,
+      #
+      # @param nfs [Nfs] object to update or replace
+      # @return [Nfs] updated object or the new one that takes its place in the devicegraph
       def update_or_replace(nfs)
         if share == nfs.name
           log.info "Updating NFS based on #{inspect}"
@@ -156,6 +164,9 @@ module Y2Storage
         create_nfs_device(graph)
       end
 
+      # Whether the remote share is currently accessible
+      #
+      # @return [Boolean]
       def reachable?
         FilesystemReader.new(self).reachable?
       end
@@ -224,15 +235,25 @@ module Y2Storage
         share_string(server, path)
       end
 
+      # Checks whether the device is a concrete kind(s) of device
+      #
+      # This method mimics the signature of {Device#is?} and is provided to make it possible to use
+      # a {LegacyNfs} object in places that expect an object with an API similar to {Device}
+      #
+      # @return [Boolean]
       def is?(*types)
         types.map(&:to_sym).include?(:legacy_nfs)
       end
 
       protected
 
-      # Updates the equivalent {Nfs} object in the given devicegraph
+      # Updates the given {Nfs} object with information from this object
       #
-      # @param XXXevicegraph [Devicegraph, nil] if nil, the default devicegraph will be used
+      # Note this modifies the object given as argument.
+      #
+      # @see #update_or_replace
+      #
+      # @param nfs [Nfs] object to update
       # @return [Nfs] the updated object
       def update_nfs_device(nfs)
         if mountpoint.nil? || mountpoint.empty?
@@ -244,6 +265,12 @@ module Y2Storage
         nfs
       end
 
+      # Sets the properties of the mount point for the given {Nfs} object
+      #
+      # @see #create_nfs_device
+      # @see #update_nfs_device
+      #
+      # @param nfs [Nfs] object to update
       def configure_nfs_mount_point(nfs)
         nfs.mount_path = mountpoint
         nfs.mount_point.mount_type = fs_type

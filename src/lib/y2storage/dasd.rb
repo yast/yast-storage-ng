@@ -75,6 +75,7 @@ module Y2Storage
 
     protected
 
+    # @see Device#is?
     def types_for_is
       super << :dasd
     end

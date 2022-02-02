@@ -302,6 +302,7 @@ module Y2Storage
 
       protected
 
+      # @see Device#is?
       def types_for_is
         super << :partition_table
       end
