@@ -54,7 +54,7 @@ module Y2Storage
 
       # Filesystem type used in fstab
       # @return [Type] possible values are Type::NFS and Type::NFS4
-      attr_reader :fs_type
+      attr_accessor :fs_type
 
       # Indicates whether the share should be mounted
       #

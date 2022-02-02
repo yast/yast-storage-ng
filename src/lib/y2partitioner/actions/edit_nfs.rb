@@ -69,7 +69,10 @@ module Y2Partitioner
       #
       # @return [Symbol] :finish when the dialog successes
       def perform_action
-        result = Dialogs::Nfs.run(legacy_nfs, nfs_entries)
+        dialog = Dialogs::Nfs.new(legacy_nfs, nfs_entries)
+        return unless dialog.run?
+
+        result = dialog.run
         return unless result == :next
 
         @nfs = legacy_nfs.update_or_replace(nfs)

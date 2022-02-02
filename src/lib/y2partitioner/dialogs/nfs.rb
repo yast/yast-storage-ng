@@ -53,6 +53,13 @@ module Y2Partitioner
         @action = legacy_nfs.share == NEW_DEVICE_SHARE ? :add : :edit
       end
 
+      # Whether to show the dialog to edit the current NFS
+      #
+      # @return [Boolean]
+      def run?
+        @form.run?
+      end
+
       # @macro seeDialog
       def contents
         HVSquash(
@@ -74,7 +81,7 @@ module Y2Partitioner
       end
 
       class << self
-        # Whether to show the dialog
+        # Whether to show the dialog in general
         #
         # The package yast2-nfs-client must be installed in order to properly show the dialog.
         #
