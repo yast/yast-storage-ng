@@ -216,36 +216,14 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
     end
 
-    describe "caching" do
-      let(:scenario) { "empty_hard_disk_15GiB" }
-      let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }
-      let(:nfs_page) { Y2Partitioner::Widgets::Pages::NfsMounts.new(pager) }
+    context "when there are NFS mounts" do
+      let(:scenario) { "nfs1.xml" }
+      let(:mounts) { current_graph.nfs_mounts }
 
-      # Device names from the table
-      def rows
-        widgets = Yast::CWM.widgets_in_contents([subject])
-        table = find_table(widgets)
-        row_names(table)
-      end
+      it "contains all the NFS mounts" do
+        expected_items = mounts.map(&:name)
 
-      it "caches the table content between calls" do
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
-        Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
-        # The new device is not included
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
-      end
-
-      it "refreshes the cached content if the NFS page was visited" do
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
-        Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda"]
-        # Leave the NFS page
-        nfs_page.store
-        # Now the device is there
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda", "new:/device"]
-        Y2Storage::Filesystems::Nfs.create(current_graph, "another", "/device")
-        # Still cached
-        expect(remove_sort_keys(rows)).to eq ["/dev/sda", "new:/device"]
+        expect(items).to include(*expected_items)
       end
     end
   end
