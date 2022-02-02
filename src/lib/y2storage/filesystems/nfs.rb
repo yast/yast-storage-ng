@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -87,6 +87,17 @@ module Y2Storage
         LegacyNfs.new_from_nfs(self).to_hash
       end
 
+      # @see LegacyNfs#legacy_version?
+      #
+      # @return [Boolean]
+      def legacy_version?
+        LegacyNfs.new_from_nfs(self).legacy_version?
+      end
+
+      def version
+        LegacyNfs.new_from_nfs(self).version
+      end
+
       # String representing the remote NFS share in the most common format (the
       # "server:/path/in/server" one used in /etc/fstab)
       #
@@ -104,6 +115,7 @@ module Y2Storage
 
       protected
 
+      # @see Device#is?
       def types_for_is
         super << :nfs
       end

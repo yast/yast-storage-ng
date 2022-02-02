@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage/filesystems/nfs"
 require "y2storage/filesystems/type"
+require "y2storage/filesystems/nfs_options"
 require "y2storage/filesystem_reader"
 
 module Y2Storage
@@ -235,6 +236,30 @@ module Y2Storage
       # @return [Boolean]
       def reachable?
         FilesystemReader.new(self).reachable?
+      end
+
+      # Whether the fstab entry uses old ways of configuring the NFS version that
+      # do not longer work in the way they used to.
+      #
+      # @return [Boolean]
+      def legacy_version?
+        return true if fs_type == Y2Storage::Filesystems::Type::NFS4
+
+        nfs_options.legacy?
+      end
+
+      # Nfs options from the options fstab field
+      #
+      # @return [NfsOptions]
+      def nfs_options
+        NfsOptions.create_from_fstab(fstopt || "")
+      end
+
+      # Nfs version obtained from the fstab options field
+      #
+      # @return [NfsVersion]
+      def version
+        nfs_options.version
       end
 
       # @return [String]
