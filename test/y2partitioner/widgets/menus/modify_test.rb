@@ -255,6 +255,20 @@ describe Y2Partitioner::Widgets::Menus::Modify do
         end
       end
 
+      context "and the selected device is an NFS mount" do
+        let(:scenario) { "nfs1.xml" }
+
+        let(:device) { current_graph.nfs_mounts.last }
+
+        subject { described_class.new(device) }
+
+        it "calls an action to edit the NFS" do
+          expect(Y2Partitioner::Actions::EditNfs).to receive(:new).with(device)
+
+          subject.handle(event)
+        end
+      end
+
       context "and the selected device is a Btrfs subvolume" do
         let(:scenario) { "mixed_disks_btrfs.yml" }
 
