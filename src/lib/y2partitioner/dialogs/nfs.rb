@@ -31,8 +31,8 @@ module Y2Partitioner
       #
       # @param legacy_nfs [Y2Storage::Filesystems::LegacyNfs] representation of the NFS mount to add
       #   or edit
-      # @param nfs_entries [Array<Y2Storage::Filesystems::LegacyNfs>] entries used by the NfsForm to check for
-      #   duplicate mount points
+      # @param nfs_entries [Array<Y2Storage::Filesystems::LegacyNfs>] entries used by the NfsForm to
+      #   check for duplicate mount points
       def initialize(legacy_nfs, nfs_entries)
         super()
         textdomain "storage"
