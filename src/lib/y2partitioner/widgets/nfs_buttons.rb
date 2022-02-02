@@ -18,6 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/widgets/action_button"
+require "y2partitioner/widgets/device_edit_button"
+require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/actions/add_nfs"
 require "y2partitioner/actions/edit_nfs"
 require "y2partitioner/actions/delete_nfs"
