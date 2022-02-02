@@ -282,6 +282,23 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       end
     end
 
+    context "when targeting an NFS mount" do
+      let(:scenario) { "nfs1.xml" }
+      let(:device) { device_graph.nfs_mounts.first }
+
+      it "replaces the content with buttons to edit and to delete the NFS" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::NfsEditButton,
+            Y2Partitioner::Widgets::NfsDeleteButton
+          )
+        end
+
+        widget.device = device
+      end
+    end
     context "when an unsupported device is used" do
       let(:device) { device_graph.filesystems.first }
 
