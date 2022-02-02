@@ -65,13 +65,13 @@ describe Y2Partitioner::Actions::AddNfs do
     context "if the dialog is discarded" do
       let(:dialog_result) { :back }
 
-        it "does not create a new NFS" do
-          before = graph.nfs_mounts.size
-          subject.run
-          after = graph.nfs_mounts.size
+      it "does not create a new NFS" do
+        before = graph.nfs_mounts.size
+        subject.run
+        after = graph.nfs_mounts.size
 
-          expect(before).to eq after
-        end
+        expect(before).to eq after
+      end
 
       it "returns nil" do
         expect(subject.run).to be_nil

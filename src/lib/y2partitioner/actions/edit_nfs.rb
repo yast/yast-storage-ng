@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/ui_state"
+require "y2partitioner/actions/base"
 require "y2partitioner/dialogs/nfs"
 
 module Y2Partitioner
