@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -71,6 +71,23 @@ describe Y2Partitioner::Widgets::DescriptionSection::Filesystem do
         .and_return(double(path: "/", active?: false).as_null_object)
 
       expect(subject.value).to match(/Mount Point: \/ \(not mounted\)/)
+    end
+
+    context "when the filesystem is a NFS" do
+      let(:device) { Y2Storage::Filesystems::Nfs.create(current_graph, "example.suse.com", "/data") }
+
+      let(:filesystem) { device }
+
+      context "and it has no mount options" do
+        before do
+          device.mount_path = "/mnt"
+          device.mount_point.mount_options = []
+        end
+
+        it "contains 'defaults' in the mount options" do
+          expect(subject.value).to match(/Mount Options: defaults/)
+        end
+      end
     end
 
     context "when the filesystem is a block filesystem" do

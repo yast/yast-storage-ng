@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/widgets/description_section/base"
+require "y2storage/filesystems/nfs"
+require "y2storage/filesystems/nfs_options"
 
 module Y2Partitioner
   module Widgets
@@ -194,7 +196,11 @@ module Y2Partitioner
         def mount_options
           return "" unless filesystem&.mount_point
 
-          filesystem.mount_point.mount_options.join(" ")
+          options = filesystem.mount_point.mount_options
+
+          return options.join(", ") unless filesystem.is_a?(Y2Storage::Filesystems::Nfs)
+
+          Y2Storage::Filesystems::NfsOptions.new(options).to_fstab
         end
 
         # Information about journal
