@@ -23,23 +23,27 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/actions/edit_nfs"
 
 describe Y2Partitioner::Actions::EditNfs do
+  let(:graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:nfs) { Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, "srv2", "/home/b") }
+  subject { described_class.new(nfs) }
+
+  let(:legacy_nfs) { Y2Storage::Filesystems::LegacyNfs.new_from_nfs(nfs) }
+  let(:dialog) { double(Y2Partitioner::Dialogs::Nfs) }
+
   before do
     devicegraph_stub("nfs1.xml")
 
-    allow(Y2Partitioner::Dialogs::Nfs).to receive(:run) do |nfs_entry, _entries|
-      nfs_entry.server = new_server
-      nfs_entry.path = new_remote_path
-      nfs_entry.mountpoint = new_mount_path
+    allow(Y2Storage::Filesystems::LegacyNfs).to receive(:new_from_nfs).and_return legacy_nfs
+    allow(Y2Partitioner::Dialogs::Nfs).to receive(:new).and_return dialog
+
+    allow(dialog).to receive(:run) do
+      legacy_nfs.server = new_server
+      legacy_nfs.path = new_remote_path
+      legacy_nfs.mountpoint = new_mount_path
 
       dialog_result
     end
   end
-
-  subject { described_class.new(nfs) }
-
-  let(:nfs) { Y2Storage::Filesystems::Nfs.find_by_server_and_path(graph, "srv2", "/home/b") }
-  let(:graph) { Y2Partitioner::DeviceGraphs.instance.current }
-  let(:new_mount_path) { "/the/local" }
 
   describe "#run" do
     before do
@@ -60,8 +64,26 @@ describe Y2Partitioner::Actions::EditNfs do
       end
     end
 
-    xcontext "if yast2-nfs-client is available" do
+    context "if yast2-nfs-client is available" do
       let(:can_run_dialog) { true }
+      let(:new_mount_path) { "/the/local" }
+
+      before { allow(dialog).to receive(:run?).and_return(confirm_edit_nfs) }
+      let(:confirm_edit_nfs) { true }
+
+      context "but the user decided to not edit an NFS mount with a legacy version specification" do
+        let(:confirm_edit_nfs) { false }
+
+        it "does not run the dialog" do
+          expect(Y2Partitioner::Dialogs::Nfs).to_not receive(:run)
+
+          subject.run
+        end
+
+        it "returns nil" do
+          expect(subject.run).to be_nil
+        end
+      end
 
       context "and the user goes forward in the dialog" do
         let(:dialog_result) { :next }

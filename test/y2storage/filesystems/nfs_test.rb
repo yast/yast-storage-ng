@@ -106,4 +106,37 @@ describe Y2Storage::Filesystems::Nfs do
       expect(subject.version.value).to eq("4.1")
     end
   end
+
+  describe "#reachable?" do
+    context "when libstorage-ng is able to provide space information" do
+      before { allow(subject).to receive(:detect_space_info).and_return space_info }
+      let(:space_info) { double(Y2Storage::SpaceInfo) }
+
+      it "returns true" do
+        expect(subject.reachable?).to eq true
+      end
+    end
+
+    context "when libstorage-ng fails to provide space information" do
+      before { allow(subject).to receive(:detect_space_info).and_raise(::Storage::Exception) }
+
+      it "returns false" do
+        expect(subject.reachable?).to eq false
+      end
+    end
+  end
+
+  describe "#to_legacy_hash" do
+    it "returns a hash with the correct entries" do
+      expected = {
+        "device"       => subject.name,
+        "mount"        => subject.mount_path,
+        "used_fs"      => :nfs,
+        "fstopt"       => "defaults",
+        "active"       => subject.mount_point.active?,
+        "in_etc_fstab" => subject.mount_point.in_etc_fstab?
+      }
+      expect(subject.to_legacy_hash).to eq expected
+    end
+  end
 end
