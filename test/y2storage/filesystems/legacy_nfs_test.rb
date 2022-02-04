@@ -102,4 +102,72 @@ describe Y2Storage::Filesystems::LegacyNfs do
       expect(subject.version.value).to eq("4.1")
     end
   end
+
+  describe "#reachable?" do
+    let(:error) { Cheetah::ExecutionFailed.new([], "", nil, nil) }
+
+    context "when it is possible to mount the NFS share in the local system" do
+      before do
+        allow(Yast::Execute).to receive(:locally!)
+      end
+
+      it "returns true" do
+        expect(subject.reachable?).to eq true
+      end
+    end
+
+    context "when there is any error mounting the NFS share in the local system" do
+      before do
+        allow(Yast::Execute).to receive(:locally!)
+        allow(Yast::Execute).to receive(:locally!).with("/usr/bin/mount", any_args).and_raise(error)
+      end
+
+      it "returns false" do
+        expect(subject.reachable?).to eq false
+      end
+    end
+  end
+
+  describe ".new_from_hash" do
+    context "if all possible values are given" do
+      let(:hash) do
+        {
+          "device"       => "server.example.org:/remote/path",
+          "mount"        => "/local/path",
+          "fstopt"       => "rw,exec",
+          "vfstype"      => "nfs4",
+          "active"       => false,
+          "in_etc_fstab" => false
+        }
+      end
+
+      it "returns a LegacyNfs object with all fields correctly set" do
+        result = described_class.new_from_hash(hash)
+        expect(result).to be_a(Y2Storage::Filesystems::LegacyNfs)
+        expect(result.server).to eq "server.example.org"
+        expect(result.path).to eq "/remote/path"
+        expect(result.mountpoint).to eq "/local/path"
+        expect(result.fstopt).to eq "rw,exec"
+        expect(result.fs_type).to eq Y2Storage::Filesystems::Type::NFS4
+        expect(result.active?).to eq false
+        expect(result.in_etc_fstab?).to eq false
+      end
+    end
+
+    context "if a minimal hash is given" do
+      let(:hash) { { "device" => "server.example.org:/remote/path" } }
+
+      it "returns a LegacyNfs object with default attributes" do
+        result = described_class.new_from_hash(hash)
+        expect(result).to be_a(Y2Storage::Filesystems::LegacyNfs)
+        expect(result.server).to eq "server.example.org"
+        expect(result.path).to eq "/remote/path"
+        expect(result.mountpoint).to be_nil
+        expect(result.fstopt).to be_nil
+        expect(result.fs_type).to eq Y2Storage::Filesystems::Type::NFS
+        expect(result.active?).to eq true
+        expect(result.in_etc_fstab?).to eq true
+      end
+    end
+  end
 end
