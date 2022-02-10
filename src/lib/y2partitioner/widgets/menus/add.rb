@@ -54,7 +54,7 @@ module Y2Partitioner
             Item(Id(:menu_add_btrfs), _("&Btrfs...")),
             Item(Id(:menu_add_bcache), _("B&cache...")),
             Item(Id(:menu_add_tmpfs), _("&Tmpfs...")),
-            Item(Id(:menu_add_nfs), _("&Nfs...")),
+            Item(Id(:menu_add_nfs), _("&NFS...")),
             Item("---"),
             Item(Id(:menu_add_partition), _("&Partition...")),
             Item(Id(:menu_add_lv), _("&Logical Volume...")),
