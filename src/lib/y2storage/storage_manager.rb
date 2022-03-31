@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2021] SUSE LLC
+# Copyright (c) [2015-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -34,6 +34,7 @@ require "y2issues/list"
 
 Yast.import "Mode"
 Yast.import "Stage"
+Yast.import "Pkg"
 
 module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
@@ -182,6 +183,12 @@ module Y2Storage
     # @param probe_callbacks [Callbacks::Probe, nil]
     def probe!(probe_callbacks: nil)
       probe_callbacks ||= Callbacks::Probe.new
+
+      # Release all sources before probing. Otherwise, unmount action could fail if the mount point
+      # of the software source device is modified. Note that this is only necessary during the
+      # installation because libstorage-ng would try to unmount from the chroot path
+      # (e.g., /mnt/mount/point) and there is nothing mounted there.
+      Yast::Pkg.SourceReleaseAll if Yast::Mode.installation
 
       begin
         @storage.probe(probe_callbacks)
