@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,6 +29,7 @@ describe Y2Storage::StorageManager do
 
   before do
     described_class.create_test_instance
+    allow(Yast::Pkg).to receive(:SourceReleaseAll)
   end
 
   describe ".new" do
@@ -803,6 +804,30 @@ describe Y2Storage::StorageManager do
 
     it "returns nil if everything goes fine" do
       expect(manager.probe!).to be_nil
+    end
+
+    context "during installation" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(true)
+      end
+
+      it "releases software source devices before probing" do
+        expect(Yast::Pkg).to receive(:SourceReleaseAll)
+
+        manager.probe!
+      end
+    end
+
+    context "in an installed system" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(false)
+      end
+
+      it "does not release software source devices before probing" do
+        expect(Yast::Pkg).to_not receive(:SourceReleaseAll)
+
+        manager.probe!
+      end
     end
 
     context "and libstorage-ng fails while probing" do
