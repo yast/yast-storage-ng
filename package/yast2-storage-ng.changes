@@ -2,7 +2,8 @@
 Thu Mar 31 12:37:01 UTC 2022 - José Iván López González <jlopez@suse.com>
 
 - Release sources before probing during installation to avoid
-  issues when unmounting devices (related to bsc#1196061).
+  issues when unmounting devices (bsc#1197999 and related to
+  bsc#1196061).
 
 -------------------------------------------------------------------
 Thu Feb 10 10:18:23 UTC 2022 - Ancor Gonzalez Sosa <ancor@suse.com>
