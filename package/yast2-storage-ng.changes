@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Apr 06 13:24:58 UTC 2022 - Ladislav Slezák <lslezak@suse.cz>
+
+- Bump version to 4.5.0 (#bsc1198109)
+
+-------------------------------------------------------------------
 Thu Feb 10 10:18:23 UTC 2022 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Partitioner: 'Add NFS' instead of 'Add Nfs' in the menu (related
