@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Apr  7 16:29:00 UTC 2022 - Knut Anderssen <kanderssen@suse.com>
+
+- Fix fstab entry filesystem matching allowing the use of quotes
+  surrounding the device UUID or label (bsc#1197692)
+- 4.2.122
+
+-------------------------------------------------------------------
 Tue Dec 14 15:12:05 UTC 2021 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - AutoYaST: fixes for reusing encrypted devices, RAIDs and bcache
