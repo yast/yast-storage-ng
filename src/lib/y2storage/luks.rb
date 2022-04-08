@@ -72,8 +72,8 @@ module Y2Storage
     # @param spec [String] content of the second column of an /etc/crypttab entry
     # @return [Boolean]
     def match_crypttab_spec?(spec)
-      if /^UUID=(.*)/ =~ spec
-        return !Regexp.last_match(1).empty? && uuid == Regexp.last_match(1)
+      if /^UUID=(['"]?)(.*)\1$/ =~ spec
+        return !Regexp.last_match(2).empty? && uuid == Regexp.last_match(2)
       end
 
       super
