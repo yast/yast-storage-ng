@@ -371,6 +371,9 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
     it "returns true for the correct label using LABEL=" do
       expect(filesystem.match_fstab_spec?("LABEL=root")).to eq true
+      # labels surrounded by quotes are considered also valid
+      expect(filesystem.match_fstab_spec?("LABEL='root'")).to eq true
+      expect(filesystem.match_fstab_spec?('LABEL="root"')).to eq true
     end
 
     it "returns false for the wrong label using LABEL=" do
@@ -385,6 +388,9 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
     it "returns true for the correct UUID using UUID=" do
       expect(filesystem.match_fstab_spec?("UUID=4d2e6fde-d105-4f15-b8e1-4173badc8c66")).to eq true
+      # UUIDs surrounded by quotes are considered also valid
+      expect(filesystem.match_fstab_spec?("UUID='4d2e6fde-d105-4f15-b8e1-4173badc8c66'")).to eq true
+      expect(filesystem.match_fstab_spec?('UUID="4d2e6fde-d105-4f15-b8e1-4173badc8c66"')).to eq true
     end
 
     it "returns false for the wrong UUID using UUID=" do

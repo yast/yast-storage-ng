@@ -229,11 +229,11 @@ module Y2Storage
 
       # @see Filesystems::Base#match_fstab_spec?
       def match_fstab_spec?(spec)
-        if /^UUID=(.*)/ =~ spec
+        if /^UUID="(.*)"/ =~ spec || /^UUID='(.*)'/ =~ spec || /^UUID=(.*)/ =~ spec
           return !Regexp.last_match(1).empty? && uuid == Regexp.last_match(1)
         end
 
-        if /^LABEL=(.*)/ =~ spec
+        if /^LABEL="(.*)"/ =~ spec || /^LABEL='(.*)'/ =~ spec || /^LABEL=(.*)/ =~ spec
           return !Regexp.last_match(1).empty? && label == Regexp.last_match(1)
         end
 
