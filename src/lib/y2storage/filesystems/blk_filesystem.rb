@@ -229,12 +229,12 @@ module Y2Storage
 
       # @see Filesystems::Base#match_fstab_spec?
       def match_fstab_spec?(spec)
-        if /^UUID="(.*)"/ =~ spec || /^UUID='(.*)'/ =~ spec || /^UUID=(.*)/ =~ spec
-          return !Regexp.last_match(1).empty? && uuid == Regexp.last_match(1)
+        if /^UUID=(['"]?)(.*)\1$/ =~ spec
+          return !Regexp.last_match(2).empty? && uuid == Regexp.last_match(2)
         end
 
-        if /^LABEL="(.*)"/ =~ spec || /^LABEL='(.*)'/ =~ spec || /^LABEL=(.*)/ =~ spec
-          return !Regexp.last_match(1).empty? && label == Regexp.last_match(1)
+        if /^LABEL=(['"]?)(.*)\1$/ =~ spec
+          return !Regexp.last_match(2).empty? && label == Regexp.last_match(2)
         end
 
         named_device = devicegraph.find_by_any_name(spec)
