@@ -53,6 +53,8 @@ describe Y2Storage::Luks do
 
     it "returns true for the encryption device UUID when using UUID=" do
       expect(subject.match_crypttab_spec?("UUID=#{luks_uuid}")).to eq(true)
+      expect(subject.match_crypttab_spec?("UUID='#{luks_uuid}'")).to eq(true)
+      expect(subject.match_crypttab_spec?("UUID=\"#{luks_uuid}\"")).to eq(true)
     end
 
     it "returns false for the kernel name of the encryption device" do
