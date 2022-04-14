@@ -32,16 +32,21 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
+        @widget = Widgets::MkfsOptions.new(@controller)
       end
 
       def title
         _("Format Options:")
       end
 
+      def help
+        @widget.help
+      end
+
       def contents
         HBox(
           HSpacing(2),
-          HVSquash(Widgets::MkfsOptions.new(@controller)),
+          HVSquash(@widget),
           HSpacing(1)
         )
       end

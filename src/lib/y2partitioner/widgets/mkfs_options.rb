@@ -107,6 +107,8 @@ module Y2Partitioner
       # @return [String]
       #
       def help
+        # FIXME: this method causes duplicated help text
+        # if Wizard.SetHelpText is used
         Yast::CWM.widgets_in_contents(contents).find_all do |w|
           w.respond_to?(:help)
         end.map(&:help).join("\n")
