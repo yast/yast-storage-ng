@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Apr 18 09:01:42 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- Fix empty help in some Partitioner dialogs (bsc#1194274)
+- 4.4.38
+
+-------------------------------------------------------------------
 Thu Apr  7 16:29:00 UTC 2022 - Knut Anderssen <kanderssen@suse.com>
 
 - Fix fstab entry filesystem matching allowing the use of quotes

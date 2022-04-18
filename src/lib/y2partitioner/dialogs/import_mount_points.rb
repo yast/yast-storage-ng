@@ -32,10 +32,15 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
+        @widget = fstab_selector
       end
 
       def title
         _("Import Mount Points from Existing System:")
+      end
+
+      def help
+        @widget.help
       end
 
       # @see #fstab_selector
@@ -44,7 +49,7 @@ module Y2Partitioner
           1,
           0.5,
           VBox(
-            fstab_selector,
+            @widget,
             VSpacing(1),
             Left(format_widget)
           )

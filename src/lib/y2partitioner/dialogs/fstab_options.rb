@@ -33,17 +33,22 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
+        @widget = Widgets::FstabOptions.new(@controller)
       end
 
       def title
         _("Fstab Options:")
       end
 
+      def help
+        @widget.help
+      end
+
       def contents
         HBox(
           HStretch(),
           HSpacing(1),
-          HVSquash(Widgets::FstabOptions.new(@controller)),
+          HVSquash(@widget),
           HStretch(),
           HSpacing(1)
         )
