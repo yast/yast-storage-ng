@@ -188,12 +188,20 @@ module Y2Partitioner
         disable if !supported_by_filesystem?
       end
 
-      def help
-        # FIXME: this method causes duplicated help text
-        # if Wizard.SetHelpText is used
-        Yast::CWM.widgets_in_contents(contents).find_all do |w|
-          w.respond_to?(:help)
-        end.map(&:help).join("\n")
+      # @macro seeAbstractWidget
+      def handle(event)
+        case event["ID"]
+        when :help
+          help = []
+
+          widgets.each do |w|
+            help << w.help if w.respond_to? "help"
+          end
+
+          Yast::Wizard.ShowHelp(help.join("\n"))
+        end
+
+        nil
       end
 
       # @macro seeCustomWidget

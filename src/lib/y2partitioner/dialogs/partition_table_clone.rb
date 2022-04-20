@@ -39,7 +39,6 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
-        @widget = DevicesSelector.new(controller)
       end
 
       # @macro seeDialog
@@ -48,14 +47,10 @@ module Y2Partitioner
         format(_("Clone partition layout of %{name}"), name: controller.device.name)
       end
 
-      def help
-        @widget.help
-      end
-
       # @macro seeDialog
       # @see DevicesSelector
       def contents
-        @contents ||= VBox(@widget)
+        @contents ||= VBox(DevicesSelector.new(controller))
       end
 
       # Widget to select devices for cloning
