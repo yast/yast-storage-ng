@@ -40,7 +40,8 @@ module Y2Partitioner
           1, # left / right
           0.45, # top / bottom
           VBox(
-            # This Id makes the Help texts work, see Wizard.SetHelpText
+            # This Id makes the Help texts work because CWM will assign the merged help texts
+            # of the individual widgets to that one, see Wizard.SetHelpText
             Id(:WizardDialog),
             Left(Heading(Id(:title), title)),
             VSpacing(0.6),
