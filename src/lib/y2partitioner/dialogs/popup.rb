@@ -26,7 +26,6 @@ module Y2Partitioner
     class Popup < Base
       def wizard_create_dialog(&block)
         Yast::UI.OpenDialog(layout)
-        set_help_text
         block.call
       ensure
         Yast::UI.CloseDialog()
@@ -41,7 +40,9 @@ module Y2Partitioner
           1, # left / right
           0.45, # top / bottom
           VBox(
-            Id(:help_text_container),
+            # This Id makes the Help texts work because CWM will assign the merged help texts
+            # of the individual widgets to that one, see Wizard.SetHelpText
+            Id(:WizardDialog),
             Left(Heading(Id(:title), title)),
             VSpacing(0.6),
             VCenter(MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty()))),
@@ -90,23 +91,6 @@ module Y2Partitioner
 
       def cancel_button
         PushButton(Id(:cancel), cancel_button_label)
-      end
-
-      # Set the help text to the widget with ID help_text_container.
-      #
-      # For wizard dialogs, CWM handles this, but for popups, this does not
-      # work. So use the UI's built-in help viewer with the predefined
-      # HelpText widget property.
-      def set_help_text
-        return unless respond_to?(:help)
-
-        help_text = help
-        return if help_text.nil? || help_text.empty?
-
-        # The UI handles help texts completely on its own if the HelpText
-        # property is set: It opens a help viewer with the help text of the
-        # topmost widget in the dialog that has one.
-        Yast::UI.ChangeWidget(Id(:help_text_container), :HelpText, help_text)
       end
     end
   end
