@@ -100,29 +100,9 @@ module Y2Partitioner
         self.handle_all_events = true
       end
 
-      # Help text.
-      #
-      # The text is a combination of help texts from all sub-widgets.
-      #
-      # @return [String]
-      #
-      def help
-        Yast::CWM.widgets_in_contents(contents).find_all do |w|
-          w.respond_to?(:help)
-        end.map(&:help).join("\n")
-      end
-
       # @macro seeAbstractWidget
       def opt
         [:notify]
-      end
-
-      # @macro seeAbstractWidget
-      def handle(event)
-        case event["ID"]
-        when :help
-          Yast::Wizard.ShowHelp(help)
-        end
       end
 
       # @macro seeAbstractWidget
