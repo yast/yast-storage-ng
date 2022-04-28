@@ -40,8 +40,8 @@ module Y2Partitioner
       # @see ConfigurableBlkDevicesTable#help
       def help
         super +
-          "<p>Only temporary file systems included in /etc/fstab are considered here. Other " \
-          "automatically mounted temporary file systems are not shown.</p>"
+          _("<p>Only temporary file systems included in /etc/fstab are considered here. Other " \
+            "automatically mounted temporary file systems are not shown.</p>")
       end
 
       private
