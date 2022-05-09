@@ -72,6 +72,7 @@ module Y2Storage
         UF_EXT4:             "e2fsprogs",
         UF_XFS:              "xfsprogs",
         UF_REISERFS:         "reiserfs",
+        UF_NILFS2:           "nilfs-utils",
         UF_NFS:              "nfs-client",
         UF_NTFS:             ["ntfs-3g", "ntfsprogs"],
         UF_VFAT:             "dosfstools",
@@ -108,7 +109,7 @@ module Y2Storage
     # NTFS Windows partition on the disk; don't throw an error pop-up in that
     # case, just log a warning (bsc#1039830).
     #
-    OPTIONAL_PACKAGES = ["ntfs-3g", "ntfsprogs", "exfat-utils", "f2fs-tools", "jfsutils"]
+    OPTIONAL_PACKAGES = ["ntfs-3g", "ntfsprogs", "exfat-utils", "f2fs-tools", "jfsutils", "nilfs-utils"]
     # configurable part ends here
     #======================================================================
 
