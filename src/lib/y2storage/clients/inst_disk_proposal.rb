@@ -50,6 +50,8 @@ module Y2Storage
       def initialize
         textdomain "storage"
 
+        detach_media_and_reprobe
+
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         # Save staging revision to check later if the system was reprobed
@@ -88,6 +90,18 @@ module Y2Storage
       end
 
       private
+
+      # weird stuff
+      #
+      # Local (disk) media sources should not be mounted as the additional
+      # mountpoints will confuse libstorage-ng when doing the commit.
+      def detach_media_and_reprobe
+        Yast.import "PackageCallbacks"
+        log.info("XXX inst_disk_proposal")
+
+        Pkg.SourceReleaseAll
+        storage_manager.probe
+      end
 
       # @return [Integer]
       attr_reader :initial_staging_revision
