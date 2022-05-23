@@ -60,6 +60,7 @@ module Y2Storage
       twofish256_old: N_("Old Twofish (loop_fish2) 256-bit"),
       luks1:          N_("LUKS1"),
       luks2:          N_("LUKS2"),
+      bitlocker:      N_("BitLocker"),
       plain:          N_("Plain encryption")
     }
     private_constant :TRANSLATIONS
