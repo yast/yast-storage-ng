@@ -762,7 +762,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device is a RAID10" do
       let(:md_level) { Y2Storage::MdLevel::RAID10 }
 
-      it "returns 64 KiB" do
+      it "returns 4 KiB" do
         size = Y2Storage::DiskSize.KiB(4)
         expect(controller.chunk_sizes.min).to eq size
       end
