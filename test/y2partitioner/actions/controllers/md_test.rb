@@ -717,12 +717,14 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#min_chunk_size" do
+    # rubocop:disable Layout/LineLength
     before do
       controller.md_level = md_level
       # Prevent unpleasant surprises on different architectures
       allow_any_instance_of(Y2Storage::Md).to receive(:block_size).and_return(Y2Storage::DiskSize.B(512))
       allow_any_instance_of(Y2Storage::Arch).to receive(:page_size).and_return(Y2Storage::DiskSize.KiB(8))
     end
+    # rubocop:enable Layout/LineLength
 
     context "when the Md device is a RAID0" do
       let(:md_level) { Y2Storage::MdLevel::RAID0 }
