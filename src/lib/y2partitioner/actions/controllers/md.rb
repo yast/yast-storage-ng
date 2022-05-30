@@ -294,7 +294,13 @@ module Y2Partitioner
         end
 
         def min_chunk_size
-          [default_chunk_size, Y2Storage::DiskSize.KiB(64)].min
+          case md.md_level.to_sym
+          when :raid0, :raid10
+            puts "\n*** md.block_size: #{md.block_size}"
+            [md.block_size, Y2Storage::DiskSize.KiB(4)].max # bsc#1200018
+          else # including raid1/5/6
+            [default_chunk_size, Y2Storage::DiskSize.KiB(64)].min
+          end
         end
 
         def max_chunk_size
