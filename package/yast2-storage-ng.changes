@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon May 30 12:35:08 UTC 2022 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Partitioner: Allow min chunk size of 4 KiB (page size) for RAID0 /
+  RAID10 (bsc#1200018)
+- 4.4.40
+
+-------------------------------------------------------------------
 Thu Apr 28 11:22:27 UTC 2022 - Josef Reidinger <jreidinger@suse.com>
 
 - Mark properly help text in tmpfs widget for localization
