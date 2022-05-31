@@ -716,6 +716,62 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
   end
 
+  describe "#min_chunk_size" do
+    # rubocop:disable Layout/LineLength
+    before do
+      controller.md_level = md_level
+      # Prevent unpleasant surprises on different architectures
+      allow_any_instance_of(Y2Storage::Md).to receive(:block_size).and_return(Y2Storage::DiskSize.B(512))
+      allow_any_instance_of(Y2Storage::Arch).to receive(:page_size).and_return(Y2Storage::DiskSize.KiB(8))
+    end
+    # rubocop:enable Layout/LineLength
+
+    context "when the Md device is a RAID0" do
+      let(:md_level) { Y2Storage::MdLevel::RAID0 }
+
+      it "returns 4 KiB" do
+        size = Y2Storage::DiskSize.KiB(4)
+        expect(controller.chunk_sizes.min).to eq size
+      end
+    end
+
+    context "when the Md device is a RAID1" do
+      let(:md_level) { Y2Storage::MdLevel::RAID1 }
+
+      it "returns 4 KiB" do
+        size = Y2Storage::DiskSize.KiB(4)
+        expect(controller.chunk_sizes.min).to eq size
+      end
+    end
+
+    context "when the Md device is a RAID5" do
+      let(:md_level) { Y2Storage::MdLevel::RAID5 }
+
+      it "returns 64 KiB" do
+        size = Y2Storage::DiskSize.KiB(64)
+        expect(controller.chunk_sizes.min).to eq size
+      end
+    end
+
+    context "when the Md device is a RAID6" do
+      let(:md_level) { Y2Storage::MdLevel::RAID6 }
+
+      it "returns 64 KiB" do
+        size = Y2Storage::DiskSize.KiB(64)
+        expect(controller.chunk_sizes.min).to eq size
+      end
+    end
+
+    context "when the Md device is a RAID10" do
+      let(:md_level) { Y2Storage::MdLevel::RAID10 }
+
+      it "returns the page size (8 KiB)" do
+        size = Y2Storage::DiskSize.KiB(8)
+        expect(controller.chunk_sizes.min).to eq size
+      end
+    end
+  end
+
   describe "#md_parity" do
     it "returns the parity algorithm of the Md device" do
       parity = Y2Storage::MdParity::OFFSET_2
