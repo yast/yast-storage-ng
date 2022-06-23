@@ -631,6 +631,8 @@ module Y2Storage
         create_logger
         log.info "Creating Storage object"
         @instance = new(environment)
+        @instance.rootprefix = Yast::Installation.destdir
+	@instance
       rescue Storage::LockException => e
         raise Yast::AbortException unless retry_create_instance?(e, callbacks)
 
