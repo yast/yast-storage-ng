@@ -484,8 +484,7 @@ module Y2Storage
       candidates.delete(Filesystems::MountByType::LABEL) unless label
       candidates.delete(Filesystems::MountByType::UUID) unless uuid
       # filter out yast unsupported partuuid and partlabel
-      candidates.delete(Filesystems::MountByType::PARTLABEL)
-      candidates.delete(Filesystems::MountByType::PARTUUID)
+      candidates.select! { |c| Filesystems::MountByType.all_supported.include?(c) }
     end
   end
 end
