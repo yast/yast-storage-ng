@@ -90,12 +90,10 @@ module Y2Storage
       end
 
       class << self
-
-
         # Supported types
 
         def all_supported
-          all.reject { |t| t == PARTUUID || t == PARTLABEL }
+          all.reject { |t| [PARTUUID, PARTLABEL].include?(t) }
         end
 
         # Type corresponding to the given fstab spec
