@@ -483,6 +483,9 @@ module Y2Storage
     def filter_mount_bys(candidates, label, uuid)
       candidates.delete(Filesystems::MountByType::LABEL) unless label
       candidates.delete(Filesystems::MountByType::UUID) unless uuid
+      # filter out yast unsupported partuuid and partlabel
+      candidates.delete(Filesystems::MountByType::PARTLABEL)
+      candidates.delete(Filesystems::MountByType::PARTUUID)
     end
   end
 end
