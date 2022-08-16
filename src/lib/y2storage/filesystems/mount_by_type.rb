@@ -90,6 +90,14 @@ module Y2Storage
       end
 
       class << self
+
+
+        # Supported types
+
+        def all_supported
+          all.reject { |t| t == PARTUUID || t == PARTLABEL }
+        end
+
         # Type corresponding to the given fstab spec
         #
         # @param spec [String] content of the first column of an /etc/fstab entry
