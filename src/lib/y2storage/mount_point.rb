@@ -183,12 +183,19 @@ module Y2Storage
     #   Set the mount-by method to the global default, see Storage::get_default_mount_by()
     storage_forward :set_default_mount_by, to: :default_mount_by=
 
-    # @!method possible_mount_bys
+    # @!method possible_mount_bys_unfiltered
     #   Returns the possible mount-by methods for the mount point.
     #   LABEL is included even if the filesystem label is not set.
     #
     #   @return [Array<Filesystems::MountByType>]
-    storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
+    storage_forward :possible_mount_bys_unfiltered, as: "Filesystems::MountByType", to: :possible_mount_bys
+    private :possible_mount_bys_unfiltered
+
+    # redefine possible_mount_bys to filter out unsupported values
+    # @see #possible_mount_bys_unfiltered
+    def possible_mount_bys
+      possible_mount_bys_unfiltered & Filesystems::MountByType.all
+    end
 
     # @!attribute mount_type
     #   Filesystem type used to mount the device, as specified in fstab and/or

@@ -791,7 +791,7 @@ module Y2Storage
     #
     # @return [Filesystems::MountByType]
     def preferred_mount_by
-      Filesystems::MountByType.best_for(self, possible_mount_bys)
+      Filesystems::MountByType.best_for(self, possible_mount_bys & Filesystems::MountByType.all)
     end
 
     # @see Device#is?
