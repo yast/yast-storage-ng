@@ -289,13 +289,20 @@ module Y2Storage
     #   @return [Encryption] nil if the device is not encrypted
     storage_forward :encryption, as: "Encryption", check_with: :has_encryption
 
-    # @!method possible_mount_bys
+    # @!method storage_possible_mount_bys
     #   Possible mount-by methods to reference the block device itself, regardless of its content
     #
     #   @see #preferred_name
     #
     #   @return [Array<Filesystems::MountByType>]
-    storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
+    storage_forward :storage_possible_mount_bys, as: "Filesystems::MountByType",
+      to: :possible_mount_bys
+    private :storage_possible_mount_bys
+
+    # overwritted possible_mount_bys to contain only supported types
+    def possible_mount_bys
+      storage_possible_mount_bys & Filesystems::MountByType.all
+    end
     private :possible_mount_bys
 
     # Checks whether the device is encrypted

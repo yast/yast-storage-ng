@@ -90,6 +90,13 @@ module Y2Storage
       end
 
       class << self
+        alias_method :storage_all, :all
+
+        # Redefined `.storage_all` method that filter out unsupported values
+        def all
+          storage_all.reject { |t| [PARTUUID, PARTLABEL].include?(t) }
+        end
+
         # Type corresponding to the given fstab spec
         #
         # @param spec [String] content of the first column of an /etc/fstab entry
