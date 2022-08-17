@@ -90,12 +90,11 @@ module Y2Storage
       end
 
       class << self
+        alias_method :storage_all, :all
 
-        alias_method :all_nonfiltered, :all
-
-        # Redefined `.all` method that filter out unsupported values
+        # Redefined `.storage_all` method that filter out unsupported values
         def all
-          all_nonfiltered.reject { |t| [PARTUUID, PARTLABEL].include?(t) }
+          storage_all.reject { |t| [PARTUUID, PARTLABEL].include?(t) }
         end
 
         # Type corresponding to the given fstab spec
