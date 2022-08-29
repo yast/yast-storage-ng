@@ -29,6 +29,7 @@ require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/configuration"
+require "y2storage/storage_wrapper"
 require "yast2/fs_snapshot"
 require "y2issues/list"
 
@@ -55,24 +56,10 @@ module Y2Storage
     # @return [Storage::Storage]
     attr_reader :storage
 
-    # Revision of the staging devicegraph.
-    #
-    # Zero means no modification (still not probed). Incremented every
-    # time the staging devicegraph is re-assigned.
-    # @see #copy_to_staging
-    # @see #staging_changed
-    #
-    # @return [Integer]
-    attr_reader :staging_revision
-
-    # Proposal that was used to calculate the current staging devicegraph.
-    #
-    # Nil if the devicegraph was set manually and not by accepting a proposal.
-    #
-    # @return [GuidedProposal, nil]
-    attr_reader :proposal
-
-    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=
+    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
+      :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
+      :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
+      :mode, :configuration, :proposal
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -88,15 +75,7 @@ module Y2Storage
 
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
-      @storage = Storage::Storage.new(storage_environment)
-      configuration.apply_defaults
-
-      @probed = false
-      @activate_issues = Y2Issues::List.new
-      @probe_issues = Y2Issues::List.new
-      reset_probed
-      reset_staging
-      reset_staging_revision
+      @storage = Y2Storage::StorageWrapper.new(storage_environment)
     end
 
     # Current architecture
@@ -104,49 +83,6 @@ module Y2Storage
     # @return [Y2Storage::Arch]
     def arch
       @arch ||= Arch.new(@storage.arch)
-    end
-
-    # Whether probing has been done
-    # @return [Boolean]
-    def probed?
-      @probed
-    end
-
-    # Increments #staging_revision
-    #
-    # To be called explicitly if the staging devicegraph is modified without
-    # using #staging= or #proposal=
-    def increase_staging_revision
-      @staging_revision += 1
-    end
-
-    # Activate devices like multipath, MD and DM RAID, LVM and LUKS. It is not
-    # required to have probed the system to call this function. On the other
-    # hand, after calling this function the system should be probed.
-    #
-    # With the default callbacks, every question about activating a given
-    # technology is forwarded to the user using pop up dialogs. In addition,
-    # errors reported by libstorage-ng are stored in the {#activate_issues} list.
-    #
-    # @param callbacks [Callbacks::Activate, nil]
-    # @return [Boolean] whether activation was successful
-    def activate(callbacks = nil)
-      activate_callbacks = callbacks || Callbacks::Activate.new
-      @storage.activate(activate_callbacks)
-      @activate_issues = activate_callbacks.issues
-      true
-    rescue Storage::Exception
-      false
-    end
-
-    # Deactivate devices like multipath, MD and DM RAID, LVM and LUKS. It is
-    # not required to have probed the system to call this function. On the
-    # other hand after calling this function the system should be probed.
-    #
-    # @return [Storage::DeactivateStatus] status of subsystems, see
-    #   libstorage-ng documentation for details.
-    def deactivate
-      @storage.deactivate
     end
 
     # Probes all storage devices
@@ -182,27 +118,15 @@ module Y2Storage
     #
     # @param probe_callbacks [Callbacks::Probe, nil]
     def probe!(probe_callbacks: nil)
-      probe_callbacks ||= Callbacks::Probe.new
-
       # Release all sources before probing. Otherwise, unmount action could fail if the mount point
       # of the software source device is modified. Note that this is only necessary during the
       # installation because libstorage-ng would try to unmount from the chroot path
       # (e.g., /mnt/mount/point) and there is nothing mounted there.
       Yast::Pkg.SourceReleaseAll if Yast::Mode.installation
 
-      begin
-        @storage.probe(probe_callbacks)
-      rescue Storage::Aborted
-        retry if probe_callbacks.again?
-
-        raise
-      end
-
-      @probe_issues = probe_callbacks.issues
-
-      probe_performed
+      @storage.probe(probe_callbacks: probe_callbacks)
       manage_probing_issues
-      DumpManager.dump(@probed_graph)
+      DumpManager.dump(@storage.probed)
 
       nil
     end
@@ -219,93 +143,7 @@ module Y2Storage
     # @return [Devicegraph]
     def probed
       probe! unless probed?
-      @probed_graph
-    end
-
-    # Probed devicegraph returned by libstorage-ng (without sanitizing)
-    #
-    # @see #probed
-    #
-    # @return [Devicegraph]
-    def raw_probed
-      @raw_probed ||= begin
-        probe unless probed?
-        Devicegraph.new(storage.probed)
-      end
-    end
-
-    # Staging devicegraph
-    #
-    # @note The initial staging is not exactly the same than the initial staging
-    #   returned by libstorage-ng. This staging is initialized from the sanitized
-    #   probed devicegraph (see {#manage_probing_issues}).
-    #
-    # @raise [Storage::Exception, Yast::AbortException] when probe fails
-    #
-    # @return [Devicegraph]
-    def staging
-      @staging ||= begin
-        probe! unless probed?
-        Devicegraph.new(storage.staging)
-      end
-    end
-
-    # Copies the manually-calculated (no proposal) devicegraph to staging.
-    #
-    # If the devicegraph was calculated by means of a proposal, use #proposal=
-    # instead.
-    # @see #proposal=
-    #
-    # @param [Devicegraph] devicegraph to copy
-    def staging=(devicegraph)
-      copy_to_staging(devicegraph)
-    end
-
-    # System devicegraph
-    #
-    # It is used to perform actions beforme the commit phase (e.g., immediate unmount).
-    #
-    # @return [Y2Storage::Devicegraph]
-    def system
-      @system ||= Devicegraph.new(storage.system)
-    end
-
-    # Stores the proposal, modifying the staging devicegraph and all the related
-    # information.
-    #
-    # @param proposal [GuidedProposal]
-    def proposal=(proposal)
-      copy_to_staging(proposal.devices)
-      @proposal = proposal
-    end
-
-    # Disk analyzer used to analyze the probed devicegraph
-    #
-    # @return [DiskAnalyzer]
-    def probed_disk_analyzer
-      @probed_disk_analyzer ||= DiskAnalyzer.new(probed)
-    end
-
-    # Checks whether the staging devicegraph has been previously set, either
-    # manually or through a proposal.
-    #
-    # @return [Boolean] false if the staging devicegraph is just the result of
-    #   probing (so a direct copy of #probed), true otherwise.
-    def staging_changed?
-      staging_revision != staging_revision_after_probing
-    end
-
-    # Checks whether the staging devicegraph has been committed to the system.
-    #
-    # @see #commit
-    #
-    # If this is false, the probed devicegraph (see {#probed}) should perfectly
-    # match the real current system... as long as the system has not been
-    # modified externally to YaST, which is impossible to control.
-    #
-    # @return [Boolean]
-    def committed?
-      @committed
+      @storage.probed
     end
 
     # Performs in the system all the necessary operations to make it match the staging devicegraph.
@@ -322,59 +160,26 @@ module Y2Storage
     def commit(force_rw: false, callbacks: nil)
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
-      callbacks ||= Callbacks::Commit.new
 
-      staging.pre_commit
-
-      storage.calculate_actiongraph
-      commit_options = ::Storage::CommitOptions.new(force_rw)
+      result = storage.commit(force_rw: force_rw, callbacks: callbacks)
 
       # Save committed devicegraph into logs
-      log.info("Committed devicegraph\n#{staging.to_xml}")
-      DumpManager.dump(staging, "committed")
+      log.info("Committed devicegraph\n#{storage.staging.to_xml}")
+      DumpManager.dump(storage.staging, "committed")
 
-      # Log libstorage-ng checks
-      staging.check
-
-      storage.commit(commit_options, callbacks)
-      staging.post_commit
-
-      @committed = true
-    rescue Storage::Exception
-      false
+      result
     end
 
     # Probes from a yml file instead of doing real probing
     def probe_from_yaml(yaml_file = nil)
-      fake_graph = Devicegraph.new(storage.create_devicegraph("fake"))
-      Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
-
-      fake_graph.to_storage_value.copy(storage.probed)
-      fake_graph.to_storage_value.copy(storage.staging)
-      fake_graph.to_storage_value.copy(storage.system)
-
-      probe_performed
+      storage.probe_from_yaml(yaml_file)
       manage_probing_issues
-    ensure
-      storage.remove_devicegraph("fake")
     end
 
     # Probes from a xml file instead of doing real probing
     def probe_from_xml(xml_file)
-      storage.probed.load(xml_file)
-      storage.probed.copy(storage.staging)
-      storage.probed.copy(storage.system)
-      probe_performed
+      storage.probe_from_xml(xml_file)
       manage_probing_issues
-    end
-
-    # Access mode in which the storage system was initialized (read-only or read-write)
-    #
-    # @see StorageManager.setup
-    #
-    # @return [Symbol] :ro, :rw
-    def mode
-      environment.read_only? ? :ro : :rw
     end
 
     # Whether there is any device in the system that may be used to install a
@@ -392,99 +197,11 @@ module Y2Storage
       if probed?
         !probed.disk_devices.empty?
       else
-        begin
-          Storage.light_probe
-        rescue Storage::Exception
-          false
-        end
+        storage.light_probe
       end
     end
 
-    # Configuration of Y2Storage
-    #
-    # @return [Configuration]
-    def configuration
-      @configuration ||= Configuration.new(@storage)
-    end
-
     private
-
-    # Value of #staging_revision right after executing the latest libstorage
-    # probing.
-    #
-    # Used to check if the system has been re-probed
-    #
-    # @return [Integer]
-    attr_reader :staging_revision_after_probing
-
-    # Issues detected while activating devices
-    #
-    # @return [Y2Issues::List<Issue>]
-    attr_reader :activate_issues
-
-    # Issues detected while probing the system
-    #
-    # @return [Y2Issues::List<Issue>]
-    attr_reader :probe_issues
-
-    # Sets the devicegraph as the staging one, updating all the associated
-    # information like #staging_revision
-    #
-    # @param [Devicegraph] devicegraph to copy
-    def copy_to_staging(devicegraph)
-      devicegraph.safe_copy(staging)
-      staging_changed
-    end
-
-    # Invalidates previous probed devicegraph and its related data
-    def reset_probed
-      # Invalidate probed and its two derivative devicegraphs
-      @raw_probed = @probed_graph = @system = nil
-
-      @probed_disk_analyzer = nil
-      @committed = false
-      Y2Storage::HWInfoReader.instance.reset
-    end
-
-    alias_method :probed_changed, :reset_probed
-
-    # Invalidates previous staging devicegraph and its related data
-    def reset_staging
-      @staging = nil
-      @proposal = nil
-    end
-
-    # Sets all necessary data after changing the staging devicegraph. To be executed
-    # always after a staging assignment
-    def staging_changed
-      reset_staging
-      increase_staging_revision
-    end
-
-    # Sets all necessary data after probing. To be executed always after probing.
-    def probe_performed
-      @probed = true
-      probed_changed
-      staging_changed
-
-      # Save probed devicegraph into logs
-      log.info("Probed devicegraph\n#{raw_probed.to_xml}")
-
-      @staging_revision_after_probing = staging_revision
-
-      # Probing issues will contain issues detected on activate and probe callbacks, and also issues
-      # detected after checking the probed devicegraph.
-      issues = activate_issues.concat(probe_issues)
-      issues.concat(ProbedDevicegraphChecker.new(raw_probed).issues)
-
-      raw_probed.issues_manager.probing_issues = issues
-    end
-
-    # Resets the #staging_revision
-    def reset_staging_revision
-      @staging_revision = 0
-      @staging_revision_after_probing = 0
-    end
 
     # Manages issues detected during the probing phase
     #
@@ -499,16 +216,9 @@ module Y2Storage
     #   proposal/partitioner.
     def manage_probing_issues
       continue = raw_probed.issues_manager.report_probing_issues
-
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
-      sanitizer = DevicegraphSanitizer.new(raw_probed)
-
-      @probed_graph = sanitizer.sanitized_devicegraph
-      @probed_graph.safe_copy(staging)
-
-      # Save sanitized devicegraph into logs
-      log.info("Sanitized probed devicegraph\n#{probed.to_xml}")
+      storage.sanitize_devicegraph
     end
 
     # Whether the final steps to configure Snapper should be performed by YaST
@@ -521,7 +231,7 @@ module Y2Storage
         return false
       end
 
-      root = staging.filesystems.find(&:root?)
+      root = @storage.staging.filesystems.find(&:root?)
       if !root
         log.info "No root filesystem in staging. Don't configure Snapper."
         return false

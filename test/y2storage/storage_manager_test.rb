@@ -384,14 +384,14 @@ describe Y2Storage::StorageManager do
 
     it "initializes #storage with empty devicegraphs" do
       manager = described_class.create_test_instance
-      expect(manager.storage).to be_a Storage::Storage
+      expect(manager.storage).to be_a Y2Storage::StorageWrapper
       expect(manager.probed).to be_empty
       expect(manager.staging).to be_empty
     end
 
     it "initializes #staging_revision" do
       manager = described_class.create_test_instance
-      expect(manager.staging_revision).to be_zero
+      expect(manager.storage.staging_revision).to be_zero
     end
   end
 
