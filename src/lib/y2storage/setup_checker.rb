@@ -42,6 +42,7 @@ module Y2Storage
   #   checker.valid? #=> true
   class SetupChecker
     include Yast::I18n
+    include Yast::Logger
 
     # @return [Devicegraph]
     attr_reader :devicegraph
@@ -147,6 +148,7 @@ module Y2Storage
       require "y2security/security_policies"
       yield
     rescue LoadError
+      log.warn("Security policies cannot be loaded. Make sure yast2-security is installed.")
       nil
     end
 
