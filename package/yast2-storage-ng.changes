@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Aug 30 10:06:43 UTC 2022 - José Iván López González <jlopez@suse.com>
+
+- Validate security policies in both guided proposal and
+  partitioner (part of jsc#SLE-24764).
+- 4.4.41
+
+-------------------------------------------------------------------
 Mon May 30 12:35:08 UTC 2022 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Partitioner: Allow min chunk size of 4 KiB (page size) for RAID0 /
