@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,6 +28,7 @@ require "y2storage/proposal_settings"
 # when running in an installed system. During installation, this module
 # is imported by WorkflowManager.
 Yast.import "ProductControl"
+Yast.import "Mode"
 
 module Y2Storage
   # Class to check whether a setup (devicegraph) fulfills the storage requirements
@@ -74,7 +75,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings
+      boot_warnings + product_warnings + mount_warnings + security_policies_warnings.values.flatten
     end
 
     # All boot errors detected in the setup
@@ -105,7 +106,49 @@ module Y2Storage
       devicegraph.mount_points.map { |mp| mount_warning(mp) }.compact
     end
 
+    # Warnings detected in the setup for each enabled policy
+    #
+    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<SetupError>>]
+    def security_policies_warnings
+      return {} unless Yast::Mode.installation
+
+      return @security_policies_warnings if @security_policies_warnings
+
+      policies_warnings = security_policies_issues.map do |policy, issues|
+        warnings = issues.map { |i| SetupError.new(message: i.message) }
+        [policy, warnings]
+      end
+
+      @security_policies_warnings = policies_warnings.to_h
+    end
+
     private
+
+    # Issues for each enabled security policy
+    #
+    # @note yast2-security might not be available, see {#ensure_security_policies}.
+    #
+    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<Y2Security::SecurityPolicies::Issue>>]
+    def security_policies_issues
+      issues = ensure_security_policies do
+        policies_manager = Y2Security::SecurityPolicies::Manager.instance
+        scope = Y2Security::SecurityPolicies::Scopes::Storage.new(devicegraph: devicegraph)
+
+        policies_manager.issues(scope).to_h
+      end
+
+      issues || {}
+    end
+
+    # Ensures security polices are correctly loaded
+    #
+    # Package yast2-security is not added as dependency to avoid cyclic dependencies.
+    def ensure_security_policies
+      require "y2security/security_policies"
+      yield
+    rescue LoadError
+      nil
+    end
 
     # Mandatory product volumes that are not present in the current setup
     #

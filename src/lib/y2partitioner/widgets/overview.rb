@@ -24,7 +24,7 @@ require "cwm/tree"
 require "y2partitioner/icons"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
-require "y2partitioner/setup_errors_presenter"
+require "y2storage/setup_errors_presenter"
 require "y2storage/setup_checker"
 require "y2storage/package_handler"
 require "y2storage/bcache"
@@ -188,7 +188,7 @@ module Y2Partitioner
         setup_checker = Y2Storage::SetupChecker.new(device_graph)
         return true if setup_checker.valid?
 
-        errors = SetupErrorsPresenter.new(setup_checker).to_html
+        errors = Y2Storage::SetupErrorsPresenter.new(setup_checker).to_html
 
         if setup_checker.errors.empty? # so only warnings there
           # FIXME: improve Yast2::Popup to allow some text before the buttons

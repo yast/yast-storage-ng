@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,7 +23,7 @@ require "y2storage"
 
 Yast.import "HTML"
 
-module Y2Partitioner
+module Y2Storage
   # Class to represent storage setup errors
   class SetupErrorsPresenter
     include Yast::I18n
@@ -50,11 +50,17 @@ module Y2Partitioner
     # @return [SetupChecker] checker for the current setup
     attr_reader :setup_checker
 
-    # HTML representation for boot warnings
+    # HTML representation for all warnings
     #
     # @return [String, nil] nil if there is no boot warning
     def warnings_html
-      warnings = [boot_warnings_html, product_warnings_html, mount_warnings_html].compact
+      warnings = [
+        boot_warnings_html,
+        product_warnings_html,
+        mount_warnings_html,
+        security_policies_warnings_html
+      ].compact
+
       return nil if warnings.empty?
 
       warnings.join(Yast::HTML.Newline)
@@ -95,6 +101,27 @@ module Y2Partitioner
       create_html(header, warnings)
     end
 
+    # HTML representation for warnings about the security policies
+    #
+    # @return [String, nil] nil if there is no warnings
+    def security_policies_warnings_html
+      policies_warnings = setup_checker.security_policies_warnings.map do |policy, warnings|
+        security_policy_warnings_html(policy, warnings)
+      end
+
+      policies_warnings.join(Yast::HTML.Newline)
+    end
+
+    # HTML representation for warnings about a specific security policy
+    #
+    # @param policy [Y2Security::SecurityPolicies::Policy]
+    # @param warnings [Array<SetupError>]
+    def security_policy_warnings_html(policy, warnings)
+      header = format(_("The system does not comply with the %s security policy:"), policy.name)
+
+      create_html(header, warnings)
+    end
+
     # HTML representation for fatal booting errors
     #
     # @return [String, nil] nil if there is no error
@@ -118,7 +145,7 @@ module Y2Partitioner
       return nil if errors.empty?
 
       error_messages = errors.map(&:message)
-      header + Yast::HTML.Newline + Yast::HTML.List(error_messages)
+      header + Yast::HTML.List(error_messages)
     end
   end
 end

@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018] SUSE LLC
+
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +21,7 @@
 
 require_relative "spec_helper"
 require "y2storage"
+require "y2storage/setup_checker"
 
 describe Y2Storage::SetupChecker do
   using Y2Storage::Refinements::SizeCasts
@@ -46,7 +48,7 @@ describe Y2Storage::SetupChecker do
   before do
     allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
     allow(boot_checker).to receive(:warnings).and_return(boot_warnings)
-    allow(boot_checker).to receive(:errors).and_return(fatal_errors)
+    allow(boot_checker).to receive(:errors).and_return(boot_errors)
 
     allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product).and_return(settings)
     allow(settings).to receive(:volumes).and_return(product_volumes)
@@ -63,7 +65,7 @@ describe Y2Storage::SetupChecker do
 
   let(:boot_warnings) { [] }
 
-  let(:fatal_errors) { [] }
+  let(:boot_errors) { [] }
 
   let(:product_volumes) { [] }
 
@@ -104,75 +106,138 @@ describe Y2Storage::SetupChecker do
   end
 
   describe "#valid?" do
-    context "when some mandatory product volume is not present in the system" do
-      let(:product_volumes) { [root_volume, home_volume] }
-      let(:boot_warnings) { [] }
+    before do
+      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+    end
+
+    let(:policies_issues) { {} }
+
+    context "if there is any boot error" do
+      let(:boot_errors) { [boot_error] }
 
       it "returns false" do
         expect(subject.valid?).to eq(false)
       end
     end
 
-    context "when there is some boot error" do
-      let(:product_volumes) { [] }
-      let(:boot_warnings) { [boot_error] }
+    context "if there are no boot errors" do
+      let(:boot_errors) { [] }
 
-      it "returns false" do
-        expect(subject.valid?).to eq(false)
-      end
-    end
+      context "but there is any boot warning" do
+        let(:boot_warnings) { [boot_error] }
 
-    context "when there is some error in the mount options" do
-      before { create_root }
-
-      let(:product_volumes) { [] }
-      let(:boot_warnings) { [] }
-      let(:missing_root_opts) { ["_netdev"] }
-
-      it "returns false" do
-        expect(subject.valid?).to eq(false)
-      end
-    end
-
-    context "when there is a fatal error" do
-      let(:fatal_errors) { [boot_error] }
-
-      it "returns false" do
-        expect(subject.valid?).to eq(false)
-      end
-    end
-
-    context "when all mandatory product volumes are present in the system and there is no boot error" do
-      let(:product_volumes) { [root_volume, home_volume] }
-      let(:boot_warnings) { [] }
-      let(:missing_root_opts) { [] }
-
-      before do
-        create_root
+        it "returns false" do
+          expect(subject.valid?).to eq(false)
+        end
       end
 
-      it "returns true" do
-        expect(subject.valid?).to eq(true)
+      context "but there is any warning because a missing product volume" do
+        let(:product_volumes) { [root_volume] }
+
+        it "returns false" do
+          expect(subject.valid?).to eq(false)
+        end
+      end
+
+      context "but there is any warning because the mount options" do
+        before do
+          create_root
+        end
+
+        let(:missing_root_opts) { ["_netdev"] }
+
+        it "returns false" do
+          expect(subject.valid?).to eq(false)
+        end
+      end
+
+      context "but there is any policy warning" do
+        before do
+          allow(Yast::Mode).to receive(:installation).and_return(true)
+        end
+
+        let(:policies_issues) { { policy1 => policy1_issues } }
+
+        let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
+
+        let(:policy1_issues) { [double("Y2Security::SecurityPolicies::Issue", message: "policy error")] }
+
+        it "returns false" do
+          expect(subject.valid?).to eq(false)
+        end
+      end
+
+      context "and there are no warnings" do
+        it "returns true" do
+          expect(subject.valid?).to eq(true)
+        end
       end
     end
   end
 
+  describe "#errors" do
+    before do
+      create_root
+
+      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+    end
+
+    let(:boot_errors) do
+      [
+        instance_double(Y2Storage::SetupError),
+        instance_double(Y2Storage::SetupError)
+      ]
+    end
+
+    let(:boot_warnings) { [instance_double(Y2Storage::SetupError)] }
+
+    # Mandatory swap is missing
+    let(:product_volumes) { [root_volume, swap_volume] }
+
+    let(:missing_root_opts) { ["_netdev"] }
+
+    let(:policies_issues) { { policy1 => policy1_issues } }
+
+    let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
+
+    let(:policy1_issues) { [double("Y2Security::SecurityPolicies::Issue", message: "policy error")] }
+
+    it "only includes boot errors" do
+      expect(subject.errors).to contain_exactly(*boot_errors)
+    end
+  end
+
   describe "#warnings" do
-    let(:boot_error1) { instance_double(Y2Storage::SetupError) }
-    let(:boot_error2) { instance_double(Y2Storage::SetupError) }
-    let(:boot_warnings) { [boot_error1, boot_error2] }
+    before do
+      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+    end
+
+    let(:boot_warnings) do
+      [
+        instance_double(Y2Storage::SetupError),
+        instance_double(Y2Storage::SetupError)
+      ]
+    end
+
+    let(:boot_errors) { [instance_double(Y2Storage::SetupError)] }
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
+    let(:policies_issues) { {} }
+
     it "includes all boot warnings" do
-      expect(subject.warnings).to include(boot_error1, boot_error2)
+      expect(subject.warnings).to include(*boot_warnings)
     end
 
-    it "does not include an error for optional product volumes" do
+    it "does not include boot errors" do
+      expect(subject.warnings).to_not include(*boot_errors)
+    end
+
+    it "does not include errors for missing optional product volumes" do
       expect(subject.warnings).to_not include(an_object_having_attributes(missing_volume: home_volume))
     end
 
-    it "includes an error for each mandatory product volume not present in the system" do
+    it "includes an error for each missing mandatory product volume" do
       expect(subject.warnings).to include(an_object_having_attributes(missing_volume: root_volume))
       expect(subject.warnings).to include(an_object_having_attributes(missing_volume: swap_volume))
     end
@@ -187,7 +252,43 @@ describe Y2Storage::SetupChecker do
       end
     end
 
-    context "when there is no boot error, mount options are ok and all mandatory volumes are present" do
+    context "when a mount option is missing for some mount point" do
+      before { create_root }
+      let(:boot_warnings) { [] }
+      let(:missing_root_opts) { ["_netdev"] }
+
+      it "includes an error mentioning the missing option" do
+        expect(subject.warnings.map(&:message)).to include(an_object_matching(/_netdev/))
+      end
+    end
+
+    context "when there are issues for some security policy" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(true)
+      end
+
+      let(:boot_warnings) { [] }
+
+      let(:policies_issues) { { policy1 => policy1_issues } }
+
+      let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
+
+      let(:policy1_issues) do
+        [
+          double("Y2Security::SecurityPolicies::Issue", message: "policy error 1"),
+          double("Y2Security::SecurityPolicies::Issue", message: "policy error 2")
+        ]
+      end
+
+      it "includes an error for each policy issue" do
+        expect(subject.warnings.map(&:message)).to include(
+          an_object_matching(/policy error 1/),
+          an_object_matching(/policy error 2/)
+        )
+      end
+    end
+
+    context "when there is no warnings" do
       let(:boot_warnings) { [] }
       let(:product_volumes) { [root_volume, home_volume] }
 
@@ -197,16 +298,6 @@ describe Y2Storage::SetupChecker do
 
       it "returns an empty list" do
         expect(subject.warnings).to be_empty
-      end
-    end
-
-    context "when a mount option is missing for some mount point" do
-      before { create_root }
-      let(:boot_warnings) { [] }
-      let(:missing_root_opts) { ["_netdev"] }
-
-      it "includes an error mentioning the missing option" do
-        expect(subject.warnings.map(&:message)).to include(an_object_matching(/_netdev/))
       end
     end
   end
@@ -353,6 +444,69 @@ describe Y2Storage::SetupChecker do
         warning = subject.mount_warnings.first
         expect(warning.message).to include "/"
         expect(warning.message).to include "one,two"
+      end
+    end
+  end
+
+  describe "#security_policies_warnings" do
+    context "when y2security cannot be required" do
+      before do
+        allow(subject).to receive(:require).with("y2security/security_policies").and_raise(LoadError)
+      end
+
+      it "returns an empty hash" do
+        expect(subject.security_policies_warnings).to eq({})
+      end
+    end
+
+    context "when y2security can be required" do
+      before do
+        allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+      end
+
+      context "and there are no issues for the policies" do
+        let(:policies_issues) { {} }
+
+        it "returns an empty hash" do
+          expect(subject.security_policies_warnings).to eq({})
+        end
+      end
+
+      context "and there are issues for some policy" do
+        let(:policies_issues) { { policy1 => policy1_issues } }
+
+        let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
+
+        let(:policy1_issues) do
+          [
+            double("Y2Security::SecurityPolicies::Issue", message: "policy error 1"),
+            double("Y2Security::SecurityPolicies::Issue", message: "policy error 2")
+          ]
+        end
+
+        context "and the mode is not installation" do
+          before do
+            allow(Yast::Mode).to receive(:installation).and_return(false)
+          end
+
+          it "returns an empty hash" do
+            expect(subject.security_policies_warnings).to eq({})
+          end
+        end
+
+        context "and the mode is installation" do
+          before do
+            allow(Yast::Mode).to receive(:installation).and_return(true)
+          end
+
+          it "returns a hash with the issues of each policy" do
+            warnings = subject.security_policies_warnings
+            expect(warnings[policy1].map(&:message)).to include(
+              an_object_matching(/policy error 1/),
+              an_object_matching(/policy error 2/)
+            )
+          end
+        end
       end
     end
   end
