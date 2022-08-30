@@ -58,6 +58,23 @@ describe Y2Storage::Dialogs::Proposal do
 
     let(:blk_devices) { [] }
 
+    let(:setup_checker0) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid0) }
+    let(:setup_checker1) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid1) }
+
+    let(:setup_checker_valid0) { true }
+    let(:setup_checker_valid1) { true }
+
+    let(:setup_errors_presenter0) do
+      instance_double(Y2Storage::SetupErrorsPresenter, to_html: setup_errors_presenter_content0)
+    end
+
+    let(:setup_errors_presenter1) do
+      instance_double(Y2Storage::SetupErrorsPresenter, to_html: setup_errors_presenter_content1)
+    end
+
+    let(:setup_errors_presenter_content0) { "" }
+    let(:setup_errors_presenter_content1) { "" }
+
     before do
       Y2Storage::StorageManager.create_test_instance
 
@@ -75,6 +92,16 @@ describe Y2Storage::Dialogs::Proposal do
         .to receive(:new).with(actiongraph1).and_return actions_presenter1
       allow(Y2Storage::ActionsPresenter)
         .to receive(:new).with(nil).and_return actions_presenter2
+
+      allow(Y2Storage::SetupChecker).to receive(:new).with(devicegraph0)
+        .and_return(setup_checker0)
+      allow(Y2Storage::SetupChecker).to receive(:new).with(devicegraph1)
+        .and_return(setup_checker1)
+
+      allow(Y2Storage::SetupErrorsPresenter).to receive(:new).with(setup_checker0)
+        .and_return(setup_errors_presenter0)
+      allow(Y2Storage::SetupErrorsPresenter).to receive(:new).with(setup_checker1)
+        .and_return(setup_errors_presenter1)
     end
 
     # Convenience method to inspect the tree of terms for the UI
@@ -252,6 +279,32 @@ describe Y2Storage::Dialogs::Proposal do
 
         include_examples "BOSS information"
 
+        context "if there are setup errors" do
+          let(:setup_checker_valid1) { false }
+
+          let(:setup_errors_presenter_content1) { "<li>Policy issue</li>" }
+
+          it "displays the setup errors" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include "Policy issue"
+            end
+            dialog.run
+          end
+        end
+
+        context "if there are no setup errors" do
+          let(:setup_checker_valid1) { true }
+
+          let(:setup_errors_presenter_content1) { "<li>Policy issue</li>" }
+
+          it "does not display setup errors" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to_not include "Policy issue"
+            end
+            dialog.run
+          end
+        end
+
         it "sets #proposal to the provided proposal" do
           dialog.run
           expect(dialog.proposal).to eq proposal
@@ -418,6 +471,32 @@ describe Y2Storage::Dialogs::Proposal do
       end
 
       include_examples "BOSS information"
+
+      context "if there are setup errors" do
+        let(:setup_checker_valid0) { false }
+
+        let(:setup_errors_presenter_content0) { "<li>Policy issue</li>" }
+
+        it "displays the setup errors" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to include "Policy issue"
+          end
+          dialog.run
+        end
+      end
+
+      context "if there are no setup errors" do
+        let(:setup_checker_valid0) { true }
+
+        let(:setup_errors_presenter_content0) { "<li>Policy issue</li>" }
+
+        it "does not display setup errors" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to_not include "Policy issue"
+          end
+          dialog.run
+        end
+      end
 
       it "sets #proposal to the provided proposal" do
         dialog.run
