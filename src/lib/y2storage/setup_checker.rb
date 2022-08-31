@@ -143,7 +143,11 @@ module Y2Storage
 
     # Ensures security polices are correctly loaded
     #
-    # Package yast2-security is not added as dependency to avoid cyclic dependencies.
+    # The package yast2-security has yast2-storage-ng as dependency, so yast2-storage-ng does not
+    # require yast2-security at RPM level to avoid cyclic dependencies. Note that yast2-security is
+    # always included in the installation image, but it could be missing at building time. And
+    # missing yast2-security in a running system should not be relevant because the policies are
+    # only checked during the installation.
     def ensure_security_policies
       require "y2security/security_policies"
       yield
