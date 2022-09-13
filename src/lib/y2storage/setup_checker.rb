@@ -115,8 +115,8 @@ module Y2Storage
 
       return @security_policies_warnings if @security_policies_warnings
 
-      policies_warnings = security_policies_issues.map do |policy, issues|
-        warnings = issues.map { |i| SetupError.new(message: i.message) }
+      policies_warnings = security_policies_failing_rules.map do |policy, failing_rules|
+        warnings = failing_rules.map { |r| SetupError.new(message: "#{r.id} #{r.description}") }
         [policy, warnings]
       end
 
@@ -125,28 +125,30 @@ module Y2Storage
 
     private
 
-    # Issues for each enabled security policy
+    # Failing rules from each enabled security policy
     #
     # @note yast2-security might not be available, see {#ensure_security_policies}.
     #
-    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<Y2Security::SecurityPolicies::Issue>>]
-    def security_policies_issues
-      issues = ensure_security_policies do
+    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<Y2Security::SecurityPolicies::Rule>>]
+    def security_policies_failing_rules
+      failing_rules = ensure_security_policies do
         policies_manager = Y2Security::SecurityPolicies::Manager.instance
-        scope = Y2Security::SecurityPolicies::Scopes::Storage.new(devicegraph: devicegraph)
+        target_config = Y2Security::SecurityPolicies::TargetConfig.new.tap do |config|
+          config.storage = devicegraph
+        end
 
-        policies_manager.issues(scope).to_h
+        policies_manager.failing_rules(target_config, scope: :storage)
       end
 
-      issues || {}
+      failing_rules || {}
     end
 
     # Ensures security polices are correctly loaded
     #
     # The package yast2-security has yast2-storage-ng as dependency, so yast2-storage-ng does not
     # require yast2-security at RPM level to avoid cyclic dependencies. Note that yast2-security is
-    # always included in the installation image, but it could be missing at building time. And
-    # missing yast2-security in a running system should not be relevant because the policies are
+    # always included in the installation image, but it could be missing at building time.
+    # Missing yast2-security in a running system should not be relevant because the policies are
     # only checked during the installation.
     def ensure_security_policies
       require "y2security/security_policies"

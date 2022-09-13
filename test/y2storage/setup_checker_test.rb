@@ -107,10 +107,10 @@ describe Y2Storage::SetupChecker do
 
   describe "#valid?" do
     before do
-      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
     end
 
-    let(:policies_issues) { {} }
+    let(:policies_failing_rules) { {} }
 
     context "if there is any boot error" do
       let(:boot_errors) { [boot_error] }
@@ -156,11 +156,13 @@ describe Y2Storage::SetupChecker do
           allow(Yast::Mode).to receive(:installation).and_return(true)
         end
 
-        let(:policies_issues) { { policy1 => policy1_issues } }
+        let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
 
         let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-        let(:policy1_issues) { [double("Y2Security::SecurityPolicies::Issue", message: "policy error")] }
+        let(:policy1_failing_rules) do
+          [double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1")]
+        end
 
         it "returns false" do
           expect(subject.valid?).to eq(false)
@@ -179,7 +181,7 @@ describe Y2Storage::SetupChecker do
     before do
       create_root
 
-      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
     end
 
     let(:boot_errors) do
@@ -196,11 +198,13 @@ describe Y2Storage::SetupChecker do
 
     let(:missing_root_opts) { ["_netdev"] }
 
-    let(:policies_issues) { { policy1 => policy1_issues } }
+    let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
 
     let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-    let(:policy1_issues) { [double("Y2Security::SecurityPolicies::Issue", message: "policy error")] }
+    let(:policy1_failing_rules) do
+      [double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1")]
+    end
 
     it "only includes boot errors" do
       expect(subject.errors).to contain_exactly(*boot_errors)
@@ -209,7 +213,7 @@ describe Y2Storage::SetupChecker do
 
   describe "#warnings" do
     before do
-      allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
     end
 
     let(:boot_warnings) do
@@ -223,7 +227,7 @@ describe Y2Storage::SetupChecker do
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
-    let(:policies_issues) { {} }
+    let(:policies_failing_rules) { {} }
 
     it "includes all boot warnings" do
       expect(subject.warnings).to include(*boot_warnings)
@@ -262,28 +266,28 @@ describe Y2Storage::SetupChecker do
       end
     end
 
-    context "when there are issues for some security policy" do
+    context "when there are failing rules for some security policy" do
       before do
         allow(Yast::Mode).to receive(:installation).and_return(true)
       end
 
       let(:boot_warnings) { [] }
 
-      let(:policies_issues) { { policy1 => policy1_issues } }
+      let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
 
       let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-      let(:policy1_issues) do
+      let(:policy1_failing_rules) do
         [
-          double("Y2Security::SecurityPolicies::Issue", message: "policy error 1"),
-          double("Y2Security::SecurityPolicies::Issue", message: "policy error 2")
+          double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1"),
+          double("Y2Security::SecurityPolicies::Rule", id: "Test2", description: "policy rule 2")
         ]
       end
 
       it "includes an error for each policy issue" do
         expect(subject.warnings.map(&:message)).to include(
-          an_object_matching(/policy error 1/),
-          an_object_matching(/policy error 2/)
+          an_object_matching(/policy rule 1/),
+          an_object_matching(/policy rule 2/)
         )
       end
     end
@@ -461,26 +465,26 @@ describe Y2Storage::SetupChecker do
 
     context "when y2security can be required" do
       before do
-        allow(subject).to receive(:security_policies_issues).and_return(policies_issues)
+        allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
       end
 
-      context "and there are no issues for the policies" do
-        let(:policies_issues) { {} }
+      context "and there are no failing rules for the policies" do
+        let(:policies_failing_rules) { {} }
 
         it "returns an empty hash" do
           expect(subject.security_policies_warnings).to eq({})
         end
       end
 
-      context "and there are issues for some policy" do
-        let(:policies_issues) { { policy1 => policy1_issues } }
+      context "and there are failing rules for some policy" do
+        let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
 
         let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-        let(:policy1_issues) do
+        let(:policy1_failing_rules) do
           [
-            double("Y2Security::SecurityPolicies::Issue", message: "policy error 1"),
-            double("Y2Security::SecurityPolicies::Issue", message: "policy error 2")
+            double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1"),
+            double("Y2Security::SecurityPolicies::Rule", id: "Test2", description: "policy rule 2")
           ]
         end
 
@@ -499,11 +503,11 @@ describe Y2Storage::SetupChecker do
             allow(Yast::Mode).to receive(:installation).and_return(true)
           end
 
-          it "returns a hash with the issues of each policy" do
+          it "returns a hash with the failing rules of each policy" do
             warnings = subject.security_policies_warnings
             expect(warnings[policy1].map(&:message)).to include(
-              an_object_matching(/policy error 1/),
-              an_object_matching(/policy error 2/)
+              an_object_matching(/policy rule 1/),
+              an_object_matching(/policy rule 2/)
             )
           end
         end
