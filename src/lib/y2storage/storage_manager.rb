@@ -161,24 +161,24 @@ module Y2Storage
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
 
-      result = storage.commit(force_rw: force_rw, callbacks: callbacks)
+      result = @storage.commit(force_rw: force_rw, callbacks: callbacks)
 
       # Save committed devicegraph into logs
-      log.info("Committed devicegraph\n#{storage.staging.to_xml}")
-      DumpManager.dump(storage.staging, "committed")
+      log.info("Committed devicegraph\n#{@storage.staging.to_xml}")
+      DumpManager.dump(@storage.staging, "committed")
 
       result
     end
 
     # Probes from a yml file instead of doing real probing
     def probe_from_yaml(yaml_file = nil)
-      storage.probe_from_yaml(yaml_file)
+      @storage.probe_from_yaml(yaml_file)
       manage_probing_issues
     end
 
     # Probes from a xml file instead of doing real probing
     def probe_from_xml(xml_file)
-      storage.probe_from_xml(xml_file)
+      @storage.probe_from_xml(xml_file)
       manage_probing_issues
     end
 
@@ -197,7 +197,7 @@ module Y2Storage
       if probed?
         !probed.disk_devices.empty?
       else
-        storage.light_probe
+        @storage.light_probe
       end
     end
 
@@ -218,7 +218,7 @@ module Y2Storage
       continue = raw_probed.issues_manager.report_probing_issues
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
-      storage.sanitize_devicegraph
+      @storage.sanitize_devicegraph
     end
 
     # Whether the final steps to configure Snapper should be performed by YaST
