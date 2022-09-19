@@ -45,7 +45,7 @@ module Y2Storage
   # be extracted to a new place, mainly all stuff related to testing
   # (e.g., {#probe_from_yaml}).
   #
-  class StorageManager # rubocop:disable Metrics/ClassLength
+  class StorageManager
     include Yast::Logger
     extend Forwardable
 
