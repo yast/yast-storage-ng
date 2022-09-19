@@ -187,7 +187,7 @@ module Y2Storage
     # @return [Devicegraph]
     def staging
       @staging ||= begin
-        probe unless probed?
+        probe unless probed? # FIXME: it looks redundant (see StorageManager#staging)
         Devicegraph.new(storage.staging)
       end
     end

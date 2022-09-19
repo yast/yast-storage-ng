@@ -49,17 +49,10 @@ module Y2Storage
     include Yast::Logger
     extend Forwardable
 
-    # Libstorage object
-    #
-    # Calls to several methods (e.g., #environment and #rootprefix) are forwarded to this object.
-    #
-    # @return [Storage::Storage]
-    attr_reader :storage
-
-    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
+    def_delegators :@wrapper, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
       :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
       :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
-      :mode, :configuration, :proposal
+      :mode, :configuration, :proposal, :storage
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -75,14 +68,14 @@ module Y2Storage
 
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
-      @storage = Y2Storage::StorageWrapper.new(storage_environment)
+      @wrapper = Y2Storage::StorageWrapper.new(storage_environment)
     end
 
     # Current architecture
     #
     # @return [Y2Storage::Arch]
     def arch
-      @arch ||= Arch.new(@storage.arch)
+      @arch ||= Arch.new(@wrapper.arch)
     end
 
     # Probes all storage devices
@@ -124,9 +117,9 @@ module Y2Storage
       # (e.g., /mnt/mount/point) and there is nothing mounted there.
       Yast::Pkg.SourceReleaseAll if Yast::Mode.installation
 
-      @storage.probe(probe_callbacks: probe_callbacks)
+      @wrapper.probe(probe_callbacks: probe_callbacks)
       manage_probing_issues
-      DumpManager.dump(@storage.probed)
+      DumpManager.dump(@wrapper.probed)
 
       nil
     end
@@ -143,7 +136,21 @@ module Y2Storage
     # @return [Devicegraph]
     def probed
       probe! unless probed?
-      @storage.probed
+      @wrapper.probed
+    end
+
+    # Staging devicegraph
+    #
+    # @note The initial staging is not exactly the same than the initial staging
+    #   returned by libstorage-ng. This staging is initialized from the sanitized
+    #   probed devicegraph (see {#manage_probing_issues}).
+    #
+    # @raise [Storage::Exception, Yast::AbortException] when probe fails
+    #
+    # @return [Devicegraph]
+    def staging
+      probe! unless probed?
+      @wrapper.staging
     end
 
     # Performs in the system all the necessary operations to make it match the staging devicegraph.
@@ -161,24 +168,24 @@ module Y2Storage
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
 
-      result = @storage.commit(force_rw: force_rw, callbacks: callbacks)
+      result = @wrapper.commit(force_rw: force_rw, callbacks: callbacks)
 
       # Save committed devicegraph into logs
-      log.info("Committed devicegraph\n#{@storage.staging.to_xml}")
-      DumpManager.dump(@storage.staging, "committed")
+      log.info("Committed devicegraph\n#{staging.to_xml}")
+      DumpManager.dump(staging, "committed")
 
       result
     end
 
     # Probes from a yml file instead of doing real probing
     def probe_from_yaml(yaml_file = nil)
-      @storage.probe_from_yaml(yaml_file)
+      @wrapper.probe_from_yaml(yaml_file)
       manage_probing_issues
     end
 
     # Probes from a xml file instead of doing real probing
     def probe_from_xml(xml_file)
-      @storage.probe_from_xml(xml_file)
+      @wrapper.probe_from_xml(xml_file)
       manage_probing_issues
     end
 
@@ -197,7 +204,7 @@ module Y2Storage
       if probed?
         !probed.disk_devices.empty?
       else
-        @storage.light_probe
+        @wrapper.light_probe
       end
     end
 
@@ -218,7 +225,7 @@ module Y2Storage
       continue = raw_probed.issues_manager.report_probing_issues
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
-      @storage.sanitize_devicegraph
+      @wrapper.sanitize_devicegraph
     end
 
     # Whether the final steps to configure Snapper should be performed by YaST
@@ -231,7 +238,7 @@ module Y2Storage
         return false
       end
 
-      root = @storage.staging.filesystems.find(&:root?)
+      root = staging.filesystems.find(&:root?)
       if !root
         log.info "No root filesystem in staging. Don't configure Snapper."
         return false
