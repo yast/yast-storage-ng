@@ -55,7 +55,7 @@ module Y2Storage
     def_delegators :@wrapper, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
       :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
       :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
-      :mode, :configuration, :proposal, :storage
+      :mode, :configuration, :proposal, :commit, :arch, :storage
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -72,13 +72,6 @@ module Y2Storage
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @wrapper = Y2Storage::StorageWrapper.new(storage_environment)
-    end
-
-    # Current architecture
-    #
-    # @return [Y2Storage::Arch]
-    def arch
-      @arch ||= Arch.new(@wrapper.arch)
     end
 
     # Probes all storage devices

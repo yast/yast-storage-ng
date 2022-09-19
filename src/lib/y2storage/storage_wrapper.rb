@@ -17,6 +17,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+
+Yast.import "Arch"
+
 module Y2Storage
   class StorageWrapper
     include Yast::Logger
@@ -46,8 +50,7 @@ module Y2Storage
     # @return [GuidedProposal, nil]
     attr_reader :proposal
 
-    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=,
-      :arch
+    def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -76,6 +79,13 @@ module Y2Storage
       reset_probed
       reset_staging
       reset_staging_revision
+    end
+
+    # Current architecture
+    #
+    # @return [Y2Storage::Arch]
+    def arch
+      @arch ||= Arch.new(@storage.arch)
     end
 
     # Whether probing has been done
