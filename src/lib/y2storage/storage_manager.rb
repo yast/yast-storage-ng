@@ -55,7 +55,7 @@ module Y2Storage
     def_delegators :@wrapper, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
       :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
       :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
-      :mode, :configuration, :proposal, :commit, :arch, :storage
+      :mode, :configuration, :proposal, :commit, :devices_for_installation?, :storage
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
@@ -159,25 +159,6 @@ module Y2Storage
     def probe_from_xml(xml_file)
       @wrapper.probe_from_xml(xml_file)
       manage_probing_issues
-    end
-
-    # Whether there is any device in the system that may be used to install a
-    # system.
-    #
-    # This method does not check sizes or any other property of the devices.
-    # It performs a very simple check and returns true if there is any device
-    # of one of the acceptable types (basically disks or DASDs).
-    #
-    # It will never trigger a hardware probing. The method works even if
-    # such probing has not been performed yet.
-    #
-    # @return [Boolean]
-    def devices_for_installation?
-      if probed?
-        !probed.disk_devices.empty?
-      else
-        @wrapper.light_probe
-      end
     end
 
     private
