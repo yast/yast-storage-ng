@@ -49,6 +49,9 @@ module Y2Storage
     include Yast::Logger
     extend Forwardable
 
+    # @return [Storage::Storage] Storage wrapper
+    attr_reader :wrapper
+
     def_delegators :@wrapper, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
       :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
       :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
@@ -153,30 +156,6 @@ module Y2Storage
       @wrapper.staging
     end
 
-    # Performs in the system all the necessary operations to make it match the staging devicegraph.
-    #
-    # Beware: this method can cause data loss
-    #
-    # The user is asked whether to continue on each error reported by libstorage-ng.
-    #
-    # @param force_rw [Boolean] if mount points should be forced to have read/write permissions.
-    # @param callbacks [Y2Storage::Callbacks::Commit]
-    #
-    # @return [Boolean] whether commit was successful, false if libstorage-ng found a problem and it was
-    #   decided to abort.
-    def commit(force_rw: false, callbacks: nil)
-      # Tell FsSnapshot whether Snapper should be configured later
-      Yast2::FsSnapshot.configure_on_install = configure_snapper?
-
-      result = @wrapper.commit(force_rw: force_rw, callbacks: callbacks)
-
-      # Save committed devicegraph into logs
-      log.info("Committed devicegraph\n#{staging.to_xml}")
-      DumpManager.dump(staging, "committed")
-
-      result
-    end
-
     # Probes from a yml file instead of doing real probing
     def probe_from_yaml(yaml_file = nil)
       @wrapper.probe_from_yaml(yaml_file)
@@ -226,31 +205,6 @@ module Y2Storage
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
       @wrapper.sanitize_devicegraph
-    end
-
-    # Whether the final steps to configure Snapper should be performed by YaST
-    # at the end of the installation process.
-    #
-    # @return [Boolean]
-    def configure_snapper?
-      if !Yast::Mode.installation || !Yast::Stage.initial
-        log.info "Not a fresh installation. Don't configure Snapper."
-        return false
-      end
-
-      root = staging.filesystems.find(&:root?)
-      if !root
-        log.info "No root filesystem in staging. Don't configure Snapper."
-        return false
-      end
-
-      if !root.respond_to?(:configure_snapper)
-        log.info "The root filesystem can't configure snapper."
-        return false
-      end
-
-      log.info "Configure Snapper? #{root.configure_snapper}"
-      root.configure_snapper
     end
 
     # Class methods

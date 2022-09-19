@@ -583,7 +583,7 @@ describe Y2Storage::StorageManager do
       let(:another_fs) { double("Y2Storage::BlkFilesystem", root?: false) }
 
       before do
-        allow(manager).to receive(:staging).and_return staging
+        allow(manager.wrapper).to receive(:staging).and_return staging
         allow(staging).to receive(:pre_commit)
         allow(staging).to receive(:post_commit)
       end

@@ -262,6 +262,8 @@ module Y2Storage
     # @return [Boolean] whether commit was successful, false if libstorage-ng found a problem and it was
     #   decided to abort.
     def commit(force_rw: false, callbacks: nil)
+      # Tell FsSnapshot whether Snapper should be configured later
+      Yast2::FsSnapshot.configure_on_install = configure_snapper?
       callbacks ||= Callbacks::Commit.new
 
       staging.pre_commit
@@ -419,5 +421,29 @@ module Y2Storage
       @staging_revision_after_probing = 0
     end
 
+    # Whether the final steps to configure Snapper should be performed by YaST
+    # at the end of the installation process.
+    #
+    # @return [Boolean]
+    def configure_snapper?
+      if !Yast::Mode.installation || !Yast::Stage.initial
+        log.info "Not a fresh installation. Don't configure Snapper."
+        return false
+      end
+
+      root = staging.filesystems.find(&:root?)
+      if !root
+        log.info "No root filesystem in staging. Don't configure Snapper."
+        return false
+      end
+
+      if !root.respond_to?(:configure_snapper)
+        log.info "The root filesystem can't configure snapper."
+        return false
+      end
+
+      log.info "Configure Snapper? #{root.configure_snapper}"
+      root.configure_snapper
+    end
   end
 end
