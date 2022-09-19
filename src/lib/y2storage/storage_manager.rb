@@ -18,20 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage"
-require "y2storage/arch"
-require "y2storage/fake_device_factory"
-require "y2storage/devicegraph"
-require "y2storage/probed_devicegraph_checker"
-require "y2storage/devicegraph_sanitizer"
-require "y2storage/disk_analyzer"
-require "y2storage/dump_manager"
 require "y2storage/callbacks"
-require "y2storage/hwinfo_reader"
-require "y2storage/configuration"
 require "y2storage/storage_wrapper"
-require "yast2/fs_snapshot"
-require "y2issues/list"
 
 Yast.import "Mode"
 Yast.import "Stage"
