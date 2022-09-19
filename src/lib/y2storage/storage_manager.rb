@@ -38,8 +38,9 @@ Yast.import "Stage"
 Yast.import "Pkg"
 
 module Y2Storage
-  # Singleton class to provide access to the libstorage Storage object and
-  # to store related state information.
+  # Singleton class to provide access to the storage layer
+  #
+  # It relies on StorageWrapper, adding some UI logic and state information.
   #
   # FIXME: This class contains some responsibilities (and code) that could
   # be extracted to a new place, mainly all stuff related to testing
@@ -99,9 +100,6 @@ module Y2Storage
     #
     # Invalidates the probed and staging devicegraph. Real probing is
     # only performed when the instance is not for testing.
-    #
-    # With the default probe callbacks, the errors reported by libstorage-ng are stored in the
-    # {#probe_issues} list.
     #
     # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #

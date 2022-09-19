@@ -22,6 +22,8 @@ require "yast"
 Yast.import "Arch"
 
 module Y2Storage
+  # Class to provide access to the libstorage Storage object and
+  # to store related state information.
   class StorageWrapper
     include Yast::Logger
     extend Forwardable
