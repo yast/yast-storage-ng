@@ -41,10 +41,10 @@ module Y2Storage
     # @return [Storage::Storage] Storage wrapper
     attr_reader :wrapper
 
-    def_delegators :@wrapper, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=, :arch,
-      :probed?, :activate, :deactivate, :activate, :deactivate, :raw_probed, :staging, :staging=,
-      :staging_revision, :system, :proposal=, :probed_disk_analyzer, :staging_changed?, :committed?,
-      :mode, :configuration, :proposal, :commit, :devices_for_installation?, :storage
+    def_delegators :@wrapper, :activate, :arch, :commit, :committed?, :configuration, :deactivate,
+      :devices_for_installation?, :environment, :mode, :prepend_rootprefix, :probed?,
+      :probed_disk_analyzer, :proposal, :proposal=, :raw_probed, :rootprefix, :rootprefix=,
+      :staging, :staging=, :staging_changed?, :staging_revision, :storage, :system
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
