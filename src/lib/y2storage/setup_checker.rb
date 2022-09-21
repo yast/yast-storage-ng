@@ -116,7 +116,9 @@ module Y2Storage
       return @security_policies_warnings if @security_policies_warnings
 
       policies_warnings = security_policies_failing_rules.map do |policy, failing_rules|
-        warnings = failing_rules.map { |r| SetupError.new(message: "#{r.id} #{r.description}") }
+        warnings = failing_rules.sort_by(&:id).map do |rule|
+          SetupError.new(message: "#{rule.id} #{rule.description}")
+        end
         [policy, warnings]
       end
 
