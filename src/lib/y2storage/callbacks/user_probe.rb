@@ -29,6 +29,17 @@ module Y2Storage
       def initialize
         textdomain "storage"
       end
+
+      # Reports probing issues
+      #
+      # @todo Replace the issues manager with just a list of issues
+      #
+      # @param issues_manager [IssuesManager] Issues manager
+      # @return [Boolean] true if the user acknowledges the issues and wants
+      #   to continue; false otherwise.
+      def report_probing_issues(issues_manager)
+        issues_manager.report_probing_issues
+      end
     end
   end
 end

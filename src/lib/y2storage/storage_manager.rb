@@ -201,7 +201,7 @@ module Y2Storage
       @probe_issues = probe_callbacks.issues
 
       probe_performed
-      manage_probing_issues
+      manage_probing_issues(user_callbacks)
       DumpManager.dump(@probed_graph)
 
       nil
@@ -497,8 +497,14 @@ module Y2Storage
     # @raise [Yast::AbortException] if the user decides to not continue. In that case, the probed
     #   and staging devicegraphs also remain untouched, but they are useless for
     #   proposal/partitioner.
-    def manage_probing_issues
-      continue = raw_probed.issues_manager.report_probing_issues
+    def manage_probing_issues(user_callbacks = nil)
+      probing_issues = raw_probed.issues_manager.probing_issues
+
+      continue = true
+      if !StorageEnv.instance.ignore_probe_errors? && probing_issues.any?
+        user_callbacks ||= Callbacks::UserProbe.new
+        continue = user_callbacks.report_probing_issues(raw_probed.issues_manager)
+      end
 
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 
