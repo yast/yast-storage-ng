@@ -157,12 +157,12 @@ module Y2Storage
     #
     # @see #probe!
     #
-    # @param probe_callbacks [Callbacks::Probe, nil]
+    # @param user_callbacks [Callbacks::Probe, nil]
     # @return [Boolean] whether probing was successful, false if libstorage-ng
     #   found a problem and the corresponding callback returned false (i.e. it
     #   was decided to abort due to the error)
-    def probe(probe_callbacks: nil)
-      probe!(probe_callbacks: probe_callbacks)
+    def probe(user_callbacks: nil)
+      probe!(user_callbacks: user_callbacks)
       true
     rescue Storage::Exception, Yast::AbortException => e
       log.error("ERROR: #{e.message}")
@@ -180,9 +180,9 @@ module Y2Storage
     #
     # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
-    # @param probe_callbacks [Callbacks::Probe, nil]
-    def probe!(probe_callbacks: nil)
-      probe_callbacks ||= Callbacks::Probe.new
+    # @param user_callbacks [Callbacks::Probe, nil]
+    def probe!(user_callbacks: nil)
+      probe_callbacks ||= Callbacks::Probe.new(user_callbacks: user_callbacks)
 
       # Release all sources before probing. Otherwise, unmount action could fail if the mount point
       # of the software source device is modified. Note that this is only necessary during the

@@ -36,10 +36,12 @@ module Y2Storage
 
       include Yast::Logger
 
-      def initialize
+      # @param user_callbacks [UserProbe] Probing user callbacks
+      def initialize(user_callbacks: nil)
         textdomain "storage"
 
-        super
+        super()
+        @user_callbacks = user_callbacks || UserProbe.new
       end
 
       # Callback for libstorage-ng to show a message to the user.
@@ -104,6 +106,9 @@ module Y2Storage
       end
 
       private
+
+      # @return [UserProbe] Probing user callbacks
+      attr_reader :user_callbacks
 
       # Interactive pop-up, AutoYaST is not taken into account because this is
       # only used in normal mode, not in (auto)installation.
