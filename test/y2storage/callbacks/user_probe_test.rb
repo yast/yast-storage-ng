@@ -1,0 +1,83 @@
+#!/usr/bin/env rspec
+
+# Copyright (c) [2021] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require_relative "../spec_helper"
+require "y2storage/callbacks/user_probe"
+
+describe Y2Storage::Callbacks::UserProbe do
+  subject { described_class.new }
+
+  let(:devicegraph) { devicegraph_from(scenario) }
+
+  let(:scenario) { "mixed_disks" }
+
+  describe "#report_probing_issues" do
+
+    let(:issues) { Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")]) }
+    let(:reporter) { Y2Storage::IssuesReporter.new(issues) }
+    let(:acepted) { true }
+
+    before do
+      allow(Y2Storage::IssuesReporter).to receive(:new).with(issues)
+        .and_return(reporter)
+
+      allow(reporter).to receive(:report).and_return(acepted)
+    end
+
+    it "reports the issues" do
+      expect(reporter).to receive(:report) do |args|
+        expect(args[:message]).to include("Issues found")
+      end
+
+      subject.report_probing_issues(issues)
+    end
+
+    context "when the report is accepted" do
+      let(:accepted) { true }
+
+      it "returns true" do
+        expect(subject.report_probing_issues(issues)).to eq(true)
+      end
+    end
+
+    context "when the report is rejected" do
+      let(:acepted) { false }
+
+      it "returns false" do
+        expect(subject.report_probing_issues(issues)).to eq(false)
+      end
+    end
+
+    context "when there are no probing issues" do
+      let(:issues) { Y2Issues::List.new }
+
+      it "does not report issues" do
+        expect_any_instance_of(Y2Storage::IssuesReporter).to_not receive(:report)
+
+        subject.report_probing_issues(issues)
+      end
+
+      it "returns true" do
+        expect(subject.report_probing_issues(issues)).to eq(true)
+      end
+    end
+  end
+end

@@ -81,7 +81,7 @@ module Y2Storage
     #
     # @return [Y2Issues::List]
     def issues
-      devicegraph.issues_manager.probing_issues
+      devicegraph.probing_issues
     end
   end
 end

@@ -30,8 +30,7 @@ describe Y2Partitioner::Widgets::Menus::View do
 
   let(:graphical) { true }
 
-  let(:issues_manager) { instance_double(Y2Storage::IssuesManager, probing_issues: issues) }
-  let(:devicegraph) { instance_double(Y2Storage::Devicegraph, issues_manager: issues_manager) }
+  let(:devicegraph) { instance_double(Y2Storage::Devicegraph, probing_issues: issues) }
   let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs, system: devicegraph) }
 
   let(:issues) { Y2Issues::List.new }

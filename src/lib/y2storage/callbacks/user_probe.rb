@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/issues_reporter"
 
 module Y2Storage
   module Callbacks
@@ -34,11 +35,14 @@ module Y2Storage
       #
       # @todo Replace the issues manager with just a list of issues
       #
-      # @param issues_manager [IssuesManager] Issues manager
+      # @param IssuesList [IssuesList] Probing issues
       # @return [Boolean] true if the user acknowledges the issues and wants
       #   to continue; false otherwise.
-      def report_probing_issues(issues_manager)
-        issues_manager.report_probing_issues
+      def report_probing_issues(issues)
+        return true if issues.empty?
+
+        reporter = Y2Storage::IssuesReporter.new(issues)
+        reporter.report(message: _("Issues found while analyzing the storage devices."))
       end
     end
   end

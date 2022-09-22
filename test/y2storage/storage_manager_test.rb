@@ -684,7 +684,7 @@ describe Y2Storage::StorageManager do
       context "and there are issues during probing" do
         before do
           allow(manager.storage).to receive(:probed).and_return st_probed
-          allow_any_instance_of(Y2Storage::IssuesManager)
+          allow_any_instance_of(Y2Storage::Callbacks::UserProbe)
             .to receive(:report_probing_issues).and_return(continue)
         end
 
@@ -692,7 +692,7 @@ describe Y2Storage::StorageManager do
         let(:continue) { true }
 
         it "reports the probing issues" do
-          expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+          expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_probing_issues)
 
           manager.probe
         end
@@ -843,7 +843,7 @@ describe Y2Storage::StorageManager do
     context "and there are issues during probing" do
       before do
         allow(manager.storage).to receive(:probed).and_return st_probed
-        allow_any_instance_of(Y2Storage::IssuesManager)
+        allow_any_instance_of(Y2Storage::Callbacks::UserProbe)
           .to receive(:report_probing_issues).and_return(continue)
       end
 
@@ -863,14 +863,14 @@ describe Y2Storage::StorageManager do
 
       it "stores the issues" do
         manager.probe!
-        issues_manager = manager.probed.issues_manager
+        probing_issues = manager.probed.probing_issues
 
-        expect(issues_manager.probing_issues).to be_a(Y2Issues::List)
-        expect(issues_manager.probing_issues).to_not be_empty
+        expect(probing_issues).to be_a(Y2Issues::List)
+        expect(probing_issues).to_not be_empty
       end
 
       it "reports the probing issues" do
-        expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+        expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_probing_issues)
 
         manager.probe!
       end

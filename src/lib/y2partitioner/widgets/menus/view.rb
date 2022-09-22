@@ -90,7 +90,7 @@ module Y2Partitioner
         end
 
         def probing_issues?
-          DeviceGraphs.instance.system.issues_manager.probing_issues.any?
+          DeviceGraphs.instance.system.probing_issues.any?
         end
       end
     end

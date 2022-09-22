@@ -29,6 +29,7 @@ require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/configuration"
+require "y2storage/storage_env"
 require "yast2/fs_snapshot"
 require "y2issues/list"
 
@@ -477,7 +478,7 @@ module Y2Storage
       issues = activate_issues.concat(probe_issues)
       issues.concat(ProbedDevicegraphChecker.new(raw_probed).issues)
 
-      raw_probed.issues_manager.probing_issues = issues
+      raw_probed.probing_issues = issues
     end
 
     # Resets the #staging_revision
@@ -498,12 +499,12 @@ module Y2Storage
     #   and staging devicegraphs also remain untouched, but they are useless for
     #   proposal/partitioner.
     def manage_probing_issues(user_callbacks = nil)
-      probing_issues = raw_probed.issues_manager.probing_issues
+      probing_issues = raw_probed.probing_issues
 
       continue = true
       if !StorageEnv.instance.ignore_probe_errors? && probing_issues.any?
         user_callbacks ||= Callbacks::UserProbe.new
-        continue = user_callbacks.report_probing_issues(raw_probed.issues_manager)
+        continue = user_callbacks.report_probing_issues(raw_probed.probing_issues)
       end
 
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
