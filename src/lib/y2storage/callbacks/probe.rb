@@ -39,7 +39,7 @@ module Y2Storage
         textdomain "storage"
 
         super()
-        @user_callbacks = user_callbacks || UserProbe.new
+        @user_callbacks = user_callbacks || YastProbe.new
       end
 
       # Callback for libstorage-ng to show a message to the user.

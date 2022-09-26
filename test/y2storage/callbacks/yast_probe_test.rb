@@ -20,9 +20,9 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require "y2storage/callbacks/user_probe"
+require "y2storage/callbacks/yast_probe"
 
-describe Y2Storage::Callbacks::UserProbe do
+describe Y2Storage::Callbacks::YastProbe do
   subject { described_class.new }
 
   let(:devicegraph) { devicegraph_from(scenario) }
