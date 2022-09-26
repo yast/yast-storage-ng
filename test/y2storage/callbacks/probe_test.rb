@@ -35,9 +35,35 @@ describe Y2Storage::Callbacks::Probe do
   end
 
   describe "#begin" do
+    before do
+      allow(Yast::Pkg).to receive(:SourceReleaseAll)
+    end
+
     it "clears again flag" do
       subject.begin
       expect(subject.again?).to be false
+    end
+
+    context "during installation" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(true)
+      end
+
+      it "releases software source devices before probing" do
+        expect(Yast::Pkg).to receive(:SourceReleaseAll)
+        subject.begin
+      end
+    end
+
+    context "in an installed system" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(false)
+      end
+
+      it "releases software source devices before probing" do
+        expect(Yast::Pkg).to_not receive(:SourceReleaseAll)
+        subject.begin
+      end
     end
   end
 

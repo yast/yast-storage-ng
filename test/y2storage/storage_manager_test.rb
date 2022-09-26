@@ -806,30 +806,6 @@ describe Y2Storage::StorageManager do
       expect(manager.probe!).to be_nil
     end
 
-    context "during installation" do
-      before do
-        allow(Yast::Mode).to receive(:installation).and_return(true)
-      end
-
-      it "releases software source devices before probing" do
-        expect(Yast::Pkg).to receive(:SourceReleaseAll)
-
-        manager.probe!
-      end
-    end
-
-    context "in an installed system" do
-      before do
-        allow(Yast::Mode).to receive(:installation).and_return(false)
-      end
-
-      it "does not release software source devices before probing" do
-        expect(Yast::Pkg).to_not receive(:SourceReleaseAll)
-
-        manager.probe!
-      end
-    end
-
     context "and libstorage-ng fails while probing" do
       before do
         allow(manager.storage).to receive(:probe).and_raise Storage::Exception
