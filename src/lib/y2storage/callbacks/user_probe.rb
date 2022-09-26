@@ -35,7 +35,7 @@ module Y2Storage
       # This default implementation always returns true, asking libstorage-ng
       # to continue.
       #
-      # @param _issues [IssuesList] Probing issues
+      # @param issues [IssuesList] Probing issues
       # @return [Boolean] true if the user acknowledges the issues and wants
       #   to continue; false otherwise.
       def report_issues(issues)
@@ -48,7 +48,7 @@ module Y2Storage
       # This default implementation always returns false, preventing packages
       # installation.
       #
-      # @param _packages [Array<String>] List of packages to install
+      # @param packages [Array<String>] List of packages to install
       # @return [Boolean] return true if the package should be installed; false otherwise
       def install_packages?(packages)
         log.info "Found the following issues in the devicegraph: #{packages}"

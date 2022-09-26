@@ -35,7 +35,7 @@ module Y2Storage
 
       # Report activation and probing issues through IssuesReporter
       #
-      # @param _issues [IssuesList] Probing issues
+      # @param issues [IssuesList] Probing issues
       # @return [Boolean] true if the user accepts to continue; false otherwise
       # @see UserProbe#report_issues
       def report_issues(issues)
