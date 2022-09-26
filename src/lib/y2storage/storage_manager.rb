@@ -183,7 +183,7 @@ module Y2Storage
     #
     # @param callbacks [Callbacks::Probe, nil]
     def probe!(callbacks = nil)
-      probe_callbacks ||= Callbacks::Probe.new(user_callbacks: callbacks)
+      probe_callbacks = Callbacks::Probe.new(user_callbacks: callbacks)
 
       # Release all sources before probing. Otherwise, unmount action could fail if the mount point
       # of the software source device is modified. Note that this is only necessary during the
