@@ -19,6 +19,9 @@
 
 require "yast"
 require "y2storage/issues_reporter"
+require "yast2/popup"
+
+Yast.import "Label"
 
 module Y2Storage
   module Callbacks
@@ -41,6 +44,30 @@ module Y2Storage
 
         reporter = Y2Storage::IssuesReporter.new(issues)
         reporter.report(message: _("Issues found while analyzing the storage devices."))
+      end
+
+      # Interactive pop-up, AutoYaST is not taken into account because this is
+      # only used in normal mode, not in (auto)installation.
+      #
+      # @param packages [Array<String>] List of packages to install
+      # @return [Boolean] return true if the package should be installed; false otherwise
+      def install_packages?(packages)
+        text = n_(
+          "The following package needs to be installed to fully analyze the system:\n" \
+          "%s\n\n" \
+          "If you ignore this and continue without installing it, the system\n" \
+          "information presented by YaST will be incomplete.",
+          "The following packages need to be installed to fully analyze the system:\n" \
+          "%s\n\n" \
+          "If you ignore this and continue without installing them, the system\n" \
+          "information presented by YaST will be incomplete.",
+          packages.size
+        ) % packages.sort.join(", ")
+
+        buttons = { ignore: Yast::Label.IgnoreButton, install: Yast::Label.InstallButton }
+
+        answer = Yast2::Popup.show(text, buttons: buttons, focus: :install)
+        answer == :install
       end
     end
   end

@@ -30,7 +30,6 @@ describe Y2Storage::Callbacks::UserProbe do
   let(:scenario) { "mixed_disks" }
 
   describe "#report_issues" do
-
     let(:issues) { Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")]) }
     let(:reporter) { Y2Storage::IssuesReporter.new(issues) }
     let(:acepted) { true }
@@ -77,6 +76,35 @@ describe Y2Storage::Callbacks::UserProbe do
 
       it "returns true" do
         expect(subject.report_issues(issues)).to eq(true)
+      end
+    end
+  end
+
+  describe "#install_packages?" do
+    before do
+      allow(Yast2::Popup).to receive(:show).and_return(answer)
+    end
+
+    let(:answer) { :install }
+
+    it "asks the user whether packages should be installed" do
+      expect(Yast2::Popup).to receive(:show)
+        .with(/The following package needs to be installed/, buttons: Hash, focus: :install)
+        .and_return(:install)
+      subject.install_packages?(["btrfsprogs"])
+    end
+
+    context "if the clicks 'Ignore'" do
+      let(:answer) { :ignore }
+
+      it "returns false" do
+        expect(subject.install_packages?(["btrfsprogs"])).to eq(false)
+      end
+    end
+
+    context "if the clicks 'Ignore'" do
+      it "returns true" do
+        expect(subject.install_packages?(["btrfsprogs"])).to eq(true)
       end
     end
   end

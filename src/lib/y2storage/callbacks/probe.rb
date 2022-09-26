@@ -18,13 +18,11 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "yast2/popup"
 require "y2storage/callbacks/issues_callback"
 require "y2storage/storage_features_list"
 require "y2storage/package_handler"
 
 Yast.import "Mode"
-Yast.import "Label"
 
 module Y2Storage
   module Callbacks
@@ -83,11 +81,13 @@ module Y2Storage
         # Redirect to error callback if no packages can be installed.
         return error(message, what) unless can_install?(packages)
 
-        answer = show_popup(packages)
+        answer = user_callbacks.install_packages?(packages)
         log.info "User answer: #{answer} (packages #{packages})"
 
-        return true if answer == :ignore
+        # continue if the user does not want to install the missing packages
+        return true unless answer
 
+        # install the missing packages and try again
         PackageHandler.new(packages).commit
         @again = true
         false
@@ -109,26 +109,6 @@ module Y2Storage
 
       # @return [UserProbe] Probing user callbacks
       attr_reader :user_callbacks
-
-      # Interactive pop-up, AutoYaST is not taken into account because this is
-      # only used in normal mode, not in (auto)installation.
-      def show_popup(packages)
-        text = n_(
-          "The following package needs to be installed to fully analyze the system:\n" \
-          "%s\n\n" \
-          "If you ignore this and continue without installing it, the system\n" \
-          "information presented by YaST will be incomplete.",
-          "The following packages need to be installed to fully analyze the system:\n" \
-          "%s\n\n" \
-          "If you ignore this and continue without installing them, the system\n" \
-          "information presented by YaST will be incomplete.",
-          packages.size
-        ) % packages.sort.join(", ")
-
-        buttons = { ignore: Yast::Label.IgnoreButton, install: Yast::Label.InstallButton }
-
-        Yast2::Popup.show(text, buttons: buttons, focus: :install)
-      end
 
       def can_install?(packages)
         if packages.empty?
