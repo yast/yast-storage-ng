@@ -26,10 +26,6 @@ module Y2Storage
     class UserProbe
       include Yast::Logger
 
-      def initialize
-        textdomain "storage"
-      end
-
       # Reports activation and probing issues
       #
       # This default implementation always returns true, asking libstorage-ng

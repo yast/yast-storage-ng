@@ -38,7 +38,7 @@ module Y2Storage
         textdomain "storage"
       end
 
-      # Report activation and probing issues through IssuesReporter
+      # Reports activation and probing issues through IssuesReporter
       #
       # @param issues [IssuesList] Probing issues
       # @return [Boolean] true if the user accepts to continue; false otherwise
