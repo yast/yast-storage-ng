@@ -33,9 +33,7 @@ module Y2Storage
 
       # Reports probing issues
       #
-      # @todo Replace the issues manager with just a list of issues
-      #
-      # @param IssuesList [IssuesList] Probing issues
+      # @param issues [IssuesList] Probing issues
       # @return [Boolean] true if the user acknowledges the issues and wants
       #   to continue; false otherwise.
       def report_probing_issues(issues)
