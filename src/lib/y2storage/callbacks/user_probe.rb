@@ -36,7 +36,7 @@ module Y2Storage
       # @param issues [IssuesList] Probing issues
       # @return [Boolean] true if the user acknowledges the issues and wants
       #   to continue; false otherwise.
-      def report_probing_issues(issues)
+      def report_issues(issues)
         return true if issues.empty?
 
         reporter = Y2Storage::IssuesReporter.new(issues)

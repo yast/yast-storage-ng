@@ -29,7 +29,7 @@ describe Y2Storage::Callbacks::UserProbe do
 
   let(:scenario) { "mixed_disks" }
 
-  describe "#report_probing_issues" do
+  describe "#report_issues" do
 
     let(:issues) { Y2Issues::List.new([Y2Storage::Issue.new("Issue 1")]) }
     let(:reporter) { Y2Storage::IssuesReporter.new(issues) }
@@ -47,14 +47,14 @@ describe Y2Storage::Callbacks::UserProbe do
         expect(args[:message]).to include("Issues found")
       end
 
-      subject.report_probing_issues(issues)
+      subject.report_issues(issues)
     end
 
     context "when the report is accepted" do
       let(:accepted) { true }
 
       it "returns true" do
-        expect(subject.report_probing_issues(issues)).to eq(true)
+        expect(subject.report_issues(issues)).to eq(true)
       end
     end
 
@@ -62,7 +62,7 @@ describe Y2Storage::Callbacks::UserProbe do
       let(:acepted) { false }
 
       it "returns false" do
-        expect(subject.report_probing_issues(issues)).to eq(false)
+        expect(subject.report_issues(issues)).to eq(false)
       end
     end
 
@@ -72,11 +72,11 @@ describe Y2Storage::Callbacks::UserProbe do
       it "does not report issues" do
         expect_any_instance_of(Y2Storage::IssuesReporter).to_not receive(:report)
 
-        subject.report_probing_issues(issues)
+        subject.report_issues(issues)
       end
 
       it "returns true" do
-        expect(subject.report_probing_issues(issues)).to eq(true)
+        expect(subject.report_issues(issues)).to eq(true)
       end
     end
   end

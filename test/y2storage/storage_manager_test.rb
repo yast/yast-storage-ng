@@ -685,14 +685,14 @@ describe Y2Storage::StorageManager do
         before do
           allow(manager.storage).to receive(:probed).and_return st_probed
           allow_any_instance_of(Y2Storage::Callbacks::UserProbe)
-            .to receive(:report_probing_issues).and_return(continue)
+            .to receive(:report_issues).and_return(continue)
         end
 
         let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
         let(:continue) { true }
 
         it "reports the probing issues" do
-          expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_probing_issues)
+          expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_issues)
 
           manager.probe
         end
@@ -844,7 +844,7 @@ describe Y2Storage::StorageManager do
       before do
         allow(manager.storage).to receive(:probed).and_return st_probed
         allow_any_instance_of(Y2Storage::Callbacks::UserProbe)
-          .to receive(:report_probing_issues).and_return(continue)
+          .to receive(:report_issues).and_return(continue)
       end
 
       let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
@@ -870,7 +870,7 @@ describe Y2Storage::StorageManager do
       end
 
       it "reports the probing issues" do
-        expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_probing_issues)
+        expect_any_instance_of(Y2Storage::Callbacks::UserProbe).to receive(:report_issues)
 
         manager.probe!
       end
