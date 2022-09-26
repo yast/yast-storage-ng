@@ -33,6 +33,11 @@ module Y2Storage
       include Yast::I18n
       include Yast::Logger
 
+      def initialize
+        super
+        textdomain "storage"
+      end
+
       # Report activation and probing issues through IssuesReporter
       #
       # @param issues [IssuesList] Probing issues
