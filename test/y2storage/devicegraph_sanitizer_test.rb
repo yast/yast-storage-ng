@@ -27,10 +27,9 @@ describe Y2Storage::DevicegraphSanitizer do
 
   let(:devicegraph) { devicegraph_from("mixed_disks") }
   let(:issues) { Y2Issues::List.new }
-  let(:issues_manager) { instance_double(Y2Storage::IssuesManager, probing_issues: issues) }
 
   before do
-    allow(devicegraph).to receive(:issues_manager).and_return(issues_manager)
+    allow(devicegraph).to receive(:probing_issues).and_return(issues)
   end
 
   describe "#sanitized_devicegraph" do

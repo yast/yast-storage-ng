@@ -81,7 +81,7 @@ module Y2Partitioner
         #
         # @return [Y2Issues::List]
         def issues
-          DeviceGraphs.instance.system.issues_manager.probing_issues
+          DeviceGraphs.instance.system.probing_issues
         end
       end
     end

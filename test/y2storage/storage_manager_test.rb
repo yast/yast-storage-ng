@@ -684,15 +684,15 @@ describe Y2Storage::StorageManager do
       context "and there are issues during probing" do
         before do
           allow(manager.storage).to receive(:probed).and_return st_probed
-          allow_any_instance_of(Y2Storage::IssuesManager)
-            .to receive(:report_probing_issues).and_return(continue)
+          allow_any_instance_of(Y2Storage::Callbacks::YastProbe)
+            .to receive(:report_issues).and_return(continue)
         end
 
         let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
         let(:continue) { true }
 
         it "reports the probing issues" do
-          expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+          expect_any_instance_of(Y2Storage::Callbacks::YastProbe).to receive(:report_issues)
 
           manager.probe
         end
@@ -806,30 +806,6 @@ describe Y2Storage::StorageManager do
       expect(manager.probe!).to be_nil
     end
 
-    context "during installation" do
-      before do
-        allow(Yast::Mode).to receive(:installation).and_return(true)
-      end
-
-      it "releases software source devices before probing" do
-        expect(Yast::Pkg).to receive(:SourceReleaseAll)
-
-        manager.probe!
-      end
-    end
-
-    context "in an installed system" do
-      before do
-        allow(Yast::Mode).to receive(:installation).and_return(false)
-      end
-
-      it "does not release software source devices before probing" do
-        expect(Yast::Pkg).to_not receive(:SourceReleaseAll)
-
-        manager.probe!
-      end
-    end
-
     context "and libstorage-ng fails while probing" do
       before do
         allow(manager.storage).to receive(:probe).and_raise Storage::Exception
@@ -843,8 +819,8 @@ describe Y2Storage::StorageManager do
     context "and there are issues during probing" do
       before do
         allow(manager.storage).to receive(:probed).and_return st_probed
-        allow_any_instance_of(Y2Storage::IssuesManager)
-          .to receive(:report_probing_issues).and_return(continue)
+        allow_any_instance_of(Y2Storage::Callbacks::YastProbe)
+          .to receive(:report_issues).and_return(continue)
       end
 
       let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
@@ -863,14 +839,14 @@ describe Y2Storage::StorageManager do
 
       it "stores the issues" do
         manager.probe!
-        issues_manager = manager.probed.issues_manager
+        probing_issues = manager.probed.probing_issues
 
-        expect(issues_manager.probing_issues).to be_a(Y2Issues::List)
-        expect(issues_manager.probing_issues).to_not be_empty
+        expect(probing_issues).to be_a(Y2Issues::List)
+        expect(probing_issues).to_not be_empty
       end
 
       it "reports the probing issues" do
-        expect_any_instance_of(Y2Storage::IssuesManager).to receive(:report_probing_issues)
+        expect_any_instance_of(Y2Storage::Callbacks::YastProbe).to receive(:report_issues)
 
         manager.probe!
       end

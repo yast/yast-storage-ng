@@ -29,12 +29,12 @@ require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/configuration"
+require "y2storage/storage_env"
 require "yast2/fs_snapshot"
 require "y2issues/list"
 
 Yast.import "Mode"
 Yast.import "Stage"
-Yast.import "Pkg"
 
 module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
@@ -157,12 +157,12 @@ module Y2Storage
     #
     # @see #probe!
     #
-    # @param probe_callbacks [Callbacks::Probe, nil]
+    # @param callbacks [Callbacks::UserProbe, nil]
     # @return [Boolean] whether probing was successful, false if libstorage-ng
     #   found a problem and the corresponding callback returned false (i.e. it
     #   was decided to abort due to the error)
-    def probe(probe_callbacks: nil)
-      probe!(probe_callbacks: probe_callbacks)
+    def probe(callbacks = nil)
+      probe!(callbacks)
       true
     rescue Storage::Exception, Yast::AbortException => e
       log.error("ERROR: #{e.message}")
@@ -180,15 +180,9 @@ module Y2Storage
     #
     # @raise [Storage::Exception, Yast::AbortException] when probe fails
     #
-    # @param probe_callbacks [Callbacks::Probe, nil]
-    def probe!(probe_callbacks: nil)
-      probe_callbacks ||= Callbacks::Probe.new
-
-      # Release all sources before probing. Otherwise, unmount action could fail if the mount point
-      # of the software source device is modified. Note that this is only necessary during the
-      # installation because libstorage-ng would try to unmount from the chroot path
-      # (e.g., /mnt/mount/point) and there is nothing mounted there.
-      Yast::Pkg.SourceReleaseAll if Yast::Mode.installation
+    # @param callbacks [Callbacks::Probe, nil]
+    def probe!(callbacks = nil)
+      probe_callbacks = Callbacks::Probe.new(user_callbacks: callbacks)
 
       begin
         @storage.probe(probe_callbacks)
@@ -201,7 +195,7 @@ module Y2Storage
       @probe_issues = probe_callbacks.issues
 
       probe_performed
-      manage_probing_issues
+      manage_probing_issues(callbacks)
       DumpManager.dump(@probed_graph)
 
       nil
@@ -477,7 +471,7 @@ module Y2Storage
       issues = activate_issues.concat(probe_issues)
       issues.concat(ProbedDevicegraphChecker.new(raw_probed).issues)
 
-      raw_probed.issues_manager.probing_issues = issues
+      raw_probed.probing_issues = issues
     end
 
     # Resets the #staging_revision
@@ -494,11 +488,18 @@ module Y2Storage
     # The raw probed devicegraph remains untouched, and the new sanitized one is internally saved and
     # copied into the staging devicegraph.
     #
+    # @param callbacks [Callbacks::UserProbe,nil]
     # @raise [Yast::AbortException] if the user decides to not continue. In that case, the probed
     #   and staging devicegraphs also remain untouched, but they are useless for
     #   proposal/partitioner.
-    def manage_probing_issues
-      continue = raw_probed.issues_manager.report_probing_issues
+    def manage_probing_issues(callbacks = nil)
+      probing_issues = raw_probed.probing_issues
+
+      continue = true
+      if !StorageEnv.instance.ignore_probe_errors? && probing_issues.any?
+        callbacks ||= Callbacks::YastProbe.new
+        continue = callbacks.report_issues(raw_probed.probing_issues)
+      end
 
       raise Yast::AbortException, "Devicegraph contains errors. User has aborted." unless continue
 

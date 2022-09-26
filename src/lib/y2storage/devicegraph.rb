@@ -38,7 +38,6 @@ require "y2storage/partition"
 require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
 require "y2storage/storage_features_list"
-require "y2storage/issues_manager"
 
 module Y2Storage
   # The master container of libstorage.
@@ -130,6 +129,9 @@ module Y2Storage
     storage_forward :remove_device
     private :remove_device
 
+    # @return [IssuesList] List of probing issues
+    attr_accessor :probing_issues
+
     # Creates a new devicegraph with the information read from a file
     #
     # @param filename [String]
@@ -139,11 +141,6 @@ module Y2Storage
       devicegraph = ::Storage::Devicegraph.new(storage)
       Y2Storage::FakeDeviceFactory.load_yaml_file(devicegraph, filename)
       new(devicegraph)
-    end
-
-    # @return [IssuesManager]
-    def issues_manager
-      @issues_manager ||= IssuesManager.new(self)
     end
 
     # @return [Devicegraph]
@@ -169,7 +166,7 @@ module Y2Storage
     # @param devicegraph [Devicegraph]
     def copy(devicegraph)
       storage_copy(devicegraph)
-      devicegraph.issues_manager.probing_issues = issues_manager.probing_issues
+      devicegraph.probing_issues = probing_issues
       devicegraph
     end
 
