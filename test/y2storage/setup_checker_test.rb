@@ -161,7 +161,13 @@ describe Y2Storage::SetupChecker do
         let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
         let(:policy1_failing_rules) do
-          [double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1")]
+          [
+            double("Y2Security::SecurityPolicies::Rule",
+              id:          "Test1",
+              identifiers: [],
+              references:  [],
+              description: "policy rule 1")
+          ]
         end
 
         it "returns false" do
@@ -203,7 +209,13 @@ describe Y2Storage::SetupChecker do
     let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
     let(:policy1_failing_rules) do
-      [double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1")]
+      [
+        double("Y2Security::SecurityPolicies::Rule",
+          id:          "Test1",
+          identifiers: [],
+          references:  [],
+          description: "policy rule 1")
+      ]
     end
 
     it "only includes boot errors" do
@@ -279,8 +291,16 @@ describe Y2Storage::SetupChecker do
 
       let(:policy1_failing_rules) do
         [
-          double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1"),
-          double("Y2Security::SecurityPolicies::Rule", id: "Test2", description: "policy rule 2")
+          double("Y2Security::SecurityPolicies::Rule",
+            id:          "test1",
+            identifiers: [],
+            references:  [],
+            description: "policy rule 1"),
+          double("Y2Security::SecurityPolicies::Rule",
+            id:          "test2",
+            identifiers: [],
+            references:  [],
+            description: "policy rule 2")
         ]
       end
 
@@ -452,27 +472,27 @@ describe Y2Storage::SetupChecker do
     end
   end
 
-  describe "#security_policies_warnings" do
+  describe "#security_policies_failing_rules" do
     context "when y2security cannot be required" do
       before do
         allow(subject).to receive(:require).with("y2security/security_policies").and_raise(LoadError)
       end
 
       it "returns an empty hash" do
-        expect(subject.security_policies_warnings).to eq({})
+        expect(subject.security_policies_failing_rules).to eq({})
       end
     end
 
     context "when y2security can be required" do
       before do
-        allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
+        allow(subject).to receive(:with_security_policies).and_return(policies_failing_rules)
       end
 
       context "and there are no failing rules for the policies" do
         let(:policies_failing_rules) { {} }
 
         it "returns an empty hash" do
-          expect(subject.security_policies_warnings).to eq({})
+          expect(subject.security_policies_failing_rules).to eq({})
         end
       end
 
@@ -483,8 +503,16 @@ describe Y2Storage::SetupChecker do
 
         let(:policy1_failing_rules) do
           [
-            double("Y2Security::SecurityPolicies::Rule", id: "Test1", description: "policy rule 1"),
-            double("Y2Security::SecurityPolicies::Rule", id: "Test2", description: "policy rule 2")
+            double("Y2Security::SecurityPolicies::Rule",
+              id:          "test1",
+              identifiers: [],
+              references:  [],
+              description: "policy rule 1"),
+            double("Y2Security::SecurityPolicies::Rule",
+              id:          "test2",
+              identifiers: [],
+              references:  [],
+              description: "policy rule 2")
           ]
         end
 
@@ -494,7 +522,7 @@ describe Y2Storage::SetupChecker do
           end
 
           it "returns an empty hash" do
-            expect(subject.security_policies_warnings).to eq({})
+            expect(subject.security_policies_failing_rules).to eq({})
           end
         end
 
@@ -504,8 +532,8 @@ describe Y2Storage::SetupChecker do
           end
 
           it "returns a hash with the failing rules of each policy" do
-            warnings = subject.security_policies_warnings
-            expect(warnings[policy1].map(&:message)).to include(
+            failing_rules = subject.security_policies_failing_rules
+            expect(failing_rules[policy1].map(&:description)).to include(
               an_object_matching(/policy rule 1/),
               an_object_matching(/policy rule 2/)
             )

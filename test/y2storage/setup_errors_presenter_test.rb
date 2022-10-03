@@ -33,7 +33,7 @@ describe Y2Storage::SetupErrorsPresenter do
     allow(setup_checker).to receive(:boot_warnings).and_return(boot_errors)
     allow(setup_checker).to receive(:product_warnings).and_return(product_errors)
     allow(setup_checker).to receive(:mount_warnings).and_return(mount_errors)
-    allow(setup_checker).to receive(:security_policies_warnings).and_return(policies_errors)
+    allow(setup_checker).to receive(:security_policies_failing_rules).and_return(policies_errors)
     allow(setup_checker).to receive(:errors).and_return(fatal_errors)
   end
 
@@ -77,16 +77,14 @@ describe Y2Storage::SetupErrorsPresenter do
       let(:product_error3) { instance_double(Y2Storage::SetupError, message: "product error 3") }
       let(:mount_error1) { instance_double(Y2Storage::SetupError, message: "missing option 1") }
 
-      let(:policies_errors) { { policy1 => policy1_errors } }
-      let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-      let(:policy1_errors) { [instance_double(Y2Storage::SetupError, message: "policy error")] }
+      let(:policies_errors) { {} }
 
       let(:boot_errors) { [boot_error1, boot_error2] }
       let(:product_errors) { [product_error1, product_error2, product_error3] }
       let(:mount_errors) { [mount_error1] }
 
       it "contains a message for each error" do
-        expect(subject.to_html.scan(/<li>/).size).to eq(7)
+        expect(subject.to_html.scan(/<li>/).size).to eq(6)
       end
 
       context "and there are boot errors" do
@@ -108,7 +106,9 @@ describe Y2Storage::SetupErrorsPresenter do
         end
 
         it "does not contain a general error message for policies errors" do
-          expect(subject.to_html).to_not match(/security policy/)
+          expect(subject).to_not receive(:security_policy_warnings_html)
+
+          subject.to_html
         end
       end
 
@@ -131,7 +131,9 @@ describe Y2Storage::SetupErrorsPresenter do
         end
 
         it "does not contain a general error message for policies errors" do
-          expect(subject.to_html).to_not match(/security policy/)
+          expect(subject).to_not receive(:security_policy_warnings_html)
+
+          subject.to_html
         end
       end
 
@@ -154,7 +156,9 @@ describe Y2Storage::SetupErrorsPresenter do
         end
 
         it "does not contain a general error message for policies errors" do
-          expect(subject.to_html).to_not match(/security policy/)
+          expect(subject).to_not receive(:security_policy_warnings_html)
+
+          subject.to_html
         end
       end
 
@@ -164,10 +168,12 @@ describe Y2Storage::SetupErrorsPresenter do
         let(:mount_errors) { [] }
         let(:policies_errors) { { policy1 => policy1_errors } }
         let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-        let(:policy1_errors) { [instance_double(Y2Storage::SetupError, message: "policy error")] }
+        let(:policy1_errors) { [double("Y2Security::SecurityPolicies::Rule")] }
 
         it "contains a general error message for each policy" do
-          expect(subject.to_html).to match(/STIG security policy/)
+          expect(subject).to receive(:security_policy_warnings_html).with(policy1, policy1_errors)
+
+          subject.to_html
         end
 
         it "does not contain a general error message for boot errors" do
@@ -204,7 +210,9 @@ describe Y2Storage::SetupErrorsPresenter do
         end
 
         it "contains a general error message for each policy" do
-          expect(subject.to_html).to match(/STIG security policy/)
+          expect(subject).to receive(:security_policy_warnings_html).with(policy1, policy1_errors)
+
+          subject.to_html
         end
       end
     end

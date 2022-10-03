@@ -23,6 +23,7 @@ require "y2storage/blk_device"
 require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
+require "y2storage/with_security_policies"
 
 # This 'import' is necessary to load the control file (/etc/YaST/control.xml)
 # when running in an installed system. During installation, this module
@@ -43,6 +44,7 @@ module Y2Storage
   class SetupChecker
     include Yast::I18n
     include Yast::Logger
+    include WithSecurityPolicies
 
     # @return [Devicegraph]
     attr_reader :devicegraph
@@ -76,7 +78,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings + security_policies_warnings.values.flatten
+      boot_warnings + product_warnings + mount_warnings + security_policies_warnings
     end
 
     # All boot errors detected in the setup
@@ -107,33 +109,24 @@ module Y2Storage
       devicegraph.mount_points.map { |mp| mount_warning(mp) }.compact
     end
 
-    # Warnings detected in the setup for each enabled policy
+    # Security policies warnings detected in the setup
     #
-    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<SetupError>>]
+    # @return [Array<SetupError>]
     def security_policies_warnings
-      return {} unless Yast::Mode.installation
-
-      return @security_policies_warnings if @security_policies_warnings
-
-      policies_warnings = security_policies_failing_rules.map do |policy, failing_rules|
-        warnings = failing_rules.sort_by(&:id).map do |rule|
-          SetupError.new(message: "#{rule.id} #{rule.description}")
-        end
-        [policy, warnings]
+      @security_policies_warnings ||= security_policies_failing_rules.values.flatten.map do |rule|
+        SetupError.new(message: "#{rule.identifiers.first} #{rule.description}")
       end
-
-      @security_policies_warnings = policies_warnings.to_h
     end
-
-    private
 
     # Failing rules from each enabled security policy
     #
-    # @note yast2-security might not be available, see {#ensure_security_policies}.
+    # @note yast2-security might not be available, see {#with_security_policies}.
     #
     # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<Y2Security::SecurityPolicies::Rule>>]
     def security_policies_failing_rules
-      failing_rules = ensure_security_policies do
+      return {} unless Yast::Mode.installation
+
+      failing_rules = with_security_policies do
         policies_manager = Y2Security::SecurityPolicies::Manager.instance
         target_config = Y2Security::SecurityPolicies::TargetConfig.new.tap do |config|
           config.storage = devicegraph
@@ -145,20 +138,7 @@ module Y2Storage
       failing_rules || {}
     end
 
-    # Ensures security polices are correctly loaded
-    #
-    # The package yast2-security has yast2-storage-ng as dependency, so yast2-storage-ng does not
-    # require yast2-security at RPM level to avoid cyclic dependencies. Note that yast2-security is
-    # always included in the installation image, but it could be missing at building time.
-    # Missing yast2-security in a running system should not be relevant because the policies are
-    # only checked during the installation.
-    def ensure_security_policies
-      require "y2security/security_policies"
-      yield
-    rescue LoadError
-      log.warn("Security policies cannot be loaded. Make sure yast2-security is installed.")
-      nil
-    end
+    private
 
     # Mandatory product volumes that are not present in the current setup
     #

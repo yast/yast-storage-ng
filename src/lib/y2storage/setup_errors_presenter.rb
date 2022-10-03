@@ -20,6 +20,7 @@
 require "yast"
 require "yast/i18n"
 require "y2storage"
+require "y2storage/with_security_policies"
 
 Yast.import "HTML"
 
@@ -27,6 +28,7 @@ module Y2Storage
   # Class to represent storage setup errors
   class SetupErrorsPresenter
     include Yast::I18n
+    include WithSecurityPolicies
 
     # Constructor
     #
@@ -52,7 +54,7 @@ module Y2Storage
 
     # HTML representation for all warnings
     #
-    # @return [String, nil] nil if there is no boot warning
+    # @return [String, nil] nil if there is no warning
     def warnings_html
       warnings = [
         boot_warnings_html,
@@ -103,11 +105,14 @@ module Y2Storage
 
     # HTML representation for warnings about the security policies
     #
-    # @return [String, nil] nil if there is no warnings
+    # @return [String, nil] nil if there are no warnings
     def security_policies_warnings_html
-      policies_warnings = setup_checker.security_policies_warnings.map do |policy, warnings|
-        security_policy_warnings_html(policy, warnings)
+      policies_warnings = setup_checker.security_policies_failing_rules.map do |policy, rules|
+        security_policy_warnings_html(policy, rules)
       end
+
+      policies_warnings.compact!
+      return nil if policies_warnings.none?
 
       policies_warnings.join(Yast::HTML.Newline)
     end
@@ -115,11 +120,19 @@ module Y2Storage
     # HTML representation for warnings about a specific security policy
     #
     # @param policy [Y2Security::SecurityPolicies::Policy]
-    # @param warnings [Array<SetupError>]
-    def security_policy_warnings_html(policy, warnings)
-      header = format(_("The system does not comply with the %s security policy:"), policy.name)
+    # @param failing_rules [Array<Y2Security::SecurityPolicies::Rule>]
+    #
+    # @return [String, nil] nil if warnings cannot be represented, see {#with_security_policies}
+    def security_policy_warnings_html(policy, failing_rules)
+      with_security_policies do
+        require "y2security/security_policies/rule_presenter"
 
-      create_html(header, warnings)
+        header = format(_("The system does not comply with the %s security policy:"), policy.name)
+        sorted_rules = failing_rules.sort_by { |r| r.identifiers.first }
+        warnings = sorted_rules.map { |r| Y2Security::SecurityPolicies::RulePresenter.new(r).to_html }
+
+        header + Yast::HTML.List(warnings)
+      end
     end
 
     # HTML representation for fatal booting errors
