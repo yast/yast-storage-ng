@@ -168,15 +168,27 @@ module Y2Storage
       end
 
       try_with_each(target_sizes, error_proc: log_error) do |target_size|
-        log.info "Trying to make a proposal with target size: #{target_size}\n" \
-                 "using the following settings:\n#{settings}"
-
-        raise Error if useless_volumes_sets?
-
-        @planned_devices = planned_devices_list(target_size)
-        @devices = devicegraph(@planned_devices)
-        true
+        try_with_target(target_size)
       end
+    end
+
+    # Helper method to do a proposal attempt with the given target size
+    #
+    # @raise [Error, NoDiskSpaceError] if it was not possible to calculate the proposal
+    #
+    # @param target_size [Symbol] see {#target_sizes}
+    # @return [true]
+    def try_with_target(target_size)
+      log.info "Trying to make a proposal with target size: #{target_size}\n" \
+               "using the following settings:\n#{settings}"
+
+      # Calculate the planned devices even before checking #useless_volumes_sets?
+      # because they can contain useful information
+      @planned_devices = planned_devices_list(target_size)
+      raise Error if useless_volumes_sets?
+
+      @devices = devicegraph(@planned_devices)
+      true
     end
 
     # All possible target sizes to make the proposal
