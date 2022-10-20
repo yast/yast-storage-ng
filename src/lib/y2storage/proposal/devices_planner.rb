@@ -267,6 +267,8 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_btrfs_sizes(planned_device, volume)
+        return if volume.ignore_snapshots_sizes?
+
         if volume.snapshots_size > DiskSize.zero
           planned_device.min_size += volume.snapshots_size
           planned_device.max_size += volume.snapshots_size
@@ -315,6 +317,7 @@ module Y2Storage
       # @param attr [Symbol, String]
       def value_with_fallbacks(volume, attr)
         value = volume.send(attr)
+        return value if volume.ignore_fallback_sizes?
 
         volumes = volumes_with_fallback(volume.mount_point, attr)
         return value if volumes.empty?
