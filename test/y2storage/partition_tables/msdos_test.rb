@@ -51,8 +51,8 @@ describe Y2Storage::PartitionTables::Msdos do
       expect(subject.partition_id_supported?(Y2Storage::PartitionId::DOS32)).to eq true
     end
 
-    it "ms-dos can NOT have an UNKNOWN partition" do
-      expect(subject.partition_id_supported?(Y2Storage::PartitionId::UNKNOWN)).to eq false
+    it "ms-dos can have an UNKNOWN partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::UNKNOWN)).to eq true
     end
 
     it "ms-dos can NOT have partition id 0" do
