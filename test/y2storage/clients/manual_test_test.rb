@@ -157,7 +157,8 @@ describe Y2Storage::Clients::ManualTest do
       include_examples "mock devicegraph"
 
       it "mocks the product features" do
-        expect(Yast::ProductFeatures).to receive(:Import).with(some: "value")
+        profile = { some: "value" }
+        expect(Yast::ProductFeatures).to receive(:Import).with(profile)
         described_class.run
       end
 
