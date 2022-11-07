@@ -60,7 +60,7 @@ module Y2Storage
         boot_warnings_html,
         product_warnings_html,
         mount_warnings_html,
-        security_policies_warnings_html
+        security_policy_warnings_html
       ].compact
 
       return nil if warnings.empty?
@@ -103,27 +103,15 @@ module Y2Storage
       create_html(header, warnings)
     end
 
-    # HTML representation for warnings about the security policies
-    #
-    # @return [String, nil] nil if there are no warnings
-    def security_policies_warnings_html
-      policies_warnings = setup_checker.security_policies_failing_rules.map do |policy, rules|
-        security_policy_warnings_html(policy, rules)
-      end
-
-      policies_warnings.compact!
-      return nil if policies_warnings.none?
-
-      policies_warnings.join(Yast::HTML.Newline)
-    end
-
-    # HTML representation for warnings about a specific security policy
-    #
-    # @param policy [Y2Security::SecurityPolicies::Policy]
-    # @param failing_rules [Array<Y2Security::SecurityPolicies::Rule>]
+    # HTML representation for warnings from the enabled security policy
     #
     # @return [String, nil] nil if warnings cannot be represented, see {#with_security_policies}
-    def security_policy_warnings_html(policy, failing_rules)
+    def security_policy_warnings_html
+      policy = setup_checker.security_policy
+      failing_rules = setup_checker.security_policy_failing_rules
+
+      return nil if policy.nil? || failing_rules.none?
+
       with_security_policies do
         require "y2security/security_policies/rule_presenter"
 

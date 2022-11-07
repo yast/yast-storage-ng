@@ -57,6 +57,9 @@ describe Y2Storage::SetupChecker do
     # a different object for each query to the devicegraph)
     allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:missing_mount_options)
       .and_return(missing_root_opts)
+
+    allow(subject).to receive(:security_policy).and_return(policy)
+    allow(subject).to receive(:security_policy_failing_rules).and_return(policy_failing_rules)
   end
 
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker) }
@@ -105,13 +108,10 @@ describe Y2Storage::SetupChecker do
     volume
   end
 
+  let(:policy) { nil }
+  let(:policy_failing_rules) { [] }
+
   describe "#valid?" do
-    before do
-      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
-    end
-
-    let(:policies_failing_rules) { {} }
-
     context "if there is any boot error" do
       let(:boot_errors) { [boot_error] }
 
@@ -151,16 +151,14 @@ describe Y2Storage::SetupChecker do
         end
       end
 
-      context "but there is any policy warning" do
+      context "but there is any warning because failing security policy rules" do
         before do
           allow(Yast::Mode).to receive(:installation).and_return(true)
         end
 
-        let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
+        let(:policy) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-        let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-
-        let(:policy1_failing_rules) do
+        let(:policy_failing_rules) do
           [
             double("Y2Security::SecurityPolicies::Rule",
               id:          "Test1",
@@ -186,8 +184,6 @@ describe Y2Storage::SetupChecker do
   describe "#errors" do
     before do
       create_root
-
-      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
     end
 
     let(:boot_errors) do
@@ -204,11 +200,9 @@ describe Y2Storage::SetupChecker do
 
     let(:missing_root_opts) { ["_netdev"] }
 
-    let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
+    let(:policy) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-    let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-
-    let(:policy1_failing_rules) do
+    let(:policy_failing_rules) do
       [
         double("Y2Security::SecurityPolicies::Rule",
           id:          "Test1",
@@ -224,10 +218,6 @@ describe Y2Storage::SetupChecker do
   end
 
   describe "#warnings" do
-    before do
-      allow(subject).to receive(:security_policies_failing_rules).and_return(policies_failing_rules)
-    end
-
     let(:boot_warnings) do
       [
         instance_double(Y2Storage::SetupError),
@@ -239,7 +229,7 @@ describe Y2Storage::SetupChecker do
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
-    let(:policies_failing_rules) { {} }
+    let(:policy_failing_rules) { [] }
 
     it "includes all boot warnings" do
       expect(subject.warnings).to include(*boot_warnings)
@@ -278,18 +268,16 @@ describe Y2Storage::SetupChecker do
       end
     end
 
-    context "when there are failing rules for some security policy" do
+    context "when there are failing rules for the enabled security policy" do
       before do
         allow(Yast::Mode).to receive(:installation).and_return(true)
       end
 
       let(:boot_warnings) { [] }
 
-      let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
+      let(:policy) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-      let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-
-      let(:policy1_failing_rules) do
+      let(:policy_failing_rules) do
         [
           double("Y2Security::SecurityPolicies::Rule",
             id:          "test1",
@@ -472,36 +460,38 @@ describe Y2Storage::SetupChecker do
     end
   end
 
-  describe "#security_policies_failing_rules" do
+  describe "#security_policy_failing_rules" do
+    before do
+      allow(subject).to receive(:security_policy_failing_rules).and_call_original
+    end
+
     context "when y2security cannot be required" do
       before do
         allow(subject).to receive(:require).with("y2security/security_policies").and_raise(LoadError)
       end
 
-      it "returns an empty hash" do
-        expect(subject.security_policies_failing_rules).to eq({})
+      it "returns an empty list" do
+        expect(subject.security_policy_failing_rules).to eq([])
       end
     end
 
     context "when y2security can be required" do
       before do
-        allow(subject).to receive(:with_security_policies).and_return(policies_failing_rules)
+        allow(subject).to receive(:with_security_policies).and_return(policy_failing_rules)
       end
 
       context "and there are no failing rules for the policies" do
-        let(:policies_failing_rules) { {} }
+        let(:policy_failing_rules) { [] }
 
-        it "returns an empty hash" do
-          expect(subject.security_policies_failing_rules).to eq({})
+        it "returns an empty list" do
+          expect(subject.security_policy_failing_rules).to eq([])
         end
       end
 
       context "and there are failing rules for some policy" do
-        let(:policies_failing_rules) { { policy1 => policy1_failing_rules } }
+        let(:policy) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
-        let(:policy1) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
-
-        let(:policy1_failing_rules) do
+        let(:policy_failing_rules) do
           [
             double("Y2Security::SecurityPolicies::Rule",
               id:          "test1",
@@ -521,8 +511,8 @@ describe Y2Storage::SetupChecker do
             allow(Yast::Mode).to receive(:installation).and_return(false)
           end
 
-          it "returns an empty hash" do
-            expect(subject.security_policies_failing_rules).to eq({})
+          it "returns an empty list" do
+            expect(subject.security_policy_failing_rules).to eq([])
           end
         end
 
@@ -531,9 +521,9 @@ describe Y2Storage::SetupChecker do
             allow(Yast::Mode).to receive(:installation).and_return(true)
           end
 
-          it "returns a hash with the failing rules of each policy" do
-            failing_rules = subject.security_policies_failing_rules
-            expect(failing_rules[policy1].map(&:description)).to include(
+          it "returns a list with the failing rules of the enabled policy" do
+            failing_rules = subject.security_policy_failing_rules
+            expect(failing_rules.map(&:description)).to include(
               an_object_matching(/policy rule 1/),
               an_object_matching(/policy rule 2/)
             )

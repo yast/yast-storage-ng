@@ -78,7 +78,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings + security_policies_warnings
+      boot_warnings + product_warnings + mount_warnings + security_policy_warnings
     end
 
     # All boot errors detected in the setup
@@ -109,22 +109,31 @@ module Y2Storage
       devicegraph.mount_points.map { |mp| mount_warning(mp) }.compact
     end
 
-    # Security policies warnings detected in the setup
+    # Security policy warnings detected in the setup
     #
     # @return [Array<SetupError>]
-    def security_policies_warnings
-      @security_policies_warnings ||= security_policies_failing_rules.values.flatten.map do |rule|
+    def security_policy_warnings
+      @security_policy_warnings ||= security_policy_failing_rules.map do |rule|
         SetupError.new(message: "#{rule.identifiers.first} #{rule.description}")
       end
     end
 
-    # Failing rules from each enabled security policy
+    # Currently enabled security policy
     #
     # @note yast2-security might not be available, see {#with_security_policies}.
     #
-    # @return [Hash<Y2Security::SecurityPolicies::Policy, Array<Y2Security::SecurityPolicies::Rule>>]
-    def security_policies_failing_rules
-      return {} unless Yast::Mode.installation
+    # @return [Y2Security::SecurityPolicies::Policy, nil]
+    def security_policy
+      with_security_policies { Y2Security::SecurityPolicies::Manager.instance.enabled_policy }
+    end
+
+    # Failing rules from the enabled security policy
+    #
+    # @note yast2-security might not be available, see {#with_security_policies}.
+    #
+    # @return [Array<Y2Security::SecurityPolicies::Rule>]
+    def security_policy_failing_rules
+      return [] unless Yast::Mode.installation
 
       failing_rules = with_security_policies do
         policies_manager = Y2Security::SecurityPolicies::Manager.instance
@@ -135,7 +144,7 @@ module Y2Storage
         policies_manager.failing_rules(target_config, scope: :storage)
       end
 
-      failing_rules || {}
+      failing_rules || []
     end
 
     private
