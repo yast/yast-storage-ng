@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,13 +20,15 @@
 require "yast"
 require "yast/i18n"
 require "y2storage"
+require "y2storage/with_security_policies"
 
 Yast.import "HTML"
 
-module Y2Partitioner
+module Y2Storage
   # Class to represent storage setup errors
   class SetupErrorsPresenter
     include Yast::I18n
+    include WithSecurityPolicies
 
     # Constructor
     #
@@ -50,11 +52,17 @@ module Y2Partitioner
     # @return [SetupChecker] checker for the current setup
     attr_reader :setup_checker
 
-    # HTML representation for boot warnings
+    # HTML representation for all warnings
     #
-    # @return [String, nil] nil if there is no boot warning
+    # @return [String, nil] nil if there is no warning
     def warnings_html
-      warnings = [boot_warnings_html, product_warnings_html, mount_warnings_html].compact
+      warnings = [
+        boot_warnings_html,
+        product_warnings_html,
+        mount_warnings_html,
+        security_policy_warnings_html
+      ].compact
+
       return nil if warnings.empty?
 
       warnings.join(Yast::HTML.Newline)
@@ -95,6 +103,26 @@ module Y2Partitioner
       create_html(header, warnings)
     end
 
+    # HTML representation for warnings from the enabled security policy
+    #
+    # @return [String, nil] nil if warnings cannot be represented, see {#with_security_policies}
+    def security_policy_warnings_html
+      policy = setup_checker.security_policy
+      failing_rules = setup_checker.security_policy_failing_rules
+
+      return nil if policy.nil? || failing_rules.none?
+
+      with_security_policies do
+        require "y2security/security_policies/rule_presenter"
+
+        header = format(_("The system does not comply with the %s security policy:"), policy.name)
+        sorted_rules = failing_rules.sort_by { |r| r.identifiers.first }
+        warnings = sorted_rules.map { |r| Y2Security::SecurityPolicies::RulePresenter.new(r).to_html }
+
+        header + Yast::HTML.List(warnings)
+      end
+    end
+
     # HTML representation for fatal booting errors
     #
     # @return [String, nil] nil if there is no error
@@ -118,7 +146,7 @@ module Y2Partitioner
       return nil if errors.empty?
 
       error_messages = errors.map(&:message)
-      header + Yast::HTML.Newline + Yast::HTML.List(error_messages)
+      header + Yast::HTML.List(error_messages)
     end
   end
 end

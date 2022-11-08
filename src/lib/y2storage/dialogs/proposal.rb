@@ -1,4 +1,4 @@
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,6 +23,8 @@ require "ui/installation_dialog"
 require "y2storage"
 require "y2storage/actions_presenter"
 require "y2storage/dump_manager"
+require "y2storage/setup_checker"
+require "y2storage/setup_errors_presenter"
 
 Yast.import "HTML"
 
@@ -137,6 +139,7 @@ module Y2Storage
       def actions_html
         actions_source_html +
           boss_html +
+          setup_errors_html +
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
           @actions_presenter.to_html
@@ -181,6 +184,16 @@ module Y2Storage
       # @see #actions_source_html
       def actions_source_for_default_settings
         para(_("Initial layout proposed with the default Guided Setup settings."))
+      end
+
+      # Setup errors
+      #
+      # @return [String] HTML-formatted text
+      def setup_errors_html
+        setup_checker = Y2Storage::SetupChecker.new(devicegraph)
+        return "" if setup_checker.valid?
+
+        Y2Storage::SetupErrorsPresenter.new(setup_checker).to_html
       end
 
       # Text for the summary in cases in which it was not possible to propose

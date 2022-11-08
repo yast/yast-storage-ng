@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,11 +23,13 @@ require "y2storage/blk_device"
 require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
+require "y2storage/with_security_policies"
 
 # This 'import' is necessary to load the control file (/etc/YaST/control.xml)
 # when running in an installed system. During installation, this module
 # is imported by WorkflowManager.
 Yast.import "ProductControl"
+Yast.import "Mode"
 
 module Y2Storage
   # Class to check whether a setup (devicegraph) fulfills the storage requirements
@@ -41,6 +43,8 @@ module Y2Storage
   #   checker.valid? #=> true
   class SetupChecker
     include Yast::I18n
+    include Yast::Logger
+    include WithSecurityPolicies
 
     # @return [Devicegraph]
     attr_reader :devicegraph
@@ -74,7 +78,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings
+      boot_warnings + product_warnings + mount_warnings + security_policy_warnings
     end
 
     # All boot errors detected in the setup
@@ -103,6 +107,44 @@ module Y2Storage
     # @return [Array<SetupError>]
     def mount_warnings
       devicegraph.mount_points.map { |mp| mount_warning(mp) }.compact
+    end
+
+    # Security policy warnings detected in the setup
+    #
+    # @return [Array<SetupError>]
+    def security_policy_warnings
+      @security_policy_warnings ||= security_policy_failing_rules.map do |rule|
+        SetupError.new(message: "#{rule.identifiers.first} #{rule.description}")
+      end
+    end
+
+    # Currently enabled security policy
+    #
+    # @note yast2-security might not be available, see {#with_security_policies}.
+    #
+    # @return [Y2Security::SecurityPolicies::Policy, nil]
+    def security_policy
+      with_security_policies { Y2Security::SecurityPolicies::Manager.instance.enabled_policy }
+    end
+
+    # Failing rules from the enabled security policy
+    #
+    # @note yast2-security might not be available, see {#with_security_policies}.
+    #
+    # @return [Array<Y2Security::SecurityPolicies::Rule>]
+    def security_policy_failing_rules
+      return [] unless Yast::Mode.installation
+
+      failing_rules = with_security_policies do
+        policies_manager = Y2Security::SecurityPolicies::Manager.instance
+        target_config = Y2Security::SecurityPolicies::TargetConfig.new.tap do |config|
+          config.storage = devicegraph
+        end
+
+        policies_manager.failing_rules(target_config, scope: :storage)
+      end
+
+      failing_rules || []
     end
 
     private
