@@ -267,9 +267,15 @@ module Y2Storage
     # Stores the proposal, modifying the staging devicegraph and all the related
     # information.
     #
+    # If the proposal failed, it resets the staging devicegraph to the values of the probed one.
+    #
     # @param proposal [GuidedProposal]
     def proposal=(proposal)
-      copy_to_staging(proposal.devices)
+      if proposal.failed?
+        copy_to_staging(probed)
+      else
+        copy_to_staging(proposal.devices)
+      end
       @proposal = proposal
     end
 

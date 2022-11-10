@@ -147,12 +147,27 @@ module Y2Storage
     # @return [String, nil]
     attr_accessor :device
 
+    # Whether to ignore the fact that this volume is the fallback for the sizes of other volumes
+    # (ie. is referenced at any #fallback_for_min_size, #fallback_for_desired_size,
+    # #fallback_for_max_size or #fallback_for_max_size_lvm).
+    #
+    # @return [Boolean] true to indicate the absence of other volumes will not affect the size
+    #   calculation of this one
+    attr_accessor :ignore_fallback_sizes
+
+    # Whether to ignore any possible effect on the size derived from (de)activating snapshots.
+    #
+    # @return [Boolean] true if #snapshots_size and #snapshots_percentage should be ignored
+    attr_accessor :ignore_snapshots_sizes
+
     alias_method :proposed?, :proposed
     alias_method :proposed_configurable?, :proposed_configurable
     alias_method :adjust_by_ram?, :adjust_by_ram
     alias_method :adjust_by_ram_configurable?, :adjust_by_ram_configurable
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
+    alias_method :ignore_snapshots_sizes?, :ignore_snapshots_sizes
+    alias_method :ignore_fallback_sizes?, :ignore_fallback_sizes
     alias_method :btrfs_read_only?, :btrfs_read_only
 
     class << self
@@ -338,6 +353,8 @@ module Y2Storage
       @snapshots_size             = DiskSize.zero
       @snapshots_percentage       = 0
       @fs_types                   = []
+      @ignore_fallback_sizes      = false
+      @ignore_snapshots_sizes     = false
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied

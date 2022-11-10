@@ -116,6 +116,8 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
         let(:planned_device) { planned_devices.detect { |d| d.mount_point == mount_point } }
 
+        let(:vol_in_settings) { settings.volumes.find { |v| v.mount_point == mount_point } }
+
         context "and the volume is not proposed to be created" do
           let(:proposed) { false }
 
@@ -313,6 +315,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
                   it "sets max_size including max_size fallback values" do
                     expect(planned_device.max_size).to eq(max_size + home_max_size)
                   end
+
+                  it "sets max_size excluding the fallback if #ignore_fallback_sizes is set" do
+                    vol_in_settings.ignore_fallback_sizes = true
+                    expect(planned_device.max_size).to eq(max_size)
+                  end
                 end
 
                 context "and it is proposing a LVM-based setup" do
@@ -345,6 +352,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
                     it "sets max_size including max_size_lvm fallback values" do
                       expect(planned_device.max_size).to eq(max_size_lvm + home_max_size_lvm)
+                    end
+
+                    it "sets max_size excluding the fallback if #ignore_fallback_sizes is set" do
+                      vol_in_settings.ignore_fallback_sizes = true
+                      expect(planned_device.max_size).to eq(max_size_lvm)
                     end
                   end
 
@@ -390,6 +402,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
                   it "sets min_size including desired_size fallback values" do
                     expect(planned_device.min_size).to eq(desired_size + home_desired_size)
                   end
+
+                  it "sets min_size excluding the fallback if #ignore_fallback_sizes is set" do
+                    vol_in_settings.ignore_fallback_sizes = true
+                    expect(planned_device.min_size).to eq(desired_size)
+                  end
                 end
               end
             end
@@ -421,6 +438,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
                   it "sets min_size including min_size fallback values" do
                     expect(planned_device.min_size).to eq(min_size + home_min_size)
+                  end
+
+                  it "sets min_size excluding the fallback if #ignore_fallback_sizes is set" do
+                    vol_in_settings.ignore_fallback_sizes = true
+                    expect(planned_device.min_size).to eq(min_size)
                   end
                 end
               end
@@ -501,6 +523,12 @@ describe Y2Storage::Proposal::DevicesPlanner do
                   expect(planned_device.min_size).to eq(desired_size + snapshots_size)
                   expect(planned_device.max_size).to eq(max_size + snapshots_size)
                 end
+
+                it "the sizes are not increased if #ignore_snapshots_sizes is set" do
+                  vol_in_settings.ignore_snapshots_sizes = true
+                  expect(planned_device.min_size).to eq(desired_size)
+                  expect(planned_device.max_size).to eq(max_size)
+                end
               end
 
               context "and snapshots_size is not indicated" do
@@ -513,6 +541,12 @@ describe Y2Storage::Proposal::DevicesPlanner do
                     # percentage == 100%, this means that final size should be the double
                     expect(planned_device.min_size).to eq(desired_size * 2)
                     expect(planned_device.max_size).to eq(max_size * 2)
+                  end
+
+                  it "the sizes are not increased if #ignore_snapshots_sizes is set" do
+                    vol_in_settings.ignore_snapshots_sizes = true
+                    expect(planned_device.min_size).to eq(desired_size)
+                    expect(planned_device.max_size).to eq(max_size)
                   end
                 end
               end

@@ -398,7 +398,7 @@ describe Y2Storage::StorageManager do
   describe "#staging=" do
     let(:old_graph) { devicegraph_from("empty_hard_disk_50GiB") }
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: old_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: old_graph, failed?: false) }
 
     before do
       manager.proposal = proposal
@@ -451,29 +451,53 @@ describe Y2Storage::StorageManager do
   end
 
   describe "#proposal=" do
-    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph, failed?: failed) }
 
-    it "copies the proposal result to staging" do
-      manager.proposal = proposal
-      expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
+    context "with a successful proposal" do
+      let(:failed) { false }
+      let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+
+      it "copies the proposal result to staging" do
+        manager.proposal = proposal
+        expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
+      end
+
+      it "increments the staging revision" do
+        pre = manager.staging_revision
+        manager.proposal = proposal
+        expect(manager.staging_revision).to be > pre
+      end
+
+      it "stores the proposal" do
+        manager.proposal = proposal
+        expect(manager.proposal).to eq proposal
+      end
     end
 
-    it "increments the staging revision" do
-      pre = manager.staging_revision
-      manager.proposal = proposal
-      expect(manager.staging_revision).to be > pre
-    end
+    context "with a failed proposal" do
+      let(:failed) { true }
+      let(:new_graph) { nil }
 
-    it "stores the proposal" do
-      manager.proposal = proposal
-      expect(manager.proposal).to eq proposal
+      it "resets staging to the probed devicegraph" do
+        manager.proposal = proposal
+        expect(manager.staging).to eq manager.probed
+      end
+
+      it "increments the staging revision" do
+        pre = manager.staging_revision
+        manager.proposal = proposal
+        expect(manager.staging_revision).to be > pre
+      end
+
+      it "stores the proposal" do
+        manager.proposal = proposal
+        expect(manager.proposal).to eq proposal
+      end
     end
   end
 
   describe "#staging_changed?" do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
     it "returns false initially" do
       expect(manager.staging_changed?).to eq false
@@ -484,9 +508,23 @@ describe Y2Storage::StorageManager do
       expect(manager.staging_changed?).to eq true
     end
 
-    it "returns true if a proposal was accepted" do
-      manager.proposal = proposal
-      expect(manager.staging_changed?).to eq true
+    context "with a successful proposal" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph, failed?: false) }
+      let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+
+      it "returns true if the proposal was accepted" do
+        manager.proposal = proposal
+        expect(manager.staging_changed?).to eq true
+      end
+    end
+
+    context "with a failed proposal" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", devices: nil, failed?: true) }
+
+      it "returns true if the proposal was stored" do
+        manager.proposal = proposal
+        expect(manager.staging_changed?).to eq true
+      end
     end
   end
 
@@ -743,7 +781,7 @@ describe Y2Storage::StorageManager do
     let(:st_staging) { Storage::Devicegraph.new(manager.storage) }
     let(:st_system) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, failed?: false) }
 
     it "refreshes #probed" do
       expect(manager.probed.disks.size).to eq 6
@@ -872,7 +910,7 @@ describe Y2Storage::StorageManager do
   describe "#probe_from_yaml" do
     let(:st_devicegraph) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_devicegraph) }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, failed?: false) }
 
     it "refreshes #probed" do
       manager = described_class.create_test_instance
@@ -919,7 +957,7 @@ describe Y2Storage::StorageManager do
   describe "#probe_from_xml" do
     let(:st_devicegraph) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_devicegraph) }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, failed?: false) }
 
     it "refreshes #probed" do
       manager = described_class.create_test_instance
