@@ -63,6 +63,7 @@ require "y2storage/btrfs_raid_level"
 require "y2storage/btrfs_qgroup"
 require "y2storage/btrfs_subvolume"
 require "y2storage/storage_features_list"
+require "y2storage/pbkd_function"
 
 require "y2storage/exceptions"
 require "y2storage/boot_requirements_checker"

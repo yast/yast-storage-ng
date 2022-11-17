@@ -19,7 +19,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/pbkd_function"
+require "y2storage/pbkd_function"
 
 module Y2Partitioner
   module Widgets
@@ -50,7 +50,7 @@ module Y2Partitioner
 
       # @macro seeItemsSelection
       def items
-        PbkdFunction.all.map { |opt| [opt.value, opt.name] }
+        Y2Storage::PbkdFunction.all.map { |opt| [opt.value, opt.name] }
       end
 
       # @macro seeAbstractWidget

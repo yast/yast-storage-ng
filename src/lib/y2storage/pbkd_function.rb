@@ -1,4 +1,4 @@
-# Copyright (c) [2021] SUSE LLC
+# Copyright (c) [2021-2022] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,9 +18,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
 
-module Y2Partitioner
+module Y2Storage
   # Class to represent each one of the possible values for {Y2Storage::Encryption#pbkdf}
   class PbkdFunction
     include Yast::I18n
