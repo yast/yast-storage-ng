@@ -46,6 +46,8 @@ module Y2Storage
       #   @return [String, nil] password used to encrypt the device.
       secret_attr :encryption_password
 
+      attr_accessor :encryption_pbkdf
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_encrypted; end
 
@@ -80,6 +82,7 @@ module Y2Storage
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
           result = plain_device.encrypt(method: method, password: encryption_password)
+          result.pbkdf = encryption_pbkdf if encryption_pbkdf && result.supports_pbkdf?
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"

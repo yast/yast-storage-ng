@@ -45,7 +45,7 @@ module Y2Storage
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
         :root_fs_can_embed_grub?, :boot_in_lvm?,
         :boot_in_thin_lvm?, :boot_in_bcache?, :boot_in_software_raid?, :encrypted_boot?,
-        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_encryption_type,
+        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_encryption_type, :boot_luks2_pbkdf,
         :esp_in_lvm?, :esp_in_software_raid?, :esp_in_software_raid1?, :encrypted_esp?
 
       # Constructor
@@ -224,10 +224,14 @@ module Y2Storage
       #
       # * it is not encrypted (obviously),
       # * or it is encrypted using LUKS1.
+      # * or it is encrypted using LUKS2 with PBKDF2 as key derivation function
       #
       # @return [Boolean] true if grub can read the boot device
       def boot_readable_by_grub?
         t = boot_encryption_type
+        # FIXME: probably this is true only in TW and ALP. The Grub2 at SLE-15-SP5 is likely not enough
+        return boot_luks2_pbkdf == "pbkdf2" if t.is?(:luks2)
+
         t.is?(:none) || t.is?(:luks1)
       end
     end

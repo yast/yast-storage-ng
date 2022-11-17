@@ -68,6 +68,8 @@ module Y2Storage
     storage_forward :cipher=
 
     # @!attribute pbkdf
+    #   TODO: we decided to create an enum to represent the possible values here
+    #
     #   PBKDF (Password-Based Key Derivation Function), currently only supported for LUKS2 where
     #   this attribute corresponds to the PBKDF of the first used keyslot.
     #
@@ -76,6 +78,13 @@ module Y2Storage
     #   @return [String]
     storage_forward :pbkdf
     storage_forward :pbkdf=
+
+    # Whether the attribute #pbkdf makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_pbkdf?
+      type.to_sym == :luks2
+    end
 
     # @!attribute crypt_options
     #   Options in the fourth field of /etc/crypttab

@@ -68,6 +68,9 @@ module Y2Storage
       #     physical volumes. If nil, the PVs will not be encrypted.
       secret_attr :pvs_encryption_password
 
+      attr_accessor :pvs_encryption_pbkdf
+      attr_accessor :pvs_encryption_method
+
       # Strategy used by the guided proposal to calculate the size of the resulting
       # volume group
       #

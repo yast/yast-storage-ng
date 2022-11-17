@@ -266,6 +266,10 @@ module Y2Storage
         encryption_type(device_for_boot)
       end
 
+      def boot_luks2_pbkdf
+        luks2_pbkdf(device_for_boot)
+      end
+
       # Whether the partition table of the disk used for booting matches the
       # given type.
       #
@@ -600,11 +604,18 @@ module Y2Storage
       def encryption_type(device)
         # FIXME: the implementation of this method (and others) would be much simpler if the API
         # offered by Planned::Device and Device would be more consistent which each other
-        if device.is_a?(Planned::Device)
-          planned_encryption_type(device)
-        elsif device.respond_to?(:plain_blk_devices)
-          device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
-        end || Y2Storage::EncryptionType::NONE
+        return planned_encryption_type(device) if device.is_a?(Planned::Device)
+
+        enc = encryption_for_filesystem(device)
+        return Y2Storage::EncryptionType::NONE unless enc
+
+        enc.type
+      end
+
+      def encryption_for_filesystem(filesystem)
+        return nil unless filesystem.respond_to?(:plain_blk_devices)
+
+        filesystem.plain_blk_devices.map(&:encryption).compact.first
       end
 
       # @see #encryption_type
@@ -615,6 +626,18 @@ module Y2Storage
         return Y2Storage::EncryptionType::NONE unless planned.respond_to?(:encrypt?) && planned.encrypt?
 
         planned.encryption_method&.encryption_type || Y2Storage::EncryptionType::LUKS1
+      end
+
+      def luks2_pbkdf(device)
+        # FIXME: the implementation of this method (and others) would be much simpler if the API
+        # offered by Planned::Device and Device would be more consistent which each other
+        return nil unless encryption_type(device) == Y2Storage::EncryptionType::LUKS2
+
+        if device.is_a?(Planned::Device)
+          device.encryption_pbkdf
+        else
+          encryption_for_filesystem(device).pbkdf
+        end
       end
 
       # Whether the device is in a software RAID
