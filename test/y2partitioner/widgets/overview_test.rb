@@ -322,7 +322,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(checker).to receive(:valid?).and_return(valid_setup)
       allow(checker).to receive(:errors).and_return(fatal_errors)
 
-      allow(Y2Partitioner::SetupErrorsPresenter).to receive(:new).and_return(presenter)
+      allow(Y2Storage::SetupErrorsPresenter).to receive(:new).and_return(presenter)
       allow(presenter).to receive(:to_html).and_return("html representation")
 
       allow(Yast2::Popup).to receive(:show).and_return(user_input)
@@ -336,7 +336,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:checker) { instance_double(Y2Storage::SetupChecker) }
 
-    let(:presenter) { instance_double(Y2Partitioner::SetupErrorsPresenter) }
+    let(:presenter) { instance_double(Y2Storage::SetupErrorsPresenter) }
 
     let(:valid_setup) { nil }
 
