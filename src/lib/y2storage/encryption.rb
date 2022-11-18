@@ -422,6 +422,13 @@ module Y2Storage
       self.pbkdf_value = function&.value || ""
     end
 
+    # Whether the attribute #pbkdf makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_pbkdf?
+      type.is?(:luks2)
+    end
+
     protected
 
     # @see Device#is?

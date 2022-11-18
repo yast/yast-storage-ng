@@ -111,6 +111,8 @@ module Y2Storage
         @reused_volume_group.lvs = planned_lvs
         @reused_volume_group.size_strategy = vg_strategy
         @reused_volume_group.pvs_encryption_password = settings.encryption_password
+        @reused_volume_group.pvs_encryption_method = settings.encryption_method
+        @reused_volume_group.pvs_encryption_pbkdf = settings.encryption_pbkdf
       end
 
       # Checks whether the passed device is the volume group to be reused
@@ -153,6 +155,8 @@ module Y2Storage
       def new_volume_group
         vg = Planned::LvmVg.new(volume_group_name: DEFAULT_VG_NAME, lvs: planned_lvs)
         vg.pvs_encryption_password = settings.encryption_password
+        vg.pvs_encryption_method = settings.encryption_method
+        vg.pvs_encryption_pbkdf = settings.encryption_pbkdf
         vg.size_strategy = vg_strategy
         vg
       end

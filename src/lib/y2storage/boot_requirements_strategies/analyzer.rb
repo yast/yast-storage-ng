@@ -259,11 +259,22 @@ module Y2Storage
 
       # Encryption type of boot device
       #
+      # FIXME: this method does not work well with GuidedProposal if LVM+encryption is used.
+      #        It was not a problem before but it is now if LVM and LUKS2 with Argon2 are combined.
+      #
       # The device can be a planned one or filesystem from the devicegraph.
       #
       # @return [Y2Storage::EncryptionType] Encryption type
       def boot_encryption_type
         encryption_type(device_for_boot)
+      end
+
+      # Password-based key derivation function used to encrypt the boot device, if such property
+      # makes sense (ie. if LUKS2 encryption is used)
+      #
+      # @return [PbkdFunction, nil] nil if the value is not known
+      def boot_luks2_pbkdf
+        Device.new(device_for_boot).luks2_pbkdf
       end
 
       # Whether the partition table of the disk used for booting matches the
@@ -701,13 +712,23 @@ module Y2Storage
         end
 
         # Encryption type of the device
+        #
+        # @return [Y2Storage::EncryptionType]
         def encryption_type
           return planned_encryption_type if planned?
-          return Y2Storage::EncryptionType::NONE unless device.respond_to?(:plain_blk_devices)
 
-          type = device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
-          type ||= Y2Storage::EncryptionType::NONE
-          type
+          filesystem_encryption&.type || Y2Storage::EncryptionType::NONE
+        end
+
+        # Encryption device associated to the filesystem
+        #
+        # To be used only when {#device} is a filesystem from the devicegraph
+        #
+        # @return [Encryption, nil]
+        def filesystem_encryption
+          return nil unless device.respond_to?(:plain_blk_devices)
+
+          device.plain_blk_devices.map(&:encryption).compact.first
         end
 
         # @see #encryption_type
@@ -717,6 +738,17 @@ module Y2Storage
           return Y2Storage::EncryptionType::NONE unless device.respond_to?(:encrypt?) && device.encrypt?
 
           device.encryption_method&.encryption_type || Y2Storage::EncryptionType::LUKS1
+        end
+
+        # Password-based key derivation function used to encrypt the device with LUKS2
+        #
+        # @return [PbkdFunction, nil] nil if the device is not formatted with LUKS2 or the
+        #   function is unknown
+        def luks2_pbkdf
+          return nil unless encryption_type.is?(:luks2)
+          return device.encryption_pbkdf if planned?
+
+          filesystem_encryption.pbkdf
         end
       end
     end
