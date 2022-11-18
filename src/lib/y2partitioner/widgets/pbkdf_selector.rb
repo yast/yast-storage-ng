@@ -45,7 +45,7 @@ module Y2Partitioner
       # Sets the initial value
       def init
         enable_on_init ? enable : disable
-        self.value = @controller.pbkdf
+        self.value = @controller.pbkdf&.value
       end
 
       # @macro seeItemsSelection
@@ -55,7 +55,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def store
-        @controller.pbkdf = value
+        @controller.pbkdf = Y2Storage::PbkdFunction.find(value)
       end
 
       private

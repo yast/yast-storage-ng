@@ -36,15 +36,18 @@ module Y2Storage
       @name = name
     end
 
+    # Instance of the function to be always returned by the class
+    # TRANSLATORS: name of a key derivation function used by LUKS
+    ARGON2ID = new("argon2id", N_("Argon2id"))
+    # Instance of the function to be always returned by the class
+    # TRANSLATORS: name of a key derivation function used by LUKS
+    ARGON2I = new("argon2i", N_("Argon2i"))
+    # Instance of the function to be always returned by the class
+    # TRANSLATORS: name of a key derivation function used by LUKS
+    PBKDF2 = new("pbkdf2", N_("PBKDF2"))
+
     # All possible instances
-    ALL = [
-      # TRANSLATORS: name of a key derivation function used by LUKS
-      new("argon2id", N_("Argon2id")),
-      # TRANSLATORS: name of a key derivation function used by LUKS
-      new("argon2i",  N_("Argon2i")),
-      # TRANSLATORS: name of a key derivation function used by LUKS
-      new("pbkdf2",   N_("PBKDF2"))
-    ].freeze
+    ALL = [ARGON2ID, ARGON2I, PBKDF2].freeze
     private_constant :ALL
 
     # Sorted list of all possible roles
@@ -54,10 +57,10 @@ module Y2Storage
 
     # Finds a function by its value
     #
-    # @param value [String, nil]
+    # @param value [#to_s]
     # @return [PbkdFunction, nil] nil if such value does not exist
     def self.find(value)
-      ALL.find { |opt| opt.value == value }
+      ALL.find { |opt| opt.value == value.to_s }
     end
 
     # @return [String] value for {Y2Storage::Encryption#pbkdf}
@@ -66,6 +69,35 @@ module Y2Storage
     # @return [String] localized name for the function to display in the UI
     def name
       _(@name)
+    end
+
+    alias_method :to_s, :value
+
+    # @return [Symbol]
+    def to_sym
+      value.to_sym
+    end
+
+    # Checks whether the object corresponds to any of the given enum values.
+    #
+    # By default, this will be the base comparison used in the case statements.
+    #
+    # @param names [#to_sym]
+    # @return [Boolean]
+    def is?(*names)
+      names.any? { |n| n.to_sym == to_sym }
+    end
+
+    # @return [Boolean]
+    def ==(other)
+      other.class == self.class && other.value == value
+    end
+
+    alias_method :eql?, :==
+
+    # @return [Boolean]
+    def ===(other)
+      other.instance_of?(self.class) && is?(other)
     end
   end
 end

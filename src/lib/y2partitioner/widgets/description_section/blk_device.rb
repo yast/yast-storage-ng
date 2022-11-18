@@ -102,7 +102,7 @@ module Y2Partitioner
         #
         # @return [String]
         def pbkdf_value
-          pbkdf = Y2Storage::PbkdFunction.find(blk_device.encryption.pbkdf)
+          pbkdf = blk_device.encryption.pbkdf
           # TRANSLATORS: %s becomes the name of the PBKDF function used by a LUKS2 device (eg. Argon2i)
           format(_("Key Derivation Function (PBKDF): %s"), pbkdf.name)
         end
