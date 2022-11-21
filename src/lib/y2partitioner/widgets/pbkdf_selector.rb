@@ -19,7 +19,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/pbkd_function"
+require "y2storage/pbkd_function"
 
 module Y2Partitioner
   module Widgets
@@ -45,17 +45,17 @@ module Y2Partitioner
       # Sets the initial value
       def init
         enable_on_init ? enable : disable
-        self.value = @controller.pbkdf
+        self.value = @controller.pbkdf&.value
       end
 
       # @macro seeItemsSelection
       def items
-        PbkdFunction.all.map { |opt| [opt.value, opt.name] }
+        Y2Storage::PbkdFunction.all.map { |opt| [opt.value, opt.name] }
       end
 
       # @macro seeAbstractWidget
       def store
-        @controller.pbkdf = value
+        @controller.pbkdf = Y2Storage::PbkdFunction.find(value)
       end
 
       private

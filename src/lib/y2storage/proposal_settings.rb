@@ -25,6 +25,7 @@ require "y2storage/subvol_specification"
 require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
 require "y2storage/volume_specifications_set"
+require "y2storage/encryption_method"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -149,9 +150,22 @@ module Y2Storage
     # @return [Array<String>, nil]
     attr_reader :explicit_candidate_devices
 
+    # TODO: it makes sense to encapsulate #encryption_password, #encryption_method and
+    # #encryption_pbkdf in some new class (eg. EncryptionSettings), posponed for now
+
     # @!attribute encryption_password
     #   @return [String] password to use when creating new encryption devices
     secret_attr :encryption_password
+
+    # Encryption method to use if {#encryption_password} is set
+    #
+    # @return [EncryptionMethod::Base]
+    attr_accessor :encryption_method
+
+    # PBKDF to use if {#encryption_password} is set and {#encryption_method} is LUKS2
+    #
+    # @return [PbkdFunction, nil] nil to use the default
+    attr_accessor :encryption_pbkdf
 
     # @return [Boolean] whether to resize Windows systems if needed
     attr_accessor :resize_windows
@@ -384,6 +398,7 @@ module Y2Storage
       linux_delete_mode:          :ondemand,
       lvm:                        false,
       lvm_vg_strategy:            :use_available,
+      encryption_method:          EncryptionMethod::LUKS1,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,

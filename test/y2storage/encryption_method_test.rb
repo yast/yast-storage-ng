@@ -21,6 +21,7 @@
 
 require_relative "spec_helper"
 require "y2storage/encryption_method"
+require "y2storage/pbkd_function"
 
 describe Y2Storage::EncryptionMethod do
   describe ".all" do
@@ -274,10 +275,12 @@ describe Y2Storage::EncryptionMethod do
       it "sets the given label and PBKDF for the LUKS2 device" do
         expect(device.encrypted?).to eq(false)
 
-        subject.create_device(device, "cr_dev", label: "cool_luks", pbkdf: "argon2i")
+        subject.create_device(
+          device, "cr_dev", label: "cool_luks", pbkdf: Y2Storage::PbkdFunction::ARGON2I
+        )
 
         expect(device.encryption.label).to eq "cool_luks"
-        expect(device.encryption.pbkdf).to eq "argon2i"
+        expect(device.encryption.pbkdf.value).to eq "argon2i"
       end
     end
 

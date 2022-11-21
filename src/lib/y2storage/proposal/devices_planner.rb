@@ -160,8 +160,19 @@ module Y2Storage
         adjust_to_settings(lv, volume)
 
         planned_device = Planned::LvmVg.new(volume_group_name: volume.separate_vg_name, lvs: [lv])
-        planned_device.pvs_encryption_password = settings.encryption_password
+        adjust_pvs_encryption(planned_device)
         planned_device
+      end
+
+      # @see #planned_separate_vg
+      #
+      # @param vg [Planned::LvmVg]
+      def adjust_pvs_encryption(vg)
+        return unless settings.encryption_password
+
+        vg.pvs_encryption_password = settings.encryption_password
+        vg.pvs_encryption_method = settings.encryption_method
+        vg.pvs_encryption_pbkdf = settings.encryption_pbkdf
       end
 
       # Adjusts planned device values according to settings
@@ -195,8 +206,11 @@ module Y2Storage
       # @param _volume [VolumeSpecification]
       def adjust_encryption(planned_device, _volume)
         return unless planned_device.is_a?(Planned::Partition)
+        return unless settings.encryption_password
 
         planned_device.encryption_password = settings.encryption_password
+        planned_device.encryption_method = settings.encryption_method
+        planned_device.encryption_pbkdf = settings.encryption_pbkdf
       end
 
       # Adjusts planned device sizes according to settings

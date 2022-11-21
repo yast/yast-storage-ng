@@ -259,11 +259,22 @@ module Y2Storage
 
       # Encryption type of boot device
       #
+      # FIXME: this method does not work well with GuidedProposal if LVM+encryption is used.
+      #        It was not a problem before but it is now if LVM and LUKS2 with Argon2 are combined.
+      #
       # The device can be a planned one or filesystem from the devicegraph.
       #
       # @return [Y2Storage::EncryptionType] Encryption type
       def boot_encryption_type
         encryption_type(device_for_boot)
+      end
+
+      # Password-based key derivation function used to encrypt the boot device, if such property
+      # makes sense (ie. if LUKS2 encryption is used)
+      #
+      # @return [PbkdFunction, nil] nil if the value is not known
+      def boot_luks2_pbkdf
+        Device.new(device_for_boot).luks2_pbkdf
       end
 
       # Whether the partition table of the disk used for booting matches the
@@ -519,7 +530,7 @@ module Y2Storage
       def filesystem_type(device)
         return nil if device.nil?
 
-        device.respond_to?(:filesystem_type) ? device.filesystem_type : device.type
+        Device.new(device).filesystem_type
       end
 
       # Whether the device is in a LVM logical volume
@@ -531,11 +542,7 @@ module Y2Storage
       def in_lvm?(device)
         return false if device.nil?
 
-        if device.is_a?(Planned::Device)
-          device.is_a?(Planned::LvmLv)
-        else
-          device.plain_blk_devices.any? { |dev| dev.is?(:lvm_lv) }
-        end
+        Device.new(device).in_lvm?
       end
 
       # Whether the device is in a thinly provisioned LVM logical volume
@@ -547,16 +554,7 @@ module Y2Storage
       def in_thin_lvm?(device)
         return false if device.nil?
 
-        if device.is_a?(Planned::Device)
-          device.is_a?(Planned::LvmLv) && device.lv_type == LvType::THIN
-        else
-          # If this is not a BlkFilesystem (e.g. NFS), it can't be on thin LVM
-          return false unless device.respond_to?(:plain_blk_devices)
-
-          device.plain_blk_devices.any? do |dev|
-            dev.is?(:lvm_lv) && dev.lv_type == LvType::THIN
-          end
-        end
+        Device.new(device).in_thin_lvm?
       end
 
       # Whether the device is in a BCache
@@ -568,17 +566,7 @@ module Y2Storage
       def in_bcache?(device)
         return false if device.nil?
 
-        if device.is_a?(Planned::Device)
-          device.is_a?(Planned::Bcache)
-        else
-          # If this is not a BlkFilesystem (e.g. NFS), it can't be in a BCache
-          return false unless device.respond_to?(:plain_blk_devices)
-
-          # Strictly speaking, with very advanced storage configurations it may be possible to
-          # access a filesystem with bcache ancestors in the devicegraph without actually accessing
-          # the bcache. But that would be an extreme case and is not supported by YaST.
-          device.ancestors.any? { |dev| dev.is?(:bcache) }
-        end
+        Device.new(device).in_bcache?
       end
 
       # Whether the device is encrypted
@@ -598,23 +586,9 @@ module Y2Storage
       # @param device [Filesystems::Base, Planned::Device, nil]
       # @return [Y2Storage::EncryptionType] Encryption type
       def encryption_type(device)
-        # FIXME: the implementation of this method (and others) would be much simpler if the API
-        # offered by Planned::Device and Device would be more consistent which each other
-        if device.is_a?(Planned::Device)
-          planned_encryption_type(device)
-        elsif device.respond_to?(:plain_blk_devices)
-          device.plain_blk_devices.map { |d| d.encryption&.type }.compact.first
-        end || Y2Storage::EncryptionType::NONE
-      end
+        return Y2Storage::EncryptionType::NONE if device.nil?
 
-      # @see #encryption_type
-      #
-      # @param planned [Planned::Device]
-      # @return [Y2Storage::EncryptionType] Encryption type
-      def planned_encryption_type(planned)
-        return Y2Storage::EncryptionType::NONE unless planned.respond_to?(:encrypt?) && planned.encrypt?
-
-        planned.encryption_method&.encryption_type || Y2Storage::EncryptionType::LUKS1
+        Device.new(device).encryption_type
       end
 
       # Whether the device is in a software RAID
@@ -626,15 +600,7 @@ module Y2Storage
       def in_software_raid?(device)
         return false if device.nil?
 
-        if device.is_a?(Planned::Device)
-          device.is_a?(Planned::Md)
-        else
-          device.ancestors.any? do |dev|
-            # Don't check boot_disk as it might validly be a RAID1 itself
-            # (full disks as RAID case) - we want to treat this as 'no RAID'.
-            dev.is?(:software_raid) && dev != boot_disk
-          end
-        end
+        Device.new(device).in_software_raid?(boot_disk)
       end
 
       # Check if device is a direct member of a RAID1 (RAID over entire disks).
@@ -657,6 +623,133 @@ module Y2Storage
         end
 
         raid1_dev
+      end
+
+      # Auxiliar class to check the properties or a given device
+      #
+      # FIXME: this class wouldn't be needed if the API offered by Planned::Device and Device would
+      # be more consistent which each other. Having all the affected code in a single class helps
+      # readability and makes easier to fix the inconsistency problem in the future.
+      class Device
+        # Constructor
+        #
+        # @param device [Filesystems::Base, Planned::Device] see {#device}
+        def initialize(device)
+          @device = device
+        end
+
+        # Device being analyzed, it can be a planned device or a filesystem from the devicegraph
+        #
+        # @return [Filesystems::Base, Planned::Device]
+        attr_reader :device
+
+        # Whether the analyzed device is a planned one
+        #
+        # @return [Boolean]
+        def planned?
+          device.is_a?(Planned::Device)
+        end
+
+        # Filesystem type used for the device
+        #
+        # @return [Filesystems::Type, nil] nil if is a planned device not going to be formatted
+        def filesystem_type
+          device.respond_to?(:filesystem_type) ? device.filesystem_type : device.type
+        end
+
+        # Whether the device is in a LVM logical volume
+        def in_lvm?
+          return device.is_a?(Planned::LvmLv) if planned?
+
+          device.plain_blk_devices.any? { |dev| dev.is?(:lvm_lv) }
+        end
+
+        # Whether the device is in a thinly provisioned LVM logical volume
+        #
+        # @return [Boolean]
+        def in_thin_lvm?
+          return planned_in_thin_lvm? if planned?
+
+          # If this is not a BlkFilesystem (e.g. NFS), it can't be on thin LVM
+          return false unless device.respond_to?(:plain_blk_devices)
+
+          device.plain_blk_devices.any? do |dev|
+            dev.is?(:lvm_lv) && dev.lv_type == LvType::THIN
+          end
+        end
+
+        # @see #in_thin_lvm?
+        def planned_in_thin_lvm?
+          device.is_a?(Planned::LvmLv) && device.lv_type == LvType::THIN
+        end
+
+        # Whether the device is in a software RAID
+        #
+        # @return [Boolean]
+        def in_software_raid?(boot_disk)
+          return device.is_a?(Planned::Md) if planned?
+
+          device.ancestors.any? do |dev|
+            # Don't check boot_disk as it might validly be a RAID1 itself
+            # (full disks as RAID case) - we want to treat this as 'no RAID'.
+            dev.is?(:software_raid) && dev != boot_disk
+          end
+        end
+
+        # Whether the device is in a BCache
+        #
+        # @return [Boolean]
+        def in_bcache?
+          return device.is_a?(Planned::Bcache) if planned?
+
+          # If this is not a BlkFilesystem (e.g. NFS), it can't be in a BCache
+          return false unless device.respond_to?(:plain_blk_devices)
+
+          # Strictly speaking, with very advanced storage configurations it may be possible to
+          # access a filesystem with bcache ancestors in the devicegraph without actually accessing
+          # the bcache. But that would be an extreme case and is not supported by YaST.
+          device.ancestors.any? { |dev| dev.is?(:bcache) }
+        end
+
+        # Encryption type of the device
+        #
+        # @return [Y2Storage::EncryptionType]
+        def encryption_type
+          return planned_encryption_type if planned?
+
+          filesystem_encryption&.type || Y2Storage::EncryptionType::NONE
+        end
+
+        # Encryption device associated to the filesystem
+        #
+        # To be used only when {#device} is a filesystem from the devicegraph
+        #
+        # @return [Encryption, nil]
+        def filesystem_encryption
+          return nil unless device.respond_to?(:plain_blk_devices)
+
+          device.plain_blk_devices.map(&:encryption).compact.first
+        end
+
+        # @see #encryption_type
+        #
+        # @return [Y2Storage::EncryptionType] Encryption type
+        def planned_encryption_type
+          return Y2Storage::EncryptionType::NONE unless device.respond_to?(:encrypt?) && device.encrypt?
+
+          device.encryption_method&.encryption_type || Y2Storage::EncryptionType::LUKS1
+        end
+
+        # Password-based key derivation function used to encrypt the device with LUKS2
+        #
+        # @return [PbkdFunction, nil] nil if the device is not formatted with LUKS2 or the
+        #   function is unknown
+        def luks2_pbkdf
+          return nil unless encryption_type.is?(:luks2)
+          return device.encryption_pbkdf if planned?
+
+          filesystem_encryption.pbkdf
+        end
       end
     end
   end

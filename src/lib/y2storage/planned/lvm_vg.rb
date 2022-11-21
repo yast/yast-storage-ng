@@ -68,6 +68,17 @@ module Y2Storage
       #     physical volumes. If nil, the PVs will not be encrypted.
       secret_attr :pvs_encryption_password
 
+      # Method used to encrypt the newly created physical volumes if {#pvs_encryption_password} is set
+      #
+      # @return [EncryptionMethod]
+      attr_accessor :pvs_encryption_method
+
+      # PBKDF used to encrypt the newly created physical volumes if {#pvs_encryption_password} is set
+      # and LUKS2 is used
+      #
+      # @return [PbkdFunction, nil] nil to use the default function
+      attr_accessor :pvs_encryption_pbkdf
+
       # Strategy used by the guided proposal to calculate the size of the resulting
       # volume group
       #
@@ -132,7 +143,7 @@ module Y2Storage
         res = Planned::Partition.new(nil)
         res.partition_id = PartitionId::LVM
         res.lvm_volume_group_name = volume_group_name
-        res.encryption_password = pvs_encryption_password
+        adjust_encryption(res)
         res.min_size = min_pv_size
         res.disk = forced_disk_name
         res
@@ -266,6 +277,15 @@ module Y2Storage
         return nil unless reuse?
 
         Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse_name)
+      end
+
+      # @see #minimal_pv_partition
+      def adjust_encryption(planned_pv)
+        return unless pvs_encryption_password
+
+        planned_pv.encryption_password = pvs_encryption_password
+        planned_pv.encryption_method = pvs_encryption_method
+        planned_pv.encryption_pbkdf = pvs_encryption_pbkdf
       end
 
       # Whether the created PVs should be encrypted

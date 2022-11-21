@@ -22,12 +22,15 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/pbkdf_selector"
+require "y2storage/pbkd_function"
 
 describe Y2Partitioner::Widgets::PbkdfSelector do
   subject(:widget) { described_class.new(controller) }
 
-  let(:controller) { double("Controllers::Encryption", pbkdf: initial_pbkdf) }
   let(:initial_pbkdf) { "pbkdf2" }
+  let(:controller) do
+    double("Controllers::Encryption", pbkdf: Y2Storage::PbkdFunction.find(initial_pbkdf))
+  end
 
   include_examples "CWM::ComboBox"
 
@@ -71,7 +74,8 @@ describe Y2Partitioner::Widgets::PbkdfSelector do
     end
 
     it "sets the selected pbkdf" do
-      expect(controller).to receive(:pbkdf=).with(selected_pbkdf)
+      pbkdf = Y2Storage::PbkdFunction.find(selected_pbkdf)
+      expect(controller).to receive(:pbkdf=).with(pbkdf)
 
       widget.store
     end

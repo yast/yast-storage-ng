@@ -22,6 +22,7 @@ require_relative "../../test_helper"
 require_relative "help_fields_examples"
 
 require "y2partitioner/widgets/description_section/blk_device"
+require "y2storage/pbkd_function"
 
 describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
   before { devicegraph_stub(scenario) }
@@ -73,7 +74,9 @@ describe Y2Partitioner::Widgets::DescriptionSection::BlkDevice do
       end
 
       context "if LUKS2 is used as encryption type" do
-        before { device.encrypt(method: :luks2, label: "something", pbkdf: "argon2i") }
+        before do
+          device.encrypt(method: :luks2, label: "something", pbkdf: Y2Storage::PbkdFunction::ARGON2I)
+        end
 
         it "includes an entry about the encryption including the encryption type" do
           expect(subject.value).to match(/Encrypted: Yes/)

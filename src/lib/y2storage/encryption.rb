@@ -67,15 +67,12 @@ module Y2Storage
     storage_forward :cipher
     storage_forward :cipher=
 
-    # @!attribute pbkdf
-    #   PBKDF (Password-Based Key Derivation Function), currently only supported for LUKS2 where
-    #   this attribute corresponds to the PBKDF of the first used keyslot.
-    #
-    #   If is set to empty, during the commit phase the default of cryptsetup will be used.
+    # @!attribute pbkdf_value
+    #   String representation of {#pbkdf}, an empty string is equivalent to a nil value on {#pbkdf}
     #
     #   @return [String]
-    storage_forward :pbkdf
-    storage_forward :pbkdf=
+    storage_forward :pbkdf_value, to: :pbkdf
+    storage_forward :pbkdf_value=, to: :pbkdf=
 
     # @!attribute crypt_options
     #   Options in the fourth field of /etc/crypttab
@@ -406,6 +403,30 @@ module Y2Storage
     # @see Device#update_etc_attributes
     def assign_etc_attribute(value)
       self.storage_in_etc_crypttab = value
+    end
+
+    # PBKDF (Password-Based Key Derivation Function), currently only supported for LUKS2 where
+    # this attribute corresponds to the PBKDF of the first used keyslot.
+    #
+    # If is set to nil, during the commit phase the default of cryptsetup will be used.
+    #
+    # @return [PbkdFunction, nil]
+    def pbkdf
+      PbkdFunction.find(pbkdf_value)
+    end
+
+    # @see #pbkdf
+    #
+    # @param function [PbkdFunction, nil]
+    def pbkdf=(function)
+      self.pbkdf_value = function&.value || ""
+    end
+
+    # Whether the attribute #pbkdf makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_pbkdf?
+      type.is?(:luks2)
     end
 
     protected
