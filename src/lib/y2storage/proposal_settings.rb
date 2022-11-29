@@ -219,6 +219,11 @@ module Y2Storage
     #   specify the predefined size of the LVM volume group.
     attr_accessor :lvm_vg_size
 
+    # @return [Boolean] whether a pre-existing LVM volume group should be reused if
+    #   the conditions to do so are met. That is the historical YaST behavior, which
+    #   can be inhibited by setting this to false.
+    attr_accessor :lvm_vg_reuse
+
     # @return [Array<VolumeSpecification>] list of volumes specifications used during
     #   the proposal
     attr_accessor :volumes
@@ -398,6 +403,7 @@ module Y2Storage
       linux_delete_mode:          :ondemand,
       lvm:                        false,
       lvm_vg_strategy:            :use_available,
+      lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,

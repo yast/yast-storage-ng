@@ -84,6 +84,13 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "windows-linux-lvm-pc" }
       include_examples "LVM-based proposed layouts"
       include_examples "partition-based proposed layouts"
+
+      context "if the proposal is configured to not reuse volume groups" do
+        before { settings.lvm_vg_reuse = false }
+
+        let(:expected_scenario) { "windows-linux-lvm-noreuse" }
+        include_examples "LVM-based proposed layouts"
+      end
     end
 
     context "in a windows-only PC with GPT partition table" do
