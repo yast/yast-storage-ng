@@ -64,6 +64,14 @@ describe Y2Storage::Proposal::LvmHelper do
           expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
         end
       end
+
+      context "and ProposalSettings#lvm_vg_reuse is set to false" do
+        before { settings.lvm_vg_reuse = false }
+
+        it "returns an empty array" do
+          expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
+        end
+      end
     end
 
     context "if some volume groups are big enough" do
@@ -97,6 +105,14 @@ describe Y2Storage::Proposal::LvmHelper do
 
       context "and the logical volumes are assigned to a concrete disk" do
         before { volumes.first.disk = "/dev/sda" }
+
+        it "returns an empty array" do
+          expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
+        end
+      end
+
+      context "and ProposalSettings#lvm_vg_reuse is set to false" do
+        before { settings.lvm_vg_reuse = false }
 
         it "returns an empty array" do
           expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
