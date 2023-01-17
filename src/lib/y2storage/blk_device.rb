@@ -665,7 +665,7 @@ module Y2Storage
     #   @return [Array<String>] empty if the driver is unknown
 
     # @see #boss?
-    BOSS_REGEXP = Regexp.new("dellboss", Regexp::IGNORECASE).freeze
+    BOSS_REGEXP = Regexp.new("dell.*boss", Regexp::IGNORECASE).freeze
     private_constant :BOSS_REGEXP
 
     # Whether this device is a Dell BOSS (Boot Optimized Storage Solution)
