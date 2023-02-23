@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
+require "y2storage/equal_by_instance_variables"
 
 Yast.import "Kernel"
 
@@ -27,6 +28,7 @@ module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
   class VolumeSpecification
     include PartitioningFeatures
+    include EqualByInstanceVariables
 
     # @return [PartitionId] when the volume needs to be a partition with a specific id
     attr_accessor :partition_id

@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2storage/shadower"
+require "y2storage/equal_by_instance_variables"
 
 Yast.import "Arch"
 Yast.import "ProductFeatures"
@@ -29,6 +30,7 @@ module Y2Storage
   #
   class SubvolSpecification
     include Yast::Logger
+    include EqualByInstanceVariables
 
     attr_accessor :path, :copy_on_write, :archs, :referenced_limit
 

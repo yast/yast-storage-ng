@@ -26,6 +26,7 @@ require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
 require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
+require "y2storage/equal_by_instance_variables"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -35,6 +36,7 @@ module Y2Storage
   class ProposalSettings
     include SecretAttributes
     include PartitioningFeatures
+    include EqualByInstanceVariables
 
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
