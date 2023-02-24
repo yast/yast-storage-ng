@@ -22,30 +22,6 @@
 require_relative "../../spec_helper"
 require "y2storage/proposal/settings_generator"
 
-# diff-friendly inspect
-def dinspect(obj)
-  obj.inspect.gsub(/0x00[0-9a-f]+/, "0x00(address)")
-end
-
-def peeker(blob, filename)
-  File.open(filename, "w") do |io|
-    peek = proc do |v|
-      io.puts "PEEK #{v.class}"
-
-      # NOTE: this gets called AFTER instance variables are declared with nil
-      # but BEFORE #initialize is called. Therefore:
-      # undefined * for nil in human_string_components
-      next if v.is_a? Y2Storage::DiskSize
-      io.puts(dinspect(v))
-    end
-    Marshal.load(blob, peek)
-    o = Marshal.load(blob)
-    io.puts "FINAL"
-    io.puts o.class
-    io.puts(dinspect(o))
-  end
-end
-
 describe Y2Storage::Proposal::SettingsGenerator do
   subject { described_class.new(settings) }
 
@@ -109,9 +85,6 @@ describe Y2Storage::Proposal::SettingsGenerator do
       it "returns the same values as the initial settings" do
         settings_values = Marshal.dump(settings)
         next_settings_values = Marshal.dump(subject.next_settings)
-
-        peeker(settings_values, "/tmp/dump1")
-        peeker(next_settings_values, "/tmp/dump2")
 
         expect(next_settings_values).to eq(settings_values)
       end
