@@ -648,9 +648,13 @@ describe Y2Storage::Filesystems::Btrfs do
     end
 
     it "returns a copy of the stored objects instead of the original ones" do
-      filesystem.auto_deleted_subvolumes = [subvol1, subvol2]
+      subvols = [subvol1, subvol2]
+      filesystem.auto_deleted_subvolumes = subvols
+      returned_subvols = filesystem.auto_deleted_subvolumes
 
-      expect(filesystem.auto_deleted_subvolumes).to_not eq [subvol1, subvol2]
+      expect(returned_subvols).to_not equal subvols
+      expect(returned_subvols[0]).to_not equal subvols[0]
+      expect(returned_subvols[1]).to_not equal subvols[1]
     end
 
     it "shares the stored value with all the instances of the filesystem" do
