@@ -44,6 +44,15 @@ module Y2Storage
         # use deep instrospection
         []
       end
+
+      # Enable comparison
+      #
+      # The motivation for this is cooperation with EqualByInstanceVariables,
+      # and another way would be to simply include that mixin here,
+      # but it is more understandable to inline it like this.
+      def ==(other)
+        other.class == self.class && other.value == value
+      end
     end
 
     # Class methods for the mixin

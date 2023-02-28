@@ -21,6 +21,7 @@
 require_relative "spec_helper"
 require "y2storage"
 require "pp"
+require "y2storage/equal_by_instance_variables"
 
 describe Y2Storage::SecretAttributes do
   # Dummy test clase
@@ -35,6 +36,7 @@ describe Y2Storage::SecretAttributes do
   # Another dummy test clase
   class ClassWithData
     include Y2Storage::SecretAttributes
+    include Y2Storage::EqualByInstanceVariables
 
     attr_accessor :name
 
@@ -126,6 +128,30 @@ describe Y2Storage::SecretAttributes do
 
       expect(with_password2.name).to eq "data2X"
       expect(with_password2.password).to eq "xx2X"
+    end
+
+    context "when comparing (==) by instance variables" do
+      let(:with_data2) { ClassWithData.new }
+
+      it "compares as equal when the secret is equal" do
+        with_data.name = "name"
+        with_data.data = "data"
+
+        with_data2.name = "name"
+        with_data2.data = "data"
+
+        expect(with_data).to eq with_data2
+      end
+
+      it "compares as different when the secret is different" do
+        with_data.name = "name"
+        with_data.data = "data"
+
+        with_data2.name = "name"
+        with_data2.data = "somethingelse"
+
+        expect(with_data).to_not eq with_data2
+      end
     end
 
     context "when the attribute has never been set" do
