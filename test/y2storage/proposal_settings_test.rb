@@ -68,10 +68,7 @@ describe Y2Storage::ProposalSettings do
     end
 
     it "creates an object with the same values" do
-      settings_values = Marshal.dump(settings)
-      settings_deep_copy_values = Marshal.dump(settings.deep_copy)
-
-      expect(settings_deep_copy_values).to eq(settings_values)
+      expect(settings.deep_copy).to eq(settings)
     end
 
     it "creates an object with different references" do

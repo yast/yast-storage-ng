@@ -83,10 +83,9 @@ describe Y2Storage::Proposal::SettingsGenerator do
 
     context "when called for first time" do
       it "returns the same values as the initial settings" do
-        settings_values = Marshal.dump(settings)
-        next_settings_values = Marshal.dump(subject.next_settings)
+        next_settings = subject.next_settings
 
-        expect(next_settings_values).to eq(settings_values)
+        expect(next_settings).to eq(settings)
       end
 
       it "creates an empty SettingsAdjustment object" do
