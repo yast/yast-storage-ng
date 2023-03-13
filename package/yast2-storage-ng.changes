@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar 10 16:35:10 UTC 2023 - Ladislav Slezák <lslezak@suse.com>
+
+- Removed unnecessary executable flags from files (bsc#1209094)
+- 4.5.18
+
+-------------------------------------------------------------------
 Thu Mar  2 10:13:14 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - Fix comparing ProposalSettings in tests, avoid using Marshal
