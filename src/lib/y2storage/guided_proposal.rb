@@ -271,7 +271,7 @@ module Y2Storage
     def candidate_devices_with_empty_partition_table(devicegraph)
       device_names = settings.candidate_devices
       devices = device_names.map { |n| devicegraph.find_by_name(n) }
-      devices.select { |d| d.partition_table && d.partitions.empty? }
+      devices.select { |d| d&.partition_table && d.partitions.empty? }
     end
 
     # Candidate devices to make a proposal
