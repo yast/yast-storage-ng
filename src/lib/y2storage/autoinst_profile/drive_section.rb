@@ -385,7 +385,7 @@ module Y2Storage
         @type = :CT_LVM
         @device = vg.name
 
-        @partitions = partitions_from_collection(vg.lvm_lvs)
+        @partitions = partitions_from_collection(vg.all_lvm_lvs)
         return false if @partitions.empty?
 
         @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem).compact)
