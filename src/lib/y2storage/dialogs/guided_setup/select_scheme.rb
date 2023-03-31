@@ -109,10 +109,8 @@ module Y2Storage
               CheckBox(
                 Id(:separate_vgs),
                 format(
-                  # TRANSLATORS: %{widget_label} refers to the label of the widget. %{paths} is a
-                  # comma separated list of paths
-                  _("%{widget_label}\n(%{paths})"),
-                  widget_label: WIDGET_LABELS[:use_separate_vgs],
+                  "%{widget_label}\n(%{paths})",
+                  widget_label: _(WIDGET_LABELS[:use_separate_vgs]),
                   paths:        separated_volume_groups.map(&:mount_point).join(", ")
                 )
               )
@@ -123,7 +121,7 @@ module Y2Storage
 
         def enable_disk_encryption
           VBox(
-            Left(CheckBox(Id(:encryption), Opt(:notify), WIDGET_LABELS[:enable_disk_encryption])),
+            Left(CheckBox(Id(:encryption), Opt(:notify), _(WIDGET_LABELS[:enable_disk_encryption]))),
             VSpacing(0.2),
             Left(
               HBox(
@@ -201,7 +199,7 @@ module Y2Storage
               "so make sure not to lose it!</i>" \
               "</p>"
             ),
-            disk_encryption_label: WIDGET_LABELS[:use_disk_encryption]
+            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption])
           )
           # rubocop:enable Metrics/MethodLength
         end
@@ -211,7 +209,7 @@ module Y2Storage
           format(
             _("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
               "to put some of those special paths in an isolated Volume Group.</p>"),
-            widget_label: WIDGET_LABELS[:use_separate_vgs]
+            widget_label: _(WIDGET_LABELS[:use_separate_vgs])
           )
         end
 
