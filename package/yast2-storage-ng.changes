@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Mar 31 11:21:44 UTC 2023 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
+
+- Fix the translation of widgets titles in the dialog to select
+  a partitioning scheme (bsc#1209697).
+- 4.5.19
+
+-------------------------------------------------------------------
 Fri Mar 10 16:35:10 UTC 2023 - Ladislav Slezák <lslezak@suse.com>
 
 - Removed unnecessary executable flags from files (bsc#1209094)
