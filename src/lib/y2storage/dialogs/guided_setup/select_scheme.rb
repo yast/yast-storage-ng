@@ -199,7 +199,7 @@ module Y2Storage
               "so make sure not to lose it!</i>" \
               "</p>"
             ),
-            disk_encryption_label: _(WIDGET_LABELS[:use_disk_encryption])
+            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption])
           )
           # rubocop:enable Metrics/MethodLength
         end
