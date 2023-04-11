@@ -292,9 +292,11 @@ module Y2Partitioner
         #
         # @return [String]
         def default_unformatted_label(device)
-          data = [device.vendor, device.model].compact
+          # The "model" field from hwinfo is a combination of vendor + device with quite some added
+          # heuristics to make the result nice looking. See comment#66 at bsc#1200975.
+          model = device.model || ""
 
-          return data.join("-") unless data.empty?
+          return model unless model.empty?
           return device.id.to_human_string if device.respond_to?(:id)
 
           default_label(device)
