@@ -1186,6 +1186,71 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#boss?" do
+    let(:device_name) { "/dev/sda" }
+
+    before { allow(device).to receive(:model).and_return model }
+
+    context "when no model information is available" do
+      let(:model) { nil }
+
+      it "returns false" do
+        expect(device.boss?).to eq false
+      end
+    end
+
+    context "when the model information is empty" do
+      let(:model) { "" }
+
+      it "returns false" do
+        expect(device.boss?).to eq false
+      end
+    end
+
+    # Original criteria provided by Dell at jsc#SLE-17578
+    context "when the model contains DELLBOSS" do
+      let(:model) { "A DELLBOSS device" }
+
+      it "returns true" do
+        expect(device.boss?).to eq true
+      end
+    end
+
+    # Used in some models like the one reported as bsc#1200975
+    context "when the model contains 'Dell BOSS'" do
+      let(:model) { "Dell BOSS-N1 Modular" }
+
+      it "returns true" do
+        expect(device.boss?).to eq true
+      end
+    end
+
+    # Hypothetical string based on the criteria exposed at comment#84 of bsc#1200975
+    context "when the model contains first 'BOSS' and then 'Dell'" do
+      let(:model) { "Cool BOSS device by Dell" }
+
+      it "returns true" do
+        expect(device.boss?).to eq true
+      end
+    end
+
+    context "when the model contains 'Dell' but not 'BOSS'" do
+      let(:model) { "Dell controller" }
+
+      it "returns false" do
+        expect(device.boss?).to eq false
+      end
+    end
+
+    context "when the model contains 'BOSS' but not 'Dell'" do
+      let(:model) { "BOSS as Back Office Support System" }
+
+      it "returns false" do
+        expect(device.boss?).to eq false
+      end
+    end
+  end
+
   describe ".sorted_by_name" do
     let(:scenario) { "sorting/disks_and_dasds1" }
 

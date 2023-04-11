@@ -665,16 +665,20 @@ module Y2Storage
     #   @return [Array<String>] empty if the driver is unknown
 
     # @see #boss?
-    BOSS_REGEXP = Regexp.new("dell.*boss", Regexp::IGNORECASE).freeze
+    DELL_REGEXP = Regexp.new("dell", Regexp::IGNORECASE).freeze
+    BOSS_REGEXP = Regexp.new("BOSS").freeze
+    private_constant :DELL_REGEXP
     private_constant :BOSS_REGEXP
 
     # Whether this device is a Dell BOSS (Boot Optimized Storage Solution)
     #
-    # See https://jira.suse.com/browse/SLE-17578
+    # See https://jira.suse.com/browse/SLE-17578 and bsc#1200975
     #
     # @return [Boolean]
     def boss?
-      !!model&.match?(BOSS_REGEXP)
+      return false unless model
+
+      model.match?(BOSS_REGEXP) && model.match?(DELL_REGEXP)
     end
 
     # Size of the space that could be theoretically reclaimed by shrinking the
