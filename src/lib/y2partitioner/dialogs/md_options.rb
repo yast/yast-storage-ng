@@ -33,8 +33,8 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
-        @chunk_size_selector = ChunkSize.new(controller)
-        @parity_selector = controller.parity_supported? ? Parity.new(controller) : Empty()
+        @chunk_size_selector = chunk_size? ? ChunkSize.new(controller) : Empty()
+        @parity_selector = parity? ? Parity.new(controller) : Empty()
       end
 
       # @macro seeDialog
@@ -52,9 +52,29 @@ module Y2Partitioner
         )
       end
 
+      def run
+        return :next unless parity? || chunk_size?
+
+        super
+      end
+
       private
 
       attr_reader :controller
+
+      # Whether the widget for selecting the chunk size must be displayed
+      #
+      # @return [Boolean]
+      def chunk_size?
+        controller.chunk_size_supported?
+      end
+
+      # Whether the widget for selecting the RAID parity must be displayed
+      #
+      # @return [Boolean]
+      def parity?
+        controller.parity_supported?
+      end
 
       # Widget to select the chunk size
       class ChunkSize < CWM::ComboBox
@@ -73,8 +93,7 @@ module Y2Partitioner
           _("<p><b>Chunk Size:</b> " \
             "It is the smallest \"atomic\" mass of data that can be written to the devices. " \
             "A reasonable chunk size for RAID 5 is 128 kB. " \
-            "For RAID 0, 32 kB is a good starting point. " \
-            "For RAID 1, the chunk size does not affect the array very much." \
+            "For RAID 0, 32 kB is a good starting point." \
             "</p>")
         end
 
