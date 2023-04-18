@@ -96,6 +96,19 @@ module Y2Storage
         @parity_algorithm = md.md_parity.to_s
         @device_order = md.sorted_devices.map(&:name)
       end
+
+      # RAID parity, according to the value of {#parity_algorithm}
+      #
+      # If possible, finds the corresponding MD parity, no matter if a legacy or modern
+      # representation is used at {#parity_algorithm} (see {MdParity.find_with_legacy}).
+      #
+      # @return [MdParity, nil] nil if {#parity_algorithm} is blank or it's impossible to infer
+      #   the corresponding RAID parity
+      def md_parity
+        return nil if parity_algorithm.nil? || parity_algorithm.empty?
+
+        MdParity.find_with_legacy(parity_algorithm)
+      end
     end
   end
 end
