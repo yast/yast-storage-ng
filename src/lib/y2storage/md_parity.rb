@@ -57,6 +57,35 @@ module Y2Storage
     }
     private_constant :TRANSLATIONS
 
+    # Matching between identifiers for parity_algorithm in the old libstorage and the current ones
+    LEGACY_TO_CURRENT = {
+      parity_first:   :first,
+      parity_last:    :last,
+      parity_first_6: :first_6,
+      n2:             :near_2,
+      o2:             :offset_2,
+      f2:             :far_2,
+      n3:             :near_3,
+      o3:             :offset_3,
+      f3:             :far_3
+    }.freeze
+    private_constant :LEGACY_TO_CURRENT
+
+    # Parity corresponding to the given identifier
+    #
+    # Before storage-ng (SLE <= 12.x) some MD parities were represented by a slightly different
+    # indentifier in the AutoYaST profiles. This method returns the corresponding value of the
+    # enum, no matter if an old or a modern representation is given.
+    #
+    # @param id [#to_sym] identifier of the parity
+    # @return [MdParity, nil] nil if the given id is not recognized
+    def self.find_with_legacy(id)
+      id = LEGACY_TO_CURRENT[id.to_sym] if LEGACY_TO_CURRENT.key?(id.to_sym)
+      find(id)
+    rescue NameError
+      nil
+    end
+
     # Returns human readable representation of enum which is already translated.
     # @return [String]
     # @raise [RuntimeError] when called on enum value for which translation is not yet defined.
