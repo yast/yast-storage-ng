@@ -41,6 +41,9 @@ describe Y2Storage::AutoinstProposal do
     let(:scenario) { "bug_1120979" }
 
     let(:format_md) { create }
+    let(:raid_options) do
+      { "raid_type" => "raid1", "device_order" => ["/dev/vdb1", "/dev/vdc1"] }
+    end
     let(:partitioning) do
       [
         {
@@ -51,10 +54,7 @@ describe Y2Storage::AutoinstProposal do
               {
                 "create" => create, "filesystem" => :xfs, "format" => format_md, "mount" => "/home",
                 "mountby" => :uuid, "partition_nr" => partition_nr,
-                "raid_options" => {
-                  "raid_type"    => "raid1",
-                  "device_order" => ["/dev/vdb1", "/dev/vdc1"]
-                }
+                "raid_options" => raid_options
               }
             ]
         },
@@ -326,6 +326,38 @@ describe Y2Storage::AutoinstProposal do
         let(:partition_nr) { 0 }
 
         include_examples "all MD create/reuse combinations"
+      end
+    end
+
+    context "when a parity algorithm is specified " do
+      let(:raid_options) do
+        { "raid_type" => "raid10", "parity_algorithm" => parity_algorithm }
+      end
+      let(:md_name_in_profile) { "/dev/md/0" }
+      let(:drive_device) { md_name_in_profile }
+      let(:partition_nr) { 0 }
+      let(:create) { true }
+      let(:create_vdb1) { true }
+      let(:create_vdc1) { true }
+
+      context "if parity is given as a modern identifier" do
+        let(:parity_algorithm) { "far_3" }
+
+        it "creates the RAID with the expected parity" do
+          proposal.propose
+          raid = proposal.devices.raids.first
+          expect(raid.md_parity).to eq Y2Storage::MdParity::FAR_3
+        end
+      end
+
+      context "if parity is given as a legacy identifier" do
+        let(:parity_algorithm) { "f3" }
+
+        it "creates the RAID with the expected parity" do
+          proposal.propose
+          raid = proposal.devices.raids.first
+          expect(raid.md_parity).to eq Y2Storage::MdParity::FAR_3
+        end
       end
     end
   end

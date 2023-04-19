@@ -735,15 +735,6 @@ describe Y2Partitioner::Actions::Controllers::Md do
       end
     end
 
-    context "when the Md device is a RAID1" do
-      let(:md_level) { Y2Storage::MdLevel::RAID1 }
-
-      it "returns 4 KiB" do
-        size = Y2Storage::DiskSize.KiB(4)
-        expect(controller.chunk_sizes.min).to eq size
-      end
-    end
-
     context "when the Md device is a RAID5" do
       let(:md_level) { Y2Storage::MdLevel::RAID5 }
 
@@ -855,9 +846,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device is a RAID1" do
       let(:md_level) { Y2Storage::MdLevel::RAID1 }
 
-      it "sets chunk size to 4 KiB" do
+      it "does not set the chunk size" do
         controller.apply_default_options
-        expect(controller.md.chunk_size).to eq(4.KiB)
+        expect(controller.md.chunk_size).to eq(Y2Storage::DiskSize.zero)
       end
 
       it "does not set the parity" do

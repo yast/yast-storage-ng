@@ -37,7 +37,8 @@ module Y2Partitioner
         extend Forwardable
 
         def_delegators :md, :md_level, :md_level=, :md_name,
-          :chunk_size, :chunk_size=, :md_parity, :md_parity=
+          :chunk_size_supported?, :chunk_size, :chunk_size=,
+          :md_parity, :md_parity=
 
         # Constructor
         #
@@ -206,7 +207,7 @@ module Y2Partitioner
         # @see #default_chunk_size
         # @see #default_md_parity
         def apply_default_options
-          md.chunk_size = default_chunk_size
+          md.chunk_size = default_chunk_size if chunk_size_supported?
           md.md_parity = default_md_parity if parity_supported?
         end
 
@@ -299,7 +300,7 @@ module Y2Partitioner
             [block_size, Y2Storage::DiskSize.KiB(4)].max # bsc#1200018
           when :raid10
             [block_size, page_size, Y2Storage::DiskSize.KiB(4)].max # bsc#1200018
-          else # including raid1/5/6
+          else # including raid5 and raid6
             [default_chunk_size, Y2Storage::DiskSize.KiB(64)].min
           end
         end
@@ -310,8 +311,6 @@ module Y2Partitioner
 
         def default_chunk_size
           case md.md_level.to_sym
-          when :raid1
-            Y2Storage::DiskSize.KiB(4)
           when :raid5, :raid6
             Y2Storage::DiskSize.KiB(128)
           else # including raid0 and raid10
