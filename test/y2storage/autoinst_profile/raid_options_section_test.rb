@@ -98,6 +98,42 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
     end
   end
 
+  describe "#md_parity" do
+    subject(:raid_options) { described_class.new_from_hashes(spec) }
+
+    context "when parity_algorithm is not specified" do
+      let(:spec) { {} }
+
+      it "returns nil" do
+        expect(raid_options.md_parity).to be_nil
+      end
+    end
+
+    context "when parity_algorithm contains a valid modern value" do
+      let(:spec) { { "parity_algorithm" => "near_3" } }
+
+      it "returns the corresponding MdParity object" do
+        expect(raid_options.md_parity).to eq Y2Storage::MdParity::NEAR_3
+      end
+    end
+
+    context "when parity_algorithm contains a legacy (pre storage-ng) value" do
+      let(:spec) { { "parity_algorithm" => "o2" } }
+
+      it "returns the corresponding MdParity object" do
+        expect(raid_options.md_parity).to eq Y2Storage::MdParity::OFFSET_2
+      end
+    end
+
+    context "when parity_algorithm contains an invalid value" do
+      let(:spec) { { "parity_algorithm" => "invented" } }
+
+      it "returns nil" do
+        expect(raid_options.md_parity).to be_nil
+      end
+    end
+  end
+
   describe ".new_from_storage" do
     let(:numeric?) { false }
     let(:parent) { double("Installation::AutoinstProfile::SectionWithAttributes") }

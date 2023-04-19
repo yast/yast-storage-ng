@@ -103,7 +103,10 @@ module Y2Storage
     storage_forward :allowed_md_parities, as: "MdParity"
 
     # @!attribute chunk_size
-    #   Chunk size of the MD RAID.
+    #   Chunk size of the MD RAID. Zero if the value is unknown or makes no sense.
+    #
+    #   @see #chunk_size_supported?
+    #
     #   @return [DiskSize]
     storage_forward :chunk_size, as: "DiskSize"
     storage_forward :chunk_size=
@@ -316,6 +319,20 @@ module Y2Storage
       else
         super
       end
+    end
+
+    # Whether setting a chunk size makes sense (see bsc#1205172).
+    #
+    # For some MD devices, the chunk size is meaningless and the {#chunk_size}
+    # attribute should never be set to a value different from DiskSize.zero.
+    # Moreover, libstorage-ng will ignore {#chunk_size} when creating those
+    # RAIDs during the commit phase.
+    #
+    # @return [Boolean]
+    def chunk_size_supported?
+      # See bsc#1205172. Starting with version 4.2, mdadm returns an error if a
+      # chunk size is specified when creating RAID1 array.
+      !md_level.is?(:raid1)
     end
 
     protected
