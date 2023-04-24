@@ -37,20 +37,14 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
       allow(disk).to receive(:transport).and_return(transport)
       allow(disk).to receive(:sd_card?).and_return(sd_card)
       allow(disk).to receive(:boss?).and_return(boss)
-
-      allow(transport).to receive(:is?).with(:usb).and_return(usb)
-      allow(transport).to receive(:is?).with(:sbp).and_return(sbp)
-
       allow(analyzer).to receive(:installed_systems).with(disk).and_return(installed_systems)
     end
 
     let(:disk) { instance_double(Y2Storage::Disk) }
 
-    let(:transport) { instance_double(Y2Storage::DataTransport) }
+    let(:transport) { Y2Storage::DataTransport::UNKNOWN }
 
     let(:name) { "/dev/sda" }
-    let(:usb) { false }
-    let(:sbp) { false }
     let(:sd_card) { false }
     let(:boss) { false }
     let(:installed_systems) { [] }
@@ -76,7 +70,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
     end
 
     context "when the disk transport is usb" do
-      let(:usb) { true }
+      let(:transport) { Y2Storage::DataTransport::USB }
 
       it "includes the 'USB' label" do
         expect(subject.label(disk)).to match(/USB/)
@@ -84,10 +78,26 @@ describe Y2Storage::Dialogs::GuidedSetup::Helpers::Disk do
     end
 
     context "when the disk transport is sbp" do
-      let(:sbp) { true }
+      let(:transport) { Y2Storage::DataTransport::SBP }
 
       it "includes the 'IEEE 1394' label" do
         expect(subject.label(disk)).to match(/IEEE 1394/)
+      end
+    end
+
+    context "when the disk transport is FCoE" do
+      let(:transport) { Y2Storage::DataTransport::FCOE }
+
+      it "includes the raw transport name" do
+        expect(subject.label(disk)).to match(/fcoe/)
+      end
+    end
+
+    context "when the disk transport is sata" do
+      let(:transport) { Y2Storage::DataTransport::SATA }
+
+      it "does not include any reference to the transport" do
+        expect(subject.label(disk)).to_not match(/sata/i)
       end
     end
 
