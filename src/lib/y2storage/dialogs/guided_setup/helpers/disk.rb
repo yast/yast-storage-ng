@@ -98,6 +98,10 @@ module Y2Storage
               _("USB")
             elsif transport.is?(:sbp)
               _("IEEE 1394")
+            # FIXME: Find alternative ways to represent these transports with better support for
+            # i18n, etc. This implementation is the bare minimum for bsc#1209588.
+            elsif transport.is?(:iscsi, :fcoe, :tcp, :fc, :rdma)
+              transport.to_s
             else
               ""
             end
