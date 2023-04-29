@@ -63,7 +63,6 @@ module Y2Storage
       # @return [Boolean] true if everything went fine, false if the user
       #   decided to abort
       def commit
-        manager.rootprefix = Yast::Installation.destdir
         return false unless manager.commit(force_rw: true)
 
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
