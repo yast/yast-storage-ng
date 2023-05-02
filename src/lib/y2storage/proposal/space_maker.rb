@@ -254,9 +254,8 @@ module Y2Storage
       # @param ignore_lvm [Boolean]
       # @return [Planned::PartitionsDistribution, nil] nil if no valid distribution was found
       def find_distribution(planned_partitions, ignore_lvm: false)
-        spaces = free_spaces(new_graph)
         calculator = ignore_lvm ? non_lvm_dist_calculator : dist_calculator
-        calculator.best_distribution(planned_partitions, spaces, extra_free_spaces)
+        calculator.best_distribution(planned_partitions, free_spaces, extra_free_spaces)
       end
 
       # Perform all the needed operations to make space for the partitions
@@ -403,7 +402,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def resizing_size(partition, planned_partitions, disk_name)
-        spaces = free_spaces(new_graph, disk_name)
+        spaces = free_spaces(disk_name)
         if disk_name && extra_disk_names.include?(disk_name)
           # Operating in a disk that is not a candidate_device, no need to make extra space for LVM
           return non_lvm_dist_calculator.resizing_size(partition, planned_partitions, spaces)
@@ -414,13 +413,12 @@ module Y2Storage
         dist_calculator.resizing_size(partition, partitions, spaces)
       end
 
-      # List of free spaces from the candidate devices in the given devicegraph
+      # List of free spaces from the candidate devices in the new devicegraph
       #
-      # @param graph [Devicegraph]
       # @param disk [String, nil] optional disk name to restrict result to
       # @return [Array<FreeDiskSpace>]
-      def free_spaces(graph, disk = nil)
-        disks_for(graph, disk).each_with_object([]) do |d, list|
+      def free_spaces(disk = nil)
+        disks_for(new_graph, disk).each_with_object([]) do |d, list|
           list.concat(d.as_not_empty { d.free_spaces })
         end
       end
@@ -428,7 +426,7 @@ module Y2Storage
       # List of free spaces from extra disks (see {#extra_disk_names})
       # @return [Array<FreeDiskSpace>]
       def extra_free_spaces
-        extra_disk_names.flat_map { |d| free_spaces(new_graph, d) }
+        extra_disk_names.flat_map { |d| free_spaces(d) }
       end
 
       # List of candidate disk devices in the given devicegraph
