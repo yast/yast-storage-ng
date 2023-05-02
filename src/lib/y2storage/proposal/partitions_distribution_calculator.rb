@@ -42,16 +42,19 @@ module Y2Storage
       # that size (within the max limits defined for the planned VG).
       #
       # @param partitions [Array<Planned::Partition>]
-      # @param spaces [Array<FreeDiskSpace>]
+      # @param spaces [Array<FreeDiskSpace>] spaces that can be used to allocate partitions targeted
+      #   to the corresponding disk but also partitions with no specific disk and partitions for LVM
+      # @param extra_spaces [Array<FreeDiskSpace>] spaces that can only be used to allocate
+      #   partitions explicitly targeted to the corresponding disk
       #
       # @return [Planned::PartitionsDistribution]
-      def best_distribution(partitions, spaces)
+      def best_distribution(partitions, spaces, extra_spaces = [])
         log.info "Calculating best space distribution for #{partitions.inspect}"
         # First, make sure the whole attempt makes sense
-        return nil if impossible?(partitions, spaces)
+        return nil if impossible?(partitions, spaces + extra_spaces)
 
         begin
-          dist_hashes = distribute_partitions(partitions, spaces)
+          dist_hashes = distribute_partitions(partitions, spaces, extra_spaces)
         rescue NoDiskSpaceError
           return nil
         end
@@ -116,6 +119,13 @@ module Y2Storage
         end
       end
 
+      # Whether LVM should be taken into account
+      #
+      # @return [Boolean]
+      def lvm?
+        !!(planned_vg && planned_vg.missing_space > DiskSize.zero)
+      end
+
       protected
 
       # When calculating an LVM proposal, this represents the projected "system"
@@ -125,13 +135,6 @@ module Y2Storage
       #
       # @return [Planned::LvmVg, nil]
       attr_reader :planned_vg
-
-      # Whether LVM should be taken into account
-      #
-      # @return [Boolean]
-      def lvm?
-        !!(planned_vg && planned_vg.missing_space > DiskSize.zero)
-      end
 
       # Checks whether there is any chance of producing a valid
       # PartitionsDistribution to accomodate the planned partitions and the
@@ -181,10 +184,11 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>]
       # @param free_spaces [Array<FreeDiskSpace>]
+      # @param extra_spaces [Array<FreeDiskSpace>]
       # @return [Hash{Planned::Partition => Array<FreeDiskSpace>}]
-      def candidate_disk_spaces(planned_partitions, free_spaces)
+      def candidate_disk_spaces(planned_partitions, free_spaces, extra_spaces = [])
         planned_partitions.each_with_object({}) do |partition, hash|
-          spaces = free_spaces.select { |space| suitable_disk_space?(space, partition) }
+          spaces = partition_candidate_spaces(partition, free_spaces, extra_spaces)
           if spaces.empty?
             log.error "No suitable free space for #{partition}"
             raise NoDiskSpaceError, "No suitable free space for the planned partition"
@@ -227,6 +231,17 @@ module Y2Storage
         true
       end
 
+      # @see #candidate_disk_spaces
+      #
+      # @param partition [Planned::Partition]
+      # @param candidate_spaces [Array<FreeDiskSpace>]
+      # @param extra_spaces [Array<FreeDiskSpace>]
+      # @return [Array<FreeDiskSpace>]
+      def partition_candidate_spaces(partition, candidate_spaces, extra_spaces)
+        spaces = partition.disk ? candidate_spaces + extra_spaces : candidate_spaces
+        spaces.select { |space| suitable_disk_space?(space, partition) }
+      end
+
       # @param partition [Planned::Partition]
       # @param space [FreeDiskSpace]
       #
@@ -265,10 +280,11 @@ module Y2Storage
       #
       # @param partitions [Array<Planned::Partitions>]
       # @param spaces [Array<FreeDiskSpace>]
+      # @param extra_spaces [Array<FreeDiskSpace>]
       # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
-      def distribute_partitions(partitions, spaces)
+      def distribute_partitions(partitions, spaces, extra_spaces = [])
         log.info "Selecting the candidate spaces for each planned partition"
-        disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
+        disk_spaces_by_part = candidate_disk_spaces(partitions, spaces, extra_spaces)
 
         log.info "Calculate all the possible distributions of planned partitions into spaces"
         dist_hashes = distribution_hashes(disk_spaces_by_part)
