@@ -181,13 +181,11 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>]
       # @param free_spaces [Array<FreeDiskSpace>]
-      # @param raise_if_empty [Boolean] raise a {NoDiskSpaceError} if there is
-      #   any planned partition that doesn't fit in any of the spaces
       # @return [Hash{Planned::Partition => Array<FreeDiskSpace>}]
-      def candidate_disk_spaces(planned_partitions, free_spaces, raise_if_empty: true)
+      def candidate_disk_spaces(planned_partitions, free_spaces)
         planned_partitions.each_with_object({}) do |partition, hash|
           spaces = free_spaces.select { |space| suitable_disk_space?(space, partition) }
-          if spaces.empty? && raise_if_empty
+          if spaces.empty?
             log.error "No suitable free space for #{partition}"
             raise NoDiskSpaceError, "No suitable free space for the planned partition"
           end
