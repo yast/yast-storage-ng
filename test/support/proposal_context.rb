@@ -93,7 +93,7 @@ RSpec.shared_context "proposal" do
   end
 
   let(:expected_scenario) { scenario }
-  let(:expected) do
+  let(:expected_scenario_filename) do
     file_name = expected_scenario
     file_name.concat("-enc") if encrypt
     if lvm
@@ -101,7 +101,10 @@ RSpec.shared_context "proposal" do
       file_name.concat("-#{lvm_strategy}") if lvm_strategy
     end
     file_name.concat("-sep-home") if separate_home
-    full_path = output_file_for(file_name)
+    file_name
+  end
+  let(:expected) do
+    full_path = output_file_for(expected_scenario_filename)
     devicegraph = Y2Storage::Devicegraph.new_from_file(full_path)
     log.info("Expected devicegraph from file\n#{full_path}:\n\n#{devicegraph.to_str}\n")
     devicegraph

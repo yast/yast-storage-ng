@@ -1039,16 +1039,17 @@ describe Y2Storage::Proposal::SpaceMaker do
     end
 
     # Test for bug#1161331 found in the beta versions of SLE-15-SP2. Instead of just
-    # reporting the error (like SLE-15-SP1 used to do), this scenario made SpaceMaker
-    # enter an infinite loop trying to delete sda1 over and over again.
+    # doing its work, this scenario made SpaceMaker enter an infinite loop trying to
+    # delete sda1 over and over again.
     context "when a planned device needs to be created out of the candidate devices" do
       let(:scenario) { "empty-md_raid" }
-      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, disk: "/dev/sda") }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 200.GiB, disk: "/dev/sda") }
       before { settings.candidate_devices = fake_devicegraph.raids }
 
-      it "raises an Error exception" do
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Error
+      it "makes space for it" do
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        devicegraph = result[:devicegraph]
+        expect(devicegraph.partitions.size).to eq 1
       end
     end
   end

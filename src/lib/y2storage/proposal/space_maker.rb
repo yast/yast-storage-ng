@@ -131,6 +131,11 @@ module Y2Storage
 
       attr_reader :disk_analyzer, :dist_calculator
 
+      # Disks that are not candidate devices but still must be considered because
+      # there are planned partitions explicitly targeted to those disks
+      # @return [Array<String>]
+      attr_reader :extra_disk_names
+
       # New devicegraph calculated by {#provide_space}
       # @return [Devicegraph]
       attr_reader :new_graph
@@ -164,6 +169,7 @@ module Y2Storage
         @new_graph = original_graph.duplicate
         @new_graph_part_killer = PartitionKiller.new(@new_graph, candidate_disk_names)
         @new_graph_deleted_sids = []
+        @extra_disk_names = partitions.map(&:disk).compact.uniq - settings.candidate_devices
 
         # To make sure we are not freeing space in useless places first
         # restrict the operations to disks with particular disk
@@ -191,6 +197,14 @@ module Y2Storage
           #
           parts_by_disk.each do |disk, parts|
             resize_and_delete(parts, keep, lvm_helper, disk_name: disk)
+          rescue Error
+            # If LVM was involved, maybe there is still hope if we don't abort on this error.
+            raise unless dist_calculator.lvm?
+
+            # dist_calculator tried to allocate the specific partitions for this disk but also
+            # all new physical volumes for the LVM. If the physical volumes were the culprit, we
+            # should keep trying to delete/resize stuff in other disks.
+            raise unless find_distribution(parts, ignore_lvm: true)
           end
         end
 
@@ -223,15 +237,25 @@ module Y2Storage
       # @return [Boolean]
       def success?(planned_partitions)
         # Once a distribution has been found we don't have to look for another one.
-        if !@distribution
-          spaces = free_spaces(new_graph)
-          @distribution = dist_calculator.best_distribution(planned_partitions, spaces)
-        end
+        @distribution ||= find_distribution(planned_partitions)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute partitions: #{e}"
         @distribution = nil
         false
+      end
+
+      # Finds the best distribution to allocate the given set of planned partitions
+      #
+      # In case of an LVM-based proposal, the distribution will also include any needed physical
+      # volume for the system LVM. The argument ignore_lvm can be used to disable that requirement.
+      #
+      # @param planned_partitions [Array<Planned::Partition>]
+      # @param ignore_lvm [Boolean]
+      # @return [Planned::PartitionsDistribution, nil] nil if no valid distribution was found
+      def find_distribution(planned_partitions, ignore_lvm: false)
+        calculator = ignore_lvm ? non_lvm_dist_calculator : dist_calculator
+        calculator.best_distribution(planned_partitions, free_spaces, extra_free_spaces)
       end
 
       # Perform all the needed operations to make space for the partitions
@@ -378,19 +402,31 @@ module Y2Storage
       #
       # @return [DiskSize]
       def resizing_size(partition, planned_partitions, disk_name)
-        spaces = free_spaces(new_graph, disk_name)
-        dist_calculator.resizing_size(partition, planned_partitions, spaces)
+        spaces = free_spaces(disk_name)
+        if disk_name && extra_disk_names.include?(disk_name)
+          # Operating in a disk that is not a candidate_device, no need to make extra space for LVM
+          return non_lvm_dist_calculator.resizing_size(partition, planned_partitions, spaces)
+        end
+
+        # As explained above, don't assume we will make space for LVM on non-candidate devices
+        partitions = planned_partitions.reject { |p| extra_disk_names.include?(p.disk) }
+        dist_calculator.resizing_size(partition, partitions, spaces)
       end
 
-      # List of free spaces in the given devicegraph
+      # List of free spaces from the candidate devices in the new devicegraph
       #
-      # @param graph [Devicegraph]
       # @param disk [String, nil] optional disk name to restrict result to
       # @return [Array<FreeDiskSpace>]
-      def free_spaces(graph, disk = nil)
-        disks_for(graph, disk).each_with_object([]) do |d, list|
+      def free_spaces(disk = nil)
+        disks_for(new_graph, disk).each_with_object([]) do |d, list|
           list.concat(d.as_not_empty { d.free_spaces })
         end
+      end
+
+      # List of free spaces from extra disks (see {#extra_disk_names})
+      # @return [Array<FreeDiskSpace>]
+      def extra_free_spaces
+        extra_disk_names.flat_map { |d| free_spaces(d) }
       end
 
       # List of candidate disk devices in the given devicegraph
@@ -407,6 +443,16 @@ module Y2Storage
       # @return [Array<String>]
       def candidate_disk_names
         settings.candidate_devices
+      end
+
+      # Distribution calculator to use in special cases in which any implication related
+      # to LVM must be ignored
+      #
+      # Used for example when operating in extra (non-candidate) disks
+      #
+      # @return [PartitionsDistributionCalculator]
+      def non_lvm_dist_calculator
+        @non_lvm_dist_calculator ||= PartitionsDistributionCalculator.new
       end
 
       # Whether {#resize_and_delete} should be executed several times,

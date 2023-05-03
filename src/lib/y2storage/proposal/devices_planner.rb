@@ -298,14 +298,12 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_device(planned_device, volume)
-        if settings.allocate_mode?(:device)
-          planned_device.disk = volume.device if planned_device.respond_to?(:disk=)
-        elsif planned_device.root?
-          # Forcing this when planned_device is a LV would imply the new VG
-          # can only be located in that disk (preventing it to spread over
-          # several disks). We likely don't want that.
-          planned_device.disk = settings.root_device if planned_device.is_a?(Planned::Partition)
-        end
+        planned_device.disk = volume.device if planned_device.respond_to?(:disk=)
+        return unless settings.allocate_mode?(:auto) && planned_device.root?
+
+        # Forcing this when planned_device is a LV would imply the new VG can only be located
+        # in that disk (preventing it to spread over several disks). We likely don't want that.
+        planned_device.disk ||= settings.root_device if planned_device.is_a?(Planned::Partition)
       end
 
       # Adjusts values when planned device is swap
