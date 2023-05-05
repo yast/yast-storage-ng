@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2016] SUSE LLC
+# Copyright (c) [2015-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -38,8 +38,12 @@ module Y2Storage
 
       EFIVARS_PATH = "/sys/firmware/efi/efivars".freeze
 
-      def initialize
+      # Constructor
+      #
+      # @param commit_callbacks [Storage::CommitCallbacks, nil]
+      def initialize(commit_callbacks: nil)
         textdomain "storage"
+        @commit_callbacks = commit_callbacks
       end
 
       def run
@@ -58,13 +62,18 @@ module Y2Storage
 
       protected
 
+      # Callbacks to use for commit
+      #
+      # @return [Storage::CommitCallbacks, nil]
+      attr_reader :commit_callbacks
+
       # Commits the actions to disk
       #
       # @return [Boolean] true if everything went fine, false if the user
       #   decided to abort
       def commit
         manager.rootprefix = Yast::Installation.destdir
-        return false unless manager.commit(force_rw: true)
+        return false unless manager.commit(force_rw: true, callbacks: commit_callbacks)
 
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")

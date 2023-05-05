@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May  5 10:50:07 UTC 2023 - José Iván López González <jlopez@suse.com>
+
+- Allow to pass commit callbacks to inst_prepdisk client.
+- Needed for Agama (gh#openSUSE/agama/558).
+- 4.6.8
+
+-------------------------------------------------------------------
 Wed May  3 11:51:09 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - GuidedProposal adapted to support assigning volumes to specific
