@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,22 +17,21 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/space_maker_prospects/base"
+require "y2storage/proposal/space_maker_actions/base"
+require "y2storage/proposal/partition_killer"
 
 module Y2Storage
   module Proposal
-    module SpaceMakerProspects
-      # Represents the prospect action of deleting the content of a disk with no
-      # partition table (i.e. a disk that is directly formatted or is a
-      # component of a software RAID or an LVM).
+    module SpaceMakerActions
+      # Action for deleting a given partition
       #
       # @see Base
-      class WipeDisk < Base
-        protected
-
-        # @see #action
-        def action_class
-          SpaceMakerActions::Wipe
+      class Delete < Base
+        # @param devicegraph [Devicegraph]
+        # @param disk_names [Array<String>] collateral actions are restricted to these disks
+        def delete(devicegraph, disk_names)
+          killer = PartitionKiller.new(devicegraph, disk_names)
+          killer.delete_by_sid(sid)
         end
       end
     end

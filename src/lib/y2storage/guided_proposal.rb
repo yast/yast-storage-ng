@@ -249,7 +249,7 @@ module Y2Storage
       # the end of the process for those devices that were not used (as soon as libstorage-ng
       # allows us to copy sub-graphs).
       remove_empty_partition_tables(new_devicegraph)
-      @clean_graph = space_maker.delete_unwanted_partitions(new_devicegraph)
+      @clean_graph = space_maker.prepare_devicegraph(new_devicegraph)
     end
 
     # Removes partition tables from candidate devices with empty partition table

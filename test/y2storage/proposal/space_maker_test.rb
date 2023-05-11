@@ -53,14 +53,14 @@ describe Y2Storage::Proposal::SpaceMaker do
 
   subject(:maker) { described_class.new(analyzer, settings) }
 
-  describe "#delete_unwanted_partitions" do
+  describe "#prepare_devicegraph" do
     let(:scenario) { "complex-lvm-encrypt" }
 
     context "if a given delete_mode is :none" do
       let(:delete_linux) { :none }
 
       it "does not delete the affected partitions" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.size).to eq fake_devicegraph.partitions.size
       end
     end
@@ -69,7 +69,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:delete_linux) { :ondemand }
 
       it "does not delete the affected partitions" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.size).to eq fake_devicegraph.partitions.size
       end
     end
@@ -78,12 +78,12 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:delete_linux) { :all }
 
       it "does not delete partitions out of SpaceMaker#candidate_devices" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to include "/dev/sde1", "/dev/sde2", "/dev/sdf1"
       end
 
       it "deletes affected partitions within the candidate devices" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda2", "/dev/sda3", "/dev/sda4"
       end
     end
@@ -94,17 +94,17 @@ describe Y2Storage::Proposal::SpaceMaker do
       before { settings.candidate_devices = fake_devicegraph.disks.map(&:name) }
 
       it "deletes partitions with id linux" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda2", "/dev/sda4", "/dev/sde1"
       end
 
       it "deletes partitions with id swap" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to_not include "/dev/sde3"
       end
 
       it "deletes partitions with id lvm" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda3", "/dev/sde2"
       end
 
@@ -113,7 +113,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "does not delete any other partition" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.size).to eq 2
       end
     end
@@ -124,22 +124,22 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:windows_partitions) { [partition_double("/dev/sda2")] }
 
       it "deletes partitions that seem to contain a Windows system" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda2"
       end
 
       it "does not delete NTFS/FAT partitions that don't look like a bootable Windows system" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to include "/dev/sda4"
       end
 
       it "does not delete Linux partitions" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to include "/dev/sda3"
       end
 
       it "does not delete other partitions like the Grub one" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to include "/dev/sda1"
       end
     end
@@ -150,7 +150,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:windows_partitions) { [partition_double("/dev/sda2")] }
 
       it "deletes all partitions except those included in the Windows or Linux definitions" do
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to contain_exactly "/dev/sda2", "/dev/sda3"
       end
     end
@@ -161,13 +161,13 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "deletes all partitions constituting this btrfs" do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to be_empty
       end
 
       it "but deletes only partitions on candidate devices" do
         settings.candidate_devices = ["/dev/sda"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
       end
     end
@@ -178,13 +178,13 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "deletes all partitions constituting this raid" do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to be_empty
       end
 
       it "but deletes only partitions on candidate devices" do
         settings.candidate_devices = ["/dev/sda"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
       end
     end
@@ -195,13 +195,13 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "deletes all partitions constituting this volume group" do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to be_empty
       end
 
       it "but deletes only partitions on candidate devices" do
         settings.candidate_devices = ["/dev/sda"]
-        result = maker.delete_unwanted_partitions(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to contain_exactly "/dev/sdb1", "/dev/sdb2", "/dev/sdb3"
       end
     end

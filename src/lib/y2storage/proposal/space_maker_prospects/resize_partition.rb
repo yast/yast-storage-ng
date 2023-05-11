@@ -54,9 +54,11 @@ module Y2Storage
           settings.resize_windows
         end
 
-        # @return [Symbol]
-        def to_sym
-          :resize_partition
+        protected
+
+        # @see #action
+        def action_class
+          SpaceMakerActions::Shrink
         end
       end
     end
