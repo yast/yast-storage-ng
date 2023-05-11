@@ -33,7 +33,7 @@ module Y2Storage
       class List
         # Initialize.
         #
-        # @param settings [ProposalSettings] proposal settings
+        # @param settings [ProposalSpaceSettings] proposal settings
         # @param disk_analyzer [DiskAnalyzer] information about existing partitions
         def initialize(settings, disk_analyzer)
           @settings = settings

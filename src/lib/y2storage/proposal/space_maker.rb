@@ -104,7 +104,7 @@ module Y2Storage
         log.info "BEGIN SpaceMaker#prepare_devicegraph"
 
         result = original_graph.dup
-        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
         disks_for(result).each { |d| actions.add_mandatory_actions(d) }
 
         while (action = actions.next)
@@ -265,7 +265,7 @@ module Y2Storage
         @distribution = nil
         force_ptables(planned_partitions)
 
-        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
           actions.add_optional_actions(disk, keep, lvm_helper)
         end
