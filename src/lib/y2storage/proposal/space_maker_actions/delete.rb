@@ -27,11 +27,20 @@ module Y2Storage
       #
       # @see Base
       class Delete < Base
+        # @return [Boolean] see {PartitionKiller#delete_by_sid}
+        attr_reader :related_partitions
+
+        # Constructor
+        def initialize(device, related_partitions: true)
+          super(device)
+          @related_partitions = related_partitions
+        end
+
         # @param devicegraph [Devicegraph]
         # @param disk_names [Array<String>] collateral actions are restricted to these disks
         def delete(devicegraph, disk_names)
           killer = PartitionKiller.new(devicegraph, disk_names)
-          killer.delete_by_sid(sid)
+          killer.delete_by_sid(sid, delete_related_partitions: related_partitions)
         end
       end
     end

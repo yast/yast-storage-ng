@@ -17,7 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/space_maker_prospects"
+require "y2storage/proposal/space_maker_actions/auto_strategy"
+require "y2storage/proposal/space_maker_actions/bigger_resize_strategy"
 
 module Y2Storage
   module Proposal
@@ -27,36 +28,23 @@ module Y2Storage
       # This class is responsible of selecting which prospect action would be the next to be
       # performed by SpaceMaker, both at the beginning of the process (mandatory actions) and during
       # the iterative process done to find enough space (optional actions).
-      #
-      # In this original implementation is basically a wrapper around {SpaceMakerProspects::List},
-      # but in the future it will implement different strategies to calculate and sort the actions.
       class List
         # Initialize.
         #
         # @param settings [ProposalSpaceSettings] proposal settings
         # @param disk_analyzer [DiskAnalyzer] information about existing partitions
         def initialize(settings, disk_analyzer)
-          @settings = settings
-          @disk_analyzer = disk_analyzer
-          @prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
-          @mandatory = []
+          klass = strategy?(:bigger_resize, settings) ? BiggerResizeStrategy : AutoStrategy
+          @strategy = klass.new(settings, disk_analyzer)
         end
 
         # Adds mandatory actions to be performed at the beginning of the process
         #
         # @see SpaceMaker#prepare_devicegraph
         #
-        # In the case of the traditional YaST strategy for making space, that corresponds to
-        # deleting all partitions explicitly marked for removal in the proposal settings, i.e.
-        # all the partitions belonging to one of the types with delete_mode set to :all.
-        #
-        # @see ProposalSettings#windows_delete_mode
-        # @see ProposalSettings#linux_delete_mode
-        # @see ProposalSettings#other_delete_mode
-        #
         # @param disk [Disk] disk to act upon
         def add_mandatory_actions(disk)
-          mandatory.concat(prospects.unwanted_partition_prospects(disk))
+          strategy.add_mandatory_actions(disk)
         end
 
         # Adds optional actions to be performed if needed until the goal is reached
@@ -68,14 +56,14 @@ module Y2Storage
         # @param lvm_helper [Proposal::LvmHelper] contains information about the
         #     planned LVM logical volumes and how to make space for them
         def add_optional_actions(disk, keep, lvm_helper)
-          prospects.add_prospects(disk, lvm_helper, keep)
+          strategy.add_optional_actions(disk, keep, lvm_helper)
         end
 
         # Next action to be performed by SpaceMaker
         #
         # @return [Action, nil] nil if there are no more actions in the list
         def next
-          next_prospect&.action
+          strategy.next
         end
 
         # Marks the action currently reported by {#next} as completed, so it will not be longer
@@ -84,28 +72,16 @@ module Y2Storage
         # @param deleted_sids [Array<Integer>] sids of devices that are not longer available as
         #   a side effect of completing the action
         def done(deleted_sids = [])
-          if mandatory.any?
-            mandatory.shift
-            return
-          end
-
-          prospects.next_available_prospect.available = false
-          prospects.mark_deleted(deleted_sids)
+          strategy.done(deleted_sids)
         end
 
         private
 
-        # @return [Array<Action>] list of mandatory actions to be executed
-        attr_reader :mandatory
+        # @return [AutoStrategy, BiggerResizeStrategy]
+        attr_reader :strategy
 
-        # @return [SpaceMakerProspects::List] optional actions to be executed if needed
-        attr_reader :prospects
-
-        # @see #next
-        def next_prospect
-          return @mandatory.first unless @mandatory.empty?
-
-          prospects.next_available_prospect
+        def strategy?(name, settings)
+          settings.strategy.to_sym == name.to_sym
         end
       end
     end
