@@ -86,15 +86,6 @@ module Y2Storage
           "<#{sid} (#{device_name}) - #{partition_type}>"
         end
 
-        # @return [Symbol]
-        def action_type
-          :delete
-        end
-
-        def action_optional?
-          !for_delete_all
-        end
-
         private
 
         # @return [PartitionId]
