@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2021] SUSE LLC
+# Copyright (c) [2016-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
