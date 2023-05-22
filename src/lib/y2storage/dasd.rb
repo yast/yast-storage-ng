@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,6 +32,10 @@ module Y2Storage
     # @!method rotational?
     #   @return [Boolean] whether this is a rotational device
     storage_forward :rotational?
+
+    # @!method bus_id
+    #   @return [String] The bus ID of the DASD (e.g., "0.0.0150")
+    storage_forward :bus_id
 
     # @!method type
     #   @return [DasdType]
