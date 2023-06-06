@@ -175,6 +175,14 @@ module Y2Partitioner
           mount_point.path
         end
 
+        # Check if the filesystem is currently mounted in the system device graph.
+        #
+        # @return [Boolean]
+        def mounted_in_system_graph?
+          sys_fs = system_device(filesystem)
+          sys_fs&.active_mount_point?
+        end
+
         # Partition id of the block device if it is a partition
         #
         # @return [Y2Storage::PartitionId, nil] nil if there is no block device or the
