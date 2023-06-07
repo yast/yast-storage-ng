@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jun  7 08:03:52 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Prevent setting the volume label for a mounted btrfs or swap
+  (bsc#1211337)
+- 4.4.43
+
+-------------------------------------------------------------------
 Tue Jan 17 14:32:36 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Extended regexp to identify Dell BOSS storage devices (bsc#1200975)
