@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jun  7 08:03:52 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Prevent setting the volume label for a mounted btrfs or swap
+  (bsc#1211337)
+- 4.5.23
+
+-------------------------------------------------------------------
 Mon Apr 24 14:47:33 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Guided Setup: display a hint for disks with sensible data
