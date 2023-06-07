@@ -263,6 +263,7 @@ module Y2Partitioner
         self.value = filesystem.label
         Yast::UI.ChangeWidget(Id(widget_id), :ValidChars, valid_chars)
         Yast::UI.ChangeWidget(Id(widget_id), :InputMaxLength, input_max_length)
+        disable unless can_set_volume_label?
       end
 
       # Validates uniqueness of the given label. The presence of the label is also
@@ -279,6 +280,27 @@ module Y2Partitioner
 
       # @return [Widgets::FstabOptions]
       attr_reader :parent_widget
+
+      # Check if the volume label can be set.
+      #
+      # @return [Boolean]
+      def can_set_volume_label?
+        return true unless @controller.mounted_in_system_graph?
+
+        blk_dev = @controller.blk_device_name
+        fs_type = @controller.filesystem_type
+        log.info("#{blk_dev} type #{fs_type} is mounted")
+        # Can't change the volume label for a mounted Btrfs or swap (bsc#1211337)
+        !btrfs? && !swap?
+      end
+
+      def btrfs?
+        @controller.filesystem_type.is?(:btrfs)
+      end
+
+      def swap?
+        @controller.filesystem_type.is?(:swap)
+      end
 
       # Checks whether a label is given when the filesystem is mounted by label
       #
