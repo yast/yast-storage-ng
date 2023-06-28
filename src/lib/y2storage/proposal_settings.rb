@@ -427,7 +427,9 @@ module Y2Storage
     # the installation, eg. the dialog of the Common Criteria system role
     def load_encryption
       load_feature(:proposal, :encryption_password)
-      @encryption_password = nil if encryption_password&.empty?
+      return if encryption_password.nil?
+
+      @encryption_password = nil if encryption_password.empty?
     end
 
     def validated_delete_mode(mode)
