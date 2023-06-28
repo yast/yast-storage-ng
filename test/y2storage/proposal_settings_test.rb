@@ -336,6 +336,15 @@ describe Y2Storage::ProposalSettings do
       expect(settings.lvm).to eq false
     end
 
+    it "sets 'encryption_password' based on the feature in the 'proposal' section" do
+      read_feature("encryption_password", "")
+      expect(settings.use_encryption).to eq false
+      expect(settings.encryption_password).to eq nil
+      read_feature("encryption_password", "SuperSecret")
+      expect(settings.use_encryption).to eq true
+      expect(settings.encryption_password).to eq "SuperSecret"
+    end
+
     it "sets 'delete_resize_configurable' based on the feature in the 'proposal' section" do
       read_feature("delete_resize_configurable", true)
       expect(settings.delete_resize_configurable).to eq true
