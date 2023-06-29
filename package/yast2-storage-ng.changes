@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jun 29 11:42:21 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Honor encryption settings if they are set into ProductFeatures
+  by the Common Critera role (jsc#PED-4166, jsc#PED-4474).
+- 4.4.44
+
+-------------------------------------------------------------------
 Wed Jun  7 08:03:52 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Prevent setting the volume label for a mounted btrfs or swap

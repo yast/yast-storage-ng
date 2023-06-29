@@ -35,6 +35,19 @@ describe Y2Storage::ProposalSettings do
     stub_features("partitioning" => initial_partitioning_features.merge(features))
   end
 
+  # Used to test the mechanism to inject an encryption password into the settings
+  class TestInjectedPassword
+    include Y2Storage::SecretAttributes
+
+    # Real password
+    secret_attr :password
+
+    # Constructor
+    def initialize(passwd)
+      self.password = passwd
+    end
+  end
+
   before do
     Y2Storage::StorageManager.create_test_instance
   end
@@ -334,6 +347,15 @@ describe Y2Storage::ProposalSettings do
       expect(settings.lvm).to eq true
       read_feature("lvm", false)
       expect(settings.lvm).to eq false
+    end
+
+    it "sets 'encryption_password' based on the 'encryption' feature in the 'proposal' section" do
+      read_feature("encryption", "SuperSecret")
+      expect(settings.use_encryption).to eq false
+      expect(settings.encryption_password).to eq nil
+      read_feature("encryption", TestInjectedPassword.new("SuperSecret"))
+      expect(settings.use_encryption).to eq true
+      expect(settings.encryption_password).to eq "SuperSecret"
     end
 
     it "sets 'delete_resize_configurable' based on the feature in the 'proposal' section" do
