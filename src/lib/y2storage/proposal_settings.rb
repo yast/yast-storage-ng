@@ -426,10 +426,15 @@ module Y2Storage
     # The encryption settings are not part of control.xml, but can be injected by a previous step of
     # the installation, eg. the dialog of the Common Criteria system role
     def load_encryption
-      load_feature(:proposal, :encryption_password)
-      return if encryption_password.nil?
+      enc = feature(:proposal, :encryption)
 
-      @encryption_password = nil if encryption_password.empty?
+      return unless enc
+      return unless enc.respond_to?(:password)
+
+      passwd = enc.password.to_s
+      return if passwd.nil? || passwd.empty?
+
+      self.encryption_password = passwd
     end
 
     def validated_delete_mode(mode)
