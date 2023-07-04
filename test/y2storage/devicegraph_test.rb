@@ -1319,4 +1319,34 @@ describe Y2Storage::Devicegraph do
       end
     end
   end
+
+  describe "#required_used_features" do
+    before { fake_scenario(scenario) }
+
+    context "with local devices combining several filesystem types" do
+      let(:scenario) { "mixed_disks" }
+
+      it "returns only the features for mounted filesystems" do
+        features = fake_devicegraph.required_used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id))
+          .to contain_exactly(:UF_BTRFS, :UF_XFS, :UF_SWAP)
+      end
+    end
+  end
+
+  describe "#optional_used_features" do
+    before { fake_scenario(scenario) }
+
+    context "with local devices combining several filesystem types" do
+      let(:scenario) { "mixed_disks" }
+
+      it "returns only the features for filesystems that are not mounted" do
+        features = fake_devicegraph.optional_used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id))
+          .to contain_exactly(:UF_EXT4, :UF_NTFS)
+      end
+    end
+  end
 end
