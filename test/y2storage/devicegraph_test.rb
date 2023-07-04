@@ -1345,6 +1345,16 @@ describe Y2Storage::Devicegraph do
           .to contain_exactly(:UF_BTRFS, :UF_XFS, :UF_SWAP)
       end
     end
+
+    context "with an empty disk" do
+      let(:scenario) { "empty_disks" }
+
+      it "Survives not having any storage features" do
+        features = fake_devicegraph.required_used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id)).to be == []
+      end
+    end
   end
 
   describe "#optional_used_features" do
@@ -1358,6 +1368,16 @@ describe Y2Storage::Devicegraph do
         expect(features).to be_a Y2Storage::StorageFeaturesList
         expect(features.map(&:id))
           .to contain_exactly(:UF_EXT4, :UF_NTFS)
+      end
+    end
+
+    context "with an empty disk" do
+      let(:scenario) { "empty_disks" }
+
+      it "Survives not having any storage features" do
+        features = fake_devicegraph.optional_used_features
+        expect(features).to be_a Y2Storage::StorageFeaturesList
+        expect(features.map(&:id)).to be == []
       end
     end
   end
