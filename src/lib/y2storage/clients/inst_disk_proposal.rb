@@ -158,23 +158,7 @@ module Y2Storage
       # Add storage-related software packages (filesystem tools etc.) to the
       # set of packages to be installed.
       def add_storage_packages
-        features = storage_manager.staging.used_features
-        required_features = storage_manager.staging.used_features(required_only: true)
-
-        required_packages = required_features.pkg_list
-        optional_packages = features.pkg_list - required_packages
-
-        set_proposal_packages(required_packages, false)
-        set_proposal_packages(optional_packages, true)
-      end
-
-      # @see #add_storage_packages
-      #
-      # @param pkgs [Array<String>] list of packages
-      # @param optional [Boolean] whether the packages in the list are optional
-      def set_proposal_packages(pkgs, optional)
-        pkg_handler = Y2Storage::PackageHandler.new(pkgs, optional: optional)
-        pkg_handler.set_proposal_packages
+        Y2Storage::PackageHandler.set_proposal_packages_for(storage_manager.staging)
       end
 
       # Save the list of filesystem to /etc/sysconfig/storage.
