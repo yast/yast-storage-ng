@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Jul  5 13:42:12 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Ensure adding storage support software packages for MicroOS
+  which uses its custom partitions_proposal client, not the 
+  standard inst_disk_proposal client (bsc#1212452)
+  https://github.com/yast/yast-storage-ng/pull/1346
+- 4.4.45
+
+-------------------------------------------------------------------
 Thu Jun 29 11:42:21 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Honor encryption settings if they are set into ProductFeatures
