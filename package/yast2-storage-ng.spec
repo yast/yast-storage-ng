@@ -15,6 +15,7 @@
 # Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
+# Dummy comment to trigger a new CI run
 Name:           yast2-storage-ng
 Version:        4.4.44
 Release:        0
