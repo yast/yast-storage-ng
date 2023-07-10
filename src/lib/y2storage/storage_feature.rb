@@ -124,6 +124,14 @@ module Y2Storage
       end
     end
 
+    # Drop the cache of storage packages that are available.
+    #
+    # This is only ever needed if the available packages might have changed
+    # since the last use of this class.
+    def self.drop_cache
+      @all = nil
+    end
+
     # Constructor
     #
     # This looks up a constant in the ::Storage namespace to make sure the id

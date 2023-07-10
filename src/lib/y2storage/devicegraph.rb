@@ -615,6 +615,23 @@ module Y2Storage
       StorageFeaturesList.from_bitfield(storage_used_features(type))
     end
 
+    # List of required (mandatory) storage features used by the devicegraph
+    #
+    # @return [StorageFeaturesList]
+    def required_used_features
+      used_features(required_only: true)
+    end
+
+    # List of optional storage features used by the devicegraph
+    #
+    # @return [StorageFeaturesList]
+    def optional_used_features
+      all = storage_used_features(Storage::UsedFeaturesDependencyType_SUGGESTED)
+      required = storage_used_features(Storage::UsedFeaturesDependencyType_REQUIRED)
+      # Using binary XOR in those bit fields to calculate the difference
+      StorageFeaturesList.from_bitfield(all ^ required)
+    end
+
     private
 
     # Copy of a device tree where hashes have been substituted by sorted
