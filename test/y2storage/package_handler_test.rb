@@ -23,6 +23,7 @@
 
 require_relative "spec_helper"
 require "y2storage/package_handler"
+require "y2storage/storage_feature"
 
 describe Y2Storage::PackageHandler do
   let(:feature_pkg) { ["lvm2", "btrfsprogs", "e2fsprogs"] }
@@ -139,6 +140,7 @@ describe Y2Storage::PackageHandler do
   describe ".set_proposal_packages_for" do
     before do
       fake_scenario(scenario)
+      Y2Storage::StorageFeature.drop_cache
       allow(Yast::Mode).to receive(:installation).and_return(installation)
       allow(Yast::Package).to receive(:Installed).and_return(false)
       allow(Yast::Package).to receive(:Available).and_return(true)
