@@ -4,7 +4,7 @@ Wed Jul  5 13:42:12 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 - Ensure adding storage support software packages for MicroOS
   which uses its custom partitions_proposal client, not the 
   standard inst_disk_proposal client (bsc#1212452)
-  https://github.com/yast/yast-storage-ng/pull/1347
+  https://github.com/yast/yast-storage-ng/pull/1350
 - 4.5.24
 
 -------------------------------------------------------------------
