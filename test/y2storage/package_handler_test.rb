@@ -136,7 +136,7 @@ describe Y2Storage::PackageHandler do
     end
   end
 
-  describe "#set_proposal_packages_for" do
+  describe ".set_proposal_packages_for" do
     before do
       fake_scenario(scenario)
       allow(Yast::Mode).to receive(:installation).and_return(installation)
