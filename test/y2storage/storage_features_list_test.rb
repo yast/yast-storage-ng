@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
+require "y2storage/storage_feature"
 require "y2storage/storage_features_list"
 
 describe Y2Storage::StorageFeaturesList do
@@ -84,6 +85,7 @@ describe Y2Storage::StorageFeaturesList do
       let(:bits) { Storage::UF_NTFS | Storage::UF_EXT3 }
 
       before do
+        Y2Storage::StorageFeature.drop_cache
         allow(Yast::Package).to receive(:Available).and_return false
         allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return true
       end

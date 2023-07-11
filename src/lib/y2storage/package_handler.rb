@@ -112,6 +112,21 @@ module Y2Storage
       success
     end
 
+    # Add the proposal packages for storage that are needed for the specified
+    # devicegraph's used features. This marks the packages for installation;
+    # it does not install them yet.
+    #
+    # @param devicegraph [Devicegraph] usually StorageManager.instance.staging
+    # @param optional
+    def self.set_proposal_packages_for(devicegraph, optional: true)
+      required_packages = devicegraph.required_used_features.pkg_list
+      PackageHandler.new(required_packages, optional: false).set_proposal_packages
+      return unless optional
+
+      optional_packages = devicegraph.optional_used_features.pkg_list
+      PackageHandler.new(optional_packages, optional: true).set_proposal_packages
+    end
+
     private
 
     # Whether the packages should be considered as optional when adding them to the
