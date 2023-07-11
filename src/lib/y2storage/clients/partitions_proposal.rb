@@ -116,8 +116,9 @@ module Y2Storage
           staging = storage_manager.staging
           actiongraph = staging ? staging.actiongraph : nil
           self.actions_presenter = ActionsPresenter.new(actiongraph)
-          Y2Storage::DumpManager.dump(staging)
-          Y2Storage::DumpManager.dump(actions_presenter)
+          DumpManager.dump(staging)
+          DumpManager.dump(actions_presenter)
+          PackageHandler.set_proposal_packages_for(staging)
         end
       end
 
