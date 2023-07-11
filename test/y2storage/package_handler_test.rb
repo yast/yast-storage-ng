@@ -23,6 +23,7 @@
 
 require_relative "spec_helper"
 require "y2storage/package_handler"
+require "y2storage/storage_feature"
 
 describe Y2Storage::PackageHandler do
   let(:feature_pkg) { ["lvm2", "btrfsprogs", "e2fsprogs"] }
@@ -132,6 +133,49 @@ describe Y2Storage::PackageHandler do
         allow(Yast::Package).to receive(:CheckAndInstallPackages).and_return(false)
         expect(Yast::Report).to receive(:Error)
         subject.install
+      end
+    end
+  end
+
+  describe ".set_proposal_packages_for" do
+    before do
+      fake_scenario(scenario)
+      Y2Storage::StorageFeature.drop_cache
+      allow(Yast::Mode).to receive(:installation).and_return(installation)
+      allow(Yast::Package).to receive(:Installed).and_return(false)
+      allow(Yast::Package).to receive(:Available).and_return(true)
+    end
+
+    context "with local devices combining several filesystem types" do
+      PROPOSAL_ID = "storage_proposal"
+      let(:scenario) { "mixed_disks" }
+      let(:installation) { true }
+
+      it "Adds the correct required and optional storage packages to the proposal" do
+        expect(Yast::PackagesProposal).to receive(:SetResolvables)
+          .with(PROPOSAL_ID, :package, ["btrfsprogs", "e2fsprogs", "xfsprogs"], optional: false)
+          .and_return true
+        expect(Yast::PackagesProposal).to receive(:SetResolvables)
+          .with(PROPOSAL_ID, :package, ["e2fsprogs", "ntfs-3g", "ntfsprogs"], optional: true)
+          .and_return true
+        described_class.set_proposal_packages_for(fake_devicegraph)
+      end
+
+      it "Adds only required storage packages to the proposal if 'optional' is 'false" do
+        expect(Yast::PackagesProposal).to receive(:SetResolvables)
+          .with(PROPOSAL_ID, :package, ["btrfsprogs", "e2fsprogs", "xfsprogs"], optional: false)
+          .and_return true
+        described_class.set_proposal_packages_for(fake_devicegraph, optional: false)
+      end
+    end
+
+    context "with empty disks" do
+      let(:scenario) { "empty_disks" }
+      let(:installation) { true }
+
+      it "Does not add any storage packages to the proposal" do
+        expect(Yast::PackagesProposal).not_to receive(:SetResolvables)
+        described_class.set_proposal_packages_for(fake_devicegraph, optional: true)
       end
     end
   end

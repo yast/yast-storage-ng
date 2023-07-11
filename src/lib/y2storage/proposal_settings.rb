@@ -441,6 +441,23 @@ module Y2Storage
       load_feature(:proposal, :multidisk_first)
       load_size_feature(:proposal, :lvm_vg_size)
       load_volumes_feature(:volumes)
+      load_encryption
+    end
+
+    # Loads the default encryption settings
+    #
+    # The encryption settings are not part of control.xml, but can be injected by a previous step of
+    # the installation, eg. the dialog of the Common Criteria system role
+    def load_encryption
+      enc = feature(:proposal, :encryption)
+
+      return unless enc
+      return unless enc.respond_to?(:password)
+
+      passwd = enc.password.to_s
+      return if passwd.nil? || passwd.empty?
+
+      self.encryption_password = passwd
     end
 
     def validated_delete_mode(mode)
