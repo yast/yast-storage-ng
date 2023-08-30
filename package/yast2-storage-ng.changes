@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Aug 30 20:16:10 UTC 2023 - Josef Reidinger <jreidinger@suse.cz>
+
+- 5.0.0 (#bsc1185510)
+
+-------------------------------------------------------------------
 Wed Jul  5 13:42:12 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Ensure adding storage support software packages for MicroOS
