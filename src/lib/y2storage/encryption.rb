@@ -63,9 +63,25 @@ module Y2Storage
     storage_forward :key_file=
 
     # @!attribute cipher
-    #   @return [String] the encryption cipher
+    #   The encryption cipher
+    #
+    #   Currently only supported for LUKS
+    #
+    #   @return [String] if empty, the default of cryptsetup will be used during creation
     storage_forward :cipher
     storage_forward :cipher=
+
+    # @!attribute key_size
+    #   The key size in bytes
+    #
+    #   Currently only supported for LUKS
+    #
+    #   Note the value is expressed in bytes. That's dictated by libstorage-ng, even when cryptsetup
+    #   and all the LUKS-related documentation use bits for expressing the key size.
+    #
+    #   @return [Integer] if zero, the default of cryptsetup will be used during creation
+    storage_forward :key_size
+    storage_forward :key_size=
 
     # @!attribute pbkdf_value
     #   String representation of {#pbkdf}, an empty string is equivalent to a nil value on {#pbkdf}
@@ -427,6 +443,27 @@ module Y2Storage
     # @return [Boolean]
     def supports_pbkdf?
       type.is?(:luks2)
+    end
+
+    # Whether the attribute #label makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_label?
+      type.is?(:luks2)
+    end
+
+    # Whether the attribute #cipher makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_cipher?
+      type.is?(:luks1, :luks2)
+    end
+
+    # Whether the attribute #key_size makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_key_size?
+      type.is?(:luks1, :luks2)
     end
 
     protected
