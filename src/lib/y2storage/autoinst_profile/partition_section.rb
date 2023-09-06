@@ -65,6 +65,10 @@ module Y2Storage
         { name: :loop_fs },
         { name: :crypt_method },
         { name: :crypt_key },
+        { name: :crypt_pbkdf },
+        { name: :crypt_label },
+        { name: :crypt_cipher },
+        { name: :crypt_key_size },
         { name: :raid_name },
         { name: :raid_options },
         { name: :mkfs_options },
@@ -103,6 +107,22 @@ module Y2Storage
 
       # @!attribute crypt_key
       #   @return [String] encryption key
+
+      # @!attribute crypt_pbkdf
+      #   @return [Symbol,nil] password-based derivation function for LUKS2 (:pbkdf2, :argon2i,
+      #     :argon2id). See {Y2Storage::PbkdFunction}.
+
+      # @!attribute crypt_label
+      #   @return [String,nil] LUKS label if LUKS2 is going to be used
+
+      # @!attribute crypt_cipher
+      #   @return [String,nil] specific cipher if LUKS is going to be used
+      #
+      # @!attribute crypt_key_size
+      #   Specific key size (in bits) if LUKS is going to be used
+      #
+      #   @return [Integer,nil] If nil, the default key size will be used. If an integer
+      #     value is used, it has to be a multiple of 8.
 
       # @!attribute filesystem
       #   @return [Symbol] file system type to use in the partition, it also

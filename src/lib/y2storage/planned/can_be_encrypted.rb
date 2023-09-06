@@ -47,6 +47,28 @@ module Y2Storage
       # @return [PbkdFunction, nil] nil to use the default derivation function
       attr_accessor :encryption_pbkdf
 
+      # LUKS label to use for the device if labels are supported (eg. LUKS2)
+      #
+      # @return [String, nil] nil or empty string to not set any label
+      attr_accessor :encryption_label
+
+      # Cipher to use when encrypting a LUKS device
+      #
+      # @return [String, nil] nil or empty string to use the default cipher
+      attr_accessor :encryption_cipher
+
+      # Key size (in bits) to use when encrypting a LUKS device
+      #
+      # Any positive value must be a multiple of 8.
+      #
+      # Note this uses bits since that's the standard unit for the key size in LUKS and is
+      # also the unit used by cryptsetup for all its inputs and outputs.
+      #
+      # Under the hood, this is translated to bytes because that's what libstorage-ng uses.
+      #
+      # @return [Integer, nil] nil or zero to use the default size
+      attr_accessor :encryption_key_size
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_encrypted; end
 
@@ -81,7 +103,10 @@ module Y2Storage
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
           result = plain_device.encrypt(method: method, password: encryption_password)
-          result.pbkdf = encryption_pbkdf if encryption_pbkdf && result.supports_pbkdf?
+          assign_enc_attr(result, :pbkdf)
+          assign_enc_attr(result, :label)
+          assign_enc_attr(result, :cipher)
+          assign_enc_attr(result, :key_size) { |value| value / 8 }
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"
@@ -101,6 +126,24 @@ module Y2Storage
         return reformat? if respond_to?(:reformat?)
 
         false
+      end
+
+      # Assigns the corresponding attribute to the encryption object if it makes sense
+      #
+      # @see #final_device!
+      #
+      # A block can be passed to transform the value of the attribute
+      #
+      # @param encryption [Encryption]
+      # @param attr [Symbol, String]
+      def assign_enc_attr(encryption, attr)
+        value = send(:"encryption_#{attr}")
+        return if value.nil?
+
+        return unless encryption.send(:"supports_#{attr}?")
+
+        value = yield(value) if block_given?
+        encryption.send(:"#{attr}=", value)
       end
 
       # Class methods for the mixin
