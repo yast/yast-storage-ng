@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,8 +26,9 @@ module Y2Storage
     module SpaceMakerProspects
       # A set of prospect actions SpaceMaker can perform to reach its goal
       #
-      # This class is responsible of selecting which prospect action would be
-      # the next to be performed by SpaceMaker.
+      # @see SpaceMakerActions::List
+      #
+      # This class implements the logic followed by the traditional YaST GuidedProposal.
       class List
         include Yast::Logger
 
@@ -50,10 +51,11 @@ module Y2Storage
 
         # Adds to the set all the prospect actions for the given disk
         #
-        # @param disk [Disk] disk to act upon
-        # @param lvm_helper [Proposal::LvmHelper] contains information about the
-        #     planned LVM logical volumes and how to make space for them
-        # @param keep [Array<Integer>] sids of partitions that should not be deleted
+        # @see SpaceMakerActions::List#add_optional_actions
+        #
+        # @param disk [Disk]
+        # @param lvm_helper [Proposal::LvmHelper]
+        # @param keep [Array<Integer>]
         def add_prospects(disk, lvm_helper, keep = [])
           add_delete_partition_prospects(disk, keep)
           add_resize_prospects(disk)
@@ -102,7 +104,7 @@ module Y2Storage
         # Prospects actions for deleting the unwanted partitions (i.e. when one
         # of the delete modes is set to :all) for the given disk
         #
-        # @see SpaceMaker#delete_unwanted_partitions
+        # @see SpaceMakerActions::List#add_mandatory_actions
         #
         # @param disk [Disk] disk to act upon
         # @return [Array<DeletePartition>]
@@ -247,11 +249,11 @@ module Y2Storage
           partitions = disk.partitions.reject { |part| part.type.is?(:extended) }
 
           prospects = partitions.map do |part|
-            SpaceMakerProspects::DeletePartition.new(part, analyzer)
+            SpaceMakerProspects::DeletePartition.new(part, analyzer, for_delete_all)
           end
 
           prospects.select do |action|
-            allowed = action.allowed?(settings, keep, for_delete_all)
+            allowed = action.allowed?(settings, keep)
             log.info "SpaceMakerProspects::DeletePartition allowed? #{allowed} -> #{action}"
             allowed
           end

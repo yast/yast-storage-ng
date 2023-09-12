@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,17 +17,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/proposal/space_maker_actions"
+
 module Y2Storage
   module Proposal
     module SpaceMakerProspects
       # Abstract class to represent a possible action to be performed by
       # SpaceMaker on the system.
       #
-      # The SpaceMakerProspects classes are NOT responsible for actually
-      # performing the corresponding changes in the devicegraph (that's done by
-      # SpaceMaker itself), they just provide information about the prospect
-      # actions. SpaceMaker can then use such information to take decisions
-      # about what to do next.
+      # This class (and its descendants) are used by the YaST GuidedProposal as a mechanism to
+      # generate the real list of actions (SpaceMakerActions) that will executed. Not all prospects
+      # will end up being translated into an action and consumed by SpaceMaker.
       class Base
         include Yast::Logger
 
@@ -47,6 +47,13 @@ module Y2Storage
           @sid = device.sid
           @device_name = device.name
           @available = true
+        end
+
+        # Corresponding action that would be consumed by SpaceMaker
+        #
+        # @return [SpaceMakerActions::Base]
+        def action
+          @action ||= action_class.new(sid)
         end
 
         # Whether the prospect action is still possible

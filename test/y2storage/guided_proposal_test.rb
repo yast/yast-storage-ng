@@ -112,6 +112,16 @@ describe Y2Storage::GuidedProposal do
       end
     end
 
+    context "when the candidate devices are invalid" do
+      include_context "candidate devices"
+
+      let(:candidate_devices) { ["/dev/invalid_device"] }
+
+      it "raises Y2Storage::NoDiskSpaceError exception" do
+        expect { proposal.propose }.to raise_error(Y2Storage::NoDiskSpaceError)
+      end
+    end
+
     context "when the candidate devices are not given" do
       include_context "candidate devices"
 

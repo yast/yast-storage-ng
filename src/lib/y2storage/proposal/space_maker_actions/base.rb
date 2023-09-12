@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2023] SUSE LLC
+# Copyright (c) [2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,22 +17,22 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/space_maker_prospects/base"
-
 module Y2Storage
   module Proposal
-    module SpaceMakerProspects
-      # Represents the prospect action of deleting the content of a disk with no
-      # partition table (i.e. a disk that is directly formatted or is a
-      # component of a software RAID or an LVM).
+    module SpaceMakerActions
+      # Class to represent an action to be performed by SpaceMaker on the system
       #
-      # @see Base
-      class WipeDisk < Base
-        protected
+      # Objects of this class can be originated from SpaceMaker prospects (if the actions
+      # are calculated by the YaST proposal) or from objects of class ProposalSpaceAction
+      # (if the concrete actions are already specified at the proposal settings).
+      class Base
+        # Identifier of the target device
+        # @return [Integer]
+        attr_reader :sid
 
-        # @see #action
-        def action_class
-          SpaceMakerActions::Wipe
+        # @param device [Integer, Y2Storage::Device] sid or device
+        def initialize(device)
+          @sid = device.respond_to?(:sid) ? device.sid : device.to_i
         end
       end
     end

@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2021] SUSE LLC
+# Copyright (c) [2016-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -249,7 +249,7 @@ module Y2Storage
       # the end of the process for those devices that were not used (as soon as libstorage-ng
       # allows us to copy sub-graphs).
       remove_empty_partition_tables(new_devicegraph)
-      @clean_graph = space_maker.delete_unwanted_partitions(new_devicegraph)
+      @clean_graph = space_maker.prepare_devicegraph(new_devicegraph)
     end
 
     # Removes partition tables from candidate devices with empty partition table
@@ -270,7 +270,7 @@ module Y2Storage
     # @return [Array<Y2Storage::BlkDevice>]
     def candidate_devices_with_empty_partition_table(devicegraph)
       device_names = settings.candidate_devices
-      devices = device_names.map { |n| devicegraph.find_by_name(n) }
+      devices = device_names.map { |n| devicegraph.find_by_name(n) }.compact
       devices.select { |d| d.partition_table && d.partitions.empty? }
     end
 

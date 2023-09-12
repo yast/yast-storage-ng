@@ -9,8 +9,8 @@ Wed Jul  5 13:42:12 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 - Ensure adding storage support software packages for MicroOS
   which uses its custom partitions_proposal client, not the 
   standard inst_disk_proposal client (bsc#1212452)
-  https://github.com/yast/yast-storage-ng/pull/1350
-- 4.5.24
+  https://github.com/yast/yast-storage-ng/pull/1351
+- 4.6.12
 
 -------------------------------------------------------------------
 Thu Jun 29 11:42:21 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
@@ -23,14 +23,41 @@ Wed Jun  7 08:03:52 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Prevent setting the volume label for a mounted btrfs or swap
   (bsc#1211337)
-- 4.5.23
+- 4.6.11
+
+-------------------------------------------------------------------
+Fri May 19 15:36:55 UTC 2023 - José Iván López González <jlopez@suse.com>
+
+- Add bus_id for DASD (gh#yast/yast-storage-ng#1339,
+  gh#openSUSE/agama#578).
+- 4.6.10
+
+-------------------------------------------------------------------
+Wed May 17 11:45:26 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- GuidedProposal: allow Agama to configure exactly what to do with
+  every existing partition (gh#yast/yast-storage-ng#1337).
+- 4.6.9
+
+-------------------------------------------------------------------
+Fri May  5 10:50:07 UTC 2023 - José Iván López González <jlopez@suse.com>
+
+- Allow to pass commit callbacks to inst_prepdisk client.
+- Needed for Agama (gh#openSUSE/agama#558).
+- 4.6.8
+
+-------------------------------------------------------------------
+Wed May  3 11:51:09 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- GuidedProposal adapted to support assigning volumes to specific
+  devices when volumes_allocate_mode is :auto (useful for Agama).
 
 -------------------------------------------------------------------
 Mon Apr 24 14:47:33 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Guided Setup: display a hint for disks with sensible data
   transports like FCoE or NVMe/oF (bsc#1209588).
-- 4.5.22
+- 4.6.7
 
 -------------------------------------------------------------------
 Tue Apr 18 08:23:44 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
@@ -38,27 +65,45 @@ Tue Apr 18 08:23:44 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 - AutoYaST: correctly import legacy values for parity_algorithm.
 - Partitioner: when creating an MD RAID, do not ask for the chunk
   side when it makes no sense. Eg. RAID1 (bsc#1205172).
-- 4.5.21
+- 4.6.6
 
 -------------------------------------------------------------------
 Tue Apr 11 13:38:25 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Adjusted detection of Dell BOSS devices (bsc#1200975).
 - Partitioner: improved column Type for disks (bsc#1200975).
-- 4.5.20
+- 4.6.5
+
+-------------------------------------------------------------------
+Mon Apr  3 09:01:17 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- AutoYaST: export thin LVM volumes when cloning (bsc#1209725)
+- 4.6.4
 
 -------------------------------------------------------------------
 Fri Mar 31 11:21:44 UTC 2023 - Imobach Gonzalez Sosa <igonzalezsosa@suse.com>
 
 - Fix the translation of widgets titles in the dialog to select
   a partitioning scheme (bsc#1209697).
-- 4.5.19
+- 4.6.3
 
 -------------------------------------------------------------------
-Fri Mar 10 16:35:10 UTC 2023 - Ladislav Slezák <lslezak@suse.com>
+Mon Mar 20 16:42:45 UTC 2023 - Ladislav Slezák <lslezak@suse.com>
+
+- Fixed crash in the proposal code when the requested candidate
+  device does not exist (bsc#1209523)
+- 4.6.2
+
+-------------------------------------------------------------------
+Mon Mar 13 12:04:07 UTC 2023 - Ladislav Slezák <lslezak@suse.com>
 
 - Removed unnecessary executable flags from files (bsc#1209094)
-- 4.5.18
+- 4.6.1
+
+-------------------------------------------------------------------
+Fri Mar 03 14:44:07 UTC 2023 - Ladislav Slezák <lslezak@suse.cz>
+
+- Bump version to 4.6.0 (bsc#1208913)
 
 -------------------------------------------------------------------
 Thu Mar  2 10:13:14 UTC 2023 - Martin Vidner <mvidner@suse.com>
