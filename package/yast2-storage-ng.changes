@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Sep 13 08:41:15 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- New MdLevel value for linear RAIDs (bsc#1215022)
+- 4.4.46
+
+-------------------------------------------------------------------
 Wed Jul  5 13:42:12 UTC 2023 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Ensure adding storage support software packages for MicroOS
