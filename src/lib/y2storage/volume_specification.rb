@@ -140,11 +140,8 @@ module Y2Storage
     # @return [String]
     attr_accessor :separate_vg_name
 
-    # Device name of the disk (DiskDevice to be precise) in which the volume
-    # must be located. If nil, there are no restrictions allocating the volume.
-    #
-    # Note this is only relevant when {ProposalSettings#allocate_volume_mode} is
-    # set to :device.
+    # Optional device name of the disk (DiskDevice to be precise) in which the volume
+    # must be located.
     #
     # @return [String, nil]
     attr_accessor :device

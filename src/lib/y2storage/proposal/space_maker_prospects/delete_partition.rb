@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,8 +28,12 @@ module Y2Storage
       class DeletePartition < PartitionProspect
         # @param partition [Partition] partition to delete
         # @param disk_analyzer [DiskAnalyzer] see {#analyzer}
-        def initialize(partition, disk_analyzer)
-          super
+        # @param for_delete_all [Boolean] if the permissions are being checked
+        #   as part of the first step which deletes unwanted partitions when the
+        #   corresponding delete_mode is :all
+        def initialize(partition, disk_analyzer, for_delete_all)
+          @for_delete_all = for_delete_all
+          super(partition, disk_analyzer)
           @partition_id = partition.id
         end
 
@@ -51,18 +55,15 @@ module Y2Storage
         #
         # @param settings [ProposalSettings]
         # @param keep [Array<Integer>] list of sids of partitions that should be kept
-        # @param for_delete_all [Boolean] if the permissions are being checked
-        #   as part of the first step which deletes unwanted partitions when the
-        #   corresponding delete_mode is :all
         # @return [Boolean]
-        def allowed?(settings, keep, for_delete_all)
+        def allowed?(settings, keep)
           return false if keep.include?(sid)
 
-          allowed = allowed_type?(settings, partition_type, for_delete_all)
+          allowed = allowed_type?(settings, partition_type)
           if irst? && windows_in_disk? && allowed
             # Second line of defense for IRST partitions
             log.info "#{device_name} seems to be used by a Windows installation, double-checking"
-            allowed_type?(settings, :windows, for_delete_all)
+            allowed_type?(settings, :windows)
           else
             allowed
           end
@@ -85,15 +86,12 @@ module Y2Storage
           "<#{sid} (#{device_name}) - #{partition_type}>"
         end
 
-        # @return [Symbol]
-        def to_sym
-          :delete_partition
-        end
-
         private
 
         # @return [PartitionId]
         attr_reader :partition_id
+
+        attr_reader :for_delete_all
 
         # Whether the partition is an Intel Rapid Start Technology partition
         #
@@ -103,12 +101,17 @@ module Y2Storage
         end
 
         # @see #allowed?
-        def allowed_type?(settings, type, for_delete_all)
+        def allowed_type?(settings, type)
           if for_delete_all
             settings.delete_forced?(type)
           else
             !settings.delete_forbidden?(type)
           end
+        end
+
+        # @see #action
+        def action_class
+          SpaceMakerActions::Delete
         end
       end
     end

@@ -1,4 +1,4 @@
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2018-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -54,9 +54,11 @@ module Y2Storage
           settings.resize_windows
         end
 
-        # @return [Symbol]
-        def to_sym
-          :resize_partition
+        protected
+
+        # @see #action
+        def action_class
+          SpaceMakerActions::Shrink
         end
       end
     end

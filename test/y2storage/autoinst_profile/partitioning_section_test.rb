@@ -192,6 +192,30 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
         expect(drive.device).to eq("/dev/md/Volume0_0")
       end
     end
+
+    # Regression test for bug#1209725, thin volumes were not exported
+    context "in a scenario that combines normal and thin volumes" do
+      before { fake_scenario("bug_1209725.xml") }
+
+      it "includes the thin pool as a partition of the CT_LVM drive" do
+        section = described_class.new_from_storage(fake_devicegraph)
+        drive = section.drives.find { |d| d.type == :CT_LVM }
+
+        pool = drive.partitions.find(&:pool)
+        expect(pool.lv_name).to eq "thin_pool00"
+      end
+
+      it "includes all the volumes (normal and thin ones) as partitions in the CT_LVM drive" do
+        section = described_class.new_from_storage(fake_devicegraph)
+        drive = section.drives.find { |d| d.type == :CT_LVM }
+
+        lvs = drive.partitions.reject(&:pool).map { |d| [d.mount, d.used_pool] }
+        expect(lvs).to contain_exactly(
+          ["/boot", nil], ["swap", nil],
+          ["/home", "thin_pool00"], ["/", "thin_pool00"], ["/var", "thin_pool00"]
+        )
+      end
+    end
   end
 
   describe "#to_hashes" do

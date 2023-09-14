@@ -315,7 +315,7 @@ module Y2Storage
     # The user is asked whether to continue on each error reported by libstorage-ng.
     #
     # @param force_rw [Boolean] if mount points should be forced to have read/write permissions.
-    # @param callbacks [Y2Storage::Callbacks::Commit]
+    # @param callbacks [Storage::CommitCallbacks]
     #
     # @return [Boolean] whether commit was successful, false if libstorage-ng found a problem and it was
     #   decided to abort.

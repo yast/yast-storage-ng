@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2019] SUSE LLC
+# Copyright (c) [2015-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "forwardable"
 require "y2storage/disk_size"
 require "y2storage/secret_attributes"
 require "y2storage/volume_specification"
@@ -27,6 +28,7 @@ require "y2storage/partitioning_features"
 require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
 require "y2storage/equal_by_instance_variables"
+require "y2storage/proposal_space_settings"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -37,6 +39,7 @@ module Y2Storage
     include SecretAttributes
     include PartitioningFeatures
     include EqualByInstanceVariables
+    extend Forwardable
 
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
@@ -169,39 +172,6 @@ module Y2Storage
     # @return [PbkdFunction, nil] nil to use the default
     attr_accessor :encryption_pbkdf
 
-    # @return [Boolean] whether to resize Windows systems if needed
-    attr_accessor :resize_windows
-
-    # What to do regarding removal of existing partitions hosting a Windows system.
-    #
-    # Options:
-    #
-    # * :none Never delete a Windows partition.
-    # * :ondemand Delete Windows partitions as needed by the proposal.
-    # * :all Delete all Windows partitions, even if not needed.
-    #
-    # @raise ArgumentError if any other value is assigned
-    #
-    # @return [Symbol]
-    attr_reader :windows_delete_mode
-
-    # @return [Symbol] what to do regarding removal of existing Linux
-    #   partitions. See {DiskAnalyzer} for the definition of "Linux partitions".
-    #   @see #windows_delete_mode for the possible values and exceptions
-    attr_reader :linux_delete_mode
-
-    # @return [Symbol] what to do regarding removal of existing partitions that
-    #   don't fit in #windows_delete_mode or #linux_delete_mode.
-    #   @see #windows_delete_mode for the possible values and exceptions
-    attr_reader :other_delete_mode
-
-    # Whether the delete mode of the partitions and the resize option for windows can be
-    # configured. When this option is set to `false`, the {#windows_delete_mode}, {#linux_delete_mode},
-    # {#other_delete_mode} and {#resize_windows} options cannot be modified by the user.
-    #
-    # @return [Boolean]
-    attr_accessor :delete_resize_configurable
-
     # When the user decides to use LVM, strategy to decide the size of the volume
     # group (and, thus, the number and size of created physical volumes).
     #
@@ -232,6 +202,14 @@ module Y2Storage
 
     alias_method :lvm, :use_lvm
     alias_method :lvm=, :use_lvm=
+
+    # @return [ProposalSpaceSettings]
+    attr_reader :space_settings
+
+    # Constructor
+    def initialize
+      @space_settings = ProposalSpaceSettings.new
+    end
 
     # Volumes grouped by their location in the disks.
     #
@@ -273,44 +251,48 @@ module Y2Storage
       !encryption_password.nil?
     end
 
-    # Whether the settings disable deletion of a given type of partitions
-    #
-    # @see #windows_delete_mode
-    # @see #linux_delete_mode
-    # @see #other_delete_mode
-    #
-    # @param type [#to_s] :linux, :windows or :other
-    # @return [Boolean]
-    def delete_forbidden(type)
-      send(:"#{type}_delete_mode") == :none
-    end
+    def_delegators :@space_settings,
+      :windows_delete_mode, :linux_delete_mode, :other_delete_mode, :resize_windows,
+      :resize_windows=, :delete_resize_configurable, :delete_resize_configurable=,
+      :delete_forbidden, :delete_forbidden?, :delete_forced, :delete_forced?
 
-    alias_method :delete_forbidden?, :delete_forbidden
+    # @!attribute windows_delete_mode
+    #   @see ProposalSpaceSettings
 
-    # Whether the settings enforce deletion of a given type of partitions
-    #
-    # @see #windows_delete_mode
-    # @see #linux_delete_mode
-    # @see #other_delete_mode
-    #
-    # @param type [#to_s] :linux, :windows or :other
-    # @return [Boolean]
-    def delete_forced(type)
-      send(:"#{type}_delete_mode") == :all
-    end
+    # @!attribute linux_delete_mode
+    #   @see ProposalSpaceSettings
 
-    alias_method :delete_forced?, :delete_forced
+    # @!attribute other_delete_mode
+    #   @see ProposalSpaceSettings
+
+    # @!attribute resize_windows
+    #   @see ProposalSpaceSettings
+
+    # @!attribute delete_resize_configurable
+    #   @see ProposalSpaceSettings
+
+    # @!method delete_forbidden
+    #   @see ProposalSpaceSettings
+
+    # @!method delete_forbidden?
+    #   @see ProposalSpaceSettings
+
+    # @!method delete_forced
+    #   @see ProposalSpaceSettings
+
+    # @!method delete_forced?
+    #   @see ProposalSpaceSettings
 
     def windows_delete_mode=(mode)
-      @windows_delete_mode = validated_delete_mode(mode)
+      space_settings.windows_delete_mode = validated_delete_mode(mode)
     end
 
     def linux_delete_mode=(mode)
-      @linux_delete_mode = validated_delete_mode(mode)
+      space_settings.linux_delete_mode = validated_delete_mode(mode)
     end
 
     def other_delete_mode=(mode)
-      @other_delete_mode = validated_delete_mode(mode)
+      space_settings.other_delete_mode = validated_delete_mode(mode)
     end
 
     def lvm_vg_strategy=(strategy)
@@ -388,11 +370,6 @@ module Y2Storage
       volumes.find(&:root?)
     end
 
-    # List of possible delete strategies.
-    # TODO: enum?
-    DELETE_MODES = [:none, :all, :ondemand]
-    private_constant :DELETE_MODES
-
     # List of possible VG strategies.
     # TODO: enum?
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
@@ -461,7 +438,7 @@ module Y2Storage
     end
 
     def validated_delete_mode(mode)
-      validated_feature_value(mode, DELETE_MODES)
+      validated_feature_value(mode, ProposalSpaceSettings.delete_modes)
     end
 
     def validated_lvm_vg_strategy(strategy)
