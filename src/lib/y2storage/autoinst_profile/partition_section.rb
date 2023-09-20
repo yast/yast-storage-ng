@@ -402,6 +402,11 @@ module Y2Storage
         @loop_fs = true
         @crypt_method = method.id
         @crypt_key = CRYPT_KEY_VALUE if method.password_required?
+        enc = partition.encryption
+        @crypt_pbkdf = enc.pbkdf&.to_sym if enc.supports_pbkdf?
+        @crypt_label = enc.label if enc.supports_label? && !enc.label.empty?
+        @crypt_cipher = enc.cipher if enc.supports_cipher? && !enc.cipher.empty?
+        @crypt_key_size = enc.key_size * 8 if enc.supports_key_size? && !enc.key_size.zero?
       end
 
       def init_filesystem_fields(partition)
