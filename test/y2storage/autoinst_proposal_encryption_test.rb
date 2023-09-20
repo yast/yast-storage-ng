@@ -244,5 +244,41 @@ describe Y2Storage::AutoinstProposal do
         expect(issues_list).to be_empty
       end
     end
+
+    context "when encrypting the root partition using LUKS2 with the default derivation function" do
+      let(:partition) do
+        { "mount" => "/", "crypt_key" => "s3cr3t", "crypt_method" => :luks2 }
+      end
+
+      it "adds an extra /boot partition since we cannot ensure Grub2 can open the root volume" do
+        proposal.propose
+        mount_points = proposal.devices.filesystems.map(&:mount_path)
+        expect(mount_points).to contain_exactly("/boot", "/")
+      end
+    end
+
+    context "when encrypting the root partition using LUKS2 with PBKDF2 as derivation function" do
+      let(:partition) do
+        { "mount" => "/", "crypt_key" => "s3cr3t", "crypt_method" => :luks2, "crypt_pbkdf" => :pbkdf2 }
+      end
+
+      it "does not add an extra /boot partition since Grub2 can open the root volume" do
+        proposal.propose
+        mount_points = proposal.devices.filesystems.map(&:mount_path)
+        expect(mount_points).to contain_exactly("/")
+      end
+    end
+
+    context "when encrypting the root partition using LUKS2 with Argon2i as derivation function" do
+      let(:partition) do
+        { "mount" => "/", "crypt_key" => "s3cr3t", "crypt_method" => :luks2, "crypt_pbkdf" => :argon2i }
+      end
+
+      it "adds an extra /boot partition since Grub2 cannot open the root volume" do
+        proposal.propose
+        mount_points = proposal.devices.filesystems.map(&:mount_path)
+        expect(mount_points).to contain_exactly("/boot", "/")
+      end
+    end
   end
 end
