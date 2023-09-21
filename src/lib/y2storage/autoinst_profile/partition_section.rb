@@ -31,21 +31,6 @@ module Y2Storage
     # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#ay.partition_configuration
     # Check that document for details about the semantic of every attribute.
     class PartitionSection < ::Installation::AutoinstProfile::SectionWithAttributes
-      # Literal historically used at AutoinstPartPlan
-      CRYPT_KEY_VALUE = "ENTER KEY HERE"
-      private_constant :CRYPT_KEY_VALUE
-
-      # Partitions with these IDs are historically marked with format=false
-      # NOTE: "Dell Utility" was included here, but there is no such ID in the
-      # new libstorage.
-      NO_FORMAT_IDS = [PartitionId::PREP, PartitionId::DOS16]
-      private_constant :NO_FORMAT_IDS
-
-      # Partitions with these IDs are historically marked with create=false
-      # NOTE: "Dell Utility" was the only entry here. See above.
-      NO_CREATE_IDS = []
-      private_constant :NO_CREATE_IDS
-
       ATTRIBUTES = [
         { name: :create },
         { name: :filesystem },
@@ -220,9 +205,8 @@ module Y2Storage
       #   Btrfs multi-device.
       # @return [PartitionSection]
       def self.new_from_storage(device, parent = nil)
-        result = new(parent)
-        result.init_from_device(device)
-        result
+        exporter = PartitionExporter.new(device)
+        exporter.section(parent)
       end
 
       # Filesystem type to be used for the real partition object, based on the
@@ -289,35 +273,6 @@ module Y2Storage
         "btrfs_#{filesystem.sid}"
       end
 
-      # Method used by {.new_from_storage} to populate the attributes when
-      # cloning a partition device.
-      #
-      # As usual, it keeps the behavior of the old clone functionality, check
-      # the implementation of this class for details.
-      #
-      # @param device [Device] a device that can be cloned into a <partition> section,
-      #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
-      def init_from_device(device)
-        @create = true
-        @resize = false
-
-        init_fields_by_type(device)
-
-        # Exporting these values only makes sense when the device is a block device. Note that some
-        # exported devices (e.g., multi-device Btrfs and NFS filesystems) are not block devices.
-        return unless device.is?(:blk_device)
-
-        init_encryption_fields(device)
-        init_filesystem_fields(device) unless device.filesystem&.multidevice?
-
-        # NOTE: The old AutoYaST exporter does not report the real size here.
-        # It intentionally reports one cylinder less. Cylinders is an obsolete
-        # unit (that equals to 8225280 bytes in my experiments).
-        # According to the comments there, that was done due to bnc#415005 and
-        # bnc#262535.
-        @size = device.size.to_i.to_s if create && !fixed_size?(device)
-      end
-
       def to_hashes
         hash = super
         hash["fstopt"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
@@ -337,163 +292,6 @@ module Y2Storage
       end
 
       protected
-
-      # Uses legacy ids for backwards compatibility. For example, BIOS Boot
-      # partitions in the old libstorage were represented by the internal
-      # code 259 and, thus, systems cloned with the old exporter
-      # (AutoinstPartPlan) use 259 instead of the current 257.
-      def partition_id_from(partition)
-        id = enforce_bios_boot?(partition) ? PartitionId::BIOS_BOOT : partition.id
-        id.to_i_legacy
-      end
-
-      def init_fields_by_type(device)
-        if device.is?(:lvm_lv)
-          init_lv_fields(device)
-        elsif device.is?(:disk_device, :software_raid, :stray_blk_device, :bcache)
-          init_disk_device_fields(device)
-        elsif device.is?(:nfs)
-          init_nfs_fields(device)
-        elsif device.is?(:tmpfs)
-          init_tmpfs_fields(device)
-        elsif device.is?(:blk_filesystem)
-          init_blk_filesystem_fields(device)
-        else
-          init_partition_fields(device)
-        end
-      end
-
-      def init_partition_fields(partition)
-        @create = !NO_CREATE_IDS.include?(partition.id)
-        @partition_nr = partition.number
-        @partition_type = "primary" if primary_partition?(partition)
-        @partition_id = partition_id_from(partition)
-        @lvm_group = lvm_group_name(partition)
-        @raid_name = partition.md.name if partition.md
-        @btrfs_name = name_for_btrfs(partition.filesystem)
-        init_bcache_fields(partition)
-      end
-
-      def init_disk_device_fields(disk)
-        @create = false
-        @lvm_group = lvm_group_name(disk)
-        @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
-        @btrfs_name = name_for_btrfs(disk.filesystem)
-        init_bcache_fields(disk)
-      end
-
-      def init_lv_fields(lv)
-        @lv_name = lv.basename
-        @stripes = lv.stripes
-        @stripe_size = lv.stripe_size.to_i / DiskSize.KiB(1).to_i
-        @pool = lv.lv_type == LvType::THIN_POOL
-        parent = lv.parents.first
-        @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
-        @btrfs_name = name_for_btrfs(lv.filesystem)
-      end
-
-      DEFAULT_ENCRYPTION_METHOD = Y2Storage::EncryptionMethod.find(:luks1)
-      private_constant :DEFAULT_ENCRYPTION_METHOD
-
-      def init_encryption_fields(partition)
-        return unless partition.encrypted?
-
-        method = partition.encryption.method || DEFAULT_ENCRYPTION_METHOD
-        @loop_fs = true
-        @crypt_method = method.id
-        @crypt_key = CRYPT_KEY_VALUE if method.password_required?
-        enc = partition.encryption
-        @crypt_pbkdf = enc.pbkdf&.to_sym if enc.supports_pbkdf?
-        @crypt_label = enc.label if enc.supports_label? && !enc.label.empty?
-        @crypt_cipher = enc.cipher if enc.supports_cipher? && !enc.cipher.empty?
-        @crypt_key_size = enc.key_size * 8 if enc.supports_key_size? && !enc.key_size.zero?
-      end
-
-      def init_filesystem_fields(partition)
-        @format = false
-        fs = partition.filesystem
-        return unless fs
-
-        @format = true if partition.respond_to?(:id) && !NO_FORMAT_IDS.include?(partition.id)
-
-        init_blk_filesystem_fields(fs)
-      end
-
-      # @param filesystem [Filesystems::BlkFilesystem]
-      def init_blk_filesystem_fields(filesystem)
-        @filesystem = filesystem.type.to_sym
-        @label = filesystem.label unless filesystem.label.empty?
-        @mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
-        @quotas = filesystem.quota? if filesystem.respond_to?(:quota?)
-        init_subvolumes(filesystem)
-        init_mount_options(filesystem)
-      end
-
-      # @param filesystem [Filesystems::BlkFilesystem]
-      def init_mount_options(filesystem)
-        return if filesystem.mount_point.nil?
-
-        @mount = filesystem.mount_point.path
-        @mountby = filesystem.mount_point.mount_by.to_sym
-        mount_options = filesystem.mount_point.mount_options
-        @fstab_options = mount_options unless mount_options.empty?
-      end
-
-      # @param filesystem [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
-      def init_subvolumes(filesystem)
-        return unless filesystem.supports_btrfs_subvolumes?
-
-        @subvolumes_prefix = filesystem.subvolumes_prefix
-
-        valid_subvolumes = filesystem.btrfs_subvolumes.reject do |subvol|
-          subvol.path.empty? || subvol.path == @subvolumes_prefix ||
-            subvol.path.start_with?(filesystem.snapshots_root)
-        end
-
-        @subvolumes = valid_subvolumes.map do |subvol|
-          SubvolSpecification.create_from_btrfs_subvolume(subvol)
-        end
-      end
-
-      def init_bcache_fields(device)
-        if device.bcache
-          @bcache_backing_for = device.bcache.name
-        elsif device.in_bcache_cset
-          @bcache_caching_for = device.in_bcache_cset.bcaches.map(&:name)
-        end
-      end
-
-      def init_nfs_fields(device)
-        @create = false
-        init_mount_options(device)
-      end
-
-      def init_tmpfs_fields(device)
-        @create = nil
-        @resize = nil
-        init_mount_options(device)
-        @mountby = nil
-      end
-
-      # Whether the given existing partition should be reported as GRUB (GPT
-      # Bios Boot) in the cloned profile.
-      #
-      # @note To ensure backward compatibility, this method implements the
-      # logic present in the old AutoYaST exporter that used to live in
-      # AutoinstPartPlan#ReadHelper.
-      # https://github.com/yast/yast-autoinstallation/blob/47c24fb98e074f5b6432f3a4f8b9421362ee29cc/src/modules/AutoinstPartPlan.rb#L345
-      # Thus, this returns true for any partition with a Windows-related ID
-      # that is configured to be mounted in /boot*
-      # See commit 54e236cd428636b3bf8f92d2ac2914e5b1d67a90 of
-      # yast-autoinstallation.
-      #
-      # @param partition [Partition]
-      # @return [Boolean]
-      def enforce_bios_boot?(partition)
-        return false if partition.filesystem_mountpoint.nil?
-
-        partition.id.is?(:windows_system) && partition.filesystem_mountpoint.include?("/boot")
-      end
 
       # Returns an array of hashes representing subvolumes
       #
@@ -527,38 +325,272 @@ module Y2Storage
         subvolumes.reject { |s| s.path == "@" }
       end
 
-      # Returns the volume group associated to a given device
-      #
-      # @param device [Y2Storage::Partition,Y2Storage::Md] Partition or MD RAID device.
-      # @return [String,nil] Volume group; nil if it is not used as a physical volume or does
-      #   not belong to any volume group.
-      def lvm_group_name(device)
-        return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
+      # Auxiliary class to encapsulate the conversion from storage objects to their
+      # representation as {PartitionSection}
+      class PartitionExporter
+        # Literal historically used at AutoinstPartPlan
+        CRYPT_KEY_VALUE = "ENTER KEY HERE"
+        private_constant :CRYPT_KEY_VALUE
 
-        device.lvm_pv.lvm_vg.basename
-      end
+        # Partitions with these IDs are historically marked with format=false
+        # NOTE: "Dell Utility" was included here, but there is no such ID in the
+        # new libstorage.
+        NO_FORMAT_IDS = [PartitionId::PREP, PartitionId::DOS16]
+        private_constant :NO_FORMAT_IDS
 
-      # Determines whether the device has a fixed size (disk, RAID, etc.)
-      #
-      # It is used to find out whether the size specification should be included
-      # in the profile.
-      #
-      # @param device [Y2Storage::Device] Device
-      # @return [Boolean]
-      def fixed_size?(device)
-        device.is?(:disk_device, :software_raid)
-      end
+        # Partitions with these IDs are historically marked with create=false
+        # NOTE: "Dell Utility" was the only entry here. See above.
+        NO_CREATE_IDS = []
+        private_constant :NO_CREATE_IDS
 
-      # Determines whether given partition is primary or not
-      #
-      # Always false when the partition table does not allow extended partitions
-      #
-      # @param partition [Y2Storgae::Partition] the partition to check
-      # @return [Boolean] true when is a primary partition; false otherwise
-      def primary_partition?(partition)
-        return false unless partition.partition_table.extended_possible?
+        # Encryption method to use when the method of an encryption device cannot be determined
+        DEFAULT_ENCRYPTION_METHOD = Y2Storage::EncryptionMethod.find(:luks1)
+        private_constant :DEFAULT_ENCRYPTION_METHOD
 
-        partition.type.is?(:primary)
+        # @return [Device] a device that can be cloned into a <partition> section,
+        #   like a partition, an LVM logical volume, an MD RAID or a NFS filesystem.
+        attr_reader :device
+
+        # Constructor
+        #
+        # @param device [Device] see {#device}
+        def initialize(device)
+          @device = device
+        end
+
+        # Method used by {PartitionSection.new_from_storage} to populate the attributes when
+        # cloning a partition device.
+        #
+        # As usual, it keeps the behavior of the old clone functionality, check
+        # the implementation of this class for details.
+        #
+        # @return [PartitionSection]
+        def section(parent)
+          result = PartitionSection.new(parent)
+          result.create = true
+          result.resize = false
+
+          init_fields_by_type(result)
+
+          # Exporting these values only makes sense when the device is a block device. Note that some
+          # exported devices (e.g., multi-device Btrfs and NFS filesystems) are not block devices.
+          return result unless device.is?(:blk_device)
+
+          init_encryption_fields(result)
+          init_filesystem_fields(result) unless device.filesystem&.multidevice?
+
+          # NOTE: The old AutoYaST exporter does not report the real size here.
+          # It intentionally reports one cylinder less. Cylinders is an obsolete
+          # unit (that equals to 8225280 bytes in my experiments).
+          # According to the comments there, that was done due to bnc#415005 and
+          # bnc#262535.
+          result.size = device.size.to_i.to_s if result.create && !fixed_size?
+
+          result
+        end
+
+        protected
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_fields_by_type(section)
+          if device.is?(:lvm_lv)
+            init_lv_fields(section)
+          elsif device.is?(:disk_device, :software_raid, :stray_blk_device, :bcache)
+            init_disk_device_fields(section)
+          elsif device.is?(:nfs)
+            init_nfs_fields(section)
+          elsif device.is?(:tmpfs)
+            init_tmpfs_fields(section)
+          elsif device.is?(:blk_filesystem)
+            init_blk_filesystem_fields(section, device)
+          else
+            init_partition_fields(section)
+          end
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_partition_fields(section)
+          section.create = !NO_CREATE_IDS.include?(device.id)
+          section.partition_nr = device.number
+          section.partition_type = "primary" if primary_partition?
+          section.partition_id = partition_id
+          section.lvm_group = lvm_group_name
+          section.raid_name = device.md.name if device.md
+          section.btrfs_name = section.name_for_btrfs(device.filesystem)
+          init_bcache_fields(section)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_disk_device_fields(section)
+          section.create = false
+          section.lvm_group = lvm_group_name
+          section.raid_name = device.md.name if device.respond_to?(:md) && device.md
+          section.btrfs_name = section.name_for_btrfs(device.filesystem)
+          init_bcache_fields(section)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_lv_fields(section)
+          section.lv_name = device.basename
+          section.stripes = device.stripes
+          section.stripe_size = device.stripe_size.to_i / DiskSize.KiB(1).to_i
+          section.pool = device.lv_type == LvType::THIN_POOL
+          parent = device.parents.first
+          section.used_pool = parent.lv_name if device.lv_type == LvType::THIN && parent.is?(:lvm_lv)
+          section.btrfs_name = section.name_for_btrfs(device.filesystem)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_encryption_fields(section)
+          return unless device.encrypted?
+
+          method = device.encryption.method || DEFAULT_ENCRYPTION_METHOD
+          section.loop_fs = true
+          section.crypt_method = method.id
+          section.crypt_key = CRYPT_KEY_VALUE if method.password_required?
+          init_luks_fields(section)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_luks_fields(section)
+          enc = device.encryption
+          section.crypt_pbkdf = enc.pbkdf&.to_sym if enc.supports_pbkdf?
+          section.crypt_label = enc.label if enc.supports_label? && !enc.label.empty?
+          section.crypt_cipher = enc.cipher if enc.supports_cipher? && !enc.cipher.empty?
+          section.crypt_key_size = enc.key_size * 8 if enc.supports_key_size? && !enc.key_size.zero?
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_filesystem_fields(section)
+          section.format = false
+          fs = device.filesystem
+          return unless fs
+
+          section.format = true if device.respond_to?(:id) && !NO_FORMAT_IDS.include?(device.id)
+
+          init_blk_filesystem_fields(section, fs)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        # @param filesystem [Filesystems::BlkFilesystem]
+        def init_blk_filesystem_fields(section, filesystem)
+          section.filesystem = filesystem.type.to_sym
+          section.label = filesystem.label unless filesystem.label.empty?
+          section.mkfs_options = filesystem.mkfs_options unless filesystem.mkfs_options.empty?
+          section.quotas = filesystem.quota? if filesystem.respond_to?(:quota?)
+          init_subvolumes(section, filesystem)
+          init_mount_options(section, filesystem)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        # @param filesystem [Filesystems::BlkFilesystem]
+        def init_mount_options(section, filesystem)
+          return if filesystem.mount_point.nil?
+
+          section.mount = filesystem.mount_point.path
+          section.mountby = filesystem.mount_point.mount_by.to_sym
+          mount_options = filesystem.mount_point.mount_options
+          section.fstab_options = mount_options unless mount_options.empty?
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        # @param filesystem [Filesystems::BlkFilesystem] Filesystem to add subvolumes if required
+        def init_subvolumes(section, filesystem)
+          return unless filesystem.supports_btrfs_subvolumes?
+
+          section.subvolumes_prefix = filesystem.subvolumes_prefix
+
+          valid_subvolumes = filesystem.btrfs_subvolumes.reject do |subvol|
+            subvol.path.empty? || subvol.path == section.subvolumes_prefix ||
+              subvol.path.start_with?(filesystem.snapshots_root)
+          end
+
+          section.subvolumes = valid_subvolumes.map do |subvol|
+            SubvolSpecification.create_from_btrfs_subvolume(subvol)
+          end
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_bcache_fields(section)
+          if device.bcache
+            section.bcache_backing_for = device.bcache.name
+          elsif device.in_bcache_cset
+            section.bcache_caching_for = device.in_bcache_cset.bcaches.map(&:name)
+          end
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_nfs_fields(section)
+          section.create = false
+          init_mount_options(section, device)
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_tmpfs_fields(section)
+          section.create = nil
+          section.resize = nil
+          init_mount_options(section, device)
+          section.mountby = nil
+        end
+
+        # Uses legacy ids for backwards compatibility. For example, BIOS Boot
+        # partitions in the old libstorage were represented by the internal
+        # code 259 and, thus, systems cloned with the old exporter
+        # (AutoinstPartPlan) use 259 instead of the current 257.
+        def partition_id
+          id = enforce_bios_boot? ? PartitionId::BIOS_BOOT : device.id
+          id.to_i_legacy
+        end
+
+        # Whether the given existing partition should be reported as GRUB (GPT
+        # Bios Boot) in the cloned profile.
+        #
+        # @note To ensure backward compatibility, this method implements the
+        # logic present in the old AutoYaST exporter that used to live in
+        # AutoinstPartPlan#ReadHelper.
+        # https://github.com/yast/yast-autoinstallation/blob/47c24fb98e074f5b6432f3a4f8b9421362ee29cc/src/modules/AutoinstPartPlan.rb#L345
+        # Thus, this returns true for any partition with a Windows-related ID
+        # that is configured to be mounted in /boot*
+        # See commit 54e236cd428636b3bf8f92d2ac2914e5b1d67a90 of
+        # yast-autoinstallation.
+        #
+        # @return [Boolean]
+        def enforce_bios_boot?
+          return false if device.filesystem_mountpoint.nil?
+
+          device.id.is?(:windows_system) && device.filesystem_mountpoint.include?("/boot")
+        end
+
+        # Returns the volume group associated to a given device
+        #
+        # @return [String,nil] Volume group; nil if it is not used as a physical volume or does
+        #   not belong to any volume group.
+        def lvm_group_name
+          return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
+
+          device.lvm_pv.lvm_vg.basename
+        end
+
+        # Determines whether the device has a fixed size (disk, RAID, etc.)
+        #
+        # It is used to find out whether the size specification should be included
+        # in the profile.
+        #
+        # @return [Boolean]
+        def fixed_size?
+          device.is?(:disk_device, :software_raid)
+        end
+
+        # Determines whether the partition is primary or not
+        #
+        # Always false when the partition table does not allow extended partitions
+        #
+        # @return [Boolean] true when is a primary partition; false otherwise
+        def primary_partition?
+          return false unless device.partition_table.extended_possible?
+
+          device.type.is?(:primary)
+        end
       end
     end
   end
