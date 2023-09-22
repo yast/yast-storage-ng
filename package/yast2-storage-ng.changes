@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Sep 22 08:27:34 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- AutoYaST: official support for LUKS2 (jsc#PED-3878, jsc#PED-5518)
+- 4.6.13
+
+-------------------------------------------------------------------
 Fri Sep 01 19:57:03 UTC 2023 - Josef Reidinger <jreidinger@suse.com>
 
 - Branch package for SP6 (bsc#1208913)

@@ -23,6 +23,8 @@ require "y2storage/encryption_method/pervasive_luks2"
 require "y2storage/encryption_processes/luks"
 require "y2storage/pbkd_function"
 
+Yast.import "Mode"
+
 module Y2Storage
   module EncryptionMethod
     # The encryption method that allows to create and identify an encrypted device using regular
@@ -60,7 +62,8 @@ module Y2Storage
 
       # @see Base#available?
       def available?
-        StorageEnv.instance.luks2_available?
+        # jsc#PED-3878 and jsc#GEHC-6
+        Yast::Mode.auto || StorageEnv.instance.luks2_available?
       end
 
       private
