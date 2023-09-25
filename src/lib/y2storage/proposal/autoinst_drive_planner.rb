@@ -143,6 +143,10 @@ module Y2Storage
           else
             DEFAULT_ENCRYPTION_METHOD
           end
+        device.encryption_pbkdf = find_encryption_pbkdf(partition_section)
+        device.encryption_label = partition_section.crypt_label
+        device.encryption_cipher = partition_section.crypt_cipher
+        device.encryption_key_size = encryption_key_size_for(partition_section)
         return unless device.encryption_method&.password_required?
 
         device.encryption_password = find_encryption_password(partition_section)
@@ -183,6 +187,44 @@ module Y2Storage
           return
         end
         partition_section.crypt_key
+      end
+
+      # Determines the encryption password-based key derivation function for a partition section
+      #
+      # Additionally it registers an issue if a value is specified but it does not correspond to
+      # any function recognized by YaST.
+      #
+      # @param part_section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [PbkdFunction,nil] nil if the field is omitted or the value is invalid
+      def find_encryption_pbkdf(part_section)
+        return unless part_section.crypt_pbkdf
+
+        result = Y2Storage::PbkdFunction.find(part_section.crypt_pbkdf)
+        if result.nil?
+          # There is an InvalidEncryption kind of issue, but it looks oriented to report a wrong
+          # encryption_method, which is a more critical error than this
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, part_section, :crypt_pbkdf)
+        end
+        result
+      end
+
+      # Encryption key size in the given partition section
+      #
+      # Additionally it registers an issue if a value is specified but is not valid (is not
+      # a multiple of 8).
+      #
+      # @param part_section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [Integer,nil] nil if the field is omitted or the value is invalid
+      def encryption_key_size_for(part_section)
+        return unless part_section.crypt_key_size
+
+        value = part_section.crypt_key_size.to_i
+        if value % 8 != 0
+          issues_list.add(Y2Storage::AutoinstIssues::InvalidValue, part_section, :crypt_key_size)
+          return
+        end
+
+        value
       end
 
       # Sets common filesystem attributes
