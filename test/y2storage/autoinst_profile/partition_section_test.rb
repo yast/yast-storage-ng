@@ -692,6 +692,122 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         section = section_for("sdf7")
         expect(section.crypt_method).to eq(:luks1)
       end
+
+      context "and the encryption method supports LUKS label" do
+        before do
+          partition = device("sdf7")
+          partition.encrypt(method: Y2Storage::EncryptionMethod::LUKS2)
+        end
+
+        let(:encryption) { device("sdf7").encryption }
+
+        context "but the label is unknown" do
+          it "does not initialize #crypt_label" do
+            expect(section_for("sdf7").crypt_label).to be_nil
+          end
+        end
+
+        context "but there is no label" do
+          before { encryption.label = "" }
+
+          it "does not initialize #crypt_label" do
+            expect(section_for("sdf7").crypt_label).to be_nil
+          end
+        end
+
+        context "and the LUKS device has a label" do
+          before { encryption.label = "some_label" }
+
+          it "initializes #crypt_label with the label" do
+            expect(section_for("sdf7").crypt_label).to eq "some_label"
+          end
+        end
+      end
+
+      context "and the encryption method does not support LUKS labels" do
+        before do
+          partition = device("sdf7")
+          partition.encryption.label = "some_label"
+        end
+
+        it "does not initialize #crypt_label" do
+          expect(section_for("sdf7").crypt_label).to be_nil
+        end
+      end
+
+      context "and the encryption method supports setting the PBKDF" do
+        before do
+          partition = device("sdf7")
+          partition.encrypt(method: Y2Storage::EncryptionMethod::LUKS2)
+        end
+
+        let(:encryption) { device("sdf7").encryption }
+
+        context "but the PBKDF is unknown" do
+          it "does not initialize #crypt_pbkdf" do
+            expect(section_for("sdf7").crypt_pbkdf).to be_nil
+          end
+        end
+
+        context "and the PBKDF has a value" do
+          before { encryption.pbkdf = Y2Storage::PbkdFunction.find(:argon2id) }
+
+          it "initializes #crypt_pbkdf with the proper value" do
+            expect(section_for("sdf7").crypt_pbkdf).to eq :argon2id
+          end
+        end
+      end
+
+      context "and the encryption method does not support setting a PBKDF" do
+        before do
+          partition = device("sdf7")
+          partition.encryption.pbkdf = Y2Storage::PbkdFunction.find(:pbkdf2)
+        end
+
+        it "does not initialize #crypt_pbkdf" do
+          expect(section_for("sdf7").crypt_pbkdf).to be_nil
+        end
+      end
+
+      context "and the encryption method supports setting the cipher and key size" do
+        let(:encryption) { device("sdf7").encryption }
+
+        context "but the cipher and key size are unknown" do
+          it "does not initialize #crypt_cipher or #crypt_key_size" do
+            expect(section_for("sdf7").crypt_cipher).to be_nil
+            expect(section_for("sdf7").crypt_key_size).to be_nil
+          end
+        end
+
+        context "and the cipher and key size are known" do
+          before do
+            encryption.key_size = 64
+            encryption.cipher = "aes-xts-plain"
+          end
+
+          it "initializes #crypt_key_size with the key size in bits" do
+            expect(section_for("sdf7").crypt_key_size).to eq 512
+          end
+
+          it "initializes #crypt_cipher with the name of the cipher" do
+            expect(section_for("sdf7").crypt_cipher).to eq "aes-xts-plain"
+          end
+        end
+      end
+
+      context "and the encryption method does not support cipher or key size" do
+        before do
+          partition = device("sdf7")
+          encryption = partition.encrypt(method: Y2Storage::EncryptionMethod::RANDOM_SWAP)
+          encryption.key_size = 64
+          encryption.cipher = "aes-xts-plain"
+        end
+
+        it "does not initialize #crypt_cipher or #crypt_key_size" do
+          expect(section_for("sdf7").crypt_cipher).to be_nil
+          expect(section_for("sdf7").crypt_key_size).to be_nil
+        end
+      end
     end
 
     context "if the partition is not encrypted" do
