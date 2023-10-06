@@ -20,6 +20,7 @@
 
 require "yast"
 require "y2storage/encryption_method/base"
+require "y2storage/yast_feature"
 require "y2storage/encryption_processes/tpm_fde_tools"
 
 Yast.import "Mode"
@@ -130,9 +131,6 @@ module Y2Storage
         @tpm_present = EncryptionProcesses::FdeTools.new.tpm_present?
       end
 
-      NEEDED_PACKAGES = ["fde-tools"].freeze
-      private_constant :NEEDED_PACKAGES
-
       # Whether the product being installed has the ability to configure the encryption method
       #
       # @see #possible?
@@ -144,7 +142,7 @@ module Y2Storage
         # in selected product or to new repositories).
 
         # Beware: apart from true and false, AvailableAll can return nil if things go wrong
-        !!(Yast::Package.AvailableAll(NEEDED_PACKAGES))
+        !!Yast::Package.AvailableAll(YastFeature::ENCRYPTION_TPM_FDE.pkg_list)
       end
     end
   end

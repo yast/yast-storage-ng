@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,6 +22,8 @@ require "y2storage/encryption_processes/base"
 require "y2storage/encryption_processes/secure_key"
 require "yast2/execute"
 require "yast"
+
+Yast.import "Mode"
 
 module Y2Storage
   module EncryptionProcesses

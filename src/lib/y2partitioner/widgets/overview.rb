@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2022] SUSE LLC
+# Copyright (c) [2017-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -215,7 +215,9 @@ module Y2Partitioner
       def packages_installed?
         return true if Yast::Mode.installation
 
-        pkgs = device_graph.actiongraph.used_features.pkg_list
+        features = device_graph.actiongraph.used_features
+        features.concat(device_graph.yast_commit_features)
+        pkgs = features.pkg_list
         Y2Storage::PackageHandler.new(pkgs).install
       end
 

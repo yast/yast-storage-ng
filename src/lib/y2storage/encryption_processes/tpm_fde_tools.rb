@@ -110,6 +110,13 @@ module Y2Storage
         self.class.devices = []
       end
 
+      # @see Base#commit_features
+      def commit_features
+        # In installation mode is needed to ensure the enroll service is present in the new system.
+        # In an installed system is needed in order to be able to execute the fdectl commands.
+        [YastFeature::ENCRYPTION_TPM_FDE]
+      end
+
       private
 
       # Configure fde-tools to act on all the involved block devices

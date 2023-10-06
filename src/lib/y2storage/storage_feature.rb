@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2020] SUSE LLC
+# Copyright (c) [2016-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 
 require "yast"
 require "storage"
+require "y2storage/feature"
 
 module Y2Storage
   #
@@ -38,9 +39,7 @@ module Y2Storage
   # which add-on packages would be needed so support that feature, so they
   # can be installed or marked for installation as needed.
   #
-  class StorageFeature
-    include Yast::Logger
-
+  class StorageFeature < Feature
     #======================================================================
     # Configurable part starts here
     #
@@ -114,7 +113,7 @@ module Y2Storage
     # configurable part ends here
     #======================================================================
 
-    # All known features
+    # All known libstorage-ng features
     #
     # @return [Array<StorageFeature>]
     def self.all
@@ -126,12 +125,12 @@ module Y2Storage
       end
     end
 
-    # Drop the cache of storage packages that are available.
+    # Drop the cache of packages for all known storage features
     #
     # This is only ever needed if the available packages might have changed
     # since the last use of this class.
     def self.drop_cache
-      @all = nil
+      all.each(&:drop_cache)
     end
 
     # Constructor
@@ -144,24 +143,13 @@ module Y2Storage
     # @param id [Symbol] see {#id}
     # @param packages [Array<Package>] see {#all_packages}
     def initialize(id, packages)
-      @id = id
-      @all_packages = packages
+      super
 
       # Raising a NameError exception as soon as possible (i.e. in the constructor)
       # is a good way to make sure we are in sync with libstorage-ng regarding
       # the definition of possible features
       @bitmask = ::Storage.const_get(id)
     end
-
-    # Symbol representation of the feature
-    #
-    # It has the same form than the corresponding constant name in
-    # libstorage-ng, eg. :UF_NTFS
-    #
-    # @return [Symbol]
-    attr_reader :id
-
-    alias_method :to_sym, :id
 
     # Whether the feature is included in the given bit-field
     #
@@ -171,17 +159,7 @@ module Y2Storage
       (bitfield & bitmask) == bitmask
     end
 
-    # Names of the packages that should be installed if the feature is going to
-    # be used
-    #
-    # @return [Array<String>]
-    def pkg_list
-      packages.map(&:name)
-    end
-
     private
-
-    attr_reader :all_packages
 
     # Bitmask for a storage feature
     #
@@ -190,55 +168,5 @@ module Y2Storage
     #
     # @return [Integer]
     attr_reader :bitmask
-
-    # List of packages associated to the feature
-    #
-    # @return [Array<StorageFeature::Package>]
-    def packages
-      return @packages unless @packages.nil?
-
-      unavailable, @packages = all_packages.partition(&:unavailable_optional?)
-      if unavailable.any?
-        log.warn("WARNING: Skipping unavailable filesystem support packages #{unavailable.map(&:name)}")
-      end
-
-      @packages
-    end
-
-    # Internal class to represent a package associated to a storage feature
-    class Package
-      Yast.import "Package"
-
-      # Constructor
-      #
-      # @param name [String] see {#name}
-      # @param optional [Boolean] see {#optional?}
-      def initialize(name, optional: false)
-        @name = name
-        @optional = optional
-      end
-
-      # @return [String] name of the package
-      attr_reader :name
-
-      # Whether installation of the package can be skipped if the package is not
-      # available
-      #
-      # See the comment in {StorageFeature::OPTIONAL_PACKAGES} for more details
-      #
-      # @return [Boolean]
-      def optional?
-        !!@optional
-      end
-
-      # Check if a package is an optional package that is unavailable.
-      # See also bsc#1039830
-      #
-      # @return [Boolean] true if package is optional and unavailable,
-      #                   false if not optional or if available.
-      def unavailable_optional?
-        optional? && !Yast::Package.Available(name)
-      end
-    end
   end
 end

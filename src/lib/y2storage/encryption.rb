@@ -362,6 +362,14 @@ module Y2Storage
       encryption_process&.finish_installation
     end
 
+    # Features that must be supported in the target system to finish the encryption
+    # process
+    #
+    # @return [Array<YastFeature>]
+    def commit_features
+      encryption_process&.commit_features || []
+    end
+
     # If the current mount_by is suitable, it does nothing.
     #
     # Otherwise, it assigns the best option from all the suitable ones

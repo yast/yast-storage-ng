@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -18,6 +18,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/yast_feature"
 
 require "abstract_method"
 
@@ -90,6 +91,15 @@ module Y2Storage
       # @param _blk_device [BlkDevice] Block device to encrypt
       # @return [Array<String>]
       def crypt_options(_blk_device)
+        []
+      end
+
+      # Features objects to describe the requirements to perform the commit phase
+      # and any subsequent operation (eg., initialization during the first boot) of
+      # the encryption procedure
+      #
+      # @return [Array<YastFeature>]
+      def commit_features
         []
       end
 
