@@ -209,7 +209,7 @@ module Y2Partitioner
       #
       # As a side effect, it will ask the user to install missing packages.
       #
-      # @see Y2Storage::UsedStorageFeatures
+      # @see Y2Storage::StorageFeature
       #
       # @return [Boolean]
       def packages_installed?
