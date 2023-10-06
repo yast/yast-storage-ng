@@ -83,9 +83,10 @@ module Y2Storage
         UF_SWAP:             [],
 
         # Crypto technologies
-        UF_LUKS:             "cryptsetup",
         UF_PLAIN_ENCRYPTION: "cryptsetup",
         UF_BITLOCKER:        [],
+        # Device mapper is needed if names like /dev/mapper/cr_root are used at boot
+        UF_LUKS:             ["device-mapper", "cryptsetup"],
 
         # Data transport methods
         UF_ISCSI:            "open-iscsi",

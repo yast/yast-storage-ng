@@ -77,7 +77,7 @@ describe Y2Storage::StorageFeaturesList do
       end
 
       it "includes the package only once (no duplicates)" do
-        expect(list.pkg_list.sort).to eq ["cryptsetup", "e2fsprogs"]
+        expect(list.pkg_list.sort).to eq ["cryptsetup", "device-mapper", "e2fsprogs"]
       end
     end
 
