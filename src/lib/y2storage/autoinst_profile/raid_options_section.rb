@@ -90,7 +90,7 @@ module Y2Storage
       # @param md [Md] RAID device
       def init_from_raid(md)
         @raid_name = md.name unless md.numeric?
-        @raid_type = md.md_level.to_s
+        @raid_type = clone_md_level(md).to_s
         # A number will be interpreted as KB, so we explicitly set the unit.
         @chunk_size = "#{md.chunk_size.to_i}B"
         @parity_algorithm = md.md_parity.to_s
@@ -108,6 +108,23 @@ module Y2Storage
         return nil if parity_algorithm.nil? || parity_algorithm.empty?
 
         MdParity.find_with_legacy(parity_algorithm)
+      end
+
+      private
+
+      # MD level to be used at {#init_from_raid}
+      #
+      # This is a temporary method, created in the context of bsc#1215022, to avoid creating
+      # entries with "<raid_type>linear</raid_type>" in the AutoYaST profile when cloning the
+      # system. That may lead to the false impression that creation of linear RAIDs with YaST
+      # is supported.
+      #
+      # In more modern branches, the case of linear RAIDs will probably be handled differently.
+      #
+      # @param md [Md] RAID device
+      # @return [MdLevel]
+      def clone_md_level(md)
+        md.md_level.is?(:linear) ? MdLevel::UNKNOWN : md.md_level
       end
     end
   end
