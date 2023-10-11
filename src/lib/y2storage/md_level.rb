@@ -38,7 +38,9 @@ module Y2Storage
       raid5:     N_("RAID5"),
       raid6:     N_("RAID6"),
       raid10:    N_("RAID10"),
-      container: N_("Container")
+      container: N_("Container"),
+      # TRANSLATOR: RAID level for linear RAIDs
+      linear:    N_("Linear")
     }
     private_constant :TRANSLATIONS
 
