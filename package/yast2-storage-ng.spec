@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# New Md size calculation
-BuildRequires:	libstorage-ng-ruby >= 4.4.76
+# Encryption#use_key_file_in_commit
+BuildRequires:	libstorage-ng-ruby >= 4.5.144
 BuildRequires:  update-desktop-files
 # Replace PackageSystem with Package
 BuildRequires:  yast2 >= 4.4.38
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# New Md size calculation
-Requires:       libstorage-ng-ruby >= 4.4.76
+# Encryption#use_key_file_in_commit
+Requires:       libstorage-ng-ruby >= 4.5.144
 # Replace PackageSystem with Package
 Requires:       yast2 >= 4.4.38
 # Y2Packager::Repository

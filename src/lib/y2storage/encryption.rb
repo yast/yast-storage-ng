@@ -62,6 +62,23 @@ module Y2Storage
     storage_forward :key_file
     storage_forward :key_file=
 
+    # @!method use_key_file_in_commit?
+    #   Whether the information at {#key_file} is used in the commit phase of libstorage-ng
+    #   (in case it contains a valid value).
+    #
+    #   The default value is true, but it can be set to false in order to fill the third column
+    #   of the crypttab file without actually affecting the creation of the device.
+    #
+    #   @return [Boolean]
+    storage_forward :use_key_file_in_commit?
+
+    # @!method use_key_file_in_commit=(value)
+    #
+    #   Sets the {#use_key_file_in_commit?} flag
+    #
+    #   @param value [Boolean]
+    storage_forward :use_key_file_in_commit=
+
     # @!attribute cipher
     #   The encryption cipher
     #

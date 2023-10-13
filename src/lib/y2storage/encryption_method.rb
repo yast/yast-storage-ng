@@ -20,6 +20,7 @@
 require "y2storage/encryption_method/luks1"
 require "y2storage/encryption_method/pervasive_luks2"
 require "y2storage/encryption_method/luks2"
+require "y2storage/encryption_method/tpm_fde"
 require "y2storage/encryption_method/random_swap"
 require "y2storage/encryption_method/protected_swap"
 require "y2storage/encryption_method/secure_swap"
@@ -47,6 +48,8 @@ module Y2Storage
     PERVASIVE_LUKS2 = PervasiveLuks2.new
     # Instance of the Luks2 method to be always returned by the module
     LUKS2 = Luks2.new
+    # Instance of the TpmFde method to be always returned by the module
+    TPM_FDE = TpmFde.new
     # Instance of the RandomSwap method to be always returned by the module
     RANDOM_SWAP = RandomSwap.new
     # Instance of the ProtectedSwap method to be always returned by the module
@@ -57,7 +60,7 @@ module Y2Storage
     # Sorted list of all the method instances
     # @see .all
     ALL = [
-      LUKS1, PERVASIVE_LUKS2, LUKS2, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP
+      LUKS1, PERVASIVE_LUKS2, LUKS2, TPM_FDE, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP
     ]
     private_constant :ALL
 
