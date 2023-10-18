@@ -29,6 +29,9 @@ describe Y2Storage::HWInfoReader do
   let(:hwinfo_file) { "hwinfo.txt" }
 
   before do
+    # Disable the global mock that normally prevents calls to hwinfo
+    allow(reader).to receive(:for_device).and_call_original
+
     allow(Yast::Execute).to receive(:on_target!)
       .with(/hwinfo/, anything, anything, anything).and_return(hwinfo_output)
     reader.reset

@@ -136,6 +136,9 @@ RSpec.configure do |c|
       end
     end
 
+    allow(Y2Storage::HWInfoReader.instance).to receive(:for_device)
+      .and_return Y2Storage::HWInfoDisk.new
+
     # Bcache is only supported for x86_64 architecture. Probing the devicegraph complains if Bcache is
     # used with another architecture. Bcache error is avoided here. Otherwise, x86_84 architecture must
     # to be set for every test using Bcache (which has demonstrated to be quite error prone).
