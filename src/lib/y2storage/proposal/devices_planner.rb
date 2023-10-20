@@ -93,19 +93,38 @@ module Y2Storage
       # @param required_size [DiskSize]
       # @return [Partition]
       def reusable_swap(required_size)
-        return nil if settings.use_lvm || settings.use_encryption
+        return nil unless try_to_reuse_swap?
 
         partitions = available_swap_partitions
-        partitions.select! { |part| part.size >= required_size }
+        partitions.select! { |part| can_be_reused?(part, required_size) }
         # Use #name in case of #size tie to provide stable sorting
         partitions.min_by { |part| [part.size, part.name] }
       end
 
-      # Returns all avaiable swap partitions
+      # Returns all available and acceptable swap partitions
       #
       # @return [Array<Partition>]
       def available_swap_partitions
         devicegraph.partitions.select(&:swap?)
+      end
+
+      # Whether it makes sense to try to reuse existing swap partitions
+      #
+      # @return [Boolean]
+      def try_to_reuse_swap?
+        !settings.use_lvm && !settings.use_encryption && settings.swap_reuse != :none
+      end
+
+      # Whether it is acceptable to reuse the given swap partition
+      #
+      # @param partition [Partition]
+      # @param required_size [DiskSize]
+      # @return [Boolean]
+      def can_be_reused?(partition, required_size)
+        return false if partition.size < required_size
+        return true unless settings.swap_reuse == :candidate
+
+        settings.candidate_devices.include?(partition.partitionable.name)
       end
 
       # Delete shadowed subvolumes from each planned device

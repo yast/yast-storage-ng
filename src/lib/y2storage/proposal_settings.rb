@@ -62,6 +62,15 @@ module Y2Storage
     #   available candidate devices.
     attr_accessor :multidisk_first
 
+    # Criteria to use if it is possible to reuse an existing swap partition
+    #
+    #   * :any reuse a suitable swap partition from any disk, default historical behavior of YaST
+    #   * :none do not reuse existing swap partitions
+    #   * :candidate reuse a suitable partition only if it is located in a candidate disk
+    #
+    # @return [:any, :none, :candidate]
+    attr_accessor :swap_reuse
+
     # Device name of the disk in which '/' must be placed.
     #
     # If it's set to nil and {#allocate_volume_mode} is :auto, the proposal will try
@@ -388,6 +397,7 @@ module Y2Storage
       other_delete_mode:          :ondemand,
       resize_windows:             true,
       separate_vgs:               false,
+      swap_reuse:                 :any,
       volumes:                    [],
       windows_delete_mode:        :ondemand
     }

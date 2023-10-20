@@ -40,9 +40,9 @@
     - partition:
         size:         1 GiB
         name:         /dev/dasdb1
+        id:           swap
         file_system:  swap
-        mount_point:  swap
-        label:        swap
+        label:        swap_dasdb
 
     - partition:
         size:         6 GiB
@@ -73,8 +73,7 @@
         name:         /dev/sdc2
         id:           swap
         file_system:  swap
-        mount_point:  swap
-        label:        swap
+        label:        swap_sdc
 
     - partition:
         size:         20 GiB
@@ -162,7 +161,7 @@
         type: logical
         id: swap
         file_system: swap
-        mount_point: swap
+        label: swap_sdd
 
     - partition:
         size: 10 GiB
@@ -215,6 +214,7 @@
         type: logical
         id: swap
         file_system: swap
+        label: swap_sdf
 
     - partition:
         size: 10 GiB
@@ -265,8 +265,7 @@
         name:         /dev/sdaa2
         id:           swap
         file_system:  swap
-        mount_point:  swap
-        label:        swap
+        label:        swap_sdaa
 
     - partition:
         size:         20 GiB
@@ -328,7 +327,7 @@
         name:         /dev/sdh3
         id:           swap
         file_system:  swap
-        mount_point:  swap
+        label:        swap_sdh
 
 # Btrfs with default_subvolume set to ""
 - disk:
