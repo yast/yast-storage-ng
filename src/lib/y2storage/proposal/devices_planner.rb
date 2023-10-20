@@ -93,7 +93,7 @@ module Y2Storage
       # @param required_size [DiskSize]
       # @return [Partition]
       def reusable_swap(required_size)
-        return nil if skip_swap_reuse?
+        return nil unless try_to_reuse_swap?
 
         partitions = available_swap_partitions
         partitions.select! { |part| can_be_reused?(part, required_size) }
@@ -108,11 +108,11 @@ module Y2Storage
         devicegraph.partitions.select(&:swap?)
       end
 
-      # Whether reusing swap partitions is pointless
+      # Whether it makes sense to try to reuse existing swap partitions
       #
       # @return [Boolean]
-      def skip_swap_reuse?
-        settings.use_lvm || settings.use_encryption || settings.swap_reuse == :none
+      def try_to_reuse_swap?
+        !settings.use_lvm && !settings.use_encryption && settings.swap_reuse != :none
       end
 
       # Whether it is acceptable to reuse the given swap partition
