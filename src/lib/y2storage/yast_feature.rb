@@ -19,11 +19,16 @@
 
 require "yast"
 require "y2storage/feature"
+require "yast2/equatable"
 
 module Y2Storage
   # Analogous to {StorageFeature}, but for requirements originated by Y2Storage and not
   # from libstorage-ng.
   class YastFeature < Feature
+    include Yast2::Equatable
+
+    eql_attr :id
+
     # Constructor
     def initialize(id, mandatory_pkgs, optional_pkgs)
       pkgs = mandatory_pkgs.map { |pkg| Package.new(pkg, optional: false) }
@@ -50,12 +55,5 @@ module Y2Storage
     def self.drop_cache
       all.each(&:drop_cache)
     end
-
-    # @return [Boolean]
-    def ==(other)
-      other.class == self.class && other.id == id
-    end
-
-    alias_method :eql?, :==
   end
 end

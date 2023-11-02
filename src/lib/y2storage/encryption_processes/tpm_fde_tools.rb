@@ -44,17 +44,17 @@ module Y2Storage
       KEY_FILE_NAME = "/.fde-virtual.key".freeze
       private_constant :KEY_FILE_NAME
 
-      # Content of the third column of crypttab for all involved devices
-      #
-      # @return [String]
-      def self.key_file_name
-        KEY_FILE_NAME.dup
-      end
-
       # Class methods
       class << self
         # List of all block devices configured by fde-tools during system installation
         attr_accessor :devices
+
+        # Content of the third column of crypttab for all involved devices
+        #
+        # @return [String]
+        def key_file_name
+          KEY_FILE_NAME.dup
+        end
       end
 
       # Creates an encryption layer over the given block device
