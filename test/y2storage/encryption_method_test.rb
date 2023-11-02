@@ -49,8 +49,8 @@ describe Y2Storage::EncryptionMethod do
       expect(described_class.all.map(&:to_sym)).to include(:secure_swap)
     end
 
-    it "returns a method for pervasive luks2" do
-      expect(described_class.all.map(&:to_sym)).to include(:pervasive_luks2)
+    it "contains a method for TPM full-disk encryption" do
+      expect(described_class.all.map(&:to_sym)).to include(:tpm_fde)
     end
   end
 
@@ -193,6 +193,26 @@ describe Y2Storage::EncryptionMethod do
         expect(described_class.available.map(&:to_sym)).to_not include(:secure_swap)
       end
     end
+
+    context "if TPM full-disk encryption is available" do
+      before do
+        allow(Y2Storage::EncryptionMethod::TPM_FDE).to receive(:available?).and_return(true)
+      end
+
+      it "includes the corresponding method" do
+        expect(described_class.available.map(&:to_sym)).to include(:tpm_fde)
+      end
+    end
+
+    context "if TPM full-disk encryption is not available" do
+      before do
+        allow(Y2Storage::EncryptionMethod::TPM_FDE).to receive(:available?).and_return(false)
+      end
+
+      it "does not include the TPM FDE method" do
+        expect(described_class.available.map(&:to_sym)).to_not include(:tpm_fde)
+      end
+    end
   end
 
   describe ".find" do
@@ -281,6 +301,33 @@ describe Y2Storage::EncryptionMethod do
 
         expect(device.encryption.label).to eq "cool_luks"
         expect(device.encryption.pbkdf.value).to eq "argon2i"
+      end
+    end
+
+    context "when using :tpm_fde method" do
+      let(:method) { :tpm_fde }
+
+      it "returns an encryption device" do
+        result = subject.create_device(device, "cr_dev")
+
+        expect(result.is?(:encryption)).to eq(true)
+      end
+
+      it "encrypts the given device with LUKS2 encryption" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev")
+
+        expect(device.encrypted?).to eq(true)
+        expect(device.encryption.type.is?(:luks2)).to eq(true)
+      end
+
+      it "sets the given label for the LUKS2 device" do
+        expect(device.encrypted?).to eq(false)
+
+        subject.create_device(device, "cr_dev", label: "fde_label")
+
+        expect(device.encryption.label).to eq "fde_label"
       end
     end
 

@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2017-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -594,12 +594,19 @@ module Y2Storage
 
     # List of storage features used by the devicegraph
     #
+    # Note this is used during system installation. In the installed system, the
+    # combination of Actiongraph#used_features and Devicegraph#yast_commit_features
+    # is used instead.
+    #
     # By default, it returns the features associated to all devices and filesystems
     # in the devicegraph. The required_only argument can be used to limit the result
-    # by excluding features associated to those filesystems that have no mount point.
+    # by excluding features that are not mandatory to produce a functional system. For
+    # example, it excludes features associated to those filesystems that have no mount
+    # point.
     #
     # @param required_only [Boolean] whether the result should only include those
-    #   features that are mandatory (ie. associated to devices with a mount point)
+    #   features that are mandatory (ie. associated to devices with a mount point or
+    #   to devices that will be configured during the first boot of the new system)
     # @return [StorageFeaturesList]
     def used_features(required_only: false)
       type =
@@ -609,7 +616,9 @@ module Y2Storage
           Storage::UsedFeaturesDependencyType_SUGGESTED
         end
 
-      StorageFeaturesList.from_bitfield(storage_used_features(type))
+      list = StorageFeaturesList.from_bitfield(storage_used_features(type))
+      list.concat(yast_commit_features)
+      list
     end
 
     # List of required (mandatory) storage features used by the devicegraph
@@ -626,7 +635,20 @@ module Y2Storage
       all = storage_used_features(Storage::UsedFeaturesDependencyType_SUGGESTED)
       required = storage_used_features(Storage::UsedFeaturesDependencyType_REQUIRED)
       # Using binary XOR in those bit fields to calculate the difference
-      StorageFeaturesList.from_bitfield(all ^ required)
+      list = StorageFeaturesList.from_bitfield(all ^ required)
+      list.concat(yast_commit_features)
+      list
+    end
+
+    # List of features that correspond to aspects handled by Y2Storage (not coming
+    # from libstorage-ng) and that need to be present in the target system either during
+    # the storage commit phase or at a later stage. Ie. features needed in the target
+    # system to access the device or to finish its configuration.
+    #
+    # @return [StorageFeaturesList]
+    def yast_commit_features
+      features = encryptions.flat_map(&:commit_features).uniq
+      StorageFeaturesList.new(features)
     end
 
     private

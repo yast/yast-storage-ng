@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017,2019-2020] SUSE LLC
+# Copyright (c) [2017-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -77,7 +77,7 @@ describe Y2Storage::StorageFeaturesList do
       end
 
       it "includes the package only once (no duplicates)" do
-        expect(list.pkg_list.sort).to eq ["cryptsetup", "e2fsprogs"]
+        expect(list.pkg_list.sort).to eq ["cryptsetup", "device-mapper", "e2fsprogs"]
       end
     end
 
@@ -108,6 +108,21 @@ describe Y2Storage::StorageFeaturesList do
 
       it "returns an empty array" do
         expect(list.pkg_list).to eq []
+      end
+    end
+
+    context "when the list includes both storage and YaST features" do
+      let(:bits) { Storage::UF_LUKS }
+
+      before do
+        # Not really needed yet since we have no optional packages in any YaST feature
+        Y2Storage::YastFeature.drop_cache
+
+        list.concat(Y2Storage::YastFeature.all)
+      end
+
+      it "includes the packages related to both kind of features" do
+        expect(list.pkg_list).to include("device-mapper", "cryptsetup", "fde-tools")
       end
     end
   end

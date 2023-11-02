@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2017-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -1306,6 +1306,22 @@ describe Y2Storage::Devicegraph do
         expect(features).to be_a Y2Storage::StorageFeaturesList
         expect(features.map(&:id))
           .to contain_exactly(:UF_BTRFS, :UF_XFS, :UF_SWAP)
+      end
+
+      context "if YaST needs some extra feature to configure a device" do
+        before do
+          sda2 = fake_devicegraph.find_by_name("/dev/sda2")
+          sda2.encrypt(method: Y2Storage::EncryptionMethod::TPM_FDE)
+        end
+
+        it "returns the expected set of features" do
+          features = fake_devicegraph.used_features
+          expect(features).to be_a Y2Storage::StorageFeaturesList
+          expect(features.map(&:id))
+            .to contain_exactly(
+              :UF_BTRFS, :UF_EXT4, :UF_NTFS, :UF_XFS, :UF_SWAP, :UF_LUKS, :encryption_tpm_fde
+            )
+        end
       end
     end
 

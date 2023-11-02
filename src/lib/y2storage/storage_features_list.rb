@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2017,2019-2020] SUSE LLC
+# Copyright (c) [2016-2023] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,7 @@
 require "yast"
 require "forwardable"
 require "y2storage/storage_feature"
+require "y2storage/yast_feature"
 
 module Y2Storage
   # List of storage features
@@ -69,6 +70,13 @@ module Y2Storage
       log.info("Storage feature packages: #{@pkg_list}")
 
       @pkg_list
+    end
+
+    # Concatenate the give features into the current list
+    #
+    # @param other_list [#to_a]
+    def concat(other_list)
+      @features.concat(other_list.to_a)
     end
   end
 end
