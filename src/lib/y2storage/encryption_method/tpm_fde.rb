@@ -102,11 +102,6 @@ module Y2Storage
         encryption_process.create_device(blk_device, dm_name, label: label)
       end
 
-      # Special method used in the tests to reset all memoizations
-      def reset
-        @tpm_present = nil
-      end
-
       private
 
       # @see Base#encryption_process

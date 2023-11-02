@@ -64,7 +64,6 @@ describe Y2Storage::EncryptionMethod::TpmFde do
   describe "#available? and #possible?" do
     before do
       Y2Storage::StorageManager.create_test_instance
-      subject.reset
 
       allow(Yast::Execute).to receive(:on_target!).with(/fdectl/, "tpm-present") do
         raise(Cheetah::ExecutionFailed.new("", "", "", "")) unless tpm_present
