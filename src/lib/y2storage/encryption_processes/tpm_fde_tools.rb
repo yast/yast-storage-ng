@@ -84,7 +84,7 @@ module Y2Storage
 
       # @see Base#post_commit
       #
-      # TODO: this implemented only for the installation case. In an installed system the procedure
+      # TODO: this is implemented only for the installation case. In an installed system the procedure
       # would be completely different and will likely include steps like configuring the fde-tools,
       # calling "fdectl regenerate-key" and regenerating initrd and the bootloader configuration.
       #

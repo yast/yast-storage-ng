@@ -59,7 +59,7 @@ module Y2Storage
 
       # @see Base#available?
       #
-      # In this initial implementation this always returns false because there important
+      # In this initial implementation this always returns false because there are important
       # limitations to use this in (Auto)YaST:
       #
       # - The current version of the inst-sys cannot talk to the TPM
