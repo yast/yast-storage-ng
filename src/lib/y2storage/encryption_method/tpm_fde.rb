@@ -34,6 +34,9 @@ module Y2Storage
     # This is a quite special encryption method due to the way the fde-tools work. First of all,
     # if this method is used, it must be used at least for the root (/) filesystem and only
     # additionally for some other devices.
+    #
+    # Check the documentation of fde-tools for further information.
+    # https://github.com/openSUSE/fde-tools
     class TpmFde < Base
       def initialize
         textdomain "storage"

@@ -35,6 +35,27 @@ module Y2Storage
     #
     # This assumes all the devices use the same recovery password. That's a fde-tools
     # requirement.
+    #
+    # The process is based on the information and commands described at [1] and
+    # looks like this:
+    #
+    #  - The devices are encrypted using LUKS2 as usual but ensuring certain values
+    #    expected by fde-tools at the third and fourth column of crypttab.
+    #  - At the end of installation, the following steps are performed in the target
+    #    system:
+    #      * The value of FDE_DEVS is adjusted in the fde-tools configuration, so the
+    #        fdectl subcommands know in which devices they must operate.
+    #      * "fdectl add-secondary-password" is executed once, so it "leaves the key under
+    #        the doormat" for Grub2 to be able to unlock all the involved devices in the
+    #        first boot after installation.
+    #      * "fdectl add-secondary-key" is executed once, so it prepares all devices for
+    #        the upcoming configuration.
+    #  - In the first boot of the target system after installation, the service
+    #    "fde-tpm-enroll" (that is enabled by the installer) takes care of finishing the
+    #    configuration for all devices that have been prepared with a secondary key.
+    #
+    # [1] https://github.com/openSUSE/fde-tools
+    #
     class TpmFdeTools < Base
       # Options to add to the fourth column of crypttab for all involved devices
       CRYPT_OPTIONS = ["x-initrd.attach"]
@@ -47,6 +68,10 @@ module Y2Storage
       # Class methods
       class << self
         # List of all block devices configured by fde-tools during system installation
+        #
+        # A class variable is used to hold a single list of devices for all the processes.
+        # The list with all the affected devices is built during post_commit and then all
+        # devices are configured at once with a single execution of #finish_execution.
         attr_accessor :devices
 
         # Content of the third column of crypttab for all involved devices
@@ -98,7 +123,7 @@ module Y2Storage
 
       # @see Base#finish_installation
       def finish_installation
-        # This process is only needed once
+        # This procedure is only needed once
         return if self.class.devices.empty?
 
         return unless configure_fde_tools(self.class.devices)
@@ -106,7 +131,8 @@ module Y2Storage
         fde = FdeTools.new(recovery_password)
         fde.add_secondary_password && fde.add_secondary_key && fde.enroll_service&.enable
 
-        # Mark as done
+        # Mark as done, no need to do the same again since this already configured all
+        # the devices that are associated to EncryptionProcesses::TpmFdeTools objects
         self.class.devices = []
       end
 
