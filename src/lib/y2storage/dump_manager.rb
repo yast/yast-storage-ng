@@ -285,7 +285,7 @@ module Y2Storage
     end
 
     def clear_dump_dir
-      remove_dir(dump_dir) if File.exist?(dump_dir)
+      FileUtils.remove_dir(dump_dir) if File.exist?(dump_dir)
       ensure_dump_dir
     end
 
