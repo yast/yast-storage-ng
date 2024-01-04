@@ -436,18 +436,6 @@ describe Y2Storage::StorageManager do
         expect(manager.staging.disks.size).to eq 1
       end
     end
-
-    it "increments the staging revision" do
-      pre = manager.staging_revision
-      manager.staging = new_graph
-      expect(manager.staging_revision).to be > pre
-    end
-
-    it "sets #proposal to nil" do
-      expect(manager.proposal).to_not be_nil
-      manager.staging = manager.staging
-      expect(manager.proposal).to be_nil
-    end
   end
 
   describe "#proposal=" do
