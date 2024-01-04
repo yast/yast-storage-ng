@@ -213,6 +213,9 @@ module Yast
           hash[key]
         end
         allow(ENV).to receive(:keys).and_return hash.keys
+        allow(ENV).to receive(:fetch) do |key, default|
+          hash[key] || default
+        end
         # reset the ENV cache
         Y2Storage::StorageEnv.instance.send(:initialize)
       end
