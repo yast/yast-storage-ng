@@ -61,7 +61,7 @@ module Y2Storage
     # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
     def initialize(partitioning: [], proposal_settings: nil, devicegraph: nil, disk_analyzer: nil,
       issues_list: nil)
-      super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
+      super(devicegraph:, disk_analyzer:)
       @issues_list = issues_list || ::Installation::AutoinstIssues::List.new
       @proposal_settings = proposal_settings
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
@@ -206,7 +206,7 @@ module Y2Storage
 
       settings = proposal_settings_for_disks(drives)
 
-      proposal = GuidedProposal.initial(devicegraph: devicegraph, settings: settings)
+      proposal = GuidedProposal.initial(devicegraph:, settings:)
 
       proposal.devices
     end

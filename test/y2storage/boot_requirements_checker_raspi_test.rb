@@ -45,8 +45,8 @@ describe Y2Storage::BootRequirementsChecker do
       region = Y2Storage::Region.create(start, 512, 512)
 
       double(
-        "Partition", name: "/dev/sda#{number}", id: id, size: 256.MiB, match_volume?: false,
-        filesystem: filesystem, direct_blk_filesystem: filesystem, region: region
+        "Partition", name: "/dev/sda#{number}", id:, size: 256.MiB, match_volume?: false,
+        filesystem:, direct_blk_filesystem: filesystem, region:
       )
     end
 

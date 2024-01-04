@@ -43,7 +43,7 @@ describe Y2Storage::Proposal::AutoinstPartitioner do
       let(:real_bcache) { fake_devicegraph.bcaches.first }
 
       let(:planned_bcache0) do
-        planned_bcache(name: "/dev/bcache0", partitions: partitions)
+        planned_bcache(name: "/dev/bcache0", partitions:)
       end
 
       before do
@@ -64,7 +64,7 @@ describe Y2Storage::Proposal::AutoinstPartitioner do
       let(:real_md) { fake_devicegraph.md_raids.first }
 
       let(:planned_md0) do
-        planned_md(name: "/dev/md0", partitions: partitions)
+        planned_md(name: "/dev/md0", partitions:)
       end
 
       before do

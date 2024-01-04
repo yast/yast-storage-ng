@@ -149,7 +149,7 @@ describe Y2Partitioner::Clients::Main do
               expect(storage_manager).to receive(:"staging=").with(device_graph)
               expect(commit_dialog).to receive(:run)
 
-              subject.run(allow_commit: allow_commit)
+              subject.run(allow_commit:)
             end
           end
 
@@ -159,7 +159,7 @@ describe Y2Partitioner::Clients::Main do
             it "shows a message" do
               expect(Yast2::Popup).to receive(:show).with(/commit is not allowed/)
 
-              subject.run(allow_commit: allow_commit)
+              subject.run(allow_commit:)
             end
 
             it "does not show the commit dialog" do
@@ -167,7 +167,7 @@ describe Y2Partitioner::Clients::Main do
 
               expect(commit_dialog).to_not receive(:run)
 
-              subject.run(allow_commit: allow_commit)
+              subject.run(allow_commit:)
             end
           end
         end

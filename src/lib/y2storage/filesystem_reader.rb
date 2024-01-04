@@ -342,8 +342,8 @@ module Y2Storage
     # For possible parameters, see Yast::Execute.locally!.
     #
     # @return [Boolean] true if the command finishes correctly; false otherwise.
-    def execute(*args)
-      Yast::Execute.locally!(*args)
+    def execute(*)
+      Yast::Execute.locally!(*)
       true
     rescue Cheetah::ExecutionFailed
       false

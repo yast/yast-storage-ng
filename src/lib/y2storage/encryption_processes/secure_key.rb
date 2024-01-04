@@ -157,7 +157,7 @@ module Y2Storage
         # TODO: likely this method could be better implemented with
         # StringScanner
 
-        vol_pattern = "\s+\/[^\s]*\s*\n"
+        vol_pattern = "\s+/[^\s]*\s*\n"
         match_data = /\s* Volumes\s+:((#{vol_pattern})+)/.match(string)
         return [] unless match_data
 
@@ -270,7 +270,7 @@ module Y2Storage
         #
         # @return [SecureKey] an object representing the new key
         def generate(name, sector_size: nil, volumes: [], apqns: [])
-          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+          key = new_for_generate(name, sector_size:, volumes:, apqns:)
 
           key.generate
 
@@ -283,7 +283,7 @@ module Y2Storage
         #
         # @raise [Cheetah::ExecutionFailed] when the generation fails
         def generate!(name, sector_size: nil, volumes: [], apqns: [])
-          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+          key = new_for_generate(name, sector_size:, volumes:, apqns:)
 
           key.generate!
 
@@ -312,7 +312,7 @@ module Y2Storage
             all[parts[0].strip] = parts[1].strip
           end
           sector_size = attrs["Sector size"].start_with?(/\d/) ? attrs["Sector size"].to_i : nil
-          key = new(attrs["Key"], sector_size: sector_size)
+          key = new(attrs["Key"], sector_size:)
           key.add_zkey_volumes(string)
           key
         end
@@ -336,7 +336,7 @@ module Y2Storage
         # @return [SecureKey]
         def new_for_generate(name, sector_size: nil, volumes: [], apqns: [])
           name = exclusive_name(name)
-          key = new(name, sector_size: sector_size, apqns: apqns)
+          key = new(name, sector_size:, apqns:)
           volumes.each { |v| key.add_device(v) }
 
           key

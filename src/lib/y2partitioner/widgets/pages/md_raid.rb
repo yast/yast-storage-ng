@@ -76,7 +76,7 @@ module Y2Partitioner
 
         # @see UsedDevicesTab#buttons
         def buttons
-          Right(MdDevicesEditButton.new(device: device))
+          Right(MdDevicesEditButton.new(device:))
         end
       end
     end

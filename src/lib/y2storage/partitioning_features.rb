@@ -52,7 +52,7 @@ module Y2Storage
     #   settings.lvm #=> true
     #
     def load_feature(*feature, to: nil, source: partitioning_section)
-      value = feature(*feature, source: source)
+      value = feature(*feature, source:)
       set_feature(*feature, to, value)
     end
 
@@ -63,7 +63,7 @@ module Y2Storage
     # @param to [Symbol, String] attribute name where to store the feature value
     # @param source [Hash] from where to read the features
     def load_integer_feature(*feature, to: nil, source: partitioning_section)
-      value = feature(*feature, source: source)
+      value = feature(*feature, source:)
       return nil if value.nil?
 
       value = value.to_i
@@ -77,7 +77,7 @@ module Y2Storage
     # @param to [Symbol, String] attribute name where to store the feature value
     # @param source [Hash] from where to read the features
     def load_size_feature(*feature, to: nil, source: partitioning_section)
-      value = feature(*feature, source: source)
+      value = feature(*feature, source:)
       return nil if value.nil?
 
       begin
@@ -95,7 +95,7 @@ module Y2Storage
     # @param to [Symbol, String] attribute name where to store the feature value
     # @param source [Hash] from where to read the features
     def load_subvolumes_feature(*feature, to: nil, source: partitioning_section)
-      value = feature(*feature, source: source)
+      value = feature(*feature, source:)
       value = SubvolSpecification.list_from_control_xml(value)
       set_feature(*feature, to, value) if value
     end
@@ -107,7 +107,7 @@ module Y2Storage
     # @param to [Symbol, String] attribute name where to store the feature value
     # @param source [Hash] from where to read the features
     def load_volumes_feature(*feature, to: nil, source: partitioning_section)
-      value = feature(*feature, source: source)
+      value = feature(*feature, source:)
       return nil if value.nil?
 
       value = value.map { |v| VolumeSpecification.new(v) }

@@ -80,7 +80,7 @@ module Y2Storage
         #   (e.g., "/tmp").
         #
         #   Examples: "Tmpfs /tmp"
-        format(_("%{type} %{mount_path}"), type: type.to_human_string, mount_path: mount_path)
+        format(_("%{type} %{mount_path}"), type: type.to_human_string, mount_path:)
       end
 
       protected

@@ -90,7 +90,7 @@ describe Y2Storage::SetupErrorsPresenter do
       let(:mount_errors) { [mount_error1] }
 
       it "contains a message for each error" do
-        expect(subject.to_html.scan(/<li>/).size).to eq(6)
+        expect(subject.to_html.scan("<li>").size).to eq(6)
       end
 
       context "and there are boot errors" do

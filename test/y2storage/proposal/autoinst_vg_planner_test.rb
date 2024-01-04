@@ -31,7 +31,7 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   before do
     fake_scenario(scenario)

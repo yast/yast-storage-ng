@@ -190,7 +190,7 @@ module Y2Partitioner
         pvs = committed_devices.map(&:name).join(", ")
         vg = controller.vg.vg_name
 
-        Yast2::Popup.show(format(error_message, pvs: pvs, vg: vg), headline: :error)
+        Yast2::Popup.show(format(error_message, pvs:, vg:), headline: :error)
       end
 
       # Finds devices by sid

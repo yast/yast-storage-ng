@@ -775,7 +775,7 @@ module Y2Storage
     def volume_match_values
       {
         mount_point:  filesystem_mountpoint,
-        size:         size,
+        size:,
         fs_type:      filesystem_type,
         partition_id: nil
       }

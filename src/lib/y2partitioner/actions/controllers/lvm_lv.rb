@@ -358,7 +358,7 @@ module Y2Partitioner
           format(
             _("A logical volume named \"%{lv_name}\" already exists\n" \
               "in volume group \"%{vg_name}\"."),
-            lv_name: name, vg_name: vg_name
+            lv_name: name, vg_name:
           )
         end
 

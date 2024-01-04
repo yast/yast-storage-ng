@@ -78,7 +78,7 @@ module Y2Storage
     def fallback_spec(mount_point)
       name = mount_point.sub(/\A\//, "").tr("/", "_")
       meth = "fallback_for_#{name}"
-      return send(meth) if respond_to?(meth, true)
+      send(meth) if respond_to?(meth, true)
     end
 
     # Volume specification fallback for /boot

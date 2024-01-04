@@ -24,7 +24,7 @@ require_relative "#{TEST_PATH}/support/proposal_context"
 describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
-  subject { described_class.new(settings: settings) }
+  subject { described_class.new(settings:) }
 
   let(:test_with_subvolumes) { true }
 

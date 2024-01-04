@@ -35,10 +35,10 @@ module Y2Partitioner
         # @yield [Y2Storage::BlkDevice]
         #
         # @return [Array<Y2Storage::BlkDevice>]
-        def available_devices(devicegraph, &block)
+        def available_devices(devicegraph, &)
           finder = Finder.new(devicegraph)
 
-          finder.available_devices(&block)
+          finder.available_devices(&)
         end
 
         # Helper class to find available devices

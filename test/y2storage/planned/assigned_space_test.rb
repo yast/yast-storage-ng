@@ -44,7 +44,7 @@ describe Y2Storage::Planned::AssignedSpace do
 
     let(:space) do
       double("Y2Storage::FreeDiskSpace",
-        disk:                   disk,
+        disk:,
         disk_size:              500.GiB,
         align_grain:            1.MiB,
         require_end_alignment?: false)
@@ -101,14 +101,14 @@ describe Y2Storage::Planned::AssignedSpace do
     end
 
     let(:space) do
-      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size, align_grain: align_grain)
+      double("Y2Storage::FreeDiskSpace", disk:, disk_size: size, align_grain:)
     end
 
     let(:space) do
       double("Y2Storage::FreeDiskSpace",
-        disk:                   disk,
+        disk:,
         disk_size:              size,
-        align_grain:            align_grain,
+        align_grain:,
         require_end_alignment?: end_alignment)
     end
 

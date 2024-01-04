@@ -70,7 +70,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
   end
 
   let(:disk_analyzer) do
-    instance_double(Y2Storage::DiskAnalyzer, fstabs: fstabs, crypttabs: crypttabs)
+    instance_double(Y2Storage::DiskAnalyzer, fstabs:, crypttabs:)
   end
 
   let(:fstabs) { [fstab1, fstab2, fstab3] }

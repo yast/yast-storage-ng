@@ -29,7 +29,7 @@ describe Y2Partitioner::Actions::Controllers::BtrfsSubvolume do
     devicegraph_stub(scenario)
   end
 
-  subject { described_class.new(filesystem, subvolume: subvolume) }
+  subject { described_class.new(filesystem, subvolume:) }
 
   let(:filesystem) { device.filesystem }
 

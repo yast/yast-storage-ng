@@ -26,7 +26,7 @@ require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
   describe "#propose in a system with pre-existing swap partitions" do
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
 
     include_context "proposal"
     let(:architecture) { :x86 }

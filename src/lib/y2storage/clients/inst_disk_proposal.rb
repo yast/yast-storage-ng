@@ -62,7 +62,7 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :cancel, :next, :abort].include?(@result)
-          dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
+          dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons:)
           @result = dialog.run
           @proposal = dialog.proposal
           @devicegraph = dialog.devicegraph
@@ -92,7 +92,7 @@ module Y2Storage
       # Asking if these changes can be overwritten.
       def overwrite_manual_settings?
         ret = Popup.YesNo(_(
-                            "Computing this proposal will overwrite manual changes \n"\
+                            "Computing this proposal will overwrite manual changes \n" \
                             "done so far. Continue with computing proposal?"
                           ))
         log.info "overwrite_manual_settings? return #{ret}"
@@ -215,7 +215,7 @@ module Y2Storage
       # between the proposal and the dialogs.
       def new_proposal(settings)
         probed = storage_manager.probed
-        GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
+        GuidedProposal.new(settings:, devicegraph: probed, disk_analyzer: probed_analyzer)
       end
 
       # Buttons to be excluded in the proposal dialog

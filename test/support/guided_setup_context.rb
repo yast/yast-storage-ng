@@ -79,9 +79,9 @@ RSpec.shared_context "guided setup requirements" do
     allow(guided_setup).to receive(:settings).and_return(settings)
 
     allow(analyzer).to receive(:candidate_disks)
-      .and_return(all_disks.map { |d| disk(d, partitions: partitions) })
+      .and_return(all_disks.map { |d| disk(d, partitions:) })
 
-    allow(analyzer).to receive(:device_by_name) { |d| disk(d, partitions: partitions) }
+    allow(analyzer).to receive(:device_by_name) { |d| disk(d, partitions:) }
 
     allow(analyzer).to receive(:installed_systems)
       .and_return(windows_systems + linux_systems)

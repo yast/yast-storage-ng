@@ -182,7 +182,7 @@ module Y2Partitioner
             "This mode has the best redundancy. " \
             "It can be used with two or more disks. " \
             "This mode maintains an exact copy of all data on all disks. " \
-            "As long as at least one disk is still working, no data are lost. "  \
+            "As long as at least one disk is still working, no data are lost. " \
             "The partitions used for this type of RAID should have " \
             "approximately the same size.")
         end

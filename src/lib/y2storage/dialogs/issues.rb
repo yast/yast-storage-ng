@@ -59,7 +59,7 @@ module Y2Storage
           @issues = issues
 
           super(message,
-            headline: headline, timeout: timeout, focus: focus, buttons: buttons, style: style)
+            headline:, timeout:, focus:, buttons:, style:)
         end
         # rubocop:enable Metrics/ParameterLists
 

@@ -337,7 +337,7 @@ module Y2Storage
     # @param arg [Hash or Scalar] argument to pass to the create method
     #
     def call_create_method(parent, name, arg)
-      create_method = "create_#{name}".to_sym
+      create_method = :"create_#{name}"
 
       begin
         if respond_to?(create_method, true)
@@ -362,12 +362,12 @@ module Y2Storage
         @nodes = hash
       end
 
-      def tsort_each_node(&block)
-        @nodes.each_key(&block)
+      def tsort_each_node(&)
+        @nodes.each_key(&)
       end
 
-      def tsort_each_child(node, &block)
-        @nodes.fetch(node, []).each(&block)
+      def tsort_each_child(node, &)
+        @nodes.fetch(node, []).each(&)
       end
     end
 

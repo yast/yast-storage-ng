@@ -26,7 +26,7 @@ describe Y2Storage::EncryptionType do
     context "for all the possible values of the library" do
       it "returns the translated string" do
         described_class.all.each do |value|
-          expect(value.to_human_string).to be_a(::String)
+          expect(value.to_human_string).to be_a(String)
         end
       end
     end

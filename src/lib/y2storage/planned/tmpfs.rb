@@ -57,7 +57,7 @@ module Y2Storage
       # @see MatchVolumeSpec
       def volume_match_values
         {
-          mount_point:  mount_point,
+          mount_point:,
           size:         nil,
           fs_type:      Filesystems::Type::TMPFS,
           partition_id: nil

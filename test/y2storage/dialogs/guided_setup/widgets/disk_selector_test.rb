@@ -25,7 +25,7 @@ require "y2storage/dialogs/guided_setup/widgets/disk_selector"
 describe Y2Storage::Dialogs::GuidedSetup::Widgets::DiskSelector do
   include_context "widgets"
 
-  subject(:widget) { described_class.new(index, settings, candidate_disks: candidate_disks) }
+  subject(:widget) { described_class.new(index, settings, candidate_disks:) }
 
   let(:disk1) { instance_double(Y2Storage::Disk, name: "/dev/disk1", size: "100GiB") }
   let(:disk2) { instance_double(Y2Storage::Disk, name: "/dev/disk2", size: "200GiB") }

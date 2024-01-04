@@ -48,7 +48,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
   let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk]) }
 
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   before { fake_scenario(scenario) }
 
@@ -67,7 +67,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       devicegraph = result.devicegraph
       _win, _swap, _root, home = devicegraph.partitions
       expect(home).to have_attributes(
-        filesystem_type:       filesystem_type,
+        filesystem_type:,
         filesystem_mountpoint: "/home"
       )
     end
@@ -101,14 +101,14 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     context "when primary partitions are wanted" do
       let(:primary) do
         planned_partition(
-          mount_point: "/home", filesystem_type: filesystem_type, max_size: 5.GiB, weight: 1,
+          mount_point: "/home", filesystem_type:, max_size: 5.GiB, weight: 1,
           primary: true
         )
       end
 
       let(:non_primary) do
         planned_partition(
-          mount_point: "/", filesystem_type: filesystem_type, max_size: 5.GiB, weight: 1
+          mount_point: "/", filesystem_type:, max_size: 5.GiB, weight: 1
         )
       end
 
@@ -298,7 +298,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         end
 
         let(:root) do
-          planned_partition(filesystem_type: filesystem_type, mount_point: "/", min_size: 250.GiB)
+          planned_partition(filesystem_type:, mount_point: "/", min_size: 250.GiB)
         end
 
         it "shrinks the partition to make it fit into the MD RAID" do
@@ -416,7 +416,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         let(:root) do
           planned_partition(
-            disk: "/dev/bcache0", mount_point: "/", min_size: 250.GiB, filesystem_type: filesystem_type
+            disk: "/dev/bcache0", mount_point: "/", min_size: 250.GiB, filesystem_type:
           )
         end
 
@@ -567,7 +567,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
       let(:new_part) do
         planned_partition(
-          mount_point: "/data", filesystem_type: filesystem_type, min_size: 240.GiB, max_size: 240.GiB
+          mount_point: "/data", filesystem_type:, min_size: 240.GiB, max_size: 240.GiB
         )
       end
 

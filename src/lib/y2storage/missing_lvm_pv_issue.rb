@@ -34,7 +34,7 @@ module Y2Storage
     def initialize(device)
       textdomain "storage"
 
-      super(build_message(device), description: build_description, device: device)
+      super(build_message(device), description: build_description, device:)
     end
 
     # Builds the message of the issue

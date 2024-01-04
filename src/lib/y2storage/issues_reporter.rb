@@ -54,7 +54,7 @@ module Y2Storage
       @message = message
       @focus = focus
 
-      super(warn: warn, error: error)
+      super(warn:, error:)
     end
 
     private
@@ -95,7 +95,7 @@ module Y2Storage
 
       # NOTE: the headline is omitted in order to keep the previous look when an error was reported
       # with the Yast::Report module.
-      options = { headline: "", buttons: btns, focus: focus, timeout: time }
+      options = { headline: "", buttons: btns, focus:, timeout: time }
 
       if issues.size == 1
         issue_popup(footer, options)
@@ -111,7 +111,7 @@ module Y2Storage
     #
     # @return [Symbol]
     def issue_popup(footer, options)
-      presenter = IssuePresenter.new(issues.first, footer: footer)
+      presenter = IssuePresenter.new(issues.first, footer:)
 
       Yast2::Popup.show(presenter.message, **options.merge(details: presenter.details))
     end
@@ -126,9 +126,9 @@ module Y2Storage
     #
     # @return [Symbol]
     def issues_popup(footer, options)
-      presenter = IssuesPresenter.new(issues, intro: message, footer: footer)
+      presenter = IssuesPresenter.new(issues, intro: message, footer:)
 
-      Dialogs::Issues.show(presenter.message, **options.merge(issues: issues))
+      Dialogs::Issues.show(presenter.message, **options.merge(issues:))
     end
 
     # Label for the abort button

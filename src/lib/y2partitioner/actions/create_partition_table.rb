@@ -209,7 +209,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount devices
         note = _("A new partition table cannot be created while the devices are mounted.")
 
-        recursive_unmount(disk, note: note)
+        recursive_unmount(disk, note:)
       end
 
       # Current devicegraph

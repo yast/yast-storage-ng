@@ -55,7 +55,7 @@ module Y2Partitioner
             "recommended unless the user intends to actually use them. Moreover, " \
             "Btrfs quotas have been reported to produce system instability and to " \
             "present incorrect space accounting in some cases. The situation is " \
-            "gradually improving as the issues are being found and fixed.</p>"), label: label
+            "gradually improving as the issues are being found and fixed.</p>"), label:
         )
       end
 

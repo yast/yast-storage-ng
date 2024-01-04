@@ -51,7 +51,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
   describe "#header" do
     it "returns array" do
-      expect(subject.header).to be_a(::Array)
+      expect(subject.header).to be_a(Array)
     end
   end
 
@@ -59,7 +59,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     let(:devices) { device_graph.partitions }
 
     it "returns array of CWM::TableItem objects" do
-      expect(subject.items).to be_a(::Array)
+      expect(subject.items).to be_a(Array)
       expect(subject.items.first).to be_a(CWM::TableItem)
     end
 

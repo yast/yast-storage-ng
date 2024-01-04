@@ -27,7 +27,7 @@ require "y2storage/widgets/issues"
 describe Y2Storage::Widgets::Issues do
   include_context "widgets"
 
-  subject { described_class.new(id: id, issues: issues) }
+  subject { described_class.new(id:, issues:) }
 
   let(:id) { :storage_issues_widget }
 

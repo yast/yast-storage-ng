@@ -54,7 +54,7 @@ describe Y2Partitioner::Actions::EditBtrfsSubvolume do
     let(:dialog) { instance_double(Y2Partitioner::Dialogs::BtrfsSubvolume, run: result) }
 
     let(:controller) do
-      Y2Partitioner::Actions::Controllers::BtrfsSubvolume.new(filesystem, subvolume: subvolume)
+      Y2Partitioner::Actions::Controllers::BtrfsSubvolume.new(filesystem, subvolume:)
     end
 
     let(:result) { nil }

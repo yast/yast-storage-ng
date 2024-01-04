@@ -24,7 +24,7 @@ require "y2storage/actions_presenter"
 describe Y2Storage::ActionsPresenter do
   subject { described_class.new(actiongraph) }
 
-  let(:actiongraph) { double(Y2Storage::Actiongraph, compound_actions: compound_actions) }
+  let(:actiongraph) { double(Y2Storage::Actiongraph, compound_actions:) }
   let(:compound_actions) { [] }
   let(:ca_delete_device) { instance_double(Y2Storage::CompoundAction) }
   let(:ca_create_device) { instance_double(Y2Storage::CompoundAction) }

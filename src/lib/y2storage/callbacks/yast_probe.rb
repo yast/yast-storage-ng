@@ -71,7 +71,7 @@ module Y2Storage
 
         buttons = { ignore: Yast::Label.IgnoreButton, install: Yast::Label.InstallButton }
 
-        answer = Yast2::Popup.show(text, buttons: buttons, focus: :install)
+        answer = Yast2::Popup.show(text, buttons:, focus: :install)
         answer == :install
       end
     end

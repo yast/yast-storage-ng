@@ -46,7 +46,7 @@ describe Y2Storage::Dialogs::Issues do
         expect(message).to_not be_nil
       end
 
-      subject.show("issues message", issues: issues)
+      subject.show("issues message", issues:)
     end
 
     context "when there are issues" do
@@ -64,7 +64,7 @@ describe Y2Storage::Dialogs::Issues do
           expect(details).to_not be_nil
         end
 
-        subject.show("issues message", issues: issues)
+        subject.show("issues message", issues:)
       end
     end
 
@@ -83,7 +83,7 @@ describe Y2Storage::Dialogs::Issues do
           expect(details).to be_nil
         end
 
-        subject.show("issues message", issues: issues)
+        subject.show("issues message", issues:)
       end
     end
   end

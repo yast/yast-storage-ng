@@ -98,11 +98,11 @@ module Yast
       end
 
       def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
-        instance_double("Y2Storage::Partition", name: name, size: disk_size)
+        instance_double("Y2Storage::Partition", name:, size: disk_size)
       end
 
       def swap_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
-        instance_double("Y2Storage::Partition", name: name, size: disk_size, swap?: swap)
+        instance_double("Y2Storage::Partition", name:, size: disk_size, swap?: swap)
       end
 
       def planned_partition(attrs = {})

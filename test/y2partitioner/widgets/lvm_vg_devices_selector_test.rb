@@ -33,7 +33,7 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:controller) { Y2Partitioner::Actions::Controllers::LvmVg.new(vg: vg) }
+  let(:controller) { Y2Partitioner::Actions::Controllers::LvmVg.new(vg:) }
 
   let(:vg) { nil }
 

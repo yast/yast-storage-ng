@@ -66,7 +66,7 @@ module Y2Storage
           # %{device_type} is a device type ('partitions' or 'logical volumes').
           _("Some additional space (%{diff}) was required for new %{device_type}. " \
             "As a consequence, the size of some devices will be adjusted as follows: "),
-          diff: diff.to_human_string, device_type: device_type
+          diff: diff.to_human_string, device_type:
         )
         details = device_shrinkages.map { |i| device_details(i) }.join(", ")
         description + details

@@ -1147,12 +1147,12 @@ describe Y2Storage::Devicegraph do
 
     it "contains the xml representation of the devicegraph" do
       expect(devicegraph.to_xml).to match(/^<\?xml/)
-      expect(devicegraph.to_xml.scan(/<Disk>/).size).to eq(1)
-      expect(devicegraph.to_xml.scan(/<Partition>/).size).to eq(0)
+      expect(devicegraph.to_xml.scan("<Disk>").size).to eq(1)
+      expect(devicegraph.to_xml.scan("<Partition>").size).to eq(0)
 
       create_next_partition(devicegraph.disks.first)
 
-      expect(devicegraph.to_xml.scan(/<Partition>/).size).to eq(1)
+      expect(devicegraph.to_xml.scan("<Partition>").size).to eq(1)
     end
   end
 

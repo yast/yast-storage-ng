@@ -39,7 +39,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject(:controller) { described_class.new(vg: vg) }
+  subject(:controller) { described_class.new(vg:) }
 
   let(:scenario) { "complex-lvm-encrypt.yml" }
 
@@ -71,7 +71,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
       it "does not create a volume group" do
         previous_vgs = current_graph.lvm_vgs
-        described_class.new(vg: vg)
+        described_class.new(vg:)
 
         expect(current_graph.lvm_vgs).to eq(previous_vgs)
       end

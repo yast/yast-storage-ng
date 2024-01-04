@@ -204,7 +204,7 @@ module Y2Storage
       # @param collection [Planned::DevicesCollection] Planned devices
       # @param role [Symbol] bcache member role (:backing, :caching)
       def add_bcache_issues_for(bcache_name, collection, role)
-        method = "bcache_#{role}_for?".to_sym
+        method = :"bcache_#{role}_for?"
         devs = collection.to_a.select do |dev|
           dev.respond_to?(method) && dev.send(method, bcache_name)
         end

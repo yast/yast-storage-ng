@@ -28,7 +28,7 @@ describe Y2Storage::GuidedProposal do
   describe "#propose in Raspberry Pi" do
     include_context "proposal"
 
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
     let(:architecture) { :aarch64 }
     let(:control_file) { "legacy_settings.xml" }
 

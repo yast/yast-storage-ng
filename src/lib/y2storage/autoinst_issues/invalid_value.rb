@@ -71,9 +71,9 @@ module Y2Storage
         # name; 'new_value_message' is a short explanation about what should be done with the value.
         format(
           _("Invalid value '%{value}' for attribute '%{attr}' (%{new_value_message})."),
-          value:             value,
-          attr:              attr,
-          new_value_message: new_value_message
+          value:,
+          attr:,
+          new_value_message:
         )
       end
 

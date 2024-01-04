@@ -179,7 +179,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.label = "something" }
 
           it "returns all the existing types" do
-            expect(mount_point.suitable_mount_bys(label: label))
+            expect(mount_point.suitable_mount_bys(label:))
               .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
           end
         end
@@ -187,7 +187,7 @@ describe Y2Storage::MountPoint do
         context "and the filesystem has no label" do
           it "returns all the existing types except LABEL" do
             types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:label) }
-            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+            expect(mount_point.suitable_mount_bys(label:)).to contain_exactly(*types)
           end
         end
       end
@@ -199,14 +199,14 @@ describe Y2Storage::MountPoint do
           before { filesystem.label = "something" }
 
           it "returns all the existing types" do
-            expect(mount_point.suitable_mount_bys(label: label))
+            expect(mount_point.suitable_mount_bys(label:))
               .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
           end
         end
 
         context "and the filesystem has no label" do
           it "returns all the existing types" do
-            expect(mount_point.suitable_mount_bys(label: label))
+            expect(mount_point.suitable_mount_bys(label:))
               .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
           end
         end
@@ -216,7 +216,7 @@ describe Y2Storage::MountPoint do
         let(:encryption) { nil }
 
         it "includes ID or PATH if the corresponding udev links are available" do
-          types = mount_point.suitable_mount_bys(encryption: encryption)
+          types = mount_point.suitable_mount_bys(encryption:)
           expect(types).to include(Y2Storage::Filesystems::MountByType::ID)
           expect(types).to include(Y2Storage::Filesystems::MountByType::PATH)
         end
@@ -226,7 +226,7 @@ describe Y2Storage::MountPoint do
         let(:encryption) { true }
 
         it "does not include ID or PATH" do
-          types = mount_point.suitable_mount_bys(encryption: encryption)
+          types = mount_point.suitable_mount_bys(encryption:)
           expect(types).to_not include(Y2Storage::Filesystems::MountByType::ID)
           expect(types).to_not include(Y2Storage::Filesystems::MountByType::PATH)
         end
@@ -239,7 +239,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.uuid = "12345678-90ab-cdef-1234-567890abcdef" }
 
           it "includes MountByType::UUID" do
-            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+            expect(mount_point.suitable_mount_bys(assume_uuid:))
               .to include(Y2Storage::Filesystems::MountByType::UUID)
           end
         end
@@ -248,7 +248,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.uuid = "" }
 
           it "includes MountByType::UUID" do
-            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+            expect(mount_point.suitable_mount_bys(assume_uuid:))
               .to include(Y2Storage::Filesystems::MountByType::UUID)
           end
         end
@@ -261,7 +261,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.uuid = "12345678-90ab-cdef-1234-567890abcdef" }
 
           it "includes MountByType::UUID" do
-            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+            expect(mount_point.suitable_mount_bys(assume_uuid:))
               .to include(Y2Storage::Filesystems::MountByType::UUID)
           end
         end
@@ -270,7 +270,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.uuid = "" }
 
           it "does not include MountByType::UUID" do
-            expect(mount_point.suitable_mount_bys(assume_uuid: assume_uuid))
+            expect(mount_point.suitable_mount_bys(assume_uuid:))
               .to_not include(Y2Storage::Filesystems::MountByType::UUID)
           end
         end
@@ -290,13 +290,13 @@ describe Y2Storage::MountPoint do
 
           it "returns all the existing types except the ones associated to udev links" do
             types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
-            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+            expect(mount_point.suitable_mount_bys(label:)).to contain_exactly(*types)
           end
         end
 
         context "and the filesystem has no label" do
           it "returns only DEVICE and UUID" do
-            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(
+            expect(mount_point.suitable_mount_bys(label:)).to contain_exactly(
               Y2Storage::Filesystems::MountByType::DEVICE, Y2Storage::Filesystems::MountByType::UUID
             )
           end
@@ -311,14 +311,14 @@ describe Y2Storage::MountPoint do
 
           it "returns all the existing types except the ones associated to udev links" do
             types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
-            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+            expect(mount_point.suitable_mount_bys(label:)).to contain_exactly(*types)
           end
         end
 
         context "although the filesystem has no label" do
           it "returns all the existing types except the ones associated to udev links" do
             types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:id, :path) }
-            expect(mount_point.suitable_mount_bys(label: label)).to contain_exactly(*types)
+            expect(mount_point.suitable_mount_bys(label:)).to contain_exactly(*types)
           end
         end
       end
@@ -330,7 +330,7 @@ describe Y2Storage::MountPoint do
           before { filesystem.label = "something" }
 
           it "returns all the existing types" do
-            expect(mount_point.suitable_mount_bys(encryption: encryption))
+            expect(mount_point.suitable_mount_bys(encryption:))
               .to contain_exactly(*Y2Storage::Filesystems::MountByType.all)
           end
         end
@@ -338,7 +338,7 @@ describe Y2Storage::MountPoint do
         context "and the filesystem has no label" do
           it "returns all the existing types except LABEL" do
             types = Y2Storage::Filesystems::MountByType.all.reject { |t| t.is?(:label) }
-            expect(mount_point.suitable_mount_bys(encryption: encryption)).to contain_exactly(*types)
+            expect(mount_point.suitable_mount_bys(encryption:)).to contain_exactly(*types)
           end
         end
       end

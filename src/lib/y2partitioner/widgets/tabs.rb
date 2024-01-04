@@ -57,11 +57,11 @@ module Y2Partitioner
     class Tabs < CWM::Tabs
       # Follow the same (very surprising) behavior of CWM::Tabs of redefining
       # self.new to call {DumbTabPager}.new or {PushButtonTabPager}.new.
-      def self.new(*args)
+      def self.new(*)
         if Yast::UI.HasSpecialWidget(:DumbTab)
-          DumbTabPager.new(*args)
+          DumbTabPager.new(*)
         else
-          PushButtonTabPager.new(*args)
+          PushButtonTabPager.new(*)
         end
       end
     end

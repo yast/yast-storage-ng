@@ -153,7 +153,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("Devices cannot be deleted while mounted.")
 
-        recursive_unmount(device, note: note)
+        recursive_unmount(device, note:)
       end
 
       # Current devicegraph

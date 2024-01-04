@@ -28,7 +28,7 @@ describe Y2Storage::VolumeSpecificationBuilder do
   subject(:builder) { described_class.new(settings) }
 
   let(:settings) do
-    instance_double(Y2Storage::ProposalSettings, volumes: volumes)
+    instance_double(Y2Storage::ProposalSettings, volumes:)
   end
 
   let(:volumes) { [home_spec] }

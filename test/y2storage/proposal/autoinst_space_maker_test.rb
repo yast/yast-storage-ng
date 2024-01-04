@@ -50,7 +50,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     Y2Storage::Planned::Bcache.new.tap { |b| b.reuse_name = "/dev/bcache0" }
   end
   let(:issues_list) do
-    ::Installation::AutoinstIssues::List
+    Installation::AutoinstIssues::List
   end
 
   before do

@@ -62,7 +62,7 @@ describe Y2Storage::Planned::CanBeEncrypted do
       let(:password) { "12345678" }
 
       it "encrypts the device with the right password and a default name" do
-        expect(plain_device).to receive(:encrypt).with(method: method, password: password)
+        expect(plain_device).to receive(:encrypt).with(method:, password:)
         planned.final_device!(plain_device)
       end
     end
@@ -73,7 +73,7 @@ describe Y2Storage::Planned::CanBeEncrypted do
 
       it "encrypts the device with the right password and a default name" do
         expect(plain_device).to receive(:encrypt)
-          .with(method: Y2Storage::EncryptionMethod.find(:luks1), password: password)
+          .with(method: Y2Storage::EncryptionMethod.find(:luks1), password:)
         planned.final_device!(plain_device)
       end
     end

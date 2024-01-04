@@ -36,7 +36,7 @@ end
 shared_context "device button context" do
   include_context "action button context"
 
-  subject { described_class.new(device: device) }
+  subject { described_class.new(device:) }
 
   before do
     allow(action).to receive(:new).with(device).and_return(instance_double(action, run: action_result))

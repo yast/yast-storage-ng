@@ -32,7 +32,7 @@ module Y2Partitioner
       def initialize(subvolume)
         super()
 
-        @controller = Controllers::BtrfsSubvolume.new(subvolume.filesystem, subvolume: subvolume)
+        @controller = Controllers::BtrfsSubvolume.new(subvolume.filesystem, subvolume:)
       end
 
       private

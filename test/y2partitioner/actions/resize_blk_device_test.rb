@@ -40,8 +40,8 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   let(:resize_info) do
     instance_double(Y2Storage::ResizeInfo,
       resize_ok?:   can_resize,
-      min_size:     min_size,
-      max_size:     max_size,
+      min_size:,
+      max_size:,
       reasons:      0,
       reason_texts: ["Unspecified"])
   end

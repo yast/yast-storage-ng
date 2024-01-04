@@ -78,8 +78,8 @@ module Y2Storage
         partitions = Planned::Partition.distribute_space(
           partitions,
           usable_size,
-          align_grain:   align_grain,
-          end_alignment: end_alignment
+          align_grain:,
+          end_alignment:
         )
 
         create_planned_partitions(partitions, free_space, num_logical)

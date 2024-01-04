@@ -259,7 +259,7 @@ module Y2Storage
           _("A partition of type %s is needed to install the bootloader."),
           PartitionId::BIOS_BOOT.to_human_string
         )
-        SetupError.new(message: message)
+        SetupError.new(message:)
       end
 
       # Specific warning when the current setup is not supported
@@ -270,7 +270,7 @@ module Y2Storage
           "Such a setup is not supported and may cause problems " \
           "with the bootloader now or in the future."
         )
-        SetupError.new(message: message)
+        SetupError.new(message:)
       end
 
       # Specific error when we are quite sure the current setup will not work
@@ -280,7 +280,7 @@ module Y2Storage
         message = _(
           "It will not be possible to install the bootloader."
         )
-        SetupError.new(message: message)
+        SetupError.new(message:)
       end
 
       # Whether the warning about missing BIOS Boot partition should be included

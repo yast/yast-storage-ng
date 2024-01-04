@@ -102,7 +102,7 @@ module Y2Storage
         result = super
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
-          result = plain_device.encrypt(method: method, password: encryption_password)
+          result = plain_device.encrypt(method:, password: encryption_password)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
           assign_enc_attr(result, :cipher)

@@ -105,13 +105,13 @@ describe Y2Storage::StorageManager do
 
         it "does not modify the current storage instance" do
           initial_instance = described_class.instance
-          described_class.setup(mode: mode)
+          described_class.setup(mode:)
 
           expect(described_class.instance).to equal(initial_instance)
         end
 
         it "returns true" do
-          expect(described_class.setup(mode: mode)).to eq(true)
+          expect(described_class.setup(mode:)).to eq(true)
         end
       end
 
@@ -128,7 +128,7 @@ describe Y2Storage::StorageManager do
         end
 
         it "raises an error" do
-          expect { described_class.setup(mode: mode) }.to raise_error(Y2Storage::AccessModeError)
+          expect { described_class.setup(mode:) }.to raise_error(Y2Storage::AccessModeError)
         end
       end
     end
@@ -139,7 +139,7 @@ describe Y2Storage::StorageManager do
       allow(Yast::Mode).to receive(:installation).and_return(installation)
     end
 
-    subject { described_class.instance(mode: mode) }
+    subject { described_class.instance(mode:) }
 
     let(:installation) { false }
 
@@ -614,7 +614,7 @@ describe Y2Storage::StorageManager do
     context "during installation" do
       let(:mode) { :installation }
       let(:staging) do
-        instance_double(Y2Storage::Devicegraph, filesystems: filesystems, to_xml: "xml", check: nil)
+        instance_double(Y2Storage::Devicegraph, filesystems:, to_xml: "xml", check: nil)
       end
       let(:filesystems) { [root_fs, another_fs] }
       let(:root_fs) { double("Y2Storage::BlkFilesystem", root?: true) }
@@ -1115,13 +1115,13 @@ describe Y2Storage::StorageManager do
 
     context "system is not yet probed" do
       it "returns result of libstorage method light_probe" do
-        expect(::Storage).to receive(:light_probe).and_return true
+        expect(Storage).to receive(:light_probe).and_return true
 
         expect(subject.devices_for_installation?).to eq true
       end
 
       it "returns false if libstorage raise exception" do
-        expect(::Storage).to receive(:light_probe).and_raise(::Storage::Exception)
+        expect(Storage).to receive(:light_probe).and_raise(Storage::Exception)
 
         expect(subject.devices_for_installation?).to eq false
       end

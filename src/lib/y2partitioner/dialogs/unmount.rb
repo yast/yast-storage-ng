@@ -143,7 +143,7 @@ module Y2Partitioner
       #
       # @return [Symbol]
       def show
-        Yast2::Popup.show(content, headline: Yast::Label.WarningMsg, buttons: buttons, focus: :cancel)
+        Yast2::Popup.show(content, headline: Yast::Label.WarningMsg, buttons:, focus: :cancel)
       end
 
       # Content for the popup
@@ -155,7 +155,7 @@ module Y2Partitioner
         # TRANSLATORS: %{mount_sentences} is replaced by a text describing which devices are mounted.
         #   Try to keep line breaks.
         text = format(_("The following devices are currently mounted:\n\n%{mount_sentences}\n\n"),
-          mount_sentences: mount_sentences)
+          mount_sentences:)
 
         text << (note + "\n\n") if note
 
@@ -229,11 +229,11 @@ module Y2Partitioner
         # TRANSLATORS: %{mount_sentences} is replaced by a text describing which devices are mounted.
         #   Try to keep line breaks.
         content = format(_("Some devices cannot be unmounted: \n\n%{mount_sentences}"),
-          mount_sentences: mount_sentences)
+          mount_sentences:)
 
         details = errors.join("\n\n-------\n\n")
 
-        Yast2::Popup.show(content, headline: :error, details: details, buttons: :ok)
+        Yast2::Popup.show(content, headline: :error, details:, buttons: :ok)
       end
     end
   end

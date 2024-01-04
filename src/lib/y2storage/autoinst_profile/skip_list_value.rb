@@ -177,7 +177,7 @@ module Y2Storage
       private
 
       # Redefine method_missing in order to try to to get additional values from hardware info
-      def method_missing(meth, *_args, &_block)
+      def method_missing(meth, *_args, &)
         if disk.hwinfo && HWINFO_KEYS.include?(meth) && disk.hwinfo.respond_to?(meth)
           disk.hwinfo.public_send(meth)
         else

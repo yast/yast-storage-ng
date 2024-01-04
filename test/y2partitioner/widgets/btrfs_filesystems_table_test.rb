@@ -43,7 +43,7 @@ describe Y2Partitioner::Widgets::BtrfsFilesystemsTable do
 
   describe "#header" do
     it "returns an array including the quota and the subvolume sizes" do
-      expect(subject.header).to be_a(::Array)
+      expect(subject.header).to be_a(Array)
       titles = subject.header.map { |col| col.is_a?(Yast::Term) ? col.params.first : col }
       expect(titles).to include("Ref. Size", "Excl. Size", "Size Limit")
     end
@@ -51,7 +51,7 @@ describe Y2Partitioner::Widgets::BtrfsFilesystemsTable do
 
   describe "#items" do
     it "returns array of CWM table items" do
-      expect(subject.items).to be_a(::Array)
+      expect(subject.items).to be_a(Array)
       expect(subject.items.first).to be_a(CWM::TableItem)
     end
   end

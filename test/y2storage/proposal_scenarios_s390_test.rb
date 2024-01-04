@@ -33,7 +33,7 @@ end
 describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
-  subject(:proposal) { described_class.new(settings: settings) }
+  subject(:proposal) { described_class.new(settings:) }
   let(:architecture) { :s390 }
   let(:control_file) { "legacy_settings.xml" }
 

@@ -134,7 +134,7 @@ module Y2Partitioner
               "by the default subvolume path, typically @\\. The path cannot be modified for " \
               "existing subvolumes." \
               "</p>"),
-            label: label
+            label:
           )
         end
 
@@ -269,7 +269,7 @@ module Y2Partitioner
               "This is useful when runtime performace is required, so there is no risk for delaying " \
               "copy when application is running." \
               "</p>"),
-            label: label
+            label:
           )
         end
 

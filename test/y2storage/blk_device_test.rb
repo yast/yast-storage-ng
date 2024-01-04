@@ -1407,7 +1407,7 @@ describe Y2Storage::BlkDevice do
 
     context "when a method is provided" do
       let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
-      let(:enc) { device.encrypt(dm_name: "cr_manual", method: method) }
+      let(:enc) { device.encrypt(dm_name: "cr_manual", method:) }
 
       include_examples "given method"
 
@@ -1419,7 +1419,7 @@ describe Y2Storage::BlkDevice do
         let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
 
         it "creates the encryption with the given APQNs" do
-          enc = device.encrypt(dm_name: "cr_manual", method: method, apqns: [apqn])
+          enc = device.encrypt(dm_name: "cr_manual", method:, apqns: [apqn])
 
           expect(enc).to be_a Y2Storage::Encryption
           expect(enc.encryption_process.apqns).to contain_exactly(apqn)

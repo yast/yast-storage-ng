@@ -192,7 +192,7 @@ module Y2Storage
       #   device.create_blk_filesystem(fs_type)
       #
       def storage_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
-        modifiers = { as: as, check_with: check_with, raise_errors: raise_errors }
+        modifiers = { as:, check_with:, raise_errors: }
         target = to || method
         define_method(method) do |*args|
           StorageClassWrapper.forward(to_storage_value, target, modifiers, *args)
@@ -204,7 +204,7 @@ module Y2Storage
       #
       # @see #storage_forward
       def storage_class_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
-        modifiers = { as: as, check_with: check_with, raise_errors: raise_errors }
+        modifiers = { as:, check_with:, raise_errors: }
         target = to || method
         define_singleton_method(method) do |*args|
           StorageClassWrapper.forward(storage_class, target, modifiers, *args)
@@ -243,14 +243,14 @@ module Y2Storage
     # the class using the mixin
     class << self
       # @see ClassMethods#storage_forward
-      def forward(storage_object, method, modifiers, *args)
+      def forward(storage_object, method, modifiers, *)
         wrapper_class_name = modifiers[:as]
         check_method = modifiers[:check_with]
         raise_errors = modifiers[:raise_errors]
 
         return nil unless pass_check?(storage_object, check_method)
 
-        processed_args = processed_storage_args(*args)
+        processed_args = processed_storage_args(*)
         result = storage_object.public_send(method, *processed_args)
         processed_storage_result(result, wrapper_class_name)
       rescue Storage::WrongNumberOfChildren,
@@ -298,8 +298,8 @@ module Y2Storage
 
         @downcast_map[class_name] = {
           class:        klass,
-          check_method: check_method,
-          cast_method:  cast_method
+          check_method:,
+          cast_method:
         }
       end
 

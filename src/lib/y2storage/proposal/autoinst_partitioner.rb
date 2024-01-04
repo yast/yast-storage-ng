@@ -55,7 +55,7 @@ module Y2Storage
         planned_device.reuse!(new_graph)
         device = new_graph.find_by_name(planned_device.reuse_name)
 
-        reused_parts = sized_partitions(planned_device.partitions.select(&:reuse?), device: device)
+        reused_parts = sized_partitions(planned_device.partitions.select(&:reuse?), device:)
         reuse_partitions_in_devicegraph(reused_parts, new_graph)
 
         CreatorResult.new(new_graph, {})
@@ -109,7 +109,7 @@ module Y2Storage
       def partition_device(device, planned_device)
         PartitionTableCreator.new.create_or_update(device, planned_device.ptable_type)
         new_partitions = planned_device.partitions.reject(&:reuse?)
-        new_partitions = sized_partitions(new_partitions, device: device)
+        new_partitions = sized_partitions(new_partitions, device:)
         create_partitions(new_partitions, [device])
       end
 

@@ -28,7 +28,7 @@ describe Y2Storage::GuidedProposal do
   describe "#propose with #allocate_volume_mode set to :device" do
     include_context "proposal"
 
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
     let(:architecture) { :x86 }
     let(:settings_format) { :ng }
     let(:control_file) { "separate_vgs.xml" }

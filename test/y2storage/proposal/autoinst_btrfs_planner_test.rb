@@ -33,7 +33,7 @@ describe Y2Storage::Proposal::AutoinstBtrfsPlanner do
 
   let(:scenario) { "btrfs2-devicegraph.xml" }
 
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   describe "#planned_devices" do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(btrfs_spec) }

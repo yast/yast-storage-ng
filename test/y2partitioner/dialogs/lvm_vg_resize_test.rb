@@ -31,7 +31,7 @@ describe Y2Partitioner::Dialogs::LvmVgResize do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:controller) { Y2Partitioner::Actions::Controllers::LvmVg.new(vg: vg) }
+  let(:controller) { Y2Partitioner::Actions::Controllers::LvmVg.new(vg:) }
 
   let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 

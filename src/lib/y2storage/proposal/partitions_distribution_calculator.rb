@@ -247,7 +247,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def compatible_disk?(partition, space)
-        return true unless partition.disk && partition.disk != space.disk_name
+        true unless partition.disk && partition.disk != space.disk_name
       end
 
       # @param partition [Planned::Partition]

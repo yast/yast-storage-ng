@@ -50,7 +50,7 @@ module Y2Partitioner
         textdomain "storage"
 
         @form = self.class.nfs_form_class.new(legacy_nfs, nfs_entries)
-        @action = legacy_nfs.share == NEW_DEVICE_SHARE ? :add : :edit
+        @action = (legacy_nfs.share == NEW_DEVICE_SHARE) ? :add : :edit
       end
 
       # Whether to show the dialog to edit the current NFS

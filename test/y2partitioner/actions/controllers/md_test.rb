@@ -58,12 +58,12 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
       it "does not creates a new Md device" do
         mds = current_graph.md_raids
-        described_class.new(md: md)
+        described_class.new(md:)
         expect(current_graph.md_raids).to eq(mds)
       end
 
       it "uses the given Md device" do
-        controller = described_class.new(md: md)
+        controller = described_class.new(md:)
         expect(controller.md).to eq(md)
       end
     end
@@ -87,7 +87,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
       let(:md) { current_graph.md_raids.first }
 
-      subject(:controller) { described_class.new(md: md) }
+      subject(:controller) { described_class.new(md:) }
 
       it "returns the given Md device" do
         expect(controller.md).to eq(md)
@@ -407,7 +407,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [cr_sde1.sid] }
 
             it "changes nothing" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -416,7 +416,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sde2.sid] }
 
             it "moves the device forward in the RAID devices list" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -427,7 +427,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sde1.sid] }
 
             it "changes nothing" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -436,7 +436,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sda4.sid] }
 
             it "moves the device forward in the RAID devices list" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, cr_sda4, sda3]
             end
           end
@@ -446,7 +446,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
           let(:sids) { [dev("/dev/sda1").sid] }
 
           it "changes nothing" do
-            controller.devices_one_step(sids, up: up)
+            controller.devices_one_step(sids, up:)
             expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
           end
         end
@@ -456,7 +456,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
           let(:sids) { [22] }
 
           it "changes nothing" do
-            controller.devices_one_step(sids, up: up)
+            controller.devices_one_step(sids, up:)
             expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
           end
         end
@@ -467,7 +467,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sda3.sid, sda4.sid] }
 
         it "moves them both together as a unit" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda3, cr_sda4, sda2]
         end
       end
@@ -476,7 +476,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sda3.sid, sda2.sid, sde3.sid] }
 
         it "moves them all together as a unit" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sda2, sda3, sde2, cr_sda4]
         end
       end
@@ -485,7 +485,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sde2.sid, sde1.sid, sda2.sid, sda3.sid] }
 
         it "moves everything correctly" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sda2, sda3, sde3, cr_sda4]
         end
       end
@@ -494,7 +494,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sde1.sid, sde3.sid, sda2.sid, sda3.sid, sda4.sid] }
 
         it "moves the non-marked device to the end" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sda2, sda3, cr_sda4, sde2]
         end
       end
@@ -509,7 +509,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [cr_sda4.sid] }
 
             it "changes nothing" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -518,7 +518,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sde2.sid] }
 
             it "moves the device backwards in the RAID devices list" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sde2, sda2, sda3, cr_sda4]
             end
           end
@@ -529,7 +529,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sda4.sid] }
 
             it "changes nothing" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -538,7 +538,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
             let(:sids) { [sde1.sid] }
 
             it "moves the device backwards in the RAID devices list" do
-              controller.devices_one_step(sids, up: up)
+              controller.devices_one_step(sids, up:)
               expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
             end
           end
@@ -548,7 +548,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
           let(:sids) { [dev("/dev/sda1").sid] }
 
           it "changes nothing" do
-            controller.devices_one_step(sids, up: up)
+            controller.devices_one_step(sids, up:)
             expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
           end
         end
@@ -558,7 +558,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
           let(:sids) { [22] }
 
           it "changes nothing" do
-            controller.devices_one_step(sids, up: up)
+            controller.devices_one_step(sids, up:)
             expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
           end
         end
@@ -569,7 +569,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sde1.sid, sde2.sid] }
 
         it "moves them both together as a unit" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [sde3, cr_sde1, sde2, sda2, sda3, cr_sda4]
         end
       end
@@ -578,7 +578,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sde3.sid, sda2.sid, sda3.sid] }
 
         it "moves them all together as a unit" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, cr_sda4, sde3, sda2, sda3]
         end
       end
@@ -587,7 +587,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sda2.sid, sda4.sid, sde1.sid, sde2.sid] }
 
         it "moves everything correctly" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [sde3, cr_sde1, sde2, sda3, sda2, cr_sda4]
         end
       end
@@ -596,7 +596,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         let(:sids) { [sde1.sid, sde3.sid, sda2.sid, sda3.sid, sda4.sid] }
 
         it "moves the non-marked device to the beginning" do
-          controller.devices_one_step(sids, up: up)
+          controller.devices_one_step(sids, up:)
           expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
         end
       end
@@ -673,7 +673,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#md_size" do
-    let(:md) { instance_double(Y2Storage::Md, size: size) }
+    let(:md) { instance_double(Y2Storage::Md, size:) }
 
     let(:size) { Y2Storage::DiskSize.new(1254) }
 
@@ -788,7 +788,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#wizard_title" do
-    subject(:controller) { described_class.new(md: md) }
+    subject(:controller) { described_class.new(md:) }
 
     let(:md) { nil }
 

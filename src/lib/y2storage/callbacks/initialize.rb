@@ -51,8 +51,8 @@ module Y2Storage
         headline = _("Accessing the Storage Subsystem Failed")
 
         answer = Yast::Report.yesno_popup(message,
-          headline: headline,
-          buttons:  buttons,
+          headline:,
+          buttons:,
           focus:    focus_button)
 
         log.info "User answer: #{answer}"

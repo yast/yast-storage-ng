@@ -28,13 +28,13 @@ describe Y2Storage::AutoinstProposal do
 
   subject(:proposal) do
     described_class.new(
-      partitioning: partitioning, proposal_settings: proposal_settings,
-      devicegraph: fake_devicegraph, issues_list: issues_list
+      partitioning:, proposal_settings:,
+      devicegraph: fake_devicegraph, issues_list:
     )
   end
 
   let(:partitioning) { [] }
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
   let(:vg_name) { "system" }
   let(:proposal_settings) do
     Y2Storage::ProposalSettings.new_for_current_product
@@ -100,7 +100,7 @@ describe Y2Storage::AutoinstProposal do
         it "registers an -Could Not Calculate Boot- issue" do
           expect_any_instance_of(Y2Storage::BootRequirementsStrategies::Legacy).to receive(
             :needed_partitions
-          ).and_raise(::Y2Storage::BootRequirementsStrategies::Error)
+          ).and_raise(Y2Storage::BootRequirementsStrategies::Error)
           proposal.propose
           issue = proposal.issues_list.find do |i|
             i.is_a?(Y2Storage::AutoinstIssues::CouldNotCalculateBoot)
@@ -472,7 +472,7 @@ describe Y2Storage::AutoinstProposal do
       let(:resize_info) do
         instance_double(
           Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 245.GiB, resize_ok?: resize_ok,
-            reasons: 0, reason_texts: []
+          reasons: 0, reason_texts: []
         )
       end
 
@@ -671,7 +671,7 @@ describe Y2Storage::AutoinstProposal do
       let(:resize_info) do
         instance_double(
           Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 2.GiB, resize_ok?: true,
-            reasons: 0, reason_texts: []
+          reasons: 0, reason_texts: []
         )
       end
 
@@ -1669,7 +1669,7 @@ describe Y2Storage::AutoinstProposal do
       subject(:proposal) { described_class.new(partitioning: [], devicegraph: fake_devicegraph) }
 
       it "returns a new list" do
-        expect(proposal.issues_list).to be_a(::Installation::AutoinstIssues::List)
+        expect(proposal.issues_list).to be_a(Installation::AutoinstIssues::List)
       end
     end
   end

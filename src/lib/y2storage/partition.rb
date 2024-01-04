@@ -182,13 +182,7 @@ module Y2Storage
       min = [min, size].min
 
       self.size =
-        if new_size > max
-          max
-        elsif new_size < min
-          min
-        else
-          new_size
-        end
+        new_size.clamp(min, max)
       log.info "Partition #{name} size initially set to #{size}"
 
       return if align_type.nil?
@@ -306,7 +300,7 @@ module Y2Storage
       max_end = region.start + max_length - 1
       new_region =
         begin
-          partition_table.align_end(region, align_type, max_end: max_end)
+          partition_table.align_end(region, align_type, max_end:)
         rescue Storage::AlignError
           nil
         end

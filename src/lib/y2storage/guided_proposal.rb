@@ -64,9 +64,9 @@ module Y2Storage
       # @return [InitialGuidedProposal]
       def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
         proposal = InitialGuidedProposal.new(
-          settings:      settings,
-          devicegraph:   devicegraph,
-          disk_analyzer: disk_analyzer
+          settings:,
+          devicegraph:,
+          disk_analyzer:
         )
 
         proposal.propose
@@ -86,7 +86,7 @@ module Y2Storage
     #   based on the initial {devicegraph} or will use the one in {StorageManager} if
     #   starting from probed (i.e. {devicegraph} argument is also missing).
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
-      super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
+      super(devicegraph:, disk_analyzer:)
 
       @settings = settings || ProposalSettings.new_for_current_product
     end

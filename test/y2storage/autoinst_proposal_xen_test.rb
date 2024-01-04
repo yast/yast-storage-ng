@@ -26,11 +26,11 @@ require "y2storage"
 describe Y2Storage::AutoinstProposal do
   subject(:proposal) do
     described_class.new(
-      partitioning: partitioning, devicegraph: fake_devicegraph, issues_list: issues_list
+      partitioning:, devicegraph: fake_devicegraph, issues_list:
     )
   end
 
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)

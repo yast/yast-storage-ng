@@ -57,7 +57,7 @@ module Y2Storage
       #
       # @return [Y2Storage::Encryption]
       def create_device(blk_device, dm_name, pbkdf: nil, label: "")
-        encryption_process.create_device(blk_device, dm_name, pbkdf: pbkdf, label: label)
+        encryption_process.create_device(blk_device, dm_name, pbkdf:, label:)
       end
 
       # @see Base#available?

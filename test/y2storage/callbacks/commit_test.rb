@@ -27,7 +27,7 @@ describe Y2Storage::Callbacks::Commit do
 
   describe "#message" do
     context "when a widget is given" do
-      subject { described_class.new(widget: widget) }
+      subject { described_class.new(widget:) }
 
       let(:widget) { double("Actions", add_action: nil) }
 

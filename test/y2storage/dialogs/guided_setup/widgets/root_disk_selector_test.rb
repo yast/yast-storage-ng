@@ -30,7 +30,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::RootDiskSelector do
     allow(settings).to receive(:allocate_volume_mode).and_return(:auto)
   end
 
-  subject { described_class.new(widget_id, settings, candidate_disks: candidate_disks) }
+  subject { described_class.new(widget_id, settings, candidate_disks:) }
 
   let(:widget_id) { "root_disk_selector" }
 

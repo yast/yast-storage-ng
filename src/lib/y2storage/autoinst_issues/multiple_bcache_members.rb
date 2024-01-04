@@ -69,7 +69,7 @@ module Y2Storage
           _(
             "%{bcache_name}: only one %{role} can be specified per bcache."
           ),
-          bcache_name: bcache_name,
+          bcache_name:,
           role:        _(ROLE[role])
         )
       end

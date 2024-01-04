@@ -22,7 +22,7 @@ require_relative "../../../spec_helper"
 require "y2storage/dialogs/guided_setup/widgets/partition_actions"
 
 describe Y2Storage::Dialogs::GuidedSetup::Widgets::PartitionActions do
-  subject { described_class.new(widget_id, settings, windows: windows, linux: linux, other: other) }
+  subject { described_class.new(widget_id, settings, windows:, linux:, other:) }
 
   let(:widget_id) { "partition_actions" }
 

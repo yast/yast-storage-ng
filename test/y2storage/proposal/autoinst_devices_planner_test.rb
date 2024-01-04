@@ -35,7 +35,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
   let(:architecture) { :x86_64 }
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   let(:partitioning) do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)

@@ -74,7 +74,7 @@ module Y2Partitioner
         #
         # @return [Y2Storage::Widgets::Issues]
         def raw_widget
-          @raw_widget ||= Y2Storage::Widgets::Issues.new(id: "issues", issues: issues)
+          @raw_widget ||= Y2Storage::Widgets::Issues.new(id: "issues", issues:)
         end
 
         # List of probing issues

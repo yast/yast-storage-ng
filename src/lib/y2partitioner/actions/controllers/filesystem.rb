@@ -240,12 +240,12 @@ module Y2Partitioner
           end
 
           delete_filesystem
-          create_filesystem(type, label: label)
+          create_filesystem(type, label:)
           self.partition_id = filesystem.type.default_partition_id
 
           return if mount_path.nil?
 
-          create_mount_point(mount_path, mount_by: mount_by, manual_mount_by: manual)
+          create_mount_point(mount_path, mount_by:, manual_mount_by: manual)
         end
 
         # Makes the changes related to the option "do not format" in the UI, which
@@ -550,7 +550,7 @@ module Y2Partitioner
           @restorer.restore_from_system
           @encrypt = blk_device.encrypted?
 
-          restore_mount_point(mount_path, mount_by: mount_by, manual_mount_by: manual)
+          restore_mount_point(mount_path, mount_by:, manual_mount_by: manual)
           blk_device.update_etc_status
         end
 

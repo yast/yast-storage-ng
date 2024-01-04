@@ -94,7 +94,7 @@ module Y2Storage
       #
       # @return [Widgets::Issues]
       def issues_widget
-        @issues_widget ||= Widgets::Issues.new(id: "issues", issues: issues)
+        @issues_widget ||= Widgets::Issues.new(id: "issues", issues:)
       end
 
       # Handles the events

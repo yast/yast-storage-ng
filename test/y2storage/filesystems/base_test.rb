@@ -216,7 +216,7 @@ describe Y2Storage::Filesystems::Base do
       allow(Y2Storage::FilesystemReader).to receive(:new).with(subject).and_return(reader)
     end
 
-    let(:reader) { double(Y2Storage::FilesystemReader, release_name: release_name).as_null_object }
+    let(:reader) { double(Y2Storage::FilesystemReader, release_name:).as_null_object }
 
     context "when the filesystem contains a release name" do
       let(:release_name) { "Linux" }
@@ -249,7 +249,7 @@ describe Y2Storage::Filesystems::Base do
     let(:reader) do
       double(Y2Storage::FilesystemReader,
         windows?:     windows,
-        release_name: release_name).as_null_object
+        release_name:).as_null_object
     end
 
     context "when the filesystem contains a Windows" do
@@ -282,7 +282,7 @@ describe Y2Storage::Filesystems::Base do
       allow(Y2Storage::FilesystemReader).to receive(:new).with(subject).and_return(reader)
     end
 
-    let(:reader) { double(Y2Storage::FilesystemReader, release_name: release_name).as_null_object }
+    let(:reader) { double(Y2Storage::FilesystemReader, release_name:).as_null_object }
 
     context "when the filesystem contains a release name" do
       let(:release_name) { "Linux" }

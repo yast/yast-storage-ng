@@ -33,7 +33,7 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
   subject { described_class.new(controller) }
 
   let(:controller) do
-    Y2Partitioner::Actions::Controllers::BtrfsSubvolume.new(filesystem, subvolume: subvolume)
+    Y2Partitioner::Actions::Controllers::BtrfsSubvolume.new(filesystem, subvolume:)
   end
 
   let(:filesystem) { current_graph.find_by_name(device_name).filesystem }

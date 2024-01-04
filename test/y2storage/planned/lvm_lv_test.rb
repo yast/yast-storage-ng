@@ -112,7 +112,7 @@ describe Y2Storage::Planned::LvmLv do
       end
 
       let(:lvm_lv) do
-        planned_lv(lv_type: Y2Storage::LvType::THIN, thin_pool: thin_pool, max: lv_size)
+        planned_lv(lv_type: Y2Storage::LvType::THIN, thin_pool:, max: lv_size)
       end
 
       context "and max size is limited" do

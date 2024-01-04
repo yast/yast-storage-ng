@@ -20,7 +20,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
-require_relative "./shared_examples"
+require_relative "shared_examples"
 
 require "y2partitioner/widgets/columns/mount_options"
 require "y2storage/filesystems/legacy_nfs"

@@ -91,7 +91,7 @@ module Y2Storage
 
         {
           devicegraph:             new_graph,
-          deleted_partitions:      deleted_partitions,
+          deleted_partitions:,
           partitions_distribution: @distribution
         }
       end

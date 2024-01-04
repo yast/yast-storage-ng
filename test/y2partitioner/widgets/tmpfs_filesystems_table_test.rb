@@ -45,7 +45,7 @@ describe Y2Partitioner::Widgets::TmpfsFilesystemsTable do
 
   describe "#items" do
     it "returns array of CWM table items" do
-      expect(subject.items).to be_a(::Array)
+      expect(subject.items).to be_a(Array)
       expect(subject.items).to all(be_a(CWM::TableItem))
     end
 

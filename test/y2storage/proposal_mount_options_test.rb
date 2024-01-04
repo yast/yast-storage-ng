@@ -47,7 +47,7 @@ describe Y2Storage::GuidedProposal do
   let(:home_fstype) { "ext3" }
 
   describe "#propose" do
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
 
     context "locating a filesystem in a local disk" do
       let(:blk_device) { proposal.devices.find_by_name(dev_name) }

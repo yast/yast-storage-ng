@@ -89,7 +89,7 @@ module Y2Storage
         def root_selection_widget
           @root_selection_widget ||= Widgets::RootDiskSelector.new("root_selector", settings,
             candidate_disks: candidate_disks_helper.candidate_disks,
-            disk_helper:     disk_helper)
+            disk_helper:)
         end
 
         # Widget to select the actions (delete or resize) over the partitions
