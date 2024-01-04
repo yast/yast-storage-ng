@@ -122,7 +122,7 @@ module Y2Partitioner
         items_with_children = with_children(tree.items)
         open_items = Yast::UI.QueryWidget(Id(tree.widget_id), :OpenItems).keys
 
-        items_with_children.map { |i| [i.to_s, open_items.include?(i)] }.to_h
+        items_with_children.to_h { |i| [i.to_s, open_items.include?(i)] }
       end
 
       # Checks whether the current page is associated to a specific device
@@ -243,7 +243,7 @@ module Y2Partitioner
         children = devices.map do |dev|
           dev.is?(:stray_blk_device) ? stray_blk_device_item(dev) : disk_items(dev)
         end
-        section_item(page, Icons::HD, children: children)
+        section_item(page, Icons::HD, children:)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -263,7 +263,7 @@ module Y2Partitioner
         devices = device_graph.software_raids
         page = Pages::MdRaids.new(self)
         children = devices.map { |m| raid_items(m) }
-        section_item(page, Icons::RAID, children: children)
+        section_item(page, Icons::RAID, children:)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -279,7 +279,7 @@ module Y2Partitioner
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(self)
         children = devices.map { |v| disk_items(v, Pages::Bcache) }
-        section_item(page, Icons::BCACHE, children: children)
+        section_item(page, Icons::BCACHE, children:)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -287,7 +287,7 @@ module Y2Partitioner
         devices = device_graph.lvm_vgs
         page = Pages::Lvm.new(self)
         children = devices.map { |v| lvm_vg_items(v) }
-        section_item(page, Icons::LVM, children: children)
+        section_item(page, Icons::LVM, children:)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -303,7 +303,7 @@ module Y2Partitioner
         page = Pages::BtrfsFilesystems.new(filesystems, self)
         children = filesystems.map { |f| btrfs_item(f) }
 
-        section_item(page, Icons::BTRFS, children: children)
+        section_item(page, Icons::BTRFS, children:)
       end
 
       # @return [CWM::PagerTreeItem]
@@ -316,7 +316,7 @@ module Y2Partitioner
       def tmpfs_section
         page = Pages::TmpfsFilesystems.new(self)
         children = device_graph.tmp_filesystems.map { |f| tmpfs_item(f) }
-        section_item(page, Icons::TMPFS, children: children)
+        section_item(page, Icons::TMPFS, children:)
       end
 
       # @param filesystem [Y2Storage::Filesystems::Tmpfs]
@@ -330,7 +330,7 @@ module Y2Partitioner
       def nfs_section
         page = Pages::NfsMounts.new(self)
         children = device_graph.nfs_mounts.map { |f| nfs_item(f) }
-        section_item(page, Icons::NFS, children: children)
+        section_item(page, Icons::NFS, children:)
       end
 
       # @param nfs [Y2Storage::Filesystems::Nfs]
@@ -351,7 +351,7 @@ module Y2Partitioner
       #
       # @return [CWM::PagerTreeItem]
       def section_item(page, icon, children: [])
-        CWM::PagerTreeItem.new(page, children: children, icon: icon, open: item_open?(page, true))
+        CWM::PagerTreeItem.new(page, children:, icon:, open: item_open?(page, true))
       end
 
       # Generates a `device` tree item for given page
@@ -363,7 +363,7 @@ module Y2Partitioner
       #
       # @return [CWM::PagerTreeItem]
       def device_item(page, children: [])
-        CWM::PagerTreeItem.new(page, children: children, open: item_open?(page, false))
+        CWM::PagerTreeItem.new(page, children:, open: item_open?(page, false))
       end
 
       # For a list of tree entries, returns the ids of those that have children,

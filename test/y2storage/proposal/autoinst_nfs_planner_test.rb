@@ -32,7 +32,7 @@ describe Y2Storage::Proposal::AutoinstNfsPlanner do
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   describe "#planned_devices" do
     shared_examples "create planned NFS" do

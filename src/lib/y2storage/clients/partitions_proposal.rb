@@ -114,7 +114,7 @@ module Y2Storage
           self.staging_revision = storage_manager.staging_revision
 
           staging = storage_manager.staging
-          actiongraph = staging ? staging.actiongraph : nil
+          actiongraph = staging&.actiongraph
           self.actions_presenter = ActionsPresenter.new(actiongraph)
           DumpManager.dump(staging)
           DumpManager.dump(actions_presenter)

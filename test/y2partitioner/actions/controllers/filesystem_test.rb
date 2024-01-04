@@ -719,7 +719,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
   RSpec.shared_context "mount point actions" do
     let(:mount_path) { "/foo" }
-    let(:mount_point_options) { { mount_by: mount_by_id, mount_options: mount_options } }
+    let(:mount_point_options) { { mount_by: mount_by_id, mount_options: } }
     let(:mount_by_id) { Y2Storage::Filesystems::MountByType::ID }
     let(:mount_options) { ["rw", "minorversion=1"] }
     let(:filesystem) { subject.filesystem }

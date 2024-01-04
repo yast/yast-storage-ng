@@ -36,7 +36,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
   let(:issues_list) do
-    ::Installation::AutoinstIssues::List.new
+    Installation::AutoinstIssues::List.new
   end
 
   before { fake_scenario(scenario) }

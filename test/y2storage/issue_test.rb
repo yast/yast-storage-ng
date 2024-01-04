@@ -23,7 +23,7 @@ require_relative "../spec_helper"
 require "y2storage/issue"
 
 describe Y2Storage::Issue do
-  subject { described_class.new(message, description: description, details: details, device: device) }
+  subject { described_class.new(message, description:, details:, device:) }
 
   let(:message) { "Issue 1" }
 

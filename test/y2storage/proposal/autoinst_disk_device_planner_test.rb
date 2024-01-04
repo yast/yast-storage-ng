@@ -31,7 +31,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   before do
     fake_scenario(scenario)
@@ -188,7 +188,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         let(:settings) do
-          instance_double(Y2Storage::ProposalSettings, volumes: volumes, format: :ng)
+          instance_double(Y2Storage::ProposalSettings, volumes:, format: :ng)
         end
 
         let(:volumes) { [] }

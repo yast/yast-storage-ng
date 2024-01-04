@@ -146,7 +146,7 @@ module Y2Storage
               _("Disk for Additional Partition")
             else
               # TRANSLATORS: %{mount_point} is a mount point (e.g. /var/lib)
-              format(_("Disk for the %{mount_point} Partition"), mount_point: mount_point)
+              format(_("Disk for the %{mount_point} Partition"), mount_point:)
             end
           end
         end

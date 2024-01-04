@@ -30,14 +30,14 @@ describe Y2Storage::Dialogs::Proposal do
 
   subject(:dialog) do
     Y2Storage::Dialogs::Proposal.new(proposal, devicegraph0,
-      excluded_buttons: excluded_buttons)
+      excluded_buttons:)
   end
 
   let(:excluded_buttons) { [] }
 
   describe "#run" do
     let(:devicegraph0) do
-      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices: blk_devices)
+      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices:)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
@@ -46,7 +46,7 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) do
-      double("Storage::Devicegraph", actiongraph: actiongraph1, blk_devices: blk_devices)
+      double("Storage::Devicegraph", actiongraph: actiongraph1, blk_devices:)
     end
     let(:actiongraph1) { double("Storage::Actiongraph") }
     let(:actions_presenter1) do

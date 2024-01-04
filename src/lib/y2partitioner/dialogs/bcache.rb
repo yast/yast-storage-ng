@@ -210,7 +210,7 @@ module Y2Partitioner
               "It will define the size of the resulting bcache device. " \
               "The device will be formatted so any previous content will be wiped out." \
               "</p>"),
-            label: label
+            label:
           )
         end
 
@@ -279,7 +279,7 @@ module Y2Partitioner
               "your slow devices as bcache backing devices without a cache. You can " \
               "add a caching device later." \
               "</p>"),
-            label: label
+            label:
           )
         end
 
@@ -348,7 +348,7 @@ module Y2Partitioner
               "sequential read or write, otherwise that would result in intensive " \
               "overwriting on the cache device.</li>" \
               "</p>"),
-            label: label
+            label:
           )
         end
 

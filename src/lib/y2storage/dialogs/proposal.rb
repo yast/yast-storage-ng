@@ -297,7 +297,7 @@ module Y2Storage
       end
 
       def settings_adjustment
-        proposal ? proposal.auto_settings_adjustment : nil
+        proposal&.auto_settings_adjustment
       end
 
       # Shortcut for Yast::HTML.Para
@@ -317,7 +317,7 @@ module Y2Storage
       #
       # @return [Actiongraph, nil] nil if it's not possible to calculate the actions
       def actiongraph
-        @devicegraph ? @devicegraph.actiongraph : nil
+        @devicegraph&.actiongraph
       rescue ::Storage::Exception => e
         # TODO: the code capturing the exception and displaying the error pop-up
         # should not be directly in this dialog. It should be in some common

@@ -85,7 +85,7 @@ module Y2Storage
                 idx,
                 settings,
                 candidate_disks: analyzer.candidate_disks,
-                disk_helper:     disk_helper
+                disk_helper:
               )
             end.compact
         end

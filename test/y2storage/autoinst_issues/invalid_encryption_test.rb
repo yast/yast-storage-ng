@@ -27,7 +27,7 @@ describe Y2Storage::AutoinstIssues::InvalidEncryption do
   let(:crypt_method) { :luks1 }
   let(:reason) { :unknown }
   let(:section) do
-    instance_double(Y2Storage::AutoinstProfile::PartitionSection, crypt_method: crypt_method)
+    instance_double(Y2Storage::AutoinstProfile::PartitionSection, crypt_method:)
   end
 
   describe "#message" do

@@ -35,7 +35,7 @@ describe Y2Storage::InitialGuidedProposal do
 
   let(:scenario) { "empty_hard_disk_gpt_25GiB" }
 
-  subject(:proposal) { described_class.new(settings: settings) }
+  subject(:proposal) { described_class.new(settings:) }
 
   describe ".new" do
     context "when settings are not passed" do

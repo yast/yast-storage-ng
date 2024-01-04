@@ -74,7 +74,7 @@ module Y2Partitioner
 
         # @see UsedDevicesTab#buttons
         def buttons
-          Right(BcacheEditButton.new(device: device))
+          Right(BcacheEditButton.new(device:))
         end
       end
     end

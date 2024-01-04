@@ -100,7 +100,7 @@ describe Y2Partitioner::UIState do
       before { ui_state.select_page(page.tree_path) }
 
       context "if the disk is still there after redrawing" do
-        before { pages.concat [page, another_disk_page] }
+        before { pages.push page, another_disk_page }
 
         it "selects the correct disk page" do
           expect(ui_state.find_page(pages_ids)).to eq page.id
@@ -152,7 +152,7 @@ describe Y2Partitioner::UIState do
       before { ui_state.select_page(page.tree_path) }
 
       context "if the VG is still there after redrawing" do
-        before { pages.concat [page, another_vg_page] }
+        before { pages.push page, another_vg_page }
 
         it "selects the correct VG page" do
           expect(ui_state.find_page(pages_ids)).to eq page.id
@@ -179,7 +179,7 @@ describe Y2Partitioner::UIState do
       before { ui_state.select_page(page.tree_path) }
 
       context "if the bcache is still there after redrawing" do
-        before { pages.concat [page, another_bcache_page] }
+        before { pages.push page, another_bcache_page }
 
         it "selects the correct bcache page" do
           expect(ui_state.find_page(pages_ids)).to eq page.id
@@ -206,7 +206,7 @@ describe Y2Partitioner::UIState do
       before { ui_state.select_page(page.tree_path) }
 
       context "if the filesystem is still there after redrawing" do
-        before { pages.concat [page, another_btrfs_page] }
+        before { pages.push page, another_btrfs_page }
 
         it "selects the correct btrfs page" do
           expect(ui_state.find_page(pages_ids)).to eq page.id

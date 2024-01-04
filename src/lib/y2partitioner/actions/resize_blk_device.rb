@@ -191,7 +191,7 @@ module Y2Partitioner
         note = _("It is not possible to check whether a NTFS\ncan be resized while it is mounted.")
 
         ntfs = controller.committed_filesystem
-        Dialogs::Unmount.new(ntfs, note: note, allow_continue: false).run == :finish
+        Dialogs::Unmount.new(ntfs, note:, allow_continue: false).run == :finish
       end
 
       # Checks whether the current filesystem is NTFS, it exists on disk and it is mounted.

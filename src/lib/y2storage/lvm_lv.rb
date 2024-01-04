@@ -201,13 +201,7 @@ module Y2Storage
 
       # The sizes in resize_info are already rounded to the extent size
       self.size =
-        if new_size > resize_info.max_size
-          resize_info.max_size
-        elsif new_size < resize_info.min_size
-          resize_info.min_size
-        else
-          new_size
-        end
+        new_size.clamp(resize_info.min_size, resize_info.max_size)
 
       self.size = rounded_size if size != resize_info.min_size
 
@@ -239,7 +233,7 @@ module Y2Storage
       types << :lvm_lv
       types << :lvm_snapshot if origin
       types << :lvm_thin_snapshot if lv_type.is?(:thin) && origin
-      types << "lvm_#{lv_type}".to_sym unless lv_type.is?(:unknown, :normal, :snapshot)
+      types << :"lvm_#{lv_type}" unless lv_type.is?(:unknown, :normal, :snapshot)
       types
     end
   end

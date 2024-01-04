@@ -55,7 +55,7 @@ describe Y2Storage::EncryptionMethod::RandomSwap do
 
   describe "#used_for?" do
     let(:encryption) do
-      instance_double(Y2Storage::Encryption, key_file: key_file, crypt_options: crypt_options)
+      instance_double(Y2Storage::Encryption, key_file:, crypt_options:)
     end
 
     let(:key_file) { nil }
@@ -92,7 +92,7 @@ describe Y2Storage::EncryptionMethod::RandomSwap do
   describe "#used_for_crypttab?" do
     let(:entry) do
       instance_double(
-        Y2Storage::SimpleEtcCrypttabEntry, password: password, crypt_options: crypt_options
+        Y2Storage::SimpleEtcCrypttabEntry, password:, crypt_options:
       )
     end
 

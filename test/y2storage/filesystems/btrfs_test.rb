@@ -122,14 +122,14 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not create a new subvolume" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.ensure_default_btrfs_subvolume(path: path)
+        filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
       end
 
       it "returns the current default subvolume" do
         default = filesystem.default_btrfs_subvolume
-        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(subvolume).to eq(default)
       end
@@ -141,20 +141,20 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not create a new subvolume" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.ensure_default_btrfs_subvolume(path: path)
+        filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
       end
 
       it "returns the top level subvolume" do
-        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path:)
         expect(subvolume.top_level?).to be(true)
       end
 
       it "sets the top level subvolume as default subvolume" do
         expect(filesystem.top_level_btrfs_subvolume.default_btrfs_subvolume?).to eq(false)
 
-        filesystem.ensure_default_btrfs_subvolume(path: path)
+        filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(filesystem.top_level_btrfs_subvolume.default_btrfs_subvolume?).to eq(true)
       end
@@ -167,7 +167,7 @@ describe Y2Storage::Filesystems::Btrfs do
       it "creates a new default subvolume with the requested path" do
         expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
 
-        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(subvolume.default_btrfs_subvolume?).to be(true)
         expect(subvolume.path).to eq(path)
@@ -180,20 +180,20 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not create a new subvolume" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.ensure_default_btrfs_subvolume(path: path)
+        filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
       end
 
       it "returns the subvolume with the requested path" do
-        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path:)
         expect(subvolume.path).to eq(path)
       end
 
       it "sets the subvolume as default subvolume" do
         expect(filesystem.find_btrfs_subvolume_by_path(path).default_btrfs_subvolume?).to eq(false)
 
-        filesystem.ensure_default_btrfs_subvolume(path: path)
+        filesystem.ensure_default_btrfs_subvolume(path:)
 
         expect(filesystem.find_btrfs_subvolume_by_path(path).default_btrfs_subvolume?).to eq(true)
       end
@@ -215,9 +215,9 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:path) { "@/home" }
 
       it "deletes the subvolume" do
-        expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path: path))
+        expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path:))
         filesystem.delete_btrfs_subvolume(path)
-        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: path))
+        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path:))
       end
 
       context "when there are no more subvolumes after deleting" do

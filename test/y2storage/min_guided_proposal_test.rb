@@ -55,7 +55,7 @@ describe Y2Storage::MinGuidedProposal do
     settings.candidate_devices = ["/dev/sda"]
   end
 
-  subject(:proposal) { described_class.new(settings: settings) }
+  subject(:proposal) { described_class.new(settings:) }
 
   describe "#propose" do
     context "when there is space even for the desired sizes" do

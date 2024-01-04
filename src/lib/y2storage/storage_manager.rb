@@ -566,7 +566,7 @@ module Y2Storage
         # default mode (e.g., current is read-only but {.setup} is called without
         # mode during installation).
         mode ||= default_storage_mode
-        Y2Storage::StorageManager.instance(mode: mode, callbacks: callbacks)
+        Y2Storage::StorageManager.instance(mode:, callbacks:)
         true
       rescue Yast::AbortException
         false
@@ -726,7 +726,7 @@ module Y2Storage
         # libstorage pretent that it use same logging as y2_logger but y2_logger support also
         # parameter expansion via printf, so we need double escaping to prevent this expansion
         # (bsc#1091062)
-        content = content.gsub(/%/, "%%")
+        content = content.gsub("%", "%%")
         Yast.y2_logger(level, component, filename, line, function, content)
       end
       # rubocop:enable Metrics/ParameterLists

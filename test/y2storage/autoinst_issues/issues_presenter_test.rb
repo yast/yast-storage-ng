@@ -52,7 +52,7 @@ describe Installation::AutoinstIssues::IssuesPresenter do
     partitioning.drives.first.partitions.first
   end
 
-  let(:list) { ::Installation::AutoinstIssues::List.new }
+  let(:list) { Installation::AutoinstIssues::List.new }
 
   describe "#to_html" do
     context "when a fatal issue was found" do

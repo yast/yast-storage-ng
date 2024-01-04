@@ -56,7 +56,7 @@ module Y2Storage
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
       # @return [Planned::DevicesCollection]
       def planned_devices(drives_map)
-        devices = drives_map.each_pair.each_with_object([]) do |(disk_name, drive), memo|
+        devices = drives_map.each_pair.with_object([]) do |(disk_name, drive), memo|
           planned_devs = planned_for_drive(drive, disk_name)
           memo.concat(planned_devs) if planned_devs
         end
@@ -204,7 +204,7 @@ module Y2Storage
       # @param collection [Planned::DevicesCollection] Planned devices
       # @param role [Symbol] bcache member role (:backing, :caching)
       def add_bcache_issues_for(bcache_name, collection, role)
-        method = "bcache_#{role}_for?".to_sym
+        method = :"bcache_#{role}_for?"
         devs = collection.to_a.select do |dev|
           dev.respond_to?(method) && dev.send(method, bcache_name)
         end

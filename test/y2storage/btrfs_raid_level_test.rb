@@ -26,7 +26,7 @@ describe Y2Storage::BtrfsRaidLevel do
     context "when there is a translation" do
       it "returns the translated string" do
         described_class.all.each do |value|
-          expect(value.to_human_string).to be_a(::String)
+          expect(value.to_human_string).to be_a(String)
         end
       end
     end

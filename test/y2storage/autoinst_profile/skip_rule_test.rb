@@ -34,7 +34,7 @@ describe Y2Storage::AutoinstProfile::SkipRule do
   let(:value) do
     double(
       "Y2Storage::AutoinstProfile::SkipListValue",
-      size_k: size_k,
+      size_k:,
       device: "/dev/sda",
       driver: ["ahci", "sd"]
     )

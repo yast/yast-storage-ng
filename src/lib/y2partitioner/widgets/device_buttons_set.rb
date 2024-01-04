@@ -110,30 +110,30 @@ module Y2Partitioner
       # Buttons to display if {#device} is a partition
       def partition_buttons
         [
-          BlkDeviceEditButton.new(device: device),
-          PartitionAddButton.new(device: device),
+          BlkDeviceEditButton.new(device:),
+          PartitionAddButton.new(device:),
           btrfs_subvolume_add_button,
-          PartitionDeleteButton.new(pager: pager, device: device)
+          PartitionDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a software raid
       def software_raid_buttons
         [
-          BlkDeviceEditButton.new(device: device),
-          PartitionAddButton.new(device: device),
+          BlkDeviceEditButton.new(device:),
+          PartitionAddButton.new(device:),
           btrfs_subvolume_add_button,
-          MdDeleteButton.new(pager: pager, device: device)
+          MdDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a Bcache device
       def bcache_buttons
         [
-          BlkDeviceEditButton.new(device: device),
-          PartitionAddButton.new(device: device),
+          BlkDeviceEditButton.new(device:),
+          PartitionAddButton.new(device:),
           btrfs_subvolume_add_button,
-          BcacheDeleteButton.new(pager: pager, device: device)
+          BcacheDeleteButton.new(pager:, device:)
         ]
       end
 
@@ -143,13 +143,13 @@ module Y2Partitioner
         # (e.g., DASD devices).
         if device.usable_as_blk_device?
           [
-            BlkDeviceEditButton.new(device: device),
-            PartitionAddButton.new(device: device),
+            BlkDeviceEditButton.new(device:),
+            PartitionAddButton.new(device:),
             btrfs_subvolume_add_button
           ]
         else
           [
-            PartitionAddButton.new(device: device)
+            PartitionAddButton.new(device:)
           ]
         end
       end
@@ -158,7 +158,7 @@ module Y2Partitioner
       # (StrayBlkDevice)
       def stray_blk_device_buttons
         [
-          BlkDeviceEditButton.new(device: device),
+          BlkDeviceEditButton.new(device:),
           btrfs_subvolume_add_button
         ]
       end
@@ -166,52 +166,52 @@ module Y2Partitioner
       # Buttons to display if {#device} is a volume group
       def lvm_vg_buttons
         [
-          LvmLvAddButton.new(device: device),
-          LvmVgDeleteButton.new(pager: pager, device: device)
+          LvmLvAddButton.new(device:),
+          LvmVgDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a logical volume
       def lvm_lv_buttons
         [
-          BlkDeviceEditButton.new(device: device),
-          LvmLvAddButton.new(device: device),
+          BlkDeviceEditButton.new(device:),
+          LvmLvAddButton.new(device:),
           btrfs_subvolume_add_button,
-          LvmLvDeleteButton.new(pager: pager, device: device)
+          LvmLvDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a Btrfs filesystem
       def btrfs_buttons
         [
-          BtrfsEditButton.new(device: device),
-          BtrfsSubvolumeAddButton.new(device: device),
-          BtrfsDeleteButton.new(pager: pager, device: device)
+          BtrfsEditButton.new(device:),
+          BtrfsSubvolumeAddButton.new(device:),
+          BtrfsDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a Btrfs subvolume
       def btrfs_subvolume_buttons
         [
-          BtrfsSubvolumeEditButton.new(device: device),
-          BtrfsSubvolumeAddButton.new(device: device),
-          BtrfsSubvolumeDeleteButton.new(pager: pager, device: device)
+          BtrfsSubvolumeEditButton.new(device:),
+          BtrfsSubvolumeAddButton.new(device:),
+          BtrfsSubvolumeDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is a Tmpfs filesystem
       def tmpfs_buttons
         [
-          TmpfsEditButton.new(device: device),
-          TmpfsDeleteButton.new(pager: pager, device: device)
+          TmpfsEditButton.new(device:),
+          TmpfsDeleteButton.new(pager:, device:)
         ]
       end
 
       # Buttons to display if {#device} is an Nfs mount
       def nfs_buttons
         [
-          NfsEditButton.new(device: device),
-          NfsDeleteButton.new(pager: pager, device: device)
+          NfsEditButton.new(device:),
+          NfsDeleteButton.new(pager:, device:)
         ]
       end
 
@@ -222,7 +222,7 @@ module Y2Partitioner
         return nil unless device.is?(:blk_device)
         return nil unless device.formatted_as?(:btrfs)
 
-        BtrfsSubvolumeAddButton.new(device: device)
+        BtrfsSubvolumeAddButton.new(device:)
       end
 
       # Simple widget to represent an HBox with a CWM API

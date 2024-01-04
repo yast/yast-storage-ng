@@ -90,7 +90,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
       before do
         allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args)
-        device.encrypt(method: Y2Storage::EncryptionMethod::PERVASIVE_LUKS2, apqns: apqns)
+        device.encrypt(method: Y2Storage::EncryptionMethod::PERVASIVE_LUKS2, apqns:)
       end
 
       context "and the secure key was created for some specific APQNs" do
@@ -150,7 +150,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
           let(:method) { Y2Storage::EncryptionMethod::RANDOM_SWAP }
           let(:encryption) do
             double("Encryption",
-              method: method, password: "123456", active?: true, pbkdf: "", encryption_process: nil)
+              method:, password: "123456", active?: true, pbkdf: "", encryption_process: nil)
           end
 
           before do

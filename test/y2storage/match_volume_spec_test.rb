@@ -209,7 +209,7 @@ describe Y2Storage::MatchVolumeSpec do
         let(:exclude) { [:mount_point, :partition_id, :fs_type, :size] }
 
         it "returns true" do
-          expect(matcher.match_volume?(volume, exclude: exclude)).to eq(true)
+          expect(matcher.match_volume?(volume, exclude:)).to eq(true)
         end
       end
     end

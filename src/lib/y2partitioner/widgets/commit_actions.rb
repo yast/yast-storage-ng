@@ -57,7 +57,7 @@ module Y2Partitioner
       # @see Y2Storage::StorageManager#commit
       # @see Y2Storage::Callbacks::Commit
       def init
-        Y2Storage::StorageManager.instance.commit(callbacks: callbacks)
+        Y2Storage::StorageManager.instance.commit(callbacks:)
         Y2Storage::UsedFilesystems.new(Y2Storage::StorageManager.instance.staging).write
       end
 

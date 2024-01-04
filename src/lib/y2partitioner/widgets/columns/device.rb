@@ -39,7 +39,7 @@ module Y2Partitioner
 
         # @see Columns::Base#entry_value
         def entry_value(entry)
-          value_for(entry.device, entry: entry)
+          value_for(entry.device, entry:)
         end
 
         # @see Columns::Base#value_for

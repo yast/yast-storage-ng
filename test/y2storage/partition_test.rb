@@ -223,21 +223,21 @@ describe Y2Storage::Partition do
     RSpec.shared_examples "start not modified" do
       it "does not modify the partition start" do
         initial_start = partition.start
-        partition.resize(new_size, align_type: align_type)
+        partition.resize(new_size, align_type:)
         expect(partition.start).to eq initial_start
       end
     end
 
     RSpec.shared_examples "requested size" do
       it "resizes the partition to the requested size" do
-        partition.resize(new_size, align_type: align_type)
+        partition.resize(new_size, align_type:)
         expect(partition.size).to eq new_size
       end
     end
 
     RSpec.shared_examples "closest valid value" do
       it "resizes the partition to the closest valid size" do
-        partition.resize(new_size, align_type: align_type)
+        partition.resize(new_size, align_type:)
 
         expect(partition.size).to_not eq new_size
         diff = (new_size.to_i - partition.size.to_i).abs
@@ -251,7 +251,7 @@ describe Y2Storage::Partition do
         initial_end = partition.end
         initial_start = partition.start
 
-        partition.resize(new_size, align_type: align_type)
+        partition.resize(new_size, align_type:)
 
         expect(partition.size).to eq initial_size
         expect(partition.end).to eq initial_end
@@ -298,7 +298,7 @@ describe Y2Storage::Partition do
         include_examples "start not modified"
 
         it "does not align the end of the partition" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
 
           expect(partition.end_aligned?(required)).to eq false
           expect(partition.end_aligned?(optimal)).to eq false
@@ -311,7 +311,7 @@ describe Y2Storage::Partition do
         include_examples "closest valid value"
 
         it "ensures the end of the partition is optimally aligned" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
           expect(partition.end_aligned?).to eq true
         end
 
@@ -324,7 +324,7 @@ describe Y2Storage::Partition do
         include_examples "closest valid value"
 
         it "ensures the end of the partition is aligned to requirements" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
           expect(partition.end_aligned?(required)).to eq true
         end
 
@@ -348,7 +348,7 @@ describe Y2Storage::Partition do
         include_examples "closest valid value"
 
         it "ensures the end of the partition is optimally aligned" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
           expect(partition.end_aligned?).to eq true
         end
 
@@ -371,7 +371,7 @@ describe Y2Storage::Partition do
         let(:align_type) { nil }
 
         it "sets the size of the partition to the max" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
           expect(partition.size).to eq max
         end
       end
@@ -381,7 +381,7 @@ describe Y2Storage::Partition do
 
         context "and is possible to align whithin the resizing limits (min & max)" do
           it "sets the size of the partition to the max" do
-            partition.resize(new_size, align_type: align_type)
+            partition.resize(new_size, align_type:)
             expect(partition.size).to eq max
           end
         end
@@ -391,7 +391,7 @@ describe Y2Storage::Partition do
           let(:min) { max - 700.KiB }
 
           it "sets the size of the partition to the max" do
-            partition.resize(new_size, align_type: align_type)
+            partition.resize(new_size, align_type:)
             expect(partition.size).to eq max
           end
         end
@@ -406,7 +406,7 @@ describe Y2Storage::Partition do
         let(:align_type) { nil }
 
         it "sets the size of the partition to the min" do
-          partition.resize(new_size, align_type: align_type)
+          partition.resize(new_size, align_type:)
           expect(partition.size).to eq min
         end
       end
@@ -416,7 +416,7 @@ describe Y2Storage::Partition do
 
         context "and is possible to align whithin the resizing limits (min & max)" do
           it "resizes the partition to the minimal aligned size" do
-            partition.resize(new_size, align_type: align_type)
+            partition.resize(new_size, align_type:)
 
             expect(partition.size).to be > min
             expect(partition.size - min).to be < partition.partition_table.align_grain

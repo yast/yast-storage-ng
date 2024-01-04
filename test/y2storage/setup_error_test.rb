@@ -25,7 +25,7 @@ require "y2storage/setup_error"
 describe Y2Storage::SetupError do
   using Y2Storage::Refinements::SizeCasts
 
-  subject { described_class.new(message: error_message, missing_volume: missing_volume) }
+  subject { described_class.new(message: error_message, missing_volume:) }
 
   let(:error_message) { nil }
 

@@ -35,7 +35,7 @@ describe Y2Storage::Proposal::AutoinstBcacheCreator do
 
   let(:planned_bcache0) do
     planned_bcache(
-      name: "/dev/bcache0", partitions: partitions, ptable_type: ptable_type,
+      name: "/dev/bcache0", partitions:, ptable_type:,
       cache_mode: Y2Storage::CacheMode::WRITEBACK
     )
   end
@@ -137,7 +137,7 @@ describe Y2Storage::Proposal::AutoinstBcacheCreator do
       let(:caching_devname) { "/dev/vdb" }
       let(:backing_devname) { "/dev/vdd3" }
       let(:planned_bcache3) do
-        planned_bcache(name: "/dev/bcache3", partitions: [], ptable_type: ptable_type)
+        planned_bcache(name: "/dev/bcache3", partitions: [], ptable_type:)
       end
 
       before do

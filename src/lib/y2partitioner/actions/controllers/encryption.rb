@@ -174,7 +174,7 @@ module Y2Partitioner
           key_name = "yast2_tmp_secure_key_test"
 
           begin
-            key = Y2Storage::EncryptionProcesses::SecureKey.generate!(key_name, apqns: apqns)
+            key = Y2Storage::EncryptionProcesses::SecureKey.generate!(key_name, apqns:)
           rescue Cheetah::ExecutionFailed => e
             return e.message
           end
@@ -358,7 +358,7 @@ module Y2Partitioner
         def finish_encrypt
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
-            method: method, password: password, apqns: apqns, label: label, pbkdf: pbkdf
+            method:, password:, apqns:, label:, pbkdf:
           )
         end
 

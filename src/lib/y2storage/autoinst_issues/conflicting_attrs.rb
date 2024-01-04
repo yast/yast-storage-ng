@@ -63,7 +63,7 @@ module Y2Storage
           # is the element that will be taken into account.
           _("These elements are conflicting: %{attrs_list}. " \
             "Only '%{selected_attr}' will be considered."),
-          attrs_list: attrs.join(", "), selected_attr: selected_attr
+          attrs_list: attrs.join(", "), selected_attr:
         )
       end
     end

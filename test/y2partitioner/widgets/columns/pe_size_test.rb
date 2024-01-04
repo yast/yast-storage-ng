@@ -19,7 +19,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
-require_relative "./shared_examples"
+require_relative "shared_examples"
 
 require "y2partitioner/widgets/columns/pe_size"
 

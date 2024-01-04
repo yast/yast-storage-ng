@@ -343,7 +343,7 @@ module Y2Partitioner
           format(
             _("The volume group name \"%{vg_name}\" conflicts\n" \
               "with another entry in the /dev directory."),
-            vg_name: vg_name
+            vg_name:
           )
         end
 

@@ -42,7 +42,7 @@ describe Y2Storage::Dialogs::GuidedSetup::Widgets::Volume do
   subject(:widget) { described_class.new(settings, index) }
 
   let(:settings) do
-    double("ProposalSettings", lvm: lvm, separate_vgs: separate_vgs, volumes: volumes)
+    double("ProposalSettings", lvm:, separate_vgs:, volumes:)
   end
 
   let(:lvm) { false }

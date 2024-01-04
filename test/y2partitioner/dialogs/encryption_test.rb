@@ -25,7 +25,7 @@ require "cwm/rspec"
 require "y2partitioner/dialogs/encryption"
 
 describe Y2Partitioner::Dialogs::Encryption do
-  let(:controller) { double("FilesystemController", wizard_title: "Title", actions: actions) }
+  let(:controller) { double("FilesystemController", wizard_title: "Title", actions:) }
 
   subject(:dialog) { described_class.new(controller) }
 
@@ -60,7 +60,7 @@ end
 
 describe Y2Partitioner::Dialogs::Encryption::ActionWidget do
   let(:controller) do
-    double("EncryptionController", actions: [:keep, :encrypt], encryption: encryption)
+    double("EncryptionController", actions: [:keep, :encrypt], encryption:)
   end
 
   let(:encryption) { double("Encryption", method: Y2Storage::EncryptionMethod::LUKS1) }

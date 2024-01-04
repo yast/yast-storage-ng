@@ -122,7 +122,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
           let(:proposed) { false }
 
           it "does not plan a device for the <volume> entry" do
-            expect(planned_devices).to_not include(an_object_having_attributes(mount_point: mount_point))
+            expect(planned_devices).to_not include(an_object_having_attributes(mount_point:))
           end
         end
 
@@ -130,7 +130,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
           let(:proposed) { true }
 
           it "plans a device for the <volume> entry" do
-            expect(planned_devices).to include(an_object_having_attributes(mount_point: mount_point))
+            expect(planned_devices).to include(an_object_having_attributes(mount_point:))
           end
 
           context "and the <volume> entry contains empty <mount_options>" do
@@ -631,7 +631,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
               allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
             end
 
-            let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda", partitions: partitions) }
+            let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda", partitions:) }
 
             let(:planned_swap) { planned_devices.select { |d| d.mount_point == "swap" } }
 

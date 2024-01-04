@@ -53,7 +53,7 @@ module Installation
 
         def help
           # TRANSLATORS: help text for the checkbox enabling LUKS2 support
-          _("<p>You can enable experimental LUKS2 encryption support in "\
+          _("<p>You can enable experimental LUKS2 encryption support in " \
             "the YaST partitioner. It is not supported and is designed as a " \
             "technology preview only.</p>")
         end

@@ -175,7 +175,7 @@ module Y2Partitioner
         size = device.size.to_human_string
         # TRANSLATORS: label for current size of the partition or LVM logical volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
-        Left(Label(format(_("Current size: %{size}"), size: size)))
+        Left(Label(format(_("Current size: %{size}"), size:)))
       end
 
       # Widget with more details about the size
@@ -205,7 +205,7 @@ module Y2Partitioner
         size = used_size.to_human_string
         # TRANSLATORS: label for currently used size of the partition or LVM volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
-        Left(Label(format(_("Currently used: %{size}"), size: size)))
+        Left(Label(format(_("Currently used: %{size}"), size:)))
       end
 
       # Tries to unmount the device, if required.
@@ -238,7 +238,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It is not possible to shrink the file system while it is mounted.")
 
-        Unmount.new(controller.committed_filesystem, note: note).run == :finish
+        Unmount.new(controller.committed_filesystem, note:).run == :finish
       end
 
       # Tries to unmount when growing the device
@@ -251,7 +251,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It is not possible to extend the file system while it is mounted.")
 
-        Unmount.new(controller.committed_filesystem, note: note).run == :finish
+        Unmount.new(controller.committed_filesystem, note:).run == :finish
       end
 
       # Tries to unmount when performing big growing
@@ -270,7 +270,7 @@ module Y2Partitioner
           growing_size.to_i / Y2Storage::DiskSize.GiB(1).to_i
         )
 
-        Unmount.new(controller.committed_filesystem, note: note).run == :finish
+        Unmount.new(controller.committed_filesystem, note:).run == :finish
       end
 
       # Whether the device is going to be shrunk
@@ -527,7 +527,7 @@ module Y2Partitioner
           total_thin_size = Y2Storage::DiskSize.sum(device.lvm_lvs.map(&:size))
 
           format(
-            _("The LVM thin pool %{name} is overcomitted "\
+            _("The LVM thin pool %{name} is overcomitted " \
               "(needs %{total_thin_size} and only has %{size}).\n" \
               "It might not have enough space for some LVM thin volumes."),
             name:            device.name,

@@ -23,7 +23,7 @@ require "y2storage/proposal/autoinst_size"
 
 describe Y2Storage::Proposal::AutoinstSize do
 
-  subject(:autoinst_size) { described_class.new("10GB", max: max) }
+  subject(:autoinst_size) { described_class.new("10GB", max:) }
 
   describe "#unlimited?" do
     context "when max size is unlimited" do

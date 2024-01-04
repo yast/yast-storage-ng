@@ -362,7 +362,7 @@ module Y2Storage
     #   each subclass.
     # @return [Boolean]
     def is?(*types)
-      (types.map(&:to_sym) & types_for_is).any?
+      types.map(&:to_sym).intersect?(types_for_is)
     end
 
     # Whether there is (or there will be) an entry for this device in the
@@ -459,7 +459,7 @@ module Y2Storage
       return nil if serialized.nil?
 
       if RUBY_VERSION.start_with?("2.")
-        YAML.load(serialized) # rubocop:disable Security/YAMLLoad # here it is our data, so safe
+        YAML.load(serialized) # # here it is our data, so safe
       else
         # ruby3 from 3.1 defaults load to safe_load, so need explicit unsafe_load
         YAML.unsafe_load(serialized)

@@ -679,7 +679,7 @@ module Y2Storage
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless method
 
       blk_parent = BlkDevice.find_by_name(@devicegraph, parent)
-      encryption = blk_parent.encrypt(dm_name: name, password: password, method: method)
+      encryption = blk_parent.encrypt(dm_name: name, password:, method:)
       if @file_system_data.key?(parent)
         # Notify create_file_system that this partition is encrypted
         @file_system_data[parent]["encryption"] = encryption.name

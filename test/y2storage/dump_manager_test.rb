@@ -81,7 +81,7 @@ describe Y2Storage::DumpManager do
   def dump_dir_list
     return [] unless File.exist?(base_dir)
 
-    Dir.glob(base_dir + "/storage*").sort
+    Dir.glob(base_dir + "/storage*")
   end
 
   describe "#instance" do

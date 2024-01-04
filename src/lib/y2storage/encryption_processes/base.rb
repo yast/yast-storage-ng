@@ -123,7 +123,7 @@ module Y2Storage
       # @param blk_device [BlkDevice] Block device to encrypt
       # @return [Integer,nil]
       def sector_size_for(blk_device)
-        return IDEAL_SECTOR_SIZE if blk_device.region.block_size.to_i >= IDEAL_SECTOR_SIZE
+        IDEAL_SECTOR_SIZE if blk_device.region.block_size.to_i >= IDEAL_SECTOR_SIZE
       end
     end
   end

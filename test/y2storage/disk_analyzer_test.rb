@@ -115,8 +115,8 @@ describe Y2Storage::DiskAnalyzer do
         before do
           # A bit ugly mock, but what we want to achieve is to simulate that one of available
           # windows partitions cannot be properly detected due an Storage exception (bsc#1101979).
-          allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info) do |fs|
-            raise ::Storage::Exception if fs.label == "recovery"
+          allow_any_instance_of(Storage::BlkFilesystem).to receive(:detect_content_info) do |fs|
+            raise Storage::Exception if fs.label == "recovery"
 
             double("::Storage::ContentInfo", windows?: true)
           end
@@ -175,7 +175,7 @@ describe Y2Storage::DiskAnalyzer do
 
   describe "#installed_systems" do
     before do
-      allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
+      allow_any_instance_of(Storage::BlkFilesystem).to receive(:detect_content_info)
         .and_return(content_info)
       allow_any_instance_of(Y2Storage::Filesystems::Base).to receive(:release_name)
         .and_return release_name

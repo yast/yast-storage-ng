@@ -36,7 +36,7 @@ describe Y2Storage::Proposal::AutoinstMdCreator do
   let(:ptable_type) { Y2Storage::PartitionTables::Type::GPT }
   let(:planned_md0) do
     planned_md(
-      name: "/dev/md0", md_level: md_level, partitions: partitions, ptable_type: ptable_type
+      name: "/dev/md0", md_level:, partitions:, ptable_type:
     )
   end
   let(:devices) { ["/dev/sda1", "/dev/sda2"] }

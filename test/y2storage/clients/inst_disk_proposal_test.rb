@@ -464,7 +464,7 @@ describe Y2Storage::Clients::InstDiskProposal do
     context "processing the guided setup result" do
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
       let(:settings) { double("Storage::ProposalSettings") }
-      let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, settings: settings) }
+      let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, settings:) }
       let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
 
       before do

@@ -46,7 +46,7 @@ module Y2Partitioner
         # TRANSLATORS: widget help, where %{label} is replaced by the label of the widget.
         format(
           _("<p><b>%{label}:</b> RAID level for the Btrfs data.</p>"),
-          label: label
+          label:
         )
       end
 

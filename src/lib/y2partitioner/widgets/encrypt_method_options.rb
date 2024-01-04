@@ -190,7 +190,7 @@ module Y2Partitioner
 
       # @see LuksOptions#widgets
       def widgets
-        super.concat([pbkdf_widget, label_widget])
+        super.push(pbkdf_widget, label_widget)
       end
 
       # Widget to set the password-based key derivation function
@@ -264,7 +264,7 @@ module Y2Partitioner
       def validate_secure_key_generation
         apqns = select_apqns? ? apqn_widget.value : []
 
-        command_error_message = controller.test_secure_key_generation(apqns: apqns)
+        command_error_message = controller.test_secure_key_generation(apqns:)
 
         return true unless command_error_message
 

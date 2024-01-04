@@ -79,7 +79,7 @@ module Y2Storage
     # @return [String, nil]
     def root_device
       if allocate_mode?(:device)
-        root_volume ? root_volume.device : nil
+        root_volume&.device
       else
         @explicit_root_device
       end

@@ -29,7 +29,7 @@ describe Y2Storage::StorageFeature do
     # This test will fail every time a new feature is added to libstorage-ng,
     # to remind us we should define its yast2-storage-ng counterpart
     it "contains one entry for each feature from libstorage-ng" do
-      constants = ::Storage.constants.select { |c| c.to_s.start_with?("UF_") }
+      constants = Storage.constants.select { |c| c.to_s.start_with?("UF_") }
       expect(described_class.all.map(&:to_sym)).to contain_exactly(*constants)
     end
 

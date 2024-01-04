@@ -247,7 +247,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def compatible_disk?(partition, space)
-        return true unless partition.disk && partition.disk != space.disk_name
+        true unless partition.disk && partition.disk != space.disk_name
       end
 
       # @param partition [Planned::Partition]
@@ -315,7 +315,7 @@ module Y2Storage
         keys = hash.keys
         # Ensure same order
         arrays = keys.map { |key| hash[key] }
-        product = arrays[0].product(*arrays[1..-1])
+        product = arrays[0].product(*arrays[1..])
         product.map { |p| keys.zip(p).to_h }
       end
 

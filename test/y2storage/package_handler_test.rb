@@ -100,7 +100,7 @@ describe Y2Storage::PackageHandler do
         # Let's simulate the first package is already installed
         allow(Yast::Package).to receive(:Installed).with(feature_pkg[0]).and_return true
 
-        expect(Yast::Package).to receive(:DoInstall).with(feature_pkg[1..-1])
+        expect(Yast::Package).to receive(:DoInstall).with(feature_pkg[1..])
         subject.install(ask: false)
       end
 
@@ -125,7 +125,7 @@ describe Y2Storage::PackageHandler do
         # Let's simulate the first package is already installed
         allow(Yast::Package).to receive(:Installed).with(feature_pkg[0]).and_return true
 
-        expect(Yast::Package).to receive(:CheckAndInstallPackages).with(feature_pkg[1..-1])
+        expect(Yast::Package).to receive(:CheckAndInstallPackages).with(feature_pkg[1..])
         subject.install
       end
 

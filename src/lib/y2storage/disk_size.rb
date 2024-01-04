@@ -360,7 +360,7 @@ module Y2Storage
         str = sanitize(str)
         return DiskSize.unlimited if str == UNLIMITED
 
-        bytes = str_to_bytes(str, legacy_units: legacy_units)
+        bytes = str_to_bytes(str, legacy_units:)
         DiskSize.new(bytes)
       end
 
@@ -384,7 +384,7 @@ module Y2Storage
       #
       # @see .parse
       def parse_or(str, fallback = nil, legacy_units: false)
-        parse(str, legacy_units: legacy_units)
+        parse(str, legacy_units:)
       rescue TypeError
         fallback
       end
@@ -404,7 +404,7 @@ module Y2Storage
         unit = unit(str)
         return number if unit.empty?
 
-        calculate_bytes(number, unit, legacy_units: legacy_units)
+        calculate_bytes(number, unit, legacy_units:)
       end
 
       def number(str)

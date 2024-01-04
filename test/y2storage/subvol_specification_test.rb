@@ -26,7 +26,7 @@ Yast.import "Arch"
 describe Y2Storage::SubvolSpecification do
   let(:architecture) { :x86_64 }
 
-  subject { Y2Storage::SubvolSpecification.new(path, archs: archs) }
+  subject { Y2Storage::SubvolSpecification.new(path, archs:) }
 
   let(:path) { "" }
   let(:archs) { [] }

@@ -78,8 +78,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
       let(:volumes) do
         [
-          double("VolumeSpecification", mount_point: "/", separate_vg_name: separate_vg_name),
-          double("VolumeSpecification", mount_point: "swap", separate_vg_name: separate_vg_name)
+          double("VolumeSpecification", mount_point: "/", separate_vg_name:),
+          double("VolumeSpecification", mount_point: "swap", separate_vg_name:)
         ]
       end
 

@@ -469,7 +469,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       allow(controller).to receive(:vg).and_return(vg)
     end
 
-    let(:vg) { double("LvmVg", vg_name: "vg0", extent_size: extent_size) }
+    let(:vg) { double("LvmVg", vg_name: "vg0", extent_size:) }
 
     context "when the editing vg extend size is less than 4 KiB" do
       let(:extent_size) { 1.KiB }

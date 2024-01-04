@@ -302,7 +302,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       let(:vol) do
         planned_vol(
-          type: :vfat, partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable: bootable
+          type: :vfat, partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable:
         )
       end
       let(:distribution) { space_dist(disk_spaces.first => [vol]) }

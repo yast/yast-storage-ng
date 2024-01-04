@@ -41,7 +41,7 @@ module Y2Partitioner
     #
     # @return [Array<String>]
     def filesystem_errors(filesystem, new_size: nil)
-      [small_size_for_snapshots_error(filesystem, new_size: new_size)].compact
+      [small_size_for_snapshots_error(filesystem, new_size:)].compact
     end
 
     private
@@ -59,7 +59,7 @@ module Y2Partitioner
     def small_size_for_snapshots_error(filesystem, new_size: nil)
       textdomain "storage"
 
-      return nil unless installing? && small_size_for_snapshots?(filesystem, new_size: new_size)
+      return nil unless installing? && small_size_for_snapshots?(filesystem, new_size:)
 
       format(
         _("Your %{name} device is very small for snapshots.\n" \

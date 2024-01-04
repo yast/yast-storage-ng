@@ -36,7 +36,7 @@ describe Y2Storage::GuidedProposal do
 
   describe ".initial" do
     it "generates a proposal" do
-      expect(described_class.initial(settings: settings))
+      expect(described_class.initial(settings:))
         .to be_a(Y2Storage::GuidedProposal)
     end
 
@@ -45,11 +45,11 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "rste_swraid.xml" }
 
       it "does not raise an exception" do
-        expect { described_class.initial(settings: settings) }.to_not raise_error
+        expect { described_class.initial(settings:) }.to_not raise_error
       end
 
       it "generates a valid calculated proposal" do
-        result = described_class.initial(settings: settings)
+        result = described_class.initial(settings:)
         expect(result).to be_a Y2Storage::GuidedProposal
         expect(result.devices).to be_a Y2Storage::Devicegraph
       end
@@ -60,11 +60,11 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "unformatted-eckd-dasd" }
 
       it "does not raise an exception" do
-        expect { described_class.initial(settings: settings) }.to_not raise_error
+        expect { described_class.initial(settings:) }.to_not raise_error
       end
 
       it "generates a failed proposal" do
-        result = described_class.initial(settings: settings)
+        result = described_class.initial(settings:)
         expect(result).to be_a Y2Storage::GuidedProposal
         expect(result.failed?).to eq true
       end
@@ -72,7 +72,7 @@ describe Y2Storage::GuidedProposal do
   end
 
   describe "#propose" do
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
 
     context "when the candidate devices are given" do
       include_context "candidate devices"

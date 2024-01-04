@@ -24,7 +24,7 @@ require "y2storage/actions_presenter"
 describe Y2Storage::ActionsPresenter do
   subject { described_class.new(actiongraph) }
 
-  let(:actiongraph) { double(Y2Storage::Actiongraph, compound_actions: compound_actions) }
+  let(:actiongraph) { double(Y2Storage::Actiongraph, compound_actions:) }
   let(:compound_actions) { [] }
   let(:ca_delete_device) { instance_double(Y2Storage::CompoundAction) }
   let(:ca_create_device) { instance_double(Y2Storage::CompoundAction) }
@@ -170,7 +170,7 @@ describe Y2Storage::ActionsPresenter do
     let(:compound_actions) { [ca_create_device, ca_delete_device] }
     let(:filename) { "/tmp/saved_actions.txt" }
 
-    before { FileUtils.remove(filename) if File.exist?(filename) }
+    before { FileUtils.rm_f(filename) }
     after { FileUtils.remove(filename) }
 
     it "Saves the actions in a plain text file" do

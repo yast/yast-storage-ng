@@ -103,7 +103,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
     end
 
     context "when volumes are given" do
-      let(:params) { { volumes: volumes } }
+      let(:params) { { volumes: } }
 
       before do
         device = devicegraph.find_by_name("/dev/dasdc1")
@@ -191,7 +191,7 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
     end
 
     let(:device) do
-      instance_double(Y2Storage::Encryption, blk_device: blk_device, dm_table_name: "cr_1")
+      instance_double(Y2Storage::Encryption, blk_device:, dm_table_name: "cr_1")
     end
 
     subject { described_class.new("cr", sector_size: 2048) }

@@ -26,7 +26,7 @@ describe Y2Storage::GuidedProposal do
 
   include_context "proposal"
 
-  subject(:proposal) { described_class.new(settings: settings) }
+  subject(:proposal) { described_class.new(settings:) }
 
   describe "#propose with an IRST partition" do
     let(:scenario) { "irst-windows-linux" }

@@ -99,7 +99,7 @@ module Y2Storage
       # disk uses a driver that is known to require a daemon to be started in order to make the
       # device available. See bsc#1176140.
       log.info "systemd_remote? for #{name}: checking driver - #{driver}"
-      (SYSTEMD_REMOTE_DRIVERS & driver).any?
+      SYSTEMD_REMOTE_DRIVERS.intersect?(driver)
     end
 
     # Default partition table type for newly created partition tables

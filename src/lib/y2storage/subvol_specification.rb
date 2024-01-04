@@ -183,7 +183,7 @@ module Y2Storage
       archs = xml["archs"].gsub(/\s+/, "").split(",") if xml.key?("archs")
       referenced_limit = DiskSize.parse_or(xml["referenced_limit"]) if xml["referenced_limit"]
       planned_subvol = SubvolSpecification.new(
-        xml["path"], copy_on_write: cow, archs: archs, referenced_limit: referenced_limit
+        xml["path"], copy_on_write: cow, archs:, referenced_limit:
       )
       log.info("Creating from XML: #{planned_subvol}")
       planned_subvol

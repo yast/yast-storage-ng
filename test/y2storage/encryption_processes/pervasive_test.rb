@@ -32,7 +32,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
   let(:dm_name) { "cr_sda" }
   let(:secure_key) { nil }
   let(:block_size) { Y2Storage::DiskSize.new(4096) }
-  let(:region) { instance_double(Y2Storage::Region, block_size: block_size) }
+  let(:region) { instance_double(Y2Storage::Region, block_size:) }
 
   let(:zkey_cryptsetup) do
     "cryptsetup luksFormat --foo bar --dummy /dev/dasdc1\n" \
@@ -147,7 +147,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "sets LUKS format options" do
       subject.pre_commit(encryption)
-      expect(encryption.format_options).to include("--master-key-file "\
+      expect(encryption.format_options).to include("--master-key-file " \
                                                    "/etc/zkey/repository/secure_xtskey1.skey")
       expect(encryption.format_options).to include("--key-size 1024")
       expect(encryption.format_options).to include("--cipher paes-xts-plain64")

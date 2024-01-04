@@ -62,7 +62,7 @@ module Y2Storage
       #
       # @return [Y2Storage::Encryption]
       def create_device(blk_device, dm_name, apqns: [])
-        encryption_process.create_device(blk_device, dm_name, apqns: apqns)
+        encryption_process.create_device(blk_device, dm_name, apqns:)
       end
 
       private

@@ -113,7 +113,7 @@ describe Y2Storage::Callbacks::Activate do
     end
 
     let(:info) do
-      instance_double(Storage::LuksInfo, device_name: device_name, uuid: uuid, label: label, size: size)
+      instance_double(Storage::LuksInfo, device_name:, uuid:, label:, size:)
     end
 
     let(:device_name) { "/dev/sda1" }
@@ -339,7 +339,7 @@ describe Y2Storage::Callbacks::Activate do
   describe Y2Storage::Callbacks::Activate::InfoPresenter do
     subject { described_class.new(info) }
 
-    let(:info) { instance_double(Storage::LuksInfo, device_name: device, label: label, size: size) }
+    let(:info) { instance_double(Storage::LuksInfo, device_name: device, label:, size:) }
     let(:device) { "/dev/sda1" }
     let(:size) { 1024 }
 

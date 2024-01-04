@@ -147,7 +147,7 @@ module Y2Partitioner
           # TRANSLATORS: %{mount_points} is replaced by a list of mount points, please
           # do not modify it.
           format(_("The following mount points cannot be imported:\n%{mount_points}"),
-            mount_points: mount_points)
+            mount_points:)
         end
 
         # Entries in the current selected fstab that can be imported

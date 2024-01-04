@@ -101,7 +101,7 @@ module Y2Storage
 
       log.info("Marking #{pkg_list} for installation (optional: #{optional})")
       success = Yast::PackagesProposal.SetResolvables(
-        PROPOSAL_ID, :package, @pkg_list, optional: optional
+        PROPOSAL_ID, :package, @pkg_list, optional:
       )
       if !success
         log.error("PackagesProposal::SetResolvables() for #{pkg_list} failed")

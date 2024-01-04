@@ -73,7 +73,7 @@ module Y2Storage
       # @see SIZE_REGEXP
       def extract_sizes_for(size_spec, min, max)
         if ["", "max"].include?(size_spec)
-          return AutoinstSize.new(size_spec, min: min, max: DiskSize.unlimited)
+          return AutoinstSize.new(size_spec, min:, max: DiskSize.unlimited)
         end
 
         number, unit = size_to_components(size_spec)
@@ -84,7 +84,7 @@ module Y2Storage
           else
             DiskSize.parse(size_spec, legacy_units: true)
           end
-        AutoinstSize.new(size_spec, min: size, max: size, percentage: percentage)
+        AutoinstSize.new(size_spec, min: size, max: size, percentage:)
       rescue TypeError
         nil
       end
@@ -113,7 +113,7 @@ module Y2Storage
       def auto_sizes_for(mount_point)
         return nil if mount_point.nil?
 
-        spec = VolumeSpecification.for(mount_point, proposal_settings: proposal_settings)
+        spec = VolumeSpecification.for(mount_point, proposal_settings:)
         return nil if spec.nil?
 
         AutoinstSize.new(

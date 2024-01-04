@@ -124,14 +124,14 @@ describe Y2Storage::Planned::Md do
         let(:exclude) { :size }
 
         it "returns true" do
-          expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(true)
+          expect(planned_md.match_volume?(volume, exclude:)).to eq(true)
         end
 
         context "but the volume requires a specific partition id" do
           let(:volume_partition_id) { Y2Storage::PartitionId::ESP }
 
           it "returns false" do
-            expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(false)
+            expect(planned_md.match_volume?(volume, exclude:)).to eq(false)
           end
         end
       end

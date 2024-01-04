@@ -25,7 +25,7 @@ require "y2storage/dialogs/guided_setup/widgets/other_partition_actions"
 describe Y2Storage::Dialogs::GuidedSetup::Widgets::OtherPartitionActions do
   include_context "widgets"
 
-  subject { described_class.new(:other_actions, settings, enabled: enabled) }
+  subject { described_class.new(:other_actions, settings, enabled:) }
 
   let(:settings) { Y2Storage::ProposalSettings.new }
 

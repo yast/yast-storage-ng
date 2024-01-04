@@ -65,7 +65,7 @@ module Y2Partitioner
 
         Yast::WFM.call(client) if client
         reset_activation if reset_activation?
-        reprobe(activate: activate)
+        reprobe(activate:)
 
         :finish
       end

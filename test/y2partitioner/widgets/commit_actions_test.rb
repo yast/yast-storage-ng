@@ -64,7 +64,7 @@ describe Y2Partitioner::Widgets::CommitActions do
 
     it "performs an storage commit with proper callbacks" do
       expect(Y2Storage::StorageManager.instance).to receive(:commit)
-        .with(hash_including(callbacks: callbacks))
+        .with(hash_including(callbacks:))
 
       subject.init
     end

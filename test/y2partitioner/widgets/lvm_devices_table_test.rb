@@ -45,13 +45,13 @@ describe Y2Partitioner::Widgets::LvmDevicesTable do
 
   describe "#header" do
     it "returns array" do
-      expect(subject.header).to be_a(::Array)
+      expect(subject.header).to be_a(Array)
     end
   end
 
   describe "#items" do
     it "returns array of CWM table items" do
-      expect(subject.items).to be_a(::Array)
+      expect(subject.items).to be_a(Array)
       expect(subject.items.first).to be_a(CWM::TableItem)
     end
   end

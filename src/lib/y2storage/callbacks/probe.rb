@@ -74,7 +74,7 @@ module Y2Storage
         command.force_encoding("UTF-8")
 
         log.info "libstorage-ng reported a missing command, asking the user whether to continue"
-        log.info "Error details. message: #{message}. what: #{what}. command: #{command}. "\
+        log.info "Error details. message: #{message}. what: #{what}. command: #{command}. " \
                  "used_features: #{used_features}."
 
         packages = StorageFeaturesList.from_bitfield(used_features).pkg_list

@@ -22,7 +22,7 @@ require "y2storage"
 
 describe Y2Storage::EncryptionMethod::Luks2 do
   describe ".used_for?" do
-    let(:encryption) { double(Y2Storage::Encryption, type: type, cipher: cipher) }
+    let(:encryption) { double(Y2Storage::Encryption, type:, cipher:) }
     let(:cipher) { "aes-xts-plain64" }
 
     context "when the encryption type is LUKS1'" do

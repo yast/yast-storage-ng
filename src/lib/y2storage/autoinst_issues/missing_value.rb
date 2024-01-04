@@ -57,7 +57,7 @@ module Y2Storage
       # @see Issue#message
       def message
         # TRANSLATORS: AutoYaST element
-        format(_("Missing element '%{attr}'"), attr: attr)
+        format(_("Missing element '%{attr}'"), attr:)
       end
     end
   end

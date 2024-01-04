@@ -33,7 +33,7 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
     allow(Yast::UI).to receive(:QueryWidget).with(Id(:skip_decrypt), :Value).and_return(skip_decrypt)
   end
 
-  subject { described_class.new(info, attempts, always_skip: always_skip) }
+  subject { described_class.new(info, attempts, always_skip:) }
 
   let(:info) { instance_double(Y2Storage::Callbacks::Activate::InfoPresenter, to_text: "/dev/sda1") }
 

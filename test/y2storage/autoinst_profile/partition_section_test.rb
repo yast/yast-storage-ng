@@ -257,8 +257,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
             numeric?:       numeric?,
             number:         0,
             encrypted?:     false,
-            filesystem:     filesystem,
-            lvm_pv:         lvm_pv,
+            filesystem:,
+            lvm_pv:,
             bcache:         nil,
             in_bcache_cset: nil
           )
@@ -291,7 +291,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         let(:lvm_pv) do
           instance_double(
             Y2Storage::LvmPv,
-            lvm_vg: lvm_vg
+            lvm_vg:
           )
         end
 

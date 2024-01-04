@@ -39,7 +39,7 @@ describe "Creating and deleting filesystems in a block device" do
     Y2Partitioner::Actions::Controllers::Filesystem.new(partition, "The title")
   end
   let(:vg_controller) do
-    Y2Partitioner::Actions::Controllers::LvmVg.new(vg: vg)
+    Y2Partitioner::Actions::Controllers::LvmVg.new(vg:)
   end
 
   RSpec.shared_examples "empty partition" do

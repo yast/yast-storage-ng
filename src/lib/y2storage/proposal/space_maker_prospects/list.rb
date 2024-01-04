@@ -179,7 +179,7 @@ module Y2Storage
         # @param disk [Disk] disk to act upon
         # @param keep [Array<Integer>] sids of partitions that should not be deleted
         def add_delete_partition_prospects(disk, keep = [])
-          prospects = delete_prospects_for_disk(disk, keep: keep)
+          prospects = delete_prospects_for_disk(disk, keep:)
           linux, non_linux = prospects.partition { |e| e.partition_type == :linux }
           windows, other = non_linux.partition { |e| e.partition_type == :windows }
 

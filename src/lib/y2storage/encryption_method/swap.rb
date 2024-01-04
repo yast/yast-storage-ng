@@ -121,7 +121,7 @@ module Y2Storage
       # @see Base#encryption_process
       def encryption_process
         EncryptionProcesses::Volatile.new(
-          self, key_file: key_file, cipher: cipher, key_size: key_size
+          self, key_file:, cipher:, key_size:
         )
       end
     end

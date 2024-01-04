@@ -169,7 +169,7 @@ module Y2Partitioner
         journal:                   N_("<b>Journal Device</b> shows the device holding the " \
                                       "external journal."),
 
-        btrfs_devices:             N_("<b>Devices</b> shows the kernel name of the devices used by a "\
+        btrfs_devices:             N_("<b>Devices</b> shows the kernel name of the devices used by a " \
                                       "Btrfs file system."),
 
         btrfs_metadata_raid_level: N_("<b>Metadata RAID Level</b> shows the RAID level for the Btrfs " \

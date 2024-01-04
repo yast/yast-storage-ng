@@ -59,7 +59,7 @@ describe Y2Storage::InitialGuidedProposal do
     devices.map(&:name)
   end
 
-  subject(:proposal) { described_class.new(settings: settings) }
+  subject(:proposal) { described_class.new(settings:) }
 
   describe "#propose (with multidisk_first set to true)" do
     let(:sda) { fake_devicegraph.find_by_name("/dev/sda") }

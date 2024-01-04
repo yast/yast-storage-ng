@@ -68,10 +68,8 @@ module Y2Storage
         device.size =
           if max_size > resize_info.max_size || max_size == DiskSize.unlimited
             resize_info.max_size
-          elsif max_size < resize_info.min_size
-            resize_info.min_size
           else
-            max_size
+            [max_size, resize_info.min_size].max
           end
 
         if max_size != device.size && max_size != DiskSize.unlimited

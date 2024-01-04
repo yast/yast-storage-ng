@@ -136,7 +136,7 @@ module Y2Storage
       key = ENV.keys.sort.find { |k| k.match(/\A#{variable}\z/i) }
       return nil unless key
 
-      value = ENV[key]
+      value = ENV.fetch(key, nil)
       log.debug "Found ENV variable key: #{key.inspect} value: #{value.inspect}"
       value
     end

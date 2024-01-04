@@ -32,7 +32,7 @@ describe Y2Storage::Proposal::NfsCreator do
 
   let(:planned_nfs0) do
     planned_nfs(
-      server: server, path: path, mount_point: mount_point, fstab_options: fstab_options
+      server:, path:, mount_point:, fstab_options:
     )
   end
 

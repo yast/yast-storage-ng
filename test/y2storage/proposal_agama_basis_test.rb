@@ -26,7 +26,7 @@ require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::MinGuidedProposal do
   describe "#propose with settings in the Agama style" do
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
 
     include_context "proposal"
     let(:architecture) { :x86 }

@@ -179,7 +179,7 @@ module Y2Partitioner
         # TRANSLATORS: error message, where %{error_by} is replaced by an initial sentence.
         intro = format(
           _("%{error_by}\nModify the list of devices or adjust the RAID levels."),
-          error_by: error_by
+          error_by:
         )
 
         [intro, data_error, metadata_error].compact.join("\n\n")

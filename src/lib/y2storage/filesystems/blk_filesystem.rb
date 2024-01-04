@@ -140,7 +140,7 @@ module Y2Storage
 
         # TRANSLATORS: block device basename for a multi-device filesystem, where %{basename} is replaced
         # by the basename of the first block device (e.g., "(sda1...)").
-        format(_("(%{basename}\u2026)"), basename: basename)
+        format(_("(%{basename}\u2026)"), basename:)
       end
 
       # Display name to represent the filesystem

@@ -160,7 +160,7 @@ describe Y2Storage::Planned::LvmVg do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 1.GiB, max: max)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 1.GiB, max:)] }
 
       context "and the max size is unlimited" do
         let(:reused_vg) { nil }

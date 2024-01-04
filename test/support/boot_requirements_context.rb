@@ -42,8 +42,8 @@ RSpec.shared_context "boot requirements" do
   let(:analyzer) do
     double(
       "Y2Storage::BootRequirementsStrategies::Analyzer",
-      boot_disk:               boot_disk,
-      root_filesystem:         root_filesystem,
+      boot_disk:,
+      root_filesystem:,
       root_in_lvm?:            use_lvm,
       root_in_software_raid?:  use_raid,
       encrypted_root?:         use_encryption,
@@ -54,8 +54,8 @@ RSpec.shared_context "boot requirements" do
       encrypted_boot?:         use_encryption,
       btrfs_root?:             use_btrfs,
       boot_filesystem_type:    boot_fs,
-      planned_prep_partitions: planned_prep_partitions,
-      planned_grub_partitions: planned_grub_partitions,
+      planned_prep_partitions:,
+      planned_grub_partitions:,
       planned_devices:         planned_grub_partitions + planned_prep_partitions,
       max_planned_weight:      0.0,
       boot_fs_can_embed_grub?: embed_grub,

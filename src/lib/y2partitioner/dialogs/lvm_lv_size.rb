@@ -164,7 +164,7 @@ module Y2Partitioner
               "%{max_size}. Please, adjust the selected size.\n\n" \
               "Also consider the size of other striped volumes. Otherwise the volume group might not " \
               "be able to allocate all the striped volumes."),
-            stripes:  stripes,
+            stripes:,
             max_size: controller.vg.max_size_for_striped_lv(stripes)
           )
         end
@@ -347,7 +347,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def help
-          _("<p><b>Stripes:</b> How to distribute data of this logical volume "\
+          _("<p><b>Stripes:</b> How to distribute data of this logical volume " \
             "over different physical volumes for better performance.</p>")
         end
 

@@ -21,7 +21,7 @@ require "installation/autoinst_profile/section_with_attributes"
 
 RSpec.shared_examples "autoinst section" do
   let(:parent) do
-    ::Installation::AutoinstProfile::SectionWithAttributes.new
+    Installation::AutoinstProfile::SectionWithAttributes.new
   end
 
   describe ".new_from_hashes" do

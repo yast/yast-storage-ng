@@ -25,7 +25,7 @@ require "y2storage/dialogs/guided_setup/widgets/linux_partition_actions"
 describe Y2Storage::Dialogs::GuidedSetup::Widgets::LinuxPartitionActions do
   include_context "widgets"
 
-  subject { described_class.new(:linux_actions, settings, enabled: enabled) }
+  subject { described_class.new(:linux_actions, settings, enabled:) }
 
   let(:settings) { Y2Storage::ProposalSettings.new }
 

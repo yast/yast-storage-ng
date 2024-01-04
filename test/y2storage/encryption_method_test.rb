@@ -509,7 +509,7 @@ describe Y2Storage::EncryptionMethod do
   describe ".for_crypttab" do
     let(:entry) do
       instance_double(
-        Y2Storage::SimpleEtcCrypttabEntry, password: password, crypt_options: crypt_options
+        Y2Storage::SimpleEtcCrypttabEntry, password:, crypt_options:
       )
     end
 

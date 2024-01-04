@@ -154,7 +154,7 @@ module Y2Partitioner
         accept = Yast::Popup.YesNo(
           # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
           format(
-            _("The device %{name} is directly formatted.\n"\
+            _("The device %{name} is directly formatted.\n" \
               "Remove the filesystem on %{name}?"),
             name: device_name
           )
@@ -201,7 +201,7 @@ module Y2Partitioner
         # TRANSLATORS: Note added to the dialog for trying to unmount devices
         note = _("A new partition cannot be created while the file system is mounted.")
 
-        Dialogs::Unmount.new(controller.committed_filesystem, note: note).run == :finish
+        Dialogs::Unmount.new(controller.committed_filesystem, note:).run == :finish
       end
 
       # Convenience method for returning the device available partition types

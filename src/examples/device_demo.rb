@@ -113,7 +113,7 @@ if opt_propose
   settings = Y2Storage::ProposalSettings.new_for_current_product
   settings.use_lvm = opt_lvm
   settings.encryption_password = opt_encryption
-  proposal = Y2Storage::GuidedProposal.new(settings: settings)
+  proposal = Y2Storage::GuidedProposal.new(settings:)
   proposal.propose
   devicegraph = proposal.devices
 end

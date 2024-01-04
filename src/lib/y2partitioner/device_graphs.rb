@@ -33,7 +33,7 @@ module Y2Partitioner
       # Creates the singleton instance with customized devicegraphs. To
       # be used during the initialization of the partitioner.
       def create_instance(system, initial)
-        @instance = new(system: system, initial: initial)
+        @instance = new(system:, initial:)
       end
 
       # Make sure only .instance and .create_instance can be used to

@@ -65,7 +65,7 @@ module Y2Partitioner
       # @see TransactionWizard
       def init_transaction
         # The controller object must be created within the transaction
-        @controller = Controllers::BtrfsDevices.new(filesystem: filesystem, wizard_title: title)
+        @controller = Controllers::BtrfsDevices.new(filesystem:, wizard_title: title)
       end
 
       # Wizard title

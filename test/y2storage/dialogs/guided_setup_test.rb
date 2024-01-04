@@ -22,32 +22,32 @@ require_relative "../spec_helper"
 require "y2storage/dialogs/guided_setup"
 
 describe Y2Storage::Dialogs::GuidedSetup do
-  def allow_dialog(dialog, action, &block)
-    allow_any_instance_of(dialog).to receive(action), &block
+  def allow_dialog(dialog, action, &)
+    allow_any_instance_of(dialog).to(receive(action), &)
   end
 
-  def allow_run_select_disks(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, :run, &block)
+  def allow_run_select_disks(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, :run, &)
   end
 
-  def allow_run_select_root_disk(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, :run, &block)
+  def allow_run_select_root_disk(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, :run, &)
   end
 
-  def allow_run_select_scheme(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, :run, &block)
+  def allow_run_select_scheme(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, :run, &)
   end
 
-  def allow_run_select_filesystem(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, :run, &block)
+  def allow_run_select_filesystem(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, :run, &)
   end
 
-  def allow_run_select_volumes_disks(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectVolumesDisks, :run, &block)
+  def allow_run_select_volumes_disks(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectVolumesDisks, :run, &)
   end
 
-  def allow_run_select_partition_actions(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectPartitionActions, :run, &block)
+  def allow_run_select_partition_actions(&)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectPartitionActions, :run, &)
   end
 
   def allow_run_all_dialogs
@@ -85,7 +85,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
   end
 
   def disk(name)
-    instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
+    instance_double(Y2Storage::Disk, name:, size: Y2Storage::DiskSize.new(0))
   end
 
   subject { described_class.new(settings, analyzer) }

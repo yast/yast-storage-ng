@@ -30,7 +30,7 @@ describe Y2Storage::GuidedProposal do
   describe "#propose" do
     include_context "proposal"
 
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.new(settings:) }
     let(:scenario) { "empty_hard_disk_50GiB" }
     let(:architecture) { :x86 }
     let(:control_file) { "legacy_settings.xml" }

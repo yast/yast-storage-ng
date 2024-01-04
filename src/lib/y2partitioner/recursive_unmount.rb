@@ -41,7 +41,7 @@ module Y2Partitioner
 
       return true if mounted_devices.none?
 
-      Dialogs::Unmount.new(mounted_devices, note: note).run == :finish
+      Dialogs::Unmount.new(mounted_devices, note:).run == :finish
     end
 
     # Finds devices that are currently mounted in the system

@@ -27,7 +27,7 @@ describe Y2Storage::GuidedProposal do
   describe ".initial" do
     include_context "proposal"
 
-    subject(:proposal) { described_class.initial(settings: settings) }
+    subject(:proposal) { described_class.initial(settings:) }
 
     let(:architecture) { :x86 }
 

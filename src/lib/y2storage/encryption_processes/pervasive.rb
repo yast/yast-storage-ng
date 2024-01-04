@@ -78,7 +78,7 @@ module Y2Storage
         # NOTE: The options cipher and key-size could also be influenced by setting
         # Encryption#cipher and Encryption#key_size. If those attributes have any value, the
         # correspoding format options are prepended to Encryption#format_options by libstorage-ng.
-        device.format_options = "--master-key-file #{master_key_file.shellescape} --key-size 1024 "\
+        device.format_options = "--master-key-file #{master_key_file.shellescape} --key-size 1024 " \
                                 "--cipher paes-xts-plain64"
         device.format_options += " --sector-size #{sector_size}" if sector_size
         device.format_options += " --pbkdf pbkdf2"
@@ -94,7 +94,7 @@ module Y2Storage
         @secure_key.add_device_and_write(device) unless @secure_key.for_device?(device)
 
         zkey_cryptsetup_output = execute_zkey_cryptsetup(device)
-        commands = zkey_cryptsetup_output[1..-1]
+        commands = zkey_cryptsetup_output[1..]
         return if commands.nil?
 
         commands.each do |command|
@@ -156,7 +156,7 @@ module Y2Storage
         key = SecureKey.generate(
           key_name,
           sector_size: sector_size_for(device.blk_device),
-          apqns:       apqns
+          apqns:
         )
         log.info "Generated secure key #{key.name}"
 

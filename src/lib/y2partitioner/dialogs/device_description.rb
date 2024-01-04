@@ -127,7 +127,7 @@ module Y2Partitioner
         return @info_widget if @info_widget
 
         entry = WIDGETS.find { |k, _v| device.is?(k) }
-        @info_widget = entry ? entry.last.new(device) : nil
+        @info_widget = entry&.last&.new(device)
       end
 
       # @see Y2Partitioner::Dialogs::Popup

@@ -34,7 +34,7 @@ describe Y2Storage::Shadower do
 
   let(:root_spec) { instance_double(Y2Storage::VolumeSpecification, btrfs_default_subvolume: "@") }
 
-  subject { described_class.new(devicegraph, filesystems: filesystems) }
+  subject { described_class.new(devicegraph, filesystems:) }
 
   let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
 

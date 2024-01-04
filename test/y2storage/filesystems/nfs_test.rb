@@ -118,7 +118,7 @@ describe Y2Storage::Filesystems::Nfs do
     end
 
     context "when libstorage-ng fails to provide space information" do
-      before { allow(subject).to receive(:detect_space_info).and_raise(::Storage::Exception) }
+      before { allow(subject).to receive(:detect_space_info).and_raise(Storage::Exception) }
 
       it "returns false" do
         expect(subject.reachable?).to eq false

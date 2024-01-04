@@ -586,7 +586,7 @@ module Y2Partitioner
           _("<p><b>%{label}</b> configures Snapper and the subvolumes of the root file " \
             "system in a way that makes possible to take snapshots of the system. That " \
             "allows to boot to any of those former snapshots, rolling back any change " \
-            "done to the system and restoring its previous state.</p>"), label: label
+            "done to the system and restoring its previous state.</p>"), label:
         )
       end
     end

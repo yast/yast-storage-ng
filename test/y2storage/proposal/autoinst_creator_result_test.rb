@@ -46,7 +46,7 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   let(:shrinked_lv1) do
     instance_double(
       Y2Storage::Planned::LvmLv, planned_id: planned_lv1.planned_id,
-                                 min_size:   Y2Storage::DiskSize.B(1)
+      min_size:   Y2Storage::DiskSize.B(1)
     )
   end
 

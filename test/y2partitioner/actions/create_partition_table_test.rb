@@ -439,7 +439,7 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
           sid = disk.filesystem.sid
 
           expect(Y2Partitioner::Dialogs::Unmount).to receive(:new) do |devices, _|
-            expect(devices).to contain_exactly(an_object_having_attributes(sid: sid))
+            expect(devices).to contain_exactly(an_object_having_attributes(sid:))
           end.and_return(unmount_dialog)
 
           action.run

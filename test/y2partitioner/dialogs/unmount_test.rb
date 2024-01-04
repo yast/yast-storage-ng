@@ -29,7 +29,7 @@ describe Y2Partitioner::Dialogs::Unmount do
     devicegraph_stub(scenario)
   end
 
-  subject { described_class.new(devices, note: note, allow_continue: allow_continue) }
+  subject { described_class.new(devices, note:, allow_continue:) }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 

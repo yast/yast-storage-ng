@@ -107,7 +107,7 @@ module Y2Partitioner
 
         # @see UsedDevicesTab#buttons
         def buttons
-          Right(LvmVgResizeButton.new(device: device))
+          Right(LvmVgResizeButton.new(device:))
         end
       end
     end

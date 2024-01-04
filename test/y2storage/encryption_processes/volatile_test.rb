@@ -26,9 +26,9 @@ describe Y2Storage::EncryptionProcesses::Volatile do
   subject do
     described_class.new(
       method,
-      key_file: key_file,
-      cipher:   cipher,
-      key_size: key_size
+      key_file:,
+      cipher:,
+      key_size:
     )
   end
 
@@ -52,7 +52,7 @@ describe Y2Storage::EncryptionProcesses::Volatile do
 
     let(:block_size) { Y2Storage::DiskSize.new(4096) }
 
-    let(:region) { instance_double(Y2Storage::Region, block_size: block_size) }
+    let(:region) { instance_double(Y2Storage::Region, block_size:) }
 
     it "returns an encryption device" do
       result = subject.create_device(device, dm_name)
