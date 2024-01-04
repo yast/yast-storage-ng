@@ -264,7 +264,7 @@ module Y2Storage
       # @return [String, nil]
       def forced_disk_name
         forced_lv = lvs.find(&:disk)
-        forced_lv ? forced_lv.disk : nil
+        forced_lv&.disk
       end
 
       protected

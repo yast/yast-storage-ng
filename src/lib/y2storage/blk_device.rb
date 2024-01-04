@@ -504,7 +504,7 @@ module Y2Storage
     # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups,
     #   multipath, bcache and bcache_cset devices
     def component_of
-      vg = lvm_pv ? lvm_pv.lvm_vg : nil
+      vg = lvm_pv&.lvm_vg
       fs = (formatted? && filesystem.multidevice?) ? filesystem : nil
 
       (dm_raids + [vg, md, multipath, bcache, in_bcache_cset, fs]).compact

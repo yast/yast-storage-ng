@@ -190,7 +190,7 @@ module Y2Partitioner
 
       # @see LuksOptions#widgets
       def widgets
-        super.concat([pbkdf_widget, label_widget])
+        super.push(pbkdf_widget, label_widget)
       end
 
       # Widget to set the password-based key derivation function

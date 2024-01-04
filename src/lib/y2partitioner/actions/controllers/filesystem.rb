@@ -144,7 +144,7 @@ module Y2Partitioner
         #
         # @return [Y2Storage::Filesystems::Type, nil] nil if there is no filesystem
         def filesystem_type
-          filesystem ? filesystem.type : nil
+          filesystem&.type
         end
 
         # Whether the block device will be formatted, i.e. a new filesystem will

@@ -362,7 +362,7 @@ module Y2Storage
     #   each subclass.
     # @return [Boolean]
     def is?(*types)
-      (types.map(&:to_sym) & types_for_is).any?
+      types.map(&:to_sym).intersect?(types_for_is)
     end
 
     # Whether there is (or there will be) an entry for this device in the

@@ -29,7 +29,7 @@ describe Y2Storage::StorageClassWrapper do
       describe wrapper do
         all_children = ObjectSpace.each_object(Class).select { |c| c < wrapper }
         direct_children = all_children.select do |child|
-          ancestors_classes = child.ancestors[1..-1].select { |c| c.is_a?(Class) }
+          ancestors_classes = child.ancestors[1..].select { |c| c.is_a?(Class) }
           ancestors_classes.first == wrapper
         end
 

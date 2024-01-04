@@ -219,7 +219,7 @@ module Y2Partitioner
     # @return [Y2Storage::BlkDevice, nil]
     def checkpoint_device
       checkpoint = DeviceGraphs.instance.checkpoint(device)
-      dev = checkpoint.nil? ? nil : checkpoint.find_device(device.sid)
+      dev = checkpoint&.find_device(device.sid)
       dev || system_device
     end
 

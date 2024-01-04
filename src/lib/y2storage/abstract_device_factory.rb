@@ -127,7 +127,7 @@ module Y2Storage
 
       # Split up pure parameters and sub-product descriptions
       sub_prod = content.select { |k, _v| factory_products.include?(k) }
-      param    = content.reject { |k, _v| factory_products.include?(k) }
+      param    = content.except(*factory_products)
 
       # Call subclass-defined fixup method if available
       # to convert known value types to a better usable type

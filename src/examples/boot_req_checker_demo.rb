@@ -31,7 +31,6 @@ require "yast"	# changes $LOAD_PATH
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "y2storage"
-require "pp"
 
 if !Process.euid.zero?
   warn "You need to run this script as 'root'."

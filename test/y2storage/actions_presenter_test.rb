@@ -170,7 +170,7 @@ describe Y2Storage::ActionsPresenter do
     let(:compound_actions) { [ca_create_device, ca_delete_device] }
     let(:filename) { "/tmp/saved_actions.txt" }
 
-    before { FileUtils.remove(filename) if File.exist?(filename) }
+    before { FileUtils.rm_f(filename) }
     after { FileUtils.remove(filename) }
 
     it "Saves the actions in a plain text file" do

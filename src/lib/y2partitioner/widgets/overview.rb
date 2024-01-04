@@ -122,7 +122,7 @@ module Y2Partitioner
         items_with_children = with_children(tree.items)
         open_items = Yast::UI.QueryWidget(Id(tree.widget_id), :OpenItems).keys
 
-        items_with_children.map { |i| [i.to_s, open_items.include?(i)] }.to_h
+        items_with_children.to_h { |i| [i.to_s, open_items.include?(i)] }
       end
 
       # Checks whether the current page is associated to a specific device

@@ -87,7 +87,6 @@ module Installation
   class ProposalStore; end
 
   class ProposalRunner
-    def initialize(_runner); end
     def run; end
   end
 end

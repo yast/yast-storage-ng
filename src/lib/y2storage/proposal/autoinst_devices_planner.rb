@@ -56,7 +56,7 @@ module Y2Storage
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
       # @return [Planned::DevicesCollection]
       def planned_devices(drives_map)
-        devices = drives_map.each_pair.each_with_object([]) do |(disk_name, drive), memo|
+        devices = drives_map.each_pair.with_object([]) do |(disk_name, drive), memo|
           planned_devs = planned_for_drive(drive, disk_name)
           memo.concat(planned_devs) if planned_devs
         end

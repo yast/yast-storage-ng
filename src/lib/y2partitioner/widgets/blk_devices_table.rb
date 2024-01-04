@@ -76,7 +76,7 @@ module Y2Partitioner
       # @return [Hash{String => Boolean}] same format as {#open_items}
       def ui_open_items
         open = Yast::UI.QueryWidget(Id(widget_id), :OpenItems).keys
-        all_items.map { |i| [i.id, open.include?(i.id) || i.children.none?] }.to_h
+        all_items.to_h { |i| [i.id, open.include?(i.id) || i.children.none?] }
       end
 
       # Updates table content

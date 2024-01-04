@@ -83,7 +83,7 @@ module Y2Storage
 
       lines = output.split(DEVICE_REGEXP).reject(&:empty?)
 
-      lines.each_slice(2).each_with_object({}) do |(header, body), data|
+      lines.each_slice(2).with_object({}) do |(header, body), data|
         details = data_from_body(body)
         next if details.device_file.nil?
 

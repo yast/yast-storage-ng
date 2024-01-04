@@ -24,7 +24,6 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup"
-require "pp"
 
 DATA_DIR = "../../test/data"
 FALLBACK_CONTROL_FILE = DATA_DIR + "/control_files/volumes_ng/control.SLE-with-data.xml"

@@ -20,7 +20,6 @@
 
 require_relative "spec_helper"
 require "y2storage"
-require "pp"
 require "y2storage/equal_by_instance_variables"
 
 describe Y2Storage::SecretAttributes do

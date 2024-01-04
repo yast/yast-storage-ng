@@ -94,7 +94,7 @@ module Y2Storage
         @secure_key.add_device_and_write(device) unless @secure_key.for_device?(device)
 
         zkey_cryptsetup_output = execute_zkey_cryptsetup(device)
-        commands = zkey_cryptsetup_output[1..-1]
+        commands = zkey_cryptsetup_output[1..]
         return if commands.nil?
 
         commands.each do |command|

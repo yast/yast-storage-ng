@@ -52,7 +52,7 @@ module Y2Storage
       # @param planned_ptable_type [Y2Storage::PartitionTables::Type,nil] Wanted partition table type
       # @return [Y2Storage::PartitionTables::Type] Partition table type
       def suitable_ptable_type(device, planned_ptable_type)
-        device_ptable_type = device.partition_table ? device.partition_table.type : nil
+        device_ptable_type = device.partition_table&.type
         planned_ptable_type || device_ptable_type || device.preferred_ptable_type
       end
 

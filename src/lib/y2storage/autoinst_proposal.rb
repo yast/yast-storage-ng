@@ -134,7 +134,7 @@ module Y2Storage
       ptable_type = nil
       ptable_type = Y2Storage::PartitionTables::Type.find(drive_spec.disklabel) if drive_spec.disklabel
 
-      disk_ptable_type = disk.partition_table ? disk.partition_table.type : nil
+      disk_ptable_type = disk.partition_table&.type
       ptable_type || disk_ptable_type || disk.preferred_ptable_type
     end
 

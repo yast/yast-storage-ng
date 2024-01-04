@@ -339,7 +339,7 @@ module Y2Storage
         if result.zero?
           if attrs.size > 1
             # Try next attribute
-            compare(one, other, attrs[1..-1], nils_first, descending)
+            compare(one, other, attrs[1..], nils_first, descending)
           else
             # Keep original order by checking the indexes
             one.last <=> other.last

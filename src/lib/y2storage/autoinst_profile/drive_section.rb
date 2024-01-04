@@ -619,7 +619,7 @@ module Y2Storage
       #   nil if the root filesystem is not applicable.
       def enabled_snapshots?(filesystems)
         root_fs = filesystems.find(&:root?)
-        return nil if root_fs.nil? || (root_fs.multidevice? && !btrfs_drive_section?)
+        return false if root_fs.nil? || (root_fs.multidevice? && !btrfs_drive_section?)
 
         root_fs.respond_to?(:snapshots?) && root_fs.snapshots?
       end
