@@ -36,8 +36,11 @@ module Y2Storage
 
     ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS = "LIBSTORAGE_IGNORE_PROBE_ERRORS".freeze
 
+    ENV_REUSE_LVM = "YAST_REUSE_LVM".freeze
+
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS, :ENV_LUKS2_AVAILABLE
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
+    private_constant :ENV_REUSE_LVM
 
     def initialize
       reset_cache
@@ -87,6 +90,15 @@ module Y2Storage
     # @return [Boolean]
     def luks2_available?
       active?(ENV_LUKS2_AVAILABLE, default: false)
+    end
+
+    # Whether YaST should reuse existing LVM
+    #
+    # see jsc#PED-6407 or jsc#IBM-1315
+    #
+    # @return [Boolean]
+    def reuse_lvm?
+      active?(ENV_REUSE_LVM, default: true)
     end
 
     # Whether errors during libstorage probing should be ignored.
