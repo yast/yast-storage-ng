@@ -1,4 +1,4 @@
-#eCopyright (c) [2015] SUSE LLC
+# Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
 #
