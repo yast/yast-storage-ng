@@ -21,7 +21,6 @@ require "fileutils"
 require "y2storage/disk_size"
 require "y2storage/exceptions"
 require "y2storage/planned/lvm_vg"
-require "y2storage/storage_env"
 
 module Y2Storage
   module Proposal

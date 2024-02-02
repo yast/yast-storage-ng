@@ -29,6 +29,7 @@ require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
+require "y2storage/storage_env"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
