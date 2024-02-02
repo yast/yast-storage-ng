@@ -236,6 +236,7 @@ module Y2Storage
     def for_current_product
       apply_defaults
       load_features
+      apply_user_enforced
     end
 
     # Produces a deep copy of settings
@@ -399,6 +400,14 @@ module Y2Storage
       DEFAULTS.each do |key, value|
         send(:"#{key}=", value) if send(key).nil?
       end
+    end
+
+    # Some values can be explicitly enforced by user
+    # This setting should have precendence over everything else
+    def apply_user_enforced
+      value = StorageEnv.instance.reuse_lvm?
+
+      send(:lvm_vg_reuse, StorageEnv.instance.reuse_lvm?) if !value.nil?
     end
 
     # Overrides the settings with values read from the YaST product features

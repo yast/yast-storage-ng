@@ -167,9 +167,7 @@ module Y2Storage
       # @return [Boolean]
       def try_to_reuse?
         # Setting introduced to completely avoid LVM reusing in D-Installer.
-        # However it happened to be handy even in old yast later on. Preset
-        # settings can get overwritten by Linuxrc boot param.
-        return false if StorageEnv.instance.reuse_lvm? == false || settings.lvm_vg_reuse == false
+        return false if settings.lvm_vg_reuse == false
 
         # We introduced this when we still didn't have a mechanism to activate
         # existing LUKS. Now such mechanism exists but this check has never been
