@@ -97,7 +97,7 @@ module Y2Storage
     # see jsc#PED-6407 or jsc#IBM-1315
     #
     # @return [Boolean, nil] boolean as explicitly set by user, nil if user set nothing
-    def reuse_lvm?
+    def requested_lvm_reuse
       active?(ENV_REUSE_LVM, default: nil)
     end
 

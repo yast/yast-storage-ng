@@ -406,9 +406,9 @@ module Y2Storage
     # Some values can be explicitly enforced by user
     # This setting should have precendence over everything else
     def apply_user_enforced
-      value = StorageEnv.instance.reuse_lvm?
+      value = StorageEnv.instance.requested_lvm_reuse
 
-      send(:lvm_vg_reuse, StorageEnv.instance.reuse_lvm?) if !value.nil?
+      send(:lvm_vg_reuse=, StorageEnv.instance.requested_lvm_reuse) if !value.nil?
     end
 
     # Overrides the settings with values read from the YaST product features
