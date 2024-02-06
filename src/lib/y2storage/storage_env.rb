@@ -98,7 +98,11 @@ module Y2Storage
     #
     # @return [Boolean, nil] boolean as explicitly set by user, nil if user set nothing
     def requested_lvm_reuse
-      active?(ENV_REUSE_LVM, default: nil)
+      value = read(ENV_REUSE_LVM)
+
+      return env_str_to_bool(value) if value
+
+      nil
     end
 
     # Whether errors during libstorage probing should be ignored.
@@ -118,6 +122,13 @@ module Y2Storage
 
     private
 
+    # Takes a string and translates it to bool in a similar way how linuxrc does
+    def env_str_to_bool(value)
+      # Similar to what linuxrc does, also consider the flag activated if the
+      # variable is used with no value or with "1"
+      value.casecmp?("on") || value.empty? || value == "1"
+    end
+
     # Whether the env variable is active
     #
     # @param variable [String]
@@ -128,9 +139,7 @@ module Y2Storage
 
       value = read(variable)
       result = if value
-        # Similar to what linuxrc does, also consider the flag activated if the
-        # variable is used with no value or with "1"
-        value.casecmp?("on") || value.empty? || value == "1"
+        env_str_to_bool(value)
       else
         default
       end
