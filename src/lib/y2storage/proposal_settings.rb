@@ -424,7 +424,6 @@ module Y2Storage
       load_feature(:proposal, :other_delete_mode)
       load_feature(:proposal, :delete_resize_configurable)
       load_feature(:proposal, :lvm_vg_strategy)
-      load_feature(:proposal, :lvm_vg_reuse)
       load_feature(:proposal, :allocate_volume_mode)
       load_feature(:proposal, :multidisk_first)
       load_size_feature(:proposal, :lvm_vg_size)
