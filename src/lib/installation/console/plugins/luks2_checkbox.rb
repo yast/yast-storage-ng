@@ -36,7 +36,7 @@ module Installation
 
         def label
           # TRANSLATORS: check box label
-          _("Enable Experimental LUKS2 Encryption Support")
+          _("Enable LUKS2 Encryption Support")
         end
 
         def store
