@@ -98,6 +98,7 @@ module Y2Storage
         # Other
         UF_QUOTA:            "quota",
         UF_BCACHE:           "bcache-tools",
+        UF_BCACHEFS:         [], # When implemented: "bcachefs-tools"
         UF_SNAPSHOTS:        "snapper"
       }
 
