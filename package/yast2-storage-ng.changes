@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Feb 14 09:11:06 UTC 2024 - Michal Filka <mfilka@suse.com>
+
+- jsc#PED-6407
+  - new env variable YAST_REUSE_LVM for reusing LVM in new
+    installation. It can be used as linuxrc boot param.
+- 4.6.15
+
+-------------------------------------------------------------------
 Wed Oct 11 08:41:15 UTC 2023 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - New MdLevel value for linear RAIDs (bsc#1215022)
