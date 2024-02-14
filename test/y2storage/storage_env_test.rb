@@ -68,4 +68,26 @@ describe Y2Storage::StorageEnv do
       end
     end
   end
+
+  describe "#requested_lvm_reuse" do
+    context "YAST_REUSE_LVM is set to '1'" do
+      let(:env_vars) do
+        { "YAST_REUSE_LVM" => "1" }
+      end
+
+      it "returns true" do
+        expect(Y2Storage::StorageEnv.instance.requested_lvm_reuse).to be true
+      end
+    end
+
+    context "YAST_REUSE_LVM not set" do
+      let(:env_vars) do
+        {}
+      end
+
+      it "returns nil" do
+        expect(Y2Storage::StorageEnv.instance.requested_lvm_reuse).to be nil
+      end
+    end
+  end
 end
