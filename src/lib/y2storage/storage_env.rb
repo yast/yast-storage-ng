@@ -100,9 +100,9 @@ module Y2Storage
     def requested_lvm_reuse
       value = read(ENV_REUSE_LVM)
 
-      return env_str_to_bool(value) if value
+      return nil if !value
 
-      nil
+      env_str_to_bool(value)
     end
 
     # Whether errors during libstorage probing should be ignored.
