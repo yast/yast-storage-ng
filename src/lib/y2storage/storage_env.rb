@@ -36,8 +36,11 @@ module Y2Storage
 
     ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS = "LIBSTORAGE_IGNORE_PROBE_ERRORS".freeze
 
+    ENV_REUSE_LVM = "YAST_REUSE_LVM".freeze
+
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS, :ENV_LUKS2_AVAILABLE
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
+    private_constant :ENV_REUSE_LVM
 
     def initialize
       reset_cache
@@ -89,6 +92,19 @@ module Y2Storage
       active?(ENV_LUKS2_AVAILABLE, default: false)
     end
 
+    # Whether YaST should reuse existing LVM
+    #
+    # see jsc#PED-6407 or jsc#IBM-1315
+    #
+    # @return [Boolean, nil] boolean as explicitly set by user, nil if user set nothing
+    def requested_lvm_reuse
+      value = read(ENV_REUSE_LVM)
+
+      return nil if !value
+
+      env_str_to_bool(value)
+    end
+
     # Whether errors during libstorage probing should be ignored.
     #
     # See bsc#1177332:
@@ -106,6 +122,13 @@ module Y2Storage
 
     private
 
+    # Takes a string and translates it to bool in a similar way how linuxrc does
+    def env_str_to_bool(value)
+      # Similar to what linuxrc does, also consider the flag activated if the
+      # variable is used with no value or with "1"
+      value.casecmp?("on") || value.empty? || value == "1"
+    end
+
     # Whether the env variable is active
     #
     # @param variable [String]
@@ -116,9 +139,7 @@ module Y2Storage
 
       value = read(variable)
       result = if value
-        # Similar to what linuxrc does, also consider the flag activated if the
-        # variable is used with no value or with "1"
-        value.casecmp?("on") || value.empty? || value == "1"
+        env_str_to_bool(value)
       else
         default
       end
