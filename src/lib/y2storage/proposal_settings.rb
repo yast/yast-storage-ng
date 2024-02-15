@@ -30,6 +30,7 @@ require "y2storage/encryption_method"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
 require "y2storage/storage_env"
+require "y2storage/pbkd_function"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -443,18 +444,32 @@ module Y2Storage
 
     # Loads the default encryption settings
     #
-    # The encryption settings are not part of control.xml, but can be injected by a previous step of
-    # the installation, eg. the dialog of the Common Criteria system role
+    # The encryption settings are not part of the offical control.xml, but can be injected by a previous step of
+    # the installation, eg. the dialog of the Common Criteria system role or expert dialog
     def load_encryption
       enc = feature(:proposal, :encryption)
-
       return unless enc
-      return unless enc.respond_to?(:password)
 
-      passwd = enc.password.to_s
-      return if passwd.nil? || passwd.empty?
+      if enc.is_a?(Hash)
+        # Data comes from expert dialog
+        passwd = enc["password"]
+        self.encryption_password = passwd if !passwd.nil? && !passwd.empty?
 
-      self.encryption_password = passwd
+        type = enc["type"]
+        # default is luks1
+        self.encryption_method = EncryptionMethod::LUKS2 if !type.nil? && type == "luks2"
+
+        pbkdf = enc["pbkdf"]
+        self.encryption_pbkdf = Y2Storage::PbkdFunction.find(pbkdf) if !pbkdf.nil? && !pbkdf.empty?
+      else
+        # Data comes event. from Common Criteria system role ?
+        return unless enc.respond_to?(:password)
+
+        passwd = enc.password.to_s
+        return if passwd.nil? || passwd.empty?
+
+        self.encryption_password = passwd
+      end
     end
 
     def validated_delete_mode(mode)
