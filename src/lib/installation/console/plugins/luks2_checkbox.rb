@@ -20,7 +20,7 @@ require "y2storage/storage_env"
 module Installation
   module Console
     module Plugins
-      # define a checkbox for enabling the experimental LUKS2 support in the installer
+      # define a checkbox for enabling the LUKS2 support in the installer
       class LUKS2CheckBox < CWM::CheckBox
         include Yast::Logger
 
@@ -36,7 +36,7 @@ module Installation
 
         def label
           # TRANSLATORS: check box label
-          _("Enable Experimental LUKS2 Encryption Support")
+          _("Enable LUKS2 Encryption Support")
         end
 
         def store
@@ -53,7 +53,7 @@ module Installation
 
         def help
           # TRANSLATORS: help text for the checkbox enabling LUKS2 support
-          _("<p>You can enable experimental LUKS2 encryption support in "\
+          _("<p>You can enable LUKS2 encryption support in "\
             "the YaST partitioner. It is not supported and is designed as a " \
             "technology preview only.</p>")
         end
