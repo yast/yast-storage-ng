@@ -29,6 +29,7 @@ require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
+require "y2storage/storage_env"
 
 module Y2Storage
   # Class to manage settings used by the proposal (typically read from control.xml)
@@ -245,6 +246,7 @@ module Y2Storage
     def for_current_product
       apply_defaults
       load_features
+      apply_user_enforced
     end
 
     # Produces a deep copy of settings
@@ -409,6 +411,14 @@ module Y2Storage
       DEFAULTS.each do |key, value|
         send(:"#{key}=", value) if send(key).nil?
       end
+    end
+
+    # Some values can be explicitly enforced by user
+    # This setting should have precendence over everything else
+    def apply_user_enforced
+      value = StorageEnv.instance.requested_lvm_reuse
+
+      send(:lvm_vg_reuse=, StorageEnv.instance.requested_lvm_reuse) if !value.nil?
     end
 
     # Overrides the settings with values read from the YaST product features
