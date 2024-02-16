@@ -94,6 +94,17 @@ describe Y2Storage::MinGuidedProposal do
 
         # Creates default partitions in the target disk and special ones at sda and sdc as requested
         include_examples "proposed layout"
+
+        context "if some volume must be created at a dedicated volume group" do
+          let(:expected_scenario_filename) { "agama-basis-distributed_with_lvm" }
+
+          before do
+            settings.volumes.find { |v| v.mount_point == "/home" }.separate_vg_name = "home"
+          end
+
+          # Like the previous one but with an extra volume group
+          include_examples "proposed layout"
+        end
       end
 
       context "if all partitions (even the root one) are assigned to a different disk" do
@@ -174,6 +185,25 @@ describe Y2Storage::MinGuidedProposal do
         let(:expected_scenario_filename) { "agama-basis-lvm-distributed" }
 
         # Creates the system VG in the target disk and separate ones at sda and sdc as requested
+        include_examples "proposed layout"
+      end
+
+      context "if some volumes must be created at separate VG and others as partitions" do
+        before do
+          settings.volumes.each do |vol|
+            case vol.mount_point
+            when "/home"
+              vol.separate_vg_name = "home"
+              vol.device = "/dev/sda"
+            when "/srv"
+              vol.device = "/dev/sdc"
+            end
+          end
+        end
+
+        let(:expected_scenario_filename) { "agama-basis-lvm-distributed_with_partition" }
+
+        # Like the previous one but with /srv directly in a partition (no LVM)
         include_examples "proposed layout"
       end
     end

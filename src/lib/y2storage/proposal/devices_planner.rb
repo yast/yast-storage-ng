@@ -155,16 +155,28 @@ module Y2Storage
         if settings.separate_vgs && volume.separate_vg?
           planned_separate_vg(volume)
         else
-          planned_blk_device(volume)
+          planned_type = planned_lv?(volume) ? Planned::LvmLv : Planned::Partition
+          planned_blk_device(volume, planned_type)
         end
+      end
+
+      # @see #planned_device
+      #
+      # @param volume [VolumeSpecification] volume that is NOT assigned to a separate volume group
+      # @return [Boolean]
+      def planned_lv?(volume)
+        # Exceptional case: although the mode is auto, a concrete device has been specified for a
+        # volume that is not a assigned to a separate VG
+        return false if settings.allocate_mode?(:auto) && volume.device
+
+        settings.lvm
       end
 
       # @see #planned_device
       #
       # @param volume [VolumeSpecification]
       # @return [Planned::LvmLv, Planed::Partition]
-      def planned_blk_device(volume)
-        planned_type = settings.lvm ? Planned::LvmLv : Planned::Partition
+      def planned_blk_device(volume, planned_type)
         planned_device = planned_type.new(volume.mount_point, volume.fs_type)
         adjust_to_settings(planned_device, volume)
         planned_device
