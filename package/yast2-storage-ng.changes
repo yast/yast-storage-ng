@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Feb 20 12:50:08 UTC 2024 - Stefan Schubert <schubi@suse.com>
+
+- Set different encryption types (luks1, luks2), password and pbkdf
+  via product proposal/encryption settings.
+  (jsc#PED-1906)
+- 5.0.7
+
+-------------------------------------------------------------------
 Wed Feb 14 09:11:06 UTC 2024 - Michal Filka <mfilka@suse.com>
 
 - jsc#PED-6407
