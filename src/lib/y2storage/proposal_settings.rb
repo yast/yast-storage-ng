@@ -442,25 +442,30 @@ module Y2Storage
       load_encryption
     end
 
+    def load_encryption_hash(enc)
+      passwd = enc["password"]
+      self.encryption_password = passwd if !passwd.nil? && !passwd.empty?
+
+      type = enc["type"]
+      # default luks1 is already set
+      self.encryption_method = EncryptionMethod::LUKS2 if !type.nil? && type == "luks2"
+
+      pbkdf = enc["pbkdf"]
+      self.encryption_pbkdf = Y2Storage::PbkdFunction.find(pbkdf) if !pbkdf.nil? && !pbkdf.empty?
+    end
+
     # Loads the default encryption settings
     #
-    # The encryption settings are not part of the offical control.xml, but can be injected by a previous step of
-    # the installation, eg. the dialog of the Common Criteria system role or expert dialog
+    # The encryption settings are not part of the offical control.xml, but can be injected by a
+    # previous step of the installation, eg. the dialog of the Common Criteria system role or
+    # expert dialog
     def load_encryption
       enc = feature(:proposal, :encryption)
       return unless enc
 
       if enc.is_a?(Hash)
-        # Data comes from expert dialog
-        passwd = enc["password"]
-        self.encryption_password = passwd if !passwd.nil? && !passwd.empty?
-
-        type = enc["type"]
-        # default is luks1
-        self.encryption_method = EncryptionMethod::LUKS2 if !type.nil? && type == "luks2"
-
-        pbkdf = enc["pbkdf"]
-        self.encryption_pbkdf = Y2Storage::PbkdFunction.find(pbkdf) if !pbkdf.nil? && !pbkdf.empty?
+        # Data comes from configuration dialog
+        load_encryption_hash(enc)
       else
         # Data comes event. from Common Criteria system role ?
         return unless enc.respond_to?(:password)
