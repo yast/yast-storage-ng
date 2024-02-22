@@ -105,7 +105,7 @@ module Y2Storage
 
     def initialize
       @strategy = :auto
-      @actions = []
+      @actions = {}
     end
 
     # Whether the settings disable deletion of a given type of partitions
