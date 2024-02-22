@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2023] SUSE LLC
+
+# Copyright (c) [2023-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -70,6 +71,11 @@ describe Y2Storage::MinGuidedProposal do
       settings.volumes.each { |v| v.weight = 100 }
       # Activate support for separate LVM VGs
       settings.separate_vgs = true
+
+      settings.space_settings.strategy = :bigger_resize
+      settings.space_settings.actions = {
+        "/dev/sdb1" => :resize
+      }
     end
 
     context "when ProposalSettings#lvm is set to false" do
@@ -90,6 +96,11 @@ describe Y2Storage::MinGuidedProposal do
             vol.device = "/dev/sda" if vol.mount_point == "/home"
             vol.device = "/dev/sdc" if vol.mount_point == "/srv"
           end
+
+          settings.space_settings.actions.merge!({
+            "/dev/sda1" => :resize,
+            "/dev/sdc1" => :resize
+          })
         end
 
         # Creates default partitions in the target disk and special ones at sda and sdc as requested
@@ -110,7 +121,13 @@ describe Y2Storage::MinGuidedProposal do
       context "if all partitions (even the root one) are assigned to a different disk" do
         let(:expected_scenario_filename) { "agama-basis-separate_boot" }
 
-        before { settings.volumes.each { |v| v.device = "/dev/sda" } }
+        before do
+          settings.volumes.each { |v| v.device = "/dev/sda" }
+
+          settings.space_settings.actions.merge!({
+            "/dev/sda1" => :resize
+          })
+        end
 
         # Creates all partitions at sda except the bios_boot one (at sdb)
         include_examples "proposed layout"
@@ -133,7 +150,14 @@ describe Y2Storage::MinGuidedProposal do
         end
 
         context "and the system VG is allowed to use several disks" do
-          before { settings.candidate_devices = ["/dev/sdb", "/dev/sdc"] }
+          before do
+            settings.candidate_devices = ["/dev/sdb", "/dev/sdc"]
+
+            settings.space_settings.actions = {
+              "/dev/sdb1" => :resize,
+              "/dev/sdc1" => :resize
+            }
+          end
 
           context "if all volumes fit when using only a disk" do
             let(:expected_scenario_filename) { "agama-basis-lvm-single_disk" }
@@ -159,7 +183,12 @@ describe Y2Storage::MinGuidedProposal do
         end
 
         context "and the system VG must be located in another disk (not the boot one)" do
-          before { settings.candidate_devices = ["/dev/sdc"] }
+          before do
+            settings.candidate_devices = ["/dev/sdc"]
+            settings.space_settings.actions.merge!({
+              "/dev/sdc1" => :resize
+            })
+          end
 
           let(:expected_scenario_filename) { "agama-basis-lvm-separate_boot" }
 
@@ -175,9 +204,11 @@ describe Y2Storage::MinGuidedProposal do
             when "/home"
               vol.separate_vg_name = "home"
               vol.device = "/dev/sda"
+              settings.space_settings.actions.merge!({ "/dev/sda1" => :resize })
             when "/srv"
               vol.separate_vg_name = "srv"
               vol.device = "/dev/sdc"
+              settings.space_settings.actions.merge!({ "/dev/sdc1" => :resize })
             end
           end
         end
@@ -195,8 +226,10 @@ describe Y2Storage::MinGuidedProposal do
             when "/home"
               vol.separate_vg_name = "home"
               vol.device = "/dev/sda"
+              settings.space_settings.actions.merge!({ "/dev/sda1" => :resize })
             when "/srv"
               vol.device = "/dev/sdc"
+              settings.space_settings.actions.merge!({ "/dev/sdc1" => :resize })
             end
           end
         end
