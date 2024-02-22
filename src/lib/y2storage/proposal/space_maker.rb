@@ -421,7 +421,8 @@ module Y2Storage
 
       # @return [Array<String>]
       def candidate_disk_names
-        settings.candidate_devices
+        candidates = [settings.root_device] + settings.candidate_devices
+        candidates.uniq
       end
 
       # Distribution calculator to use in special cases in which any implication related
