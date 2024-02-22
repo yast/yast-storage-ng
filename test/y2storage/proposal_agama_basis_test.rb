@@ -116,6 +116,21 @@ describe Y2Storage::MinGuidedProposal do
           # Like the previous one but with an extra volume group
           include_examples "proposed layout"
         end
+
+        context "if some device is set to be deleted" do
+          before do
+            settings.space_settings.actions.merge!({
+              "/dev/sda1" => :force_delete,
+              "/dev/sdb1" => :force_delete,
+              "/dev/sdc1" => :resize
+            })
+          end
+
+          let(:expected_scenario_filename) { "agama-basis-distributed-delete" }
+
+          # NOTE: fails because sda1 is never deleted and there is no free space in sda.
+          include_examples "proposed layout"
+        end
       end
 
       context "if all partitions (even the root one) are assigned to a different disk" do
@@ -194,6 +209,19 @@ describe Y2Storage::MinGuidedProposal do
 
           # Creates the system VG at sdc and the partition needed for booting at sdb
           include_examples "proposed layout"
+
+          context "and the boot disk is set to be deleted" do
+            before do
+              settings.space_settings.actions.merge!({
+                "/dev/sdb1" => :force_delete
+              })
+            end
+
+            let(:expected_scenario_filename) { "agama-basis-lvm-separate_boot-delete" }
+
+            # NOTE: fails because the volume group is created over sdb instead of sdc.
+            include_examples "proposed layout"
+          end
         end
       end
 
