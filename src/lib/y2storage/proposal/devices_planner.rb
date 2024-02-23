@@ -342,14 +342,12 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param _volume [VolumeSpecification]
       def adjust_swap(planned_device, _volume)
-        if planned_device.is_a?(Planned::Partition)
-          reuse = reusable_swap(planned_device.min_size)
-          if reuse
-            planned_device.reuse_name = reuse.name
-            log.info "planned to reuse swap #{reuse.name}"
-          end
-        else
-          planned_device.logical_volume_name = "swap"
+        return unless planned_device.is_a?(Planned::Partition)
+
+        reuse = reusable_swap(planned_device.min_size)
+        if reuse
+          planned_device.reuse_name = reuse.name
+          log.info "planned to reuse swap #{reuse.name}"
         end
       end
 
