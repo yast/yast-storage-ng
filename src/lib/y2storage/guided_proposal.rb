@@ -218,7 +218,10 @@ module Y2Storage
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
       generator = Proposal::DevicesPlanner.new(settings, clean_graph)
-      generator.planned_devices(target)
+      swap = Proposal::SwapReusePlanner.new(settings, clean_graph)
+      planned = generator.planned_devices(target)
+      swap.adjust_devices(planned)
+      planned
     end
 
     # Devicegraph resulting of accommodating some planned devices in the

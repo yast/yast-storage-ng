@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2016-2021] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -68,8 +68,6 @@ describe Y2Storage::Proposal::DevicesPlanner do
         "btrfs_read_only" => btrfs_read_only
       }
     end
-
-    let(:volumes) { [volume] }
 
     let(:proposed) { true }
 
@@ -679,9 +677,10 @@ describe Y2Storage::Proposal::DevicesPlanner do
                 context "without encryption" do
                   let(:password) { nil }
 
-                  it "plans a volume to reuse the existing swap and no new swap" do
+                  # The reusing responsability was moved to SwapReusePlanner
+                  it "plans a brand new swap volume and no swap reusing" do
                     expect(planned_swap).to contain_exactly(
-                      an_object_having_attributes(reuse_name: "/dev/sdaX")
+                      an_object_having_attributes(reuse_name: nil)
                     )
                   end
                 end

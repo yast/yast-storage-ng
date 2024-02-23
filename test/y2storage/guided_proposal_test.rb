@@ -316,6 +316,7 @@ describe Y2Storage::GuidedProposal do
     context "with pre-existing swap partitions" do
       before do
         allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new).and_return dev_generator
+        allow(Y2Storage::Proposal::SwapReusePlanner).to receive(:new).and_return swap_planner
         settings.root_device = "/dev/sda"
 
         allow(Yast::Execute).to receive(:locally!).and_return uuidgen_output
@@ -333,6 +334,9 @@ describe Y2Storage::GuidedProposal do
       end
       let(:dev_generator) do
         instance_double("Y2Storage::Proposal::DevicesPlanner", planned_devices: all_volumes)
+      end
+      let(:swap_planner) do
+        instance_double("Y2Storage::Proposal::SwapReusePlanner", adjust_devices: nil)
       end
       let(:uuidgen) { "12345678-9abc-def1-2345-67890abcdef0" }
       let(:uuidgen_output) { "#{uuidgen}\n" }

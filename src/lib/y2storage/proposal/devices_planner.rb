@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2021] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -84,47 +84,6 @@ module Y2Storage
         # exception if it's impossible to get a bootable system, even adding
         # more partitions.
         raise NotBootableError, e.message
-      end
-
-      # Swap partition that can be reused.
-      #
-      # It returns the smaller partition that is big enough for our purposes.
-      #
-      # @param required_size [DiskSize]
-      # @return [Partition]
-      def reusable_swap(required_size)
-        return nil unless try_to_reuse_swap?
-
-        partitions = available_swap_partitions
-        partitions.select! { |part| can_be_reused?(part, required_size) }
-        # Use #name in case of #size tie to provide stable sorting
-        partitions.min_by { |part| [part.size, part.name] }
-      end
-
-      # Returns all available and acceptable swap partitions
-      #
-      # @return [Array<Partition>]
-      def available_swap_partitions
-        devicegraph.partitions.select(&:swap?)
-      end
-
-      # Whether it makes sense to try to reuse existing swap partitions
-      #
-      # @return [Boolean]
-      def try_to_reuse_swap?
-        !settings.use_lvm && !settings.use_encryption && settings.swap_reuse != :none
-      end
-
-      # Whether it is acceptable to reuse the given swap partition
-      #
-      # @param partition [Partition]
-      # @param required_size [DiskSize]
-      # @return [Boolean]
-      def can_be_reused?(partition, required_size)
-        return false if partition.size < required_size
-        return true unless settings.swap_reuse == :candidate
-
-        settings.candidate_devices.include?(partition.partitionable.name)
       end
 
       # Delete shadowed subvolumes from each planned device
@@ -218,7 +177,6 @@ module Y2Storage
         adjust_sizes(planned_device, volume)
         adjust_btrfs(planned_device, volume)
         adjust_device(planned_device, volume)
-        adjust_swap(planned_device, volume) if planned_device.swap?
 
         planned_device.fstab_options = volume.mount_options&.split(",")
       end
@@ -335,20 +293,6 @@ module Y2Storage
         # Forcing this when planned_device is a LV would imply the new VG can only be located
         # in that disk (preventing it to spread over several disks). We likely don't want that.
         planned_device.disk ||= settings.root_device if planned_device.is_a?(Planned::Partition)
-      end
-
-      # Adjusts values when planned device is swap
-      #
-      # @param planned_device [Planned::Device]
-      # @param _volume [VolumeSpecification]
-      def adjust_swap(planned_device, _volume)
-        return unless planned_device.is_a?(Planned::Partition)
-
-        reuse = reusable_swap(planned_device.min_size)
-        if reuse
-          planned_device.reuse_name = reuse.name
-          log.info "planned to reuse swap #{reuse.name}"
-        end
       end
 
       # Calculates the value for a specific attribute taking into
