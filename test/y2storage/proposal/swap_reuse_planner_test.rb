@@ -45,15 +45,15 @@ describe Y2Storage::Proposal::SwapReusePlanner do
     end
     let(:volume) do
       {
-        "mount_point"     => "swap",
-        "fs_type"         => :swap,
-        "desired_size"    => "2 GiB",
-        "min_size"        => "1 GiB",
-        "max_size"        => "10 GiB"
+        "mount_point"  => "swap",
+        "fs_type"      => :swap,
+        "desired_size" => "2 GiB",
+        "min_size"     => "1 GiB",
+        "max_size"     => "10 GiB"
       }
     end
-    let(:planned_devices) { devices_planner.planned_devices(target) }
-    let(:devices_planner) { Y2Storage::Proposal::DevicesPlanner.new(settings, devicegraph) }
+    let(:planned_devices) { devices_planner.volumes_planned_devices(target) }
+    let(:devices_planner) { Y2Storage::Proposal::DevicesPlanner.new(settings) }
 
     before do
       settings.encryption_password = password

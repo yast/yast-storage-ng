@@ -36,33 +36,50 @@ module Y2Storage
       # Constructor
       #
       # @param settings [ProposalSettings]
-      # @param devicegraph [Devicegraph]
-      def initialize(settings, devicegraph)
+      def initialize(settings)
         @settings = settings
-        @devicegraph = devicegraph
       end
 
-      # List of devices (read: partitions or volumes) that need to be
-      # created to satisfy the settings.
+      # List of all devices (read: partitions or logical volumes) that need to be created to
+      # satisfy the settings, including those needed for booting.
       #
       # @param target [Symbol] :desired means the sizes of the planned devices
       #   should be the ideal ones, :min for generating the smallest functional
       #   devices
+      # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
-      def planned_devices(target)
+      def planned_devices(target, devicegraph)
+        devices = volumes_planned_devices(target)
+        add_boot_devices(devices, target, devicegraph)
+        devices
+      end
+
+      # List of devices that need to be created to satisfy the settings. Does not include
+      # devices needed for booting.
+      #
+      # @param target [Symbol] see #planned_devices
+      # @return [Array<Planned::Device>]
+      def volumes_planned_devices(target)
         @target = target
         proposed_volumes = settings.volumes.select(&:proposed?)
+        devices = proposed_volumes.map { |v| planned_device(v) }
+        remove_shadowed_subvolumes(devices)
+      end
 
-        planned_devices = proposed_volumes.map { |v| planned_device(v) }
-        planned_devices = planned_boot_devices(planned_devices) + planned_devices
-
-        remove_shadowed_subvolumes(planned_devices)
+      # Modifies the given list of planned devices, adding any planned partition needed for booting
+      # the new target system
+      #
+      # @param devices [Array<Planned::Device>]
+      # @param target [Symbol] see #planned_devices
+      # @param devicegraph [Devicegraph]
+      # @return [Array<Planned::Device>]
+      def add_boot_devices(devices, target, devicegraph)
+        @target = target
+        devices.unshift(*planned_boot_devices(devices, devicegraph))
+        remove_shadowed_subvolumes(devices)
       end
 
       protected
-
-      # @return [Devicegraph]
-      attr_reader :devicegraph
 
       # @return [Symbol] :desired or :min
       attr_reader :target
@@ -70,8 +87,9 @@ module Y2Storage
       # Planned devices needed by the bootloader
       #
       # @param planned_devices [Array<Planned::Device>] devices that have been planned
+      # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
-      def planned_boot_devices(planned_devices)
+      def planned_boot_devices(planned_devices, devicegraph)
         flat = planned_devices.flat_map do |dev|
           dev.respond_to?(:lvs) ? dev.lvs : dev
         end

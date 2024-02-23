@@ -30,7 +30,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
     include_context "devices planner"
 
-    subject { described_class.new(settings, devicegraph) }
+    subject { described_class.new(settings) }
 
     let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
@@ -91,17 +91,18 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
     let(:btrfs_read_only) { false }
 
-    describe "#planned_devices" do
+    describe "#volumes_planned_devices + add_boot_devices" do
       let(:target) { :desired }
 
       it "returns an array of planned devices" do
-        planned_devices = subject.planned_devices(target)
+        planned_devices = subject.planned_devices(target, devicegraph)
+
         expect(planned_devices).to be_a Array
         expect(planned_devices).to all(be_a(Y2Storage::Planned::Device))
       end
 
       it "includes the partitions needed by BootRequirementChecker" do
-        expect(subject.planned_devices(:desired)).to include(
+        expect(subject.planned_devices(:desired, devicegraph)).to include(
           an_object_having_attributes(mount_point: "/one_boot", filesystem_type: xfs),
           an_object_having_attributes(mount_point: "/other_boot", filesystem_type: vfat)
         )
@@ -110,7 +111,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
       context "when a volume is specified in <volumes> section" do
         let(:volumes) { [volume] }
 
-        let(:planned_devices) { subject.planned_devices(target) }
+        let(:planned_devices) { subject.planned_devices(target, devicegraph) }
 
         let(:planned_device) { planned_devices.detect { |d| d.mount_point == mount_point } }
 

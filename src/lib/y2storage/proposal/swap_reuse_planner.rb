@@ -45,7 +45,7 @@ module Y2Storage
         end
       end
 
-    protected
+      protected
 
       # Settings used to calculate the planned devices
       # @return [ProposalSettings]
@@ -75,10 +75,10 @@ module Y2Storage
         return unless planned_device.is_a?(Planned::Partition)
 
         reuse = reusable_swap(planned_device.min_size)
-        if reuse
-          planned_device.reuse_name = reuse.name
-          log.info "planned to reuse swap #{reuse.name}"
-        end
+        return unless reuse
+
+        planned_device.reuse_name = reuse.name
+        log.info "planned to reuse swap #{reuse.name}"
       end
 
       # Swap partition that can be reused.

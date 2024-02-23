@@ -184,10 +184,10 @@ module Y2Storage
 
       # Calculate the planned devices even before checking #useless_volumes_sets?
       # because they can contain useful information
-      @planned_devices = planned_devices_list(target_size)
+      @planned_devices = initial_planned_devices(target_size)
       raise Error if useless_volumes_sets?
 
-      @devices = devicegraph(@planned_devices)
+      @devices = devicegraph(target_size)
       true
     end
 
@@ -216,20 +216,25 @@ module Y2Storage
     end
 
     # @return [Array<Planned::Device>]
-    def planned_devices_list(target)
-      generator = Proposal::DevicesPlanner.new(settings, clean_graph)
-      swap = Proposal::SwapReusePlanner.new(settings, clean_graph)
-      planned = generator.planned_devices(target)
-      swap.adjust_devices(planned)
-      planned
+    def initial_planned_devices(target)
+      planner = Proposal::DevicesPlanner.new(settings)
+      planner.volumes_planned_devices(target)
     end
 
-    # Devicegraph resulting of accommodating some planned devices in the
-    # initial devicegraph
+    # Devicegraph resulting of accommodating the planned devices and the boot-related
+    # partitions in the initial devicegraph
     #
-    # @param planned_devices [Array<Planned::Device>] devices to accomodate
+    # Note this method modifies the list of planned devices to add partitions needed for
+    # booting and to reuse existing swap devices if possible.
+    #
+    # @param target_size [Symbol] see {#target_sizes}
     # @return [Devicegraph]
-    def devicegraph(planned_devices)
+    def devicegraph(target_size)
+      planner = Proposal::DevicesPlanner.new(settings)
+      planner.add_boot_devices(@planned_devices, target_size, clean_graph)
+      swap = Proposal::SwapReusePlanner.new(settings, clean_graph)
+      swap.adjust_devices(@planned_devices)
+
       generator = Proposal::DevicegraphGenerator.new(settings)
       generator.devicegraph(planned_devices, clean_graph, space_maker)
     end
