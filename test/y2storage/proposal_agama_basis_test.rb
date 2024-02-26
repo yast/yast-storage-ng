@@ -59,6 +59,8 @@ describe Y2Storage::MinGuidedProposal do
       { "mount_point" => "swap", "fs_type" => "swap", "min_size" => "1 GiB", "max_size" => "2 GiB" }
     end
 
+    let(:expected_scenario_filename) { expected_basename + expected_suffix }
+
     before do
       # Speed-up things by avoiding calls to hwinfo
       allow_any_instance_of(Y2Storage::Disk).to receive(:hwinfo).and_return(Y2Storage::HWInfoDisk.new)
@@ -78,14 +80,14 @@ describe Y2Storage::MinGuidedProposal do
         let(:lvm) { false }
 
         context "if no alternative disks are specified for any of the volumes" do
-          let(:expected_scenario_filename) { "agama-basis-single_disk" }
+          let(:expected_basename) { "agama-basis-single_disk" }
 
           # Creates all partitions in the target disk and leaves everything else untouched
           include_examples "proposed layout"
         end
 
         context "if some partitions are assigned to different disks" do
-          let(:expected_scenario_filename) { "agama-basis-distributed" }
+          let(:expected_basename) { "agama-basis-distributed" }
 
           before do
             settings.volumes.each do |vol|
@@ -98,7 +100,7 @@ describe Y2Storage::MinGuidedProposal do
           include_examples "proposed layout"
 
           context "if some volume must be created at a dedicated volume group" do
-            let(:expected_scenario_filename) { "agama-basis-distributed_with_lvm" }
+            let(:expected_basename) { "agama-basis-distributed_with_lvm" }
 
             before do
               settings.volumes.find { |v| v.mount_point == "/home" }.separate_vg_name = "home"
@@ -110,7 +112,7 @@ describe Y2Storage::MinGuidedProposal do
         end
 
         context "if all partitions (even the root one) are assigned to a different disk" do
-          let(:expected_scenario_filename) { "agama-basis-separate_boot" }
+          let(:expected_basename) { "agama-basis-separate_boot" }
 
           before { settings.volumes.each { |v| v.device = "/dev/sda" } }
 
@@ -128,42 +130,16 @@ describe Y2Storage::MinGuidedProposal do
           end
 
           context "and the system VG must be located in the boot disk" do
-            let(:expected_scenario_filename) { "agama-basis-lvm-single_disk" }
+            let(:expected_basename) { "agama-basis-lvm-single_disk" }
 
             # Creates the boot partition and the system VG with all volumes at the target disk
             include_examples "proposed layout"
           end
 
-          context "and the system VG is allowed to use several disks" do
-            before { settings.candidate_devices = ["/dev/sdb", "/dev/sdc"] }
-
-            context "if all volumes fit when using only a disk" do
-              let(:expected_scenario_filename) { "agama-basis-lvm-single_disk" }
-
-              # Creates the boot partition and the system VG with all volumes at the target disk
-              include_examples "proposed layout"
-            end
-
-            context "if several disks must be used for the volumes to fit" do
-              before do
-                root = settings.volumes.find { |v| v.mount_point == "/" }
-                root.min_size = Y2Storage::DiskSize.GiB(380)
-                root.max_size = Y2Storage::DiskSize.GiB(380)
-              end
-
-              let(:expected_scenario_filename) { "agama-basis-lvm-several_disks" }
-
-              # Creates the system VG with all volumes over the needed candidate disks
-              # FIXME: due to bsc#1211041, this resizes sdc1 to its minimum and consequently creates
-              # bigger LVs for swap, /srv or /home than the other LVM-based contexts
-              include_examples "proposed layout"
-            end
-          end
-
           context "and the system VG must be located in another disk (not the boot one)" do
             before { settings.candidate_devices = ["/dev/sdc"] }
 
-            let(:expected_scenario_filename) { "agama-basis-lvm-separate_boot" }
+            let(:expected_basename) { "agama-basis-lvm-separate_boot" }
 
             # Creates the system VG at sdc and the partition needed for booting at sdb
             include_examples "proposed layout"
@@ -184,7 +160,7 @@ describe Y2Storage::MinGuidedProposal do
             end
           end
 
-          let(:expected_scenario_filename) { "agama-basis-lvm-distributed" }
+          let(:expected_basename) { "agama-basis-lvm-distributed" }
 
           # Creates the system VG in the target disk and separate ones at sda and sdc as requested
           include_examples "proposed layout"
@@ -203,7 +179,7 @@ describe Y2Storage::MinGuidedProposal do
             end
           end
 
-          let(:expected_scenario_filename) { "agama-basis-lvm-distributed_with_partition" }
+          let(:expected_basename) { "agama-basis-lvm-distributed_with_partition" }
 
           # Like the previous one but with /srv directly in a partition (no LVM)
           include_examples "proposed layout"
@@ -211,13 +187,67 @@ describe Y2Storage::MinGuidedProposal do
       end
     end
 
+    RSpec.shared_examples "resize volume combinations" do
+      include_examples "volume combinations"
+
+      context "when all volumes must be located in a system VG potentially over several disks" do
+        let(:lvm) { true }
+
+        before do
+          settings.volumes.each { |v| v.separate_vg_name = nil }
+          settings.candidate_devices = ["/dev/sdb", "/dev/sdc"]
+        end
+
+        context "if all volumes fit when using only a disk" do
+          let(:expected_basename) { "agama-basis-lvm-single_disk" }
+
+          # Creates the boot partition and the system VG with all volumes at the target disk
+          include_examples "proposed layout"
+        end
+
+        context "if several disks must be used for the volumes to fit" do
+          before do
+            root = settings.volumes.find { |v| v.mount_point == "/" }
+            root.min_size = Y2Storage::DiskSize.GiB(380)
+            root.max_size = Y2Storage::DiskSize.GiB(380)
+          end
+
+          let(:expected_basename) { "agama-basis-lvm-several_disks" }
+
+          # Creates the system VG with all volumes over the needed candidate disks
+          # FIXME: due to bsc#1211041, this resizes sdc1 to its minimum and consequently creates
+          # bigger LVs for swap, /srv or /home than the other LVM-based contexts
+          include_examples "proposed layout"
+        end
+      end
+    end
+
+    RSpec.shared_examples "delete volume combinations" do
+      include_examples "volume combinations"
+
+      context "when all volumes must be located in a system VG potentially over several disks" do
+        let(:lvm) { true }
+
+        before do
+          settings.volumes.each { |v| v.separate_vg_name = nil }
+          settings.candidate_devices = ["/dev/sdb", "/dev/sdc"]
+        end
+
+        let(:expected_basename) { "agama-basis-lvm-several_disks" }
+
+        include_examples "proposed layout"
+      end
+    end
+
     context "with SpaceMaker strategy :auto set to resize" do
+      let(:expected_suffix) { "" }
       let(:proposal_settings) { { "windows_delete_mode" => :none } }
 
-      include_examples "volume combinations"
+      include_examples "resize volume combinations"
     end
 
     context "with SpaceMaker strategy :bigger_resize set to resize" do
+      let(:expected_suffix) { "" }
       let(:proposal_settings) { {} }
 
       before do
@@ -229,7 +259,30 @@ describe Y2Storage::MinGuidedProposal do
         }
       end
 
-      include_examples "volume combinations"
+      include_examples "resize volume combinations"
+    end
+
+    context "with SpaceMaker strategy :auto set to delete everything" do
+      let(:expected_suffix) { "-delete" }
+      let(:proposal_settings) { { "windows_delete_mode" => :all } }
+
+      include_examples "delete volume combinations"
+    end
+
+    context "with SpaceMaker strategy :bigger_resize set to delete everything" do
+      let(:expected_suffix) { "-delete" }
+      let(:proposal_settings) { {} }
+
+      before do
+        settings.space_settings.strategy = :bigger_resize
+        settings.space_settings.actions = {
+          "/dev/sda1" => :force_delete,
+          "/dev/sdb1" => :force_delete,
+          "/dev/sdc1" => :force_delete
+        }
+      end
+
+      include_examples "delete volume combinations"
     end
   end
 end

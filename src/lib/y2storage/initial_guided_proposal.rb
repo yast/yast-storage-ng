@@ -226,7 +226,7 @@ module Y2Storage
     # Redefines this method from the base class to ensure the SpaceMaker object
     # and the clean devicegraph are recreated before trying
     def try_with_each_target_size
-      self.space_maker = nil
+      @graph_generator = nil
       @clean_graph = nil
       super
     end

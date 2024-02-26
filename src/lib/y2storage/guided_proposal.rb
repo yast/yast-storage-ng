@@ -96,9 +96,6 @@ module Y2Storage
     # @return [ProposalSettings]
     attr_writer :settings
 
-    # @return [Proposal::SpaceMaker]
-    attr_writer :space_maker
-
     # Calculates the proposal
     #
     # @see #try_proposal
@@ -235,12 +232,11 @@ module Y2Storage
       swap = Proposal::SwapReusePlanner.new(settings, clean_graph)
       swap.adjust_devices(@planned_devices)
 
-      generator = Proposal::DevicegraphGenerator.new(settings)
-      generator.devicegraph(planned_devices, clean_graph, space_maker)
+      graph_generator.devicegraph(planned_devices, clean_graph)
     end
 
-    def space_maker
-      @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, settings)
+    def graph_generator
+      @graph_generator ||= Proposal::DevicegraphGenerator.new(settings, disk_analyzer)
     end
 
     # Copy of #initial_devicegraph without all the partitions that must be wiped out
@@ -257,7 +253,8 @@ module Y2Storage
       # the end of the process for those devices that were not used (as soon as libstorage-ng
       # allows us to copy sub-graphs).
       remove_empty_partition_tables(new_devicegraph)
-      @clean_graph = space_maker.prepare_devicegraph(new_devicegraph)
+
+      @clean_graph = graph_generator.prepared(@planned_devices, new_devicegraph)
     end
 
     # Removes partition tables from candidate devices with empty partition table

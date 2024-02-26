@@ -99,12 +99,17 @@ module Y2Storage
       # Executes all the mandatory actions to make space (see #{SpaceMakerActions::List})
       #
       # @param original_graph [Devicegraph] initial devicegraph
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
       # @return [Devicegraph] copy of #original_graph after performing the actions
-      def prepare_devicegraph(original_graph)
+      def prepare_devicegraph(original_graph, planned_partitions = [])
         log.info "BEGIN SpaceMaker#prepare_devicegraph"
 
         result = original_graph.dup
         actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
+
+        non_candidate_disks(planned_partitions).each do |disk_name|
+          disks_for(result, disk_name).each { |d| actions.add_mandatory_actions(d) }
+        end
         disks_for(result).each { |d| actions.add_mandatory_actions(d) }
 
         while (action = actions.next)
@@ -143,6 +148,16 @@ module Y2Storage
       # @return [Array<Partition>]
       def deleted_partitions
         original_graph.partitions.select { |p| @all_deleted_sids.include?(p.sid) }
+      end
+
+      # Disks that will be used, either as boot disk or by any of the given planned partitions,
+      # but that are not part of the candidate disks
+      #
+      # @param planned_partitions [Array<Planned::Partition>]
+      # @return [Array<String>]
+      def non_candidate_disks(planned_partitions)
+        planned_disks = planned_partitions_by_disk(planned_partitions).keys
+        planned_disks + [settings.root_device] - candidate_disk_names
       end
 
       # @see #provide_space
