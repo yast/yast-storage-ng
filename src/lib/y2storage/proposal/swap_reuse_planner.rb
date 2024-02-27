@@ -77,7 +77,7 @@ module Y2Storage
         reuse = reusable_swap(planned_device.min_size)
         return unless reuse
 
-        planned_device.reuse_name = reuse.name
+        planned_device.assign_reuse(reuse)
         log.info "planned to reuse swap #{reuse.name}"
       end
 

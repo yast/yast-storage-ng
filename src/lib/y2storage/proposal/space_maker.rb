@@ -68,12 +68,6 @@ module Y2Storage
         @original_graph = original_graph
         @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper.volume_group)
 
-        # update storage ids of reused volumes in planned volumes list
-        planned_partitions.select(&:reuse?).each do |part|
-          p = @original_graph.find_by_name(part.reuse_name)
-          part.reuse_sid = p.sid if p
-        end
-
         # Partitions that should not be deleted
         keep = lvm_helper.partitions_in_vg
         # Let's filter out partitions with some value in #reuse_name
