@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2021] SUSE LLC
+# Copyright (c) [2017-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -146,6 +146,24 @@ module Y2Storage
     # @return [String, nil]
     attr_accessor :device
 
+    # Name of an existing device that will be used to allocate the filesystem described by
+    # this volume.
+    #
+    # If this field is used, no new device will be created. As a consequence, many of the other
+    # attributes (eg. those about sizes and weights) could be ignored.
+    #
+    # @return [String]
+    attr_accessor :reuse_name
+
+    # Whether a reused device should be formatted.
+    #
+    # If set to false, the existing filesystem should be kept.
+    #
+    # Only relevant if #reuse_name points to an existing device
+    #
+    # @return [Boolean]
+    attr_accessor :reformat
+
     # Whether to ignore the fact that this volume is the fallback for the sizes of other volumes
     # (ie. is referenced at any #fallback_for_min_size, #fallback_for_desired_size,
     # #fallback_for_max_size or #fallback_for_max_size_lvm).
@@ -234,6 +252,20 @@ module Y2Storage
     # @return [Boolean]
     def fs_type_configurable?
       fs_types.size > 1
+    end
+
+    # @see #reformat
+    #
+    # @return [Boolean]
+    def reformat?
+      reformat
+    end
+
+    # Whether this volume is expected to reuse an existing device
+    #
+    # @return [Boolean]
+    def reuse?
+      !(reuse_name.nil? || reuse_name.empty?)
     end
 
     # Whether the resulting device will be mounted as root
@@ -354,6 +386,7 @@ module Y2Storage
       @fs_types                   = []
       @ignore_fallback_sizes      = false
       @ignore_snapshots_sizes     = false
+      @reformat                   = true
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied

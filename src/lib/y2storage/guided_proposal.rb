@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2023] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -215,7 +215,7 @@ module Y2Storage
     # @return [Array<Planned::Device>]
     def initial_planned_devices(target)
       planner = Proposal::DevicesPlanner.new(settings)
-      planner.volumes_planned_devices(target)
+      planner.volumes_planned_devices(target, initial_devicegraph)
     end
 
     # Devicegraph resulting of accommodating the planned devices and the boot-related

@@ -740,23 +740,11 @@ describe Y2Storage::Proposal::SpaceMaker do
         )
       end
 
-      it "doesn't delete partitions marked to be reused" do
-        vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 100.GiB)
-        vol2 = planned_vol(mount_point: "/2", reuse_name: "/dev/sda6")
-        volumes = [vol1, vol2]
-        sda6 = probed_partition("/dev/sda6")
-
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        expect(result[:devicegraph].partitions.map(&:sid)).to include sda6.sid
-        expect(result[:deleted_partitions].map(&:sid)).to_not include sda6.sid
-      end
-
       it "raises an Error exception if deleting is not enough" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 980.GiB)
-        vol2 = planned_vol(mount_point: "/2", reuse_name: "/dev/sda2")
-        volumes = [vol1, vol2]
+        maker.protected_sids = [probed_partition("/dev/sda2").sid]
 
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
+        expect { maker.provide_space(fake_devicegraph, [vol1], lvm_helper) }
           .to raise_error Y2Storage::Error
       end
 
@@ -784,44 +772,16 @@ describe Y2Storage::Proposal::SpaceMaker do
       # In the past, SpaceMaker used to delete the extended partition sda4
       # leaving sda6 alive. This test ensures the bug does not re-appear
       it "does not delete the extended partition if some logical one is to be reused" do
-        volumes = [
-          planned_vol(mount_point: "/1", type: :ext4, min: 400.GiB),
-          planned_vol(mount_point: "/2", reuse_name: "/dev/sda1"),
-          planned_vol(mount_point: "/3", reuse_name: "/dev/sda2"),
-          planned_vol(mount_point: "/4", reuse_name: "/dev/sda3"),
-          planned_vol(mount_point: "/5", reuse_name: "/dev/sda6")
+        volumes = [planned_vol(mount_point: "/1", type: :ext4, min: 400.GiB)]
+        maker.protected_sids = [
+          probed_partition("/dev/sda1").sid,
+          probed_partition("/dev/sda2").sid,
+          probed_partition("/dev/sda3").sid,
+          probed_partition("/dev/sda6").sid
         ]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Error
-      end
-    end
-
-    context "when some volumes must be reused" do
-      let(:scenario) { "multi-linux-pc" }
-      let(:volumes) do
-        [
-          planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB),
-          planned_vol(mount_point: "/2", type: :ext4, min: 300.GiB),
-          planned_vol(mount_point: "/3", reuse_name: "/dev/sda6"),
-          planned_vol(mount_point: "/4", reuse_name: "/dev/sda2")
-        ]
-      end
-
-      it "ignores reused partitions in the suggested distribution" do
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        distribution = result[:partitions_distribution]
-        dist_volumes = distribution.spaces.map { |s| s.partitions.to_a }.flatten
-        expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/3")
-        expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/4")
-      end
-
-      it "only makes space for non reused volumes" do
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        devgraph = result[:devicegraph]
-        freed_space = devgraph.free_spaces.map(&:disk_size).reduce(Y2Storage::DiskSize.zero, :+)
-        # Extra 960 KiB for rounding issues related to the EBR
-        expect(freed_space).to eq(360.GiB + 960.KiB)
       end
     end
 
@@ -946,56 +906,6 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         expect(devicegraph.partitions.map(&:name)).to include "/dev/sda7"
         expect(devicegraph.lvm_vgs.map(&:vg_name)).to include "vg0"
-      end
-    end
-
-    context "when a LVM VG is going to be reused" do
-      let(:scenario) { "lvm-two-vgs" }
-      let(:windows_partitions) { [partition_double("/dev/sda1")] }
-      let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 10.GiB, max_size: 800.GiB)
-      end
-
-      before do
-        # We are reusing vg1
-        expect(lvm_helper).to receive(:partitions_in_vg).and_return ["/dev/sda5", "/dev/sda9"]
-        # At some point, we can try to resize Windows
-        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
-          .and_return(resize_info)
-      end
-
-      it "does not delete partitions belonging to the reused VG" do
-        volumes = [planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)]
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        partitions = result[:devicegraph].partitions
-
-        # sda5 and sda9 belong to vg1
-        expect(partitions.map(&:sid)).to include probed_partition("/dev/sda9").sid
-        expect(partitions.map(&:sid)).to include probed_partition("/dev/sda5").sid
-        # sda8 is deleted instead of sda9
-        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda8").sid
-      end
-
-      it "does nothing special about partitions from other VGs" do
-        volumes = [planned_vol(mount_point: "/1", type: :ext4, min: 6.GiB)]
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        partitions = result[:devicegraph].partitions
-
-        # sda7 belongs to vg0
-        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda7").sid
-      end
-
-      it "raises NoDiskSpaceError if it cannot find space respecting the VG" do
-        volumes = [
-          # This exhausts the primary partitions
-          planned_vol(mount_point: "/1", type: :ext4, min: 30.GiB),
-          # This implies deleting linux partitions out of vg1
-          planned_vol(mount_point: "/2", type: :ext4, min: 14.GiB),
-          # So this one, as small as it is, would affect vg1
-          planned_vol(mount_point: "/2", type: :ext4, min: 10.MiB)
-        ]
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Error
       end
     end
 

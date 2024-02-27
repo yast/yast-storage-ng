@@ -1,4 +1,4 @@
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2023-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -45,10 +45,9 @@ module Y2Storage
         end
 
         # @param disk [Disk] see {List}
-        # @param keep [Array<Integer>] see {List}
-        def add_optional_actions(disk, keep, _lvm_helper)
+        def add_optional_actions(disk, _lvm_helper)
           add_resize(disk)
-          add_optional_delete(disk, keep)
+          add_optional_delete(disk)
         end
 
         # @return [Action, nil] nil if there are no more actions in the list
@@ -110,11 +109,9 @@ module Y2Storage
         # @see #add_optional_actions
         #
         # @param disk [Disk]
-        # @param keep [Array<Integer>]
-        def add_optional_delete(disk, keep)
+        def add_optional_delete(disk)
           if disk.partition_table?
             partitions = partitions(disk).select { |p| configured?(p, :delete) }
-            partitions.reject! { |p| keep.include?(p.sid) }
             to_delete_optional.concat(partitions.sort { |a, b| preferred_delete(a, b) })
           elsif configured?(disk, :delete)
             to_delete_optional << disk

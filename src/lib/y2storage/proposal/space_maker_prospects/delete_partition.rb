@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2023] SUSE LLC
+# Copyright (c) [2018-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -54,11 +54,8 @@ module Y2Storage
         # Whether performing the action would be acceptable
         #
         # @param settings [ProposalSettings]
-        # @param keep [Array<Integer>] list of sids of partitions that should be kept
         # @return [Boolean]
-        def allowed?(settings, keep)
-          return false if keep.include?(sid)
-
+        def allowed?(settings)
           allowed = allowed_type?(settings, partition_type)
           if irst? && windows_in_disk? && allowed
             # Second line of defense for IRST partitions

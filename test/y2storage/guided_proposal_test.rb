@@ -325,10 +325,11 @@ describe Y2Storage::GuidedProposal do
       end
 
       let(:scenario) { "swaps" }
+      let(:sda3) { fake_devicegraph.find_by_name("/dev/sda3") }
       let(:all_volumes) do
         [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
-          planned_vol(mount_point: "swap", reuse_name: "/dev/sda3"),
+          planned_vol(mount_point: "swap", reuse_sid: sda3.sid),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)

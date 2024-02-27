@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2023] SUSE LLC
+# Copyright (c) [2015-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,6 +36,15 @@ module Y2Storage
       attr_accessor :settings
       attr_reader :original_graph
 
+      # Sids of devices that should not be affected by SpaceMaker changes
+      #
+      # The devices should not be deleted or resized either directly (in the case of partitions)
+      # or indirectly. For example, if the sid corresponds to an LVM LV, none of the partitions
+      # that act as PV of the same volume group should be deleted or resized.
+      #
+      # @return [Array<Integer>]
+      attr_accessor :protected_sids
+
       # Initialize.
       #
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
@@ -44,6 +53,7 @@ module Y2Storage
         @disk_analyzer = disk_analyzer
         @settings = settings
         @all_deleted_sids = []
+        @protected_sids = []
       end
 
       # Performs all the operations needed to free enough space to accomodate
@@ -68,20 +78,7 @@ module Y2Storage
         @original_graph = original_graph
         @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper.volume_group)
 
-        # Partitions that should not be deleted
-        keep = lvm_helper.partitions_in_vg
-        # Let's filter out partitions with some value in #reuse_name
-        partitions = planned_partitions.dup
-        partitions.select(&:reuse?).each do |part|
-          log.info "No need to find a fit for this partition, it will reuse #{part.reuse_name}: #{part}"
-          keep << part.reuse_name
-          partitions.delete(part)
-        end
-
-        # map device names to storage ids, as names may change during space making
-        keep = keep.map { |x| @original_graph.find_by_name(x) }.compact.map(&:sid)
-
-        calculate_new_graph(partitions, keep, lvm_helper)
+        calculate_new_graph(planned_partitions, lvm_helper)
 
         {
           devicegraph:             new_graph,
@@ -105,9 +102,10 @@ module Y2Storage
           disks_for(result, disk_name).each { |d| actions.add_mandatory_actions(d) }
         end
         disks_for(result).each { |d| actions.add_mandatory_actions(d) }
+        skip = all_protected_sids(result)
 
         while (action = actions.next)
-          sids = execute_action(action, result)
+          sids = execute_action(action, result, skip)
           actions.done(sids)
           @all_deleted_sids.concat(sids)
         end
@@ -157,10 +155,9 @@ module Y2Storage
       # @see #provide_space
       #
       # @param partitions [Array<Planned::Partition>] partitions to make space for
-      # @param keep [Array<Integer>] sids of partitions that should not be deleted
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
-      def calculate_new_graph(partitions, keep, lvm_helper)
+      def calculate_new_graph(partitions, lvm_helper)
         @new_graph = original_graph.duplicate
         @new_graph_deleted_sids = []
         @extra_disk_names = partitions.map(&:disk).compact.uniq - settings.candidate_devices
@@ -190,7 +187,7 @@ module Y2Storage
           # The result (if successful) is kept in @distribution.
           #
           parts_by_disk.each do |disk, parts|
-            resize_and_delete(parts, keep, lvm_helper, disk_name: disk)
+            resize_and_delete(parts, lvm_helper, disk_name: disk)
           rescue Error
             # If LVM was involved, maybe there is still hope if we don't abort on this error.
             raise unless dist_calculator.lvm?
@@ -208,7 +205,7 @@ module Y2Storage
         # Note that the result of the run above is not lost as already
         # assigned partitions are taken into account.
         #
-        resize_and_delete(partitions, keep, lvm_helper)
+        resize_and_delete(partitions, lvm_helper)
 
         @all_deleted_sids.concat(new_graph_deleted_sids)
       end
@@ -256,12 +253,11 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] partitions
       #     to make space for
-      # @param keep [Array<Integer>] sids of partitions that should not be deleted
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
       # @param disk_name [String, nil] optional disk name to restrict operations to
       #
-      def resize_and_delete(planned_partitions, keep, lvm_helper, disk_name: nil)
+      def resize_and_delete(planned_partitions, lvm_helper, disk_name: nil)
         # Note that only the execution with disk_name == nil is the final one.
         # In other words, if disk_name contains something, it means there will
         # be at least a subsequent call to the method.
@@ -276,11 +272,12 @@ module Y2Storage
 
         actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
-          actions.add_optional_actions(disk, keep, lvm_helper)
+          actions.add_optional_actions(disk, lvm_helper)
         end
+        skip = all_protected_sids(new_graph)
 
         until success?(planned_partitions)
-          break unless execute_next_action(actions, planned_partitions, disk_name)
+          break unless execute_next_action(actions, planned_partitions, skip, disk_name)
         end
 
         raise Error unless @distribution
@@ -298,21 +295,33 @@ module Y2Storage
         end
       end
 
+      # Identifiers of all the devices that should be kept as-is, either because their are
+      # part of #protected_sids or because they would affect them indirectly
+      #
+      # @param devicegraph [Devicegraph] graph used to calculate the relationship between sids
+      # @return [Array<Integer>]
+      def all_protected_sids(devicegraph)
+        devices = protected_sids.map { |s| devicegraph.find_device(s) }.compact
+        all_devices = devices + devices.flat_map(&:ancestors)
+        all_devices.map(&:sid)
+      end
+
       # Performs the next action of {#resize_and_delete}
       #
       # @param actions [SpaceMakerActions::List] set of actions that could be executed
       # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param skip [Array<Integer>] sids of devices that should not be modified
       # @param disk_name [String] optional disk name to restrict operations to
       # @return [Boolean] true if some operation was performed. False if nothing
       #   else could be done to reach the goal.
-      def execute_next_action(actions, planned_partitions, disk_name = nil)
+      def execute_next_action(actions, planned_partitions, skip, disk_name = nil)
         action = actions.next
         if !action
           log.info "No more actions for SpaceMaker (disk_name: #{disk_name})"
           return false
         end
 
-        sids = execute_action(action, new_graph, planned_partitions, disk_name)
+        sids = execute_action(action, new_graph, skip, planned_partitions, disk_name)
         actions.done(sids)
         new_graph_deleted_sids.concat(sids)
         true
@@ -322,12 +331,18 @@ module Y2Storage
       #
       # @param action [SpaceMakerActions::Base] action to execute
       # @param graph [Devicegraph] devicegraph in which the action will be executed
+      # @param skip [Array<Integer>] sids of devices that should not be modified
       # @param planned_partitions [Array<Planned::Partition>, nil] set of partitions to make space
       #   for, if known. Nil for mandatory operations executed during {#prepare_devicegraph}.
       # @param disk_name [String, nil] optional disk name to restrict operations to
       # @return [Array<Integer>] sids of the devices that has been deleted as a consequence
       #   of the action
-      def execute_action(action, graph, planned_partitions = nil, disk_name = nil)
+      def execute_action(action, graph, skip, planned_partitions = nil, disk_name = nil)
+        if skip.include?(action.sid)
+          log.info "Skipping action on device #{action.sid} (#{action.class})"
+          return []
+        end
+
         case action
         when SpaceMakerActions::Shrink
           execute_shrink(action, graph, planned_partitions, disk_name)

@@ -49,7 +49,7 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
       def planned_devices(target, devicegraph)
-        devices = volumes_planned_devices(target)
+        devices = volumes_planned_devices(target, devicegraph)
         add_boot_devices(devices, target, devicegraph)
         devices
       end
@@ -58,11 +58,12 @@ module Y2Storage
       # devices needed for booting.
       #
       # @param target [Symbol] see #planned_devices
+      # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
-      def volumes_planned_devices(target)
+      def volumes_planned_devices(target, devicegraph)
         @target = target
         proposed_volumes = settings.volumes.select(&:proposed?)
-        devices = proposed_volumes.map { |v| planned_device(v) }
+        devices = proposed_volumes.map { |v| planned_device(v, devicegraph) }
         remove_shadowed_subvolumes(devices)
       end
 
@@ -128,8 +129,12 @@ module Y2Storage
       #
       # @param volume [VolumeSpecification]
       # @return [Planned::Device]
-      def planned_device(volume)
-        if settings.separate_vgs && volume.separate_vg?
+      def planned_device(volume, devicegraph)
+        reused = reusable_device(volume, devicegraph)
+
+        if reused
+          planned_reuse(volume, reused)
+        elsif settings.separate_vgs && volume.separate_vg?
           planned_separate_vg(volume)
         else
           planned_type = planned_lv?(volume) ? Planned::LvmLv : Planned::Partition
@@ -149,14 +154,62 @@ module Y2Storage
         settings.lvm
       end
 
+      # Device that should be used for the given volume
+      #
+      # @param volume [VolumeSpecification]
+      # @param devicegraph [Devicegraph]
+      # @return [Y2Storage::Device, nil] nil if no device should be reused or if the device could
+      #   not be found
+      def reusable_device(volume, devicegraph)
+        return nil unless volume.reuse?
+
+        device = devicegraph.find_by_any_name(volume.reuse_name)
+        return nil unless device.is?(:blk_device)
+
+        device
+      end
+
+      # @see #planned_device
+      #
+      # @param volume [VolumeSpecification]
+      # @param reused [Y2Storage::Device]
+      # @return [Planned::Device]
+      def planned_reuse(volume, reused)
+        planned_type = reused_planned_type(reused)
+        planned = planned_blk_device(volume, planned_type)
+        planned.assign_reuse(reused)
+        planned.reformat = volume.reformat?
+        planned
+      end
+
+      # @see #planned_device
+      def reused_planned_type(reused)
+        return Planned::LvmLv if reused.is?(:lvm_lv)
+        return Planned::Partition if reused.is?(:partition)
+
+        # There are more specific types of planned devices, such as Bcache, Md, or StrayBlkDevice,
+        # but regarding reuse, relying on Disk seem to be good enough for all cases
+        Planned::Disk
+      end
+
       # @see #planned_device
       #
       # @param volume [VolumeSpecification]
       # @return [Planned::LvmLv, Planed::Partition]
       def planned_blk_device(volume, planned_type)
-        planned_device = planned_type.new(volume.mount_point, volume.fs_type)
+        planned_device = create_planned_device(planned_type, volume.mount_point)
+        planned_device.filesystem_type = volume.fs_type
         adjust_to_settings(planned_device, volume)
         planned_device
+      end
+
+      # @see #planned_blk_device
+      def create_planned_device(type, mount_point)
+        return type.new(mount_point) if [Planned::LvmLv, Planned::Partition].include?(type)
+
+        dev = type.new
+        dev.mount_point = mount_point
+        dev
       end
 
       # @see #planned_device
@@ -204,6 +257,8 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_weight(planned_device, volume)
+        return unless planned_device.respond_to?(:weight)
+
         planned_device.weight = value_with_fallbacks(volume, :weight)
       end
 
@@ -212,7 +267,7 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param _volume [VolumeSpecification]
       def adjust_encryption(planned_device, _volume)
-        return unless planned_device.is_a?(Planned::Partition)
+        return unless planned_device.is_a?(Planned::Partition) || planned_device.is_a?(Planned::Disk)
         return unless settings.encryption_password
 
         planned_device.encryption_password = settings.encryption_password
@@ -225,6 +280,8 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_sizes(planned_device, volume)
+        return unless planned_device.respond_to?(:min_size)
+
         planned_device.min_size = min_size(volume)
         planned_device.max_size = max_size(volume)
 

@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2023] SUSE LLC
+# Copyright (c) [2018-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -55,9 +55,8 @@ module Y2Storage
         #
         # @param disk [Disk]
         # @param lvm_helper [Proposal::LvmHelper]
-        # @param keep [Array<Integer>]
-        def add_prospects(disk, lvm_helper, keep = [])
-          add_delete_partition_prospects(disk, keep)
+        def add_prospects(disk, lvm_helper)
+          add_delete_partition_prospects(disk)
           add_resize_prospects(disk)
           add_wipe_prospects(disk, lvm_helper)
         end
@@ -177,9 +176,8 @@ module Y2Storage
         # the given disk (i.e. prospects of type {SpaceMakerProspects::DeletePartition})
         #
         # @param disk [Disk] disk to act upon
-        # @param keep [Array<Integer>] sids of partitions that should not be deleted
-        def add_delete_partition_prospects(disk, keep = [])
-          prospects = delete_prospects_for_disk(disk, keep: keep)
+        def add_delete_partition_prospects(disk)
+          prospects = delete_prospects_for_disk(disk)
           linux, non_linux = prospects.partition { |e| e.partition_type == :linux }
           windows, other = non_linux.partition { |e| e.partition_type == :windows }
 
@@ -245,7 +243,7 @@ module Y2Storage
         # @see #unwanted_partition_prospects
         #
         # @return [Array<DeletePartition>]
-        def delete_prospects_for_disk(disk, keep: [], for_delete_all: false)
+        def delete_prospects_for_disk(disk, for_delete_all: false)
           partitions = disk.partitions.reject { |part| part.type.is?(:extended) }
 
           prospects = partitions.map do |part|
@@ -253,7 +251,7 @@ module Y2Storage
           end
 
           prospects.select do |action|
-            allowed = action.allowed?(settings, keep)
+            allowed = action.allowed?(settings)
             log.info "SpaceMakerProspects::DeletePartition allowed? #{allowed} -> #{action}"
             allowed
           end

@@ -52,7 +52,7 @@ describe Y2Storage::Proposal::SwapReusePlanner do
         "max_size"     => "10 GiB"
       }
     end
-    let(:planned_devices) { devices_planner.volumes_planned_devices(target) }
+    let(:planned_devices) { devices_planner.volumes_planned_devices(target, fake_devicegraph) }
     let(:devices_planner) { Y2Storage::Proposal::DevicesPlanner.new(settings) }
 
     before do
