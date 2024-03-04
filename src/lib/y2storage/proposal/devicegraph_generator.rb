@@ -1,4 +1,4 @@
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -32,8 +32,9 @@ module Y2Storage
 
       attr_accessor :settings
 
-      def initialize(settings)
+      def initialize(settings, disk_analyzer)
         @settings = settings
+        @space_maker = Proposal::SpaceMaker.new(disk_analyzer, settings)
       end
 
       # Devicegraph including all the specified volumes
@@ -41,26 +42,26 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Device>] devices to accommodate
       # @param initial_graph [Devicegraph] initial devicegraph
       #           (typically the representation of the current system)
-      # @param space_maker [Proposal::SpaceMaker]
       #
       # @return [Devicegraph]
       # @raise [Error] if it was not possible to propose a devicegraph
-      def devicegraph(planned_devices, initial_graph, space_maker)
+      def devicegraph(planned_devices, initial_graph)
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
         planned_devices = planned_devices.map(&:dup)
 
-        lvm_lvs, part_devices = planned_devices.partition { |dev| dev.is_a?(Planned::LvmLv) }
-        partitions = part_devices.map { |dev| planned_partition_for(dev) }
+        protect_sids(planned_devices)
+        partitions = partitions_for(planned_devices)
+        lvm_lvs = system_lvs(planned_devices)
 
         lvm_helper = LvmHelper.new(lvm_lvs, settings)
-        space_result = provide_space(partitions, initial_graph, lvm_helper, space_maker)
+        space_result = provide_space(partitions, initial_graph, lvm_helper)
 
         refine_planned_partitions!(partitions, space_result[:deleted_partitions])
         creator_result = create_partitions(
           space_result[:partitions_distribution], space_result[:devicegraph]
         )
-        reuse_partitions!(partitions, creator_result.devicegraph)
+        reuse_devices(planned_devices, creator_result.devicegraph)
 
         graph = create_separate_vgs(planned_devices, creator_result).devicegraph
 
@@ -73,7 +74,44 @@ module Y2Storage
         graph
       end
 
+      # Devicegraph resulting of executing the mandatory actions to make space on all the relevant
+      # disks
+      #
+      # @param planned_devices [Array<Planned::Device>] devices to accommodate
+      # @param initial_graph [Devicegraph] initial devicegraph (typically the representation of the
+      #   current system)
+      #
+      # @return [Devicegraph]
+      def prepared(planned_devices, initial_graph)
+        protect_sids(planned_devices)
+        partitions = partitions_for(planned_devices)
+        space_maker.prepare_devicegraph(initial_graph, partitions)
+      end
+
       protected
+
+      # @return [Proposal::SpaceMaker]
+      attr_reader :space_maker
+
+      # Planned partitions that will hold the given planned devices
+      #
+      # @see #planned_partition_for
+      #
+      # @param planned_devices [Array<Planned::Device>] list of planned devices
+      # @return [Array<Planned::Partition>]
+      def partitions_for(planned_devices)
+        planned_devices.select { |d| plan_partition?(d) }.map { |d| planned_partition_for(d) }
+      end
+
+      # Whether the given planned device must result in the creation of a partition
+      #
+      # @param device [Planned::Device]
+      # @return [Boolean]
+      def plan_partition?(device)
+        return false if device.reuse?
+
+        device.is_a?(Planned::Partition) || device.is_a?(Planned::LvmVg)
+      end
 
       # Planned partition that will hold the given planned device
       #
@@ -82,6 +120,21 @@ module Y2Storage
       # @return [Planned::Partition]
       def planned_partition_for(device)
         device.is_a?(Planned::Partition) ? device : device.single_pv_partition
+      end
+
+      # Configures SpaceMaker#protected_sids according to the given list of planned devices
+      #
+      # @param devices [Array<Planned::Device]
+      def protect_sids(devices)
+        space_maker.protected_sids = devices.select(&:reuse?).map(&:reuse_sid)
+      end
+
+      # Planned logical volumes that must be created at the system volume group
+      #
+      # @param devices [Array<Planned::Device>]
+      # @return [Array<Planned::LvmLv>]
+      def system_lvs(devices)
+        devices.select { |dev| dev.is_a?(Planned::LvmLv) && !dev.reuse? }
       end
 
       # Creates the corresponding LVM devices for all the planned VGs in the
@@ -108,20 +161,19 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] set partitions to
       #     make space for.
-      # @param space_maker [SpaceMaker]
       #
       # @return [Devicegraph]
-      def provide_space(planned_partitions, devicegraph, lvm_helper, space_maker)
+      def provide_space(planned_partitions, devicegraph, lvm_helper)
         if settings.use_lvm
-          provide_space_lvm(planned_partitions, devicegraph, lvm_helper, space_maker)
+          provide_space_lvm(planned_partitions, devicegraph, lvm_helper)
         else
-          provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper, space_maker)
+          provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper)
         end
       end
 
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
-      def provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper, space_maker)
+      def provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper)
         result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
         log.info "Found enough space"
         result
@@ -132,16 +184,21 @@ module Y2Storage
       # create a new volume group from scratch.
       #
       # @see #provide_space
-      def provide_space_lvm(planned_partitions, devicegraph, lvm_helper, space_maker)
+      def provide_space_lvm(planned_partitions, devicegraph, lvm_helper)
         lvm_helper.reused_volume_group = nil
 
         lvm_helper.reusable_volume_groups(devicegraph).each do |vg|
 
           lvm_helper.reused_volume_group = vg
+          lvm_sids = lvm_helper.partitions_in_vg.map { |x| devicegraph.find_by_name(x) }.map(&:sid)
+          original_sids = space_maker.protected_sids
+          space_maker.protected_sids += lvm_sids
+
           result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
           log.info "Found enough space including LVM, reusing #{vg}"
           return result
         rescue Error
+          space_maker.protected_sids = original_sids
           next
 
         end
@@ -207,15 +264,17 @@ module Y2Storage
         partition_creator.create_partitions(distribution)
       end
 
-      # Adjusts pre-existing (not created by us) partitions assigning its
+      # Adjusts pre-existing (not created by us) devices assigning its
       # mount point and boot flag
       #
       # It works directly on the passed devicegraph
       #
-      # @param planned_partitions [Array<Planned::Partition>]
+      # @param planned_devices [Array<Planned::Device>]
       # @param graph [Devicegraph] devicegraph to modify
-      def reuse_partitions!(planned_partitions, graph)
-        planned_partitions.each do |planned|
+      def reuse_devices(planned_devices, graph)
+        planned_devices.each do |planned|
+          next unless planned.reuse?
+
           planned.reuse!(graph)
         end
       end

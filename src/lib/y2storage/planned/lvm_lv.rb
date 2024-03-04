@@ -93,12 +93,12 @@ module Y2Storage
         @lv_type = LvType::NORMAL
         @thin_lvs = []
 
-        return unless @mount_point&.start_with?("/")
-
         @logical_volume_name =
-          if @mount_point == "/"
+          if root?
             "root"
-          else
+          elsif swap?
+            "swap"
+          elsif @mount_point&.start_with?("/")
             lv_name = @mount_point.sub(%r{^/}, "")
             lv_name.tr("/", "_")
           end

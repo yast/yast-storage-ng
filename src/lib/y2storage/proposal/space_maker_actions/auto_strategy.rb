@@ -1,4 +1,4 @@
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2023-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -53,10 +53,9 @@ module Y2Storage
         end
 
         # @param disk [Disk] see {List}
-        # @param keep [Array<Integer>] see {List}
         # @param lvm_helper [Proposal::LvmHelper] see {List}
-        def add_optional_actions(disk, keep, lvm_helper)
-          prospects.add_prospects(disk, lvm_helper, keep)
+        def add_optional_actions(disk, lvm_helper)
+          prospects.add_prospects(disk, lvm_helper)
         end
 
         # @return [Action, nil] nil if there are no more actions in the list

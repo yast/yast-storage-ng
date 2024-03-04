@@ -316,23 +316,30 @@ describe Y2Storage::GuidedProposal do
     context "with pre-existing swap partitions" do
       before do
         allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new).and_return dev_generator
+        allow(Y2Storage::Proposal::SwapReusePlanner).to receive(:new).and_return swap_planner
+        allow(dev_generator).to receive(:add_boot_devices)
+        allow(swap_planner).to receive(:adjust_devices)
         settings.root_device = "/dev/sda"
 
         allow(Yast::Execute).to receive(:locally!).and_return uuidgen_output
       end
 
       let(:scenario) { "swaps" }
+      let(:sda3) { fake_devicegraph.find_by_name("/dev/sda3") }
       let(:all_volumes) do
         [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
-          planned_vol(mount_point: "swap", reuse_name: "/dev/sda3"),
+          planned_vol(mount_point: "swap", reuse_sid: sda3.sid),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)
         ]
       end
       let(:dev_generator) do
-        instance_double("Y2Storage::Proposal::DevicesPlanner", planned_devices: all_volumes)
+        instance_double("Y2Storage::Proposal::DevicesPlanner", volumes_planned_devices: all_volumes)
+      end
+      let(:swap_planner) do
+        instance_double("Y2Storage::Proposal::SwapReusePlanner")
       end
       let(:uuidgen) { "12345678-9abc-def1-2345-67890abcdef0" }
       let(:uuidgen_output) { "#{uuidgen}\n" }

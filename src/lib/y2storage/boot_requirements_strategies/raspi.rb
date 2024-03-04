@@ -125,7 +125,7 @@ module Y2Storage
         return nil unless reusable_firmware_partition
 
         planned = Planned::Partition.new(FIRMWARE_MOUNT_PATH)
-        planned.reuse_name = reusable_firmware_partition.name
+        planned.assign_reuse(reusable_firmware_partition)
         planned
       end
 

@@ -107,6 +107,17 @@ module Y2Storage
         !(reuse_name.nil? || reuse_name.empty?) || !reuse_sid.nil?
       end
 
+      # Sets both #reuse_sid and #reuse_name according to the given device
+      #
+      # The description of the class states that having separate setters for both attributes
+      # is unwanted but hard to fix. This method helps to overcome that problem.
+      #
+      # @param device [Y2Storage::Device]
+      def assign_reuse(device)
+        @reuse_sid = device.sid
+        @reuse_name = device.name if device.respond_to?(:name)
+      end
+
       # Determines whether the device is used as part of another device (VG, MD, Bcache, Btrfs, etc)
       #
       # This method is implemented by each mixin (e.g., CanBePv, CanBeMdMember, etc).

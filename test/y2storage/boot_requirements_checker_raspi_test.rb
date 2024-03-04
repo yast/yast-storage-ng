@@ -46,7 +46,7 @@ describe Y2Storage::BootRequirementsChecker do
 
       double(
         "Partition", name: "/dev/sda#{number}", id: id, size: 256.MiB, match_volume?: false,
-        filesystem: filesystem, direct_blk_filesystem: filesystem, region: region
+        filesystem: filesystem, direct_blk_filesystem: filesystem, region: region, sid: 42
       )
     end
 

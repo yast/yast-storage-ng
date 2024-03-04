@@ -155,7 +155,7 @@ module Y2Storage
         planned_partition.partition_id = PartitionId::ESP
 
         if reusable_efi
-          planned_partition.reuse_name = reusable_efi.name
+          planned_partition.assign_reuse(reusable_efi)
         else
           planned_partition.max_start_offset = EFI_MAX_START
           planned_partition.disk = boot_disk.name

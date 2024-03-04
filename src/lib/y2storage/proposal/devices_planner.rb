@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2021] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -36,33 +36,51 @@ module Y2Storage
       # Constructor
       #
       # @param settings [ProposalSettings]
-      # @param devicegraph [Devicegraph]
-      def initialize(settings, devicegraph)
+      def initialize(settings)
         @settings = settings
-        @devicegraph = devicegraph
       end
 
-      # List of devices (read: partitions or volumes) that need to be
-      # created to satisfy the settings.
+      # List of all devices (read: partitions or logical volumes) that need to be created to
+      # satisfy the settings, including those needed for booting.
       #
       # @param target [Symbol] :desired means the sizes of the planned devices
       #   should be the ideal ones, :min for generating the smallest functional
       #   devices
+      # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
-      def planned_devices(target)
+      def planned_devices(target, devicegraph)
+        devices = volumes_planned_devices(target, devicegraph)
+        add_boot_devices(devices, target, devicegraph)
+        devices
+      end
+
+      # List of devices that need to be created to satisfy the settings. Does not include
+      # devices needed for booting.
+      #
+      # @param target [Symbol] see #planned_devices
+      # @param devicegraph [Devicegraph]
+      # @return [Array<Planned::Device>]
+      def volumes_planned_devices(target, devicegraph)
         @target = target
         proposed_volumes = settings.volumes.select(&:proposed?)
+        devices = proposed_volumes.map { |v| planned_device(v, devicegraph) }
+        remove_shadowed_subvolumes(devices)
+      end
 
-        planned_devices = proposed_volumes.map { |v| planned_device(v) }
-        planned_devices = planned_boot_devices(planned_devices) + planned_devices
-
-        remove_shadowed_subvolumes(planned_devices)
+      # Modifies the given list of planned devices, adding any planned partition needed for booting
+      # the new target system
+      #
+      # @param devices [Array<Planned::Device>]
+      # @param target [Symbol] see #planned_devices
+      # @param devicegraph [Devicegraph]
+      # @return [Array<Planned::Device>]
+      def add_boot_devices(devices, target, devicegraph)
+        @target = target
+        devices.unshift(*planned_boot_devices(devices, devicegraph))
+        remove_shadowed_subvolumes(devices)
       end
 
       protected
-
-      # @return [Devicegraph]
-      attr_reader :devicegraph
 
       # @return [Symbol] :desired or :min
       attr_reader :target
@@ -70,8 +88,9 @@ module Y2Storage
       # Planned devices needed by the bootloader
       #
       # @param planned_devices [Array<Planned::Device>] devices that have been planned
+      # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
-      def planned_boot_devices(planned_devices)
+      def planned_boot_devices(planned_devices, devicegraph)
         flat = planned_devices.flat_map do |dev|
           dev.respond_to?(:lvs) ? dev.lvs : dev
         end
@@ -84,47 +103,6 @@ module Y2Storage
         # exception if it's impossible to get a bootable system, even adding
         # more partitions.
         raise NotBootableError, e.message
-      end
-
-      # Swap partition that can be reused.
-      #
-      # It returns the smaller partition that is big enough for our purposes.
-      #
-      # @param required_size [DiskSize]
-      # @return [Partition]
-      def reusable_swap(required_size)
-        return nil unless try_to_reuse_swap?
-
-        partitions = available_swap_partitions
-        partitions.select! { |part| can_be_reused?(part, required_size) }
-        # Use #name in case of #size tie to provide stable sorting
-        partitions.min_by { |part| [part.size, part.name] }
-      end
-
-      # Returns all available and acceptable swap partitions
-      #
-      # @return [Array<Partition>]
-      def available_swap_partitions
-        devicegraph.partitions.select(&:swap?)
-      end
-
-      # Whether it makes sense to try to reuse existing swap partitions
-      #
-      # @return [Boolean]
-      def try_to_reuse_swap?
-        !settings.use_lvm && !settings.use_encryption && settings.swap_reuse != :none
-      end
-
-      # Whether it is acceptable to reuse the given swap partition
-      #
-      # @param partition [Partition]
-      # @param required_size [DiskSize]
-      # @return [Boolean]
-      def can_be_reused?(partition, required_size)
-        return false if partition.size < required_size
-        return true unless settings.swap_reuse == :candidate
-
-        settings.candidate_devices.include?(partition.partitionable.name)
       end
 
       # Delete shadowed subvolumes from each planned device
@@ -151,23 +129,87 @@ module Y2Storage
       #
       # @param volume [VolumeSpecification]
       # @return [Planned::Device]
-      def planned_device(volume)
-        if settings.separate_vgs && volume.separate_vg?
+      def planned_device(volume, devicegraph)
+        reused = reusable_device(volume, devicegraph)
+
+        if reused
+          planned_reuse(volume, reused)
+        elsif settings.separate_vgs && volume.separate_vg?
           planned_separate_vg(volume)
         else
-          planned_blk_device(volume)
+          planned_type = planned_lv?(volume) ? Planned::LvmLv : Planned::Partition
+          planned_blk_device(volume, planned_type)
         end
+      end
+
+      # @see #planned_device
+      #
+      # @param volume [VolumeSpecification] volume that is NOT assigned to a separate volume group
+      # @return [Boolean]
+      def planned_lv?(volume)
+        # Exceptional case: although the mode is auto, a concrete device has been specified for a
+        # volume that is not assigned to a separate VG
+        return false if settings.allocate_mode?(:auto) && volume.device
+
+        settings.lvm
+      end
+
+      # Device that should be used for the given volume
+      #
+      # @param volume [VolumeSpecification]
+      # @param devicegraph [Devicegraph]
+      # @return [Y2Storage::Device, nil] nil if no device should be reused or if the device could
+      #   not be found
+      def reusable_device(volume, devicegraph)
+        return nil unless volume.reuse?
+
+        device = devicegraph.find_by_any_name(volume.reuse_name)
+        return nil unless device.is?(:blk_device)
+
+        device
+      end
+
+      # @see #planned_device
+      #
+      # @param volume [VolumeSpecification]
+      # @param reused [Y2Storage::Device]
+      # @return [Planned::Device]
+      def planned_reuse(volume, reused)
+        planned_type = reused_planned_type(reused)
+        planned = planned_blk_device(volume, planned_type)
+        planned.assign_reuse(reused)
+        planned.reformat = volume.reformat?
+        planned
+      end
+
+      # @see #planned_device
+      def reused_planned_type(reused)
+        return Planned::LvmLv if reused.is?(:lvm_lv)
+        return Planned::Partition if reused.is?(:partition)
+
+        # There are more specific types of planned devices, such as Bcache, Md, or StrayBlkDevice,
+        # but regarding reuse, relying on Disk seem to be good enough for all cases
+        Planned::Disk
       end
 
       # @see #planned_device
       #
       # @param volume [VolumeSpecification]
       # @return [Planned::LvmLv, Planed::Partition]
-      def planned_blk_device(volume)
-        planned_type = settings.lvm ? Planned::LvmLv : Planned::Partition
-        planned_device = planned_type.new(volume.mount_point, volume.fs_type)
+      def planned_blk_device(volume, planned_type)
+        planned_device = create_planned_device(planned_type, volume.mount_point)
+        planned_device.filesystem_type = volume.fs_type
         adjust_to_settings(planned_device, volume)
         planned_device
+      end
+
+      # @see #planned_blk_device
+      def create_planned_device(type, mount_point)
+        return type.new(mount_point) if [Planned::LvmLv, Planned::Partition].include?(type)
+
+        dev = type.new
+        dev.mount_point = mount_point
+        dev
       end
 
       # @see #planned_device
@@ -206,7 +248,6 @@ module Y2Storage
         adjust_sizes(planned_device, volume)
         adjust_btrfs(planned_device, volume)
         adjust_device(planned_device, volume)
-        adjust_swap(planned_device, volume) if planned_device.swap?
 
         planned_device.fstab_options = volume.mount_options&.split(",")
       end
@@ -216,6 +257,8 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_weight(planned_device, volume)
+        return unless planned_device.respond_to?(:weight)
+
         planned_device.weight = value_with_fallbacks(volume, :weight)
       end
 
@@ -224,7 +267,7 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param _volume [VolumeSpecification]
       def adjust_encryption(planned_device, _volume)
-        return unless planned_device.is_a?(Planned::Partition)
+        return unless planned_device.is_a?(Planned::Partition) || planned_device.is_a?(Planned::Disk)
         return unless settings.encryption_password
 
         planned_device.encryption_password = settings.encryption_password
@@ -237,6 +280,8 @@ module Y2Storage
       # @param planned_device [Planned::Device]
       # @param volume [VolumeSpecification]
       def adjust_sizes(planned_device, volume)
+        return unless planned_device.respond_to?(:min_size)
+
         planned_device.min_size = min_size(volume)
         planned_device.max_size = max_size(volume)
 
@@ -323,22 +368,6 @@ module Y2Storage
         # Forcing this when planned_device is a LV would imply the new VG can only be located
         # in that disk (preventing it to spread over several disks). We likely don't want that.
         planned_device.disk ||= settings.root_device if planned_device.is_a?(Planned::Partition)
-      end
-
-      # Adjusts values when planned device is swap
-      #
-      # @param planned_device [Planned::Device]
-      # @param _volume [VolumeSpecification]
-      def adjust_swap(planned_device, _volume)
-        if planned_device.is_a?(Planned::Partition)
-          reuse = reusable_swap(planned_device.min_size)
-          if reuse
-            planned_device.reuse_name = reuse.name
-            log.info "planned to reuse swap #{reuse.name}"
-          end
-        else
-          planned_device.logical_volume_name = "swap"
-        end
       end
 
       # Calculates the value for a specific attribute taking into

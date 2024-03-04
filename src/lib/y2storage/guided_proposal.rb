@@ -1,4 +1,4 @@
-# Copyright (c) [2016-2023] SUSE LLC
+# Copyright (c) [2016-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -96,9 +96,6 @@ module Y2Storage
     # @return [ProposalSettings]
     attr_writer :settings
 
-    # @return [Proposal::SpaceMaker]
-    attr_writer :space_maker
-
     # Calculates the proposal
     #
     # @see #try_proposal
@@ -184,10 +181,10 @@ module Y2Storage
 
       # Calculate the planned devices even before checking #useless_volumes_sets?
       # because they can contain useful information
-      @planned_devices = planned_devices_list(target_size)
+      @planned_devices = initial_planned_devices(target_size)
       raise Error if useless_volumes_sets?
 
-      @devices = devicegraph(@planned_devices)
+      @devices = devicegraph(target_size)
       true
     end
 
@@ -216,23 +213,30 @@ module Y2Storage
     end
 
     # @return [Array<Planned::Device>]
-    def planned_devices_list(target)
-      generator = Proposal::DevicesPlanner.new(settings, clean_graph)
-      generator.planned_devices(target)
+    def initial_planned_devices(target)
+      planner = Proposal::DevicesPlanner.new(settings)
+      planner.volumes_planned_devices(target, initial_devicegraph)
     end
 
-    # Devicegraph resulting of accommodating some planned devices in the
-    # initial devicegraph
+    # Devicegraph resulting of accommodating the planned devices and the boot-related
+    # partitions in the initial devicegraph
     #
-    # @param planned_devices [Array<Planned::Device>] devices to accomodate
+    # Note this method modifies the list of planned devices to add partitions needed for
+    # booting and to reuse existing swap devices if possible.
+    #
+    # @param target_size [Symbol] see {#target_sizes}
     # @return [Devicegraph]
-    def devicegraph(planned_devices)
-      generator = Proposal::DevicegraphGenerator.new(settings)
-      generator.devicegraph(planned_devices, clean_graph, space_maker)
+    def devicegraph(target_size)
+      planner = Proposal::DevicesPlanner.new(settings)
+      planner.add_boot_devices(@planned_devices, target_size, clean_graph)
+      swap = Proposal::SwapReusePlanner.new(settings, clean_graph)
+      swap.adjust_devices(@planned_devices)
+
+      graph_generator.devicegraph(planned_devices, clean_graph)
     end
 
-    def space_maker
-      @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, settings)
+    def graph_generator
+      @graph_generator ||= Proposal::DevicegraphGenerator.new(settings, disk_analyzer)
     end
 
     # Copy of #initial_devicegraph without all the partitions that must be wiped out
@@ -249,7 +253,8 @@ module Y2Storage
       # the end of the process for those devices that were not used (as soon as libstorage-ng
       # allows us to copy sub-graphs).
       remove_empty_partition_tables(new_devicegraph)
-      @clean_graph = space_maker.prepare_devicegraph(new_devicegraph)
+
+      @clean_graph = graph_generator.prepared(@planned_devices, new_devicegraph)
     end
 
     # Removes partition tables from candidate devices with empty partition table

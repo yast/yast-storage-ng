@@ -1,4 +1,4 @@
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2023-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -52,11 +52,10 @@ module Y2Storage
         # @see SpaceMaker#provide_space
         #
         # @param disk [Disk] disk to act upon
-        # @param keep [Array<Integer>] sids of partitions that should not be deleted
         # @param lvm_helper [Proposal::LvmHelper] contains information about the
         #     planned LVM logical volumes and how to make space for them
-        def add_optional_actions(disk, keep, lvm_helper)
-          strategy.add_optional_actions(disk, keep, lvm_helper)
+        def add_optional_actions(disk, lvm_helper)
+          strategy.add_optional_actions(disk, lvm_helper)
         end
 
         # Next action to be performed by SpaceMaker
