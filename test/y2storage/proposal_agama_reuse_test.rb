@@ -72,7 +72,7 @@ describe Y2Storage::MinGuidedProposal do
       settings.space_settings.actions = space_actions
     end
 
-    context "when reusing an existing partition in the target disk" do
+    context "when reusing an existing plain partition in the target disk" do
       before do
         srv = settings.volumes.find { |v| v.mount_point == "/srv" }
         srv.reuse_name = "/dev/sda8"
@@ -113,6 +113,57 @@ describe Y2Storage::MinGuidedProposal do
           filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
           expect(filesystem.type.is?(:xfs)).to eq true
           expect(filesystem.blk_devices.first.sid).to eq original_sda8.sid
+        end
+      end
+    end
+
+    context "when reusing an existing encrypted partition in the target disk" do
+      let(:scenario) { "gpt_encryption" }
+
+      before do
+        srv = settings.volumes.find { |v| v.mount_point == "/srv" }
+        srv.reuse_name = "/dev/sda4"
+        srv.reformat = reformat
+      end
+
+      let(:space_actions) { { "/dev/sda1" => :delete, "/dev/sda4" => :delete } }
+      let(:original_sda4) { fake_devicegraph.find_by_name("/dev/sda4") }
+
+      context "keeping its filesystem" do
+        let(:reformat) { false }
+
+        it "does not delete the reused partition even if told to do so" do
+          proposal.propose
+          new_partition = proposal.devices.find_device(original_sda4.sid)
+          expect(new_partition).to_not be_nil
+        end
+
+        it "keeps the encryption layer on the reused partition and does not format it" do
+          proposal.propose
+          filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
+          expect(filesystem.type.is?(:btrfs)).to eq true
+          blk_device = filesystem.blk_devices.first
+          expect(blk_device.is?(:luks)).to eq true
+          expect(blk_device.plain_device.sid).to eq original_sda4.sid
+        end
+      end
+
+      context "not keeping its filesystem" do
+        let(:reformat) { true }
+
+        it "does not delete the reused partition even if told to do so" do
+          proposal.propose
+          new_partition = proposal.devices.find_device(original_sda4.sid)
+          expect(new_partition).to_not be_nil
+        end
+
+        it "keeps the encryption layer on the reused partition and formats it" do
+          proposal.propose
+          filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
+          expect(filesystem.type.is?(:xfs)).to eq true
+          blk_device = filesystem.blk_devices.first
+          expect(blk_device.is?(:luks)).to eq true
+          expect(blk_device.plain_device.sid).to eq original_sda4.sid
         end
       end
     end
