@@ -148,7 +148,7 @@ module Y2Storage
       # @return [Boolean]
       def planned_lv?(volume)
         # Exceptional case: although the mode is auto, a concrete device has been specified for a
-        # volume that is not a assigned to a separate VG
+        # volume that is not assigned to a separate VG
         return false if settings.allocate_mode?(:auto) && volume.device
 
         settings.lvm

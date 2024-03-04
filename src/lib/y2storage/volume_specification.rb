@@ -186,6 +186,7 @@ module Y2Storage
     alias_method :ignore_snapshots_sizes?, :ignore_snapshots_sizes
     alias_method :ignore_fallback_sizes?, :ignore_fallback_sizes
     alias_method :btrfs_read_only?, :btrfs_read_only
+    alias_method :reformat?, :reformat
 
     class << self
       # Returns the volume specification for the given mount point
@@ -252,13 +253,6 @@ module Y2Storage
     # @return [Boolean]
     def fs_type_configurable?
       fs_types.size > 1
-    end
-
-    # @see #reformat
-    #
-    # @return [Boolean]
-    def reformat?
-      reformat
     end
 
     # Whether this volume is expected to reuse an existing device
