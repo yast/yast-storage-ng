@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2partitioner/widgets/columns/base"
+require "y2storage/filesystem_label"
 
 module Y2Partitioner
   module Widgets
@@ -39,44 +40,12 @@ module Y2Partitioner
 
         # @see Columns::Base#value_for
         def value_for(device)
-          return fstab_filesystem_label(device) if fstab_entry?(device)
-
-          filesystem_label(device)
+          Y2Storage::FilesystemLabel.new(device, system_graph: system_graph).to_s
         end
 
         # @see Columns::Base#id
         def id
           :label
-        end
-
-        private
-
-        # Returns the label for the given device, when possible
-        #
-        # @param device [Y2Storage::Device, nil]
-        # @return [String] the label if possible; empty string otherwise
-        def filesystem_label(device)
-          return "" unless device
-          return "" if device.is?(:btrfs_subvolume)
-
-          filesystem = filesystem_for(device)
-
-          return "" unless filesystem
-          return "" if part_of_multidevice?(device, filesystem)
-          # fs may not support labels, like NFS
-          return "" unless filesystem.respond_to?(:label)
-
-          filesystem.label
-        end
-
-        # Returns the label for the given fstab entry, when possible
-        #
-        # @see #filesystem_label
-        # @param fstab_entry [Y2Storage::SimpleEtcFstabEntry]
-        def fstab_filesystem_label(fstab_entry)
-          device = fstab_entry.device(system_graph)
-
-          filesystem_label(device)
         end
       end
     end
