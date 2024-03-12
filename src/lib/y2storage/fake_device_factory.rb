@@ -769,7 +769,7 @@ module Y2Storage
       size = args["size"] || DiskSize.zero
       raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" unless args.key?("size")
 
-      size = DiskSize.EiB(4) if size.unlimited? # bsc#1221222
+      size = DiskSize.EiB(4) if size.unlimited? # (2^62 bytes) bsc#1221222
 
       lvm_lv = parent.create_lvm_lv(lv_name, size)
       create_lvm_lv_stripe_parameters(lvm_lv, args)
