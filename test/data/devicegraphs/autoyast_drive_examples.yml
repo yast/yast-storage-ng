@@ -415,7 +415,7 @@
           blk_device: /dev/sdj1
     lvm_lvs:
       - lvm_lv:
-          size:         unlimited
+          size:         1 TiB
           lv_name:      lv1
           file_system:  btrfs
           mount_point:  /
@@ -434,7 +434,7 @@
           blk_device: /dev/sdj2
     lvm_lvs:
       - lvm_lv:
-          size:         unlimited
+          size:         1 TiB
           lv_name:      lv1
           file_system:  btrfs
           mount_point:  /

@@ -31,7 +31,7 @@
             blk_device: /dev/sdb1
     lvm_lvs:
         - lvm_lv:
-            size:         unlimited
+            size:         100 GiB
             lv_name:      lv1
             file_system:  btrfs
             mount_point:  /
