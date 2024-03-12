@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Mar 12 11:52:40 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Fixed build failure with latest SWIG:
+  Make sure not to pass -1 to unsigned long long value in libstorage-ng
+  (bsc#1221222)
+- 5.0.9
+
+-------------------------------------------------------------------
 Thu Mar  7 16:26:04 UTC 2024 - José Iván López González <jlopez@suse.com>
 
 - Share the logic for generating the description of a device and
