@@ -287,6 +287,8 @@ module Y2Storage
         planned_device.min_size = min_size(volume)
         planned_device.max_size = max_size(volume)
 
+        return if volume.ignore_adjust_by_ram?
+
         if volume.adjust_by_ram?
           planned_device.min_size = [planned_device.min_size, ram_size].max
           planned_device.max_size = [planned_device.max_size, ram_size].max

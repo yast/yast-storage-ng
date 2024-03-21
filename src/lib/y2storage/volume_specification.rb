@@ -177,10 +177,16 @@ module Y2Storage
     # @return [Boolean] true if #snapshots_size and #snapshots_percentage should be ignored
     attr_accessor :ignore_snapshots_sizes
 
+    # Whether to ignore any possible effect on the size derived from RAM size
+    #
+    # @return [Boolean] true if #adjust_by_ram should be ignored
+    attr_accessor :ignore_adjust_by_ram
+
     alias_method :proposed?, :proposed
     alias_method :proposed_configurable?, :proposed_configurable
     alias_method :adjust_by_ram?, :adjust_by_ram
     alias_method :adjust_by_ram_configurable?, :adjust_by_ram_configurable
+    alias_method :ignore_adjust_by_ram?, :ignore_adjust_by_ram
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
     alias_method :ignore_snapshots_sizes?, :ignore_snapshots_sizes
@@ -380,6 +386,7 @@ module Y2Storage
       @fs_types                   = []
       @ignore_fallback_sizes      = false
       @ignore_snapshots_sizes     = false
+      @ignore_adjust_by_ram       = false
       @reformat                   = true
     end
 

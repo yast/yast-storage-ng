@@ -472,6 +472,12 @@ describe Y2Storage::Proposal::DevicesPlanner do
               expect(planned_device.min_size).to eq(8.GiB)
               expect(planned_device.max_size).to eq(8.GiB)
             end
+
+            it "does not extend the sizes to ram size if #ignore_adjust_by_ram is set" do
+              vol_in_settings.ignore_adjust_by_ram = true
+              expect(planned_device.min_size).to eq(1.GiB)
+              expect(planned_device.max_size).to eq(2.GiB)
+            end
           end
 
           context "when it is planning a device with btrfs filesystem" do
