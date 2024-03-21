@@ -75,6 +75,8 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
       def add_boot_devices(devices, target, devicegraph)
+        return unless settings.boot
+
         @target = target
         devices.unshift(*planned_boot_devices(devices, devicegraph))
         remove_shadowed_subvolumes(devices)

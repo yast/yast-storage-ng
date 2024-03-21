@@ -108,6 +108,15 @@ describe Y2Storage::Proposal::DevicesPlanner do
         )
       end
 
+      context "if ProposalSettings#boot is set to false" do
+        before { settings.boot = false }
+
+        it "does not include the partitions needed by BootRequirementChecker" do
+          mount_points = subject.planned_devices(:desired, devicegraph).map(&:mount_point)
+          expect(mount_points).to_not include("/one_boot", "/other_boot")
+        end
+      end
+
       context "when a volume is specified in <volumes> section" do
         let(:volumes) { [volume] }
 
