@@ -75,6 +75,8 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       # @return [Array<Planned::Device>]
       def add_boot_devices(devices, target, devicegraph)
+        return unless settings.boot
+
         @target = target
         devices.unshift(*planned_boot_devices(devices, devicegraph))
         remove_shadowed_subvolumes(devices)
@@ -284,6 +286,8 @@ module Y2Storage
 
         planned_device.min_size = min_size(volume)
         planned_device.max_size = max_size(volume)
+
+        return if volume.ignore_adjust_by_ram?
 
         if volume.adjust_by_ram?
           planned_device.min_size = [planned_device.min_size, ram_size].max

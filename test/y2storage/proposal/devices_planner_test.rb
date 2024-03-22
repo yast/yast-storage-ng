@@ -108,6 +108,15 @@ describe Y2Storage::Proposal::DevicesPlanner do
         )
       end
 
+      context "if ProposalSettings#boot is set to false" do
+        before { settings.boot = false }
+
+        it "does not include the partitions needed by BootRequirementChecker" do
+          mount_points = subject.planned_devices(:desired, devicegraph).map(&:mount_point)
+          expect(mount_points).to_not include("/one_boot", "/other_boot")
+        end
+      end
+
       context "when a volume is specified in <volumes> section" do
         let(:volumes) { [volume] }
 
@@ -462,6 +471,12 @@ describe Y2Storage::Proposal::DevicesPlanner do
             it "extends min_size and max_size to ram size if necessary" do
               expect(planned_device.min_size).to eq(8.GiB)
               expect(planned_device.max_size).to eq(8.GiB)
+            end
+
+            it "does not extend the sizes to ram size if #ignore_adjust_by_ram is set" do
+              vol_in_settings.ignore_adjust_by_ram = true
+              expect(planned_device.min_size).to eq(1.GiB)
+              expect(planned_device.max_size).to eq(2.GiB)
             end
           end
 

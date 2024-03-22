@@ -213,6 +213,10 @@ module Y2Storage
     alias_method :lvm, :use_lvm
     alias_method :lvm=, :use_lvm=
 
+    # @return [Boolean] whether the proposal should automatically configure any partition
+    #   possibly needed for booting the system.
+    attr_accessor :boot
+
     # @return [ProposalSpaceSettings]
     attr_reader :space_settings
 
@@ -313,7 +317,7 @@ module Y2Storage
     # List of all the supported settings
     SETTINGS = [
       :multidisk_first, :root_device, :explicit_root_device,
-      :candidate_devices, :explicit_candidate_devices,
+      :candidate_devices, :explicit_candidate_devices, :boot,
       :windows_delete_mode, :linux_delete_mode, :other_delete_mode, :resize_windows,
       :delete_resize_configurable,
       :lvm, :separate_vgs, :allocate_volume_mode, :lvm_vg_strategy, :lvm_vg_size
@@ -389,6 +393,7 @@ module Y2Storage
     # Defaults when a setting is not specified
     DEFAULTS = {
       allocate_volume_mode:       :auto,
+      boot:                       true,
       delete_resize_configurable: true,
       linux_delete_mode:          :ondemand,
       lvm:                        false,
