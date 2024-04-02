@@ -60,12 +60,6 @@ module Y2Storage
         encryption_process.create_device(blk_device, dm_name, pbkdf: pbkdf, label: label)
       end
 
-      # @see Base#available?
-      def available?
-        # jsc#PED-3878 and jsc#GEHC-6
-        Yast::Mode.auto || StorageEnv.instance.luks2_available?
-      end
-
       private
 
       # @see Base#encryption_process
