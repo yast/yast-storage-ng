@@ -477,6 +477,9 @@ module Y2Storage
 
           # At least one distribution is valid
           assigned_spaces = distros.map { |i| i.spaces.find { |a| a.disk_space.growing? } }
+          # There is a valid distribution which doesn't need to use the growing space
+          return DiskSize.zero if assigned_spaces.include?(nil)
+
           missing = assigned_spaces.map(&:total_missing_size).min
           return missing.ceil(align_grain)
         end
