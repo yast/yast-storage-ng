@@ -263,7 +263,7 @@ module Y2Storage
     # Whether encryption must be used
     # @return [Boolean]
     def use_encryption
-      !encryption_password.nil?
+      !encryption_method.nil?
     end
 
     def_delegators :@space_settings,
@@ -399,7 +399,7 @@ module Y2Storage
       lvm:                        false,
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
-      encryption_method:          EncryptionMethod::LUKS1,
+      encryption_method:          nil,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,
@@ -446,13 +446,18 @@ module Y2Storage
       load_encryption
     end
 
-    # Loads the default encryption settings
+    # Loads the encryption settings
     #
-    # The encryption settings are not part of control.xml, but can be injected by a previous step of
-    # the installation, eg. the dialog of the Common Criteria system role
     def load_encryption
-      enc = feature(:proposal, :encryption)
+      enc_method = feature(:proposal, :encryption_method)
+      self.encryption_method = EncryptionMethod.find(enc_method.to_sym) if !enc_method.nil?
 
+      enc_pbkdf = feature(:proposal, :encryption_pbkdf)
+      self.encryption_pbkdf = Y2Storage::PbkdFunction.find(enc_pbkdf) if !enc_pbkdf.nil?
+
+      # The encryption password is not part of control.xml, but can be injected by a previous step of
+      # the installation, eg. the dialog of the Common Criteria system role.
+      enc = feature(:proposal, :encryption)
       return unless enc
       return unless enc.respond_to?(:password)
 
@@ -460,6 +465,10 @@ module Y2Storage
       return if passwd.nil? || passwd.empty?
 
       self.encryption_password = passwd
+
+      # If an encryption password and no method have been set, we are using LUKS1 as default
+      self.encryption_method = EncryptionMethod::LUKS1 if self.encryption_method.nil?
+
     end
 
     def validated_delete_mode(mode)
