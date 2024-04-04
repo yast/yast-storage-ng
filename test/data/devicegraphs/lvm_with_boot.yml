@@ -24,7 +24,7 @@
 
     lvm_lvs:
         - lvm_lv:
-            size:         unlimited
+            size:         200 GiB
             lv_name:      lv1
             file_system:  btrfs
             mount_point:  /

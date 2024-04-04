@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Apr  3 11:23:01 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Fix unlimited-sized fake device graphs (bsc#1221222)
+- 4.6.17
+
+-------------------------------------------------------------------
 Thu Feb 22 08:32:24 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Added new libstorage enum value UF_BCACHEFS to fix build failure
