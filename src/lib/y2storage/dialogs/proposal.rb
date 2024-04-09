@@ -1,3 +1,4 @@
+# coding: utf-8
 # Copyright (c) [2016-2022] SUSE LLC
 #
 # All Rights Reserved.
@@ -126,7 +127,6 @@ module Y2Storage
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
         content = devicegraph ? actions_html : failure_html
-
         RichText(Id(:summary), content)
       end
 
@@ -139,10 +139,25 @@ module Y2Storage
       def actions_html
         actions_source_html +
           boss_html +
+          encryption_error +
           setup_errors_html +
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
           @actions_presenter.to_html
+      end
+
+      def encryption_error
+        ret = ""
+        if (!@proposal.nil? &&
+            !@proposal.settings.nil? &&
+            !@proposal.settings.encryption_method.nil? &&
+            @proposal.settings.encryption_password.nil?)
+          ret = Yast::HTML.Para (_("Missing encryption password - Proposal has been done without encryption.")) +
+            Yast::HTML.Newline +
+            _("Please use \"Guided Setup\" in order to set the password or in order to disable encryption.")
+          ret = Yast::HTML.Colorize(ret, "red")
+        end
+        ret
       end
 
       def boss_html
