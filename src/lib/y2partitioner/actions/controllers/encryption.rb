@@ -215,7 +215,7 @@ module Y2Partitioner
           if methods.include?(encryption&.method)
             encryption.method
           else
-            Y2Storage::EncryptionMethod::LUKS1
+            Y2Storage::EncryptionMethod::LUKS2
           end
         end
 

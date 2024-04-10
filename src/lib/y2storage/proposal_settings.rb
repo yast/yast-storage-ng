@@ -466,8 +466,8 @@ module Y2Storage
 
       self.encryption_password = passwd
 
-      # If an encryption password and no method have been set, we are using LUKS1 as default
-      self.encryption_method = EncryptionMethod::LUKS1 if self.encryption_method.nil?
+      # If an encryption password and no method have been set, we are using LUKS2 as default
+      self.encryption_method = EncryptionMethod::LUKS2 if self.encryption_method.nil?
 
     end
 

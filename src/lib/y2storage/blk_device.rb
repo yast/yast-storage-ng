@@ -255,7 +255,7 @@ module Y2Storage
     #   in the real system. It will fail during commit.
     #
     #   @param dm_name [String] see #dm_table_name
-    #   @param type [EncryptionType] optional encryption type of the new device, LUKS1 by default
+    #   @param type [EncryptionType] optional encryption type of the new device, LUKS2 by default
     #   @return [Encryption]
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
 
@@ -326,7 +326,7 @@ module Y2Storage
     #   the documentation of the create_device method of the corresponding class
     #
     # @return [Encryption]
-    def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, **method_args)
+    def encrypt(method: EncryptionMethod::LUKS2, dm_name: nil, password: nil, **method_args)
       enc = encrypt_with_method(method, dm_name, **method_args)
 
       enc.auto_dm_name = enc.dm_table_name.empty?
