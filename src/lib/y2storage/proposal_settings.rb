@@ -263,7 +263,7 @@ module Y2Storage
     # Whether encryption must be used
     # @return [Boolean]
     def use_encryption
-      !encryption_method.nil?
+      !encryption_method.nil? || !encryption_password.nil?
     end
 
     def_delegators :@space_settings,
