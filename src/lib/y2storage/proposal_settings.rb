@@ -467,8 +467,7 @@ module Y2Storage
       self.encryption_password = passwd
 
       # If an encryption password and no method have been set, we are using LUKS2 as default
-      self.encryption_method = EncryptionMethod::LUKS2 if self.encryption_method.nil?
-
+      self.encryption_method = EncryptionMethod::LUKS2 if encryption_method.nil?
     end
 
     def validated_delete_mode(mode)

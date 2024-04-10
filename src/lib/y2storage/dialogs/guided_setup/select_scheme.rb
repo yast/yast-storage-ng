@@ -44,11 +44,11 @@ module Y2Storage
           super
         end
 
-
         # Handler for :encryption_method ComboBox.
         # @param focus [Boolean] whether password field should be focused
         def encryption_method_handler(focus: true)
-          widget_update(:encryption_pbkdf, (using_encryption? && using_luks2_encryption?), attr: :Enabled)
+          widget_update(:encryption_pbkdf, (using_encryption? && using_luks2_encryption?),
+            attr: :Enabled)
           return unless focus && using_encryption? && using_luks2_encryption?
 
           Yast::UI.SetFocus(Id(:encryption_pbkdf))
@@ -149,7 +149,9 @@ module Y2Storage
                   Id(:encryption_method),
                   Opt(:notify, :hstretch),
                   _("Encryption method"),
-                  Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?).map { |m| Item(Id(m.to_sym), m.to_human_string,false) }
+                  Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?).map do |m|
+                    Item(Id(m.to_sym), m.to_human_string, false)
+                  end
                 )
               )
             ),
@@ -160,7 +162,9 @@ module Y2Storage
                   Id(:encryption_pbkdf),
                   Opt(:hstretch),
                   _("Password-Based Key Derivation &Function (PBKDF)"),
-                  Y2Storage::PbkdFunction.all.map { |m| Item(Id(m.value), m.name, (m.value == "pbkdf2" ? true : false)) }
+                  Y2Storage::PbkdFunction.all.map do |m|
+                    Item(Id(m.value), m.name, (m.value == "pbkdf2"))
+                  end
                 )
               )
             )
@@ -173,7 +177,10 @@ module Y2Storage
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
           widget_update(:encryption_method, settings.encryption_method.id) if settings.encryption_method
-          widget_update(:encryption_pbkdf, Id(settings.encryption_pbkdf.value)) if settings.encryption_pbkdf
+          if settings.encryption_pbkdf
+            widget_update(:encryption_pbkdf,
+              Id(settings.encryption_pbkdf.value))
+          end
           encryption_method_handler(focus: false)
           return unless settings.use_encryption
 
@@ -185,8 +192,12 @@ module Y2Storage
           settings.use_lvm = widget_value(:lvm)
           settings.separate_vgs = widget_value(:separate_vgs) if settings.separate_vgs_relevant?
           settings.encryption_password = using_encryption? ? widget_value(:password) : nil
-          settings.encryption_method = using_encryption? ? Y2Storage::EncryptionMethod.find(widget_value(:encryption_method)) : nil
-          settings.encryption_pbkdf = (using_encryption? && using_luks2_encryption?) ? Y2Storage::PbkdFunction.find(widget_value(:encryption_pbkdf)) : nil
+          settings.encryption_method = if using_encryption?
+            Y2Storage::EncryptionMethod.find(widget_value(:encryption_method))
+          end
+          settings.encryption_pbkdf = if using_encryption? && using_luks2_encryption?
+            Y2Storage::PbkdFunction.find(widget_value(:encryption_pbkdf))
+          end
         end
 
         def help_text

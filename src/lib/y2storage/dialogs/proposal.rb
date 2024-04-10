@@ -1,4 +1,3 @@
-# coding: utf-8
 # Copyright (c) [2016-2022] SUSE LLC
 #
 # All Rights Reserved.
@@ -148,13 +147,15 @@ module Y2Storage
 
       def encryption_error
         ret = ""
-        if (!@proposal.nil? &&
+        if !@proposal.nil? &&
             !@proposal.settings.nil? &&
             !@proposal.settings.encryption_method.nil? &&
-            @proposal.settings.encryption_password.nil?)
-          ret = Yast::HTML.Para (_("Missing encryption password - Proposal has been done without encryption.")) +
+            @proposal.settings.encryption_password.nil?
+          ret = Yast::HTML.Para(
+              _("Missing encryption password - Proposal has been done without encryption.")
+            ) +
             Yast::HTML.Newline +
-            _("Please use \"Guided Setup\" in order to set the password or in order to disable encryption.")
+            _("Please use \"Guided Setup\" in order to set the password or to disable encryption.")
           ret = Yast::HTML.Colorize(ret, "red")
         end
         ret
