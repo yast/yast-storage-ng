@@ -131,44 +131,61 @@ module Y2Storage
           )
         end
 
+        def password_widget
+          Left(
+            HBox(
+              HSpacing(2),
+              Password(Id(:password), Opt(:hstretch), _("Password")),
+              Password(Id(:repeat_password), Opt(:hstretch), _("Verify Password"))
+            )
+          )
+        end
+
+        def encryption_method_widget
+          Left(
+            HBox(
+              HSpacing(2),
+              ComboBox(
+                Id(:encryption_method),
+                Opt(:notify, :hstretch),
+                _("Encryption method"),
+                Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?).map do |m|
+                  Item(Id(m.to_sym), m.to_human_string, false)
+                end
+              )
+            )
+          )
+        end
+
+        def encryption_pbkdf_widget
+          Left(
+            HBox(
+              HSpacing(2),
+              ComboBox(
+                Id(:encryption_pbkdf),
+                Opt(:hstretch),
+                _("Password-Based Key Derivation &Function (PBKDF)"),
+                Y2Storage::PbkdFunction.all.map do |m|
+                  Item(Id(m.value), m.name, (m.value == "pbkdf2"))
+                end
+              )
+            )
+          )
+        end
+
         def enable_disk_encryption
           VBox(
             Left(CheckBox(Id(:encryption), Opt(:notify), _(WIDGET_LABELS[:enable_disk_encryption]))),
             VSpacing(0.2),
-            Left(
-              HBox(
-                HSpacing(2),
-                Password(Id(:password), Opt(:hstretch), _("Password")),
-                Password(Id(:repeat_password), Opt(:hstretch), _("Verify Password"))
-              )
-            ),
-            Left(
-              HBox(
-                HSpacing(2),
-                ComboBox(
-                  Id(:encryption_method),
-                  Opt(:notify, :hstretch),
-                  _("Encryption method"),
-                  Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?).map do |m|
-                    Item(Id(m.to_sym), m.to_human_string, false)
-                  end
-                )
-              )
-            ),
-            Left(
-              HBox(
-                HSpacing(2),
-                ComboBox(
-                  Id(:encryption_pbkdf),
-                  Opt(:hstretch),
-                  _("Password-Based Key Derivation &Function (PBKDF)"),
-                  Y2Storage::PbkdFunction.all.map do |m|
-                    Item(Id(m.value), m.name, (m.value == "pbkdf2"))
-                  end
-                )
-              )
-            )
+            password_widget,
+            encryption_method_widget,
+            encryption_pbkdf_widget
           )
+        end
+
+        def initialize_encryption_widgets
+          widget_update(:password, settings.encryption_password)
+          widget_update(:repeat_password, settings.encryption_password)
         end
 
         def initialize_widgets
@@ -182,10 +199,7 @@ module Y2Storage
               Id(settings.encryption_pbkdf.value))
           end
           encryption_method_handler(focus: false)
-          return unless settings.use_encryption
-
-          widget_update(:password, settings.encryption_password)
-          widget_update(:repeat_password, settings.encryption_password)
+          initialize_encryption_widgets if settings.use_encryption
         end
 
         def update_settings!
