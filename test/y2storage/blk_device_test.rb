@@ -1384,9 +1384,9 @@ describe Y2Storage::BlkDevice do
     end
 
     RSpec.shared_examples "default method" do
-      it "creates an encryption device using LUKS1 as default encryption method" do
+      it "creates an encryption device using LUKS2 as default encryption method" do
         expect(enc).to be_a Y2Storage::Encryption
-        expect(enc.method).to eq(Y2Storage::EncryptionMethod::LUKS1)
+        expect(enc.method).to eq(Y2Storage::EncryptionMethod::LUKS2)
       end
     end
 
