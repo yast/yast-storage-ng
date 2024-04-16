@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+# coding: utf-8
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,6 +48,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
   describe "#run" do
     let(:password) { "" }
     let(:repeat_password) { password }
+    let(:encryption_method) { :luks1 }
 
     context "when settings has not LVM" do
       before do
@@ -179,6 +181,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         select_widget(:encryption)
         select_widget(:password, value: password)
         select_widget(:repeat_password, value: repeat_password)
+        select_widget(:encryption_method, value: encryption_method)
         settings.encryption_password = nil
       end
 
@@ -264,6 +267,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
     context "when encryption is clicked" do
       before do
         select_widget(:encryption)
+        select_widget(:encryption_method, value: encryption_method)
         allow(Yast::UI).to receive(:UserInput).and_return(:encryption, :abort)
       end
 
@@ -279,6 +283,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         select_widget(:encryption)
         select_widget(:password, value: password)
         select_widget(:repeat_password, value: password)
+        select_widget(:encryption_method, value: encryption_method)
       end
 
       let(:password) { "Val1d_pass" }
