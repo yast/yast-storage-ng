@@ -123,7 +123,7 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: adjustment)
+      double("Y2Storage::GuidedProposal", proposed?: proposed, settings: nil, auto_settings_adjustment: adjustment)
     end
     let(:adjustment) { nil }
 
