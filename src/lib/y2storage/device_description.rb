@@ -31,10 +31,12 @@ module Y2Storage
     #
     # @param device [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
     # @param system_graph [Y2Storage::Devicegraph] Representation of the system in its initial state
-    def initialize(device, system_graph: nil)
+    # @param include_encryption [Boolean] Whether to include the encryption status in the label or not
+    def initialize(device, system_graph: nil, include_encryption: false)
       textdomain "storage"
       @device = device
       @system_graph = system_graph || StorageManager.instance.probed
+      @include_encryption = include_encryption
     end
 
     # Text representation of the description
@@ -51,6 +53,9 @@ module Y2Storage
 
     # @return [Y2Storage::Devicegraph]
     attr_reader :system_graph
+
+    # @return [Boolean]
+    attr_reader :include_encryption
 
     # Default labels based on the device type
     #
@@ -116,6 +121,15 @@ module Y2Storage
         journal_type_label(fs)
       elsif show_multidevice_type_label?(fs)
         multidevice_type_label(fs)
+      elsif device.encrypted? && include_encryption
+        # TRANSLATORS: Encrypted device
+        #              %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
+        #              %{device_label} is the device label. I.e., Partition, Disk, etc
+        format(
+          _("Encrypted %{fs_type} %{device_label}"),
+          fs_type:      fs_type(device, fs),
+          device_label: default_label(device)
+        )
       else
         # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
         #              %{device_label} is the device label. I.e., Partition, Disk, etc
