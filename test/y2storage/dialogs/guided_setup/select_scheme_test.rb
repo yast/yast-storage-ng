@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -48,6 +49,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
     let(:password) { "" }
     let(:repeat_password) { password }
     let(:encryption_method) { :luks2 }
+    let(:encryption_pbkdf) { "pbkdf2" }
 
     context "when settings has not LVM" do
       before do
@@ -218,7 +220,31 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
           select_widget(:password, value: password)
           select_widget(:repeat_password, value: repeat_password)
           select_widget(:encryption_method, value: encryption_method)
+          select_widget(:encryption_method, value: encryption_method)
+          select_widget(:encryption_pbkdf, value: encryption_pbkdf)
           settings.encryption_password = nil
+        end
+
+        context "and luks1 is selected" do
+          before do
+            select_widget(:encryption_method, value: :luks1)
+          end
+
+          it "disables pbkdf field" do
+            expect_disable(:encryption_pbkdf)
+            subject.run
+          end
+        end
+
+        context "and luks2 is selected" do
+          before do
+            select_widget(:encryption_method, value: :luks2)
+          end
+
+          it "enables pbkdf field" do
+            expect_enable(:encryption_pbkdf)
+            subject.run
+          end
         end
 
         it "enables password, encryption method fields" do
@@ -321,6 +347,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
           select_widget(:password, value: password)
           select_widget(:repeat_password, value: password)
           select_widget(:encryption_method, value: encryption_method)
+          select_widget(:encryption_pbkdf, value: encryption_pbkdf) if encryption_method == :luks2
         end
 
         let(:password) { "Val1d_pass" }
@@ -330,6 +357,9 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
           expect(subject.settings.use_lvm).to eq(true)
           expect(subject.settings.encryption_password).to eq(password)
           expect(subject.settings.encryption_method.id).to eq(encryption_method)
+          if encryption_method == :luks2
+            expect(subject.settings.encryption_pbkdf.value).to eq(encryption_pbkdf)
+          end
         end
       end
     end

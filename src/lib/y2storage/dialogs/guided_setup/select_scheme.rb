@@ -150,7 +150,7 @@ module Y2Storage
                 Opt(:notify, :hstretch),
                 _("Encryption method"),
                 Y2Storage::EncryptionMethod.available.reject(&:only_for_swap?).map do |m|
-                  Item(Id(m.to_sym), m.to_human_string, false)
+                  Item(Id(m.id), m.to_human_string, (m.id == :luks2))
                 end
               )
             )
