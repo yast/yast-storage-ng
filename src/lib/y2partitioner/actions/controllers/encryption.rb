@@ -71,7 +71,7 @@ module Y2Partitioner
           @fs_controller = fs_controller
           @action = actions.first
           @password = encryption&.password || ""
-          @pbkdf = encryption&.pbkdf
+          @pbkdf = encryption&.pbkdf || PbkdFunction::PBKDF2
           @method = initial_method
           @apqns = initial_apqns
           @label = initial_label
