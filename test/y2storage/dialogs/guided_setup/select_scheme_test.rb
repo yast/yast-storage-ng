@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+# coding: utf-8
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -47,7 +48,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
   describe "#run" do
     let(:password) { "" }
     let(:repeat_password) { password }
-    let(:encryption_method) { :luks1 }
+    let(:encryption_method) { :luks2 }
 
     context "when settings has not LVM" do
       before do
@@ -135,115 +136,106 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       end
     end
 
-    context "when settings has not encryption password" do
-      before do
-        settings.encryption_password = nil
-      end
-
-      it "does not select encryption by default" do
-        expect_not_select(:encryption)
-        subject.run
-      end
-    end
-
-    context "when settings has encryption password" do
-      before do
-        settings.encryption_password = "12345678"
-      end
-
-      it "selects encryption by default" do
-        expect_select(:encryption)
-        subject.run
-      end
-    end
-
-    context "when encryption is not selected" do
-      before do
-        settings.encryption_password = "12345678"
-        not_select_widget(:encryption)
-      end
-
-      it "disables password fields" do
-        expect_disable(:password)
-        expect_disable(:repeat_password)
-        subject.run
-      end
-
-      it "sets password to nil" do
-        subject.run
-        expect(settings.encryption_password).to be_nil
-      end
-    end
-
-    context "when encryption is selected" do
-      before do
-        select_widget(:encryption)
-        select_widget(:password, value: password)
-        select_widget(:repeat_password, value: repeat_password)
-        select_widget(:encryption_method, value: encryption_method)
-        settings.encryption_password = nil
-      end
-
-      it "enables password fields" do
-        expect_enable(:password)
-        expect_enable(:repeat_password)
-        subject.run
-      end
-
-      context "and password is valid" do
-        let(:password) { "Val1d_pass" }
-
-        it "does not show an error message" do
-          expect(Yast::Report).not_to receive(:Warning)
-          subject.run
-        end
-
-        it "saves password in settings" do
-          subject.run
-          expect(subject.settings.encryption_password).to eq(password)
-        end
-      end
-
-      context "but password is missing" do
-        let(:password) { "" }
-        include_examples("wrong password")
-      end
-
-      context "but passwords do not match" do
-        let(:password) { "pass1" }
-        let(:repeat_password) { "pass2" }
-        include_examples("wrong password")
-      end
-
-      context "but password is short" do
-        let(:password) { "pass" }
-        include_examples("wrong password")
-      end
-
-      context "but password contains forbidden chars" do
-        let(:password) { "pássw0rd1" }
-        include_examples("wrong password")
-      end
-
-      context "and password is weak" do
+    describe "checkbox for #encryption" do
+      context "when settings has not encryption password" do
         before do
-          allow(Yast::InstExtensionImage).to receive(:LoadExtension)
-            .with(/cracklib/, anything).and_return(true)
-          allow(Yast::SCR).to receive(:Execute).with(Yast::Path.new(".crack"), password)
-            .and_return("an error message")
-          allow(Yast::Popup).to receive(:AnyQuestion).and_return(password_accepted)
+          settings.encryption_password = nil
         end
 
-        let(:password) { "12345678" }
-        let(:password_accepted) { false }
+        context "and encryption method is not set" do
+          before do
+            settings.encryption_method = nil
+          end
 
-        it "shows an error message" do
-          expect(Yast::Popup).to receive(:AnyQuestion)
+          it "does not select encryption by default" do
+            expect_not_select(:encryption)
+            subject.run
+          end
+        end
+
+        context "and encryption method is set" do
+          before do
+            settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+          end
+
+          it "selects encryption by default" do
+            expect_select(:encryption)
+            subject.run
+          end
+        end
+      end
+
+      context "when settings has encryption password" do
+        before do
+          settings.encryption_password = "12345678"
+        end
+
+        context "and encryption method is not set" do
+          before do
+            settings.encryption_method = nil
+          end
+
+          it "selects encryption by default" do
+            expect_select(:encryption)
+            subject.run
+          end
+        end
+
+        context "and encryption method is set" do
+          before do
+            settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+          end
+
+          it "selects encryption by default" do
+            expect_select(:encryption)
+            subject.run
+          end
+        end
+      end
+
+      context "when encryption is not selected" do
+        before do
+          settings.encryption_password = "12345678"
+          not_select_widget(:encryption)
+        end
+
+        it "disables password, encryption fields and " do
+          expect_disable(:password)
+          expect_disable(:repeat_password)
+          expect_disable(:encryption_method)
+          expect_disable(:encryption_pbkdf)
           subject.run
         end
 
-        context "and password is accepted" do
-          let(:password_accepted) { true }
+        it "sets password to nil" do
+          subject.run
+          expect(settings.encryption_password).to be_nil
+        end
+      end
+
+      context "when encryption is selected" do
+        before do
+          select_widget(:encryption)
+          select_widget(:password, value: password)
+          select_widget(:repeat_password, value: repeat_password)
+          select_widget(:encryption_method, value: encryption_method)
+          settings.encryption_password = nil
+        end
+
+        it "enables password, encryption method fields" do
+          expect_enable(:password)
+          expect_enable(:repeat_password)
+          expect_enable(:encryption_method)
+          subject.run
+        end
+
+        context "and password is valid" do
+          let(:password) { "Val1d_pass" }
+
+          it "does not show an error message" do
+            expect(Yast::Report).not_to receive(:Warning)
+            subject.run
+          end
 
           it "saves password in settings" do
             subject.run
@@ -251,46 +243,95 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
           end
         end
 
-        context "and password is not accepted" do
+        context "but password is missing" do
+          let(:password) { "" }
+          include_examples("wrong password")
+        end
+
+        context "but passwords do not match" do
+          let(:password) { "pass1" }
+          let(:repeat_password) { "pass2" }
+          include_examples("wrong password")
+        end
+
+        context "but password is short" do
+          let(:password) { "pass" }
+          include_examples("wrong password")
+        end
+
+        context "but password contains forbidden chars" do
+          let(:password) { "pássw0rd1" }
+          include_examples("wrong password")
+        end
+
+        context "and password is weak" do
+          before do
+            allow(Yast::InstExtensionImage).to receive(:LoadExtension)
+              .with(/cracklib/, anything).and_return(true)
+            allow(Yast::SCR).to receive(:Execute).with(Yast::Path.new(".crack"), password)
+              .and_return("an error message")
+            allow(Yast::Popup).to receive(:AnyQuestion).and_return(password_accepted)
+          end
+
+          let(:password) { "12345678" }
           let(:password_accepted) { false }
 
-          it "does not save password in settings" do
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:AnyQuestion)
             subject.run
-            expect(subject.settings).not_to receive(:encryption_password=)
-            expect(subject.settings.encryption_password).to eq(nil)
+          end
+
+          context "and password is accepted" do
+            let(:password_accepted) { true }
+
+            it "saves password in settings" do
+              subject.run
+              expect(subject.settings.encryption_password).to eq(password)
+            end
+          end
+
+          context "and password is not accepted" do
+            let(:password_accepted) { false }
+
+            it "does not save password in settings" do
+              subject.run
+              expect(subject.settings).not_to receive(:encryption_password=)
+              expect(subject.settings.encryption_password).to eq(nil)
+            end
           end
         end
       end
-    end
 
-    context "when encryption is clicked" do
-      before do
-        select_widget(:encryption)
-        select_widget(:encryption_method, value: encryption_method)
-        allow(Yast::UI).to receive(:UserInput).and_return(:encryption, :abort)
+      context "when encryption is clicked" do
+        before do
+          select_widget(:encryption)
+          select_widget(:encryption_method, value: encryption_method)
+          allow(Yast::UI).to receive(:UserInput).and_return(:encryption, :abort)
+        end
+
+        it "focuses password field" do
+          expect(Yast::UI).to receive(:SetFocus).at_least(1).times
+          subject.run
+        end
       end
 
-      it "focuses password field" do
-        expect(Yast::UI).to receive(:SetFocus)
-        subject.run
-      end
-    end
+      context "when settings are valid" do
+        before do
+          select_widget(:lvm)
+          select_widget(:encryption)
+          select_widget(:password, value: password)
+          select_widget(:repeat_password, value: password)
+          select_widget(:encryption_method, value: encryption_method)
+        end
 
-    context "when settings are valid" do
-      before do
-        select_widget(:lvm)
-        select_widget(:encryption)
-        select_widget(:password, value: password)
-        select_widget(:repeat_password, value: password)
-        select_widget(:encryption_method, value: encryption_method)
-      end
+        let(:password) { "Val1d_pass" }
 
-      let(:password) { "Val1d_pass" }
-
-      it "saves settings correctly" do
-        subject.run
-        expect(subject.settings.use_lvm).to eq(true)
-        expect(subject.settings.encryption_password).to eq(password)
+        it "saves settings correctly" do
+          subject.run
+          expect(subject.settings.use_lvm).to eq(true)
+          expect(subject.settings.encryption_password).to eq(password)
+          expect(subject.settings.encryption_method.id).to eq(encryption_method)
+        end
       end
     end
   end

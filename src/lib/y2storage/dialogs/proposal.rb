@@ -152,10 +152,9 @@ module Y2Storage
             !@proposal.settings.encryption_method.nil? &&
             @proposal.settings.encryption_password.nil?
           ret = Yast::HTML.Para(
-              _("Missing encryption password - Proposal has been done without encryption.")
-            ) +
-            Yast::HTML.Newline +
-            _("Please use \"Guided Setup\" in order to set the password or to disable encryption.")
+              _("Missing encryption password - Proposal has been done without encryption.") +
+              Yast::HTML.Newline +
+              _("Please use \"Guided Setup\" in order to set the password or to disable encryption."))
           ret = Yast::HTML.Colorize(ret, "red")
         end
         ret

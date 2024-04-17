@@ -48,7 +48,7 @@ RSpec.shared_context "widgets" do
   end
 
   def expect_enable(id)
-    expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, true)
+    expect(Yast::UI).to receive(:ChangeWidget).with(Id(id), :Enabled, true)
   end
 
   def expect_not_enable(id)
@@ -56,7 +56,7 @@ RSpec.shared_context "widgets" do
   end
 
   def expect_disable(id)
-    expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, false)
+    expect(Yast::UI).to receive(:ChangeWidget).with(Id(id), :Enabled, false)
   end
 
   def select_widget(id, value: true)
