@@ -126,6 +126,7 @@ module Y2Storage
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
         content = devicegraph ? actions_html : failure_html
+
         RichText(Id(:summary), content)
       end
 
