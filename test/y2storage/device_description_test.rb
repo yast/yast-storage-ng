@@ -22,8 +22,23 @@
 require_relative "spec_helper"
 require "y2storage/device_description"
 
+RSpec.shared_examples "Encrypted device" do
+  context "when the device is encrypted and the encryption status is required" do
+    it "displays the encryption status" do
+      # ignore case
+      expect(description_with_encryption.downcase).to include("encrypted")
+    end
+  end
+end
+
 describe Y2Storage::DeviceDescription do
   subject { described_class.new(device) }
+  let(:subject_with_encryption) do
+    dev = fake_devicegraph.find_by_name(device_name)
+    # enable encryption
+    dev.encrypt
+    described_class.new(dev, include_encryption: true)
+  end
 
   describe "#to_s" do
     let(:scenario) { "lvm-types1.xml" }
@@ -33,6 +48,7 @@ describe Y2Storage::DeviceDescription do
     let(:device) { blk_device }
     let(:blk_filesystem) { blk_device.blk_filesystem }
     let(:description) { subject.to_s }
+    let(:description_with_encryption) { subject_with_encryption.to_s }
 
     before do
       fake_scenario(scenario)
@@ -43,6 +59,8 @@ describe Y2Storage::DeviceDescription do
       let(:device_name) { "/dev/sdd1" }
       let(:device) { blk_filesystem }
 
+      include_examples "Encrypted device"
+
       it "returns its human readable type" do
         expect(description).to include("Btrfs")
       end
@@ -52,6 +70,8 @@ describe Y2Storage::DeviceDescription do
       let(:scenario) { "mixed_disks_btrfs" }
       let(:filesystem) { devicegraph.find_by_name("/dev/sda2").filesystem }
       let(:device) { filesystem.btrfs_subvolumes.first }
+
+      include_examples "Encrypted device"
 
       it "returns 'Btrfs Subvolume'" do
         expect(description).to eq("Btrfs Subvolume")
@@ -69,6 +89,8 @@ describe Y2Storage::DeviceDescription do
     context "when the device is an LVM non-thin snapshot" do
       let(:device_name) { "/dev/vg0/snap_normal1" }
 
+      include_examples "Encrypted device"
+
       it "includes the 'Snapshot of'" do
         expect(description).to include("Snapshot of")
       end
@@ -80,6 +102,8 @@ describe Y2Storage::DeviceDescription do
 
     context "when the device is an LVM thin snapshot" do
       let(:device_name) { "/dev/vg0/snap_thinvol1" }
+
+      include_examples "Encrypted device"
 
       it "includes the 'Thin Snapshot of'" do
         expect(description).to include("Thin Snapshot of")
@@ -93,6 +117,8 @@ describe Y2Storage::DeviceDescription do
     context "when the device is formatted" do
       let(:device_name) { "/dev/vg0/cached1" }
 
+      include_examples "Encrypted device"
+
       it "includes the human readable filesystem type" do
         expect(description).to include("XFS")
       end
@@ -104,6 +130,8 @@ describe Y2Storage::DeviceDescription do
       context "but it is the external journal of an Ext3/4 filesystem" do
         let(:scenario) { "bug_1145841.xml" }
         let(:device_name) { "/dev/sdd1" }
+
+        include_examples "Encrypted device"
 
         it "includes the human readable filesystem type" do
           expect(description).to include("Ext4")
@@ -121,6 +149,8 @@ describe Y2Storage::DeviceDescription do
       context "but it is part of a multi-device filesystem" do
         let(:scenario) { "btrfs2-devicegraph.xml" }
         let(:device_name) { "/dev/sdb1" }
+
+        include_examples "Encrypted device"
 
         it "includes 'Part of'" do
           expect(description).to include("Part of")
@@ -166,6 +196,8 @@ describe Y2Storage::DeviceDescription do
         let(:scenario) { "unused_lvm_pvs.xml" }
         let(:device_name) { "/dev/sda2" }
 
+        include_examples "Encrypted device"
+
         it "returns 'Unused LVM PV'" do
           expect(description).to eq("Unused LVM PV")
         end
@@ -174,6 +206,8 @@ describe Y2Storage::DeviceDescription do
       context "and it is part of an MD RAID" do
         let(:scenario) { "md_raid" }
         let(:device_name) { "/dev/sda2" }
+
+        include_examples "Encrypted device"
 
         it "includes 'Part of'" do
           expect(description).to include("Part of")
@@ -187,6 +221,8 @@ describe Y2Storage::DeviceDescription do
       context "and it is part of a bcache" do
         let(:scenario) { "bcache1.xml" }
         let(:device_name) { "/dev/vdc" }
+
+        include_examples "Encrypted device"
 
         it "includes 'Backing of'" do
           expect(description).to include("Backing of")

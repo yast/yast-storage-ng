@@ -31,10 +31,12 @@ module Y2Storage
     #
     # @param device [Y2Storage::Device, Y2Storage::LvmPv, Y2Storage::SimpleEtcFstabEntry]
     # @param system_graph [Y2Storage::Devicegraph] Representation of the system in its initial state
-    def initialize(device, system_graph: nil)
+    # @param include_encryption [Boolean] Whether to include the encryption status in the label or not
+    def initialize(device, system_graph: nil, include_encryption: false)
       textdomain "storage"
       @device = device
       @system_graph = system_graph || StorageManager.instance.probed
+      @include_encryption = include_encryption
     end
 
     # Text representation of the description
@@ -51,6 +53,9 @@ module Y2Storage
 
     # @return [Y2Storage::Devicegraph]
     attr_reader :system_graph
+
+    # @return [Boolean]
+    attr_reader :include_encryption
 
     # Default labels based on the device type
     #
@@ -86,11 +91,25 @@ module Y2Storage
     # @return [String]
     def device_label(device)
       return fstab_device_label(device) if device.is_a?(SimpleEtcFstabEntry)
-      return device.type.to_human_string if device.is?(:filesystem)
-      return default_label(device) if device.is?(:lvm_vg, :btrfs_subvolume)
+      return filesystem_label(device) if device.is?(:filesystem)
+      return default_label(device, false) if device.is?(:lvm_vg, :btrfs_subvolume)
       return snapshot_type_label(device) if device.is?(:lvm_snapshot)
 
       formatted_device_type_label(device) || unformatted_device_type_label(device)
+    end
+
+    # Filesystem name
+    #
+    # @param filesystem [Y2Storage::Filesystems::Base]
+    # @return [String]
+    def filesystem_label(filesystem)
+      label = filesystem.type.to_human_string
+      if filesystem.encrypted? && include_encryption
+        # TRANSLATORS: %s is a type of filesystem
+        format(_("Encrypted %s"))
+      else
+        label
+      end
     end
 
     # Label for the device in the given fstab entry
@@ -113,16 +132,26 @@ module Y2Storage
       return nil unless fs
 
       if device.journal?
-        journal_type_label(fs)
+        journal_type_label(fs, device.encrypted?)
       elsif show_multidevice_type_label?(fs)
-        multidevice_type_label(fs)
+        multidevice_type_label(fs, device.encrypted?)
+      elsif device.encrypted? && include_encryption
+        # TRANSLATORS: Encrypted device
+        #              %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
+        #              %{device_label} is the device label. I.e., Partition, Disk, etc
+        format(
+          _("Encrypted %{fs_type} %{device_label}"),
+          fs_type:      fs_type(device, fs),
+          # false to avoid adding "Encrypted" twice
+          device_label: default_label(device, false)
+        )
       else
         # TRANSLATORS: %{fs_type} is the filesystem type. I.e., FAT, Ext4, etc
         #              %{device_label} is the device label. I.e., Partition, Disk, etc
         format(
           _("%{fs_type} %{device_label}"),
           fs_type:      fs_type(device, fs),
-          device_label: default_label(device)
+          device_label: default_label(device, false)
         )
       end
     end
@@ -143,27 +172,42 @@ module Y2Storage
     # @return [String]
     def unformatted_device_type_label(device)
       if device.lvm_pv
-        lvm_pv_type_label(device.lvm_pv)
+        lvm_pv_type_label(device.lvm_pv, device.encrypted?)
       elsif device.md
-        part_of_label(device.md)
+        part_of_label(device.md, device.encrypted?)
       elsif device.bcache
-        bcache_backing_label(device.bcache)
+        bcache_backing_label(device.bcache, device.encrypted?)
       elsif device.in_bcache_cset
         bcache_cset_label
       else
-        default_unformatted_label(device)
+        default_unformatted_label(device, device.encrypted?)
       end
     end
 
     # Label when the device is a LVM physical volume
     #
     # @param lvm_pv [Y2Storage::LvmPv]
+    # @param encrypted [Boolean]
     # @return [String]
-    def lvm_pv_type_label(lvm_pv)
+    def lvm_pv_type_label(lvm_pv, encrypted)
       vg = lvm_pv.lvm_vg
 
-      return _("Unused LVM PV") if vg.nil?
-      return _("PV of LVM") if vg.basename.empty?
+      if vg.nil?
+        return _("Unused encrypted LVM PV") if encrypted && include_encryption
+
+        return _("Unused LVM PV")
+      end
+
+      if vg.basename.empty?
+        return _("Encrypted PV of LVM") if encrypted && include_encryption
+
+        return _("PV of LVM")
+      end
+
+      if encrypted && include_encryption
+        # TRANSLATORS: %s is the volume group name. E.g., "vg0"
+        format(_("Encrypted PV of %s"), vg.basename)
+      end
 
       # TRANSLATORS: %s is the volume group name. E.g., "vg0"
       format(_("PV of %s"), vg.basename)
@@ -176,11 +220,21 @@ module Y2Storage
     def snapshot_type_label(lvm_snapshot)
       label =
         if lvm_snapshot.is?(:lvm_thin_snapshot)
-          # TRANSLATORS: %{origin} is replaced by an LVM logical volumme name
-          # (e.g., /dev/vg0/user-data)
-          _("Thin Snapshot of %{origin}")
+          if lvm_snapshot.encrypted? && include_encryption
+            # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
+            # (e.g., /dev/vg0/user-data)
+            _("Encrypted Thin Snapshot of %{origin}")
+          else
+            # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
+            # (e.g., /dev/vg0/user-data)
+            _("Thin Snapshot of %{origin}")
+          end
+        elsif lvm_snapshot.encrypted? && include_encryption
+          _("Encrypted Snapshot of %{origin}")
+        # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
+        # (e.g., /dev/vg0/user-data)
         else
-          # TRANSLATORS: %{origin} is replaced by an LVM logical volumme name
+          # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
           # (e.g., /dev/vg0/user-data)
           _("Snapshot of %{origin}")
         end
@@ -191,39 +245,68 @@ module Y2Storage
     # Label when the device holds a journal
     #
     # @param filesystem [Y2Storage::BlkFilesystem]
+    # @param encrypted [Boolean]
     # @return [String]
-    def journal_type_label(filesystem)
+    def journal_type_label(filesystem, encrypted)
       data_device = filesystem.blk_devices.find { |d| !d.journal? }
 
-      # TRANSLATORS: %{fs_type} is the filesystem type. E.g., Btrfs, Ext4, etc.
-      #              %{data_device_name} is the data device name. E.g., sda1
-      format(
-        _("%{fs_type} Journal (%{data_device_name})"),
-        fs_type:          filesystem.type.to_human_string,
-        data_device_name: data_device.basename
-      )
+      if encrypted && include_encryption
+        # TRANSLATORS: Encrypted journal device
+        #              %{fs_type} is the filesystem type. E.g., Btrfs, Ext4, etc.
+        #              %{data_device_name} is the data device name. E.g., sda1
+        format(
+          _("Encrypted %{fs_type} Journal (%{data_device_name})"),
+          fs_type:          filesystem.type.to_human_string,
+          data_device_name: data_device.basename
+        )
+      else
+        # TRANSLATORS: %{fs_type} is the filesystem type. E.g., Btrfs, Ext4, etc.
+        #              %{data_device_name} is the data device name. E.g., sda1
+        format(
+          _("%{fs_type} Journal (%{data_device_name})"),
+          fs_type:          filesystem.type.to_human_string,
+          data_device_name: data_device.basename
+        )
+      end
     end
 
     # Label when the device belongs to a multi-device filesystem
     #
     # @param filesystem [Y2Storage::BlkFilesystem]
+    # @param encrypted [Boolean]
     # @return [String]
-    def multidevice_type_label(filesystem)
-      # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
-      #              %{blk_device_name} is a device base name. E.g., sda1...
-      format(
-        _("Part of %{fs_name} %{blk_device_name}"),
-        fs_name:         filesystem.type,
-        blk_device_name: filesystem.blk_device_basename
-      )
+    def multidevice_type_label(filesystem, encrypted)
+      if encrypted && include_encryption
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{blk_device_name} is a device base name. E.g., sda1...
+        format(
+          _("Part of encrypted %{fs_name} %{blk_device_name}"),
+          fs_name:         filesystem.type,
+          blk_device_name: filesystem.blk_device_basename
+        )
+      else
+        # TRANSLATORS: %{fs_name} is the filesystem name. E.g., Btrfs, Ext4, etc.
+        #              %{blk_device_name} is a device base name. E.g., sda1...
+        format(
+          _("Part of %{fs_name} %{blk_device_name}"),
+          fs_name:         filesystem.type,
+          blk_device_name: filesystem.blk_device_basename
+        )
+      end
     end
 
     # Label when the device is used as backing device of a Bcache
     #
     # @param [Y2Storage::Device] device
-    def bcache_backing_label(device)
-      # TRANSLATORS: %{bcache} is replaced by a device name (e.g., bcache0).
-      format(_("Backing of %{bcache}"), bcache: device.basename)
+    # @param encrypted [Boolean]
+    def bcache_backing_label(device, encrypted)
+      if encrypted && include_encryption
+        # TRANSLATORS: %{bcache} is replaced by a device name (e.g., bcache0).
+        format(_("Encrypted backing of %{bcache}"), bcache: device.basename)
+      else
+        # TRANSLATORS: %{bcache} is replaced by a device name (e.g., bcache0).
+        format(_("Backing of %{bcache}"), bcache: device.basename)
+      end
     end
 
     # Label when the device is used as caching device in a Bcache
@@ -237,15 +320,21 @@ module Y2Storage
     # Label when the device is part of another one, like Bcache or RAID
     #
     # @param ancestor_device [Y2Storage::BlkDevice]
+    # @param encrypted [Boolean]
     # @return [String]
-    def part_of_label(ancestor_device)
-      format(_("Part of %s"), ancestor_device.basename)
+    def part_of_label(ancestor_device, encrypted)
+      if encrypted && include_encryption
+        format(_("Encrypted part of %s"), ancestor_device.basename)
+      else
+        format(_("Part of %s"), ancestor_device.basename)
+      end
     end
 
     # Default label when device is unformatted
     #
+    # @param encrypted [Boolean]
     # @return [String]
-    def default_unformatted_label(device)
+    def default_unformatted_label(device, encrypted)
       # The "model" field from hwinfo is a combination of vendor + device with quite some added
       # heuristics to make the result nice looking. See comment#66 at bsc#1200975.
       model = device.model || ""
@@ -253,7 +342,7 @@ module Y2Storage
       return model unless model.empty?
       return device.id.to_human_string if device.respond_to?(:id)
 
-      default_label(device)
+      default_label(device, encrypted)
     end
 
     # Default label for the device
@@ -261,13 +350,21 @@ module Y2Storage
     # @see DEVICE_LABELS
     #
     # @param device [Y2Storage::Device]
+    # @param encrypted [Boolean]
     # @return [String]
-    def default_label(device)
+    def default_label(device, encrypted)
       type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
 
       return "" if type.nil?
 
-      _(DEVICE_LABELS[type])
+      label = _(DEVICE_LABELS[type])
+
+      if encrypted && include_encryption
+        # TRANSLATORS: %s is a type of the device, e.g. disk, partition, RAID, LVM,...
+        label = format(_("Encrypted %s"), label)
+      end
+
+      label
     end
 
     # Whether the "Part of *fs.type*" label should be displayed
