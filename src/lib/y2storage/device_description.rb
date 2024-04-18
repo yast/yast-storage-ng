@@ -100,7 +100,7 @@ module Y2Storage
 
     # Filesystem name
     #
-    # @param filesystem [Y2Storage::BlkFilesystem]
+    # @param filesystem [Y2Storage::Filesystems::Base]
     # @return [String]
     def filesystem_label(filesystem)
       label = filesystem.type.to_human_string
@@ -223,14 +223,14 @@ module Y2Storage
           if lvm_snapshot.encrypted? && include_encryption
             # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
             # (e.g., /dev/vg0/user-data)
-            _("Encrypted thin Snapshot of %{origin}")
+            _("Encrypted Thin Snapshot of %{origin}")
           else
             # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
             # (e.g., /dev/vg0/user-data)
             _("Thin Snapshot of %{origin}")
           end
         elsif lvm_snapshot.encrypted? && include_encryption
-          _("Encrypted snapshot of %{origin}")
+          _("Encrypted Snapshot of %{origin}")
         # TRANSLATORS: %{origin} is replaced by an LVM logical volume name
         # (e.g., /dev/vg0/user-data)
         else
