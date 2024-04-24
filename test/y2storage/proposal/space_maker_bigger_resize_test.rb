@@ -56,6 +56,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
+    # :force_delete for disks should be ignored, actions only make sense for partitions and LVs
     context "if :force_delete is specified for a disk that contains partitions" do
       let(:settings_actions) { { "/dev/sda" => :force_delete } }
 
@@ -79,6 +80,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
+    # :force_delete for disks should be ignored, actions only make sense for partitions and LVs
     context "if :force_delete is specified for a directly formatted disk (no partition table)" do
       let(:scenario) { "multipath-formatted.xml" }
 
@@ -88,13 +90,15 @@ describe Y2Storage::Proposal::SpaceMaker do
         settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
       end
 
-      it "empties the device deleting the filesystem" do
-        expect(fake_devicegraph.filesystems.size).to eq 1
+      it "does not modify the content of the disk" do
+        original_filesystems = fake_devicegraph.filesystems
+        expect(original_filesystems.size).to eq 1
 
         result = maker.prepare_devicegraph(fake_devicegraph)
-        disk = result.disk_devices.first
-        expect(disk.has_children?).to eq false
-        expect(result.filesystems).to be_empty
+        filesystems = result.filesystems
+        expect(filesystems.size).to eq 1
+        device = filesystems.first.blk_devices.first
+        expect(device.name).to eq "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
       end
     end
 
@@ -185,36 +189,23 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "lvm-disk-as-pv.xml" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 5.GiB) }
 
-      context "and the disk is not mentioned in the settings" do
-        let(:settings_actions) { { "/dev/sda1" => :delete } }
+      it "empties the disk deleting the LVM VG" do
+        expect(fake_devicegraph.lvm_vgs.size).to eq 1
 
-        it "raises an Error exception" do
-          expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-            .to raise_error Y2Storage::Error
-        end
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        disk = result[:devicegraph].disks.first
+        expect(disk.has_children?).to eq false
+        expect(result[:devicegraph].lvm_vgs).to be_empty
       end
 
-      context "and the disk is marked to be deleted" do
-        let(:settings_actions) { { "/dev/sda" => :delete } }
+      it "assumes a (future) GPT partition table" do
+        gpt_size = 1.MiB
+        # The final 16.5 KiB are reserved by GPT
+        gpt_final_space = 16.5.KiB
 
-        it "empties the disk deleting the LVM VG" do
-          expect(fake_devicegraph.lvm_vgs.size).to eq 1
-
-          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          disk = result[:devicegraph].disks.first
-          expect(disk.has_children?).to eq false
-          expect(result[:devicegraph].lvm_vgs).to be_empty
-        end
-
-        it "assumes a (future) GPT partition table" do
-          gpt_size = 1.MiB
-          # The final 16.5 KiB are reserved by GPT
-          gpt_final_space = 16.5.KiB
-
-          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          space = result[:partitions_distribution].spaces.first
-          expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
-        end
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        space = result[:partitions_distribution].spaces.first
+        expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
       end
     end
 
@@ -227,36 +218,23 @@ describe Y2Storage::Proposal::SpaceMaker do
         settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
       end
 
-      context "and the device is not mentioned in the settings" do
-        let(:settings_actions) { {} }
+      it "empties the device deleting the filesystem" do
+        expect(fake_devicegraph.filesystems.size).to eq 1
 
-        it "raises an Error exception" do
-          expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-            .to raise_error Y2Storage::Error
-        end
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        disk = result[:devicegraph].disk_devices.first
+        expect(disk.has_children?).to eq false
+        expect(result[:devicegraph].filesystems).to be_empty
       end
 
-      context "and the disk is marked to be deleted" do
-        let(:settings_actions) { { "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1" => :delete } }
+      it "assumes a (future) GPT partition table" do
+        gpt_size = 1.MiB
+        # The final 16.5 KiB are reserved by GPT
+        gpt_final_space = 16.5.KiB
 
-        it "empties the device deleting the filesystem" do
-          expect(fake_devicegraph.filesystems.size).to eq 1
-
-          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          disk = result[:devicegraph].disk_devices.first
-          expect(disk.has_children?).to eq false
-          expect(result[:devicegraph].filesystems).to be_empty
-        end
-
-        it "assumes a (future) GPT partition table" do
-          gpt_size = 1.MiB
-          # The final 16.5 KiB are reserved by GPT
-          gpt_final_space = 16.5.KiB
-
-          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          space = result[:partitions_distribution].spaces.first
-          expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
-        end
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        space = result[:partitions_distribution].spaces.first
+        expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
       end
     end
 

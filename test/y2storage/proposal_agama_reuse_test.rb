@@ -221,22 +221,12 @@ describe Y2Storage::MinGuidedProposal do
         settings.root_device = "/dev/sdc"
       end
 
-      # FIXME: this should change when we implement https://trello.com/c/88lh9u52/
-      context "if there is no space action to delete the content of the disk" do
-        it "fails to make a proposal" do
-          proposal.propose
-          expect(proposal.failed?).to eq true
-        end
-      end
-
-      context "if there is a space action to delete the content of the disk" do
-        let(:space_actions) { { "/dev/sdc" => :delete } }
-
-        it "makes the expected proposal" do
-          expect(proposal.propose).to eq true
-          disk = proposal.devices.find_by_name(settings.root_device)
-          expect(disk.partitions.size).to eq 4
-        end
+      # In the past, a delete action on the disk was requested. We later decided that actions
+      # only make sense for partitions and LVs
+      it "makes the expected proposal" do
+        expect(proposal.propose).to eq true
+        disk = proposal.devices.find_by_name(settings.root_device)
+        expect(disk.partitions.size).to eq 4
       end
     end
 
@@ -249,7 +239,7 @@ describe Y2Storage::MinGuidedProposal do
           srv.reuse_name = "/dev/sdc"
         end
 
-        # No space action needed for sdc
+        # No space action needed for sdc, see above
         it "formats the disk and assigns the mount point" do
           proposal.propose
           filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
@@ -264,29 +254,19 @@ describe Y2Storage::MinGuidedProposal do
           srv.reuse_name = "/dev/sdb"
         end
 
-        context "and there are no space actions to delete all the partitions" do
-          # sdb2 is not deleted
-          let(:space_actions) { { "/dev/sdb1" => :delete } }
-
-          # FIXME: this should change when we implement https://trello.com/c/88lh9u52/
-          # the proposal should fail if deleting sdb2 is not allowed
-          it "formats the disk and assigns the mount point" do
-            proposal.propose
-            filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
-            expect(filesystem.blk_devices.first.name).to eq "/dev/sdb"
-            expect(filesystem.type.is?(:xfs)).to eq true
-          end
+        # In the past, delete actions were requested for the partitions. We later decided
+        # they were not necessary for disks being explicitly reused for a volume.
+        it "deletes the disk partitions even if there are no space actions about them" do
+          proposal.propose
+          disk = proposal.devices.find_by_name("/dev/sdb")
+          expect(disk.partitions).to be_empty
         end
 
-        context "and there are space actions to delete all the partitions" do
-          let(:space_actions) { { "/dev/sdb1" => :delete, "/dev/sdb2" => :delete } }
-
-          it "formats the disk and assigns the mount point" do
-            proposal.propose
-            filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
-            expect(filesystem.blk_devices.first.name).to eq "/dev/sdb"
-            expect(filesystem.type.is?(:xfs)).to eq true
-          end
+        it "formats the disk and assigns the mount point" do
+          proposal.propose
+          filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
+          expect(filesystem.blk_devices.first.name).to eq "/dev/sdb"
+          expect(filesystem.type.is?(:xfs)).to eq true
         end
       end
     end
@@ -360,10 +340,7 @@ describe Y2Storage::MinGuidedProposal do
           expect(partition).to_not be_nil
         end
 
-        # FIXME: we need to clarify what the expectations regarding the partitions of the RAID
-        # Do we need delete actions for them? So far, the only devices for which we consider the
-        # partitions in the space policy are the disk_devices. What do we do regarding MDs or
-        # bcaches. To be clarified as part of https://trello.com/c/88lh9u52/
+        # Delete actions are not necessary since the MD is being explicitly reused by a volume.
         it "deletes the MD partitions even if there are no space actions about them" do
           proposal.propose
           partition = proposal.devices.find_by_name("/dev/md0p1")
@@ -374,31 +351,6 @@ describe Y2Storage::MinGuidedProposal do
           proposal.propose
           filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
           expect(filesystem.blk_devices.first.sid).to eq original_md0.sid
-        end
-
-        context "and there are no space actions to delete all the partitions" do
-          # sdb2 is not deleted
-          let(:space_actions) { { "/dev/sdb1" => :delete } }
-
-          # FIXME: this should change when we implement https://trello.com/c/88lh9u52/
-          # the proposal should fail if deleting sdb2 is not allowed
-          it "formats the RAID and assigns the mount point" do
-            proposal.propose
-            filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
-            expect(filesystem.blk_devices.first.name).to eq "/dev/md0"
-            expect(filesystem.type.is?(:xfs)).to eq true
-          end
-        end
-
-        context "and there are space actions to delete all the partitions" do
-          let(:space_actions) { { "/dev/sdb1" => :delete, "/dev/sdb2" => :delete } }
-
-          it "formats the RAID and assigns the mount point" do
-            proposal.propose
-            filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
-            expect(filesystem.blk_devices.first.name).to eq "/dev/md0"
-            expect(filesystem.type.is?(:xfs)).to eq true
-          end
         end
       end
     end
