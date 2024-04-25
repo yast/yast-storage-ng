@@ -34,18 +34,21 @@ module Y2Storage
           @settings = settings
           @to_delete_mandatory = []
           @to_delete_optional = []
+          @to_wipe = []
           @to_resize = []
         end
 
         # @param disk [Disk] see {List}
         def add_mandatory_actions(disk)
-          devices = disk.partition_table? ? partitions(disk) : [disk]
-          devices.select! { |d| configured?(d, :force_delete) }
+          return unless disk.partition_table?
+
+          devices = partitions(disk).select { |p| configured?(p, :force_delete) }
           to_delete_mandatory.concat(devices)
         end
 
         # @param disk [Disk] see {List}
         def add_optional_actions(disk, _lvm_helper)
+          add_wipe(disk)
           add_resize(disk)
           add_optional_delete(disk)
         end
@@ -57,8 +60,9 @@ module Y2Storage
           return unless dev
 
           return Shrink.new(dev) if source == :to_resize
+          return Wipe.new(dev) if source == :to_wipe
 
-          dev.is?(:partition) ? Delete.new(dev, related_partitions: false) : Wipe.new(dev)
+          Delete.new(dev, related_partitions: false)
         end
 
         # @param deleted_sids [Array<Integer>] see {List}
@@ -74,14 +78,25 @@ module Y2Storage
         # @return [ProposalSpaceSettings] proposal settings for making space
         attr_reader :settings
 
-        # @return [Array<BlkDevice>] list of devices to be deleted or emptied (mandatory)
+        # @return [Array<BlkDevice>] list of devices to be deleted (mandatory)
         attr_reader :to_delete_mandatory
 
-        # @return [Array<BlkDevice>] list of devices to be deleted or emptied (optionally)
+        # @return [Array<BlkDevice>] list of devices to be deleted (optionally)
         attr_reader :to_delete_optional
 
         # @return [Array<Partition>] list of partitions to be shrunk
         attr_reader :to_resize
+
+        # @return [Array<BlkDevice>] list of disks to be emptied if needed
+        attr_reader :to_wipe
+
+        # @see #add_optional_actions
+        # @param disk [Disk]
+        def add_wipe(disk)
+          return if disk.partition_table?
+
+          to_wipe << disk
+        end
 
         # @see #add_optional_actions
         # @param disk [Disk]
@@ -110,12 +125,10 @@ module Y2Storage
         #
         # @param disk [Disk]
         def add_optional_delete(disk)
-          if disk.partition_table?
-            partitions = partitions(disk).select { |p| configured?(p, :delete) }
-            to_delete_optional.concat(partitions.sort { |a, b| preferred_delete(a, b) })
-          elsif configured?(disk, :delete)
-            to_delete_optional << disk
-          end
+          return unless disk.partition_table?
+
+          partitions = partitions(disk).select { |p| configured?(p, :delete) }
+          to_delete_optional.concat(partitions.sort { |a, b| preferred_delete(a, b) })
         end
 
         # Compares two partitions to decide which one should be deleted first
@@ -152,6 +165,8 @@ module Y2Storage
         def source_for_next
           if to_delete_mandatory.any?
             :to_delete_mandatory
+          elsif to_wipe.any?
+            :to_wipe
           elsif to_resize.any?
             :to_resize
           else

@@ -82,13 +82,12 @@ module Y2Storage
     # @return [Boolean]
     attr_accessor :delete_resize_configurable
 
-    # What to do with existing partitions and disks if they are involved in the process of making
-    # space.
+    # What to do with existing partitions if they are involved in the process of making space.
     #
     # Keys are device names (like in BlkDevice#name, no alternative names) that correspond to a
-    # partition or to a disk with no partitions.
+    # partition.
     #
-    # The value for each key specifies what to do with the corresponding device if the storage
+    # The value for each key specifies what to do with the corresponding partition if the storage
     # proposal needs to process the corresponding disk. If the device is not explicitly mentioned,
     # nothing will be done. Possible values are :resize, :delete and :force_delete.
     #

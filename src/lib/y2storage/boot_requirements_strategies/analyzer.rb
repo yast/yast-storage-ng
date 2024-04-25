@@ -85,6 +85,8 @@ module Y2Storage
         return @boot_disk if @boot_disk
 
         @boot_disk = devicegraph.find_by_name(boot_disk_name) if boot_disk_name
+        # If the disk was explicitly chosen via boot_disk_name, we are all set
+        return @boot_disk if @boot_disk
 
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph

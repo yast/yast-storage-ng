@@ -52,6 +52,7 @@ describe Y2Storage::MinGuidedProposal do
       fake_devicegraph.mount_points.each { |i| i.parents.first.remove_mount_point }
 
       settings.space_settings.strategy = :bigger_resize
+      settings.lvm_vg_reuse = false
       # Agama uses homogeneous weights for all volumes
       settings.volumes.each { |v| v.weight = 100 }
       # Activate support for separate LVM VGs
@@ -78,6 +79,99 @@ describe Y2Storage::MinGuidedProposal do
       # needs to get created at sda).
       it "does not crash" do
         expect { proposal.propose }.to_not raise_error
+      end
+    end
+
+    context "with one disk containing partitions and another directly formatted" do
+      let(:scenario) { "gpt_msdos_and_empty" }
+
+      let(:lvm) { true }
+
+      before do
+        settings.candidate_devices = ["/dev/sdc", "/dev/sdf"]
+        settings.root_device = "/dev/sdc"
+      end
+
+      let(:volumes) { [{ "mount_point" => "/", "fs_type" => "xfs", "min_size" => size }] }
+
+      context "if there is no need to use the formatted disk (everything fits in the other)" do
+        let(:size) { "200 GiB" }
+
+        it "does not modify the formatted disk" do
+          proposal.propose
+          disk = proposal.devices.find_by_name("/dev/sdf")
+          expect(disk.filesystem.type.is?(:xfs)).to eq true
+          expect(disk.partitions).to be_empty
+        end
+      end
+
+      context "if the formatted disk needs to be used" do
+        let(:size) { "970 GiB" }
+
+        it "empties the disk deleting the filesystem" do
+          proposal.propose
+          disk = proposal.devices.find_by_name("/dev/sdf")
+          expect(disk.filesystem).to be_nil
+          expect(disk.partitions).to_not be_empty
+        end
+      end
+
+      context "if non-mandatory actions are possible to make space" do
+        let(:size) { "100 GiB" }
+
+        before do
+          settings.candidate_devices = ["/dev/sda", "/dev/sdf"]
+          settings.root_device = "/dev/sda"
+        end
+
+        it "tries to use the formatted disk before trying an optional delete" do
+          sda1_sid = fake_devicegraph.find_by_name("/dev/sda1").sid
+
+          settings.space_settings.actions = { "/dev/sda1" => :delete }
+          proposal.propose
+          expect(proposal.failed?).to eq false
+
+          disk = proposal.devices.find_by_name("/dev/sdf")
+          expect(disk.filesystem).to be_nil
+          expect(disk.partitions).to_not be_empty
+
+          expect(proposal.devices.find_by_name("/dev/sda1").sid).to eq sda1_sid
+        end
+
+        it "tries to use the formatted disk before trying an optional resize" do
+          orig_sda1 = fake_devicegraph.find_by_name("/dev/sda1")
+
+          settings.space_settings.actions = { "/dev/sda1" => :resize }
+          proposal.propose
+          expect(proposal.failed?).to eq false
+
+          disk = proposal.devices.find_by_name("/dev/sdf")
+          expect(disk.filesystem).to be_nil
+          expect(disk.partitions).to_not be_empty
+
+          sda1 = proposal.devices.find_by_name("/dev/sda1")
+          expect(sda1.sid).to eq orig_sda1.sid
+          expect(sda1.size).to eq orig_sda1.size
+        end
+      end
+    end
+
+    context "when installing on a disk that previously contained a RAID1" do
+      let(:scenario) { "windows-pc-raid1.xml" }
+
+      before do
+        settings.candidate_devices = ["/dev/sda"]
+        settings.root_device = "/dev/sda"
+        # Let's ensure a bios_boot partition is needed
+        allow(storage_arch).to receive(:efiboot?).and_return(false)
+      end
+
+      # In the past, the pre-existing RAID1 was considered to be the booting disk due to some
+      # false asumptions made by the BootRequirementsChecker.
+      it "creates the partitions needed for booting in the correct disk" do
+        proposal.propose
+        disk = proposal.devices.find_by_name("/dev/sda")
+        expect(disk.partitions.map(&:id)).to include Y2Storage::PartitionId::BIOS_BOOT
       end
     end
   end
