@@ -155,5 +155,24 @@ describe Y2Storage::MinGuidedProposal do
         end
       end
     end
+
+    context "when installing on a disk that previously contained a RAID1" do
+      let(:scenario) { "windows-pc-raid1.xml" }
+
+      before do
+        settings.candidate_devices = ["/dev/sda"]
+        settings.root_device = "/dev/sda"
+        # Let's ensure a bios_boot partition is needed
+        allow(storage_arch).to receive(:efiboot?).and_return(false)
+      end
+
+      # In the past, the pre-existing RAID1 was considered to be the booting disk due to some
+      # false asumptions made by the BootRequirementsChecker.
+      it "creates the partitions needed for booting in the correct disk" do
+        proposal.propose
+        disk = proposal.devices.find_by_name("/dev/sda")
+        expect(disk.partitions.map(&:id)).to include Y2Storage::PartitionId::BIOS_BOOT
+      end
+    end
   end
 end
