@@ -448,9 +448,18 @@ module Y2Storage
 
     # Loads the default encryption settings
     #
-    # The encryption settings are not part of control.xml, but can be injected by a previous step of
+    # The default encryption settings can be read from control.xml.
+    #
+    # Additionally, the encryption password can be injected by a previous step of
     # the installation, eg. the dialog of the Common Criteria system role
     def load_encryption
+      enc_method = EncryptionMethod.find(feature(:proposal, :encryption_method).to_s)
+      self.encryption_method = enc_method if enc_method
+
+      enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
+      self.encryption_pbkdf = enc_pbkdf if enc_pbkdf
+
+      # Password potentially injected by a previous step
       enc = feature(:proposal, :encryption)
 
       return unless enc
