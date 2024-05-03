@@ -54,7 +54,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       let(:dev_name) { "/dev/vda2" }
 
       it "assigns the default encryption method" do
-        expect(subject.method.is?(:luks1)).to eq(true)
+        expect(subject.method.is?(:luks2)).to eq(true)
       end
     end
 
@@ -78,7 +78,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
         end
 
         it "assigns the default encryption method" do
-          expect(subject.method.is?(:luks1)).to eq(true)
+          expect(subject.method.is?(:luks2)).to eq(true)
         end
       end
     end
