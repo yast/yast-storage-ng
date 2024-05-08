@@ -71,8 +71,8 @@ module Y2Partitioner
           @fs_controller = fs_controller
           @action = actions.first
           @password = encryption&.password || ""
-          @pbkdf = encryption&.pbkdf
           @method = initial_method
+          @pbkdf = initial_pbkdf
           @apqns = initial_apqns
           @label = initial_label
         end
@@ -215,8 +215,20 @@ module Y2Partitioner
           if methods.include?(encryption&.method)
             encryption.method
           else
-            Y2Storage::EncryptionMethod::LUKS1
+            Y2Storage::EncryptionMethod::LUKS2
           end
+        end
+
+        # Initial password-based key derivation function, if relevant
+        #
+        # @return [Y2Storage::PbkdFunction, nil]
+        def initial_pbkdf
+          function = encryption&.pbkdf
+          return function unless function.nil? && method.is?(:luks2)
+
+          # Hardcoded conservative default, we can either change it or make it configurable
+          # (see Y2Storage::Configuration) in the future if needed.
+          Y2Storage::PbkdFunction::PBKDF2
         end
 
         # Currently used APQNs when the device is encrypted with pervasive encryption
