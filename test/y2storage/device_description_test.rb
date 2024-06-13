@@ -190,6 +190,8 @@ describe Y2Storage::DeviceDescription do
             expect(description).to eq("PV of LVM")
           end
         end
+
+        include_examples "Encrypted device"
       end
 
       context "and it is an unused LVM physical volume" do
