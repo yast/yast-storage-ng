@@ -206,7 +206,7 @@ module Y2Storage
 
       if encrypted && include_encryption
         # TRANSLATORS: %s is the volume group name. E.g., "vg0"
-        format(_("Encrypted PV of %s"), vg.basename)
+        return format(_("Encrypted PV of %s"), vg.basename)
       end
 
       # TRANSLATORS: %s is the volume group name. E.g., "vg0"
