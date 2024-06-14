@@ -350,6 +350,7 @@ module Y2Storage
       # @param volume [VolumeSpecification]
       def adjust_btrfs_sizes(planned_device, volume)
         return if volume.ignore_snapshots_sizes?
+        return unless planned_device.respond_to?(:min_size)
 
         if volume.snapshots_size > DiskSize.zero
           planned_device.min_size += volume.snapshots_size

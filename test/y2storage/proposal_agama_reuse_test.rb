@@ -45,7 +45,10 @@ describe Y2Storage::MinGuidedProposal do
     # Let's define some volumes to shuffle them around among the disks
     let(:volumes) { [root_vol, srv_vol, swap_vol] }
     let(:root_vol) do
-      { "mount_point" => "/", "fs_type" => "xfs", "min_size" => "5 GiB", "max_size" => "30 GiB" }
+      {
+        "mount_point" => "/", "fs_type" => "btrfs", "min_size" => "5 GiB", "max_size" => "30 GiB",
+        "snapshots" => true, "snapshots_percentage" => 160
+      }
     end
     let(:srv_vol) do
       { "mount_point" => "/srv", "fs_type" => "xfs", "min_size" => "5 GiB", "max_size" => "10 GiB" }
@@ -267,6 +270,22 @@ describe Y2Storage::MinGuidedProposal do
           filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/srv" }
           expect(filesystem.blk_devices.first.name).to eq "/dev/sdb"
           expect(filesystem.type.is?(:xfs)).to eq true
+        end
+      end
+
+      context "if the relocated volume is the root Btrfs with snapshots" do
+        before do
+          srv = settings.volumes.find { |v| v.mount_point == "/" }
+          srv.reuse_name = "/dev/sdc"
+        end
+
+        # The proposal used to throw an exception when adjusting the Btrfs-related sizes
+        # if the target device was a disk (so no sizes could actually be adjusted)
+        it "makes the proposal and assigns the mount point" do
+          proposal.propose
+          filesystem = proposal.devices.filesystems.find { |i| i.mount_path == "/" }
+          expect(filesystem.blk_devices.first.name).to eq "/dev/sdc"
+          expect(filesystem.type.is?(:btrfs)).to eq true
         end
       end
     end
