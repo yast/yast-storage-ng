@@ -62,7 +62,7 @@ module Y2Storage
         end
 
         collection = Planned::DevicesCollection.new(devices)
-        remove_shadowed_subvols(collection.mountable_devices)
+        collection.remove_shadowed_subvols
         add_bcache_issues(collection)
         collection
       end
@@ -168,25 +168,6 @@ module Y2Storage
       def planned_for_tmpfs(drive)
         planner = Y2Storage::Proposal::AutoinstTmpfsPlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive)
-      end
-
-      # Removes shadowed subvolumes from each planned device that can be mounted
-      #
-      # @param planned_devices [Array<Planned::Device>]
-      def remove_shadowed_subvols(planned_devices)
-        planned_devices.each do |device|
-          # Some planned devices could be mountable but not formattable (e.g., {Planned::Nfs}).
-          # Those devices might shadow some subvolumes but they do not have any subvolume to
-          # be shadowed.
-          next unless device.respond_to?(:shadowed_subvolumes)
-
-          device.shadowed_subvolumes(planned_devices).each do |subvol|
-            # TODO: this should be reported to the user when the shadowed
-            # subvolumes was specified in the profile.
-            log.info "Subvolume #{subvol} would be shadowed. Removing it."
-            device.subvolumes.delete(subvol)
-          end
-        end
       end
 
       # Adds a bcache issue if needed
