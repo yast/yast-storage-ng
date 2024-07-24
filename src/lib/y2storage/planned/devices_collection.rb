@@ -48,6 +48,7 @@ module Y2Storage
     class DevicesCollection
       extend Forwardable
       include Enumerable
+      include Yast::Logger
 
       # @!attribute [r] devices
       #   @return [Array<Planned::Device>] List of planned devices
@@ -184,6 +185,24 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def mountable_devices
         @mountable_devices ||= all.select { |d| d.respond_to?(:mount_point) }
+      end
+
+      # Removes shadowed subvolumes from each planned device that can be mounted
+      #
+      # Note this does not alter the collection itself, but it modifies the attributes of
+      # some of the elements in the collection
+      def remove_shadowed_subvols
+        mountable_devices.each do |device|
+          # Some planned devices could be mountable but not formattable (e.g., {Planned::Nfs}).
+          # Those devices might shadow some subvolumes but they do not have any subvolume to
+          # be shadowed.
+          next unless device.respond_to?(:shadowed_subvolumes)
+
+          device.shadowed_subvolumes(mountable_devices).each do |subvol|
+            log.info "Subvolume #{subvol} would be shadowed. Removing it."
+            device.subvolumes.delete(subvol)
+          end
+        end
       end
     end
   end
