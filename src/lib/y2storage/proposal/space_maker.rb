@@ -284,10 +284,6 @@ module Y2Storage
       end
 
       def force_ptables(planned_partitions)
-        Y2Storage::Partitionable.all(new_graph).each do |dev|
-          dev.forced_ptable_type = nil
-        end
-
         forced = planned_partitions.select { |part| part.disk && part.ptable_type }
         forced.each do |part|
           disk = new_graph.find_by_name(part.disk)
