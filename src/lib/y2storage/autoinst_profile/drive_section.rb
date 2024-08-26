@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2019] SUSE LLC
+# Copyright (c) [2017-2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -137,6 +137,7 @@ module Y2Storage
       def init_from_hashes(hash)
         super
         @type ||= default_type_for(hash)
+        @type = @type.to_sym
         @use = use_value_from_string(hash["use"]) if hash["use"]
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
