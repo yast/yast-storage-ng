@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Sep 06 06:47:30 UTC 2024 - Ladislav Slezák <lslezak@suse.com>
+
+- Branch package for SP7 (bsc#1230201)
+
+-------------------------------------------------------------------
 Wed Apr  3 11:23:01 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Fix unlimited-sized fake device graphs (bsc#1221222)
