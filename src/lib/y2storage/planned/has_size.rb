@@ -200,7 +200,7 @@ module Y2Storage
           devices.map(&:weight).reduce(0, :+)
         end
 
-        # Checks if there are eough space at all
+        # Checks if there are enough space at all
         # @raise RuntimeError if there is not enough space
         def check_size(devices, space_size)
           needed_size = DiskSize.sum(devices.map(&:min))
