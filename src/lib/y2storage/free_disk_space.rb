@@ -95,6 +95,10 @@ module Y2Storage
 
     # Whether the region belongs to a partition that is going to be reused
     #
+    # This only makes sense in the case of DASD devices with an implicit partition table,
+    # partitions are never deleted there, but 'reused' (nothing to do with the 'reuse' flag of
+    # planned devices).
+    #
     # @return [Boolean]
     def reused_partition?
       return false if growing?
