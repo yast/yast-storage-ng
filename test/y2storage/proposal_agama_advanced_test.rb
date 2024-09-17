@@ -42,6 +42,9 @@ describe Y2Storage::MinGuidedProposal do
       { "mount_point" => "swap", "fs_type" => "swap", "min_size" => "1 GiB", "max_size" => "2 GiB" }
     end
 
+    let(:delete) { Y2Storage::SpaceActions::Delete }
+    let(:resize) { Y2Storage::SpaceActions::Resize }
+
     let(:scenario) { "mixed_disks" }
 
     before do
@@ -70,7 +73,7 @@ describe Y2Storage::MinGuidedProposal do
       before do
         settings.candidate_devices = ["/dev/sdb"]
         settings.root_device = "/dev/sda"
-        settings.space_settings.actions = { "/dev/sda1" => :resize, "/dev/sda2" => :resize }
+        settings.space_settings.actions = [resize.new("/dev/sda1"), resize.new("/dev/sda2")]
         allow(storage_arch).to receive(:efiboot?).and_return(true)
       end
 
@@ -127,7 +130,7 @@ describe Y2Storage::MinGuidedProposal do
         it "tries to use the formatted disk before trying an optional delete" do
           sda1_sid = fake_devicegraph.find_by_name("/dev/sda1").sid
 
-          settings.space_settings.actions = { "/dev/sda1" => :delete }
+          settings.space_settings.actions = [delete.new("/dev/sda1")]
           proposal.propose
           expect(proposal.failed?).to eq false
 
@@ -141,7 +144,7 @@ describe Y2Storage::MinGuidedProposal do
         it "tries to use the formatted disk before trying an optional resize" do
           orig_sda1 = fake_devicegraph.find_by_name("/dev/sda1")
 
-          settings.space_settings.actions = { "/dev/sda1" => :resize }
+          settings.space_settings.actions = [resize.new("/dev/sda1")]
           proposal.propose
           expect(proposal.failed?).to eq false
 

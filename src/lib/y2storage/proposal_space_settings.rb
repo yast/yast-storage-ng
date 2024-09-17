@@ -19,6 +19,7 @@
 
 require "yast"
 require "y2storage/equal_by_instance_variables"
+require "y2storage/space_actions"
 
 module Y2Storage
   # Class to encapsulate all the GuidedProposal settings related to the process of making space
@@ -84,27 +85,20 @@ module Y2Storage
 
     # What to do with existing partitions if they are involved in the process of making space.
     #
-    # Keys are device names (like in BlkDevice#name, no alternative names) that correspond to a
-    # partition.
-    #
-    # The value for each key specifies what to do with the corresponding partition if the storage
-    # proposal needs to process the corresponding disk. If the device is not explicitly mentioned,
-    # nothing will be done. Possible values are :resize, :delete and :force_delete.
-    #
     # Entries for devices that are not involved in the proposal are ignored. For example, if all
     # the volumes are configured to be placed at /dev/sda but there is an entry like
-    # `{"/dev/sdb1" => :force_delete}`, the corresponding /dev/sdb1 partition will NOT be deleted
-    # because there is no reason for the proposal to process the disk /dev/sdb.
+    # Delete<device: "/dev/sdb1", mandatory: true>, the corresponding /dev/sdb1 partition will NOT
+    # be deleted because there is no reason for the proposal to process the disk /dev/sdb.
     #
     # Device names corresponding to extended partitions are also ignored. The storage proposal only
     # considers actions for primary and logical partitions.
     #
-    # @return [Hash{String => Symbol}]
+    # @return [Array<SpaceActions::Base>]
     attr_accessor :actions
 
     def initialize
       @strategy = :auto
-      @actions = {}
+      @actions = []
     end
 
     # Whether the settings disable deletion of a given type of partitions

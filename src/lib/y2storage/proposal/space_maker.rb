@@ -361,14 +361,17 @@ module Y2Storage
       def execute_shrink(action, devicegraph, planned_partitions, disk_name)
         log.info "SpaceMaker#execute_shrink - #{action}"
 
-        if action.shrink_size.nil?
+        if action.target_size.nil?
+          part = devicegraph.find_device(action.sid)
           if planned_partitions
-            part = devicegraph.find_device(action.sid)
-            action.shrink_size = resizing_size(part, planned_partitions, disk_name)
+            resizing = resizing_size(part, planned_partitions, disk_name)
+            action.target_size = resizing > part.size ? DiskSize.zero : part.size - resizing
           else
-            action.shrink_size = DiskSize.Unlimited
+            # Mandatory resize
+            action.target_size = part.size
           end
         end
+
         action.shrink(devicegraph)
       end
 

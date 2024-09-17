@@ -26,12 +26,25 @@ module Y2Storage
       #
       # @see Base
       class Shrink < Base
-        # @return [DiskSize] size of the space to substract ideally
-        attr_accessor :shrink_size
+        # Minimal size of the device set by the configuration, regardless of the ResizeInfo
+        #
+        # If set to nil, there is no artificial limit
+        # @return [DiskSize, nil]
+        attr_accessor :min_size
+
+        # Max size of the device set by the configuration, regardless of the ResizeInfo
+        #
+        # If set to nil, there is no artificial limit
+        # @return [DiskSize, nil]
+        attr_accessor :max_size
+
+        # Ideal final size of the device to satisfy the SpaceMaker algorithm
+        # @return [DiskSize]
+        attr_accessor :target_size
 
         # Reduces the size of the target partition
         #
-        # If possible, it reduces the size of the partition by {#shrink_size}.
+        # If possible, it reduces the size of the partition to {#adjusted_target_size}.
         # Otherwise, it reduces the size as much as possible.
         #
         # This method does not take alignment into account.
@@ -48,9 +61,21 @@ module Y2Storage
 
         # @param partition [Partition]
         def shrink_partition(partition)
-          target = shrink_size.unlimited? ? DiskSize.zero : partition.size - shrink_size
           # Explicitly avoid alignment to keep current behavior (to be reconsidered)
-          partition.resize(target, align_type: nil)
+          partition.resize(adjusted_target_size, align_type: nil)
+        end
+
+        # Real target size taking into account the max and min limits
+        #
+        # @return [DiskSize]
+        def adjusted_target_size
+          if min_size && min_size > target_size
+            min_size
+          elsif max_size && max_size < target_size
+            max_size
+          else
+            target_size
+          end
         end
       end
     end

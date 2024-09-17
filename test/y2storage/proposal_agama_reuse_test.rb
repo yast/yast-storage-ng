@@ -34,7 +34,7 @@ describe Y2Storage::MinGuidedProposal do
     let(:settings_format) { :ng }
     let(:separate_home) { true }
     let(:control_file_content) { { "partitioning" => { "volumes" => volumes } } }
-    let(:space_actions) { {} }
+    let(:space_actions) { [] }
 
     let(:scenario) { "lvm-two-vgs" }
     let(:resize_info) do
@@ -56,6 +56,9 @@ describe Y2Storage::MinGuidedProposal do
     let(:swap_vol) do
       { "mount_point" => "swap", "fs_type" => "swap", "min_size" => "2 GiB", "max_size" => "6 GiB" }
     end
+
+    let(:delete) { Y2Storage::SpaceActions::Delete }
+    let(:resize) { Y2Storage::SpaceActions::Resize }
 
     before do
       # Speed-up things by avoiding calls to hwinfo
@@ -82,7 +85,9 @@ describe Y2Storage::MinGuidedProposal do
         srv.reformat = reformat
       end
 
-      let(:space_actions) { { "/dev/sda1" => :delete, "/dev/sda2" => :delete, "/dev/sda8" => :delete } }
+      let(:space_actions) do
+        [delete.new("/dev/sda1"), delete.new("/dev/sda2"), delete.new("/dev/sda8")]
+      end
       let(:original_sda8) { fake_devicegraph.find_by_name("/dev/sda8") }
 
       context "keeping its filesystem" do
@@ -129,7 +134,7 @@ describe Y2Storage::MinGuidedProposal do
         srv.reformat = reformat
       end
 
-      let(:space_actions) { { "/dev/sda1" => :delete, "/dev/sda4" => :delete } }
+      let(:space_actions) { [delete.new("/dev/sda1"), delete.new("/dev/sda4")] }
       let(:original_sda4) { fake_devicegraph.find_by_name("/dev/sda4") }
 
       context "keeping its filesystem" do
@@ -178,7 +183,9 @@ describe Y2Storage::MinGuidedProposal do
         srv.reformat = reformat
       end
 
-      let(:space_actions) { { "/dev/sda1" => :delete, "/dev/sda2" => :delete, "/dev/sda5" => :delete } }
+      let(:space_actions) do
+        [delete.new("/dev/sda1"), delete.new("/dev/sda2"), delete.new("/dev/sda5")]
+      end
       let(:original_sda5) { fake_devicegraph.find_by_name("/dev/sda5") }
 
       context "keeping its filesystem" do
@@ -316,7 +323,7 @@ describe Y2Storage::MinGuidedProposal do
           srv.reuse_name = "/dev/md1"
         end
 
-        let(:space_actions) { { "/dev/sda2" => :delete, "/dev/sdb2" => :delete } }
+        let(:space_actions) { [delete.new("/dev/sda2"), delete.new("/dev/sdb2")] }
 
         let(:original_sda2) { fake_devicegraph.find_by_name("/dev/sda2") }
         let(:original_sdb2) { fake_devicegraph.find_by_name("/dev/sdb2") }
@@ -345,7 +352,7 @@ describe Y2Storage::MinGuidedProposal do
           srv.reuse_name = "/dev/md0"
         end
 
-        let(:space_actions) { { "/dev/sda1" => :delete, "/dev/sdb1" => :delete } }
+        let(:space_actions) { [delete.new("/dev/sda1"), delete.new("/dev/sdb1")] }
 
         let(:original_sda1) { fake_devicegraph.find_by_name("/dev/sda1") }
         let(:original_sdb1) { fake_devicegraph.find_by_name("/dev/sdb1") }
@@ -383,7 +390,7 @@ describe Y2Storage::MinGuidedProposal do
         srv.reformat = false
       end
 
-      let(:space_actions) { { "/dev/sda2" => :delete, "/dev/sdb2" => :delete } }
+      let(:space_actions) { [delete.new("/dev/sda2"), delete.new("/dev/sdb2")] }
 
       let(:original_sda2) { fake_devicegraph.find_by_name("/dev/sda2") }
       let(:original_sdb2) { fake_devicegraph.find_by_name("/dev/sdb2") }
@@ -413,7 +420,7 @@ describe Y2Storage::MinGuidedProposal do
         srv.reformat = false
       end
 
-      let(:space_actions) { { "/dev/sda2" => :delete, "/dev/sdb2" => :delete } }
+      let(:space_actions) { [delete.new("/dev/sda2"), delete.new("/dev/sdb2")] }
 
       let(:original_sda2) { fake_devicegraph.find_by_name("/dev/sda2") }
       let(:original_sdb2) { fake_devicegraph.find_by_name("/dev/sdb2") }
@@ -477,10 +484,10 @@ describe Y2Storage::MinGuidedProposal do
       end
 
       let(:space_actions) do
-        {
-          "/dev/sda1" => :delete, "/dev/sda2" => :delete, "/dev/sda3" => :delete,
-          "/dev/sdb1" => :delete, "/dev/sdb2" => :delete
-        }
+        [
+          delete.new("/dev/sda1"), delete.new("/dev/sda2"), delete.new("/dev/sda3"),
+          delete.new("/dev/sdb1"), delete.new("/dev/sdb2")
+        ]
       end
 
       let(:original_sdb1) { fake_devicegraph.find_by_name("/dev/sdb1") }
