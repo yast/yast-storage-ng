@@ -208,6 +208,14 @@ module Y2Storage
         @disk_size ||= @disk_space.disk_size
       end
 
+      # Recalculates the information about the available space, in case it has been modified
+      def update_disk_space
+        @region = nil
+        @disk_size = nil
+        @space_start = nil
+        @disk_space = @disk_space.updated_free_space(devicegraph)
+      end
+
       protected
 
       # Checks whether the disk space is inside an extended partition
@@ -322,6 +330,11 @@ module Y2Storage
         partitions.reverse.detect do |partition|
           partition.min_size.ceil(align_grain) - missing >= partition.min_size
         end
+      end
+
+      # @return [Devicegraph] devicegraph in which the space is defined
+      def devicegraph
+        disk_space.disk.devicegraph
       end
 
       def partitions_sorted_by_attr(*attrs, nils_first: false, descending: false)

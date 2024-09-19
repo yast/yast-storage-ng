@@ -145,6 +145,26 @@ module Y2Storage
       @require_end_alignment ||= disk.as_not_empty { disk.partition_table.require_end_alignment? }
     end
 
+    # Finds the remaining free space within the scope of the disk chunk defined by
+    # this (possibly outdated) FreeDiskSpace object
+    #
+    # @raise [NoDiskSpaceError] if there is no free space in the devicegraph at the region
+    #   defined by the current FreeDiskSpace object
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [FreeDiskSpace] free space within the area of the original FreeDiskSpace object
+    def updated_free_space(devicegraph)
+      disk = devicegraph.blk_devices.detect { |d| d.name == disk_name }
+      spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
+        space.region.start >= region.start &&
+          space.region.start < region.end
+      end
+      raise NoDiskSpaceError, "Exhausted free space" if spaces.empty?
+
+      spaces.first
+    end
+
+    # @return [String]
     def to_s
       "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
     end
