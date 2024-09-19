@@ -161,6 +161,15 @@ module Y2Storage
         end
       end
 
+      # Space that can be sustracted from the start of the region without invalidating this
+      # valid assignation
+      #
+      # @return [DiskSize]
+      def disposable_size
+        # FIXME: This is more based on trial and error than on a real rationale
+        usable_extra_size - align_grain
+      end
+
       # Space consumed by the EBR of one logical partition in a given disk
       # See https://en.wikipedia.org/wiki/Extended_boot_record
       #

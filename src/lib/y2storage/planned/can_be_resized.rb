@@ -44,6 +44,15 @@ module Y2Storage
         max_size <= device_to_reuse(devicegraph).size
       end
 
+      # Limit the max size to ensure the device does not grow more than a give margin
+      #
+      # @param max_grow [DiskSize] max margin to grow the device
+      # @param devicegraph [Devicegraph]
+      def limit_grow(max_grow, devicegraph)
+        limit = device_to_reuse(devicegraph).size + max_grow
+        self.max_size = [max_size, limit].min
+      end
+
       protected
 
       # Implements reuse_device! hook

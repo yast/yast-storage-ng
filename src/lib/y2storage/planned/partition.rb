@@ -87,6 +87,19 @@ module Y2Storage
         @primary = false
       end
 
+      # Whether this corresponds to a reused partition that is located right before the given
+      # assigned space
+      #
+      # @param assigned_space [AssignedSpace]
+      # @return [Boolean]
+      def subsequent_slot?(assigned_space)
+        devicegraph = assigned_space.disk_space.disk.devicegraph
+        dev = device_to_reuse(devicegraph)
+        return false unless dev
+
+        dev.subsequent_slot?(assigned_space.disk_space)
+      end
+
       def self.to_string_attrs
         [
           :mount_point, :reuse_name, :reuse_sid, :min_size, :max_size,

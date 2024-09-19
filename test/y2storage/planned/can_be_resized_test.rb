@@ -172,4 +172,18 @@ describe Y2Storage::Planned::CanBeResized do
       end
     end
   end
+
+  describe "#limit_grow" do
+    before { planned.max_size = 70.GiB }
+
+    it "limits the max size if the sum of the new limit and the original size is smaller" do
+      planned.limit_grow(5.GiB, devicegraph)
+      expect(planned.max_size).to eq 55.GiB
+    end
+
+    it "leaves the max size untouched if the sum of original size and limit is bigger" do
+      planned.limit_grow(50.GiB, devicegraph)
+      expect(planned.max_size).to eq 70.GiB
+    end
+  end
 end
