@@ -1,7 +1,13 @@
+Thu Sep 19 13:42:45 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
+
+- Use the newer exfatprogs instead of exfat-utils (bsc#1187854)
+- 4.7.1
+
 -------------------------------------------------------------------
 Fri Sep 06 06:47:30 UTC 2024 - Ladislav Slezák <lslezak@suse.com>
 
 - Branch package for SP7 (bsc#1230201)
+- 4.7.0
 
 -------------------------------------------------------------------
 Wed Apr  3 11:23:01 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
