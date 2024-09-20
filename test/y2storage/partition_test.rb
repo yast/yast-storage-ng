@@ -446,6 +446,55 @@ describe Y2Storage::Partition do
     end
   end
 
+  describe "#subsequent_slot?" do
+    let(:disk) { fake_devicegraph.find_by_name(disk_name) }
+    let(:region) { disk.partition_table.unused_partition_slots[slot].region }
+    let(:slot) { 0 }
+    let(:space) { Y2Storage::FreeDiskSpace.new(disk, region) }
+    subject(:partition) { fake_devicegraph.find_by_name(part_name) }
+
+    context "when the space starts at the sector right after the partition" do
+      let(:scenario) { "spaces_5_5_10" }
+      let(:part_name) { "/dev/sda1" }
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns true" do
+        expect(partition.subsequent_slot?(space)).to eq true
+      end
+    end
+
+    context "when the space is right after a partition with missaligned end" do
+      let(:scenario) { "alignment" }
+      let(:part_name) { "/dev/sdb1" }
+      let(:disk_name) { "/dev/sdb" }
+
+      it "returns true" do
+        expect(partition.subsequent_slot?(space)).to eq true
+      end
+    end
+
+    context "when the space is not adyacent to the partition" do
+      let(:scenario) { "spaces_5_5_10" }
+      let(:part_name) { "/dev/sda1" }
+      let(:disk_name) { "/dev/sda" }
+      let(:slot) { 1 }
+
+      it "returns false" do
+        expect(partition.subsequent_slot?(space)).to eq false
+      end
+    end
+
+    context "when the space starts at an appropriate sector but is in another disk" do
+      let(:scenario) { "alignment" }
+      let(:part_name) { "/dev/sdb1" }
+      let(:disk_name) { "/dev/sdc" }
+
+      it "returns false" do
+        expect(partition.subsequent_slot?(space)).to eq false
+      end
+    end
+  end
+
   # Only basic cases are tested here. More exhaustive tests can be found in tests
   # for Y2Storage::MatchVolumeSpec
   describe "#match_volume?" do

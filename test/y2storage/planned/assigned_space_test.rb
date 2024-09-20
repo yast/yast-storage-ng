@@ -179,4 +179,25 @@ describe Y2Storage::Planned::AssignedSpace do
       end
     end
   end
+
+  describe "#update_disk_space" do
+    before { fake_scenario("mixed_disks") }
+    let(:disk) { fake_devicegraph.find_by_name("/dev/sda") }
+    subject(:assigned) { described_class.new(disk.free_spaces.first, []) }
+
+    it "refreshes all the information related to the available space" do
+      expect(assigned.region.start).to eq 209717248
+      expect(assigned.disk_size).to eq 2.GiB
+
+      disk.partition_table.create_partition(
+        "/dev/sda3",
+        Y2Storage::Region.create(assigned.region.start, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY
+      )
+      assigned.update_disk_space
+
+      expect(assigned.region.start).to eq(209717248 + 1048576)
+      expect(assigned.disk_size).to eq 1.5.GiB
+    end
+  end
 end

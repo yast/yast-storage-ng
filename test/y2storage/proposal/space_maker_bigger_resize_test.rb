@@ -39,8 +39,10 @@ describe Y2Storage::Proposal::SpaceMaker do
     settings.space_settings.actions = settings_actions
     settings
   end
-  let(:settings_actions) { {} }
+  let(:settings_actions) { [] }
   let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
+  let(:delete) { Y2Storage::SpaceActions::Delete }
+  let(:resize) { Y2Storage::SpaceActions::Resize }
 
   subject(:maker) { described_class.new(analyzer, settings) }
 
@@ -48,7 +50,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     let(:scenario) { "complex-lvm-encrypt" }
 
     context "if no device is set as :force_delete " do
-      let(:settings_actions) { { "/dev/sda1" => :delete, "/dev/sda2" => :delete } }
+      let(:settings_actions) { [delete.new("/dev/sda1"), delete.new("/dev/sda2")] }
 
       it "does not delete any partition" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -56,9 +58,9 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
-    # :force_delete for disks should be ignored, actions only make sense for partitions and LVs
+    # Mandatory delete for disks should be ignored, actions only make sense for partitions and LVs
     context "if :force_delete is specified for a disk that contains partitions" do
-      let(:settings_actions) { { "/dev/sda" => :force_delete } }
+      let(:settings_actions) { [delete.new("/dev/sda", mandatory: true)] }
 
       it "does not delete any partition" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -68,6 +70,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "if :force_delete is specified for several partitions" do
       let(:settings_actions) { { "/dev/sda2" => :force_delete, "/dev/sde1" => :force_delete } }
+      let(:settings_actions) do
+        [delete.new("/dev/sda2", mandatory: true), delete.new("/dev/sde1", mandatory: true)]
+      end
 
       it "does not delete partitions out of SpaceMaker#candidate_devices" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -80,11 +85,14 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
-    # :force_delete for disks should be ignored, actions only make sense for partitions and LVs
+    # Mandatory delete for disks should be ignored, actions only make sense for partitions and LVs
     context "if :force_delete is specified for a directly formatted disk (no partition table)" do
       let(:scenario) { "multipath-formatted.xml" }
 
-      let(:settings_actions) { { "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1" => :force_delete } }
+      let(:settings_actions) do
+        [delete.new("/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1", mandatory: true)]
+      end
+
       before do
         settings.candidate_devices = ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"]
         settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
@@ -104,7 +112,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "when deleting a btrfs partition that is part of a multidevice btrfs" do
       let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
-      let(:settings_actions) { { "/dev/sda1" => :force_delete } }
+      let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -119,7 +127,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "when deleting a partition that is part of a raid" do
       let(:scenario) { "raid0-over-partitions.xml" }
-      let(:settings_actions) { { "/dev/sda1" => :force_delete } }
+      let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -134,7 +142,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "when deleting a partition that is part of a lvm volume group" do
       let(:scenario) { "lvm-over-partitions.xml" }
-      let(:settings_actions) { { "/dev/sda1" => :force_delete } }
+      let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
         result = maker.prepare_devicegraph(fake_devicegraph)
@@ -144,6 +152,31 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "does not delete other partitions constituting the same volume group" do
         result = maker.prepare_devicegraph(fake_devicegraph)
         expect(result.partitions.map(&:name)).to include "/dev/sda2", "/dev/sda3", "/dev/sdb2"
+      end
+    end
+
+    context "if there is a resize action with a max that is smaller than the partition size" do
+      using Y2Storage::Refinements::SizeCasts
+
+      let(:scenario) { "irst-windows-linux-gpt" }
+      let(:settings_actions) do
+        [resize.new("/dev/sda2"), resize.new("/dev/sda3", max_size: 200.GiB)]
+      end
+
+      let(:resize_info) do
+        instance_double("ResizeInfo", resize_ok?: true, min_size: 100.GiB, max_size: 800.GiB)
+      end
+
+      before do
+        allow_any_instance_of(Y2Storage::Partition)
+          .to receive(:detect_resize_info).and_return(resize_info)
+      end
+
+      it "resizes the partition to the specified max if possible" do
+        result = maker.prepare_devicegraph(fake_devicegraph)
+        expect(result.partitions).to include(
+          an_object_having_attributes(filesystem_label: "other", size: 200.GiB)
+        )
       end
     end
   end
@@ -254,10 +287,10 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       context "if resizing some partitions and deleting others is allowed" do
         let(:settings_actions) do
-          {
-            "/dev/sda2" => :resize, "/dev/sda3" => :resize,
-            "/dev/sda5" => :delete, "/dev/sda6" => :delete
-          }
+          [
+            resize.new("/dev/sda2"), resize.new("/dev/sda3"),
+            delete.new("/dev/sda5"), delete.new("/dev/sda6")
+          ]
         end
 
         context "and resizing one partition is enough" do
@@ -285,7 +318,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
         end
 
-        context "and resizing one partition is not enough" do
+        context "and resizing one partition is not enough because more space is needed" do
           let(:volumes) { [vol1, vol2] }
 
           it "resizes subsequent partitions" do
@@ -308,6 +341,39 @@ describe Y2Storage::Proposal::SpaceMaker do
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 2
             expect(distribution.spaces.flat_map(&:partitions)).to contain_exactly(*volumes)
+          end
+        end
+
+        context "and resizing one partition is not enough because the action is limited" do
+          let(:volumes) { [vol1] }
+
+          let(:settings_actions) do
+            [
+              resize.new("/dev/sda2", min_size: 250.GiB), resize.new("/dev/sda3"),
+              delete.new("/dev/sda5"), delete.new("/dev/sda6")
+            ]
+          end
+
+          it "resizes the more 'productive' partition taking restrictions into account" do
+            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            expect(result[:devicegraph].partitions).to include(
+              an_object_having_attributes(filesystem_label: "windows", size: 360.GiB),
+              an_object_having_attributes(filesystem_label: "other", size: 110.GiB)
+            )
+          end
+
+          it "does not delete any partition" do
+            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            expect(result[:devicegraph].partitions.map(&:name)).to contain_exactly(
+              "/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sda5"
+            )
+          end
+
+          it "suggests a distribution using the freed space" do
+            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            distribution = result[:partitions_distribution]
+            expect(distribution.spaces.size).to eq 1
+            expect(distribution.spaces.first.partitions).to eq volumes
           end
         end
 
@@ -334,6 +400,24 @@ describe Y2Storage::Proposal::SpaceMaker do
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 3
             expect(distribution.spaces.flat_map(&:partitions)).to contain_exactly(*volumes)
+          end
+
+          context "if resize operations are limited" do
+            let(:settings_actions) do
+              [
+                resize.new("/dev/sda2", min_size: 150.GiB),
+                resize.new("/dev/sda3", min_size: 110.GiB),
+                delete.new("/dev/sda5"), delete.new("/dev/sda6")
+              ]
+            end
+
+            it "resizes all allowed partitions their specified limits" do
+              result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+              expect(result[:devicegraph].partitions).to include(
+                an_object_having_attributes(filesystem_label: "windows", size: 150.GiB),
+                an_object_having_attributes(filesystem_label: "other", size: 110.GiB)
+              )
+            end
           end
         end
       end

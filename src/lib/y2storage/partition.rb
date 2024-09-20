@@ -281,6 +281,25 @@ module Y2Storage
       !disk.nil? && type.is?(:primary) && id.is?(:windows_system)
     end
 
+    # Whether the given disk space is located right after this partition
+    #
+    # @param disk_space [FreeDiskSpace]
+    # @return [Boolean]
+    def subsequent_slot?(disk_space)
+      return false if disk_space.disk != partition_table.partitionable
+      return false unless disk_space.region.start > region.end
+
+      # The simplest case can be easily evaluated
+      return true if disk_space.region.start == (region.end + 1)
+
+      # But if the end of the partition is not properly aligned, we may need to look closer
+      # FIXME: this can likely be both simpler and more efficient. But since it's used
+      # only for missaligned partitions is not a priority
+      slots = partition_table.partitions + partition_table.unused_partition_slots
+      break_points = slots.flat_map { |s| [s.region.start, s.region.end] }
+      break_points.none? { |p| p > region.end && p < disk_space.region.start }
+    end
+
     protected
 
     # Values for volume specification matching

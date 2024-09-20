@@ -252,11 +252,11 @@ describe Y2Storage::MinGuidedProposal do
 
       before do
         settings.space_settings.strategy = :bigger_resize
-        settings.space_settings.actions = {
-          "/dev/sda1" => :resize,
-          "/dev/sdb1" => :resize,
-          "/dev/sdc1" => :resize
-        }
+        settings.space_settings.actions = [
+          Y2Storage::SpaceActions::Resize.new("/dev/sda1"),
+          Y2Storage::SpaceActions::Resize.new("/dev/sdb1"),
+          Y2Storage::SpaceActions::Resize.new("/dev/sdc1")
+        ]
       end
 
       include_examples "resize volume combinations"
@@ -275,11 +275,11 @@ describe Y2Storage::MinGuidedProposal do
 
       before do
         settings.space_settings.strategy = :bigger_resize
-        settings.space_settings.actions = {
-          "/dev/sda1" => :force_delete,
-          "/dev/sdb1" => :force_delete,
-          "/dev/sdc1" => :force_delete
-        }
+        settings.space_settings.actions = [
+          Y2Storage::SpaceActions::Delete.new("/dev/sda1", mandatory: true),
+          Y2Storage::SpaceActions::Delete.new("/dev/sdb1", mandatory: true),
+          Y2Storage::SpaceActions::Delete.new("/dev/sdc1", mandatory: true)
+        ]
       end
 
       include_examples "delete volume combinations"

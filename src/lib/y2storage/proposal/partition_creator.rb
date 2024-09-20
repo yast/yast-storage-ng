@@ -104,7 +104,7 @@ module Y2Storage
         devices_map = {}
         planned_partitions.each_with_index do |part, idx|
 
-          space = free_space_within(initial_free_space)
+          space = initial_free_space.updated_free_space(devicegraph)
           primary = planned_partitions.size - idx > num_logical
           partition = create_partition(part, space, primary)
           part.format!(partition)
@@ -115,22 +115,6 @@ module Y2Storage
 
         end
         devices_map
-      end
-
-      # Finds the remaining free space within the scope of the disk chunk
-      # defined by a (probably outdated) FreeDiskSpace object
-      #
-      # @param initial_free_space [FreeDiskSpace] the original disk chunk, the
-      #   returned free space will be within this area
-      def free_space_within(initial_free_space)
-        disk = devicegraph.blk_devices.detect { |d| d.name == initial_free_space.disk_name }
-        spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
-          space.region.start >= initial_free_space.region.start &&
-            space.region.start < initial_free_space.region.end
-        end
-        raise NoDiskSpaceError, "Exhausted free space" if spaces.empty?
-
-        spaces.first
       end
 
       # Create a real partition for the specified planned partition within the
@@ -150,7 +134,7 @@ module Y2Storage
           create_primary_partition(planned_partition, free_space)
         elsif !ptable.has_extended?
           create_extended_partition(free_space)
-          free_space = free_space_within(free_space)
+          free_space = free_space.updated_free_space(devicegraph)
           create_logical_partition(planned_partition, free_space)
         else
           create_logical_partition(planned_partition, free_space)

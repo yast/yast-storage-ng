@@ -161,6 +161,15 @@ module Y2Storage
         end
       end
 
+      # Space that can be sustracted from the start of the region without invalidating this
+      # valid assignation
+      #
+      # @return [DiskSize]
+      def disposable_size
+        # FIXME: This is more based on trial and error than on a real rationale
+        usable_extra_size - align_grain
+      end
+
       # Space consumed by the EBR of one logical partition in a given disk
       # See https://en.wikipedia.org/wiki/Extended_boot_record
       #
@@ -206,6 +215,14 @@ module Y2Storage
       # @return [DiskSize] Size of the space
       def disk_size
         @disk_size ||= @disk_space.disk_size
+      end
+
+      # Recalculates the information about the available space, in case it has been modified
+      def update_disk_space
+        @region = nil
+        @disk_size = nil
+        @space_start = nil
+        @disk_space = @disk_space.updated_free_space(devicegraph)
       end
 
       protected
@@ -322,6 +339,11 @@ module Y2Storage
         partitions.reverse.detect do |partition|
           partition.min_size.ceil(align_grain) - missing >= partition.min_size
         end
+      end
+
+      # @return [Devicegraph] devicegraph in which the space is defined
+      def devicegraph
+        disk_space.disk.devicegraph
       end
 
       def partitions_sorted_by_attr(*attrs, nils_first: false, descending: false)

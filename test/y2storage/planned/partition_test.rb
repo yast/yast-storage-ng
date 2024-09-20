@@ -111,4 +111,53 @@ describe Y2Storage::Planned::Partition do
       end
     end
   end
+
+  describe "#subsequent_slot?" do
+    let(:assigned_space) { Y2Storage::Planned::AssignedSpace.new(space, []) }
+    let(:space) do
+      instance_double(
+        "Y2Storage::FreeDiskSpace",
+        disk:                   disk,
+        disk_size:              500.GiB,
+        align_grain:            1.MiB,
+        require_end_alignment?: false
+      )
+    end
+
+    let(:disk) { instance_double("Y2Storage::Disk", devicegraph: devicegraph) }
+    let(:devicegraph) { instance_double("Y2Storage::Devicegraph") }
+
+    context "when the plan is to create a new partition" do
+      it "returns false" do
+        expect(partition.subsequent_slot?(assigned_space)).to eq false
+      end
+    end
+
+    context "when the plan is to reuse an existing partition" do
+      let(:real_partition) { instance_double("Y2Storage::Partition", sid: 123) }
+
+      before do
+        partition.assign_reuse(real_partition)
+
+        allow(devicegraph).to receive(:find_device).and_return real_partition
+        allow(real_partition).to receive(:subsequent_slot?).with(space).and_return subsequent
+      end
+
+      context "if the reused partition is next to the region of the assigned space" do
+        let(:subsequent) { true }
+
+        it "returns true" do
+          expect(partition.subsequent_slot?(assigned_space)).to eq true
+        end
+      end
+
+      context "if the reused partition is not adjacent to the region of the assigned space" do
+        let(:subsequent) { false }
+
+        it "returns false" do
+          expect(partition.subsequent_slot?(assigned_space)).to eq false
+        end
+      end
+    end
+  end
 end
