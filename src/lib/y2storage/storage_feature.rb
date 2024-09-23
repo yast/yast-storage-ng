@@ -75,7 +75,7 @@ module Y2Storage
         UF_NFS:              "nfs-client",
         UF_NTFS:             ["ntfs-3g", "ntfsprogs"],
         UF_VFAT:             "dosfstools",
-        UF_EXFAT:            "exfat-utils",
+        UF_EXFAT:            "exfatprogs",
         UF_F2FS:             "f2fs-tools",
         UF_UDF:              "udftools",
         UF_JFS:              "jfsutils",
