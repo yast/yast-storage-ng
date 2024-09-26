@@ -167,14 +167,14 @@ module Y2Storage
         if settings.use_lvm
           provide_space_lvm(planned_partitions, devicegraph, lvm_helper)
         else
-          provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper)
+          provide_space_no_lvm(planned_partitions, devicegraph)
         end
       end
 
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
-      def provide_space_no_lvm(planned_partitions, devicegraph, lvm_helper)
-        result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
+      def provide_space_no_lvm(planned_partitions, devicegraph)
+        result = space_maker.provide_space(devicegraph, planned_partitions)
         log.info "Found enough space"
         result
       end
@@ -194,7 +194,9 @@ module Y2Storage
           original_sids = space_maker.protected_sids
           space_maker.protected_sids += lvm_sids
 
-          result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
+          result = space_maker.provide_space(
+            devicegraph, planned_partitions, lvm_helper.volume_group
+          )
           log.info "Found enough space including LVM, reusing #{vg}"
           return result
         rescue Error
@@ -204,7 +206,7 @@ module Y2Storage
         end
 
         lvm_helper.reused_volume_group = nil
-        result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
+        result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper.volume_group)
         log.info "Found enough space including LVM"
 
         result

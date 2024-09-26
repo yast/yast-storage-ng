@@ -52,10 +52,9 @@ module Y2Storage
         # @see SpaceMaker#provide_space
         #
         # @param disk [Disk] disk to act upon
-        # @param lvm_helper [Proposal::LvmHelper] contains information about the
-        #     planned LVM logical volumes and how to make space for them
-        def add_optional_actions(disk, lvm_helper)
-          strategy.add_optional_actions(disk, lvm_helper)
+        # @param volume_group [Planned::LvmVg, nil] system LVM VG to be created or reused, if any
+        def add_optional_actions(disk, volume_group)
+          strategy.add_optional_actions(disk, volume_group)
         end
 
         # Next action to be performed by SpaceMaker

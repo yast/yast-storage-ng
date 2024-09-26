@@ -54,11 +54,11 @@ module Y2Storage
         # @see SpaceMakerActions::List#add_optional_actions
         #
         # @param disk [Disk]
-        # @param lvm_helper [Proposal::LvmHelper]
-        def add_prospects(disk, lvm_helper)
+        # @param volume_group [Planned::LvmVg, nil]
+        def add_prospects(disk, volume_group)
           add_delete_partition_prospects(disk)
           add_resize_prospects(disk)
-          add_wipe_prospects(disk, lvm_helper)
+          add_wipe_prospects(disk, volume_group)
         end
 
         # Next prospect action that should be executed by SpaceMaker
@@ -207,21 +207,31 @@ module Y2Storage
         # content (i.e. prospects of type {SpaceMakerProspects::WipeDisk})
         #
         # @param disk [Disk] disk to act upon
-        # @param lvm_helper [Proposal::LvmHelper] contains information about the
-        #     planned LVM logical volumes and how to make space for them
-        def add_wipe_prospects(disk, lvm_helper)
+        # @param volume_group [Planned::LvmVg, nil] system LVM VG to be created or reused, if any
+        def add_wipe_prospects(disk, volume_group)
           log.info "Checking if the disk #{disk.name} has a partition table"
 
           return unless disk.has_children? && disk.partition_table.nil?
 
           log.info "Found something that is not a partition table"
 
-          if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
+          if disk.descendants.any? { |dev| vg_to_reuse?(dev, volume_group) }
             log.info "Not cleaning up #{disk.name} because its VG must be reused"
             return
           end
 
           @wipe_disk_prospects << SpaceMakerProspects::WipeDisk.new(disk)
+        end
+
+        # Whether the given device corresponds to the volume group that must be reused by the
+        # proposal
+        #
+        # @param device [Device]
+        # @param volume_group [Planned::LvmVg, nil]
+        def vg_to_reuse?(device, volume_group)
+          return false unless volume_group && device.is?(:lvm_vg)
+
+          volume_group.reuse? && volume_group.volume_group_name == device.vg_name
         end
 
         # @see #add_resize_prospects

@@ -65,8 +65,8 @@ module Y2Storage
       #
       # @param original_graph [Devicegraph] initial devicegraph
       # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     planned LVM logical volumes and how to make space for them
+      # @param planned_vg [Planned::LvmVg, nil] planned system LVM volume group. Nil if there is no
+      #   need to create space for the system VG
       # @return [Hash] a hash with three elements:
       #   devicegraph: [Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<Partition>] partitions that
@@ -74,11 +74,11 @@ module Y2Storage
       #   partitions_distribution: [Planned::PartitionsDistribution] proposed
       #     distribution of partitions, including new PVs if necessary
       #
-      def provide_space(original_graph, planned_partitions, lvm_helper)
+      def provide_space(original_graph, planned_partitions, planned_vg = nil)
         @original_graph = original_graph
-        @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper.volume_group)
+        @dist_calculator = PartitionsDistributionCalculator.new(planned_vg)
 
-        calculate_new_graph(planned_partitions, lvm_helper)
+        calculate_new_graph(planned_partitions, planned_vg)
 
         {
           devicegraph:             new_graph,
@@ -155,9 +155,8 @@ module Y2Storage
       # @see #provide_space
       #
       # @param partitions [Array<Planned::Partition>] partitions to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
-      def calculate_new_graph(partitions, lvm_helper)
+      # @param volume_group [Planned::LvmVg, nil] planned system LVM volume group
+      def calculate_new_graph(partitions, volume_group)
         @new_graph = original_graph.duplicate
         @new_graph_deleted_sids = []
         @extra_disk_names = partitions.map(&:disk).compact.uniq - settings.candidate_devices
@@ -187,7 +186,7 @@ module Y2Storage
           # The result (if successful) is kept in @distribution.
           #
           parts_by_disk.each do |disk, parts|
-            resize_and_delete(parts, lvm_helper, disk_name: disk)
+            resize_and_delete(parts, volume_group, disk_name: disk)
           rescue Error
             # If LVM was involved, maybe there is still hope if we don't abort on this error.
             raise unless dist_calculator.lvm?
@@ -205,7 +204,7 @@ module Y2Storage
         # Note that the result of the run above is not lost as already
         # assigned partitions are taken into account.
         #
-        resize_and_delete(partitions, lvm_helper)
+        resize_and_delete(partitions, volume_group)
 
         @all_deleted_sids.concat(new_graph_deleted_sids)
       end
@@ -253,11 +252,10 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] partitions
       #     to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
+      # @param volume_group [Planned::LvmVg, nil] planned system LVM volume group, if any
       # @param disk_name [String, nil] optional disk name to restrict operations to
       #
-      def resize_and_delete(planned_partitions, lvm_helper, disk_name: nil)
+      def resize_and_delete(planned_partitions, volume_group, disk_name: nil)
         # Note that only the execution with disk_name == nil is the final one.
         # In other words, if disk_name contains something, it means there will
         # be at least a subsequent call to the method.
@@ -272,7 +270,7 @@ module Y2Storage
 
         actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
-          actions.add_optional_actions(disk, lvm_helper)
+          actions.add_optional_actions(disk, volume_group)
         end
         skip = all_protected_sids(new_graph)
 
