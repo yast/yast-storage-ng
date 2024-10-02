@@ -48,7 +48,7 @@ module Y2Storage
       # Initialize.
       #
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
-      # @param settings [ProposalSettings] proposal settings
+      # @param settings [ProposalSpaceSettings] space settings
       def initialize(disk_analyzer, settings)
         @disk_analyzer = disk_analyzer
         @settings = settings
@@ -64,6 +64,8 @@ module Y2Storage
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
+      # @param default_disks [Array<Strings>] disks that will be used to allocate those partitions
+      #   with no concrete disks and the physical volumes of the LVM volume group
       # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
       # @param planned_vg [Planned::LvmVg, nil] planned system LVM volume group. Nil if there is no
       #   need to create space for the system VG
@@ -74,11 +76,11 @@ module Y2Storage
       #   partitions_distribution: [Planned::PartitionsDistribution] proposed
       #     distribution of partitions, including new PVs if necessary
       #
-      def provide_space(original_graph, planned_partitions, planned_vg = nil)
+      def provide_space(original_graph, default_disks, planned_partitions, planned_vg = nil)
         @original_graph = original_graph
         @dist_calculator = PartitionsDistributionCalculator.new(planned_vg)
 
-        calculate_new_graph(planned_partitions, planned_vg)
+        calculate_new_graph(default_disks, planned_partitions, planned_vg)
 
         {
           devicegraph:             new_graph,
@@ -90,18 +92,21 @@ module Y2Storage
       # Executes all the mandatory actions to make space (see #{SpaceMakerActions::List})
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param disks [Array<Strings>] set of disk names to operate on
       # @return [Devicegraph] copy of #original_graph after performing the actions
-      def prepare_devicegraph(original_graph, planned_partitions = [])
+      def prepare_devicegraph(original_graph, disks)
         log.info "BEGIN SpaceMaker#prepare_devicegraph"
 
         result = original_graph.dup
-        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
+        @candidate_disk_names = disks
 
-        non_candidate_disks(planned_partitions).each do |disk_name|
-          disks_for(result, disk_name).each { |d| actions.add_mandatory_actions(d) }
+        disks.each do |disk_name|
+          disk = result.find_by_name(disk_name)
+          next unless disk
+
+          actions.add_mandatory_actions(disk)
         end
-        disks_for(result).each { |d| actions.add_mandatory_actions(d) }
         skip = all_protected_sids(result)
 
         while (action = actions.next)
@@ -134,6 +139,9 @@ module Y2Storage
       # @return [Array<Integer>]
       attr_reader :new_graph_deleted_sids
 
+      # @return [Array<String>]
+      attr_reader :candidate_disk_names
+
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
       #
@@ -142,24 +150,16 @@ module Y2Storage
         original_graph.partitions.select { |p| @all_deleted_sids.include?(p.sid) }
       end
 
-      # Disks that will be used, either as boot disk or by any of the given planned partitions,
-      # but that are not part of the candidate disks
-      #
-      # @param planned_partitions [Array<Planned::Partition>]
-      # @return [Array<String>]
-      def non_candidate_disks(planned_partitions)
-        planned_disks = planned_partitions_by_disk(planned_partitions).keys
-        planned_disks + [settings.root_device] - candidate_disk_names
-      end
-
       # @see #provide_space
       #
+      # @param default_disk_names [Array<Strings>] see {#provide_space}
       # @param partitions [Array<Planned::Partition>] partitions to make space for
       # @param volume_group [Planned::LvmVg, nil] planned system LVM volume group
-      def calculate_new_graph(partitions, volume_group)
+      def calculate_new_graph(default_disk_names, partitions, volume_group)
         @new_graph = original_graph.duplicate
         @new_graph_deleted_sids = []
-        @extra_disk_names = partitions.map(&:disk).compact.uniq - settings.candidate_devices
+        @candidate_disk_names = default_disk_names
+        @extra_disk_names = partitions.map(&:disk).compact.uniq - candidate_disk_names
 
         # To make sure we are not freeing space in useless places first
         # restrict the operations to disks with particular disk
@@ -268,7 +268,7 @@ module Y2Storage
         @distribution = nil
         force_ptables(planned_partitions)
 
-        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
         disks_for(new_graph, disk_name).each do |disk|
           actions.add_optional_actions(disk, volume_group)
         end
@@ -438,11 +438,6 @@ module Y2Storage
       def disks_for(devicegraph, device_name = nil)
         filter = device_name ? [device_name] : candidate_disk_names
         devicegraph.blk_devices.select { |d| filter.include?(d.name) }
-      end
-
-      # @return [Array<String>]
-      def candidate_disk_names
-        settings.candidate_devices
       end
 
       # Distribution calculator to use in special cases in which any implication related

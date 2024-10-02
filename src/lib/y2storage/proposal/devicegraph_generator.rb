@@ -34,7 +34,7 @@ module Y2Storage
 
       def initialize(settings, disk_analyzer)
         @settings = settings
-        @space_maker = Proposal::SpaceMaker.new(disk_analyzer, settings)
+        @space_maker = Proposal::SpaceMaker.new(disk_analyzer, settings.space_settings)
       end
 
       # Devicegraph including all the specified volumes
@@ -84,8 +84,9 @@ module Y2Storage
       # @return [Devicegraph]
       def prepared(planned_devices, initial_graph)
         protect_sids(planned_devices)
-        partitions = partitions_for(planned_devices)
-        space_maker.prepare_devicegraph(initial_graph, partitions)
+        disks = settings.candidate_devices + [settings.root_device] + forced_disks(planned_devices)
+        disks = disks.compact.sort.uniq
+        space_maker.prepare_devicegraph(initial_graph, disks)
       end
 
       protected
@@ -101,6 +102,21 @@ module Y2Storage
       # @return [Array<Planned::Partition>]
       def partitions_for(planned_devices)
         planned_devices.select { |d| plan_partition?(d) }.map { |d| planned_partition_for(d) }
+      end
+
+      # Disks that must be used by some of the given planned devices
+      #
+      # @param planned_devices [Array<Planned::Device>] list of planned devices
+      # @return [Array<String>]
+      def forced_disks(planned_devices)
+        partitions_for(planned_devices).map(&:disk).uniq.compact
+      end
+
+      # List of default disks for the SpaceMaker
+      #
+      # @return [Array<String>]
+      def default_disks
+        settings.candidate_devices
       end
 
       # Whether the given planned device must result in the creation of a partition
@@ -174,7 +190,7 @@ module Y2Storage
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
       def provide_space_no_lvm(planned_partitions, devicegraph)
-        result = space_maker.provide_space(devicegraph, planned_partitions)
+        result = space_maker.provide_space(devicegraph, default_disks, planned_partitions)
         log.info "Found enough space"
         result
       end
@@ -195,7 +211,7 @@ module Y2Storage
           space_maker.protected_sids += lvm_sids
 
           result = space_maker.provide_space(
-            devicegraph, planned_partitions, lvm_helper.volume_group
+            devicegraph, default_disks, planned_partitions, lvm_helper.volume_group
           )
           log.info "Found enough space including LVM, reusing #{vg}"
           return result
@@ -206,7 +222,9 @@ module Y2Storage
         end
 
         lvm_helper.reused_volume_group = nil
-        result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper.volume_group)
+        result = space_maker.provide_space(
+          devicegraph, default_disks, planned_partitions, lvm_helper.volume_group
+        )
         log.info "Found enough space including LVM"
 
         result
