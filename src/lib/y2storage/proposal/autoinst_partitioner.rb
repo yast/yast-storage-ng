@@ -155,12 +155,21 @@ module Y2Storage
       def best_distribution(planned_partitions, devices)
         spaces = devices.map(&:free_spaces).flatten
 
-        calculator = Proposal::PartitionsDistributionCalculator.new
-        dist = calculator.best_distribution(planned_partitions, spaces)
+        dist = distribute_partitions(planned_partitions, spaces)
         return dist if dist
 
         # Second try with more flexible planned partitions
-        calculator.best_distribution(flexible_partitions(planned_partitions), spaces)
+        distribute_partitions(flexible_partitions(planned_partitions), spaces)
+      end
+
+      # @see #best_distribution
+      #
+      # @param partitions [Array<Planned::Partition>] list of planned partitions to create
+      # @param spaces [Array<FreeDiskSpace>] spaces to distribute the partitions
+      # @return [Planned::PartitionsDistribution, nil]
+      def distribute_partitions(partitions, spaces)
+        calculator = Proposal::PartitionsDistributionCalculator.new(partitions)
+        calculator.best_distribution(spaces)
       end
 
       # Checks whether (re)formatting the given device is acceptable

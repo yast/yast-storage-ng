@@ -190,7 +190,9 @@ module Y2Storage
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
       def provide_space_no_lvm(planned_partitions, devicegraph)
-        result = space_maker.provide_space(devicegraph, default_disks, planned_partitions)
+        result = space_maker.provide_space(
+          devicegraph, default_disks: default_disks, partitions: planned_partitions
+        )
         log.info "Found enough space"
         result
       end
@@ -211,7 +213,8 @@ module Y2Storage
           space_maker.protected_sids += lvm_sids
 
           result = space_maker.provide_space(
-            devicegraph, default_disks, planned_partitions, lvm_helper.volume_group
+            devicegraph, default_disks: default_disks,
+            partitions: planned_partitions, volume_groups: [lvm_helper.volume_group]
           )
           log.info "Found enough space including LVM, reusing #{vg}"
           return result
@@ -223,7 +226,8 @@ module Y2Storage
 
         lvm_helper.reused_volume_group = nil
         result = space_maker.provide_space(
-          devicegraph, default_disks, planned_partitions, lvm_helper.volume_group
+          devicegraph, default_disks: default_disks,
+          partitions: planned_partitions, volume_groups: [lvm_helper.volume_group]
         )
         log.info "Found enough space including LVM"
 

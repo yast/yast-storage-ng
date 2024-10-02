@@ -207,15 +207,15 @@ module Y2Storage
         # content (i.e. prospects of type {SpaceMakerProspects::WipeDisk})
         #
         # @param disk [Disk] disk to act upon
-        # @param volume_group [Planned::LvmVg, nil] system LVM VG to be created or reused, if any
-        def add_wipe_prospects(disk, volume_group)
+        # @param volume_groups [Array<Planned::LvmVg>] LVM VGs to be potentially reused
+        def add_wipe_prospects(disk, volume_groups)
           log.info "Checking if the disk #{disk.name} has a partition table"
 
           return unless disk.has_children? && disk.partition_table.nil?
 
           log.info "Found something that is not a partition table"
 
-          if disk.descendants.any? { |dev| vg_to_reuse?(dev, volume_group) }
+          if disk.descendants.any? { |dev| vg_to_reuse?(dev, volume_groups) }
             log.info "Not cleaning up #{disk.name} because its VG must be reused"
             return
           end
@@ -223,15 +223,15 @@ module Y2Storage
           @wipe_disk_prospects << SpaceMakerProspects::WipeDisk.new(disk)
         end
 
-        # Whether the given device corresponds to the volume group that must be reused by the
+        # Whether the given device corresponds to a volume group that must be reused by the
         # proposal
         #
         # @param device [Device]
-        # @param volume_group [Planned::LvmVg, nil]
-        def vg_to_reuse?(device, volume_group)
-          return false unless volume_group && device.is?(:lvm_vg)
+        # @param volume_groups [Array<Planned::LvmVg>]
+        def vg_to_reuse?(device, volume_groups)
+          return false unless device.is?(:lvm_vg)
 
-          volume_group.reuse? && volume_group.volume_group_name == device.vg_name
+          volume_groups.any? { |vg| vg.reuse? && vg.volume_group_name == device.vg_name }
         end
 
         # @see #add_resize_prospects

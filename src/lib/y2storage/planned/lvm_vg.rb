@@ -83,6 +83,11 @@ module Y2Storage
       # @return [Symbol]
       attr_accessor :size_strategy
 
+      # Disks where the proposal can create extra physical volumes to honor {#size_strategy}
+      #
+      # @return [Array<String>] names of partitionable devices
+      attr_accessor :pvs_candidate_devices
+
       # Builds a new instance based on a real VG
       #
       # The new instance represents the intention to reuse the real VG, so the
@@ -111,6 +116,7 @@ module Y2Storage
         @pvs = pvs
         @pvs_encryption_password = nil
         @make_space_policy = :needed
+        @pvs_candidate_devices = []
       end
 
       # Initializes the object taking the values from a real volume group
@@ -258,13 +264,15 @@ module Y2Storage
       end
 
       # Device name of the disk-like device in which the volume group has to be
-      # physically located. If nil, the volume group can spread freely over any
-      # set of disks.
+      # physically located. If nil, the volume group can spread over a set of
+      # several disks (maybe even unlimited).
       #
       # @return [String, nil]
       def forced_disk_name
         forced_lv = lvs.find(&:disk)
-        forced_lv ? forced_lv.disk : nil
+        return forced_lv.disk if forced_lv
+
+        pvs_candidate_devices.size == 1 ? pvs_candidate_devices.first : nil
       end
 
       protected
