@@ -22,6 +22,7 @@ require "storage"
 require "y2storage/disk_size"
 require "y2storage/planned"
 require "y2storage/proposal/phys_vol_calculator"
+require "y2storage/proposal/resize_phys_vol_calculator"
 
 module Y2Storage
   module Proposal
@@ -90,30 +91,21 @@ module Y2Storage
         # new space or make one of the existing spaces grow.
 
         disk = partition.partitionable.name
-        all_spaces = free_spaces.select { |s| s.disk_name == disk }
-        all_spaces = add_or_mark_growing_space(all_spaces, partition)
-        all_planned = all_planned_partitions.select { |p| compatible_disk?(p, disk) }
+        disk_spaces = free_spaces.select { |s| s.disk_name == disk }
+        disk_partitions = planned_partitions.select { |p| compatible_disk?(p, disk) }
 
-        begin
-          dist_hashes = distribute_partitions(all_planned, all_spaces)
-        rescue NoDiskSpaceError
-          # If some of the planned partitions cannot live in the available disks,
-          # reclaim as much space as possible.
-          #
-          # FIXME: using the partition size as fallback value in situations
-          # where resizing the partition cannot provide a valid solution.
-          return partition.size
-        end
+        disk_spaces = add_or_mark_growing_space(disk_spaces, partition)
 
-        missing = missing_size_in_growing_space(dist_hashes, partition.align_grain)
-        if missing
-          missing + partition.end_overhead
-        else
-          # Resizing the partition does not provide any valid distribution.
-          #
-          # FIXME: fallback value, same than above.
-          partition.size
-        end
+        size =
+          if incomplete_planned_vgs.empty?
+            calculate_resizing_size(partition, disk_partitions, disk_spaces)
+          else
+            calculate_resizing_size_lvm(partition, disk_partitions, disk_spaces)
+          end
+
+        # In situations where resizing the partition cannot provide a valid solution, reclaim as
+        # much space as possible by returning the partition size as fallback value.
+        size || partition.size
       end
 
       # When calculating an LVM proposal, this represents the projected volume groups for
@@ -203,6 +195,52 @@ module Y2Storage
           end
           hash[partition] = spaces
         end
+      end
+
+      # @see #resizing_size
+      #
+      # @return [DiskSize, nil] nil if resizing the partition does not seem to be
+      #   enough to make the partitions fit
+      def calculate_resizing_size(partition, partitions, spaces)
+        begin
+          dist_hashes = distribute_partitions(partitions, spaces)
+        rescue NoDiskSpaceError
+          # No valid distribution can be found for the projected partitions
+          return nil
+        end
+
+        missing = missing_size_in_growing_space(dist_hashes, partition.align_grain)
+
+        # Fail if resizing the partition does not provide any valid distribution
+        return nil unless missing
+
+        missing + partition.end_overhead
+      end
+
+      # Equivalent to {#calculate_resizing_size} but adding some planned partitions to act as
+      # physical volumes for the planned LVM volume groups
+      #
+      # @return [DiskSize, nil]
+      def calculate_resizing_size_lvm(partition, partitions, spaces)
+        # There are many heuristics we could use to try to add the physical volumes, but so far we
+        # only try two and use the best result. Thus, this method uses a quite explicit algorithm,
+        # instead of a generic loop iterating over different heuristics with cryptic names.
+
+        # Robust heuristic - assume there will be only one big PV per volume group.
+        # Quite pessimistic, it can easily produce results bigger than strictly needed.
+        sizes = [calculate_resizing_size(partition, partitions + single_pv_partitions, spaces)]
+
+        if spaces.size > 1
+          # A bit more complex heuristic that tries to be less pessimistic by making use of the
+          # spaces that are not going to be consumed by other partitions. It makes several
+          # assumptions that can lead to impossible distributions (specially on MS-DOS partition
+          # tables).
+          calc = ResizePhysVolCalculator.new(spaces, incomplete_planned_vgs, partitions)
+          sizes << calculate_resizing_size(partition, calc.all_partitions, spaces) if calc.useful?
+        end
+
+        sizes.compact!
+        sizes.empty? ? nil : sizes.min
       end
 
       # @see #best_distribution
@@ -475,21 +513,6 @@ module Y2Storage
       def space_right_after_partition?(free_space, partition)
         free_space.partitionable == partition.partitionable &&
           free_space.region.start == partition.region.end + 1
-      end
-
-      # All planned partitions to consider when resizing an existing partition
-      #
-      # Used to calculate the worst scenario for resizing a partition with LVM
-      # involved.
-      #
-      # @see #resizing_size
-      #
-      # @return [Array<Planned::Partition] original set (in the non-LVM case) or
-      #   an extended set including partitions needed for LVM
-      def all_planned_partitions
-        # In the LVM case, assume the worst case - that there will be only
-        # one big PV per volume group and we have to make room for them as well.
-        planned_partitions + single_pv_partitions
       end
 
       # Size that is missing in the space marked as "growing" in order to

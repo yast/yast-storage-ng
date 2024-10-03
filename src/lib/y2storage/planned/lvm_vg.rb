@@ -156,10 +156,12 @@ module Y2Storage
       #
       # This method is useful to generate a volume group with just one new PV.
       #
+      # @param target [DiskSize, nil] aim for the provided size, instead of
+      #   trying to provide the exact size needed by the volume group
       # @return [Planned::Partition]
-      def single_pv_partition
+      def single_pv_partition(target: nil)
         pv = minimal_pv_partition
-        pv.min_size = real_pv_size(missing_space)
+        pv.min_size = real_pv_size(target || missing_space)
         pv.max_size = real_pv_size(max_size)
         pv.weight = lvs_weight
         pv
