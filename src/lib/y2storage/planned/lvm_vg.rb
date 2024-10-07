@@ -323,7 +323,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def useless_pv_space
-        pvs_encrypt? ? USELESS_PV_SPACE + Planned::Partition.encryption_overhead : USELESS_PV_SPACE
+        pvs_encrypt? ? USELESS_PV_SPACE + encryption_overhead : USELESS_PV_SPACE
       end
 
       def substract_reused_vg_size(size)
@@ -332,6 +332,11 @@ module Y2Storage
         else
           DiskSize.zero
         end
+      end
+
+      # @return [DiskSize]
+      def encryption_overhead
+        Planned::Partition.encryption_overhead(pvs_encryption_method&.encryption_type)
       end
     end
   end
