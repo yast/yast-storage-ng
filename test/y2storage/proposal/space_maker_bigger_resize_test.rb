@@ -31,20 +31,19 @@ describe Y2Storage::Proposal::SpaceMaker do
     fake_scenario(scenario)
   end
 
-  let(:settings) do
-    settings = Y2Storage::ProposalSettings.new_for_current_product
-    settings.candidate_devices = ["/dev/sda"]
-    settings.root_device = "/dev/sda"
-    settings.space_settings.strategy = :bigger_resize
-    settings.space_settings.actions = settings_actions
-    settings
+  let(:space_settings) do
+    Y2Storage::ProposalSpaceSettings.new.tap do |settings|
+      settings.strategy = :bigger_resize
+      settings.actions = settings_actions
+    end
   end
   let(:settings_actions) { [] }
   let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:delete) { Y2Storage::SpaceActions::Delete }
   let(:resize) { Y2Storage::SpaceActions::Resize }
+  let(:disks) { ["/dev/sda"] }
 
-  subject(:maker) { described_class.new(analyzer, settings) }
+  subject(:maker) { described_class.new(analyzer, space_settings) }
 
   describe "#prepare_devicegraph" do
     let(:scenario) { "complex-lvm-encrypt" }
@@ -53,7 +52,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:settings_actions) { [delete.new("/dev/sda1"), delete.new("/dev/sda2")] }
 
       it "does not delete any partition" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.size).to eq fake_devicegraph.partitions.size
       end
     end
@@ -63,7 +62,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:settings_actions) { [delete.new("/dev/sda", mandatory: true)] }
 
       it "does not delete any partition" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.size).to eq fake_devicegraph.partitions.size
       end
     end
@@ -74,13 +73,13 @@ describe Y2Storage::Proposal::SpaceMaker do
         [delete.new("/dev/sda2", mandatory: true), delete.new("/dev/sde1", mandatory: true)]
       end
 
-      it "does not delete partitions out of SpaceMaker#candidate_devices" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+      it "does not delete partitions out of SpaceMaker#default_disks" do
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to include "/dev/sde1"
       end
 
       it "deletes affected partitions within the candidate devices" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda2"
       end
     end
@@ -93,16 +92,13 @@ describe Y2Storage::Proposal::SpaceMaker do
         [delete.new("/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1", mandatory: true)]
       end
 
-      before do
-        settings.candidate_devices = ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"]
-        settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
-      end
+      let(:disks) { ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"] }
 
       it "does not modify the content of the disk" do
         original_filesystems = fake_devicegraph.filesystems
         expect(original_filesystems.size).to eq 1
 
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         filesystems = result.filesystems
         expect(filesystems.size).to eq 1
         device = filesystems.first.blk_devices.first
@@ -115,12 +111,12 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda1"
       end
 
       it "does not delete other partitions constituting the same btrfs" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to include "/dev/sda2", "/dev/sda3", "/dev/sdb2"
       end
     end
@@ -130,12 +126,12 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda1"
       end
 
       it "does not delete other partitions constituting the same raid" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to include "/dev/sda2", "/dev/sda3", "/dev/sdb2"
       end
     end
@@ -145,12 +141,12 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:settings_actions) { [delete.new("/dev/sda1", mandatory: true)] }
 
       it "deletes the partitions explicitly mentioned in the settings" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to_not include "/dev/sda1"
       end
 
       it "does not delete other partitions constituting the same volume group" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions.map(&:name)).to include "/dev/sda2", "/dev/sda3", "/dev/sdb2"
       end
     end
@@ -173,7 +169,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "resizes the partition to the specified max if possible" do
-        result = maker.prepare_devicegraph(fake_devicegraph)
+        result = maker.prepare_devicegraph(fake_devicegraph, disks)
         expect(result.partitions).to include(
           an_object_having_attributes(filesystem_label: "other", size: 200.GiB)
         )
@@ -185,14 +181,13 @@ describe Y2Storage::Proposal::SpaceMaker do
     using Y2Storage::Refinements::SizeCasts
 
     let(:volumes) { [vol1] }
-    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new([], settings) }
 
     context "if the only disk is not big enough" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB) }
 
       it "raises an Error exception" do
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
+        expect { maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks) }
           .to raise_error Y2Storage::Error
       end
     end
@@ -202,7 +197,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB) }
 
       it "does not modify the disk" do
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         disk = result[:devicegraph].disks.first
         expect(disk.partition_table).to be_nil
       end
@@ -212,7 +207,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         # The final 16.5 KiB are reserved by GPT
         gpt_final_space = 16.5.KiB
 
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         space = result[:partitions_distribution].spaces.first
         expect(space.disk_size).to eq(50.GiB - gpt_size - gpt_final_space)
       end
@@ -225,7 +220,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "empties the disk deleting the LVM VG" do
         expect(fake_devicegraph.lvm_vgs.size).to eq 1
 
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         disk = result[:devicegraph].disks.first
         expect(disk.has_children?).to eq false
         expect(result[:devicegraph].lvm_vgs).to be_empty
@@ -236,7 +231,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         # The final 16.5 KiB are reserved by GPT
         gpt_final_space = 16.5.KiB
 
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         space = result[:partitions_distribution].spaces.first
         expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
       end
@@ -246,15 +241,12 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "multipath-formatted.xml" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 5.GiB) }
 
-      before do
-        settings.candidate_devices = ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"]
-        settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
-      end
+      let(:disks) { ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"] }
 
       it "empties the device deleting the filesystem" do
         expect(fake_devicegraph.filesystems.size).to eq 1
 
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         disk = result[:devicegraph].disk_devices.first
         expect(disk.has_children?).to eq false
         expect(result[:devicegraph].filesystems).to be_empty
@@ -265,7 +257,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         # The final 16.5 KiB are reserved by GPT
         gpt_final_space = 16.5.KiB
 
-        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
         space = result[:partitions_distribution].spaces.first
         expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
       end
@@ -297,21 +289,21 @@ describe Y2Storage::Proposal::SpaceMaker do
           let(:volumes) { [vol1] }
 
           it "resizes the more 'productive' partition" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions).to include(
               an_object_having_attributes(filesystem_label: "windows", size: 210.GiB)
             )
           end
 
           it "does not delete any partition" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions.map(&:name)).to contain_exactly(
               "/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sda5"
             )
           end
 
           it "suggests a distribution using the freed space" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 1
             expect(distribution.spaces.first.partitions).to eq volumes
@@ -322,7 +314,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           let(:volumes) { [vol1, vol2] }
 
           it "resizes subsequent partitions" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions).to include(
               an_object_having_attributes(filesystem_label: "windows", size: 100.GiB),
               an_object_having_attributes(filesystem_label: "other", size: 110.GiB)
@@ -330,14 +322,14 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
 
           it "does not delete any partition" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions.map(&:name)).to contain_exactly(
               "/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sda5"
             )
           end
 
           it "suggests a distribution using the freed space" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 2
             expect(distribution.spaces.flat_map(&:partitions)).to contain_exactly(*volumes)
@@ -355,7 +347,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
 
           it "resizes the more 'productive' partition taking restrictions into account" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions).to include(
               an_object_having_attributes(filesystem_label: "windows", size: 360.GiB),
               an_object_having_attributes(filesystem_label: "other", size: 110.GiB)
@@ -363,14 +355,14 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
 
           it "does not delete any partition" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions.map(&:name)).to contain_exactly(
               "/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sda5"
             )
           end
 
           it "suggests a distribution using the freed space" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 1
             expect(distribution.spaces.first.partitions).to eq volumes
@@ -381,7 +373,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           let(:volumes) { [vol1, vol2, vol3] }
 
           it "resizes all allowed partitions to its minimum size" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions).to include(
               an_object_having_attributes(filesystem_label: "windows", size: 100.GiB),
               an_object_having_attributes(filesystem_label: "other", size: 100.GiB)
@@ -389,14 +381,14 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
 
           it "deletes partitions starting with the one closer to the end of the disk" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             expect(result[:devicegraph].partitions.map(&:name)).to contain_exactly(
               "/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda4"
             )
           end
 
           it "suggests a distribution using the freed space" do
-            result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+            result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
             distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 3
             expect(distribution.spaces.flat_map(&:partitions)).to contain_exactly(*volumes)
@@ -412,7 +404,7 @@ describe Y2Storage::Proposal::SpaceMaker do
             end
 
             it "resizes all allowed partitions their specified limits" do
-              result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+              result = maker.provide_space(fake_devicegraph, partitions: volumes, default_disks: disks)
               expect(result[:devicegraph].partitions).to include(
                 an_object_having_attributes(filesystem_label: "windows", size: 150.GiB),
                 an_object_having_attributes(filesystem_label: "other", size: 110.GiB)

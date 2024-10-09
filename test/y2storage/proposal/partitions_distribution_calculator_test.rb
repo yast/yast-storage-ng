@@ -31,6 +31,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
   let(:lvm_vg_strategy) { :use_needed }
   let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, settings) }
   let(:planned_vg) { lvm_helper.volume_group }
+  let(:disks) { fake_devicegraph.disk_devices.map(&:name) }
 
   before do
     settings.encryption_password = enc_password
@@ -38,7 +39,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     fake_scenario(scenario)
   end
 
-  subject(:calculator) { described_class.new(planned_vg) }
+  subject(:calculator) { described_class.new(volumes, [planned_vg], disks) }
 
   describe "#best_distribution" do
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
@@ -46,7 +47,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     let(:volumes) { [vol1, vol2, vol3] }
     let(:spaces) { fake_devicegraph.free_spaces }
 
-    subject(:distribution) { calculator.best_distribution(volumes, spaces) }
+    subject(:distribution) { calculator.best_distribution(spaces) }
 
     let(:pv_vols) do
       volumes = distribution.spaces.map(&:partitions)
@@ -665,7 +666,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         it "returns the sum size of all the planned partitions" do
           # 2 extra MiB for the logical overhead (one MiB for each new logical
           # partition)
-          result = calculator.resizing_size(partition, volumes, spaces)
+          result = calculator.resizing_size(partition, spaces)
           expect(result).to eq(vol1_size + vol2_size + 2.MiB)
         end
       end
@@ -675,7 +676,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         let(:vol2_size) { 14.GiB }
 
         it "returns the sum size of the remaining planned partitions" do
-          result = calculator.resizing_size(partition, volumes, spaces)
+          result = calculator.resizing_size(partition, spaces)
           # One extra MiB for the logical overhead
           expect(result).to eq(vol2_size + 1.MiB)
         end
@@ -692,7 +693,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         it "returns the sum size of all the planned partitions" do
           # 2 extra MiB for the logical overhead (one MiB for each new logical
           # partition)
-          result = calculator.resizing_size(partition, volumes, spaces)
+          result = calculator.resizing_size(partition, spaces)
           expect(result).to eq(vol1_size + vol2_size + 2.MiB)
         end
       end
@@ -704,7 +705,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         it "returns the sum size of all the planned partitions" do
           # 2 extra MiB for the logical overhead (one MiB for each new logical
           # partition)
-          result = calculator.resizing_size(partition, volumes, spaces)
+          result = calculator.resizing_size(partition, spaces)
           expect(result).to eq(vol1_size + vol2_size + 2.MiB)
         end
       end
@@ -717,7 +718,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       let(:vol2_size) { 12.GiB }
 
       it "takes that extra space into account" do
-        result = calculator.resizing_size(partition, volumes, spaces)
+        result = calculator.resizing_size(partition, spaces)
         space_size = spaces.first.disk_size
         expect(result).to eq(vol1_size + vol2_size - space_size)
       end
@@ -736,7 +737,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       let(:vol1_size) { extended.size + 20.MiB }
 
       it "distinguishes the space inside the extended and the new space before it" do
-        result = calculator.resizing_size(partition, volumes, spaces)
+        result = calculator.resizing_size(partition, spaces)
         # If the method would consider that the space at the beginning of the
         # extended /dev/sda4 would be affected by the resizing of /dev/sda3, the
         # result would be ~20 MiB. Fortunatelly, it's not the case and the method
@@ -770,13 +771,13 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
 
       it "ensures the end of the resized partition will be aligned" do
         expect(end_aligned?(partition.end)).to eq false
-        result = calculator.resizing_size(partition, volumes, spaces)
+        result = calculator.resizing_size(partition, spaces)
         new_end = partition.end - (result.to_i / block_size)
         expect(end_aligned?(new_end)).to eq true
       end
 
       it "reclaims enough space to ensure the new partitions can be aligned" do
-        result = calculator.resizing_size(partition, volumes, spaces)
+        result = calculator.resizing_size(partition, fake_devicegraph.free_spaces)
         useless_space = partition.region.end_overhead(ptable.align_grain)
         expect(result).to eq(vol1_size + vol2_size + useless_space)
       end
@@ -795,7 +796,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         # This behavior could be reconsidered to return something more
         # informative if the general algorithm is improved in the future
         it "returns the size of the full partition" do
-          result = calculator.resizing_size(partition, volumes, spaces)
+          result = calculator.resizing_size(partition, spaces)
           expect(result).to eq(partition.size)
         end
       end
@@ -806,9 +807,9 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
 
         # Same as above, this behavior could be reconsidered in the future
-        it "returns the size of the full partition" do
-          result = calculator.resizing_size(partition, volumes, spaces)
-          expect(result).to eq(partition.size)
+        it "does not take the unrelated partitions into account" do
+          result = calculator.resizing_size(partition, spaces)
+          expect(result).to eq(Y2Storage::DiskSize.zero)
         end
       end
     end
@@ -822,7 +823,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       let(:vol2_size) { 10.GiB }
 
       it "returns the expected result" do
-        result = calculator.resizing_size(partition, volumes, spaces)
+        result = calculator.resizing_size(partition, spaces)
         # 2 extra MiB for the logical overhead (one MiB for each new logical
         # partition)
         expect(result).to eq(vol1_size + vol2_size + 2.MiB)

@@ -53,9 +53,9 @@ module Y2Storage
         end
 
         # @param disk [Disk] see {List}
-        # @param lvm_helper [Proposal::LvmHelper] see {List}
-        def add_optional_actions(disk, lvm_helper)
-          prospects.add_prospects(disk, lvm_helper)
+        # @param volume_groups [Array<Planned::LvmVg>] LVM VGs to be potentially reused
+        def add_optional_actions(disk, volume_groups)
+          prospects.add_prospects(disk, volume_groups)
         end
 
         # @return [Action, nil] nil if there are no more actions in the list

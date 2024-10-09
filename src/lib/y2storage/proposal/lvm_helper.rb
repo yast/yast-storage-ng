@@ -111,16 +111,6 @@ module Y2Storage
         @reused_volume_group.pvs_encryption_pbkdf = settings.encryption_pbkdf
       end
 
-      # Checks whether the passed device is the volume group to be reused
-      #
-      # @param device [Device]
-      # @return [Boolean]
-      def vg_to_reuse?(device)
-        return false unless @reused_volume_group
-
-        device.is?(:lvm_vg) && @reused_volume_group.volume_group_name == device.vg_name
-      end
-
       # Returns the planned volume group
       #
       # If no volume group is set (see {#reused_volume_group=}), it will create

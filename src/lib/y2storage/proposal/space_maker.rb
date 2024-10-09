@@ -48,7 +48,7 @@ module Y2Storage
       # Initialize.
       #
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
-      # @param settings [ProposalSettings] proposal settings
+      # @param settings [ProposalSpaceSettings] space settings
       def initialize(disk_analyzer, settings)
         @disk_analyzer = disk_analyzer
         @settings = settings
@@ -64,9 +64,12 @@ module Y2Storage
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     planned LVM logical volumes and how to make space for them
+      # @param partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param volume_groups [Planned::LvmVg] set of LVM volume groups for which is necessary to
+      #   allocate auto-calculated physical volumes
+      # @param default_disks [Array<Strings>] disks that will be used to allocate those partitions
+      #   with no concrete disks and the physical volumes for those volume groups with no concrete
+      #   candidate devices
       # @return [Hash] a hash with three elements:
       #   devicegraph: [Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<Partition>] partitions that
@@ -74,11 +77,10 @@ module Y2Storage
       #   partitions_distribution: [Planned::PartitionsDistribution] proposed
       #     distribution of partitions, including new PVs if necessary
       #
-      def provide_space(original_graph, planned_partitions, lvm_helper)
+      def provide_space(original_graph, partitions: [], volume_groups: [], default_disks: [])
         @original_graph = original_graph
-        @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper.volume_group)
 
-        calculate_new_graph(planned_partitions, lvm_helper)
+        calculate_new_graph(partitions, volume_groups, default_disks)
 
         {
           devicegraph:             new_graph,
@@ -90,18 +92,21 @@ module Y2Storage
       # Executes all the mandatory actions to make space (see #{SpaceMakerActions::List})
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
+      # @param disks [Array<Strings>] set of disk names to operate on
       # @return [Devicegraph] copy of #original_graph after performing the actions
-      def prepare_devicegraph(original_graph, planned_partitions = [])
+      def prepare_devicegraph(original_graph, disks)
         log.info "BEGIN SpaceMaker#prepare_devicegraph"
 
         result = original_graph.dup
-        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
+        @all_disk_names = disks
 
-        non_candidate_disks(planned_partitions).each do |disk_name|
-          disks_for(result, disk_name).each { |d| actions.add_mandatory_actions(d) }
+        disks.each do |disk_name|
+          disk = result.find_by_name(disk_name)
+          next unless disk
+
+          actions.add_mandatory_actions(disk)
         end
-        disks_for(result).each { |d| actions.add_mandatory_actions(d) }
         skip = all_protected_sids(result)
 
         while (action = actions.next)
@@ -116,12 +121,7 @@ module Y2Storage
 
       protected
 
-      attr_reader :disk_analyzer, :dist_calculator
-
-      # Disks that are not candidate devices but still must be considered because
-      # there are planned partitions explicitly targeted to those disks
-      # @return [Array<String>]
-      attr_reader :extra_disk_names
+      attr_reader :disk_analyzer
 
       # New devicegraph calculated by {#provide_space}
       # @return [Devicegraph]
@@ -134,6 +134,26 @@ module Y2Storage
       # @return [Array<Integer>]
       attr_reader :new_graph_deleted_sids
 
+      # @see #provide_space
+      #
+      # @return [Array<String>]
+      attr_reader :default_disk_names
+
+      # Names of all the disks that are involved in the current operation (ie. current call
+      # to {#prepare_devicegraph} or to {#provide_space})
+      #
+      # @return [Array<String>]
+      attr_reader :all_disk_names
+
+      # Auxiliary variable kept because some space strategies need to know whether some volume
+      # group is being reused (and which one).
+      #
+      # FIXME: keeping this internal variable is probably avoidable since it's used for a very
+      # concrete purpose
+      #
+      # @return [Array<Planned::LvmVg>]
+      attr_reader :all_volume_groups
+
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
       #
@@ -142,82 +162,112 @@ module Y2Storage
         original_graph.partitions.select { |p| @all_deleted_sids.include?(p.sid) }
       end
 
-      # Disks that will be used, either as boot disk or by any of the given planned partitions,
-      # but that are not part of the candidate disks
-      #
-      # @param planned_partitions [Array<Planned::Partition>]
-      # @return [Array<String>]
-      def non_candidate_disks(planned_partitions)
-        planned_disks = planned_partitions_by_disk(planned_partitions).keys
-        planned_disks + [settings.root_device] - candidate_disk_names
-      end
-
       # @see #provide_space
       #
       # @param partitions [Array<Planned::Partition>] partitions to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
-      def calculate_new_graph(partitions, lvm_helper)
+      # @param volume_groups [Array<Planned::LvmVg>] volume groups to potentially create PVs for
+      # @param default_disk_names [Array<Strings>] disks that will be used to allocate partitions
+      #   with no disk and volume groups with no candidate devices
+      def calculate_new_graph(partitions, volume_groups, default_disk_names)
         @new_graph = original_graph.duplicate
         @new_graph_deleted_sids = []
-        @extra_disk_names = partitions.map(&:disk).compact.uniq - settings.candidate_devices
 
-        # To make sure we are not freeing space in useless places first
-        # restrict the operations to disks with particular disk
-        # requirements.
+        @all_volume_groups = volume_groups
+        @default_disk_names = default_disk_names
+        @all_disk_names = all_disks(partitions, volume_groups, default_disk_names)
+
+        # To make sure we are not freeing space in useless places first restrict the operations to
+        # disks with particular requirements (they are the only option for some partitions or VGs)
         #
-        # planned_partitions_by_disk() returns all partitions restricted to
-        # a certain disk. Most times partitions are free to be created
-        # anywhere but sometimes it is known in advance on which disk they
-        # should be created.
+        # planned_devices_by_disk() returns all partitions and VGs restricted to a certain disk
         #
-        # Doing something similar for #max_start_offset is more difficult and
-        # doesn't pay off (#max_start_offset is used just in one case)
+        # Doing something similar for #max_start_offset is more difficult and doesn't pay off
+        # (#max_start_offset is used just in one case)
 
-        parts_by_disk = planned_partitions_by_disk(partitions)
+        devs_by_disk = planned_devices_by_disk(partitions, volume_groups)
 
-        # In some cases (for example, if there is only one candidate disk),
-        # executing #resize_and_delete with a particular disk name and its
-        # restricted set of planned partitions brings no value. It just makes
-        # the whole thing harder to debug (bsc#1057436).
-        if several_passes?(parts_by_disk)
-          # Start by freeing space to the planned partitions that are restricted
-          # to a certain disk.
-          #
-          # The result (if successful) is kept in @distribution.
-          #
-          parts_by_disk.each do |disk, parts|
-            resize_and_delete(parts, lvm_helper, disk_name: disk)
+        # In some cases (for example, if there is only one candidate disk), executing
+        # #resize_and_delete with a particular disk name and its restricted set of planned devices
+        # brings no value. It just makes the whole thing harder to debug (bsc#1057436).
+        if several_passes?(devs_by_disk)
+          # Start by freeing space to the planned devices that are restricted to a certain disk.
+          devs_by_disk.each do |disk, devs|
+            parts, vgs = devs.partition { |d| d.is_a?(Planned::Partition) }
+            dist_calculator = dist_calculator_for(parts, volume_groups, disk)
+            resize_and_delete(dist_calculator, disk_name: disk)
           rescue Error
-            # If LVM was involved, maybe there is still hope if we don't abort on this error.
-            raise unless dist_calculator.lvm?
-
-            # dist_calculator tried to allocate the specific partitions for this disk but also
-            # all new physical volumes for the LVM. If the physical volumes were the culprit, we
-            # should keep trying to delete/resize stuff in other disks.
-            raise unless find_distribution(parts, ignore_lvm: true)
+            # The previously used dist_calculator tried to allocate the specific partitions for
+            # this disk but also all new physical volumes for any LVM which could use the disk.
+            # So a failure may not mean all hope is lost.
+            #
+            # Let's check if we can still find a distribution if we stick to the volume groups that
+            # are fully attached to this disk (ie. can use no other disk)
+            raise unless disk_still_fits?(dist_calculator, parts, vgs)
           end
         end
 
-        # Now repeat the process with the full set of planned partitions and all the candidate
-        # disks.
-        #
-        # Note that the result of the run above is not lost as already
-        # assigned partitions are taken into account.
-        #
-        resize_and_delete(partitions, lvm_helper)
+        # Now repeat the process with the full set of planned devices and disks
+        dist_calculator = dist_calculator_for(partitions, volume_groups)
+        resize_and_delete(dist_calculator)
 
         @all_deleted_sids.concat(new_graph_deleted_sids)
       end
 
-      # @return [Hash{String => Array<Planned::Partition>}]
-      def planned_partitions_by_disk(planned_partitions)
-        planned_partitions.each_with_object({}) do |partition, hash|
+      # @see #calculate_new_graph
+      #
+      # @return [Boolean]
+      def disk_still_fits?(previous_dist_calculator, disk_partitions, disk_vgs)
+        # The previous failed attempt was already the best for this disk
+        return false if previous_dist_calculator.planned_vgs == disk_vgs
+
+        # Let's make a new attempt restricting the volume groups
+        dist_calculator = dist_calculator_for(disk_partitions, disk_vgs)
+        success?(dist_calculator)
+      end
+
+      # @see #calculate_new_graph
+      #
+      # @return [Array<String>]
+      def all_disks(partitions, volume_groups, default_disks)
+        lvm_disks = volume_groups.flat_map(&:pvs_candidate_devices).uniq
+        partition_disks = partitions.map(&:disk).compact.uniq
+        (lvm_disks + partition_disks + default_disks).sort.uniq
+      end
+
+      # @return [Hash{String => Array<Planned::Partition, Planned::LvmVg>}]
+      def planned_devices_by_disk(planned_partitions, volume_groups)
+        result = planned_partitions.each_with_object({}) do |partition, hash|
           if partition.disk
             hash[partition.disk] ||= []
             hash[partition.disk] << partition
           end
         end
+        volume_groups.each_with_object(result) do |vg, hash|
+          if vg.forced_disk_name
+            hash[vg.forced_disk_name] ||= []
+            hash[vg.forced_disk_name] << vg
+          end
+        end
+      end
+
+      # Instantiates a PartitionsDistributionCalculator for the given set of planned devices
+      #
+      # @return [PartitionsDistributionCalculator]
+      def dist_calculator_for(partitions, volume_groups, disk_name = nil)
+        vgs = disk_name ? volume_groups_for(disk_name, volume_groups) : volume_groups
+        PartitionsDistributionCalculator.new(partitions, vgs, default_disk_names)
+      end
+
+      # @see #dist_calculator_for
+      def volume_groups_for(disk, volume_groups)
+        volume_groups.select { |vg| disks_for_vg(vg).any?(disk) }
+      end
+
+      # @see #volume_groups_for
+      def disks_for_vg(vg)
+        return default_disk_names if vg.pvs_candidate_devices.empty?
+
+        vg.pvs_candidate_devices
       end
 
       # Checks whether the goal has already being reached
@@ -226,9 +276,8 @@ module Y2Storage
       # that made it possible.
       #
       # @return [Boolean]
-      def success?(planned_partitions)
-        # Once a distribution has been found we don't have to look for another one.
-        @distribution ||= find_distribution(planned_partitions)
+      def success?(dist_calculator)
+        @distribution ||= dist_calculator.best_distribution(free_spaces)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute partitions: #{e}"
@@ -236,51 +285,47 @@ module Y2Storage
         false
       end
 
-      # Finds the best distribution to allocate the given set of planned partitions
+      # Performs all the needed operations to make space for the partitions, including physical
+      # volumes
       #
-      # In case of an LVM-based proposal, the distribution will also include any needed physical
-      # volume for the system LVM. The argument ignore_lvm can be used to disable that requirement.
-      #
-      # @param planned_partitions [Array<Planned::Partition>]
-      # @param ignore_lvm [Boolean]
-      # @return [Planned::PartitionsDistribution, nil] nil if no valid distribution was found
-      def find_distribution(planned_partitions, ignore_lvm: false)
-        calculator = ignore_lvm ? non_lvm_dist_calculator : dist_calculator
-        calculator.best_distribution(planned_partitions, free_spaces, extra_free_spaces)
-      end
-
-      # Perform all the needed operations to make space for the partitions
-      #
-      # @param planned_partitions [Array<Planned::Partition>] partitions
-      #     to make space for
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
+      # @param dist_calculator [PartitionsDistributionCalculator]
       # @param disk_name [String, nil] optional disk name to restrict operations to
-      #
-      def resize_and_delete(planned_partitions, lvm_helper, disk_name: nil)
+      def resize_and_delete(dist_calculator, disk_name: nil)
         # Note that only the execution with disk_name == nil is the final one.
-        # In other words, if disk_name contains something, it means there will
-        # be at least a subsequent call to the method.
-        log.info "Resize and delete. disk_name: #{disk_name}, planned partitions:"
-        planned_partitions.each do |p|
-          log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
-        end
+        # In other words, if disk_name contains something, it means there will be at least a
+        # subsequent call to the method if everything goes right and the process is not aborted
 
+        log_resize_and_delete(dist_calculator, disk_name)
         # restart evaluation
         @distribution = nil
-        force_ptables(planned_partitions)
+        force_ptables(dist_calculator.planned_partitions)
 
-        actions = SpaceMakerActions::List.new(settings.space_settings, disk_analyzer)
+        actions = SpaceMakerActions::List.new(settings, disk_analyzer)
+
         disks_for(new_graph, disk_name).each do |disk|
-          actions.add_optional_actions(disk, lvm_helper)
+          actions.add_optional_actions(disk, all_volume_groups)
         end
         skip = all_protected_sids(new_graph)
 
-        until success?(planned_partitions)
-          break unless execute_next_action(actions, planned_partitions, skip, disk_name)
+        # rubocop:disable Style/WhileUntilModifier
+        # Moving the until at the end makes the 'break' hard to understand
+        until success?(dist_calculator)
+          break unless execute_next_action(actions, skip, dist_calculator)
         end
+        # rubocop:enable Style/WhileUntilModifier
 
         raise Error unless @distribution
+      end
+
+      # @see #resize_and_delete
+      def log_resize_and_delete(dist_calculator, disk_name)
+        log.info "Resize and delete. disk_name: #{disk_name}, planned_devices:"
+        dist_calculator.planned_partitions.each do |p|
+          log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
+        end
+        dist_calculator.planned_vgs.each do |vg|
+          log.info "  vg_name: #{vg.volume_group_name}, disks: #{vg.pvs_candidate_devices}"
+        end
       end
 
       def force_ptables(planned_partitions)
@@ -305,19 +350,18 @@ module Y2Storage
       # Performs the next action of {#resize_and_delete}
       #
       # @param actions [SpaceMakerActions::List] set of actions that could be executed
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
       # @param skip [Array<Integer>] sids of devices that should not be modified
-      # @param disk_name [String] optional disk name to restrict operations to
+      # @param dist_calculator [PartitionsDistributionCalculator]
       # @return [Boolean] true if some operation was performed. False if nothing
       #   else could be done to reach the goal.
-      def execute_next_action(actions, planned_partitions, skip, disk_name = nil)
+      def execute_next_action(actions, skip, dist_calculator)
         action = actions.next
         if !action
-          log.info "No more actions for SpaceMaker (disk_name: #{disk_name})"
+          log.info "No more actions for this SpaceMaker iteration"
           return false
         end
 
-        sids = execute_action(action, new_graph, skip, planned_partitions, disk_name)
+        sids = execute_action(action, new_graph, skip, dist_calculator)
         actions.done(sids)
         new_graph_deleted_sids.concat(sids)
         true
@@ -328,12 +372,10 @@ module Y2Storage
       # @param action [SpaceMakerActions::Base] action to execute
       # @param graph [Devicegraph] devicegraph in which the action will be executed
       # @param skip [Array<Integer>] sids of devices that should not be modified
-      # @param planned_partitions [Array<Planned::Partition>, nil] set of partitions to make space
-      #   for, if known. Nil for mandatory operations executed during {#prepare_devicegraph}.
-      # @param disk_name [String, nil] optional disk name to restrict operations to
+      # @param dist_calculator [PartitionsDistributionCalculator]
       # @return [Array<Integer>] sids of the devices that has been deleted as a consequence
       #   of the action
-      def execute_action(action, graph, skip, planned_partitions = nil, disk_name = nil)
+      def execute_action(action, graph, skip, dist_calculator = nil)
         if skip.include?(action.sid)
           log.info "Skipping action on device #{action.sid} (#{action.class})"
           return []
@@ -341,7 +383,7 @@ module Y2Storage
 
         case action
         when SpaceMakerActions::Shrink
-          execute_shrink(action, graph, planned_partitions, disk_name)
+          execute_shrink(action, graph, dist_calculator)
         when SpaceMakerActions::Delete
           execute_delete(action, graph)
         else
@@ -355,16 +397,15 @@ module Y2Storage
       #
       # @param action [ProposalSpaceAction]
       # @param devicegraph [Devicegraph]
-      # @param planned_partitions [Array<Planned::Partition>, nil]
-      # @param disk_name [String, nil]
+      # @param dist_calculator [PartitionsDistributionCalculator]
       # @return [Array<Integer>]
-      def execute_shrink(action, devicegraph, planned_partitions, disk_name)
+      def execute_shrink(action, devicegraph, dist_calculator)
         log.info "SpaceMaker#execute_shrink - #{action}"
 
         if action.target_size.nil?
           part = devicegraph.find_device(action.sid)
-          if planned_partitions
-            resizing = resizing_size(part, planned_partitions, disk_name)
+          if dist_calculator
+            resizing = resizing_size(part, dist_calculator)
             action.target_size = resizing > part.size ? DiskSize.zero : part.size - resizing
           else
             # Mandatory resize
@@ -384,7 +425,7 @@ module Y2Storage
       # @return [Array<Integer>]
       def execute_delete(action, devicegraph)
         log.info "SpaceMaker#execute_delete - #{action}"
-        action.delete(devicegraph, candidate_disk_names)
+        action.delete(devicegraph, all_disk_names)
       end
 
       # Performs the action described by a {SpaceMakerActions::Wipe}
@@ -403,32 +444,17 @@ module Y2Storage
       # order to reach the goal
       #
       # @return [DiskSize]
-      def resizing_size(partition, planned_partitions, disk_name)
-        spaces = free_spaces(disk_name)
-        if disk_name && extra_disk_names.include?(disk_name)
-          # Operating in a disk that is not a candidate_device, no need to make extra space for LVM
-          return non_lvm_dist_calculator.resizing_size(partition, planned_partitions, spaces)
-        end
-
-        # As explained above, don't assume we will make space for LVM on non-candidate devices
-        partitions = planned_partitions.reject { |p| extra_disk_names.include?(p.disk) }
-        dist_calculator.resizing_size(partition, partitions, spaces)
+      def resizing_size(partition, dist_calculator)
+        dist_calculator.resizing_size(partition, free_spaces)
       end
 
-      # List of free spaces from the candidate devices in the new devicegraph
+      # List of free spaces from all the involved devices in the new devicegraph
       #
-      # @param disk [String, nil] optional disk name to restrict result to
       # @return [Array<FreeDiskSpace>]
-      def free_spaces(disk = nil)
-        disks_for(new_graph, disk).each_with_object([]) do |d, list|
+      def free_spaces
+        disks_for(new_graph).each_with_object([]) do |d, list|
           list.concat(d.as_not_empty { d.free_spaces })
         end
-      end
-
-      # List of free spaces from extra disks (see {#extra_disk_names})
-      # @return [Array<FreeDiskSpace>]
-      def extra_free_spaces
-        extra_disk_names.flat_map { |d| free_spaces(d) }
       end
 
       # List of candidate disk devices in the given devicegraph
@@ -438,43 +464,25 @@ module Y2Storage
       #
       # @return [Array<Dasd, Disk>]
       def disks_for(devicegraph, device_name = nil)
-        filter = device_name ? [device_name] : candidate_disk_names
+        filter = device_name ? [device_name] : all_disk_names
         devicegraph.blk_devices.select { |d| filter.include?(d.name) }
-      end
-
-      # @return [Array<String>]
-      def candidate_disk_names
-        settings.candidate_devices
-      end
-
-      # Distribution calculator to use in special cases in which any implication related
-      # to LVM must be ignored
-      #
-      # Used for example when operating in extra (non-candidate) disks
-      #
-      # @return [PartitionsDistributionCalculator]
-      def non_lvm_dist_calculator
-        @non_lvm_dist_calculator ||= PartitionsDistributionCalculator.new
       end
 
       # Whether {#resize_and_delete} should be executed several times,
       # see {#calculate_new_graph} for details.
       #
-      # @param parts_by_disk [Hash{String => Array<Planned::Partition>}] see
-      #   {#planned_partitions_by_disk}
+      # @param devs_by_disk [Hash{String => Array<Planned::Device>}] see
+      #   {#planned_devices_by_disk}
       # @return [Boolean]
-      def several_passes?(parts_by_disk)
+      def several_passes?(devs_by_disk)
         # In this case the result is not much relevant since #resize_and_delete
         # wouldn't be executed for particular disks anyway
-        return false if parts_by_disk.empty?
+        return false if devs_by_disk.empty?
 
-        return true if parts_by_disk.size > 1
+        return true if devs_by_disk.size > 1
 
-        # In theory, the specific disk mentioned in the planned partitions
-        # (note that, at this point, we are sure there is only one) should be
-        # included in the set of candidate disks. Return false if that's not the
-        # case or if there is more than one candidate disk.
-        parts_by_disk.keys != candidate_disk_names
+        # Note that, at this point, we already know devs_by_disk.keys contains just one element
+        devs_by_disk.keys != all_disk_names
       end
     end
   end

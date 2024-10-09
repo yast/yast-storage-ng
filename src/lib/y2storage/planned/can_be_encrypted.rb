@@ -28,10 +28,14 @@ module Y2Storage
     module CanBeEncrypted
       include SecretAttributes
 
-      # This value matches Storage::Luks.metadata_size, which is not exposed in
+      # This value matches Storage::Luks.v1_metadata_size, which is not exposed in
       # the libstorage API
-      ENCRYPTION_OVERHEAD = DiskSize.MiB(2)
-      private_constant :ENCRYPTION_OVERHEAD
+      LUKS1_OVERHEAD = DiskSize.MiB(2)
+      private_constant :LUKS1_OVERHEAD
+
+      # This value matches Storage::Luks.v2_metadata_size, see above
+      LUKS2_OVERHEAD = DiskSize.MiB(16)
+      private_constant :LUKS2_OVERHEAD
 
       # @!attribute encryption_method
       #   @return [EncryptionMethod::Base, nil] method used to encrypt the device. If is nil,
@@ -152,9 +156,13 @@ module Y2Storage
         # I.e. how much smaller will be an encrypted device compared to the plain
         # one.
         #
+        # @param type [EncryptionType]
         # @return [DiskSize]
-        def encryption_overhead
-          ENCRYPTION_OVERHEAD
+        def encryption_overhead(type = EncryptionType::LUKS1)
+          return LUKS1_OVERHEAD if type&.is?(:luks1)
+          return LUKS2_OVERHEAD if type&.is?(:luks2)
+
+          DiskSize.zero
         end
       end
     end

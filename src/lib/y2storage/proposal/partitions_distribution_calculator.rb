@@ -22,6 +22,7 @@ require "storage"
 require "y2storage/disk_size"
 require "y2storage/planned"
 require "y2storage/proposal/phys_vol_calculator"
+require "y2storage/proposal/resize_phys_vol_calculator"
 
 module Y2Storage
   module Proposal
@@ -30,8 +31,18 @@ module Y2Storage
     class PartitionsDistributionCalculator
       include Yast::Logger
 
-      def initialize(planned_vg = nil)
-        @planned_vg = planned_vg
+      # Constructor
+      #
+      # @param partitions [Array<Planned::Partition>] see {#planned_partitions}
+      # @param planned_vgs [Array<Planned::LvmVg>] see {#planned_vgs}
+      def initialize(partitions = [], planned_vgs = [], default_disks = nil)
+        @planned_partitions = partitions
+        # Always process first volume groups that are more limited in their usage of different
+        # disks. Use the name as second sort criteria for stable sorting between executions.
+        @planned_vgs = planned_vgs.sort_by do |vg|
+          [vg.pvs_candidate_devices.size, vg.volume_group_name]
+        end
+        @default_disks = default_disks
       end
 
       # Best possible distribution, nil if the planned partitions don't fit
@@ -41,30 +52,21 @@ module Y2Storage
       # the LVM physical volumes that need to be created in order to reach
       # that size (within the max limits defined for the planned VG).
       #
-      # @param partitions [Array<Planned::Partition>]
-      # @param spaces [Array<FreeDiskSpace>] spaces that can be used to allocate partitions targeted
-      #   to the corresponding disk but also partitions with no specific disk and partitions for LVM
-      # @param extra_spaces [Array<FreeDiskSpace>] spaces that can only be used to allocate
-      #   partitions explicitly targeted to the corresponding disk
-      #
-      # @return [Planned::PartitionsDistribution]
-      def best_distribution(partitions, spaces, extra_spaces = [])
-        log.info "Calculating best space distribution for #{partitions.inspect}"
+      # @param spaces [Array<FreeDiskSpace>] spaces that can be used to allocate partitions
+      # @return [Planned::PartitionsDistribution, nil]
+      def best_distribution(spaces)
+        log.info "Calculating best space distribution for #{planned_partitions.inspect}"
         # First, make sure the whole attempt makes sense
-        return nil if impossible?(partitions, spaces + extra_spaces)
+        return nil if impossible?(planned_partitions, spaces)
 
         begin
-          dist_hashes = distribute_partitions(partitions, spaces, extra_spaces)
+          dist_hashes = distribute_partitions(planned_partitions, spaces)
         rescue NoDiskSpaceError
           return nil
         end
         candidates = distributions_from_hashes(dist_hashes)
 
-        if lvm?
-          log.info "Calculate LVM posibilities for the #{candidates.size} candidate distributions"
-          pv_calculator = PhysVolCalculator.new(spaces, planned_vg)
-          candidates.map! { |dist| pv_calculator.add_physical_volumes(dist) }
-        end
+        add_physical_volumes(candidates, spaces)
         candidates.compact!
 
         best_candidate(candidates)
@@ -78,11 +80,9 @@ module Y2Storage
       # from the partition.
       #
       # @param partition [Partition] partition to resize
-      # @param planned_partitions [Array<Planned::Partition>] planned
-      #     partitions to make space for
       # @param free_spaces [Array<FreeDiskSpace>] all free spaces in the system
       # @return [DiskSize]
-      def resizing_size(partition, planned_partitions, free_spaces)
+      def resizing_size(partition, free_spaces)
         # This is far more complex than "needed_space - current_space" because
         # we really have to find a distribution that is valid.
         #
@@ -90,51 +90,39 @@ module Y2Storage
         # that would succeed, taking into account that resizing will introduce a
         # new space or make one of the existing spaces grow.
 
-        all_spaces = add_or_mark_growing_space(free_spaces, partition)
-        all_planned = all_planned_partitions(planned_partitions)
+        disk = partition.partitionable.name
+        disk_spaces = free_spaces.select { |s| s.disk_name == disk }
+        disk_partitions = planned_partitions.select { |p| compatible_disk?(p, disk) }
 
-        begin
-          dist_hashes = distribute_partitions(all_planned, all_spaces)
-        rescue NoDiskSpaceError
-          # If some of the planned partitions cannot live in the available disks,
-          # reclaim as much space as possible.
-          #
-          # FIXME: using the partition size as fallback value in situations
-          # where resizing the partition cannot provide a valid solution makes
-          # sense because, with the current SpaceMaker algorithm, we will not
-          # have another chance of resizing this partition.
-          # Revisit this if the global proposal algorithm is changed in the
-          # future.
-          return partition.size
-        end
+        disk_spaces = add_or_mark_growing_space(disk_spaces, partition)
 
-        missing = missing_size_in_growing_space(dist_hashes, partition.align_grain)
-        if missing
-          missing + partition.end_overhead
-        else
-          # Resizing the partition does not provide any valid distribution.
-          #
-          # FIXME: fallback value, same than above.
-          partition.size
-        end
+        size =
+          if incomplete_planned_vgs.empty?
+            calculate_resizing_size(partition, disk_partitions, disk_spaces)
+          else
+            calculate_resizing_size_lvm(partition, disk_partitions, disk_spaces)
+          end
+
+        # In situations where resizing the partition cannot provide a valid solution, reclaim as
+        # much space as possible by returning the partition size as fallback value.
+        size || partition.size
       end
 
-      # Whether LVM should be taken into account
+      # When calculating an LVM proposal, this represents the projected volume groups for
+      # which is necessary to automatically allocate physical volumes (based on their respective
+      # values for {Planned::LvmVg#pvs_candidate_devices}.
       #
-      # @return [Boolean]
-      def lvm?
-        !!(planned_vg && planned_vg.missing_space > DiskSize.zero)
-      end
+      # Empty if LVM is not involved (partition-based proposal)
+      #
+      # @return [Array<Planned::LvmVg>]
+      attr_reader :planned_vgs
+
+      # @return [Array<Planned::Partition>] planned partitions to find space for
+      attr_reader :planned_partitions
+
+      attr_reader :default_disks
 
       protected
-
-      # When calculating an LVM proposal, this represents the projected "system"
-      # volume group to accommodate root and other volumes.
-      #
-      # Nil if LVM is not involved (partition-based proposal)
-      #
-      # @return [Planned::LvmVg, nil]
-      attr_reader :planned_vg
 
       # Checks whether there is any chance of producing a valid
       # PartitionsDistribution to accomodate the planned partitions and the
@@ -143,10 +131,8 @@ module Y2Storage
       # This check could be improved to detect more situations that make it impossible
       # to get a distribution, but the goal is to keep it relatively simple and fast.
       def impossible?(planned_partitions, free_spaces)
-        if lvm?
-          # Let's assume the best possible case - if we need to create a PV it will be only one
-          planned_partitions += [planned_vg.single_pv_partition]
-        end
+        # Let's assume the best possible case - if we need to create PVs it will be only one per VG
+        planned_partitions += single_pv_partitions
 
         # First, do the simplest calculation - checking total sizes
         needed = DiskSize.sum(planned_partitions.map(&:min))
@@ -169,6 +155,21 @@ module Y2Storage
         false
       end
 
+      # Planned volume groups that need some extra physical volume
+      #
+      # @return [Array<Planned::LvmVg]
+      def incomplete_planned_vgs
+        planned_vgs.select { |vg| vg.missing_space > DiskSize.zero }
+      end
+
+      # Simplest possible collection of missing physical volumes (only one per incomplete volume
+      # group)
+      #
+      # @return [Array<Planned::Partition>]
+      def single_pv_partitions
+        incomplete_planned_vgs.map(&:single_pv_partition)
+      end
+
       # Returns the sum of available spaces
       #
       # @param free_spaces [Array<FreeDiskSpace>] List of free disk spaces
@@ -184,17 +185,93 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>]
       # @param free_spaces [Array<FreeDiskSpace>]
-      # @param extra_spaces [Array<FreeDiskSpace>]
       # @return [Hash{Planned::Partition => Array<FreeDiskSpace>}]
-      def candidate_disk_spaces(planned_partitions, free_spaces, extra_spaces = [])
+      def candidate_disk_spaces(planned_partitions, free_spaces)
         planned_partitions.each_with_object({}) do |partition, hash|
-          spaces = partition_candidate_spaces(partition, free_spaces, extra_spaces)
+          spaces = partition_candidate_spaces(partition, free_spaces)
           if spaces.empty?
             log.error "No suitable free space for #{partition}"
             raise NoDiskSpaceError, "No suitable free space for the planned partition"
           end
           hash[partition] = spaces
         end
+      end
+
+      # @see #resizing_size
+      #
+      # @return [DiskSize, nil] nil if resizing the partition does not seem to be
+      #   enough to make the partitions fit
+      def calculate_resizing_size(partition, partitions, spaces)
+        begin
+          dist_hashes = distribute_partitions(partitions, spaces)
+        rescue NoDiskSpaceError
+          # No valid distribution can be found for the projected partitions
+          return nil
+        end
+
+        missing = missing_size_in_growing_space(dist_hashes, partition.align_grain)
+
+        # Fail if resizing the partition does not provide any valid distribution
+        return nil unless missing
+
+        missing + partition.end_overhead
+      end
+
+      # Equivalent to {#calculate_resizing_size} but adding some planned partitions to act as
+      # physical volumes for the planned LVM volume groups
+      #
+      # @return [DiskSize, nil]
+      def calculate_resizing_size_lvm(partition, partitions, spaces)
+        # There are many heuristics we could use to try to add the physical volumes, but so far we
+        # only try two and use the best result. Thus, this method uses a quite explicit algorithm,
+        # instead of a generic loop iterating over different heuristics with cryptic names.
+
+        # Robust heuristic - assume there will be only one big PV per volume group.
+        # Quite pessimistic, it can easily produce results bigger than strictly needed.
+        sizes = [calculate_resizing_size(partition, partitions + single_pv_partitions, spaces)]
+
+        if spaces.size > 1
+          # A bit more complex heuristic that tries to be less pessimistic by making use of the
+          # spaces that are not going to be consumed by other partitions. It makes several
+          # assumptions that can lead to impossible distributions (specially on MS-DOS partition
+          # tables).
+          calc = ResizePhysVolCalculator.new(spaces, incomplete_planned_vgs, partitions)
+          sizes << calculate_resizing_size(partition, calc.all_partitions, spaces) if calc.useful?
+        end
+
+        sizes.compact!
+        sizes.empty? ? nil : sizes.min
+      end
+
+      # @see #best_distribution
+      #
+      # @param candidates [Array<Planned::PartitionsDistribution>]
+      # @param spaces [Array<FreeDiskSpace>]
+      def add_physical_volumes(candidates, spaces)
+        candidates.map! do |dist|
+          incomplete_planned_vgs.inject(dist) do |res, planned_vg|
+            pv_spaces = spaces_for_vg(spaces, planned_vg)
+            pv_calculator = PhysVolCalculator.new(pv_spaces, planned_vg)
+            pv_calculator.add_physical_volumes(res)
+          end
+        end
+      end
+
+      # Subset of spaces that are located at devices that are acceptable for the given
+      # planed volume group
+      #
+      # @param all_spaces [Array<FreeDiskSpace>] full set of spaces
+      # @param volume_group [Planned::VolumeGroup]
+      # @return [Array<FreeDiskSpace>] subset of spaces that could contain a
+      #   physical volume
+      def spaces_for_vg(all_spaces, volume_group)
+        disk_name = volume_group.forced_disk_name
+        return all_spaces.select { |i| i.disk_name == disk_name } if disk_name
+
+        disk_names = volume_group.pvs_candidate_devices
+        disk_names = default_disks if disk_names.empty? && default_disks
+
+        all_spaces.select { |s| disk_names.include?(s.disk_name) }
       end
 
       # All possible combinations of spaces and planned partitions.
@@ -221,7 +298,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def suitable_disk_space?(space, partition)
-        return false unless compatible_disk?(partition, space)
+        return false unless compatible_disk?(partition, space.disk_name)
         return false unless compatible_ptable?(partition, space)
         return false unless partition_fits_space?(partition, space)
 
@@ -235,19 +312,32 @@ module Y2Storage
       #
       # @param partition [Planned::Partition]
       # @param candidate_spaces [Array<FreeDiskSpace>]
-      # @param extra_spaces [Array<FreeDiskSpace>]
       # @return [Array<FreeDiskSpace>]
-      def partition_candidate_spaces(partition, candidate_spaces, extra_spaces)
-        spaces = partition.disk ? candidate_spaces + extra_spaces : candidate_spaces
-        spaces.select { |space| suitable_disk_space?(space, partition) }
+      def partition_candidate_spaces(partition, candidate_spaces)
+        candidate_spaces.select { |space| suitable_disk_space?(space, partition) }
       end
 
       # @param partition [Planned::Partition]
-      # @param space [FreeDiskSpace]
+      # @param disk_name [String]
       #
       # @return [Boolean]
-      def compatible_disk?(partition, space)
-        return true unless partition.disk && partition.disk != space.disk_name
+      def compatible_disk?(partition, disk_name)
+        return partition.disk == disk_name if partition.disk
+
+        pv_candidates = planned_vg_for(partition)&.pvs_candidate_devices
+        return pv_candidates.include?(disk_name) if pv_candidates&.any?
+
+        return true unless default_disks
+
+        default_disks.include?(disk_name)
+      end
+
+      # Planned volume group associated to the given partition, if any
+      #
+      # @param planned_partition [Planned::Partition]
+      # @return [Planned::LvmVg, nil] nil if the partition is not meant as an LVM PV
+      def planned_vg_for(planned_partition)
+        planned_vgs.find { |vg| vg.volume_group_name == planned_partition.lvm_volume_group_name }
       end
 
       # @param partition [Planned::Partition]
@@ -280,11 +370,10 @@ module Y2Storage
       #
       # @param partitions [Array<Planned::Partitions>]
       # @param spaces [Array<FreeDiskSpace>]
-      # @param extra_spaces [Array<FreeDiskSpace>]
       # @return [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
-      def distribute_partitions(partitions, spaces, extra_spaces = [])
+      def distribute_partitions(partitions, spaces)
         log.info "Selecting the candidate spaces for each planned partition"
-        disk_spaces_by_part = candidate_disk_spaces(partitions, spaces, extra_spaces)
+        disk_spaces_by_part = candidate_disk_spaces(partitions, spaces)
 
         log.info "Calculate all the possible distributions of planned partitions into spaces"
         dist_hashes = distribution_hashes(disk_spaces_by_part)
@@ -424,25 +513,6 @@ module Y2Storage
       def space_right_after_partition?(free_space, partition)
         free_space.partitionable == partition.partitionable &&
           free_space.region.start == partition.region.end + 1
-      end
-
-      # All planned partitions to consider when resizing an existing partition
-      #
-      # Used to calculate the worst scenario for resizing a partition with LVM
-      # involved.
-      #
-      # @see #resizing_size
-      #
-      # @param planned_partitions [Array<Planned::Partition>] original set of
-      #   partitions
-      # @return [Array<Planned::Partition] original set (in the non-LVM case) or
-      #   an extended set including partitions needed for LVM
-      def all_planned_partitions(planned_partitions)
-        return planned_partitions unless lvm?
-
-        # In the LVM case, assume the worst case - that there will be only
-        # one big PV and we have to make room for it as well.
-        planned_partitions + [planned_vg.single_pv_partition]
       end
 
       # Size that is missing in the space marked as "growing" in order to

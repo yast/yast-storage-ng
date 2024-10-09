@@ -34,11 +34,11 @@ module Y2Storage
       # Initialize.
       #
       # @param all_spaces [Array<FreeDiskSpace>] Disk spaces that could
-      #     potentially contain physical volumes
+      #     potentially contain physical volumes for the given volume group
       # @param planned_vg [Planned::LvmVg] volume group to create the PVs for
       def initialize(all_spaces, planned_vg)
         @planned_vg = planned_vg
-        @all_spaces = spaces_in_valid_disks(all_spaces)
+        @all_spaces = all_spaces
 
         strategy = planned_vg.size_strategy
         if STRATEGIES[strategy]
@@ -63,24 +63,6 @@ module Y2Storage
       #     impossible to allocate all the needed physical volumes
       def add_physical_volumes(distribution)
         @strategy_class.new(distribution, @all_spaces, @planned_vg).add_physical_volumes
-      end
-
-      protected
-
-      # Subset of spaces that are located in acceptable devices
-      #
-      # Filters the original list to only include spaces in those disks that are
-      # acceptable for the planned VG. Usually that means simply returning the original
-      # list back.
-      #
-      # @param all_spaces [Array<FreeDiskSpace>] full set of spaces
-      # @return [Array<FreeDiskSpace>] subset of spaces that could contain a
-      #   physical volume
-      def spaces_in_valid_disks(all_spaces)
-        disk_name = @planned_vg.forced_disk_name
-        return all_spaces unless disk_name
-
-        all_spaces.select { |i| i.disk_name == disk_name }
       end
     end
   end

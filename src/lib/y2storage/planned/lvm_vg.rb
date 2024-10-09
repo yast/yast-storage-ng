@@ -83,6 +83,11 @@ module Y2Storage
       # @return [Symbol]
       attr_accessor :size_strategy
 
+      # Disks where the proposal can create extra physical volumes to honor {#size_strategy}
+      #
+      # @return [Array<String>] names of partitionable devices
+      attr_accessor :pvs_candidate_devices
+
       # Builds a new instance based on a real VG
       #
       # The new instance represents the intention to reuse the real VG, so the
@@ -111,6 +116,7 @@ module Y2Storage
         @pvs = pvs
         @pvs_encryption_password = nil
         @make_space_policy = :needed
+        @pvs_candidate_devices = []
       end
 
       # Initializes the object taking the values from a real volume group
@@ -150,10 +156,12 @@ module Y2Storage
       #
       # This method is useful to generate a volume group with just one new PV.
       #
+      # @param target [DiskSize, nil] aim for the provided size, instead of
+      #   trying to provide the exact size needed by the volume group
       # @return [Planned::Partition]
-      def single_pv_partition
+      def single_pv_partition(target: nil)
         pv = minimal_pv_partition
-        pv.min_size = real_pv_size(missing_space)
+        pv.min_size = real_pv_size(target || missing_space)
         pv.max_size = real_pv_size(max_size)
         pv.weight = lvs_weight
         pv
@@ -258,13 +266,15 @@ module Y2Storage
       end
 
       # Device name of the disk-like device in which the volume group has to be
-      # physically located. If nil, the volume group can spread freely over any
-      # set of disks.
+      # physically located. If nil, the volume group can spread over a set of
+      # several disks (maybe even unlimited).
       #
       # @return [String, nil]
       def forced_disk_name
         forced_lv = lvs.find(&:disk)
-        forced_lv ? forced_lv.disk : nil
+        return forced_lv.disk if forced_lv
+
+        pvs_candidate_devices.size == 1 ? pvs_candidate_devices.first : nil
       end
 
       protected
@@ -313,7 +323,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def useless_pv_space
-        pvs_encrypt? ? USELESS_PV_SPACE + Planned::Partition.encryption_overhead : USELESS_PV_SPACE
+        pvs_encrypt? ? USELESS_PV_SPACE + encryption_overhead : USELESS_PV_SPACE
       end
 
       def substract_reused_vg_size(size)
@@ -322,6 +332,11 @@ module Y2Storage
         else
           DiskSize.zero
         end
+      end
+
+      # @return [DiskSize]
+      def encryption_overhead
+        Planned::Partition.encryption_overhead(pvs_encryption_method&.encryption_type)
       end
     end
   end
