@@ -49,6 +49,7 @@ module Y2Storage
       "var/opt",
       "var/spool",
       "var/tmp",
+      "boot/grub2/i386-efi",
       "boot/grub2/i386-pc",
       "boot/grub2/x86_64-efi",
       "boot/grub2/powerpc-ieee1275",
@@ -66,6 +67,7 @@ module Y2Storage
 
     # Subvolumes, from the lists above, that contain architecture modifiers
     SUBVOL_ARCHS = {
+      "boot/grub2/i386-efi"         => ["i386", "x86_64"],
       "boot/grub2/i386-pc"          => ["i386", "x86_64"],
       "boot/grub2/x86_64-efi"       => ["x86_64"],
       "boot/grub2/powerpc-ieee1275" => ["ppc", "!board_powernv"],
