@@ -157,7 +157,6 @@ So we need a filesystem which can be booted by zipl (-> ext2).
 
    >>> [mpost] To be clear, what's in /boot/zipl only gets updated when grub2-install, etc. are run.
    >>> Since it's only task is to get the kernel up and grub2 examining what's in /boot it hopefully doesn't change very often.
-   >>>  The exception to this is /boot/zip/active_devices.txt which gets updated whenever ctc_configure, dasd_configure, qeth_configure, zfcp_host_configure add or remove devices from the system.
 
 
 ### ppc64
