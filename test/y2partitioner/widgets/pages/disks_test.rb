@@ -89,11 +89,11 @@ describe Y2Partitioner::Widgets::Pages::Disks do
       end
 
       context "and the Btrfs is multidevice" do
-        let(:scenario) { "btrfs-multidevice-over-partitions.xml" }
+        let(:scenario) { "btrfs2-devicegraph.xml" }
 
         it "does not include its Btrfs subvolumes in the table" do
-          sda2 = device_graph.find_by_name("/dev/sda2")
-          subvolumes = btrfs_subvolumes(sda2).map(&:path)
+          sdb1 = device_graph.find_by_name("/dev/sdb1")
+          subvolumes = btrfs_subvolumes(sdb1).map(&:path)
 
           expect(items).to_not include(*subvolumes)
         end
