@@ -79,9 +79,9 @@ module Y2Storage
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if mount_efivars?
-        # systemd makes default for mount bind sharable, but it cause trouble with
-        # systemd credentials that created another mount point undef /run when someone
-        # login. Result is that later /run cannot be unmounted. There is no benefit now
+        # systemd makes default for mount bind sharable, but it causes troubles with
+        # systemd credentials that created another mount point under /run when someone
+        # logs in. Result is that later /run cannot be unmounted. There is no benefit now
         # to have /mnt/run sharable mounted with propagation of mount points.
         # For defaults see https://lwn.net/Articles/689856/
         mount_in_target("/run", "/run", "--bind --make-private")
