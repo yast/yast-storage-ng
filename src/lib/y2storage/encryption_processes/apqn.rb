@@ -54,7 +54,9 @@ module Y2Storage
           apqns_data.map do |data|
             name, type, mode, status, = data
 
-            new(name, type, mode, status)
+            new(name, type, mode, status).tap do |apqn|
+              apqn.read_master_keys
+            end
           end
         end
 
@@ -88,6 +90,7 @@ module Y2Storage
         #
         # @return [String]
         def execute_lszcrypt
+          return File.read("/home/ags/projects/yast/yast-storage-ng/pervasive/lszcrypt.out")
           Yast::Execute.locally!(LSZCRYPT, stdout: :capture)
         rescue Cheetah::ExecutionFailed
           ""
@@ -119,6 +122,8 @@ module Y2Storage
       # @return [String] e.g., "online", "offline"
       attr_reader :status
 
+      attr_reader :aes_master_key
+
       # Constructor
       #
       # @param name [String]
@@ -145,6 +150,29 @@ module Y2Storage
       # @return [Boolean]
       def online?
         status == "online"
+      end
+
+      def read_master_keys
+        @aes_master_key = aes_key_from_file
+      end
+
+      private
+
+      def aes_key_from_file
+        content = File.read(master_key_file)
+        return nil if content&.empty?
+
+        entry = content.lines.grep(/^AES CUR: valid/).first
+        return nil unless entry
+
+        entry.split.last
+      rescue SystemCallError
+        nil
+      end
+
+      def master_key_file
+        return "/home/ags/projects/yast/yast-storage-ng/pervasive/cat.#{card}.#{domain}.out"
+        "/sys/bus/ap/devices/card#{card}/#{name}/mkvps"
       end
     end
   end

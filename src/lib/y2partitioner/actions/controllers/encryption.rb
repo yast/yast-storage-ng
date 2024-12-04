@@ -54,7 +54,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
         attr_accessor :apqns
-
+        
         # @return [String] Label for the encryption device if the method supports setting one
         attr_accessor :label
 
@@ -151,7 +151,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
         def online_apqns
-          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online
+          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online.select(&:aes_master_key)
         end
 
         # Finds an online APQN by its name
@@ -234,9 +234,29 @@ module Y2Partitioner
         # Currently used APQNs when the device is encrypted with pervasive encryption
         #
         # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
-        def initial_apqns
+        def initial_pervasive_key
           process = encryption&.encryption_process
 
+          master_key = process_pervasive_key(process) if process
+          return master_key if master_key
+
+          pervasive_keys.first
+        end
+
+        def process_pervasive_key(process)
+          return nil unless process.respond_to?(:apqns)
+          
+          apqn = process.apqns.first
+          return nil unless apqn
+
+          apqn.aes_master_key
+        end
+
+        # Currently used APQNs when the device is encrypted with pervasive encryption
+        #
+        # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+        def initial_apqns
+          process = encryption&.encryption_process
           return [] unless process.respond_to?(:apqns)
 
           process.apqns
