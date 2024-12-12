@@ -127,6 +127,8 @@ module Y2Storage
         BootRequirementsStrategies::NfsRoot
       elsif raspberry_pi?
         BootRequirementsStrategies::Raspi
+      elsif bls?
+        BootRequirementsStrategies::BLS
       else
         arch_strategy_class
       end
@@ -146,6 +148,13 @@ module Y2Storage
         # Fallback to Legacy as default
         BootRequirementsStrategies::Legacy
       end
+    end
+
+    # Whether BLS boot will be used for booting
+    #
+    # @return [Boolean]
+    def bls?
+      arch.efiboot?
     end
 
     # Whether the root filesystem is NFS
