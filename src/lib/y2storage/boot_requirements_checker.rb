@@ -156,6 +156,8 @@ module Y2Storage
     def bls?
       Yast.import "Linuxrc"
 
+      t = Yast::Linuxrc.InstallInf("NO_BLS_BOOT")
+      puts "xxxxxxxxxx #{t}"
       arch.efiboot? &&
         (Yast::Linuxrc.InstallInf("NO_BLS_BOOT").nil? ||
          Yast::Linuxrc.InstallInf("NO_BLS_BOOT") == "1")
