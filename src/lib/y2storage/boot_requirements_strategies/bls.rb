@@ -38,7 +38,7 @@ module Y2Storage
           # https://uapi-group.org/specifications/specs/boot_loader_specification/
           @efi_volume.min_size = DiskSize.GiB(1)
           @efi_volume.desired_size = DiskSize.GiB(1)
-          @efi_volume.max_size = DiskSize.GiB(1)          
+          @efi_volume.max_size = DiskSize.GiB(1)
         end
         @efi_volume
       end

@@ -224,7 +224,7 @@ module Y2Storage
       #
       # @return [String]
       def repo_dir
-        ENV["ZKEY_REPOSITORY"] || DEFAULT_REPO_DIR
+        ENV.fetch("ZKEY_REPOSITORY", nil) || DEFAULT_REPO_DIR
       end
 
       # Arguments to be used with the "zkey generate" command
