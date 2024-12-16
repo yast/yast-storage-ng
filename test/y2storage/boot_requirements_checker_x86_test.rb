@@ -105,6 +105,7 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
       allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
       allow(grub_partition).to receive(:match_volume?).and_return(true)
+      allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
     end
 
     let(:grub_partition) { partition_double("/dev/sda1") }
