@@ -110,10 +110,6 @@ describe Y2Storage::BootRequirementsChecker do
     let(:grub_partition) { partition_double("/dev/sda1") }
 
     context "using UEFI" do
-      before do
-        allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
-      end
-
       let(:efiboot) { true }
 
       include_context "plain UEFI"
@@ -294,6 +290,10 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing a new EFI partition" do
+        before do
+          allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
+        end
+        
         let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
         let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
         # Default values to ensure proposal of EFI partition
