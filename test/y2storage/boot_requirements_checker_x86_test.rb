@@ -301,7 +301,7 @@ describe Y2Storage::BootRequirementsChecker do
         
         context "and BLS bootloader as default" do
           before do
-            allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
+            allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("0")
           end
 
           include_examples "EFI partition for BLS bootloaders"
