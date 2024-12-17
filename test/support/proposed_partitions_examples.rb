@@ -148,6 +148,27 @@ RSpec.shared_examples "flexible size EFI partition" do
   end
 end
 
+RSpec.shared_examples "EFI partition for BLS bootloaders" do
+  using Y2Storage::Refinements::SizeCasts
+
+  context "when aiming for the recommended size" do
+    let(:target) { :desired }
+
+    it "requires /boot/efi to use FAT32" do
+      expect(efi_part.mkfs_options).to include "-F32"
+    end
+
+    it "requires it to be at least 1 GiB" do
+      expect(efi_part.min).to eq 1.GiB
+    end
+
+    it "requires it to be at most 1 GiB (enough space for all BLS entries)" do
+      expect(efi_part.max).to eq 1.GiB
+    end
+  end
+end
+
+
 RSpec.shared_examples "minimalistic EFI partition" do
   using Y2Storage::Refinements::SizeCasts
 

@@ -299,16 +299,19 @@ describe Y2Storage::BootRequirementsChecker do
         
         include_examples "proposed EFI partition basics"
         
-        context "BLS for bootloader" do
-          #include_examples "proposed EFI partition basics"
-          include_examples "flexible size EFI partition"
+        context "and BLS bootloader as default" do
+          before do
+            allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
+          end
+
+          include_examples "EFI partition for BLS bootloaders"
         end
-        context "no BLS bootloader as default" do
+
+        context "and no BLS bootloader as default" do
           before do
             allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
           end
           
-          #include_examples "proposed EFI partition basics"
           include_examples "flexible size EFI partition"          
         end
       
