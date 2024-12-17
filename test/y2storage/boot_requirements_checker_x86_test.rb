@@ -290,9 +290,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing a new EFI partition" do
-        before do
-          allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
-        end
         
         let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
         let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
@@ -300,8 +297,19 @@ describe Y2Storage::BootRequirementsChecker do
         let(:efiboot) { true }
         let(:efi_partitions) { [] }
 
-        include_examples "proposed EFI partition basics"
-        include_examples "flexible size EFI partition"
+        context "BLS for bootloader" do
+          include_examples "proposed EFI partition basics"
+          include_examples "flexible size EFI partition"
+        end
+        context "no BLS bootloader as default" do
+          before do
+            allow(Yast::Linuxrc).to receive(:InstallInf).with("NO_BLS_BOOT").and_return("1")
+          end
+          
+          include_examples "proposed EFI partition basics"
+          include_examples "flexible size EFI partition"          
+        end
+      
       end
     end
   end
