@@ -168,7 +168,6 @@ RSpec.shared_examples "EFI partition for BLS bootloaders" do
   end
 end
 
-
 RSpec.shared_examples "minimalistic EFI partition" do
   using Y2Storage::Refinements::SizeCasts
 
