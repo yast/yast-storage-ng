@@ -158,7 +158,7 @@ module Y2Storage
 
       arch.efiboot? &&
         (Yast::Linuxrc.InstallInf("NO_BLS_BOOT").nil? ||
-         !Yast::Linuxrc.InstallInf("NO_BLS_BOOT") == "1")
+         Yast::Linuxrc.InstallInf("NO_BLS_BOOT") != 1)
     end
 
     # Whether the root filesystem is NFS
