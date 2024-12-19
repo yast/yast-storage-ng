@@ -1,2 +1,343 @@
 
 [//]: # (document was automatically created using 'rake doc:bootspecs')
+
+# Y2Storage::BootRequirementsChecker
+## needed partitions in an aarch64 system
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- and it is on the boot disk
+				- **only requires to use the existing EFI partition**
+			- and it is not on the boot disk
+				- **requires only a new /boot/efi partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- and it is on the boot disk
+				- **only requires to use the existing EFI partition**
+			- and it is not on the boot disk
+				- **requires only a new /boot/efi partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- and it is on the boot disk
+				- **only requires to use the existing EFI partition**
+			- and it is not on the boot disk
+				- **requires only a new /boot/efi partition**
+- with an AutoYaST profile that places '/' in a LUKS2 device
+	- if there are no EFI partitions
+		- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+	- if there is already a suitable EFI partition in the boot disk
+		- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+
+## needed partitions in a PPC64 system
+- in a non-PowerNV system (KVM/LPAR)
+	- with a partitions-based proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- and it is on the boot disk
+				- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+			- and it is not on the boot disk
+				- **requires only a new PReP partition (to allocate Grub2)**
+	- with a LVM-based proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- and it is on the boot disk
+				- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+			- and it is not on the boot disk
+				- **requires only a new PReP partition (to allocate Grub2)**
+	- with an encrypted proposal
+		- if there are no suitable PReP partitions in the target disk
+			- **requires only a new PReP partition (to allocate Grub2)**
+			- **does not require a separate /boot partition (Grub2 can handle this setup)**
+		- if there is already a suitable PReP partition in the disk
+			- and it is on the boot disk
+				- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
+			- and it is not on the boot disk
+				- **requires only a new PReP partition (to allocate Grub2)**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- if there are no suitable PReP partitions in the target disk
+			- **requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
+		- if there is already a suitable PReP partition in the disk
+			- and it is on the boot disk
+				- **requires a separate /boot partition (Grub2 auto-config cannot handle LUKS2)**
+			- and it is not on the boot disk
+				- **requires a new PReP and a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
+- in bare metal (PowerNV)
+	- with a partitions-based proposal
+		- **does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+	- with a LVM-based proposal
+		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
+	- with an encrypted proposal
+		- **does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)**
+		- **requires only a /boot partition (for the PPC firmware to load the kernel)**
+- when proposing a boot partition
+	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
+	- when aiming for the recommended size
+		- **requires /boot to be at least 200 MiB large**
+	- when aiming for the minimal size
+		- **requires /boot to be at least 100 MiB large**
+- when proposing a PReP partition
+	- **requires it to be on the boot disk**
+	- **requires it to be a non-encrypted partition**
+	- **requires it to be bootable (ms-dos partition table) for some firmwares to find it**
+	- **requires it to be primary since some firmwares cannot find logical partitions**
+	- **requires no particular position for it in the disk (since there is no evidence of such so far)**
+	- when aiming for the recommended size
+		- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
+	- when aiming for the minimal size
+		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
+
+## needed partitions in a Raspberry Pi
+- if the target boot disk initially contains a MBR partition table
+	- and the first partition in the boot disk has id DOS32 and a FAT filesystem
+		- and it contains an EFI directory
+			- **only requires to use the existing EFI partition (bootcode will be installed there)**
+		- and it contains a Raspberry Pi boot code but no EFI directory
+			- and there is also a suitable standard EFI partition in the target disk
+				- **requires to mount at /boot/vc the firmware partition from the target disk**
+				- **requires to use the existing EFI partition**
+			- and there is no suitable EFI partition in the target disk
+				- **requires to mount at /boot/vc the firmware partition from the target disk**
+				- **requires a new /boot/efi partition**
+				- **does not enforce the /boot/efi partition to be the first**
+				- **requires the /boot/efi partition to have id ESP (according to the EFI standard)**
+		- and the first partition contains no boot code or EFI files
+			- **requires only a new /boot/efi partition**
+			- **requires /boot/efi to be the first partition of the device**
+			- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+		- and there are no partitions in the boot disk
+			- **requires only a new /boot/efi partition**
+			- **requires /boot/efi to be the first partition of the device**
+			- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+			- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+	- and the first partition in the boot disk is a standard EFI with id ESP
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+- if the target boot disk initially contains a GPT partition table
+	- even if the first partition has id DOS32 and a FAT filesystem with an EFI system
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+	- if there are no partitions in the boot disk
+		- **requires only a new /boot/efi partition**
+		- **requires /boot/efi to be the first partition of the device**
+		- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+		- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+- if the target boot disk contains no partition table initially
+	- **requires only a new /boot/efi partition**
+	- **requires /boot/efi to be the first partition of the device**
+	- **requires /boot/efi to be in a MBR partition table, bumping any existing table if needed**
+	- **requires the /boot/efi partition to have id DOS32 (bootcode will be installed there)**
+- when proposing a new EFI partition
+	- **requires /boot/efi to be on the boot disk**
+	- **requires /boot/efi to be a non-encrypted vfat partition**
+	- **requires /boot/efi to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
+	- when aiming for the minimal size
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
+
+## needed partitions in a S/390 system
+- trying to install in a FBA DASD disk
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+- trying to install in a zFCP disk (no DASD)
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+- trying to install in a (E)CKD DASD disk
+	- if the disk is formatted as LDL
+		- **raises an error (no proposal possible in such disk) - FIXME: why?**
+	- if the disk is formatted as CDL
+		- with a partitions-based proposal
+			- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+				- **does not require additional partitions (the firmware can find the kernel)**
+			- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+				- **requires only a separate /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+		- with a LVM-based proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+		- with an encrypted proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+		- with an AutoYaST profile that places '/' in a LUKS2 device
+			- **requires only a /boot/zipl partition (to allocate Grub2+kernel+initrd)**
+- when proposing a /boot/zipl partition
+	- **requires /boot/zipl to be on the boot disk**
+	- **requires /boot/zipl to be a non-encrypted partition**
+	- **requires /boot/zipl to be formatted as ext2**
+	- **requires /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)**
+	- when aiming for the recommended size (first proposal attempt)
+		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**
+	- when aiming for the minimal size
+		- **requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)**
+
+## needed partitions in a x86 system
+- using UEFI
+	- with a partitions-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with a LVM-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with an encrypted proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- if there are no EFI partitions
+			- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+		- if there is already a suitable EFI partition in the boot disk
+			- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+- not using UEFI (legacy PC)
+	- with GPT partition table
+		- in a partitions-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- and it is on the boot disk
+					- **does not require any particular volume**
+				- and it is not on the boot disk
+					- **requires a new GRUB partition**
+		- in a LVM-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- and it is on the boot disk
+					- **does not require any particular volume**
+				- and it is not on the boot disk
+					- **requires a new GRUB partition**
+		- in an encrypted proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- and it is on the boot disk
+					- **does not require any particular volume**
+				- and it is not on the boot disk
+					- **requires a new GRUB partition**
+		- with an AutoYaST profile that places '/' in a LUKS2 device
+			- if there is no GRUB partition
+				- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
+			- if there is already a GRUB partition
+				- and it is on the boot disk
+					- **requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
+				- and it is not on the boot disk
+					- **requires new GRUB and /boot partitions (Grub2 auto-config cannot handle LUKS2)**
+	- with a MS-DOS partition table
+		- if the MBR gap is big enough to embed Grub
+			- in a partitions-based proposal
+				- **does not require any particular volume**
+			- in a LVM-based proposal
+				- **does not require any particular volume**
+			- in an encrypted proposal
+				- **does not require any particular volume**
+			- with an AutoYaST profile that places '/' in a LUKS2 device
+				- **requires a new /boot partition (Grub2 auto-config cannot handle LUKS2)**
+		- with a MBR gap too small to accommodate Grub
+			- in a partitions-based proposal
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **does not require any particular volume**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
+			- in a LVM-based proposal
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
+			- in an encrypted proposal
+				- if the file-system selected for / can embed grub (ext2/3/4 or btrfs)
+					- **requires a new /boot partition to install Grub into it**
+				- if the file-system selected for / cannot embed grub (eg. XFS)
+					- **requires a new /boot partition to install Grub into it**
+	- when proposing a boot partition
+		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
+		- when aiming for the recommended size
+			- **requires /boot to be at least 200 MiB large**
+		- when aiming for the minimal size
+			- **requires /boot to be at least 100 MiB large**
+	- when proposing a new GRUB partition
+		- **requires it to be on the boot disk**
+		- **requires it to have the correct id**
+		- **requires it to be a non-encrypted partition**
+		- when aiming for the recommended size
+			- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
+			- **requires it to be at most 8 MiB (anything bigger would mean wasting space)**
+		- when aiming for the minimal size
+			- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
+			- **requires it to be at most 8 MiB (anything bigger would mean wasting space)**
+	- when proposing a new EFI partition
+		- **requires /boot/efi to be on the boot disk**
+		- **requires /boot/efi to be a non-encrypted vfat partition**
+		- **requires /boot/efi to be close enough to the beginning of disk**
+		- when aiming for the recommended size
+			- **requires /boot/efi to use FAT32**
+			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
+		- when aiming for the minimal size
+			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+			- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
