@@ -301,7 +301,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "and BLS bootloader as default" do
           before do
-            allow(Y2Storage::StorageEnv.instance.no_bls_bootloader).and_return(false)
+            allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(false)
           end
 
           include_examples "EFI partition for BLS bootloaders"
@@ -309,7 +309,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "and no BLS bootloader as default" do
           before do
-            allow(Y2Storage::StorageEnv.instance.no_bls_bootloader).and_return(true)
+            allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(true)            
           end
 
           include_examples "flexible size EFI partition"
