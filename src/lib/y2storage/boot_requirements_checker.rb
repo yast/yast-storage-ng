@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage/boot_requirements_strategies"
 require "y2storage/storage_manager"
+require "y2storage/storage_env"
 
 module Y2Storage
   #
@@ -127,8 +128,6 @@ module Y2Storage
         BootRequirementsStrategies::NfsRoot
       elsif raspberry_pi?
         BootRequirementsStrategies::Raspi
-      elsif bls?
-        BootRequirementsStrategies::BLS
       else
         arch_strategy_class
       end
@@ -139,7 +138,11 @@ module Y2Storage
     # @return [BootRequirementsStrategies::Base]
     def arch_strategy_class
       if arch.efiboot?
-        BootRequirementsStrategies::UEFI
+        if StorageEnv.instance.no_bls_bootloader
+          BootRequirementsStrategies::UEFI
+        else
+          BootRequirementsStrategies::BLS
+        end
       elsif arch.s390?
         BootRequirementsStrategies::ZIPL
       elsif arch.ppc?
@@ -148,17 +151,6 @@ module Y2Storage
         # Fallback to Legacy as default
         BootRequirementsStrategies::Legacy
       end
-    end
-
-    # Whether BLS boot will be used for booting
-    #
-    # @return [Boolean]
-    def bls?
-      Yast.import "Linuxrc"
-
-      arch.efiboot? &&
-        (Yast::Linuxrc.InstallInf("NO_BLS_BOOT").nil? ||
-         Yast::Linuxrc.InstallInf("NO_BLS_BOOT") != 1)
     end
 
     # Whether the root filesystem is NFS

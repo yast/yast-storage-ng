@@ -158,8 +158,8 @@ RSpec.shared_examples "EFI partition for BLS bootloaders" do
       expect(efi_part.mkfs_options).to include "-F32"
     end
 
-    it "requires it to be at least 1 GiB" do
-      expect(efi_part.min).to eq 1.GiB
+    it "requires it to be at least 512 MiB" do
+      expect(efi_part.min).to eq 512.MiB
     end
 
     it "requires it to be at most 1 GiB (enough space for all BLS entries)" do

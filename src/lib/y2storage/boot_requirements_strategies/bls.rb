@@ -34,9 +34,9 @@ module Y2Storage
       def efi_volume
         if @efi_volume.nil?
           @efi_volume = volume_specification_for("/boot/efi")
-          # BLS needs 1GiB for boot at least
+          # BLS suggests 1GiB for boot partition
           # https://uapi-group.org/specifications/specs/boot_loader_specification/
-          @efi_volume.min_size = DiskSize.GiB(1)
+          @efi_volume.min_size = DiskSize.MiB(512)
           @efi_volume.desired_size = DiskSize.GiB(1)
           @efi_volume.max_size = DiskSize.GiB(1)
         end
