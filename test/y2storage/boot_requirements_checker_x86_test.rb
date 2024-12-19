@@ -290,7 +290,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing a new EFI partition" do
-
         let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
         let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
         # Default values to ensure proposal of EFI partition
