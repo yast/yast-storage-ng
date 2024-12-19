@@ -36,9 +36,11 @@ module Y2Storage
 
     ENV_REUSE_LVM = "YAST_REUSE_LVM".freeze
 
+    ENV_NO_BLS_BOOT = "YAST_NO_BLS_BOOT".freeze
+
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
-    private_constant :ENV_REUSE_LVM
+    private_constant :ENV_REUSE_LVM, :ENV_NO_BLS_BOOT
 
     def initialize
       reset_cache
@@ -91,6 +93,13 @@ module Y2Storage
       return nil if !value
 
       env_str_to_bool(value)
+    end
+
+    # Whether YaST should not use bls bootloaders
+    #
+    # @return [Boolean]
+    def no_bls_bootloader
+      active?(ENV_NO_BLS_BOOT)
     end
 
     # Whether errors during libstorage probing should be ignored.

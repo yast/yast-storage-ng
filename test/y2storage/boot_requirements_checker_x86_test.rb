@@ -297,7 +297,23 @@ describe Y2Storage::BootRequirementsChecker do
         let(:efi_partitions) { [] }
 
         include_examples "proposed EFI partition basics"
-        include_examples "flexible size EFI partition"
+
+        context "and BLS installation is not explicitly disabled" do
+          before do
+            allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(false)
+          end
+
+          include_examples "EFI partition for BLS bootloaders"
+        end
+
+        context "and BLS installation is explicitly disabled" do
+          before do
+            allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(true)
+          end
+
+          include_examples "flexible size EFI partition"
+        end
+
       end
     end
   end
