@@ -47,6 +47,23 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     include_context "plain UEFI"
-    include_examples "BLS bootloader"
+
+    context "when proposing a new EFI partition" do
+      let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
+      let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
+      context "when proposing a new EFI partition" do
+        let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
+        let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
+
+        include_examples "BLS bootloader not disabled"
+        context "and BLS installation is explicitly disabled" do
+          before do
+            allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(true)
+          end
+
+          include_examples "minimalistic EFI partition"
+        end
+      end
+    end
   end
 end
