@@ -64,17 +64,6 @@ module Y2Storage
         res + res_new
       end
 
-      private
-
-      # @return [VolumeSpecification]
-      def efi_volume
-        if @efi_volume.nil?
-          @efi_volume = volume_specification_for("/boot/efi")
-          limit_volume_size_to_min(@efi_volume) if Yast::Arch.aarch64 # bsc#1119318
-        end
-        @efi_volume
-      end
-
       protected
 
       def esp_encrypted_error
@@ -120,6 +109,15 @@ module Y2Storage
         # the correct partition id, filesystem and mount point deserves some trust).
         # https://github.com/yast/yast-storage-ng/issues/1194#issuecomment-756165860
         !missing_partition_for?(efi_volume, exclude: :size)
+      end
+
+      # @return [VolumeSpecification]
+      def efi_volume
+        if @efi_volume.nil?
+          @efi_volume = volume_specification_for("/boot/efi")
+          limit_volume_size_to_min(@efi_volume) if Yast::Arch.aarch64 # bsc#1119318
+        end
+        @efi_volume
       end
 
       # Adjusts the given volume specification to enforce a minimal device that

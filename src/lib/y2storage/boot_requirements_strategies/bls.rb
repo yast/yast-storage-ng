@@ -28,7 +28,7 @@ module Y2Storage
         super
       end
 
-      private
+      protected
 
       # @return [VolumeSpecification]
       def efi_volume
