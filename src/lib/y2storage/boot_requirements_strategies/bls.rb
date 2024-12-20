@@ -1,4 +1,4 @@
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2024] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,10 +17,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/boot_requirements_strategies/legacy"
 require "y2storage/boot_requirements_strategies/uefi"
-require "y2storage/boot_requirements_strategies/prep"
-require "y2storage/boot_requirements_strategies/zipl"
-require "y2storage/boot_requirements_strategies/nfs_root"
-require "y2storage/boot_requirements_strategies/raspi"
-require "y2storage/boot_requirements_strategies/bls"
+
+module Y2Storage
+  module BootRequirementsStrategies
+    # Strategy to calculate boot requirements in BLS/UEFI systems
+    class BLS < UEFI
+      def initialize(*args)
+        textdomain "storage"
+        super
+      end
+
+      protected
+
+      # @return [VolumeSpecification]
+      def efi_volume
+        if @efi_volume.nil?
+          @efi_volume = volume_specification_for("/boot/efi")
+          # BLS suggests 1GiB for boot partition
+          # https://uapi-group.org/specifications/specs/boot_loader_specification/
+          @efi_volume.min_size = DiskSize.MiB(512)
+          @efi_volume.desired_size = DiskSize.GiB(1)
+          @efi_volume.max_size = DiskSize.GiB(1)
+        end
+        @efi_volume
+      end
+    end
+  end
+end

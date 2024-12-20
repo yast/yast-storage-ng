@@ -133,3 +133,13 @@ RSpec.shared_context "plain UEFI" do
     end
   end
 end
+
+RSpec.shared_context "BLS bootloader not disabled" do
+  context "and BLS installation is not explicitly disabled" do
+    before do
+      allow(Y2Storage::StorageEnv.instance).to receive(:no_bls_bootloader).and_return(false)
+    end
+
+    include_examples "EFI partition for BLS bootloaders"
+  end
+end
