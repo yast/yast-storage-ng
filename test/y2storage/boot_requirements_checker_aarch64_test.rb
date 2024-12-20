@@ -47,5 +47,6 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     include_context "plain UEFI"
+    include_examples "BLS bootloader"
   end
 end
