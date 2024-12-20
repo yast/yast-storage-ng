@@ -141,7 +141,7 @@ module Y2Storage
     def arch_strategy_class
       if arch.efiboot?
         if StorageEnv.instance.no_bls_bootloader ||
-            (!Yast::Arch.x86_64 && !Yast::Arch.aarch64)
+            (!arch.x86? && !Yast::Arch.aarch64)
           BootRequirementsStrategies::UEFI
         else
           # BLS is for x86_64 and aarch64 only
