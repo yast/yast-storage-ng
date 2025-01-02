@@ -2288,7 +2288,7 @@ Fri Oct 26 11:37:48 UTC 2018 - snwint@suse.com
   partitioner
 
 -------------------------------------------------------------------
-Sat Oct 20 22:10:48 WEST 2018 - igonzalezsosa@suse.com
+Sat Oct 20 21:10:48 UTC 2018 - igonzalezsosa@suse.com
 
 - Fixes and improvements to AutoYaST partitioning:
   - Improve support to reuse a disk as a PV (bsc#1107298).
