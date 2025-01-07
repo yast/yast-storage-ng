@@ -23,11 +23,12 @@ require "y2storage/pbkd_function"
 
 module Y2Partitioner
   module Widgets
-    # PBKDF for a {Y2Storage::Encryption} device using LUKS2
+    # Master key selector for a {Y2Storage::Encryption} device using pervasive encryption
     class PervasiveKeySelector < CWM::ComboBox
       # Constructor
       #
-      # @param controller [Actions::Controllers::Encryption]
+      # @param apqns_by_key [Hash]
+      # @param initial_key [String]
       # @param enable [Boolean] whether the widget should be enabled on init
       def initialize(apqns_by_key, initial_key, enable: true)
         super()
@@ -40,7 +41,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("Master Key")
+        _("Master Key Verification Pattern")
       end
 
       def opt
@@ -58,12 +59,34 @@ module Y2Partitioner
         apqns_by_key.keys.sort.map { |k| [k, key_label(k)] }
       end
 
+      # @see #items
       def key_label(key)
         apqns = apqns_by_key[key]
-        if apqns.size > 1
-          format("%s (several APQNs)", key)
+        if apqns.first.mode =~ /CCA/
+          if apqns.size > 1
+            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode, %s is
+            # replaced by a key verification pattern
+            format(_("CCA: %s (several APQNs)"), key)
+          else
+            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode.
+            #              %{key} is replaced by a key verification pattern;
+            #              %{apqn} by the name of an APQN
+            format(_("CCA: %{key} (APQN %{apqn})"), key: key, apqn: apqns.first.name)
+          end
         else
-          format("%{key} (APQN %{apqn})", key: key, apqn: apqns.first.name)
+          # TRANSLATORS: this string is used to display a subset of a key verification pattern.
+          # %{start} is replaced by the first 10 characters of the pattern; %{ending} by the final 10.
+          key_string = format(_("%{start}...%{ending}"), start: key[0..9], ending: key[-10..-1])
+          if apqns.size > 1
+            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in EP11 mode, %s is
+            # replaced by a subset of the key verification pattern
+            format(_("EP11: %s (several APQNs)"), key_string)
+          else
+            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in EP11 mode.
+            #              %{key} is replaced by a subset of the key verification pattern;
+            #              %{apqn} by the name of an APQN
+            format(_("EP11: %{key} (APQN %{apqn})"), key: key_string, apqn: apqns.first.name)
+          end
         end
       end
 
@@ -71,7 +94,11 @@ module Y2Partitioner
 
       # @return [Boolean] whether the widget should be enabled on init
       attr_reader :enable_on_init
+
+      # @return [Hash] All APQNs objects grouped by their master key
       attr_reader :apqns_by_key
+
+      # @return [String] Master key initially selected
       attr_reader :initial_key
     end
   end

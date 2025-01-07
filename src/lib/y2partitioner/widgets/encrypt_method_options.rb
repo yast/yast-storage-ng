@@ -23,8 +23,10 @@ require "yast2/popup"
 require "y2partitioner/widgets/encrypt_password"
 require "y2partitioner/widgets/encrypt_label"
 require "y2partitioner/widgets/pbkdf_selector"
+require "y2partitioner/widgets/pervasive_key"
 require "y2partitioner/widgets/pervasive_key_selector"
 require "y2partitioner/widgets/apqn_selector"
+require "y2partitioner/widgets/pervasive_key_type_selector"
 
 module Y2Partitioner
   module Widgets
@@ -214,7 +216,6 @@ module Y2Partitioner
       def initialize(controller, enable: true)
         super
         textdomain "storage"
-
         self.handle_all_events = true
       end
 
@@ -223,8 +224,10 @@ module Y2Partitioner
       #
       # @macro seeCustomWidget
       def handle(event)
-        if select_master_key? && select_apqns? && event["ID"] == master_key_widget.widget_id
-          apqn_widget.refresh(master_key_widget.value)
+        if select_master_key? && event["ID"] == master_key_widget.widget_id
+          full_key_widget.refresh(master_key_widget.value)
+          apqn_widget.refresh(master_key_widget.value) if select_apqns?
+          key_type_widget.refresh(candidate_apqns.first.name)
         end
 
         nil
@@ -241,46 +244,39 @@ module Y2Partitioner
       end
 
       private
-      
-      def selected_apqns
-        candidate_apqns =
-          if select_master_key?
-            apqns_by_key[master_key_widget.value]
-          else
-            apqns_by_key.values.first
-          end
-
-        if candidate_apqns.size > 1
-          # TODO: query_widget
-        else
-          candidate_apqns.first
-        end
-      end
 
       # @see LuksOptions#widgets
       def widgets
         widgets = super
-        widgets << master_key_widget if select_master_key?
-        widgets << apqn_widget if select_apqns?
+        return widgets if exist_secure_key?
 
+        if select_master_key?
+          widgets << master_key_widget
+          widgets << full_key_widget
+        end
+        widgets << apqn_widget if select_apqns?
+        widgets << key_type_widget
         widgets
       end
 
-      # Whether the AES master key can be chosen
+      # APQNs that can be chosen, based on the master key currently selected (implicitly or
+      # explicitly) at the UI
       #
-      # The master key can be chosen when there are several keys available and the device does not
-      # have an associated secure key yet.
-      #
-      # @return [Boolean]
-      def select_master_key?
-        !exist_secure_key? && pervasive_keys.size > 1
+      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+      def candidate_apqns
+        return apqns_by_key.values.first unless select_master_key?
+
+        apqns_by_key[master_key_widget.value]
       end
 
-      # Whether there is any possibility to define the APQNs
+      # Set of APQNs selected at the UI (implicitly or explicitly)
       #
-      # @return [Boolean]
-      def select_apqns?
-        !exist_secure_key? && apqns_by_key.any? { |i| i.last.size > 1 }
+      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+      def selected_apqns
+        candidate = candidate_apqns
+        return candidate if candidate.size == 1
+
+        apqn_widget.value.map { |a| controller.find_apqn(a) }
       end
 
       # Whether there is an secure key for the device
@@ -290,38 +286,67 @@ module Y2Partitioner
         !controller.secure_key.nil?
       end
 
-      def apqns_by_key
-        @apqns_by_key ||= @controller.online_apqns.group_by(&:aes_master_key)
+      # Whether the AES master key can be chosen
+      #
+      # The master key can be chosen when there are several keys available and the device does not
+      # have an associated secure key yet.
+      #
+      # @return [Boolean]
+      def select_master_key?
+        apqns_by_key.keys.size > 1
       end
 
-      def pervasive_keys
-        @pervasive_keys ||= apqns_by_key.keys.sort
+      # Whether there is any possibility to define the APQNs
+      #
+      # @return [Boolean]
+      def select_apqns?
+        apqns_by_key.any? { |i| i.last.size > 1 }
       end
 
+      # @return [String]
       def initial_key
         @initial_key ||=
-          if @controller.apqns.empty?
+          if controller.apqns.empty?
             pervasive_keys.first
           else
-            find_key_for(@controller.apqns.first)
+            find_key_for(controller.apqns.first)
           end
       end
 
+      # Master key configured at the given APQN
+      #
+      # @param apqn [Y2Storage::EncryptionProcesses::Apqn]
+      # @return [String]
       def find_key_for(apqn)
         apqns_by_key.each do |key, apqns|
           return key if apqns.include?(apqn)
         end
       end
 
+      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
       def initial_apqns
         @initial_apqns ||=
-          if @controller.apqns.empty?
+          if controller.apqns.empty?
             apqns_by_key[initial_key]
           else
-            @controller.apqns
+            controller.apqns
           end
       end
 
+      # All existing master keys
+      #
+      # @return [Array<String>]
+      def pervasive_keys
+        @pervasive_keys ||= apqns_by_key.keys.sort
+      end
+
+      def apqns_by_key
+        @apqns_by_key ||= controller.online_apqns.group_by(&:aes_master_key)
+      end
+
+      # Widget to allow the master key selection
+      #
+      # @return [Widgets::PervasiveKeySelector]
       def master_key_widget
         @master_key_widget ||= Widgets::PervasiveKeySelector.new(apqns_by_key, initial_key, enable: enable_on_init)
       end
@@ -333,17 +358,31 @@ module Y2Partitioner
         @apqn_widget ||= Widgets::ApqnSelector.new(apqns_by_key, initial_key, initial_apqns, enable: enable_on_init)
       end
 
+      # Read-only widget to display the full verification pattern of the chosen master key,
+      # if needed
+      #
+      # @return [Widgets::PervasiveKey]
+      def full_key_widget
+        @full_key_widget ||= Widgets::PervasiveKey.new(initial_key)
+      end
+
+      # Widget to choose the type of CCA key to use (AES Data vs AES Cipher)
+      #
+      # @return [Widgets::PervasiveKeyTypeSelector]
+      def key_type_widget
+        @key_type_widget ||= PervasiveKeyTypeSelector.new(
+          @controller, initial_apqns.first.name, enable: enable_on_init
+        )
+      end
+
       # Checks whether the secure key can be generated
       #
       # An error is reported to the user when the secure key cannot be generated.
       #
       # @return [Boolean]
       def validate_secure_key_generation
-        # TODO: revisar esto. Seguramente la lógica vaya ahora en el controlador
-        apqns = select_apqns? ? apqn_widget.value : []
-
+        apqns = apqn_widget.value
         command_error_message = controller.test_secure_key_generation(apqns: apqns)
-
         return true unless command_error_message
 
         error = _("The secure key cannot be generated.\n")

@@ -70,8 +70,6 @@ module Y2Partitioner
         @initial_apqns = initial_apqns
         @enable_on_init = enable
 
-        #require "byebug"
-        #byebug
         super(id: "apqn_selector", widget: widgets_by_key[initial_key])
       end
 
