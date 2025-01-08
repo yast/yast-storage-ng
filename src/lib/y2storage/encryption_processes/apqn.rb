@@ -90,7 +90,7 @@ module Y2Storage
         #
         # @return [String]
         def execute_lszcrypt
-          return File.read("/home/ags/projects/yast/yast-storage-ng/pervasive/lszcrypt.out")
+          # return File.read("/home/ags/projects/yast/yast-storage-ng/pervasive/lszcrypt.out")
           Yast::Execute.locally!(LSZCRYPT, stdout: :capture)
         rescue Cheetah::ExecutionFailed
           ""
@@ -171,7 +171,7 @@ module Y2Storage
       end
 
       def master_key_file
-        return "/home/ags/projects/yast/yast-storage-ng/pervasive/cat.#{card}.#{domain}.out"
+        # return "/home/ags/projects/yast/yast-storage-ng/pervasive/cat.#{card}.#{domain}.out"
         "/sys/bus/ap/devices/card#{card}/#{name}/mkvps"
       end
     end

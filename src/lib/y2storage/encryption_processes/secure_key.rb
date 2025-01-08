@@ -323,8 +323,8 @@ module Y2Storage
         #
         # @return [Array<SecureKey>]
         def all
-          output = File.read("/home/ags/projects/yast/yast-storage-ng/pervasive/zkey-list1.out")
-          # output = Yast::Execute.locally(ZKEY, "list", stdout: :capture)
+          # output = File.read("/home/ags/projects/yast/yast-storage-ng/pervasive/zkey-list1.out")
+          output = Yast::Execute.locally(ZKEY, "list", stdout: :capture)
           return [] if output&.empty?
 
           entries = output&.split("\n\n") || []
