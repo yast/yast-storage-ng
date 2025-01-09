@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jan  9 14:43:14 UTC 2025 - Stefan Schubert <schubi@suse.de>
+
+- Reserve 1GiB boot partition for grub2-bls bootloader (jsc#PED-10703).
+- 5.0.23
+
+-------------------------------------------------------------------
 Fri Nov 29 10:23:28 UTC 2024 - Josef Reidinger <jreidinger@suse.com>
 
 - Mount '/mnt/run' as private to avoid mount points propagation
