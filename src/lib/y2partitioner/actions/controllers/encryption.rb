@@ -151,7 +151,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
         def online_apqns
-          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online.select(&:aes_master_key)
+          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online.select(&:master_key_pattern)
         end
 
         # Finds an online APQN by its name
@@ -249,7 +249,7 @@ module Y2Partitioner
           apqn = process.apqns.first
           return nil unless apqn
 
-          apqn.aes_master_key
+          apqn.master_key_pattern
         end
 
         # Currently used APQNs when the device is encrypted with pervasive encryption

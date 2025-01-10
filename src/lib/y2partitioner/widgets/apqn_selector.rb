@@ -105,7 +105,7 @@ module Y2Partitioner
       def value
         return unless @widget.respond_to?(:value)
 
-        @widget.value.map { |d| @controller.find_apqn(d) }.compact
+        @widget.value
       end
 
       private

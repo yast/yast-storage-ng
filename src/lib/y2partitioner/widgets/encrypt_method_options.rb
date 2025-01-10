@@ -276,7 +276,7 @@ module Y2Partitioner
         candidate = candidate_apqns
         return candidate if candidate.size == 1
 
-        apqn_widget.value.map { |a| controller.find_apqn(a) }
+        apqn_widget.value.map { |a| controller.find_apqn(a) }.compact
       end
 
       # Whether there is an secure key for the device
@@ -341,7 +341,7 @@ module Y2Partitioner
       end
 
       def apqns_by_key
-        @apqns_by_key ||= controller.online_apqns.group_by(&:aes_master_key)
+        @apqns_by_key ||= controller.online_apqns.group_by(&:master_key_pattern)
       end
 
       # Widget to allow the master key selection
@@ -383,7 +383,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def validate_secure_key_generation
-        apqns = apqn_widget.value
+        apqns = selected_apqns
         command_error_message = controller.test_secure_key_generation(apqns: apqns)
         return true unless command_error_message
 

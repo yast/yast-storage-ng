@@ -107,7 +107,7 @@ module Y2Partitioner
       # Empty widget or selector for the CCA key variant
       def widget_for(apqn_name)
         apqn = controller.find_apqn(apqn_name)
-        return cca_selector if apqn.mode =~ /CCA/
+        return cca_selector unless apqn.ep11?
 
         CWM::Empty.new("empty_#{widget_id}")
       end

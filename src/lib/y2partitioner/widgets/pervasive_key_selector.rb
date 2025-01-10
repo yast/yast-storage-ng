@@ -62,18 +62,7 @@ module Y2Partitioner
       # @see #items
       def key_label(key)
         apqns = apqns_by_key[key]
-        if apqns.first.mode =~ /CCA/
-          if apqns.size > 1
-            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode, %s is
-            # replaced by a key verification pattern
-            format(_("CCA: %s (several APQNs)"), key)
-          else
-            # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode.
-            #              %{key} is replaced by a key verification pattern;
-            #              %{apqn} by the name of an APQN
-            format(_("CCA: %{key} (APQN %{apqn})"), key: key, apqn: apqns.first.name)
-          end
-        else
+        if apqns.first.ep11?
           # TRANSLATORS: this string is used to display a subset of a key verification pattern.
           # %{start} is replaced by the first 10 characters of the pattern; %{ending} by the final 10.
           key_string = format(_("%{start}...%{ending}"), start: key[0..9], ending: key[-10..-1])
@@ -87,6 +76,15 @@ module Y2Partitioner
             #              %{apqn} by the name of an APQN
             format(_("EP11: %{key} (APQN %{apqn})"), key: key_string, apqn: apqns.first.name)
           end
+        elsif apqns.size > 1
+          # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode, %s is
+          # replaced by a key verification pattern
+          format(_("CCA: %s (several APQNs)"), key)
+        else
+          # TRANSLATORS: Related to encryption using a CryptoExpress adapter in CCA mode.
+          #              %{key} is replaced by a key verification pattern;
+          #              %{apqn} by the name of an APQN
+          format(_("CCA: %{key} (APQN %{apqn})"), key: key, apqn: apqns.first.name)
         end
       end
 

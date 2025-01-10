@@ -36,7 +36,7 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          lines = [@key[0..34], "  #{@key[35..-1]}"]
+          lines = [@key[0..33], "  #{@key[34..-1]}"]
           Left(Label(lines.join("\n")))
         end
       end

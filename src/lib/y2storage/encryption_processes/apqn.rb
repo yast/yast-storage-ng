@@ -83,7 +83,8 @@ module Y2Storage
         #   "01          CEX5C CCA-Coproc  online         1\n" \
         #   "01.0001     CEX5C CCA-Coproc  online         1\n" \
         #   "01.0004     CEX5C CCA-Coproc  online         0\n" \
-        #   "01.0005     CEX5C CCA-Coproc  online         0"
+        #   "03          CEX7P EP11-Coproc online         0\n" \
+        #   "03.0003     CEX7P EP11-Coproc online         0"
         #
         # @return [String]
         def execute_lszcrypt
@@ -119,7 +120,10 @@ module Y2Storage
       # @return [String] e.g., "online", "offline"
       attr_reader :status
 
-      attr_reader :aes_master_key
+      # Verification pattern of the master key configured on the APQN, if any
+      #
+      # @return [String, nil]
+      attr_reader :master_key_pattern
 
       # Constructor
       #
@@ -149,17 +153,27 @@ module Y2Storage
         status == "online"
       end
 
+      # Whether the coprocessor associated to this APQN is configured in EP11 mode
+      def ep11?
+        mode =~ /EP11/
+      end
+
+      # Fills {#master_key_pattern} with information from the current system
       def read_master_keys
-        @aes_master_key = aes_key_from_file
+        @master_key_pattern = master_key_from_file
       end
 
       private
 
-      def aes_key_from_file
+      # Verification pattern for the master key that is associated to this APQN and can be used to
+      # encrypt devices. Read from the corresponding file at /sys.
+      #
+      # @return [String, nil] Nil if no usable master key is configured or it could not be read
+      def master_key_from_file
         content = File.read(master_key_file)
         return nil if content&.empty?
 
-        entry = content.lines.grep(/^AES CUR: valid/).first
+        entry = content.lines.grep(master_key_regexp).first
         return nil unless entry
 
         entry.split.last
@@ -167,6 +181,12 @@ module Y2Storage
         nil
       end
 
+      # @see #master_key_from_file
+      def master_key_regexp
+        ep11? ? /^WK CUR: valid/ : /^AES CUR: valid/
+      end
+
+      # @see #master_key_from_file
       def master_key_file
         # return "/home/ags/projects/yast/yast-storage-ng/pervasive/cat.#{card}.#{domain}.out"
         "/sys/bus/ap/devices/card#{card}/#{name}/mkvps"
