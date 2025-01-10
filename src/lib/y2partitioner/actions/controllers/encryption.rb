@@ -54,7 +54,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
         attr_accessor :apqns
-        
+
         # @return [String] Label for the encryption device if the method supports setting one
         attr_accessor :label
 
@@ -245,7 +245,7 @@ module Y2Partitioner
 
         def process_pervasive_key(process)
           return nil unless process.respond_to?(:apqns)
-          
+
           apqn = process.apqns.first
           return nil unless apqn
 

@@ -51,7 +51,7 @@ module Y2Storage
 
       # @see Base#available?
       def available?
-        return true
+        # return true
         EncryptionProcesses::SecureKey.available?
       end
 

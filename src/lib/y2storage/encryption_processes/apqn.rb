@@ -53,10 +53,7 @@ module Y2Storage
         def read_apqns
           apqns_data.map do |data|
             name, type, mode, status, = data
-
-            new(name, type, mode, status).tap do |apqn|
-              apqn.read_master_keys
-            end
+            new(name, type, mode, status).tap(&:read_master_keys)
           end
         end
 

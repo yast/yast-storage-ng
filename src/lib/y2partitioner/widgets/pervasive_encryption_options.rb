@@ -206,6 +206,7 @@ module Y2Partitioner
         if select_master_key?
           widgets << master_key_widget
           widgets << apqn_widget if select_apqns?
+        end
 
         widgets
       end

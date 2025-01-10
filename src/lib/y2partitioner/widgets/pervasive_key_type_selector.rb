@@ -89,7 +89,7 @@ module Y2Partitioner
       # @return [String]
       def value
         return "ep11" unless @widget.respond_to?(:value)
-        
+
         @widget.value
       end
 

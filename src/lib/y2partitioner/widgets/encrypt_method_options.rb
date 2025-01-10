@@ -348,14 +348,16 @@ module Y2Partitioner
       #
       # @return [Widgets::PervasiveKeySelector]
       def master_key_widget
-        @master_key_widget ||= Widgets::PervasiveKeySelector.new(apqns_by_key, initial_key, enable: enable_on_init)
+        @master_key_widget ||=
+          Widgets::PervasiveKeySelector.new(apqns_by_key, initial_key, enable: enable_on_init)
       end
 
       # Widget to allow the APQNs selection
       #
       # @return [Widgets::ApqnSelector]
       def apqn_widget
-        @apqn_widget ||= Widgets::ApqnSelector.new(apqns_by_key, initial_key, initial_apqns, enable: enable_on_init)
+        @apqn_widget ||=
+          Widgets::ApqnSelector.new(apqns_by_key, initial_key, initial_apqns, enable: enable_on_init)
       end
 
       # Read-only widget to display the full verification pattern of the chosen master key,

@@ -25,6 +25,7 @@ module Y2Partitioner
     # Widget to display the full verification pattern for the selected master key, in case the
     # pattern is too long to be displayed at the corresponding selector
     class PervasiveKey < CWM::ReplacePoint
+      # Internal widget showing the full verification pattern split into several lines
       class Label < CWM::CustomWidget
         # Constructor
         def initialize(widget_id, key)

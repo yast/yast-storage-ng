@@ -27,18 +27,15 @@ require "y2partitioner/widgets/apqn_selector"
 
 module Y2Partitioner
   module Widgets
-    # Widget to display the available options for a given encryption method
+    # Widget to select the APQNs for pervasive encryption
     class ApqnSelector < CWM::ReplacePoint
-
-      # Widget to select APQNs for generating a new secure key for pervasive encryption
+      # Internal widget used when there are several candidate APQNs for the given key
       class ApqnMultiSelector < CWM::MultiSelectionBox
         # Constructor
-        #
-        # @param enable [Boolean] whether the widget should be enabled on init
         def initialize(id, all_apqns, selected_apqns)
           super()
           textdomain "storage"
-          
+
           self.widget_id = id
           @apqns = all_apqns
           @selected_apqns = selected_apqns
@@ -60,8 +57,6 @@ module Y2Partitioner
       end
 
       # Constructor
-      #
-      # @param controller [Actions::Controllers::Encryption]
       def initialize(apqns_by_key, initial_key, initial_apqns, enable: true)
         textdomain "storage"
 
@@ -85,7 +80,7 @@ module Y2Partitioner
       def enable
         super
 
-        widgets_by_key.values.each { |w| w.enable if w.respond_to?(:enable) }
+        widgets_by_key.each_value { |w| w.enable if w.respond_to?(:enable) }
       end
 
       # @macro seeAbstractWidget
@@ -94,22 +89,22 @@ module Y2Partitioner
       def disable
         super
 
-        all_widgets.values.each { |w| w.disable if w.respond_to?(:disable) }
+        all_widgets.each_value { |w| w.disable if w.respond_to?(:disable) }
       end
 
-      # Redraws the widget to show the options for given encryption method
+      # Redraws the widget to show the options for given master key
       #
-      # @param encrypt_method [YStorage::EncryptionMethod]
+      # @param key [String]
       def refresh(key)
         replace(widgets_by_key[key])
       end
 
-      # All selected APQNs
+      # All selected APQNs, if there are several possible ones
       #
-      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>, nil] nil if there is only one possible APQN
       def value
         return unless @widget.respond_to?(:value)
-        
+
         @widget.value.map { |d| @controller.find_apqn(d) }.compact
       end
 
@@ -117,8 +112,11 @@ module Y2Partitioner
 
       # @return [Boolean]
       attr_reader :enable_on_init
+
+      # @return [Hash] list of possible APQNs for each configured master key
       attr_reader :apqns_by_key
 
+      # @return [Hash{String => CWM::AbstractWidget}]
       def widgets_by_key
         return @widgets_by_key if @widgets_by_key
 
@@ -131,6 +129,7 @@ module Y2Partitioner
         @widgets_by_key
       end
 
+      # Returns either a selector or an empty widget (if there is only one possible APQN)
       def widget_for(key, apqns, selected)
         widget_id = "Details#{key}"
         if apqns.size > 1
