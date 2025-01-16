@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -53,8 +53,7 @@ module Y2Storage
         def read_apqns
           apqns_data.map do |data|
             name, type, mode, status, = data
-
-            new(name, type, mode, status)
+            new(name, type, mode, status).tap(&:read_master_keys)
           end
         end
 
@@ -84,7 +83,8 @@ module Y2Storage
         #   "01          CEX5C CCA-Coproc  online         1\n" \
         #   "01.0001     CEX5C CCA-Coproc  online         1\n" \
         #   "01.0004     CEX5C CCA-Coproc  online         0\n" \
-        #   "01.0005     CEX5C CCA-Coproc  online         0"
+        #   "03          CEX7P EP11-Coproc online         0\n" \
+        #   "03.0003     CEX7P EP11-Coproc online         0"
         #
         # @return [String]
         def execute_lszcrypt
@@ -119,6 +119,11 @@ module Y2Storage
       # @return [String] e.g., "online", "offline"
       attr_reader :status
 
+      # Verification pattern of the master key configured on the APQN, if any
+      #
+      # @return [String, nil]
+      attr_reader :master_key_pattern
+
       # Constructor
       #
       # @param name [String]
@@ -145,6 +150,44 @@ module Y2Storage
       # @return [Boolean]
       def online?
         status == "online"
+      end
+
+      # Whether the coprocessor associated to this APQN is configured in EP11 mode
+      def ep11?
+        mode.match?(/EP11/)
+      end
+
+      # Fills {#master_key_pattern} with information from the current system
+      def read_master_keys
+        @master_key_pattern = master_key_from_file
+      end
+
+      private
+
+      # Verification pattern for the master key that is associated to this APQN and can be used to
+      # encrypt devices. Read from the corresponding file at /sys.
+      #
+      # @return [String, nil] Nil if no usable master key is configured or it could not be read
+      def master_key_from_file
+        content = File.read(master_key_file)
+        return nil if content&.empty?
+
+        entry = content.lines.grep(master_key_regexp).first
+        return nil unless entry
+
+        entry.split.last
+      rescue SystemCallError
+        nil
+      end
+
+      # @see #master_key_from_file
+      def master_key_regexp
+        ep11? ? /^WK CUR: valid/ : /^AES CUR: valid/
+      end
+
+      # @see #master_key_from_file
+      def master_key_file
+        "/sys/bus/ap/devices/card#{card}/#{name}/mkvps"
       end
     end
   end

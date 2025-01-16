@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -55,11 +55,13 @@ module Y2Storage
       # @param name [String] see {#name}
       # @param sector_size [Integer, nil] see {#sector_size}
       # @param apqns [Array<Apqn>] APQNs to use for generating the secure key
-      def initialize(name, sector_size: nil, apqns: [])
+      # @param key_type [String, nil] type of the generated secure key
+      def initialize(name, sector_size: nil, apqns: [], key_type: nil)
         @name = name
         @volume_entries = []
         @sector_size = sector_size
         @apqns = apqns
+        @key_type = key_type
       end
 
       # Whether the key contains an entry in its list of volumes referencing the
@@ -200,6 +202,9 @@ module Y2Storage
       # @return [Array<Apqn>]
       attr_reader :apqns
 
+      # @return [String, nil]
+      attr_reader :key_type
+
       # Volume entry associated to the given device
       #
       # @param device [BlkDevice, Encryption] it can be the plain device being
@@ -245,6 +250,8 @@ module Y2Storage
 
         args += ["--apqns", apqns.map(&:name).join(",")] if apqns.any?
 
+        args += ["--key-type", key_type] if key_type
+
         args
       end
 
@@ -253,7 +260,7 @@ module Y2Storage
         #
         # @return [Boolean]
         def available?
-          Apqn.online.any?
+          Apqn.online.any?(&:master_key_pattern)
         end
 
         # Registers a new secure key in the system's key database
@@ -267,10 +274,13 @@ module Y2Storage
         # @param volumes [Array<Encryption>] encryption devices to register in
         #   the "volumes" section of the new key
         # @param apqns [Array<Apqn>] APQNs to use
+        # @param key_type [String, nil] type of the generated secure key
         #
         # @return [SecureKey] an object representing the new key
-        def generate(name, sector_size: nil, volumes: [], apqns: [])
-          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+        def generate(name, sector_size: nil, volumes: [], apqns: [], key_type: nil)
+          key = new_for_generate(
+            name, sector_size: sector_size, volumes: volumes, apqns: apqns, key_type: key_type
+          )
 
           key.generate
 
@@ -282,8 +292,10 @@ module Y2Storage
         # @see #generate
         #
         # @raise [Cheetah::ExecutionFailed] when the generation fails
-        def generate!(name, sector_size: nil, volumes: [], apqns: [])
-          key = new_for_generate(name, sector_size: sector_size, volumes: volumes, apqns: apqns)
+        def generate!(name, sector_size: nil, volumes: [], apqns: [], key_type: nil)
+          key = new_for_generate(
+            name, sector_size: sector_size, volumes: volumes, apqns: apqns, key_type: key_type
+          )
 
           key.generate!
 
@@ -334,9 +346,9 @@ module Y2Storage
         # with the associated volumes).
         #
         # @return [SecureKey]
-        def new_for_generate(name, sector_size: nil, volumes: [], apqns: [])
+        def new_for_generate(name, sector_size: nil, volumes: [], apqns: [], key_type: nil)
           name = exclusive_name(name)
-          key = new(name, sector_size: sector_size, apqns: apqns)
+          key = new(name, sector_size: sector_size, apqns: apqns, key_type: key_type)
           volumes.each { |v| key.add_device(v) }
 
           key
