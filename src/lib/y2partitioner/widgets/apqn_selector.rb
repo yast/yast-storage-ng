@@ -1,4 +1,4 @@
-# Copyright (c) [2020] SUSE LLC
+# Copyright (c) [2020-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,66 +19,120 @@
 
 require "yast2/popup"
 require "cwm"
-require "y2partitioner/actions/controllers/encryption"
 
 module Y2Partitioner
   module Widgets
     # Widget to select APQNs for generating a new secure key for pervasive encryption
-    class ApqnSelector < CWM::MultiSelectionBox
-      # Constructor
-      #
-      # @param controller [Actions::Controllers::Encryption]
-      # @param enable [Boolean] whether the widget should be enabled on init
-      def initialize(controller, enable: true)
-        super()
-        textdomain "storage"
+    class ApqnSelector < CWM::ReplacePoint
+      # Internal widget used when there are several candidate APQNs for the given key
+      class ApqnMultiSelector < CWM::MultiSelectionBox
+        # Constructor
+        def initialize(id, all_apqns, selected_apqns)
+          super()
+          textdomain "storage"
 
-        @controller = controller
-        @enable_on_init = enable
+          self.widget_id = id
+          @apqns = all_apqns
+          @selected_apqns = selected_apqns
+        end
+
+        # @return [String]
+        def label
+          _("Available APQNs:")
+        end
+
+        # @return [Array<String, String>]
+        def items
+          @apqns.map { |a| [a, a] }
+        end
+
+        def init
+          self.value = @selected_apqns
+        end
       end
 
-      # @return [String]
-      def label
-        _("Available APQNs:")
+      # Constructor
+      def initialize(apqns_by_key, initial_key, initial_apqns, enable: true)
+        textdomain "storage"
+
+        @apqns_by_key = apqns_by_key
+        @initial_key = initial_key
+        @initial_apqns = initial_apqns
+        @enable_on_init = enable
+
+        super(id: "apqn_selector", widget: widgets_by_key[initial_key])
       end
 
       # @macro seeAbstractWidget
       def init
+        super
         enable_on_init ? enable : disable
-        self.value = controller.apqns
       end
 
-      # @return [Array<String, String>]
-      def items
-        controller.online_apqns.map { |d| [d.name, d.name] }
-      end
-
-      # All selected APQNs
+      # @macro seeAbstractWidget
       #
-      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
+      # Note its internal widget needs to be enabled.
+      def enable
+        super
+
+        widgets_by_key.each_value { |w| w.enable if w.respond_to?(:enable) }
+      end
+
+      # @macro seeAbstractWidget
+      #
+      # Note its internal widget needs to be disabled.
+      def disable
+        super
+
+        widgets_by_key.each_value { |w| w.disable if w.respond_to?(:disable) }
+      end
+
+      # Redraws the widget to show the options for given master key
+      #
+      # @param key [String]
+      def refresh(key)
+        replace(widgets_by_key[key])
+      end
+
+      # All selected APQNs, if there are several possible ones
+      #
+      # @return [Array<Y2Storage::EncryptionProcesses::Apqn>, nil] nil if there is only one possible APQN
       def value
-        super.map { |d| controller.find_apqn(d) }.compact
-      end
+        return unless @widget.respond_to?(:value)
 
-      # Sets selected APQNs
-      #
-      # @param apqns [Array<Y2Storage::EncryptionProcesses::Apqn>]
-      def value=(apqns)
-        super(apqns.map(&:name))
-      end
-
-      # Saves the selected APQNs into the controller
-      def store
-        controller.apqns = value
+        @widget.value
       end
 
       private
 
-      # @return [Actions::Controllers::Encryption]
-      attr_reader :controller
-
       # @return [Boolean]
       attr_reader :enable_on_init
+
+      # @return [Hash] list of possible APQNs for each configured master key
+      attr_reader :apqns_by_key
+
+      # @return [Hash{String => CWM::AbstractWidget}]
+      def widgets_by_key
+        return @widgets_by_key if @widgets_by_key
+
+        @widgets_by_key = {}
+        apqns_by_key.each do |key, apqns|
+          selected = key == @initial_key ? @initial_apqns : apqns
+          @widgets_by_key[key] = widget_for(key, apqns, selected)
+        end
+
+        @widgets_by_key
+      end
+
+      # Returns either a selector or an empty widget (if there is only one possible APQN)
+      def widget_for(key, apqns, selected)
+        widget_id = "Details#{key}"
+        if apqns.size > 1
+          ApqnMultiSelector.new(widget_id, apqns.map(&:name), selected.map(&:name))
+        else
+          CWM::Empty.new(widget_id)
+        end
+      end
     end
   end
 end
