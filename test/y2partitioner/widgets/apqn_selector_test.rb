@@ -23,30 +23,60 @@ require_relative "../test_helper"
 require "cwm/rspec"
 require "y2partitioner/widgets/apqn_selector"
 
-describe Y2Partitioner::Widgets::ApqnSelector do
-  subject { described_class.new(controller) }
+describe Y2Partitioner::Widgets do
+  let(:apqn1) { apqn_mock("01.0001", "0x123") }
+  let(:apqn2) { apqn_mock("01.0002", "0x456") }
+  let(:apqn3) { apqn_mock("02.0001", "0x123") }
+  let(:apqn4) { apqn_mock("03.0001", "0xabcdefg", ep11: true) }
 
-  let(:controller) do
-    instance_double(Y2Partitioner::Actions::Controllers::Encryption, online_apqns: apqns)
-  end
+  describe Y2Partitioner::Widgets::ApqnSelector do
+    subject(:widget) { described_class.new(apqns_by_key, initial_key, initial_apqns) }
 
-  let(:apqns) { [apqn1, apqn2] }
+    let(:all_apqns) { [apqn1, apqn2, apqn3, apqn4] }
+    let(:apqns_by_key) { all_apqns.group_by(&:master_key_pattern) }
+    let(:initial_key) { apqn1.master_key_pattern }
+    let(:initial_apqns) { [apqn1] }
 
-  let(:apqn1) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
+    include_examples "CWM::AbstractWidget"
 
-  let(:apqn2) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0002") }
-
-  include_examples "CWM::MultiSelectionBox"
-
-  describe "#store" do
     before do
-      allow(subject).to receive(:value).and_return(apqns)
+      allow(Y2Partitioner::Widgets::ApqnSelector::ApqnMultiSelector).to receive(:new).and_return(multi)
     end
 
-    it "saves selected APQNs in the controller" do
-      expect(controller).to receive(:apqns=).with(apqns)
+    let(:multi) { Y2Partitioner::Widgets::ApqnSelector::ApqnMultiSelector.new("id", [], []) }
 
-      subject.store
+    describe "#enable" do
+      it "forwards the call to the inner widget" do
+        expect(multi).to receive(:enable)
+        widget.enable
+      end
+    end
+
+    describe "#disable" do
+      it "forwards the call to the combo box" do
+        expect(multi).to receive(:disable)
+        widget.disable
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::ApqnSelector::ApqnMultiSelector do
+    subject(:widget) { described_class.new("id", [apqn1, apqn3], [apqn1]) }
+
+    include_examples "CWM::AbstractWidget"
+
+    describe "#init" do
+      it "sets the current key value" do
+        expect(widget).to receive(:value=).with([apqn1])
+
+        widget.init
+      end
+    end
+
+    describe "#items" do
+      it "includes one entry per each APQN" do
+        expect(widget.items).to eq [[apqn1, apqn1], [apqn3, apqn3]]
+      end
     end
   end
 end

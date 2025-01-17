@@ -242,6 +242,13 @@ module Yast
       def stub_product_features(features)
         Yast::ProductFeatures.Import(features)
       end
+
+      # Double for a APQN (used in pervasive encryption)
+      def apqn_mock(name, master_key, ep11: false)
+        instance_double(
+          Y2Storage::EncryptionProcesses::Apqn, name: name, master_key_pattern: master_key, ep11?: ep11
+        )
+      end
     end
     # rubocop:enable all
   end
