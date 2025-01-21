@@ -24,6 +24,10 @@ module Y2Partitioner
   module Widgets
     # Widget to display the full verification pattern for the selected master key, in case the
     # pattern is too long to be displayed at the corresponding selector
+    #
+    # Verification patterns for CCA keys are 18 characters long ("0x" + 16 hexadecimal digits) so
+    # they fit at the selector. But with EP11 keys, the pattern is 66 characters long ("0x" +
+    # 64 digits), so an extra label with two lines is displayed.
     class PervasiveKey < CWM::ReplacePoint
       # Internal widget showing the full verification pattern split into several lines
       class Label < CWM::CustomWidget
@@ -36,10 +40,15 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
+          # This shows the EP11 pattern in a readable way in both text and graphical modes
           lines = [@key[0..33], "  #{@key[34..-1]}"]
           Left(Label(lines.join("\n")))
         end
       end
+
+      # Size of a pattern for CCA APQNs. This is the maximum size that fits into a selector.
+      CCA_PATTERN_SIZE = 18
+      private_constant :CCA_PATTERN_SIZE
 
       # Constructor
       #
@@ -62,7 +71,7 @@ module Y2Partitioner
       # Empty widget or multi-line label
       def widget_for(key)
         widget_id = "FullKey#{key}"
-        if key.size > 20
+        if key.size > CCA_PATTERN_SIZE
           Label.new(widget_id, key)
         else
           CWM::Empty.new(widget_id)

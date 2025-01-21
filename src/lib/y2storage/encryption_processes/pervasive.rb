@@ -97,6 +97,7 @@ module Y2Storage
 
         master_key_file = @secure_key.filename
         sector_size = sector_size_for(device.blk_device)
+        # Convert from bytes to bits
         key_size = @secure_key.secure_key_size * 8
 
         # NOTE: The options cipher and key-size could also be influenced by setting
