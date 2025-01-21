@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -16,7 +16,6 @@
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
-# Copyright (c) [2019] SUSE LLC
 
 require "y2storage/encryption_method/base"
 require "y2storage/encryption_processes/pervasive"
@@ -59,10 +58,12 @@ module Y2Storage
       # @param blk_device [Y2Storage::BlkDevice]
       # @param dm_name [String]
       # @param apqns [Array<EncryptionProcesses::Apqn>] APQNs to use when generating a secure key.
+      # @param key_type [String] Type of the generated secure key, as accepted by the command
+      #   "zkey generate"
       #
       # @return [Y2Storage::Encryption]
-      def create_device(blk_device, dm_name, apqns: [])
-        encryption_process.create_device(blk_device, dm_name, apqns: apqns)
+      def create_device(blk_device, dm_name, apqns: [], key_type: nil)
+        encryption_process.create_device(blk_device, dm_name, apqns: apqns, key_type: key_type)
       end
 
       private

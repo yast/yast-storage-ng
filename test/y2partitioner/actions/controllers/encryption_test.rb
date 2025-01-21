@@ -642,19 +642,23 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
   shared_context "apqns" do
     before do
       allow(Y2Storage::EncryptionProcesses::Apqn).to receive(:all).and_return([apqn1, apqn2, apqn3])
+      allow(apqn1).to receive(:master_key_pattern).and_return "0x123445"
+      allow(apqn2).to receive(:master_key_pattern).and_return "0x654478"
     end
 
-    let(:apqn1) { Y2Storage::EncryptionProcesses::Apqn.new("01.0001", "", "", "online") }
+    let(:apqn1) { Y2Storage::EncryptionProcesses::Apqn.new("01.0001", "", "CCA-Coproc", "online") }
 
-    let(:apqn2) { Y2Storage::EncryptionProcesses::Apqn.new("01.0002", "", "", "online") }
+    let(:apqn2) { Y2Storage::EncryptionProcesses::Apqn.new("01.0002", "", "CCA-Coproc", "online") }
 
-    let(:apqn3) { Y2Storage::EncryptionProcesses::Apqn.new("01.0003", "", "", "offline") }
+    let(:apqn3) { Y2Storage::EncryptionProcesses::Apqn.new("01.0003", "", "CCA-Coproc", "offline") }
+
+    let(:apqn3) { Y2Storage::EncryptionProcesses::Apqn.new("02.0001", "", "EP11-Coproc", "online") }
   end
 
   describe "#online_apqns" do
     include_context "apqns"
 
-    it "returns all online APQNs" do
+    it "returns all online APQNs with a valid key" do
       expect(subject.online_apqns).to contain_exactly(apqn1, apqn2)
     end
   end
@@ -696,13 +700,13 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       let(:key) { instance_double(Y2Storage::EncryptionProcesses::SecureKey, remove: nil) }
 
       it "returns nil" do
-        expect(subject.test_secure_key_generation).to be_nil
+        expect(subject.test_secure_key_generation([], "")).to be_nil
       end
 
       it "removes the temporary key" do
         expect(key).to receive(:remove)
 
-        subject.test_secure_key_generation
+        subject.test_secure_key_generation([], "")
       end
     end
 
@@ -714,7 +718,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
       let(:error) { Cheetah::ExecutionFailed.new("", "", "", "", "error") }
 
       it "returns the error message" do
-        expect(subject.test_secure_key_generation).to eq("error")
+        expect(subject.test_secure_key_generation([], "")).to eq("error")
       end
     end
   end

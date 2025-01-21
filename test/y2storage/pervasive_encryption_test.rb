@@ -34,6 +34,7 @@ describe "pervasive encryption" do
     allow(Yast::Execute).to receive(:locally)
     allow(Yast::Execute).to receive(:locally).with(/zkey/, "list", any_args)
       .and_return zkey_list
+    allow(File).to receive(:size).with(/\/etc\/zkey\/repository/).and_return 128
   end
 
   let(:manager) { Y2Storage::StorageManager.instance }
@@ -166,7 +167,7 @@ describe "pervasive encryption" do
       it "tries to generate a new secure key with the appropriate name and arguments" do
         expect(Yast::Execute).to receive(:locally).with(
           /zkey/, "generate", "-V", "--name", "YaST_cr_dasdc1_1", "--xts", "--keybits", "256",
-          "--volume-type", "LUKS2", "--sector-size", "4096"
+          "--volume-type", "LUKS2", "--sector-size", "4096", "--key-type", anything
         )
 
         blk_device.encrypt(method: pervasive)

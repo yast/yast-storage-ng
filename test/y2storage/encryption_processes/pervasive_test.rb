@@ -89,12 +89,12 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     let(:secure_key) { nil }
 
-    let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
+    let(:apqn) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001", ep11?: false) }
 
     let(:generated_key) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKey,
         plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1",
-        filename: "/etc/zkey/repository/secure_xtskey1.skey")
+        filename: "/etc/zkey/repository/secure_xtskey1.skey", secure_key_size: 128)
     end
 
     before do
@@ -105,7 +105,8 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
 
     it "generates a new secure key for the device" do
       expect(Y2Storage::EncryptionProcesses::SecureKey).to receive(:generate)
-        .with("YaST_cr_sda", sector_size: 4096, apqns: [apqn]).and_return(generated_key)
+        .with("YaST_cr_sda", sector_size: 4096, apqns: [apqn], key_type: "CCA-AESCIPHER")
+        .and_return(generated_key)
       subject.pre_commit(encryption)
     end
 
@@ -161,7 +162,7 @@ describe Y2Storage::EncryptionProcesses::Pervasive do
     let(:secure_key) do
       instance_double(Y2Storage::EncryptionProcesses::SecureKey,
         plain_name: "/dev/dasdc1", dm_name: "cr_1", name: "secure_xtskey1",
-        filename: "/etc/zkey/repository/secure_xtskey1.skey")
+        filename: "/etc/zkey/repository/secure_xtskey1.skey", secure_key_size: 128)
     end
 
     let(:secure_key_volume) do
