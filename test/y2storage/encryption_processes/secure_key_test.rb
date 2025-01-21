@@ -185,6 +185,32 @@ describe Y2Storage::EncryptionProcesses::SecureKey do
     end
   end
 
+  describe "#secure_key_size" do
+    subject { described_class.new("cr", sector_size: 2048) }
+
+    context "if the key file exists" do
+      before do
+        allow(File).to receive(:size).with("/etc/zkey/repository/cr.skey").and_return 272
+      end
+
+      it "returns the size of the key file" do
+        expect(subject.secure_key_size).to eq 272
+      end
+    end
+
+    context "if the key file does not exist" do
+      before do
+        allow(File).to receive(:size).with("/etc/zkey/repository/cr.skey").and_raise exception
+      end
+
+      let(:exception) { Errno::ENOENT.new }
+
+      it "returns zero" do
+        expect(subject.secure_key_size).to eq 0
+      end
+    end
+  end
+
   describe "#add_device_and_write" do
     let(:blk_device) do
       instance_double(Y2Storage::BlkDevice, udev_full_ids: ["/dev/dasdc1"])

@@ -176,6 +176,19 @@ module Y2Storage
         File.join(repo_dir, name + ".skey")
       end
 
+      # Size of the secure key in bytes
+      #
+      # @return [Integer] zero if the secure key is still not generated
+      def secure_key_size
+        # This could also be obtained from "zkey list" but this seems more direct, likely "zkey list"
+        # simply does the same check
+        File.size(filename)
+      rescue SystemCallError
+        # According to a comment at jsc#IBM-1444, assuming a reasonable default size would not be safe
+        # since those default sizes can change in the future
+        0
+      end
+
       # Copies the files of this key from the current keys repository to the
       # repository of a target system
       #

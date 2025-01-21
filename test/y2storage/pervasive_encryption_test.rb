@@ -34,6 +34,7 @@ describe "pervasive encryption" do
     allow(Yast::Execute).to receive(:locally)
     allow(Yast::Execute).to receive(:locally).with(/zkey/, "list", any_args)
       .and_return zkey_list
+    allow(File).to receive(:size).with(/\/etc\/zkey\/repository/).and_return 128
   end
 
   let(:manager) { Y2Storage::StorageManager.instance }
