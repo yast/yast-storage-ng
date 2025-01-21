@@ -61,18 +61,36 @@ describe Y2Storage::EncryptionMethod do
 
     before do
       allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything).and_return(lszcrypt)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(/^\/sys\/bus\/ap\/devices\/card/).and_return mkvps_content
       mock_env(env_vars)
     end
 
     let(:lszcrypt) { "" }
     let(:env_vars) { {} }
+    let(:mkvps_content) { "" }
 
     context "if there are online Crypto Express CCA coprocessors" do
       let(:lszcrypt) { lszcrypt_output("ok") }
 
-      it "returns methods for LUKS1, LUKS2, pervasive LUKS2 and random swap" do
-        expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :luks2, :pervasive_luks2, :random_swap)
+      context "but none of them have a valid master key" do
+        it "returns methods for LUKS1, LUKS2 and random swap" do
+          expect(described_class.available.map(&:to_sym))
+            .to contain_exactly(:luks1, :luks2, :random_swap)
+        end
+      end
+
+      context "and any of them has a valid master key" do
+        def mkvps(file)
+          File.read(File.join(DATA_PATH, "mkvps", "#{file}.txt"))
+        end
+
+        let(:mkvps_content) { mkvps("cca-valid1") }
+
+        it "returns methods for LUKS1, LUKS2, pervasive LUKS2 and random swap" do
+          expect(described_class.available.map(&:to_sym))
+            .to contain_exactly(:luks1, :luks2, :pervasive_luks2, :random_swap)
+        end
       end
     end
 
