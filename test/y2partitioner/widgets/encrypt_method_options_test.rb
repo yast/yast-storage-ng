@@ -137,21 +137,26 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
 
     before do
       allow(Yast2::Popup).to receive(:show)
+      allow(controller).to receive(:online_apqns).and_return(apqns)
+      allow(Y2Partitioner::Widgets::PervasiveKeySelector).to receive(:new).and_return(master_key_widget)
     end
+
+    let(:master_key_widget) do
+      instance_double(
+        Y2Partitioner::Widgets::PervasiveKeySelector, widget_id: "mkw", value: selected_master_key
+      )
+    end
+
+    let(:apqns) { [apqn1, apqn2, apqn3, apqn4] }
+    let(:apqn1) { apqn_mock("01.0001", "0x123") }
+    let(:apqn2) { apqn_mock("01.0002", "0x456") }
+    let(:apqn3) { apqn_mock("02.0001", "0x123") }
+    let(:apqn4) { apqn_mock("03.0001", "0xabcdefg", ep11: true) }
+    let(:selected_master_key) { apqn4.master_key_pattern }
 
     include_examples "CWM::CustomWidget"
 
     describe "#contents" do
-      before do
-        allow(controller).to receive(:online_apqns).and_return(apqns)
-      end
-
-      let(:apqns) { [] }
-
-      let(:apqn1) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
-
-      let(:apqn2) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0002") }
-
       it "displays the encryption password widget" do
         widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::EncryptPassword) }
 
@@ -159,12 +164,24 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
       end
 
       context "when there are more than one online APQNs" do
-        let(:apqns) { [apqn1, apqn2] }
+        context "and some APQN is already selected" do
+          before { controller.apqns = [apqn1] }
 
-        it "displays the APQN selector widget" do
-          widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::ApqnSelector) }
+          it "displays the APQN selector widget" do
+            widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::ApqnSelector) }
 
-          expect(widget).to_not be_nil
+            expect(widget).to_not be_nil
+          end
+        end
+
+        context "and no APQNs has been selected yet" do
+          before { controller.apqns = [] }
+
+          it "displays the APQN selector widget" do
+            widget = subject.contents.nested_find { |i| i.is_a?(Y2Partitioner::Widgets::ApqnSelector) }
+
+            expect(widget).to_not be_nil
+          end
         end
       end
 
@@ -179,26 +196,32 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
       end
     end
 
+    describe "#handle" do
+      before do
+        allow(Y2Partitioner::Widgets::PervasiveKey).to receive(:new).and_return(full_key_widget)
+      end
+
+      let(:full_key_widget) do
+        instance_double(Y2Partitioner::Widgets::PervasiveKey)
+      end
+
+      it "refreshes all internal widgets if the master key changes" do
+        expect(full_key_widget).to receive(:refresh)
+
+        subject.handle({ "ID" => master_key_widget.widget_id })
+      end
+    end
+
     describe "#validate" do
       before do
         allow(Y2Partitioner::Widgets::ApqnSelector).to receive(:new).and_return(apqn_widget)
-
         allow(controller).to receive(:secure_key)
-
-        allow(controller).to receive(:online_apqns).and_return(apqns)
-
         allow(controller).to receive(:test_secure_key_generation).and_return(generation_test_error)
       end
 
       let(:apqn_widget) { instance_double(Y2Partitioner::Widgets::ApqnSelector, value: selected_apqns) }
-
-      let(:apqns) { [apqn1, apqn2] }
-
-      let(:selected_apqns) { [apqn1, apqn2] }
-
-      let(:apqn1) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001") }
-
-      let(:apqn2) { instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0002") }
+      let(:selected_apqns) { [apqn4] }
+      let(:selected_master_key) { apqn4.master_key_pattern }
 
       context "and the secure key cannot be generated" do
         let(:generation_test_error) { "error" }
@@ -207,37 +230,11 @@ describe Y2Partitioner::Widgets::EncryptMethodOptions do
           expect(subject.validate).to eq(false)
         end
 
-        context "when there are more than one selected APQNs" do
-          let(:selected_apqns) { [apqn1, apqn2] }
+        it "shows an specific error" do
+          expect(Yast2::Popup).to receive(:show)
+            .with(/secure key cannot be generated/, headline: :error, details: "error")
 
-          it "shows an specific error" do
-            expect(Yast2::Popup).to receive(:show)
-              .with(/all selected APQNs are configured/, headline: :error, details: "error")
-
-            subject.validate
-          end
-        end
-
-        context "when there is only one selected APQN" do
-          let(:selected_apqns) { [apqn1] }
-
-          it "shows an specific error" do
-            expect(Yast2::Popup).to receive(:show)
-              .with(/the selected APQN is configured/, headline: :error, details: "error")
-
-            subject.validate
-          end
-        end
-
-        context "when there is no selected APQN" do
-          let(:selected_apqns) { [] }
-
-          it "shows an specific error" do
-            expect(Yast2::Popup).to receive(:show)
-              .with(/all available APQNs are configured/, headline: :error, details: "error")
-
-            subject.validate
-          end
+          subject.validate
         end
       end
 

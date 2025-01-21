@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -55,6 +55,9 @@ module Y2Partitioner
         # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
         attr_accessor :apqns
 
+        # @return [String] Type for the new secure key for pervasive encryption
+        attr_accessor :secure_key_type
+
         # @return [String] Label for the encryption device if the method supports setting one
         attr_accessor :label
 
@@ -74,6 +77,7 @@ module Y2Partitioner
           @pbkdf = encryption&.pbkdf
           @method = initial_method
           @apqns = initial_apqns
+          @secure_key_type = initial_secure_key_type
           @label = initial_label
         end
 
@@ -151,7 +155,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
         def online_apqns
-          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online
+          @online_apqns ||= Y2Storage::EncryptionProcesses::Apqn.online.select(&:master_key_pattern)
         end
 
         # Finds an online APQN by its name
@@ -165,16 +169,19 @@ module Y2Partitioner
         # Tests the generation of a secure key
         #
         # Note that the command for generating a secure key might fail when the APQNs are not correctly
-        # configured. An APQN without a master key makes the command to tail. All the APQNs used for
+        # configured. An APQN without a master key makes the command fail. All the APQNs used for
         # generating the secure key must have the same master key.
         #
         # @param apqns [Array<Y2Storage::EncryptionProcesses::Apqn>]
+        # @param key_type [String]
         # @return [String, nil] error message or nil if the secure key can be generated
-        def test_secure_key_generation(apqns: [])
+        def test_secure_key_generation(apqns, key_type)
           key_name = "yast2_tmp_secure_key_test"
 
           begin
-            key = Y2Storage::EncryptionProcesses::SecureKey.generate!(key_name, apqns: apqns)
+            key = Y2Storage::EncryptionProcesses::SecureKey.generate!(
+              key_name, apqns: apqns, key_type: key_type
+            )
           rescue Cheetah::ExecutionFailed => e
             return e.message
           end
@@ -224,10 +231,19 @@ module Y2Partitioner
         # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
         def initial_apqns
           process = encryption&.encryption_process
-
           return [] unless process.respond_to?(:apqns)
 
           process.apqns
+        end
+
+        # Currently used key type when the device is encrypted with pervasive encryption
+        #
+        # @return [String, nil]
+        def initial_secure_key_type
+          process = encryption&.encryption_process
+          return nil unless process.respond_to?(:key_type)
+
+          process.key_type
         end
 
         # Currently used label when the device is encrypted with an encryption method that
@@ -358,7 +374,8 @@ module Y2Partitioner
         def finish_encrypt
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
-            method: method, password: password, apqns: apqns, label: label, pbkdf: pbkdf
+            method: method, password: password, label: label, pbkdf: pbkdf,
+            apqns: apqns, key_type: secure_key_type
           )
         end
 
