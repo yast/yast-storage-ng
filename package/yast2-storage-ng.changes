@@ -1,3 +1,11 @@
+-------------------------------------------------------------------
+Tue Jan 21 09:43:35 UTC 2025 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Pervasive encryption: support for AES-CIPHER and EP11 and better
+  user interface at Partitioner (jsc#IBM-1444, jsc#PED-9558).
+- 4.7.2
+
+-------------------------------------------------------------------
 Thu Sep 19 13:42:45 UTC 2024 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Use the newer exfatprogs instead of exfat-utils (bsc#1187854)
