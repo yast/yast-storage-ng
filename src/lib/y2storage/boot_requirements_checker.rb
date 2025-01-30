@@ -20,6 +20,9 @@
 require "yast"
 require "y2storage/boot_requirements_strategies"
 require "y2storage/storage_manager"
+require "y2storage/storage_env"
+
+Yast.import "Arch"
 
 module Y2Storage
   #
@@ -137,7 +140,13 @@ module Y2Storage
     # @return [BootRequirementsStrategies::Base]
     def arch_strategy_class
       if arch.efiboot?
-        BootRequirementsStrategies::UEFI
+        if StorageEnv.instance.no_bls_bootloader ||
+            (!arch.x86? && !Yast::Arch.aarch64)
+          BootRequirementsStrategies::UEFI
+        else
+          # BLS is for x86_64 and aarch64 only
+          BootRequirementsStrategies::BLS
+        end
       elsif arch.s390?
         BootRequirementsStrategies::ZIPL
       elsif arch.ppc?

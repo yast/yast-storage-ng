@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 21 10:00:00 UTC 2025 - Stefan Schubert <schubi@suse.de>
+
+- Reserve 1GiB boot partition for grub2-bls bootloader (jsc#PED-10703).
+- 5.0.24
+
+-------------------------------------------------------------------
 Tue Jan 21 09:43:35 UTC 2025 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Pervasive encryption: support for AES-CIPHER and EP11 and better

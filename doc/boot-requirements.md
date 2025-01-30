@@ -41,6 +41,18 @@
 		- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
 	- if there is already a suitable EFI partition in the boot disk
 		- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+- when proposing a new EFI partition
+	- and BLS installation is not explicitly disabled
+		- when aiming for the recommended size
+			- **requires /boot/efi to use FAT32**
+			- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
+	- and BLS installation is explicitly disabled
+		- when aiming for the recommended size
+			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+			- **requires /boot/efi to be exactly 128 MiB large**
+		- when aiming for the minimal size
+			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+			- **requires /boot/efi to be exactly 128 MiB large**
 
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
@@ -325,19 +337,24 @@
 		- **requires it to be a non-encrypted partition**
 		- when aiming for the recommended size
 			- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
-			- **requires it to be at most 8 MiB (anything bigger would mean wasting space)**
+			- **requires it to be at most 8 MiB (or optimal I/O size, bsc#1192448) for firmware to load it**
 		- when aiming for the minimal size
 			- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
-			- **requires it to be at most 8 MiB (anything bigger would mean wasting space)**
+			- **requires it to be at most 8 MiB (or optimal I/O size, bsc#1192448) for firmware to load it**
 	- when proposing a new EFI partition
 		- **requires /boot/efi to be on the boot disk**
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
-		- when aiming for the recommended size
-			- **requires /boot/efi to use FAT32**
-			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
-			- **requires it to be at most 512 MiB (enough space for several operating systems)**
-		- when aiming for the minimal size
-			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
-			- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
-			- **requires it to be at most 512 MiB (enough space for several operating systems)**
+		- and BLS installation is not explicitly disabled
+			- when aiming for the recommended size
+				- **requires /boot/efi to use FAT32**
+				- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
+		- and BLS installation is explicitly disabled
+			- when aiming for the recommended size
+				- **requires /boot/efi to use FAT32**
+				- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+				- **requires it to be at most 512 MiB (enough space for several operating systems)**
+			- when aiming for the minimal size
+				- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+				- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
+				- **requires it to be at most 512 MiB (enough space for several operating systems)**
