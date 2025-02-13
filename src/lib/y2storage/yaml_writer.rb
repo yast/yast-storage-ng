@@ -485,11 +485,12 @@ module Y2Storage
     #
     def yaml_encryption(encryption)
       content = {
-        "type" => "luks"
-        # "type" = encryption.type.to_s # not implemented yet in lib
+        "type" => encryption.type.to_human_string,
+        "name" = encryption.name
       }
 
-      content["name"] = encryption.name
+      content["pbkdf"] = encryption.pbkdf unless encryption.pbkdf.empty?
+
       if !encryption.password.empty?
         content["password"] = @record_passwords ? encryption.password : "***"
       end
