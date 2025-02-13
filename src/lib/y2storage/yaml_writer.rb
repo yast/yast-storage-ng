@@ -486,7 +486,7 @@ module Y2Storage
     def yaml_encryption(encryption)
       content = {
         "type" => encryption.type.to_human_string,
-        "name" = encryption.name
+        "name" => encryption.name
       }
 
       content["pbkdf"] = encryption.pbkdf unless encryption.pbkdf.empty?
