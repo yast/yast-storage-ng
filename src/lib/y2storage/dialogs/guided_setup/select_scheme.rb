@@ -22,6 +22,7 @@ require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 
 Yast.import "Popup"
+Yast.import "Arch"
 
 module Y2Storage
   module Dialogs
@@ -122,7 +123,7 @@ module Y2Storage
         end
 
         def tpm
-          return Empty() unless arch.has_tpm2
+          return Empty() unless Yast::Arch.has_tpm2
 
           Left(
             HBox(
@@ -161,7 +162,7 @@ module Y2Storage
 
           widget_update(:password, settings.encryption_password)
           widget_update(:repeat_password, settings.encryption_password)
-          widget_update(:tpm2, settings.encryption_use_tpm2) if arch.has_tpm2
+          widget_update(:tpm2, settings.encryption_use_tpm2) if Yast::Arch.has_tpm2
         end
 
         def update_settings!
@@ -169,7 +170,7 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
-          settings.encryption_use_tpm2 = widget_value(:tpm2) if arch.has_tpm2
+          settings.encryption_use_tpm2 = widget_value(:tpm2) if Yast::Arch.has_tpm2
         end
 
         def help_text
