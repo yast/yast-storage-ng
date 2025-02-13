@@ -489,12 +489,12 @@ module Y2Storage
         "name" => encryption.name
       }
 
-      content["pbkdf"] = encryption.pbkdf unless encryption.pbkdf.empty?
+      content["pbkdf"] = encryption.pbkdf_value unless encryption.pbkdf_value.empty?
 
       if !encryption.password.empty?
         content["password"] = @record_passwords ? encryption.password : "***"
       end
-
+puts("xxxxxxxxxxxxxx #{encryption.password}")
       { "encryption" => content }
     end
 
