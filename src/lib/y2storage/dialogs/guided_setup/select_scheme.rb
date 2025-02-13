@@ -52,6 +52,7 @@ module Y2Storage
         def encryption_handler(focus: true)
           widget_update(:password, using_encryption?, attr: :Enabled)
           widget_update(:repeat_password, using_encryption?, attr: :Enabled)
+          widget_update(:tpm2, using_encryption?, attr: :Enabled)
           return unless focus && using_encryption?
 
           Yast::UI.SetFocus(Id(:password))
@@ -128,7 +129,7 @@ module Y2Storage
           Left(
             HBox(
               HSpacing(2),
-              CheckBox(Id(:tpm2), Opt(:notify), _(WIDGET_LABELS[:use_tpm2]))
+              CheckBox(Id(:tpm2), _(WIDGET_LABELS[:use_tpm2]))
             )
           )
         end
