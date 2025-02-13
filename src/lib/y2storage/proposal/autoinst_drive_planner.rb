@@ -145,6 +145,7 @@ module Y2Storage
           end
         device.encryption_pbkdf = find_encryption_pbkdf(partition_section)
         device.encryption_label = partition_section.crypt_label
+        device.encryption_use_tpm2 = partition_section.crypt_use_tpm2
         device.encryption_cipher = partition_section.crypt_cipher
         device.encryption_key_size = encryption_key_size_for(partition_section)
         return unless device.encryption_method&.password_required?

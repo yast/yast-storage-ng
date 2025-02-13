@@ -166,7 +166,8 @@ module Y2Storage
     attr_reader :explicit_candidate_devices
 
     # TODO: it makes sense to encapsulate #encryption_password, #encryption_method and
-    # #encryption_pbkdf in some new class (eg. EncryptionSettings), posponed for now
+    # #encryption_pbkdf #encryption_use_tpm2 in some new class (eg. EncryptionSettings),
+    # posponed for now
 
     # @!attribute encryption_password
     #   @return [String] password to use when creating new encryption devices
@@ -181,6 +182,11 @@ module Y2Storage
     #
     # @return [PbkdFunction, nil] nil to use the default
     attr_accessor :encryption_pbkdf
+
+    # Using TPM2 chip for encryption.
+    #
+    # @return [Boolean] whether tpm2 chip will be used.
+    attr_accessor :encryption_use_tpm2
 
     # When the user decides to use LVM, strategy to decide the size of the volume
     # group (and, thus, the number and size of created physical volumes).
@@ -400,6 +406,7 @@ module Y2Storage
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
+      encryption_use_tpm2:        false,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,
@@ -458,6 +465,9 @@ module Y2Storage
 
       enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
       self.encryption_pbkdf = enc_pbkdf if enc_pbkdf
+
+      enc_use_tpm2 = PbkdFunction.find(feature(:proposal, :encryption_use_tpm2))
+      self.encryption_use_tpm2 = enc_use_tpm2 if enc_use_tpm2
 
       # Password potentially injected by a previous step
       enc = feature(:proposal, :encryption)

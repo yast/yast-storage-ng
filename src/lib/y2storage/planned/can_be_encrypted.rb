@@ -61,6 +61,11 @@ module Y2Storage
       # @return [String, nil] nil or empty string to use the default cipher
       attr_accessor :encryption_cipher
 
+      # Using TPM2 chip for encryption.
+      #
+      # @return [Boolean] whether tpm2 chip will be used.
+      attr_accessor :encryption_use_tpm2
+
       # Key size (in bits) to use when encrypting a LUKS device
       #
       # Any positive value must be a multiple of 8.

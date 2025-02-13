@@ -236,6 +236,7 @@ module Y2Storage
         vg.pvs_encryption_password = settings.encryption_password
         vg.pvs_encryption_method = settings.encryption_method
         vg.pvs_encryption_pbkdf = settings.encryption_pbkdf
+        vg.pvs_encryption_use_tpm2 = settings.encryption_use_tpm2
       end
 
       # Adjusts planned device values according to settings
@@ -275,6 +276,7 @@ module Y2Storage
         planned_device.encryption_password = settings.encryption_password
         planned_device.encryption_method = settings.encryption_method
         planned_device.encryption_pbkdf = settings.encryption_pbkdf
+        planned_device.encryption_use_tpm2 = settings.encryption_use_tpm2
       end
 
       # Adjusts planned device sizes according to settings
