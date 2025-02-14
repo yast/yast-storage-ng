@@ -153,6 +153,7 @@ module Y2Storage
         return unless encryption.send(:"supports_#{attr}?")
 
         value = yield(value) if block_given?
+        puts(encryption.methods)
         encryption.send(:"#{attr}=", value)
       end
 
