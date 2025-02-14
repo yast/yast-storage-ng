@@ -115,8 +115,9 @@ module Y2Storage
         log.info("yyyy #{result.methods}")                    
         log.info "xxxx #{result}"
         log.info "xxxx #{result.inspect}"
-        log.info "wwww #{result.cipher}"
-        log.info "wwww #{result.use_tpm2}"
+        log.info "wwww #{result.resond_to?(:use_tpm2)}"
+        log.info "wwww #{result.resond_to?(:cipher)}"        
+        log.info "wwww #{result.class}"
 #          assign_enc_attr(result, :use_tpm2)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
