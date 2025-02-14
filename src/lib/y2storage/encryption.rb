@@ -48,6 +48,11 @@ module Y2Storage
     storage_forward :password
     storage_forward :password=
 
+    # @!attribute use_tpm2
+    #   @return [Boolean] TPM2, only available in LUKS version 2
+    storage_forward :use_tpm2
+    storage_forward :use_tpm2=
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
