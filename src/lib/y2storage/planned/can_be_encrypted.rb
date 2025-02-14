@@ -118,6 +118,10 @@ module Y2Storage
         log.info "wwww #{result.respond_to?(:use_tpm2)}"
         log.info "wwww #{result.respond_to?(:cipher)}"        
         log.info "wwww #{result.class}"
+        if result.respond_to?(:use_tpm2)
+          puts "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          puts result.use_tpm2
+        end
 #          assign_enc_attr(result, :use_tpm2)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
