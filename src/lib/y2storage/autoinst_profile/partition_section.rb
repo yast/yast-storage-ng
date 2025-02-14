@@ -54,6 +54,8 @@ module Y2Storage
         { name: :crypt_label },
         { name: :crypt_cipher },
         { name: :crypt_key_size },
+        { name: :crypt_pervasive_apqns },
+        { name: :crypt_pervasive_key_type },
         { name: :raid_name },
         { name: :raid_options },
         { name: :mkfs_options },
@@ -108,6 +110,12 @@ module Y2Storage
       #
       #   @return [Integer,nil] If nil, the default key size will be used. If an integer
       #     value is used, it has to be a multiple of 8.
+
+      # @!attribute crypt_pervasive_apqns
+      #   @return [Array<String>,nil] items like "01.0001"
+      #
+      # @!attribute crypt_pervasive_key_type
+      #   @return [String,nil] "CCA-AESCIPHER" or "CCA-AESDATA"
 
       # @!attribute filesystem
       #   @return [Symbol] file system type to use in the partition, it also
@@ -449,6 +457,7 @@ module Y2Storage
           section.crypt_method = method.id
           section.crypt_key = CRYPT_KEY_VALUE if method.password_required?
           init_luks_fields(section)
+          init_pervasive_fields(section)
         end
 
         # @param section [PartitionSection] section object to modify based on the device
@@ -458,6 +467,12 @@ module Y2Storage
           section.crypt_label = enc.label if enc.supports_label? && !enc.label.empty?
           section.crypt_cipher = enc.cipher if enc.supports_cipher? && !enc.cipher.empty?
           section.crypt_key_size = enc.key_size * 8 if enc.supports_key_size? && !enc.key_size.zero?
+        end
+
+        # @param section [PartitionSection] section object to modify based on the device
+        def init_pervasive_fields(section)
+          section.crypt_pervasive_apqns =  fail "TODO" if todo
+          section.crypt_pervasive_key_type = fail "TODO" if todo
         end
 
         # @param section [PartitionSection] section object to modify based on the device

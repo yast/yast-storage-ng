@@ -280,5 +280,17 @@ describe Y2Storage::AutoinstProposal do
         expect(mount_points).to contain_exactly("/boot", "/")
       end
     end
+
+    context "when using pervasive LUKS2 method" do
+      let(:partition) do
+        { "mount" => "/", "crypt_key" => "s3cr3t", "crypt_method" => :pervasive_luks2, "..." => :todo }
+      end
+
+      xit "does not register any issue" do
+        proposal.propose
+        # todo: fails as the method is unavailable, I haven't mocked any apqns
+        expect(issues_list).to be_empty
+      end
+    end
   end
 end

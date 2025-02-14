@@ -52,7 +52,7 @@ module Y2Partitioner
 
         # Selected APQNs to generate a new secure key for pervasive encryption
         #
-        # @return [Array<Y2Storage:.EncryptionProcesses::Apqn>]
+        # @return [Array<Y2Storage::EncryptionProcesses::Apqn>]
         attr_accessor :apqns
 
         # @return [String] Type for the new secure key for pervasive encryption
