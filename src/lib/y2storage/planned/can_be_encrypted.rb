@@ -112,6 +112,8 @@ module Y2Storage
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
           result = plain_device.encrypt(method: method, password: encryption_password)
+        log.info "xxxx #{result}"                    
+        log.info "xxxx #{result.inspect}"          
         log.info(result.methods)          
           assign_enc_attr(result, :use_tpm2)
           assign_enc_attr(result, :pbkdf)
