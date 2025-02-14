@@ -112,6 +112,7 @@ module Y2Storage
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
           result = plain_device.encrypt(method: method, password: encryption_password)
+        log.info(result.methods)          
           assign_enc_attr(result, :use_tpm2)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
@@ -153,7 +154,6 @@ module Y2Storage
         return unless encryption.send(:"supports_#{attr}?")
 
         value = yield(value) if block_given?
-        puts(encryption.methods)
         encryption.send(:"#{attr}=", value)
       end
 
