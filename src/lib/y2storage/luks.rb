@@ -61,6 +61,11 @@ module Y2Storage
     storage_forward :label
     storage_forward :label=
 
+    # @!attribute use_tpm2
+    #   @return [Boolean] TPM2, only available in LUKS version 2
+    storage_forward :use_tpm2
+    storage_forward :use_tpm2=
+
     # Whether the LUKS encryption device matches with a given crypttab spec
     #
     # @see Encryption#match_crypttab_spec?
