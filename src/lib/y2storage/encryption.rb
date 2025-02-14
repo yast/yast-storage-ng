@@ -48,6 +48,11 @@ module Y2Storage
     storage_forward :password
     storage_forward :password=
 
+    # @!attribute use_tpm2
+    #   @return [Boolean]
+    storage_forward :use_tpm2
+    storage_forward :use_tpm2=
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
@@ -467,6 +472,13 @@ module Y2Storage
     #
     # @return [Boolean]
     def supports_pbkdf?
+      type.is?(:luks2)
+    end
+
+    # Whether the attribute #use_tpm2 makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_use_tpm2?
       type.is?(:luks2)
     end
 

@@ -494,7 +494,7 @@ module Y2Storage
       if !encryption.password.empty?
         content["password"] = @record_passwords ? encryption.password : "***"
       end
-puts("xxxxxxxxxxxxxx #{encryption.password}")
+
       { "encryption" => content }
     end
 
