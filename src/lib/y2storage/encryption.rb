@@ -50,8 +50,7 @@ module Y2Storage
 
     # @!attribute use_tpm2
     #   @return [Boolean] TPM2, only available in LUKS version 2
-    storage_forward :use_tpm2
-    storage_forward :use_tpm2=
+    attr_accessor :use_tpm2
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
