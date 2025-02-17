@@ -484,6 +484,8 @@ module Y2Storage
     # @return [Hash{String => Object}]
     #
     def yaml_encryption(encryption)
+      puts "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      puts encryption.inspect
       content = {
         "type" => encryption.type.to_human_string,
         "name" => encryption.name,
