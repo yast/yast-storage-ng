@@ -149,15 +149,11 @@ module Y2Storage
       def assign_enc_attr(encryption, attr)
         value = send(:"encryption_#{attr}")
         return if value.nil?
-        puts "xxxxxxxxxx1" if attr = :use_tpm2
+
         return unless encryption.send(:"supports_#{attr}?")
-        puts "xxxxxxxxxx2" if attr = :use_tpm2
+
         value = yield(value) if block_given?
         encryption.send(:"#{attr}=", value)
-        if attr = :use_tpm2
-          puts "xxxxxx3"
-          puts encryption.inspect
-        end
       end
 
       # Class methods for the mixin
