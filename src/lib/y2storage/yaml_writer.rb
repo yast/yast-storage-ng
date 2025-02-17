@@ -489,7 +489,7 @@ module Y2Storage
       content = {
         "type" => encryption.type.to_human_string,
         "name" => encryption.name,
-        "use_tpm2" => encryption.use_tpm2
+        "use_tpm2s" => encryption.use_tpm2
       }
 
       content["pbkdf"] = encryption.pbkdf_value unless encryption.pbkdf_value.empty?
