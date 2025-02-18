@@ -368,8 +368,8 @@ module Y2Storage
       puts "xxxxxxx"
       puts self
       puts self.use_tpm2
-      puts "yyyyxxx" 
-      log.info( "xxxxxxxxxxxxxxxxxx--------" )
+      puts "yyyyxxx"
+      log.info( "xxxxxxxxxxxxxxxxxx-------- #{self}" )
 
       encryption_process&.finish_installation
     end
