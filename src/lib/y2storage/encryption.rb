@@ -364,9 +364,9 @@ module Y2Storage
     # before unmounting the target system, when all the so-called finish clients
     # are executed
     def finish_installation
-      log.info( "finis_installation" )
+      log.info( "finisss_installation" )
 
-      log.info( use_tpm2)
+      puts use_tpm2
       log.info( "xxxxxxxxxxxxxxxxxx--------" )
       encryption_process&.finish_installation
     end
