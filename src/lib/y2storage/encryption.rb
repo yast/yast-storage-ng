@@ -369,7 +369,8 @@ module Y2Storage
       puts self
       puts self.use_tpm2
       puts "yyyyxxx"
-      log.info( "xxxxxxxxxxxxxxxxxx-------- #{self}" )
+      log.info( "xxxxxxxxxxxxxxxxxx-------- #{self.inspect}" )
+      log.info( "xxxxxxxxxxxxxxxxxx2-------- #{encryption_process.inpsect}" ) if encryption_process      
 
       encryption_process&.finish_installation
     end
