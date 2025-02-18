@@ -28,7 +28,8 @@ module Y2Storage
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
     wrap_class Storage::Encryption, downcast_to: ["Luks"]
-
+    include Yast::Logger
+    
     # @!attribute type
     #   Encryption type. Eg. luks1, luks2, etc.
     #
@@ -363,10 +364,10 @@ module Y2Storage
     # before unmounting the target system, when all the so-called finish clients
     # are executed
     def finish_installation
-      puts "finis_installation"
-      puts type
-      puts use_tpm2
-      puts "--------"
+      log.info( "finis_installation" )
+      log.info( type )
+      log.info( use_tpm2)
+      log.info( "xxxxxxxxxxxxxxxxxx--------" )
       encryption_process&.finish_installation
     end
 
