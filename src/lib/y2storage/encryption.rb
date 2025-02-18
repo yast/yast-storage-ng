@@ -365,9 +365,10 @@ module Y2Storage
     # are executed
     def finish_installation
       log.info( "finisss_installation" )
+      puts "xxxxxxx"
       puts self
       puts self.use_tpm2
-      log.info(self)      
+      puts "yyyyxxx" 
       log.info( "xxxxxxxxxxxxxxxxxx--------" )
 
       encryption_process&.finish_installation
