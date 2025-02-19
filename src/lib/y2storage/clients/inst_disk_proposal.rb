@@ -48,6 +48,7 @@ module Y2Storage
 
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
+
         # Save staging revision to check later if the system was reprobed
         save_staging_revision
 
@@ -109,6 +110,10 @@ module Y2Storage
           log.info "Storing manually configured devicegraph"
           storage_manager.staging = @devicegraph
         end
+log.info("xxxxxxxxxxxxxxxxxxxxx33")
+      log.info (StorageManager.instance.proposal.settings)
+        log.info (StorageManager.instance.proposal.settings.inspect)
+        
         add_storage_packages
         save_used_fs_list
       end

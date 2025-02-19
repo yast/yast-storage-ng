@@ -62,6 +62,7 @@ module Y2Storage
       # Enabe TPM2, if it is required
       def enable_tpm2
         log.info ("enable_tpm2")
+                puts (StorageManager.instance.proposal.inspect)
         puts (StorageManager.instance.proposal.settings)
         puts (StorageManager.instance.proposal.settings.inspect)
                 log.info (StorageManager.instance.proposal.settings.class)
