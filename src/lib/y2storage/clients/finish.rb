@@ -61,13 +61,35 @@ module Y2Storage
 
       # Enabe TPM2, if it is required
       def enable_tpm2
-        log.info ("enable_tpm2")
-        puts("xxxxxxxxxxxxxxxxxxxxx33")
-        puts(StorageManager.instance.proposal.settings.class)
-        puts(StorageManager.instance.proposal.settings.use_encryption)
-        puts(StorageManager.instance.proposal.settings.encryption_password)
-        puts(StorageManager.instance.proposal.settings.encryption_use_tpm2)
-        puts ("eeeeeeeeeeeeeeeeeeeeee")  
+        return unless StorageManager.instance.proposal
+        return unless StorageManager.instance.proposal.settings.encryption_use_tpm2
+
+        command = "echo \"#{StorageManager.instance.proposal.settings.encryption_password}\"" \
+                  " | keyctl padd user cryptenroll"
+        result = Yast::SCR.Execute(Yast.path(".target.bash_output"), command)
+        if result["exit"] != 0
+          Yast::Report.Error(
+            format(_(
+                     "Cannot pass the password via the keyring :\n" \
+                     "Command `%{command}`.\n" \
+                     "Error output: %{stderr}"
+                   ), command: command.inspect, stderr: result["stderr"])
+          )
+          return
+        end
+
+        begin
+          Yast::Execute.on_target!("/usr/bin/sdbootutil",
+                                   "enroll" "--method=tpm2")
+        rescue Cheetah::ExecutionFailed => e
+          Yast::Report.Error(
+            format(_(
+                     "Cannot enroll TPM2 method:\n" \
+                     "Command `%{command}`.\n" \
+                     "Error output: %{stderr}"
+                   ), command: e.commands.inspect, stderr: e.stderr)
+          )
+        end
       end
 
       # Updates sysconfig file (/etc/sysconfig/storage) with current values

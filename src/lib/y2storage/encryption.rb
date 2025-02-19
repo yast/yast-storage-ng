@@ -364,10 +364,6 @@ module Y2Storage
     # before unmounting the target system, when all the so-called finish clients
     # are executed
     def finish_installation
-      log.info( "finisss_installation" )
-      log.info( "xxxxxxxxxxxxxxxxxx-------- #{self.inspect}" )
-      log.info( "xxxxxxxxxxxxxxxxxx2-------- #{encryption_process.inspect}" ) if encryption_process      
-
       encryption_process&.finish_installation
     end
 
