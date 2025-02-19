@@ -47,6 +47,7 @@ module Y2Storage
         enable_multipath
         update_sysconfig
         finish_devices
+        enable_tpm2
         true
       end
 
@@ -56,6 +57,13 @@ module Y2Storage
 
         log.info "Enabling multipathd in the target system"
         Yast::Service.Enable("multipathd")
+      end
+
+      # Enabe TPM2, if it is required
+      def enable_tpm2
+        log.info ("enable_tpm2")
+        log.info (StorageManager.instance.proposal.settings)
+        log.info (StorageManager.instance.proposal.settings.inpspect)
       end
 
       # Updates sysconfig file (/etc/sysconfig/storage) with current values
