@@ -62,10 +62,11 @@ module Y2Storage
       # Enabe TPM2, if it is required
       def enable_tpm2
         log.info ("enable_tpm2")
-        log.info("xxxxxxxxxxxxxxxxxxxxx33")
-        log.info(StorageManager.instance.proposal.settings.use_encryption)
-        log.info(StorageManager.instance.proposal.settings.encryption_password)
-        log.info(StorageManager.instance.proposal.settings.encryption_use_tpm2)
+        puts("xxxxxxxxxxxxxxxxxxxxx33")
+        puts(StorageManager.instance.proposal.settings.class)
+        puts(StorageManager.instance.proposal.settings.use_encryption)
+        puts(StorageManager.instance.proposal.settings.encryption_password)
+        puts(StorageManager.instance.proposal.settings.encryption_use_tpm2)
         puts ("eeeeeeeeeeeeeeeeeeeeee")  
       end
 
