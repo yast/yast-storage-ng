@@ -110,12 +110,6 @@ module Y2Storage
           log.info "Storing manually configured devicegraph"
           storage_manager.staging = @devicegraph
         end
-log.info("xxxxxxxxxxxxxxxxxxxxx33")
-puts (StorageManager.instance.proposal.settings.inspect)
-puts (StorageManager.instance.proposal.settings.use_encryption)
-puts (StorageManager.instance.proposal.settings.encryption_password)
-puts (StorageManager.instance.proposal.settings.encryption_use_tpm2)
-puts ("eeeeeeeeeeeeeeeeeeeeee")
         
         add_storage_packages
         save_used_fs_list
