@@ -95,7 +95,7 @@ module Y2Storage
 
         begin
           Yast::Execute.on_target!("/usr/bin/sdbootutil",
-                                   "enroll" "--method=tpm2")
+                                   "enroll", "--method=tpm2")
         rescue Cheetah::ExecutionFailed => e
           Yast::Report.Error(
             format(_(
