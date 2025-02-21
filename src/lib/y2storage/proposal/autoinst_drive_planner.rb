@@ -147,9 +147,22 @@ module Y2Storage
         device.encryption_label = partition_section.crypt_label
         device.encryption_cipher = partition_section.crypt_cipher
         device.encryption_key_size = encryption_key_size_for(partition_section)
+        if device.encryption_method.is?(:pervasive_luks2)
+          device.encryption_pervasive_apqns = apqns_for(partition_section)
+          device.encryption_pervasive_key_type = partition_section.crypt_pervasive_key_type
+        end
         return unless device.encryption_method&.password_required?
 
         device.encryption_password = find_encryption_password(partition_section)
+      end
+
+      # Obtains the online APQNs for a partition section
+      #
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [Array<EncryptionProcesses::Apqn>]
+      def apqns_for(partition_section)
+        apqns = partition_section.crypt_pervasive_apqns || []
+        Y2Storage::EncryptionProcesses::Apqn.online.select { |a| apqns.include? a.name }
       end
 
       # Determines the encryption method for a partition section

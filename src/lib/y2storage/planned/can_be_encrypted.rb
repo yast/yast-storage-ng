@@ -57,6 +57,16 @@ module Y2Storage
       # @return [String, nil] nil or empty string to use the default cipher
       attr_accessor :encryption_cipher
 
+      # Selected APQNs to generate a new security key for pervasive encryption
+      #
+      # @return [Array<String>]
+      attr_accessor :encryption_pervasive_apqns
+
+      # Pervasive key key_type
+      #
+      # @return [String, nil] nil or empty string to use the default key type
+      attr_accessor :encryption_pervasive_key_type
+
       # Key size (in bits) to use when encrypting a LUKS device
       #
       # Any positive value must be a multiple of 8.
@@ -70,7 +80,9 @@ module Y2Storage
       attr_accessor :encryption_key_size
 
       # Initializations of the mixin, to be called from the class constructor.
-      def initialize_can_be_encrypted; end
+      def initialize_can_be_encrypted
+        self.encryption_pervasive_apqns = []
+      end
 
       # Checks whether the resulting device must be encrypted
       #
@@ -102,7 +114,12 @@ module Y2Storage
         result = super
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
-          result = plain_device.encrypt(method: method, password: encryption_password)
+          args = {}
+          if method.is?(:pervasive_luks2)
+            args[:apqns] = encryption_pervasive_apqns
+            args[:key_type] = encryption_pervasive_key_type
+          end
+          result = plain_device.encrypt(method: method, password: encryption_password, **args)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
           assign_enc_attr(result, :cipher)

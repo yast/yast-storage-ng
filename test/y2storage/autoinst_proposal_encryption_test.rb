@@ -288,7 +288,7 @@ describe Y2Storage::AutoinstProposal do
 
       xit "does not register any issue" do
         proposal.propose
-        # todo: fails as the method is unavailable, I haven't mocked any apqns
+        # TODO: fails as the method is unavailable, I haven't mocked any apqns
         expect(issues_list).to be_empty
       end
     end
