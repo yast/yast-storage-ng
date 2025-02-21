@@ -149,7 +149,7 @@ module Y2Storage
         device.encryption_label = partition_section.crypt_label
         device.encryption_cipher = partition_section.crypt_cipher
         device.encryption_key_size = encryption_key_size_for(partition_section)
-        if device.encryption_method.is?(:pervasive_luks2)
+        if device.encryption_method&.is?(:pervasive_luks2)
           device.encryption_pervasive_apqns = apqns_for(partition_section)
           device.encryption_pervasive_key_type = partition_section.crypt_pervasive_key_type
         end
