@@ -54,6 +54,8 @@ module Y2Storage
         { name: :crypt_label },
         { name: :crypt_cipher },
         { name: :crypt_key_size },
+        { name: :crypt_pervasive_apqns },
+        { name: :crypt_pervasive_key_type },
         { name: :raid_name },
         { name: :raid_options },
         { name: :mkfs_options },
@@ -108,6 +110,12 @@ module Y2Storage
       #
       #   @return [Integer,nil] If nil, the default key size will be used. If an integer
       #     value is used, it has to be a multiple of 8.
+
+      # @!attribute crypt_pervasive_apqns
+      #   @return [Array<String>,nil] items like "01.0001"
+      #
+      # @!attribute crypt_pervasive_key_type
+      #   @return [String,nil] "CCA-AESCIPHER" or "CCA-AESDATA"
 
       # @!attribute filesystem
       #   @return [Symbol] file system type to use in the partition, it also
@@ -186,6 +194,8 @@ module Y2Storage
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
+
+        @crypt_pervasive_apqns = hash["crypt_pervasive_apqns"] if hash["crypt_pervasive_apqns"]
 
         @subvolumes_prefix = hash["subvolumes_prefix"]
         @create_subvolumes = hash.fetch("create_subvolumes", true)

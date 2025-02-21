@@ -36,7 +36,7 @@ describe Y2Storage::AutoinstProposal do
   end
 
   let(:scenario) { "empty_disks" }
-  let(:issues_list) { ::Installation::AutoinstIssues::List.new }
+  let(:issues_list) { Installation::AutoinstIssues::List.new }
 
   let(:partitioning) do
     [
@@ -278,6 +278,65 @@ describe Y2Storage::AutoinstProposal do
         proposal.propose
         mount_points = proposal.devices.filesystems.map(&:mount_path)
         expect(mount_points).to contain_exactly("/boot", "/")
+      end
+    end
+
+    context "when using pervasive LUKS2 method" do
+      before do
+        allow(Yast::Execute).to receive(:locally).with(/zkey/, any_args)
+        allow_any_instance_of(Y2Storage::EncryptionMethod::PervasiveLuks2).to receive(:available?)
+          .and_return(true)
+
+        allow(Y2Storage::EncryptionProcesses::Apqn).to receive(:all).and_return(apqns)
+      end
+
+      let(:apqns) { [apqn1, apqn2, apqn3] }
+      let(:apqn1) do
+        instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "01.0001", type: "CEX5C",
+          mode: "CCA_Coproc", status: "online", master_key_pattern: "0x654478", online?: true)
+      end
+      let(:apqn2) do
+        instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "02.0001", status: "offline",
+          master_key_pattern: nil, online?: false)
+      end
+      let(:apqn3) do
+        instance_double(Y2Storage::EncryptionProcesses::Apqn, name: "02.0002", status: "online",
+          mode: "EP11-Coproc", master_key_pattern: nil, online?: true)
+      end
+
+      let(:password) { "s3cr3t" }
+      let(:method) { Y2Storage::EncryptionMethod::PERVASIVE_LUKS2 }
+      let(:apqn_name) { "01.0001" }
+
+      let(:partition) do
+        { "mount" => "/", "crypt_key" => password, "crypt_method" => method.id,
+"crypt_pervasive_apqns" => [apqn_name] }
+      end
+
+      it "encrypts the device with PERVASIVE LUKS2 as encryption method" do
+        proposal.propose
+        enc = proposal.devices.encryptions.first
+        expect(enc.method).to eq method
+      end
+
+      context "when an apqn is specified" do
+        context "and the selected APNs are online and with a proper master key pattern configured" do
+          it "encrypts the device with the selected apqn" do
+            expect_any_instance_of(Y2Storage::BlkDevice).to receive(:encrypt).with(method: method,
+              password: password, apqns: [apqn1], key_type: nil).and_call_original
+            proposal.propose
+          end
+        end
+
+        context "and the selected APNs are not valid candidates to be used" do
+          let(:apqn_name) { "02.0001" }
+
+          it "encrypts the device with no APQNs selected explicitly" do
+            expect_any_instance_of(Y2Storage::BlkDevice).to receive(:encrypt).with(method: method,
+              password: password, apqns: [], key_type: nil).and_call_original
+            proposal.propose
+          end
+        end
       end
     end
   end
