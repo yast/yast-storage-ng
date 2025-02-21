@@ -457,7 +457,6 @@ module Y2Storage
           section.crypt_method = method.id
           section.crypt_key = CRYPT_KEY_VALUE if method.password_required?
           init_luks_fields(section)
-          init_pervasive_fields(section)
         end
 
         # @param section [PartitionSection] section object to modify based on the device
@@ -467,12 +466,6 @@ module Y2Storage
           section.crypt_label = enc.label if enc.supports_label? && !enc.label.empty?
           section.crypt_cipher = enc.cipher if enc.supports_cipher? && !enc.cipher.empty?
           section.crypt_key_size = enc.key_size * 8 if enc.supports_key_size? && !enc.key_size.zero?
-        end
-
-        # @param section [PartitionSection] section object to modify based on the device
-        def init_pervasive_fields(section)
-          section.crypt_pervasive_apqns =  fail "TODO" if todo
-          section.crypt_pervasive_key_type = fail "TODO" if todo
         end
 
         # @param section [PartitionSection] section object to modify based on the device
