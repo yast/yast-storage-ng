@@ -17,6 +17,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/proposal_settings"
 require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/volume_specification"
@@ -24,7 +25,8 @@ require "y2storage/volume_specification"
 module Y2Storage
   module Proposal
     # This module offers a set of common methods that are used by AutoYaST planners.
-    class AutoinstDrivePlanner
+    class AutoinstDrivePlanner # rubocop:disable Metrics/ClassLength
+      include Yast::Logger
       # @!attribute [r] devicegraph
       #   @return [Devicegraph]
       # @!attribute [r] issues_list
@@ -156,13 +158,38 @@ module Y2Storage
         device.encryption_password = find_encryption_password(partition_section)
       end
 
+      # Determines if the given apqn is valid for being used for pervasive_luks2 encryption
+      #
+      # @param apqn [EncryptionProcesses::Apqn]
+      # @return [Boolean] whether the given apqn can be used for pervasive_luks2 encryption
+      def valid_apqn_candidate?(apqn)
+        if apqn.online?
+          return true if apqn.master_key_pattern
+
+          log.error "The APQN #{apqn.name} does not have a configured master key pattern"
+        else
+          log.error "The APQN #{apqn.name} is not online"
+        end
+        false
+      end
+
       # Obtains the online APQNs for a partition section
       #
       # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST specification
       # @return [Array<EncryptionProcesses::Apqn>]
       def apqns_for(partition_section)
+        result = []
         apqns = partition_section.crypt_pervasive_apqns || []
-        Y2Storage::EncryptionProcesses::Apqn.online.select { |a| apqns.include? a.name }
+        all_apqns = Y2Storage::EncryptionProcesses::Apqn.all
+        apqns.each do |name|
+          apqn = all_apqns.find { |a| a.name == name }
+          if apqn
+            result << apqn if valid_apqn_candidate?(apqn)
+          else
+            log.error "The APQN #{name} was not found"
+          end
+        end
+        result
       end
 
       # Determines the encryption method for a partition section

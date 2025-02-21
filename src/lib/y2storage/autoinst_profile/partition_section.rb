@@ -195,6 +195,8 @@ module Y2Storage
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
 
+        @crypt_pervasive_apqns = hash["crypt_pervasive_apqns"] if hash["crypt_pervasive_apqns"]
+
         @subvolumes_prefix = hash["subvolumes_prefix"]
         @create_subvolumes = hash.fetch("create_subvolumes", true)
         @subvolumes = subvolumes_from_hashes(hash["subvolumes"]) if hash["subvolumes"]
