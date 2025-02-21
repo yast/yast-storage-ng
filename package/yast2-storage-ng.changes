@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Feb 21 13:30:05 UTC 2025 - Knut Anderssen <kanderssen@suse.com>
+
+- Added AutoYaST support for selecting the APQNs and pervasive
+  encryption key type (jsc#PED-10950).
+- 4.7.3
+
+-------------------------------------------------------------------
 Tue Jan 21 09:43:35 UTC 2025 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - Pervasive encryption: support for AES-CIPHER and EP11 and better
