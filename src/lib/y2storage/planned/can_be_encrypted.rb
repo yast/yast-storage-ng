@@ -115,6 +115,9 @@ module Y2Storage
         if create_encryption?
           method = encryption_method || EncryptionMethod.find(:luks1)
           args = {}
+          # FIXME: For pervasive_luks2 the arguments need to be passed directly at #encrypt
+          # instead of being able to assign them afterwards. That's a defect on the API of
+          # that encryption method that should be fixed
           if method.is?(:pervasive_luks2)
             args[:apqns] = encryption_pervasive_apqns
             args[:key_type] = encryption_pervasive_key_type
