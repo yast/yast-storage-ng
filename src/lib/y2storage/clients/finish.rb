@@ -64,20 +64,6 @@ module Y2Storage
         return unless StorageManager.instance.proposal
         return unless StorageManager.instance.proposal.settings.encryption_use_tpm2
 
-#        command = "echo #{StorageManager.instance.proposal.settings.encryption_password}" \
-#                  " | keyctl padd user cryptenroll @u"
-#        result = Yast::SCR.Execute(Yast.path(".target.bash_output"), command)
-#        if result["exit"] != 0
-#          Yast::Report.Error(
-#            format(_(
-#                     "Cannot pass the password via the keyring :\n" \
-#                     "Command `%{command}`.\n" \
-#                     "Error output: %{stderr}"
-#                   ), command: command.inspect, stderr: result["stderr"])
-#          )
-#          return
-#        end
-
         begin
           Yast::Execute.on_target!("keyctl", "padd", "user", "cryptenroll",
              "@u", stdout: :capture,
