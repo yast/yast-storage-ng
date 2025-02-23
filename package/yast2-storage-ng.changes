@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Feb 21 13:30:05 UTC 2025 - Knut Anderssen <kanderssen@suse.com>
+
+- Added AutoYaST support for selecting the APQNs and pervasive
+  encryption key type (jsc#PED-10950).
+- 5.0.26
+
+-------------------------------------------------------------------
 Wed Feb 12 11:01:03 UTC 2025 - Stefan Hundhammer <shundhammer@suse.com>
 
 - Require libstorage bindings for the current Ruby version (bsc#1235598)
