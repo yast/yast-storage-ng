@@ -704,5 +704,13 @@ describe Y2Storage::DiskAnalyzer do
         end
       end
     end
+
+    context "when there are some RAM disks (PXE scenario with Agama)" do
+      let(:scenario) { "agama_pxe" }
+
+      it "includes only the real physical disks" do
+        expect(candidate_disks).to eq ["/dev/sda"]
+      end
+    end
   end
 end
