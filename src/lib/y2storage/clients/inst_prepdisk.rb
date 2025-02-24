@@ -79,6 +79,9 @@ module Y2Storage
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if mount_efivars?
+        if StorageManager.instance.proposal.settings.encryption_use_tpm2
+          mount_in_target("/sys/kernel/security", "securityfs", "-t securityfs")
+        end
         # systemd makes default for mount bind sharable, but it causes troubles with
         # systemd credentials that created another mount point under /run when someone
         # logs in. Result is that later /run cannot be unmounted. There is no benefit now
