@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Feb 24 15:11:04 UTC 2025 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Discarded RAM disks as candidate for installation
+  (gh#agama-project/agama#2042).
+- 5.0.27
+
+-------------------------------------------------------------------
 Fri Feb 21 13:30:05 UTC 2025 - Knut Anderssen <kanderssen@suse.com>
 
 - Added AutoYaST support for selecting the APQNs and pervasive
