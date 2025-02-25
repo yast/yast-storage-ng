@@ -135,16 +135,22 @@ module Y2Storage
       end
     end
 
+    # Says whether BLS boot should be used
+    #
+    # @return [Boolean]
+    def bls_boot?
+        # BLS is for x86_64 and aarch64 only
+        !StorageEnv.instance.no_bls_bootloader && (arch.x86? || Yast::Arch.aarch64)
+    end
+
     # @see #strategy
     #
     # @return [BootRequirementsStrategies::Base]
     def arch_strategy_class
       if arch.efiboot?
-        if StorageEnv.instance.no_bls_bootloader ||
-            (!arch.x86? && !Yast::Arch.aarch64)
+        if !bls_boot?
           BootRequirementsStrategies::UEFI
         else
-          # BLS is for x86_64 and aarch64 only
           BootRequirementsStrategies::BLS
         end
       elsif arch.s390?
