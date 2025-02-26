@@ -81,6 +81,7 @@ module Y2Storage
       end
 
       def handle_event(input)
+        log.warn("stefan yyyyyyyyyyyyyyyyyyyyyy #{chosen_id}")
         return unless @actions_presenter.can_handle?(input)
 
         @actions_presenter.update_status(input)
