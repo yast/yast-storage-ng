@@ -23,6 +23,7 @@ require "y2storage/storage_manager"
 require "y2storage/storage_env"
 
 Yast.import "Arch"
+Yast.import "Product"
 
 module Y2Storage
   #
@@ -139,6 +140,11 @@ module Y2Storage
     #
     # @return [Boolean]
     def bls_boot?
+        # BLS is only for TW or Slowroll
+        return false if !Yast::Product.FindBaseProducts.any? do |p|
+          p.display_name =~ /Tumbleweed/ || p.display_name =~ /Slowroll/
+        end
+
         # BLS is for x86_64 and aarch64 only
         !StorageEnv.instance.no_bls_bootloader && (arch.x86? || Yast::Arch.aarch64)
     end
