@@ -81,10 +81,14 @@ module Y2Storage
       end
 
       def handle_event(input)
-        log.warn("stefan yyyyyyyyyyyyyyyyyyyyyy #{input.inspect}")
-        return unless @actions_presenter.can_handle?(input)
+        if input == "disable_tpm2" || input == "enable_tpm2"
+          set_tpm(input)
+        else
+          if @actions_presenter.can_handle?(input)
+            @actions_presenter.update_status(input)
+          end
+        end
 
-        @actions_presenter.update_status(input)
         Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
       end
 
@@ -145,6 +149,17 @@ module Y2Storage
           _("<p>Changes to partitioning:</p>") +
           @actions_presenter.to_html +
           tpm_html
+      end
+
+      def set_tpm(value)
+        case value
+        when "disable_tpm2"
+          Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = false
+          proposal.settings.encryption_use_tpm2 = false
+        when "enable_tpm2"
+          Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = true
+          proposal.settings.encryption_use_tpm2 = true
+        end
       end
 
       def tpm_html
