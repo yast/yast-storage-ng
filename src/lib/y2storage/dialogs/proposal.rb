@@ -148,7 +148,14 @@ module Y2Storage
 
       def tpm_html
         return "" unless proposal
-        log.info(" xxxxxxxxxxxx {proposal.settings.inspect}")
+        if proposal.settings.use_encryption
+          if proposal.settings.encryption_use_tpm2
+            return "<p>Using TPM2 chip for encryption.</p>"
+          else
+            return "<p>Do not use TPM2 chip for encryption.</p>"
+          end
+        end
+        return ""
       end
 
       def boss_html
