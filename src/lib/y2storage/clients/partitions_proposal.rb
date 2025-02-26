@@ -62,7 +62,7 @@ module Y2Storage
       end
 
       def ask_user(param)
-        log.warn("----------------------- #{chosen_id}")
+        log.warn("yyyyyyyyyyyyyyyyyyyyyy #{chosen_id}")
         event = param["chosen_id"]
 
         # Also run the storage client as default option if no id was
