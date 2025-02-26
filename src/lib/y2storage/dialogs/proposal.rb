@@ -142,7 +142,13 @@ module Y2Storage
           setup_errors_html +
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
-          @actions_presenter.to_html
+          @actions_presenter.to_html +
+          tpm_html
+      end
+
+      def tpm_html
+        return "" unless proposal
+        log.info(" xxxxxxxxxxxx {proposal.settings.inspect}")
       end
 
       def boss_html
