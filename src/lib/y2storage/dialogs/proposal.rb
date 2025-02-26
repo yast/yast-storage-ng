@@ -142,6 +142,7 @@ module Y2Storage
       #
       # @return [String] HTML-formatted text
       def actions_html
+        log.info("yyyyyxxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.inspect}")        
         actions_source_html +
           boss_html +
           setup_errors_html +
@@ -152,8 +153,7 @@ module Y2Storage
       end
 
       def set_tpm(value)
-        log.info("xxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.proposal.settings}")
-        log.info("xxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.proposal.settings.inspect}")
+        log.info("xxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.inspect}")
         case value
         when "disable_tpm2"
           #Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = false
