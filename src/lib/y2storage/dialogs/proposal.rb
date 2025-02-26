@@ -148,11 +148,12 @@ module Y2Storage
 
       def tpm_html
         return "" unless proposal
-        if proposal.settings.use_encryption
+        if proposal.settings.use_encryption &&
+           proposal.settings.encryption_method == EncryptionMethod::LUKS2
           if proposal.settings.encryption_use_tpm2
-            return "<p>Using TPM2 chip for encryption.</p>"
+            return "<p>#{_("Using TPM2 chip for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
           else
-            return "<p>Do not use TPM2 chip for encryption.</p>"
+            return "<p>#{_("Do not use TPM2 chip for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
           end
         end
         return ""
