@@ -83,6 +83,7 @@ module Y2Storage
         end
 
         log.info("END of inst_disk_proposal (#{@result})")
+        log.info("xxxxxxxxxxeeeeeende #{storage_manager.proposal.settings&.encryption_use_tpm2}")        
         @result
       end
 
