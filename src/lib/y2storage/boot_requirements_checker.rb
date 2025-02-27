@@ -140,13 +140,14 @@ module Y2Storage
     #
     # @return [Boolean]
     def bls_boot?
-        # BLS is only for TW or Slowroll
-        return false if !Yast::Product.FindBaseProducts.any? do |p|
-          p.display_name =~ /Tumbleweed/ || p.display_name =~ /Slowroll/
-        end
+      # BLS is only for TW or Slowroll
+      return false if Yast::Product.FindBaseProducts.none? do |p|
+        # this should match "openSUSE Tumbleweed" even "openSUSE Tumbleweed-Slowroll"
+        p.display_name =~ /Tumbleweed/
+      end
 
-        # BLS is for x86_64 and aarch64 only
-        !StorageEnv.instance.no_bls_bootloader && (arch.x86? || Yast::Arch.aarch64)
+      # BLS is for x86_64 and aarch64 only
+      !StorageEnv.instance.no_bls_bootloader && (arch.x86? || Yast::Arch.aarch64)
     end
 
     # @see #strategy
@@ -154,10 +155,10 @@ module Y2Storage
     # @return [BootRequirementsStrategies::Base]
     def arch_strategy_class
       if arch.efiboot?
-        if !bls_boot?
-          BootRequirementsStrategies::UEFI
-        else
+        if bls_boot?
           BootRequirementsStrategies::BLS
+        else
+          BootRequirementsStrategies::UEFI
         end
       elsif arch.s390?
         BootRequirementsStrategies::ZIPL
