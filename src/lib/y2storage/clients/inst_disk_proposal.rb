@@ -63,11 +63,11 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :cancel, :next, :abort].include?(@result)
-          log.info("xxxxxxxxxx12 #{@proposal.settings}")
+          log.info("xxxxxxxxxx12 #{@proposal.settings&.inspect}")
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
           @result = dialog.run
           @proposal = dialog.proposal
-          log.info("xxxxxxxxxx22 #{@proposal.settings}")          
+          log.info("xxxxxxxxxx22 #{@proposal.settings&.inspect}")
           @devicegraph = dialog.devicegraph
 
           case @result
