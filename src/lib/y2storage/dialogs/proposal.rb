@@ -152,13 +152,10 @@ module Y2Storage
       end
 
       def set_tpm(value)
-        log.info("xxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.inspect}")
         case value
         when "disable_tpm2"
-          #Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = false
           proposal.settings.encryption_use_tpm2 = false
         when "enable_tpm2"
-          #Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = true
           proposal.settings.encryption_use_tpm2 = true
         end
       end
