@@ -142,7 +142,6 @@ module Y2Storage
       #
       # @return [String] HTML-formatted text
       def actions_html
-        log.info("yyyyyxxxxxxxxxxxxxxxxxxxxx #{Y2Storage::StorageManager.instance.inspect}")        
         actions_source_html +
           boss_html +
           setup_errors_html +
@@ -157,10 +156,10 @@ module Y2Storage
         case value
         when "disable_tpm2"
           #Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = false
-          #self.proposal.settings.encryption_use_tpm2 = false
+          proposal.settings.encryption_use_tpm2 = false
         when "enable_tpm2"
           #Y2Storage::StorageManager.instance.proposal.settings.encryption_use_tpm2 = true
-          #self.proposal.settings.encryption_use_tpm2 = true
+          proposal.settings.encryption_use_tpm2 = true
         end
       end
 

@@ -105,8 +105,9 @@ module Y2Storage
     # @return [true]
     def calculate_proposal
       try_proposal
-    ensure
-      settings.freeze
+    log.info("xxxxxxxxxxxxxxxxxxxxx11")  
+#    ensure
+#      settings.freeze
     end
 
     # Tries to perform a proposal
