@@ -112,7 +112,7 @@ module Y2Storage
           log.info "Storing manually configured devicegraph"
           storage_manager.staging = @devicegraph
         end
-        
+        log.info("xxxxxxxxxx6666 #{storage_manager.proposal.settings&.encryption_use_tpm2}")
         add_storage_packages
         save_used_fs_list
       end
@@ -127,6 +127,7 @@ module Y2Storage
         when :abort
           @result = :abort
         when :next
+          log.info("xxxxxxxxxx334 #{dialog.settings&.encryption_use_tpm2}")          
           @proposal = new_proposal(dialog.settings)
         end
         log.info("xxxxxxxxxx33 #{@proposal.settings&.encryption_use_tpm2}")
