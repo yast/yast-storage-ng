@@ -129,6 +129,7 @@ module Y2Storage
         when :next
           @proposal = new_proposal(dialog.settings)
         end
+        log.info("xxxxxxxxxx33 #{@proposal.settings&.inspect}")        
       end
 
       # Executes the Partitioner, called when the user presses the corresponding button
