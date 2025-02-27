@@ -105,7 +105,7 @@ module Y2Storage
     # @return [true]
     def calculate_proposal
       try_proposal
-    log.info("xxxxxxxxxxxxxxxxxxxxx11")  
+    log.info("xxxxxxxxxxxxxxxxxcalculatexxxx11 #{settings&.encryption_use_tpm2}")  
 #    ensure
 #      settings.freeze
     end
