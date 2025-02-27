@@ -143,7 +143,7 @@ module Y2Storage
       # BLS is only for TW or Slowroll
       return false if Yast::Product.FindBaseProducts.none? do |p|
         # this should match "openSUSE Tumbleweed" even "openSUSE Tumbleweed-Slowroll"
-        p.display_name =~ /Tumbleweed/
+        p["display_name"] =~ /Tumbleweed/
       end
 
       # BLS is for x86_64 and aarch64 only
