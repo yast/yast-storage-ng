@@ -174,6 +174,11 @@ module Y2Storage
         end
       end
 
+      # Checking if there is at least one partition which is encrypted with LUKS2
+      # Otherwise the check box for using TPM2 makes no sense.
+      def check_tpm
+      end
+      
       def tpm_html
         use_tpm2 = nil
         if proposal
@@ -186,6 +191,7 @@ module Y2Storage
             end
           end
         else
+          log.info "yyyyyyyyyyyyyyyyyyy #{devicegraph}"          
           use_tpm2 = storage_manager.encryption_use_tpm2
         end
         return "" if use_tpm2 == nil
