@@ -110,12 +110,11 @@ module Y2Storage
         if @proposal
           log.info "Storing accepted proposal"
           storage_manager.proposal = @proposal
-          storage_manager.encryption_use_tpm2 = storage_manager.proposal.settings&.encryption_use_tpm2
+          storage_manager.encryption_use_tpm2 = @proposal.settings&.encryption_use_tpm2
         else
           log.info "Storing manually configured devicegraph"
           storage_manager.staging = @devicegraph
         end
-        log.info("xxxxxxxxxx6666 #{storage_manager.proposal&.settings&.encryption_use_tpm2}")
         add_storage_packages
         save_used_fs_list
       end

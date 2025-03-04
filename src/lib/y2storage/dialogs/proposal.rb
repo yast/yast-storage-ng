@@ -169,7 +169,7 @@ module Y2Storage
           if proposal
             proposal.settings.encryption_use_tpm2 = true
           else
-            storage_manager.encryption_use_tpm2 = false
+            storage_manager.encryption_use_tpm2 = true
           end
         end
       end
