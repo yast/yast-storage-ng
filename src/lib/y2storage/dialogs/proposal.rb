@@ -191,7 +191,7 @@ module Y2Storage
             end
           end
         else
-          log.info "yyyyyyyyyyyyyyyyyyy #{devicegraph.inspect}"  
+          log.info "yyyyyyyyyyyyyyyyyyyyy #{devicegraph.inspect}"  
           use_tpm2 = storage_manager.encryption_use_tpm2
         end
         return "" if use_tpm2 == nil
