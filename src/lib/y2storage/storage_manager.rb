@@ -72,6 +72,14 @@ module Y2Storage
     # @return [GuidedProposal, nil]
     attr_reader :proposal
 
+    # Using TPM2 chip for encryption
+    #
+    # Nil not defined and should not be selectable because no partition will be
+    # encrypted with LUKS2.
+    #
+    # @return [Boolean, nil]
+    attr_accessor :encryption_use_tpm2
+
     def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=
 
     # @!method rootprefix
@@ -94,6 +102,7 @@ module Y2Storage
       @probed = false
       @activate_issues = Y2Issues::List.new
       @probe_issues = Y2Issues::List.new
+      encryption_use_tpm2 = nil
       reset_probed
       reset_staging
       reset_staging_revision
