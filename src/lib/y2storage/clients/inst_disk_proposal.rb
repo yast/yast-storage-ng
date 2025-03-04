@@ -63,11 +63,9 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :cancel, :next, :abort].include?(@result)
-          log.info("xxxxxxxxxx12 #{@proposal&.settings&.encryption_use_tpm2}")
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
           @result = dialog.run
           @proposal = dialog.proposal
-          log.info("xxxxxxxxxx22 #{@proposal&.settings&.encryption_use_tpm2}")
           @devicegraph = dialog.devicegraph
 
           case @result
@@ -83,8 +81,7 @@ module Y2Storage
         end
 
         log.info("END of inst_disk_proposal (#{@result})")
-        log.info("xxxxxxxxxxeeeeeende #{storage_manager.proposal&.settings&.encryption_use_tpm2}")
-        log.info("xxxxxxxxxxeeeeeende #{storage_manager.encryption_use_tpm2}")
+        log.info("using TPM2 chip for encryption: #{storage_manager.encryption_use_tpm2}")
         @result
       end
 
@@ -129,10 +126,8 @@ module Y2Storage
         when :abort
           @result = :abort
         when :next
-          log.info("xxxxxxxxxx334 #{dialog.settings&.encryption_use_tpm2}")          
           @proposal = new_proposal(dialog.settings)
         end
-        log.info("xxxxxxxxxx33 #{@proposal.settings&.encryption_use_tpm2}")
       end
 
       # Executes the Partitioner, called when the user presses the corresponding button
