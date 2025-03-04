@@ -75,11 +75,6 @@ module Y2Storage
       # @return [PbkdFunction, nil] nil to use the default function
       attr_accessor :pvs_encryption_pbkdf
 
-      # Using TPM2 chip for encryption.
-      #
-      # @return [Boolean] whether tpm2 chip will be used.
-      attr_accessor :pvs_encryption_use_tpm2
-
       # Strategy used by the guided proposal to calculate the size of the resulting
       # volume group
       #
@@ -297,7 +292,6 @@ module Y2Storage
         planned_pv.encryption_password = pvs_encryption_password
         planned_pv.encryption_method = pvs_encryption_method
         planned_pv.encryption_pbkdf = pvs_encryption_pbkdf
-        planned_pv.encryption_use_tpm2 = pvs_encryption_use_tpm2
       end
 
       # Whether the created PVs should be encrypted

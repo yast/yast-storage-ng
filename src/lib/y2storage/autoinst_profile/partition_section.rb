@@ -54,7 +54,6 @@ module Y2Storage
         { name: :crypt_label },
         { name: :crypt_cipher },
         { name: :crypt_key_size },
-        { name: :crypt_use_tpm2 },
         { name: :raid_name },
         { name: :raid_options },
         { name: :mkfs_options },
@@ -109,11 +108,6 @@ module Y2Storage
       #
       #   @return [Integer,nil] If nil, the default key size will be used. If an integer
       #     value is used, it has to be a multiple of 8.
-      #
-      # @!attribute encryption_use_tpm2
-      #   Using TPM2 chip for encryption.
-      #
-      #   @return [Boolean,nil] whether tpm2 chip will be used.
 
       # @!attribute filesystem
       #   @return [Symbol] file system type to use in the partition, it also
@@ -454,7 +448,6 @@ module Y2Storage
           section.loop_fs = true
           section.crypt_method = method.id
           section.crypt_key = CRYPT_KEY_VALUE if method.password_required?
-          section.crypt_use_tpm2 = false
           init_luks_fields(section)
         end
 

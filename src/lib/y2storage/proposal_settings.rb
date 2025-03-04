@@ -466,9 +466,6 @@ module Y2Storage
       enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
       self.encryption_pbkdf = enc_pbkdf if enc_pbkdf
 
-      enc_use_tpm2 = PbkdFunction.find(feature(:proposal, :encryption_use_tpm2))
-      self.encryption_use_tpm2 = enc_use_tpm2 if enc_use_tpm2
-
       # Password potentially injected by a previous step
       enc = feature(:proposal, :encryption)
 
