@@ -174,9 +174,9 @@ module Y2Storage
         end
       end
 
-      # Checking if there is at least one partition which is encrypted with LUKS2
+      # Checking if there is at least one partition which will be encrypted with LUKS2
       # Otherwise the check box for using TPM2 makes no sense.
-      def check_luks2
+      def have_luks2_encryption
         devicegraph.encryptions&.any? { |d| d.type == EncryptionType::LUKS2 }
       end
       
@@ -192,13 +192,16 @@ module Y2Storage
             end
           end
         else
-          log.info "yyyyyyyyyyyyyyyyyyyyy1 #{devicegraph.encryptions.inspect}"
-          devicegraph.encryptions&.each { |o| log.info "   yyyyyyyyyyyyyyyyyyyyy #{o.inspect}" }
-          devicegraph.encryptions&.each { |o| log.info "   yyyyyyyyyyyyyyyyyyyyy #{o.type.inspect}" }
-          log.info "   yyyyyyyyyyyyyyyyyyyyy2 #{check_luks2}"
-          use_tpm2 = storage_manager.encryption_use_tpm2
+          if have_luks2_encryption
+            use_tpm2 = storage_manager.encryption_use_tpm2
+            use_tpm2 = false if use_tpm2 == nil
+          else
+            storage_manager.encryption_use_tpm2 = nil
+          end
         end
+
         return "" if use_tpm2 == nil
+
         if use_tpm2
           return "<p>#{_("Using TPM2 chip for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
         else
