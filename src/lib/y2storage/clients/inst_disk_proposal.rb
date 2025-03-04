@@ -155,7 +155,7 @@ module Y2Storage
           @result = :abort
         when :next
           # saving setting from proposal to storage_manager
-          storage_manager.encryption_use_tpm2 = storage_manager.proposal&.settings&.encryption_use_tpm2
+          storage_manager.encryption_use_tpm2 = @proposal.settings&.encryption_use_tpm2 if @proposal
           @proposal = nil
           @devicegraph = devicegraph
           DumpManager.dump(devicegraph, "partitioner")
