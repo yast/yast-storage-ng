@@ -191,8 +191,9 @@ module Y2Storage
             end
           end
         else
-          log.info "yyyyyyyyyyyyyyyyyyyyy1 #{devicegraph.yast_commit_features.inspect}"
-          log.info "yyyyyyyyyyyyyyyyyyyyy1 #{devicegraph.encryptions.inspect}"            
+          log.info "yyyyyyyyyyyyyyyyyyyyy1 #{devicegraph.encryptions.inspect}"
+          devicegraph.encryptions&.each { |o| log.info "   yyyyyyyyyyyyyyyyyyyyy #{o.inspect}" }
+          devicegraph.encryptions&.each { |o| log.info "   yyyyyyyyyyyyyyyyyyyyy #{o.type.inspect}" }                                        
           use_tpm2 = storage_manager.encryption_use_tpm2
         end
         return "" if use_tpm2 == nil
