@@ -103,6 +103,11 @@ module Y2Storage
       # @return [Array<Symbol>] id of buttons that should not be shown
       attr_reader :excluded_buttons
 
+      # @return StorageManager
+      def storage_manager
+        StorageManager.instance
+      end
+
       # Calculates the desired devicegraph using the storage proposal.
       # Sets the devicegraph to nil if something went wrong
       def propose!
@@ -110,6 +115,7 @@ module Y2Storage
 
         proposal.propose
         self.devicegraph = proposal.devices
+        storage_manager.encryption_use_tpm2 = nil #reset
       rescue Y2Storage::Error
         log.error("generating proposal failed")
         self.devicegraph = nil
@@ -154,23 +160,40 @@ module Y2Storage
       def set_tpm(value)
         case value
         when "disable_tpm2"
-          proposal.settings.encryption_use_tpm2 = false
+          if proposal
+            proposal.settings.encryption_use_tpm2 = false
+          else
+            storage_manager.encryption_use_tpm2 = false
+          end
         when "enable_tpm2"
-          proposal.settings.encryption_use_tpm2 = true
+          if proposal
+            proposal.settings.encryption_use_tpm2 = true
+          else
+            storage_manager.encryption_use_tpm2 = false
+          end
         end
       end
 
       def tpm_html
-        return "" unless proposal
-        if proposal.settings.use_encryption &&
-           proposal.settings.encryption_method == EncryptionMethod::LUKS2
-          if proposal.settings.encryption_use_tpm2
-            return "<p>#{_("Using TPM2 chip for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
-          else
-            return "<p>#{_("Do not use TPM2 chip for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
+        use_tpm2 = nil
+        if proposal
+          if proposal.settings.use_encryption &&
+             proposal.settings.encryption_method == EncryptionMethod::LUKS2
+            if proposal.settings.encryption_use_tpm2
+              use_tpm2 = true
+            else
+              use_tpm2 = false
+            end
           end
+        else
+          use_tpm2 = storage_manager.encryption_use_tpm2
         end
-        return ""
+        return "" if use_tpm2 == nil
+        if use_tpm2
+          return "<p>#{_("Using TPM2 chip for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
+        else
+          return "<p>#{_("Do not use TPM2 chip for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
+        end
       end
 
       def boss_html
