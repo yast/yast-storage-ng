@@ -148,7 +148,6 @@ module Y2Storage
       #
       # @return [String] HTML-formatted text
       def actions_html
-        return "stefan"
         actions_source_html +
           boss_html +
           setup_errors_html +
