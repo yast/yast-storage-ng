@@ -203,9 +203,9 @@ module Y2Storage
         return "" if use_tpm2 == nil
 
         if use_tpm2
-          return "<p>#{_("Using TPM2 chip for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
+          return "<p>#{_("Using TPM2 device for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
         else
-          return "<p>#{_("Do not use TPM2 chip for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
+          return "<p>#{_("Do not use TPM2 device for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
         end
       end
 

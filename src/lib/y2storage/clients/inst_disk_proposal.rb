@@ -81,7 +81,7 @@ module Y2Storage
         end
 
         log.info("END of inst_disk_proposal (#{@result})")
-        log.info("using TPM2 chip for encryption: #{storage_manager.encryption_use_tpm2}")
+        log.info("using TPM2 device for encryption: #{storage_manager.encryption_use_tpm2}")
         @result
       end
 

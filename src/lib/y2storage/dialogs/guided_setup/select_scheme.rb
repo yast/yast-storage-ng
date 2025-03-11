@@ -36,8 +36,8 @@ module Y2Storage
           enable_disk_encryption: N_("Enable Disk Encryption"),
           # TRANSLATORS: label for the widget that allows to use separated volume groups
           use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze,
-          # TRANSLATORS: label for the widget to use Trusted Platform Module (TPM) chip for encryption
-          use_tpm2:               N_("Use Trusted Platform Module (TPM2) Chip").freeze
+          # TRANSLATORS: label for the widget to use Trusted Platform Module (TPM) device for encryption
+          use_tpm2:               N_("Use Trusted Platform Module (TPM2) device").freeze
         }
         private_constant :WIDGET_LABELS
 
