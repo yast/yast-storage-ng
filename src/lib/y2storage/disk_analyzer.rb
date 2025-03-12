@@ -276,11 +276,14 @@ module Y2Storage
     # A device is candidate for installation if no filesystem belonging to the device is mounted and the
     # device does not contain a repository for installation.
     #
+    # Moreover, RAM disks are also discarded.
+    #
     # @param device [BlkDevice]
     # @return [Boolean]
     def candidate_disk?(device)
       !contain_mounted_filesystem?(device) &&
-        !contain_installation_repository?(device)
+        !contain_installation_repository?(device) &&
+        !device.name.match?(/^\/dev\/ram\d+$/)
     end
 
     # Checks whether a device contains a mounted filesystem
