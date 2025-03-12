@@ -28,8 +28,8 @@ Source:         %{name}-%{version}.tar.bz2
 # Encryption#use_key_file_in_commit
 BuildRequires:	libstorage-ng-ruby >= 4.5.144
 BuildRequires:  update-desktop-files
-# Replace PackageSystem with Package
-BuildRequires:  yast2 >= 4.4.38
+# Arch.has_tpm2
+BuildRequires:  yast2 >= 5.0.13
 BuildRequires:  yast2-devtools >= 4.2.2
 # yast/rspec/helpers.rb
 BuildRequires:  yast2-ruby-bindings >= 4.4.7
@@ -49,8 +49,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 Requires:       findutils
 # Encryption#use_key_file_in_commit
 Requires:       libstorage-ng-ruby >= 4.5.144
-# Replace PackageSystem with Package
-Requires:       yast2 >= 4.4.38
+# Arch.has_tpm2
+Requires:       yast2 >= 5.0.13
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
