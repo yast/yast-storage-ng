@@ -82,7 +82,7 @@ module Y2Storage
 
       def handle_event(input)
         if ["disable_tpm2", "enable_tpm2"].include?(input)
-          set_tpm(input)
+          init_tpm(input)
         elsif @actions_presenter.can_handle?(input)
           @actions_presenter.update_status(input)
         end
@@ -155,7 +155,7 @@ module Y2Storage
           tpm_html
       end
 
-      def set_tpm(value)
+      def init_tpm(value)
         case value
         when "disable_tpm2"
           if proposal
@@ -174,10 +174,11 @@ module Y2Storage
 
       # Checking if there is at least one partition which will be encrypted with LUKS2
       # Otherwise the check box for using TPM2 makes no sense.
-      def has_luks2_encryption
+      def luks2_encryption?
         devicegraph.encryptions&.any? { |d| d.type == EncryptionType::LUKS2 }
       end
 
+      # rubocop:disable Metrics/PerceivedComplexity
       def tpm_html
         use_tpm2 = nil
         if proposal
@@ -189,7 +190,7 @@ module Y2Storage
               false
             end
           end
-        elsif has_luks2_encryption
+        elsif luks2_encryption?
           use_tpm2 = storage_manager.encryption_use_tpm2
           use_tpm2 = false if use_tpm2.nil?
         else
@@ -199,11 +200,14 @@ module Y2Storage
         return "" if use_tpm2.nil?
 
         if use_tpm2
-          "<p>#{_("Using TPM2 device for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
+          "<p>#{_("Using TPM2 device for encryption.")}"\
+            " <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
         else
-          "<p>#{_("Do not use TPM2 device for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
+          "<p>#{_("Do not use TPM2 device for encryption.")}"\
+            "  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       def boss_html
         return "" if boss_devices.empty?
