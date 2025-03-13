@@ -37,7 +37,8 @@ describe Y2Storage::Dialogs::Proposal do
 
   describe "#run" do
     let(:devicegraph0) do
-      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices: blk_devices)
+      double("Storage::Devicegraph", encryptions: encryptions,
+             actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
@@ -57,6 +58,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:actions_presenter2) { double(Y2Storage::ActionsPresenter, to_html: nil) }
 
     let(:blk_devices) { [] }
+
+    let(:encryptions) { [] }
 
     let(:setup_checker0) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid0) }
     let(:setup_checker1) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid1) }
@@ -123,11 +126,22 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: adjustment)
+      double("Y2Storage::GuidedProposal",
+             settings: settings,
+             proposed?: proposed,
+             auto_settings_adjustment: adjustment)
     end
     let(:adjustment) { nil }
 
     let(:proposed) { true }
+
+    let(:settings) do
+      settings = Y2Storage::ProposalSettings.new_for_current_product
+      settings.encryption_use_tpm2 = false
+      settings.encryption_password = "12345678"
+      settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+      settings
+    end
 
     shared_examples "partitioner from proposal" do
       context "and the button for partitioner from proposal is not excluded" do
