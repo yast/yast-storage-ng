@@ -119,12 +119,12 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     context "after receiving :next from the proposal dialog" do
       let(:new_devicegraph) { double("Y2Storage::Devicegraph", used_features: 0) }
-      let(:settings) { double("Storage::ProposalSettings",encryption_use_tpm2: false) }
+      let(:settings) { double("Storage::ProposalSettings", encryption_use_tpm2: false) }
       let(:new_proposal) do
         double("Y2Storage::GuidedProposal",
-               devices: new_devicegraph,
-               settings: settings,
-               failed?: false)
+          devices:  new_devicegraph,
+          settings: settings,
+          failed?:  false)
       end
 
       before do
@@ -564,7 +564,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
       let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
-      let(:settings) { double("Storage::ProposalSettings",encryption_use_tpm2: false) }
+      let(:settings) { double("Storage::ProposalSettings", encryption_use_tpm2: false) }
       let(:proposal) { double("Y2Storage::GuidedProposal", settings: settings) }
       let(:expert_dialog) { double("Y2Partitioner::Dialogs::Main") }
       let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
