@@ -81,12 +81,10 @@ module Y2Storage
       end
 
       def handle_event(input)
-        if input == "disable_tpm2" || input == "enable_tpm2"
+        if ["disable_tpm2", "enable_tpm2"].include?(input)
           set_tpm(input)
-        else
-          if @actions_presenter.can_handle?(input)
-            @actions_presenter.update_status(input)
-          end
+        elsif @actions_presenter.can_handle?(input)
+          @actions_presenter.update_status(input)
         end
 
         Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
@@ -115,7 +113,7 @@ module Y2Storage
 
         proposal.propose
         self.devicegraph = proposal.devices
-        storage_manager.encryption_use_tpm2 = nil #reset
+        storage_manager.encryption_use_tpm2 = nil # reset
       rescue Y2Storage::Error
         log.error("generating proposal failed")
         self.devicegraph = nil
@@ -179,33 +177,31 @@ module Y2Storage
       def has_luks2_encryption
         devicegraph.encryptions&.any? { |d| d.type == EncryptionType::LUKS2 }
       end
-      
+
       def tpm_html
         use_tpm2 = nil
         if proposal
           if proposal.settings.use_encryption &&
-             proposal.settings.encryption_method == EncryptionMethod::LUKS2
-            if proposal.settings.encryption_use_tpm2
-              use_tpm2 = true
+              proposal.settings.encryption_method == EncryptionMethod::LUKS2
+            use_tpm2 = if proposal.settings.encryption_use_tpm2
+              true
             else
-              use_tpm2 = false
+              false
             end
           end
+        elsif has_luks2_encryption
+          use_tpm2 = storage_manager.encryption_use_tpm2
+          use_tpm2 = false if use_tpm2.nil?
         else
-          if has_luks2_encryption
-            use_tpm2 = storage_manager.encryption_use_tpm2
-            use_tpm2 = false if use_tpm2 == nil
-          else
-            storage_manager.encryption_use_tpm2 = nil
-          end
+          storage_manager.encryption_use_tpm2 = nil
         end
 
-        return "" if use_tpm2 == nil
+        return "" if use_tpm2.nil?
 
         if use_tpm2
-          return "<p>#{_("Using TPM2 device for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
+          "<p>#{_("Using TPM2 device for encryption.")} <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
         else
-          return "<p>#{_("Do not use TPM2 device for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
+          "<p>#{_("Do not use TPM2 device for encryption.")}  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
         end
       end
 
