@@ -38,7 +38,7 @@ describe Y2Storage::Dialogs::Proposal do
   describe "#run" do
     let(:devicegraph0) do
       double("Storage::Devicegraph", encryptions: encryptions,
-             actiongraph: actiongraph0, blk_devices: blk_devices)
+        actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
@@ -127,9 +127,9 @@ describe Y2Storage::Dialogs::Proposal do
 
     let(:proposal) do
       double("Y2Storage::GuidedProposal",
-             settings: settings,
-             proposed?: proposed,
-             auto_settings_adjustment: adjustment)
+        settings:                 settings,
+        proposed?:                proposed,
+        auto_settings_adjustment: adjustment)
     end
     let(:adjustment) { nil }
 
