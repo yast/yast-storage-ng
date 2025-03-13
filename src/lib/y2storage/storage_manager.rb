@@ -102,7 +102,7 @@ module Y2Storage
       @probed = false
       @activate_issues = Y2Issues::List.new
       @probe_issues = Y2Issues::List.new
-      encryption_use_tpm2 = nil
+      @encryption_use_tpm2 = nil
       reset_probed
       reset_staging
       reset_staging_revision
