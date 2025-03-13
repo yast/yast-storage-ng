@@ -28,7 +28,7 @@ module Y2Storage
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
     wrap_class Storage::Encryption, downcast_to: ["Luks"]
-    
+
     # @!attribute type
     #   Encryption type. Eg. luks1, luks2, etc.
     #
