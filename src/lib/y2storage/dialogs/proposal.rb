@@ -27,6 +27,7 @@ require "y2storage/setup_checker"
 require "y2storage/setup_errors_presenter"
 
 Yast.import "HTML"
+Yast.import "Arch"
 
 module Y2Storage
   module Dialogs
@@ -190,7 +191,7 @@ module Y2Storage
               false
             end
           end
-        elsif luks2_encryption?
+        elsif luks2_encryption? && Yast::Arch.has_tpm2
           use_tpm2 = storage_manager.encryption_use_tpm2
           use_tpm2 = false if use_tpm2.nil?
         else
