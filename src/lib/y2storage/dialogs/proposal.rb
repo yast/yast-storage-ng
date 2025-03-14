@@ -179,8 +179,10 @@ module Y2Storage
         devicegraph.encryptions&.any? { |d| d.type == EncryptionType::LUKS2 }
       end
 
-      # rubocop:disable Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       def tpm_html
+        return "" unless Yast::Arch.has_tpm2
+
         use_tpm2 = nil
         if proposal
           if proposal.settings.use_encryption &&
@@ -191,7 +193,7 @@ module Y2Storage
               false
             end
           end
-        elsif luks2_encryption? && Yast::Arch.has_tpm2
+        elsif luks2_encryption?
           use_tpm2 = storage_manager.encryption_use_tpm2
           use_tpm2 = false if use_tpm2.nil?
         else
