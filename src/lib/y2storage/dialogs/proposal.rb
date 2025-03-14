@@ -210,7 +210,7 @@ module Y2Storage
             "  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
         end
       end
-      # rubocop:enable Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
       def boss_html
         return "" if boss_devices.empty?
