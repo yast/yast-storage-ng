@@ -80,6 +80,11 @@ module Y2Storage
     # @return [Boolean, nil]
     attr_accessor :encryption_use_tpm2
 
+    # Password for encryption using TPM2 chip
+    #
+    # @return [String, ""]
+    attr_accessor :encryption_tpm2_password
+
     def_delegators :@storage, :environment, :rootprefix, :prepend_rootprefix, :rootprefix=
 
     # @!method rootprefix
@@ -103,6 +108,7 @@ module Y2Storage
       @activate_issues = Y2Issues::List.new
       @probe_issues = Y2Issues::List.new
       @encryption_use_tpm2 = nil
+      @encryption_tpm2_password = ""
       reset_probed
       reset_staging
       reset_staging_revision

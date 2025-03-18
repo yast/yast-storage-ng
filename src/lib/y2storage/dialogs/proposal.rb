@@ -33,7 +33,7 @@ module Y2Storage
   module Dialogs
     # Calculates the storage proposal during installation and provides
     # the user a summary of the storage proposal
-    class Proposal < ::UI::InstallationDialog
+    class Proposal < ::UI::InstallationDialog # rubocop:disable Metrics/ClassLength
       attr_reader :proposal
       attr_reader :devicegraph
 
@@ -174,9 +174,29 @@ module Y2Storage
       end
 
       # Checking if there is at least one partition which will be encrypted with LUKS2
-      # Otherwise the check box for using TPM2 makes no sense.
-      def luks2_encryption?
-        devicegraph.encryptions&.any? { |d| d.type == EncryptionType::LUKS2 }
+      # All encrypted partitions has to be encrypted with LUKS2 with the same password.
+      def correct_luks2_encryption?
+        found = false
+        last_password = ""
+        devicegraph.encryptions&.each do |d|
+          if d.type == EncryptionType::LUKS2
+            found = true
+          else
+            log.info("Wrong encryption for TPM2 in device: #{d.inspect}")
+            return false
+          end
+          last_password = d.password if last_password.empty?
+          if last_password != d.password
+            log.info("Passwords of encrypted devices using TPM2 have the be the same")
+            return false
+          end
+        end
+        found
+      end
+
+      def proposal_has_correct_encryption
+        proposal.settings.use_encryption &&
+          proposal.settings.encryption_method == EncryptionMethod::LUKS2
       end
 
       # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
@@ -184,20 +204,24 @@ module Y2Storage
         return "" unless Yast::Arch.has_tpm2
 
         use_tpm2 = nil
-        if proposal
-          if proposal.settings.use_encryption &&
-              proposal.settings.encryption_method == EncryptionMethod::LUKS2
+        if proposal # selected via proposal (guided proposal)
+          if proposal_has_correct_encryption
             use_tpm2 = if proposal.settings.encryption_use_tpm2
               true
             else
               false
             end
           end
-        elsif luks2_encryption?
+        elsif correct_luks2_encryption? # user defined partitions
           use_tpm2 = storage_manager.encryption_use_tpm2
           use_tpm2 = false if use_tpm2.nil?
+        end
+
+        if use_tpm2
+          storage_manager.encryption_tpm2_password = devicegraph.encryptions&.password
         else
           storage_manager.encryption_use_tpm2 = nil
+          storage_manager.encryption_tpm2_password = ""
         end
 
         return "" if use_tpm2.nil?
