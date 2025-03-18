@@ -83,7 +83,7 @@ module Y2Storage
 
       def handle_event(input)
         if ["disable_tpm2", "enable_tpm2"].include?(input)
-          init_tpm(input)
+          init_tpm2(input)
         elsif @actions_presenter.can_handle?(input)
           @actions_presenter.update_status(input)
         end
@@ -156,7 +156,7 @@ module Y2Storage
           tpm_html
       end
 
-      def init_tpm(value)
+      def init_tpm2(value)
         case value
         when "disable_tpm2"
           if proposal
