@@ -218,7 +218,7 @@ module Y2Storage
         end
 
         if use_tpm2
-          storage_manager.encryption_tpm2_password = devicegraph.encryptions&.password
+          storage_manager.encryption_tpm2_password = devicegraph.encryptions&.first&.password
         else
           storage_manager.encryption_use_tpm2 = nil
           storage_manager.encryption_tpm2_password = ""
