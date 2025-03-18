@@ -22,6 +22,7 @@ require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 
 Yast.import "Popup"
+Yast.import "Arch"
 
 module Y2Storage
   module Dialogs
@@ -34,7 +35,9 @@ module Y2Storage
           # TRANSLATORS: label for the widget that allows to enable the disk encryption
           enable_disk_encryption: N_("Enable Disk Encryption"),
           # TRANSLATORS: label for the widget that allows to use separated volume groups
-          use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze
+          use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze,
+          # TRANSLATORS: label for the widget to use Trusted Platform Module (TPM) device for encryption
+          use_tpm2:               N_("Use Trusted Platform Module (TPM2) device").freeze
         }
         private_constant :WIDGET_LABELS
 
@@ -49,6 +52,7 @@ module Y2Storage
         def encryption_handler(focus: true)
           widget_update(:password, using_encryption?, attr: :Enabled)
           widget_update(:repeat_password, using_encryption?, attr: :Enabled)
+          widget_update(:tpm2, using_encryption?, attr: :Enabled)
           return unless focus && using_encryption?
 
           Yast::UI.SetFocus(Id(:password))
@@ -119,6 +123,17 @@ module Y2Storage
           )
         end
 
+        def tpm
+          return Empty() unless Yast::Arch.has_tpm2
+
+          Left(
+            HBox(
+              HSpacing(2),
+              CheckBox(Id(:tpm2), _(WIDGET_LABELS[:use_tpm2]))
+            )
+          )
+        end
+
         def enable_disk_encryption
           VBox(
             Left(CheckBox(Id(:encryption), Opt(:notify), _(WIDGET_LABELS[:enable_disk_encryption]))),
@@ -134,7 +149,8 @@ module Y2Storage
                 HSpacing(2),
                 Password(Id(:repeat_password), Opt(:hstretch), _("Verify Password"))
               )
-            )
+            ),
+            tpm
           )
         end
 
@@ -147,6 +163,7 @@ module Y2Storage
 
           widget_update(:password, settings.encryption_password)
           widget_update(:repeat_password, settings.encryption_password)
+          widget_update(:tpm2, settings.encryption_use_tpm2) if Yast::Arch.has_tpm2
         end
 
         def update_settings!
@@ -154,6 +171,7 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
+          settings.encryption_use_tpm2 = widget_value(:tpm2) if Yast::Arch.has_tpm2
         end
 
         def help_text

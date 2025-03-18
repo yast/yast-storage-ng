@@ -37,7 +37,8 @@ describe Y2Storage::Dialogs::Proposal do
 
   describe "#run" do
     let(:devicegraph0) do
-      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices: blk_devices)
+      double("Storage::Devicegraph", encryptions: encryptions,
+        actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
@@ -57,6 +58,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:actions_presenter2) { double(Y2Storage::ActionsPresenter, to_html: nil) }
 
     let(:blk_devices) { [] }
+
+    let(:encryptions) { [] }
 
     let(:setup_checker0) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid0) }
     let(:setup_checker1) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid1) }
@@ -123,11 +126,16 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: adjustment)
+      double("Y2Storage::GuidedProposal",
+        settings:                 settings,
+        proposed?:                proposed,
+        auto_settings_adjustment: adjustment)
     end
     let(:adjustment) { nil }
 
     let(:proposed) { true }
+
+    let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
     shared_examples "partitioner from proposal" do
       context "and the button for partitioner from proposal is not excluded" do
@@ -416,6 +424,13 @@ describe Y2Storage::Dialogs::Proposal do
             end
             dialog.run
           end
+
+          it "does not offer TPM2 selection" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to_not include("TPM2 device for encryption")
+            end
+            dialog.run
+          end
         end
 
         context "and there is no resulting devicegraph" do
@@ -431,6 +446,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "after adjusting the Guided Setup settings",
                 "do not adjust size of /"
               )
+              expect(content.to_s).to_not include("TPM2 device for encryption")
             end
             dialog.run
           end
@@ -450,6 +466,57 @@ describe Y2Storage::Dialogs::Proposal do
             end
             dialog.run
           end
+
+          context "and the user has selected device encryption" do
+            context "and TPM2 devices for encryption" do
+              let(:settings) do
+                settings = Y2Storage::ProposalSettings.new_for_current_product
+                settings.encryption_use_tpm2 = true
+                settings.encryption_password = "12345678"
+                settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+                settings
+              end
+
+              it "displays that available TPM2 will support encryption" do
+                expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                  expect(content.to_s).to include("Using TPM2 device for encryption")
+                end
+                dialog.run
+              end
+            end
+
+            context "and has NOT selected TPM2 devices for encryption" do
+              let(:settings) do
+                settings = Y2Storage::ProposalSettings.new_for_current_product
+                settings.encryption_use_tpm2 = false
+                settings.encryption_password = "12345678"
+                settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+                settings
+              end
+
+              it "displays that available TPM2 will NOT support encryption" do
+                expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                  expect(content.to_s).to include("Do not use TPM2 device for encryption")
+                end
+                dialog.run
+              end
+            end
+          end
+
+          context "and the user does not want device encryption" do
+            let(:settings) do
+              settings = Y2Storage::ProposalSettings.new_for_current_product
+              settings.encryption_password = nil
+              settings
+            end
+
+            it "does not offer TPM2 selection" do
+              expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                expect(content.to_s).to_not include("TPM2 device for encryption")
+              end
+              dialog.run
+            end
+          end
         end
 
         context "and there is no resulting devicegraph" do
@@ -464,6 +531,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "not able to propose",
                 "using the provided settings"
               )
+              expect(content.to_s).to_not include("TPM2 device for encryption")
             end
             dialog.run
           end

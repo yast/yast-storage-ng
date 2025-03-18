@@ -48,6 +48,7 @@ module Y2Storage
 
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
+
         # Save staging revision to check later if the system was reprobed
         save_staging_revision
 
@@ -80,6 +81,7 @@ module Y2Storage
         end
 
         log.info("END of inst_disk_proposal (#{@result})")
+        log.info("using TPM2 device for encryption: #{storage_manager.encryption_use_tpm2}")
         @result
       end
 
@@ -105,6 +107,7 @@ module Y2Storage
         if @proposal
           log.info "Storing accepted proposal"
           storage_manager.proposal = @proposal
+          storage_manager.encryption_use_tpm2 = @proposal.settings&.encryption_use_tpm2
         else
           log.info "Storing manually configured devicegraph"
           storage_manager.staging = @devicegraph

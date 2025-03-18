@@ -134,6 +134,36 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       end
     end
 
+    describe "checkbox for #tpm2" do
+      before do
+        allow(subject).to receive(:CheckBox)
+      end
+
+      context "and no TPM2 device is available" do
+        before do
+          allow(Yast::Arch).to receive(:has_tpm2).and_return(false)
+        end
+
+        it "does not include an option to select TPM2 support for encryption" do
+          expect(subject).to_not receive(:CheckBox).with(Id(:tpm2), any_args)
+
+          subject.run
+        end
+      end
+
+      context "and TPM2 device is available" do
+        before do
+          allow(Yast::Arch).to receive(:has_tpm2).and_return(true)
+        end
+
+        it "does include an option to select TPM2 support for encryption" do
+          expect(subject).to receive(:CheckBox).with(Id(:tpm2), any_args)
+
+          subject.run
+        end
+      end
+    end
+
     context "when settings has not encryption password" do
       before do
         settings.encryption_password = nil
@@ -180,11 +210,13 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         select_widget(:password, value: password)
         select_widget(:repeat_password, value: repeat_password)
         settings.encryption_password = nil
+        allow(Yast::Arch).to receive(:has_tpm2).and_return(true)
       end
 
-      it "enables password fields" do
+      it "enables password and TPM2 fields" do
         expect_enable(:password)
         expect_enable(:repeat_password)
+        expect_enable(:tpm2)
         subject.run
       end
 
