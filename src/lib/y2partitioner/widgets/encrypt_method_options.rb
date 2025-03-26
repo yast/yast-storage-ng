@@ -85,7 +85,7 @@ module Y2Partitioner
           SwapOptions.new(controller)
         when :luks1
           LuksOptions.new(controller, enable: enabled?)
-        when :luks2
+        when :luks2, :systemd_fde
           Luks2Options.new(controller, enable: enabled?)
         when :pervasive_luks2
           PervasiveOptions.new(controller, enable: enabled?)
