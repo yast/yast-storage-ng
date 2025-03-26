@@ -33,7 +33,7 @@ module Y2Storage
     #
     # Check the documentation of fde-tools for further information.
     # https://github.com/openSUSE/sdbootutil
-    class SystemdFde < LUKS2
+    class SystemdFde < Luks2
       def initialize
         textdomain "storage"
 
