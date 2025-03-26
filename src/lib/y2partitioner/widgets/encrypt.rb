@@ -224,6 +224,21 @@ module Y2Partitioner
         )
       end
 
+      # Help text for the Regular systemd_fde encryption method
+      #
+      # @return [String]
+      def help_for_systemd_fde
+        encrypt_method = Y2Storage::EncryptionMethod.find(:systemd_fde)
+
+        format(
+          # TRANSLATORS: help text for Regular Luks2 encryption method together wit TPM2 support
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 and TPM2. "\
+            "You have to provide the encryption password and the password-based key derivation " \
+            "function (PBKDF) that will be used to protect that passphrase.</p>"),
+          label: encrypt_method.to_human_string
+        )
+      end
+
       # Help text for the Random Swap encryption method
       #
       # @return [String]
