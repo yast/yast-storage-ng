@@ -33,7 +33,7 @@ module Y2Storage
     #
     # Check the documentation of fde-tools for further information.
     # https://github.com/openSUSE/sdbootutil
-    class SystemdFde < Luks2
+    class SystemdFde < Base
       def initialize
         textdomain "storage"
 
@@ -56,8 +56,20 @@ module Y2Storage
       # @return [Boolean]
       def available?
         tpm_system?
-      end      
+      end
 
+      # Creates an encryption device for the given block device
+      #
+      # @param blk_device [Y2Storage::BlkDevice]
+      # @param dm_name [String]
+      # @param pbkdf [PbkdFunction, nil] password-based key derivation function to be used by the created
+      #   LUKS2 device
+      # @param label [String] optional LUKS label
+      #
+      # @return [Y2Storage::Encryption]
+      def create_device(blk_device, dm_name, pbkdf: nil, label: "")
+        encryption_process.create_device(blk_device, dm_name, pbkdf: pbkdf, label: label)
+      end
 
       private
 
@@ -68,6 +80,10 @@ module Y2Storage
         Y2Storage::Arch.new.efiboot? && Yast::Arch.has_tpm2
       end
 
+      # @see Base#encryption_process
+      def encryption_process
+        EncryptionProcesses::Luks.new(self, :luks2)
+      end
     end
   end
 end
