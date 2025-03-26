@@ -27,13 +27,12 @@ require "y2storage/setup_checker"
 require "y2storage/setup_errors_presenter"
 
 Yast.import "HTML"
-Yast.import "Arch"
 
 module Y2Storage
   module Dialogs
     # Calculates the storage proposal during installation and provides
     # the user a summary of the storage proposal
-    class Proposal < ::UI::InstallationDialog # rubocop:disable Metrics/ClassLength
+    class Proposal < ::UI::InstallationDialog
       attr_reader :proposal
       attr_reader :devicegraph
 
@@ -82,11 +81,7 @@ module Y2Storage
       end
 
       def handle_event(input)
-        if ["disable_tpm2", "enable_tpm2"].include?(input)
-          init_tpm2(input)
-        elsif @actions_presenter.can_handle?(input)
-          @actions_presenter.update_status(input)
-        end
+        return unless @actions_presenter.can_handle?(input)
 
         Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
       end
@@ -102,11 +97,6 @@ module Y2Storage
       # @return [Array<Symbol>] id of buttons that should not be shown
       attr_reader :excluded_buttons
 
-      # @return StorageManager
-      def storage_manager
-        StorageManager.instance
-      end
-
       # Calculates the desired devicegraph using the storage proposal.
       # Sets the devicegraph to nil if something went wrong
       def propose!
@@ -114,7 +104,6 @@ module Y2Storage
 
         proposal.propose
         self.devicegraph = proposal.devices
-        storage_manager.encryption_use_tpm2 = nil # reset
       rescue Y2Storage::Error
         log.error("generating proposal failed")
         self.devicegraph = nil
@@ -152,89 +141,8 @@ module Y2Storage
           setup_errors_html +
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
-          @actions_presenter.to_html +
-          tpm_html
+          @actions_presenter.to_html
       end
-
-      def init_tpm2(value)
-        case value
-        when "disable_tpm2"
-          if proposal
-            proposal.settings.encryption_use_tpm2 = false
-          else
-            storage_manager.encryption_use_tpm2 = false
-          end
-        when "enable_tpm2"
-          if proposal
-            proposal.settings.encryption_use_tpm2 = true
-          else
-            storage_manager.encryption_use_tpm2 = true
-          end
-        end
-      end
-
-      # Checking if there is at least one partition which will be encrypted with LUKS2
-      # All encrypted partitions has to be encrypted with LUKS2 with the same password.
-      def correct_luks2_encryption?
-        found = false
-        last_password = ""
-        devicegraph.encryptions&.each do |d|
-          if d.type == EncryptionType::LUKS2
-            found = true
-          else
-            log.info("Wrong encryption for TPM2 in device: #{d.inspect}")
-            return false
-          end
-          last_password = d.password if last_password.empty?
-          if last_password != d.password
-            log.info("Passwords of encrypted devices using TPM2 have the be the same")
-            return false
-          end
-        end
-        found
-      end
-
-      def proposal_has_correct_encryption
-        proposal.settings.use_encryption &&
-          proposal.settings.encryption_method == EncryptionMethod::LUKS2
-      end
-
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      def tpm_html
-        return "" unless Yast::Arch.has_tpm2
-
-        use_tpm2 = nil
-        if proposal # selected via proposal (guided proposal)
-          if proposal_has_correct_encryption
-            use_tpm2 = if proposal.settings.encryption_use_tpm2
-              true
-            else
-              false
-            end
-          end
-        elsif correct_luks2_encryption? # user defined partitions
-          use_tpm2 = storage_manager.encryption_use_tpm2
-          use_tpm2 = false if use_tpm2.nil?
-        end
-
-        if use_tpm2
-          storage_manager.encryption_tpm2_password = devicegraph.encryptions&.first&.password
-        else
-          storage_manager.encryption_use_tpm2 = nil
-          storage_manager.encryption_tpm2_password = ""
-        end
-
-        return "" if use_tpm2.nil?
-
-        if use_tpm2
-          "<p>#{_("Using TPM2 device for encryption.")}"\
-            " <a href=\"disable_tpm2\">(#{_("disable")})</a></p>"
-        else
-          "<p>#{_("Do not use TPM2 device for encryption.")}"\
-            "  <a href=\"enable_tpm2\">(#{_("enable")})</a></p>"
-        end
-      end
-      # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
       def boss_html
         return "" if boss_devices.empty?

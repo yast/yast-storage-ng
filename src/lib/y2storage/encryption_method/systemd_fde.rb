@@ -1,0 +1,73 @@
+# Copyright (c) [2025] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+# Copyright (c) [2019] SUSE LLC
+
+require "yast"
+require "y2storage/encryption_method/luks2"
+require "y2storage/yast_feature"
+
+Yast.import "Mode"
+Yast.import "Package"
+Yast.import "Arch"
+
+module Y2Storage
+  module EncryptionMethod
+    # Encryption method that allows to encrypt a device using LUKS2 and configure the unlocking
+    # process via the system TPM using the sdbootutil created by SUSE.
+    #
+    # Check the documentation of fde-tools for further information.
+    # https://github.com/openSUSE/sdbootutil
+    class SystemdFde < LUKS2
+      def initialize
+        textdomain "storage"
+
+        super(:tpm_fde, _("TPM-Based Full Disk Encrytion"))
+      end
+
+      # @see Base#used_for?
+      #
+      # This method will only be relevant when implementing support for creating encrypted
+      # devices in an installed system, which is currently not supported.
+      # During installation returning always false is perfectly correct.
+      #
+      # @return [Boolean] false
+      def used_for?(_encryption)
+        false
+      end
+
+      # Whether the encryption method can be used in this system
+      #
+      # @return [Boolean]
+      def available?
+        tpm_system?
+      end      
+
+
+      private
+
+      # Whether the system is capable of using the encryption method
+      #
+      # @return [Boolean]
+      def tpm_system?
+        Y2Storage::Arch.new.efiboot? && Yast::Arch.has_tpm2
+      end
+
+    end
+  end
+end
