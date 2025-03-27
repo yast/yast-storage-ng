@@ -172,6 +172,12 @@ module Y2Storage
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
           settings.encryption_use_tpm2 = widget_value(:tpm2) if Yast::Arch.has_tpm2
+          if settings.encryption_use_tpm2
+            settings.encryption_method = EncryptionMethod::SYSTEMD_FDE
+          else
+            enc_method = EncryptionMethod.find(feature(:proposal, :encryption_method).to_s)
+            settings.encryption_method = (enc_method || EncryptionMethod::LUKS1)
+          end
         end
 
         def help_text
