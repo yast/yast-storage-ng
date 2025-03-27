@@ -20,6 +20,7 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
+require "y2storage/partitioning_features"
 
 Yast.import "Popup"
 Yast.import "Arch"
@@ -29,6 +30,7 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
+        require "y2storage/partitioning_features"
         extend Yast::I18n
 
         WIDGET_LABELS = {
