@@ -30,7 +30,7 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
-        require "y2storage/partitioning_features"
+        include PartitioningFeatures
         extend Yast::I18n
 
         WIDGET_LABELS = {
