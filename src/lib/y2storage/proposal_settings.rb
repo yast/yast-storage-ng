@@ -166,7 +166,7 @@ module Y2Storage
     attr_reader :explicit_candidate_devices
 
     # TODO: it makes sense to encapsulate #encryption_password, #encryption_method and
-    # #encryption_pbkdf #encryption_use_tpm2 in some new class (eg. EncryptionSettings),
+    # #encryption_pbkdf #encryption_authentication in some new class (eg. EncryptionSettings),
     # posponed for now
 
     # @!attribute encryption_password
@@ -183,10 +183,10 @@ module Y2Storage
     # @return [PbkdFunction, nil] nil to use the default
     attr_accessor :encryption_pbkdf
 
-    # Using TPM2 chip for encryption.
+    # Encryption authentication like password, tpm2, fido2,.....
     #
-    # @return [Boolean] whether tpm2 chip will be used.
-    attr_accessor :encryption_use_tpm2
+    # @return [String]
+    attr_accessor :encryption_authentication
 
     # When the user decides to use LVM, strategy to decide the size of the volume
     # group (and, thus, the number and size of created physical volumes).
@@ -406,7 +406,7 @@ module Y2Storage
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
-      encryption_use_tpm2:        false,
+      encryption_authentication:  "password",
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,
