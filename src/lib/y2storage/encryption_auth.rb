@@ -48,9 +48,10 @@ module Y2Storage
     FIDO2 = new("fido2", N_("FIDO2"))    
 
     # All possible instances
-    NONE_TPM = [PASSWORD, FIDO2].freeze
     ALL = [PASSWORD, TPM2, TPM2PIN, FIDO2].freeze
-    private_constant :ALL, :NONE_TPM
+    private_constant :ALL
+    NONE_TPM = [PASSWORD, FIDO2].freeze    
+    private_constant :NONE_TPM
 
     # Sorted list of all possible authentications
     def self.all
