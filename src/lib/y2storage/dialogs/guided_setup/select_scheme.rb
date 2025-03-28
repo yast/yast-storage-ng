@@ -134,7 +134,7 @@ module Y2Storage
           Left(
             HBox(
               HSpacing(2),
-              ComboBox(Id(:authentication), "", _(WIDGET_LABELS[:authentication]), items)
+              ComboBox(Id(:authentication), _(WIDGET_LABELS[:authentication]), items)
             )
           )
         end
