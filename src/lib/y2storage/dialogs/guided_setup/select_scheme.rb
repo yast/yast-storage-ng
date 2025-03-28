@@ -21,6 +21,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 require "y2storage/partitioning_features"
+require "y2storage/encryption_auth"
 
 Yast.import "Popup"
 Yast.import "Arch"
