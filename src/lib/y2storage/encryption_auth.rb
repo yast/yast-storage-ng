@@ -49,7 +49,7 @@ module Y2Storage
 
     # All possible instances
     NONE_TPM = [PASSWORD, FIDO2].freeze
-    All = [PASSWORD, TPM2, TPM2PIN, FIDO2].freeze    
+    ALL = [PASSWORD, TPM2, TPM2PIN, FIDO2].freeze
     private_constant :ALL, :NONE_TPM
 
     # Sorted list of all possible authentications
