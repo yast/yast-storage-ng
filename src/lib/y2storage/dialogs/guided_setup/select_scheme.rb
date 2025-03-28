@@ -179,11 +179,12 @@ module Y2Storage
           settings.encryption_authentication = widget_value(:authentication)
           if settings.encryption_authentication != "password"
             settings.encryption_method = EncryptionMethod::SYSTEMD_FDE
+            settings.encryption_pbkdf = "argon2id"
           else
             enc_method = EncryptionMethod.find(feature(:proposal, :encryption_method).to_s)
             settings.encryption_method = (enc_method || EncryptionMethod::LUKS2)
             enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
-            self.encryption_pbkdf = (enc_pbkdf || "pbkdf2")
+            settings.encryption_pbkdf = (enc_pbkdf || "pbkdf2")
           end
         end
 
