@@ -22,6 +22,7 @@ require "y2partitioner/actions/controllers/base"
 require "y2storage/encryption_type"
 require "y2storage/encryption_processes/secure_key"
 require "y2storage/encryption_processes/apqn"
+require "y2storage/encryption_auth"
 
 module Y2Partitioner
   module Actions
@@ -64,6 +65,9 @@ module Y2Partitioner
         # @return [PbkdFunction] Password-based key derivation function (PBKDF) for the LUKS2 device
         attr_accessor :pbkdf
 
+        # @return [EncryptionAuth] Authentication for systemd_fde devices
+        attr_accessor :encryption_auth
+
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
@@ -79,6 +83,7 @@ module Y2Partitioner
           @apqns = initial_apqns
           @secure_key_type = initial_secure_key_type
           @label = initial_label
+          @encryption_auth = initial_encryption_auth
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -266,6 +271,15 @@ module Y2Partitioner
           return nil unless encryption.respond_to?(:label)
 
           encryption.label
+        end
+
+        # Authentication method when the device is encrypted.
+        #
+        # @return [EncryptionAuth, nil] nil if the method does not support it.
+        def initial_encryption_auth
+          return nil unless encryption.respond_to?(:encryption_auth)
+
+          encryption.encryption_auth
         end
 
         # Calculate actions that make sense for the block device

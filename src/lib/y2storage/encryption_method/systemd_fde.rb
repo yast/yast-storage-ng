@@ -37,7 +37,7 @@ module Y2Storage
       def initialize
         textdomain "storage"
 
-        super(:systemd_fde, _("TPM-Based Full Disk Encrytion"))
+        super(:systemd_fde, _("Systemd-Based Full Disk Encryption"))
       end
 
       # @see Base#used_for?

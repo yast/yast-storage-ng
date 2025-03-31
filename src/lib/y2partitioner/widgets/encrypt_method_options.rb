@@ -85,8 +85,10 @@ module Y2Partitioner
           SwapOptions.new(controller)
         when :luks1
           LuksOptions.new(controller, enable: enabled?)
-        when :luks2, :systemd_fde
+        when :luks2
           Luks2Options.new(controller, enable: enabled?)
+        when :systemd_fde
+          SystemdFdeOptions.new(controller, enable: enabled?)
         when :pervasive_luks2
           PervasiveOptions.new(controller, enable: enabled?)
         end
@@ -208,6 +210,30 @@ module Y2Partitioner
       # @return [Widgets::EncryptLabel]
       def label_widget
         @label_widget ||= Widgets::EncryptLabel.new(@controller, enable: enable_on_init)
+      end
+    end
+
+    # Internal widget to display the SystemdFde encryption options
+    class SystemdFdeOptions < LuksOptions
+      private
+
+      # @see LuksOptions#widgets
+      def widgets
+        super.concat([pbkdf_widget, auth_widget])
+      end
+
+      # Widget to set the aauthentication function
+      #
+      # @return [Widgets::EncryptPbkdf]
+      def pbkdf_widget
+        @pbkdf_widget ||= Widgets::PbkdfSelector.new(@controller, enable: enable_on_init)
+      end
+
+      # Widget to set the authentication type of the LUKS2 device
+      #
+      # @return [Widgets::EncryptAuthSelector]
+      def auth_widget
+        @auth_widget ||= Widgets::EncryptAuthSelector.new(@controller, enable: enable_on_init)
       end
     end
 
