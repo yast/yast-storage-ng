@@ -29,6 +29,7 @@ module Y2Partitioner
     # Part of {Actions::AddPartition} and {Actions::EditBlkDevice}.
     # Formerly MiniWorkflowStepPassword
     class Encryption < Base
+      include Yast::Logger
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         super()
@@ -97,7 +98,10 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def store
+          log.info "xxxxxxxxxxxxx"
+          log.info current_widget.inspect
           current_widget.store if current_widget.respond_to?(:store)
+          log.info "yyyyyyyyyyyy #{value}"                    
           @controller.action = value
         end
 
