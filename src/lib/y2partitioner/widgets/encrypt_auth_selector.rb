@@ -19,7 +19,7 @@
 
 require "yast"
 require "cwm"
-require "y2storage/pbkd_function"
+require "y2storage/encryption_auth"
 
 module Y2Partitioner
   module Widgets
@@ -45,7 +45,7 @@ module Y2Partitioner
       # Sets the initial value
       def init
         enable_on_init ? enable : disable
-        self.value = @controller.pbkdf&.value
+        self.value = @controller.encryption_auth&.value
       end
 
       # @macro seeItemsSelection
