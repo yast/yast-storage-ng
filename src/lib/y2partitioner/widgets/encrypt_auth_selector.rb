@@ -25,6 +25,7 @@ module Y2Partitioner
   module Widgets
     # Authentication for a {Y2Storage::Encryption} device using systemd_fde
     class EncryptAuthSelector < CWM::ComboBox
+      include Yast::Logger
       # Constructor
       #
       # @param controller [Actions::Controllers::Encryption]
@@ -44,6 +45,7 @@ module Y2Partitioner
 
       # Sets the initial value
       def init
+        log.info("xxxxxxxxxxxxxx #{@controller.encryption_auth&.value}....")        
         enable_on_init ? enable : disable
         self.value = @controller.encryption_auth&.value
       end
@@ -55,6 +57,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def store
+        log.info("xxxxxxxxxxxxxx #{value}.... #{Y2Storage::EncryptionAuth.find(value)}")
         @controller.encryption_auth = Y2Storage::EncryptionAuth.find(value)
       end
 
