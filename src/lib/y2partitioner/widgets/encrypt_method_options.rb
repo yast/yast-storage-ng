@@ -220,7 +220,7 @@ module Y2Partitioner
 
       # @see LuksOptions#widgets
       def widgets
-        super.concat([auth_widget, pbkdf_widget])
+        super.concat([pbkdf_widget, auth_widget])
       end
 
       # Widget to set the aauthentication function
