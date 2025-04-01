@@ -45,6 +45,7 @@ module Y2Partitioner
 
       # Sets the initial value
       def init
+        log.info("xxxxxxxxxxxxxx #{@controller.inspect}....")                
         log.info("xxxxxxxxxxxxxx #{@controller.encryption_auth&.value}....")        
         enable_on_init ? enable : disable
         self.value = @controller.encryption_auth&.value
