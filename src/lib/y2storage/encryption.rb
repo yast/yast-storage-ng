@@ -175,6 +175,12 @@ module Y2Storage
     storage_forward :mount_by, as: "Filesystems::MountByType"
     storage_forward :mount_by=
 
+    # @!attribute encryption_auth
+    #   Authentication type
+    #
+    # @return [EncryptionAuth, nil] nil if such value does not exist
+    attr_accessor :encryption_auth
+
     # Low level setter to enforce a value for {#dm_table_name} without
     # updating {#auto_dm_name?}
     #
