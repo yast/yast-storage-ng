@@ -277,8 +277,9 @@ module Y2Partitioner
         #
         # @return [EncryptionAuth, nil] nil if the method does not support it.
         def initial_encryption_auth
+          log.info("xxxxxxxxxxxs #{encryption.inspect}")
           return nil unless encryption.respond_to?(:encryption_auth)
-
+          log.info("xxxxxxxxxxxs #{encryption.encryption_auth}")
           encryption.encryption_auth
         end
 

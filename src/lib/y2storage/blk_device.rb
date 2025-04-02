@@ -784,14 +784,12 @@ module Y2Storage
 
     # @see #encrypt
     def encrypt_with_method(method, dm_name, **method_args)
-      log.info ("xxxxxxxxxxxx1 #{method}")
       method = EncryptionMethod.find(method) if method.is_a?(Symbol)
-      log.info ("xxxxxxxxxxxx1 #{method}")      
 
       # We only pass arguments that are present at #create_device for the given encryption method
       create_device_args = method.method(:create_device).parameters.map(&:last)
       method_args = method_args.select { |k, _v| create_device_args.include?(k.to_sym) }
-      log.info ("xxxxxxxxxxxx1 #{method_args}")
+
       method.create_device(self, dm_name, **method_args)
     end
 
