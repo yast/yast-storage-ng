@@ -401,7 +401,7 @@ module Y2Partitioner
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
             method: method, password: password, label: label, pbkdf: pbkdf,
-            apqns: apqns, key_type: secure_key_type
+            apqns: apqns, key_type: secure_key_type, encryption_auth: encryption_auth
           )
         end
 

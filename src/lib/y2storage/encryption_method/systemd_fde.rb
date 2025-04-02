@@ -19,7 +19,9 @@
 # Copyright (c) [2019] SUSE LLC
 
 require "yast"
-require "y2storage/encryption_method/luks2"
+require "y2storage/encryption_method/base"
+require "y2storage/encryption_processes/systemd_fde"
+require "y2storage/pbkd_function"
 require "y2storage/yast_feature"
 
 Yast.import "Mode"
@@ -65,10 +67,12 @@ module Y2Storage
       # @param pbkdf [PbkdFunction, nil] password-based key derivation function to be used by the created
       #   LUKS2 device
       # @param label [String] optional LUKS label
+      # @param encryption_auth [EncryptionAuth] authentications for the crypted device
       #
       # @return [Y2Storage::Encryption]
-      def create_device(blk_device, dm_name, pbkdf: nil, label: "")
-        encryption_process.create_device(blk_device, dm_name, pbkdf: pbkdf, label: label)
+      def create_device(blk_device, dm_name, encryption_auth, pbkdf: nil, label: "")
+        encryption_process.create_device(blk_device, dm_name, encryption_auth,
+                                         pbkdf: pbkdf, label: label)
       end
 
       private
@@ -82,7 +86,7 @@ module Y2Storage
 
       # @see Base#encryption_process
       def encryption_process
-        EncryptionProcesses::Luks.new(self, :luks2)
+        EncryptionProcesses::SystemdFde.new(self)
       end
     end
   end

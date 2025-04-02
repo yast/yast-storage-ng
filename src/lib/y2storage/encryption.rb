@@ -126,6 +126,12 @@ module Y2Storage
     storage_forward :open_options
     storage_forward :open_options=
 
+    # @!attribute encryption_auth
+    #   Authentication type
+    #
+    # @return [EncryptionAuth, nil] nil if such value does not exist
+    attr_accessor :encryption_auth              
+
     # Sets crypt options
     #
     # @param options [Array<String>]
