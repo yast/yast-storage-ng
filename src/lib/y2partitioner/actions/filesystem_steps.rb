@@ -54,6 +54,9 @@ module Y2Partitioner
     #     end
     #   end
     module FilesystemSteps
+
+      include Yast::Logger
+      
       def self.included(base)
         base.skip_stack :filesystem_role
       end
@@ -79,6 +82,9 @@ module Y2Partitioner
       def filesystem_commit
         fs_controller.finish
         encrypt_controller.finish
+        log.info("yyyyyyyyyyyyy fs_con: #{fs_controller.inspect}")
+        log.info("yyyyyyyyyyyyy encr_con: #{encrypt_controller.inspect}")
+        log.info("yyyyyyyyyyyyy fs_con_blk: #{fs_controller.blk_device.inspect}")
         UIState.instance.select_row(fs_controller.blk_device.sid)
         :finish
       end
