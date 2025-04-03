@@ -38,9 +38,14 @@ module Y2Storage
 
     ENV_NO_BLS_BOOT = "YAST_NO_BLS_BOOT".freeze
 
+    ENV_TEST_MODE = "YAST_STORAGE_TEST_MODE".freeze
+
+    ENV_DEVICEGRAPH = "YAST_DEVICEGRAPH_FILE".freeze
+
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID, :ENV_ACTIVATE_LUKS
     private_constant :ENV_LIBSTORAGE_IGNORE_PROBE_ERRORS
     private_constant :ENV_REUSE_LVM, :ENV_NO_BLS_BOOT
+    private_constant :ENV_TEST_MODE, :ENV_DEVICEGRAPH
 
     def initialize
       reset_cache
@@ -72,6 +77,29 @@ module Y2Storage
     # @return [Boolean]
     def forced_bios_raid?
       active?(ENV_BIOS_RAID)
+    end
+
+    # Whether operations on the system should be avoided, including those for
+    # reading
+    #
+    # This implies creating a test instance of the libstorage-ng manager (instead
+    # of a regular one) and also avoiding queries to the system to search for
+    # devices or to analyze them.
+    #
+    # @return [Boolean]
+    def test_mode?
+      active?(ENV_TEST_MODE)
+    end
+
+    # Location of a file (XML or YAML) containing a devicegraph that must be
+    # used to mock the libstorage-ng probing.
+    #
+    # @return [String, nil]
+    def devicegraph_file
+      filename = read(ENV_DEVICEGRAPH)
+      return nil if filename&.strip&.empty?
+
+      filename
     end
 
     # Whether LUKSes could be activated

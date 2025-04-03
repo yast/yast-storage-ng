@@ -182,6 +182,9 @@ module Y2Storage
     #
     # @param callbacks [Callbacks::Probe, nil]
     def probe!(callbacks = nil)
+      graph_file = StorageEnv.instance.devicegraph_file
+      return probe_from_file(graph_file) if graph_file
+
       probe_callbacks = Callbacks::Probe.new(user_callbacks: callbacks)
 
       begin
@@ -366,6 +369,15 @@ module Y2Storage
       storage.probed.copy(storage.system)
       probe_performed
       manage_probing_issues
+    end
+
+    # Probes from a file (XML or YAML) instead of doing a real probing
+    def probe_from_file(filename)
+      if filename =~ /.ya?ml$/i
+        probe_from_yaml(filename)
+      else
+        probe_from_xml(filename)
+      end
     end
 
     # Access mode in which the storage system was initialized (read-only or read-write)
@@ -606,6 +618,8 @@ module Y2Storage
 
           raise AccessModeError,
             "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
+        elsif StorageEnv.instance.test_mode?
+          create_test_instance
         else
           read_only = mode == :ro
           create_instance(Storage::Environment.new(read_only), callbacks)

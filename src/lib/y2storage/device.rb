@@ -20,6 +20,8 @@
 require "yast"
 require "yaml"
 require "y2storage/storage_class_wrapper"
+require "y2storage/storage_env"
+require "y2storage/resize_info"
 
 module Y2Storage
   # An abstract base class of storage devices and a vertex in the Devicegraph.
@@ -139,25 +141,8 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :exists_in_staging?
 
-    # @!method detect_resize_info
-    #   Information about the possibility of resizing a given device.
-    #   If the device has any children, they are also taken into account;
-    #   the result of this method is the combined information about this device
-    #   and all its children.
-    #
-    #   Note that the minimal and maximal are not aligned.
-    #
-    #   If the device already exists on the disk (i.e., in the probed
-    #   devicegraph), this operation can be expensive. Thus, consider using
-    #   {#resize_info} or any other caching mechanism.
-    #
-    #   @raise [Storage::Exception] if something goes wrong during the detection
-    #     (e.g. it fails to temporarily mount the corresponding filesystem)
-    #
-    #   @see can_resize?
-    #
-    #   @return [ResizeInfo]
-    storage_forward :detect_resize_info, as: "ResizeInfo"
+    storage_forward :storage_detect_resize_info, to: :detect_resize_info, as: "ResizeInfo"
+    private :storage_detect_resize_info
 
     storage_forward :storage_remove_descendants, to: :remove_descendants
     private :storage_remove_descendants
@@ -293,6 +278,35 @@ module Y2Storage
       end
 
       devicegraph.find_device(sid)
+    end
+
+    # Information about the possibility of resizing a given device.
+    # If the device has any children, they are also taken into account;
+    # the result of this method is the combined information about this device
+    # and all its children.
+    #
+    # Note that the minimal and maximal are not aligned.
+    #
+    # If the device already exists on the disk (i.e., in the probed
+    # devicegraph), this operation can be expensive. Thus, consider using
+    # {#resize_info} or any other caching mechanism.
+    #
+    # If Y2Storage is running in test mode (configured with an ENV variable)
+    # then the device is not checked and a fake result is returned.
+    #
+    # @raise [Storage::Exception] if something goes wrong during the detection
+    #   (e.g. it fails to temporarily mount the corresponding filesystem)
+    #
+    # @see can_resize?
+    #
+    # @return [ResizeInfo]
+    def detect_resize_info
+      if StorageEnv.instance.test_mode?
+        reasons = Storage::RB_FILESYSTEM_FULL | Storage::RB_MIN_MAX_ERROR
+        Y2Storage::ResizeInfo.new(Storage::ResizeInfo.new(false, reasons))
+      else
+        storage_detect_resize_info
+      end
     end
 
     # Information about the possibility of resizing a given device.

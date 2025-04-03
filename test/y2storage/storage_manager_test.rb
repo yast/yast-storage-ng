@@ -783,6 +783,18 @@ describe Y2Storage::StorageManager do
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, failed?: false) }
 
+    context "when a devicegraph file is set via environment variables" do
+      before do
+        allow(Y2Storage::StorageEnv.instance).to receive(:devicegraph_file).and_return(mock_path)
+      end
+      let(:mock_path) { File.join(DATA_PATH, "devicegraphs", "empty_disks.yml") }
+
+      it "does not execute a real probing" do
+        expect(manager.storage).to_not receive(:probe)
+        manager.probe!
+      end
+    end
+
     it "refreshes #probed" do
       expect(manager.probed.disks.size).to eq 6
       # Calling twice (or more) does not result in a refresh
@@ -998,6 +1010,43 @@ describe Y2Storage::StorageManager do
       manager.proposal = proposal
       manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.proposal).to be_nil
+    end
+  end
+
+  describe "#probe_from_file" do
+    subject(:manager) { described_class.create_test_instance }
+
+    context "when called with a file name ending in .xml" do
+      let(:filename) { "devicegraph.xml" }
+
+      it "mocks the devicegraph using probe_from_xml" do
+        expect(manager).to receive(:probe_from_xml).with(filename)
+        expect(manager).to_not receive(:probe_from_yaml).with(filename)
+
+        manager.probe_from_file(filename)
+      end
+    end
+
+    context "when called with a file name ending in .yml" do
+      let(:filename) { "devicegraph.yml" }
+
+      it "mocks the devicegraph using probe_from_yaml" do
+        expect(manager).to receive(:probe_from_yaml).with(filename)
+        expect(manager).to_not receive(:probe_from_xml).with(filename)
+
+        manager.probe_from_file(filename)
+      end
+    end
+
+    context "when called with a file name ending in .YAML" do
+      let(:filename) { "devicegraph.YAML" }
+
+      it "mocks the devicegraph using probe_from_yaml" do
+        expect(manager).to receive(:probe_from_yaml).with(filename)
+        expect(manager).to_not receive(:probe_from_xml).with(filename)
+
+        manager.probe_from_file(filename)
+      end
     end
   end
 
