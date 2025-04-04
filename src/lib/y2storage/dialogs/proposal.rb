@@ -315,7 +315,7 @@ module Y2Storage
         ret = para(_("Authentication for encrypted devices:"))
         auth_list = []
         @devicegraph.encryptions&.each do |d|
-          auth_list << ("using " + d.encryption_auth + " for " + d.name)
+          auth_list << ("using " + d.encryption_auth.name + " for " + d.name)
         end
         if auth_list.size > 0
           return ret + list(auth_list)
