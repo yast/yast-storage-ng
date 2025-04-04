@@ -141,7 +141,8 @@ module Y2Storage
           setup_errors_html +
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
-          @actions_presenter.to_html
+          @actions_presenter.to_html +
+          encryption_auth
       end
 
       def boss_html
@@ -307,6 +308,20 @@ module Y2Storage
       # Shortcut for Yast::HTML.List
       def list(items)
         Yast::HTML.List(items)
+      end
+
+      def encryption_auth
+        return "" unless @devicegraph.encryptions&.length
+        ret = para(_("Authentication for encrypted devices:"))
+        auth_list = []
+        @devicegraph.encryptions&.each do |d|
+          auth_list << ("using " + d.encryption_auth + " for " + d.name)
+        end
+        if auth_list.size > 0
+          return ret + list(auth_list)
+        else
+          return ""
+        end
       end
 
       # Actions needed to reach the desired devicegraph
