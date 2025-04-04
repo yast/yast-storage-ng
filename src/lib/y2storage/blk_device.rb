@@ -35,7 +35,6 @@ module Y2Storage
 
     include ComparableByName
     include MatchVolumeSpec
-    include Yast::Logger    
     extend Forwardable
 
     # @!method self.all(devicegraph)
@@ -329,8 +328,6 @@ module Y2Storage
     # @return [Encryption]
     def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, **method_args)
       enc = encrypt_with_method(method, dm_name, **method_args)
-      log.info("xxxxxxblk #{enc}")
-log.info("xxxxxxblk #{enc.encryption_auth}")      
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
       enc.ensure_suitable_mount_by

@@ -30,7 +30,6 @@ module Y2Partitioner
       # This class adds or removes an encryption layer on top of the block
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
-        include Yast::Logger
         include Yast::I18n
 
         # Action to perform when {#finish} is called
@@ -277,9 +276,7 @@ module Y2Partitioner
         #
         # @return [EncryptionAuth, nil] nil if the method does not support it.
         def initial_encryption_auth
-          log.info("xxxxxxxxxxxs #{encryption.inspect}")
           return nil unless encryption.respond_to?(:encryption_auth)
-          log.info("xxxxxxxxxxxs #{encryption.encryption_auth}")
           encryption.encryption_auth
         end
 
