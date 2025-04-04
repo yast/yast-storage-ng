@@ -317,6 +317,7 @@ module Y2Storage
         @devicegraph.encryptions&.each do |d|
           if d.encryption_auth && d.blk_device
             auth_list << ("using " + d.encryption_auth.name + " for " + d.blk_device.name)
+          end
         end
         if auth_list.size > 0
           return ret + list(auth_list)
