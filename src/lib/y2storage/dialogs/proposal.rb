@@ -35,7 +35,6 @@ module Y2Storage
     class Proposal < ::UI::InstallationDialog
       attr_reader :proposal
       attr_reader :devicegraph
-      include Yast::Logger
 
       # Constructor
       #
@@ -316,7 +315,8 @@ module Y2Storage
         ret = para(_("Authentication for encrypted devices:"))
         auth_list = []
         @devicegraph.encryptions&.each do |d|
-          auth_list << ("using " + d.encryption_auth&.name + " for " + d.blk_device&.name)
+          if d.encryption_auth && d.blk_device
+            auth_list << ("using " + d.encryption_auth.name + " for " + d.blk_device.name)
         end
         if auth_list.size > 0
           return ret + list(auth_list)
