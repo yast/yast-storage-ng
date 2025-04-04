@@ -161,18 +161,42 @@ describe Y2Storage::Device do
         reasons: 0, reason_texts: [])
     end
 
-    before { allow(device).to receive(:detect_resize_info).and_return resize_info }
+    before { allow(device).to receive(:storage_detect_resize_info).and_return resize_info }
 
-    context "if libstorage-nd reports that resizing is possible" do
+    context "if not in test mode and libstorage-ng reports that resizing is possible" do
       let(:resize_ok) { true }
+
+      it "invokes the corresponding libstorage-ng method" do
+        expect(device).to receive(:storage_detect_resize_info)
+        device.can_resize?
+      end
 
       it "returns true" do
         expect(device.can_resize?).to eq true
       end
     end
 
-    context "if libstorage-ng reports that resizing is not possible" do
+    context "if not in test mode and libstorage-ng reports that resizing is not possible" do
       let(:resize_ok) { false }
+
+      it "invokes the corresponding libstorage-ng method" do
+        expect(device).to receive(:storage_detect_resize_info)
+        device.can_resize?
+      end
+
+      it "returns false" do
+        expect(device.can_resize?).to eq false
+      end
+    end
+
+    context "if in test mode" do
+      before { allow(Y2Storage::StorageEnv.instance).to receive(:test_mode?).and_return(true) }
+      let(:resize_ok) { true }
+
+      it "does not check with libstorage-ng" do
+        expect(device).to_not receive(:storage_detect_resize_info)
+        device.can_resize?
+      end
 
       it "returns false" do
         expect(device.can_resize?).to eq false

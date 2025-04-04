@@ -143,11 +143,7 @@ module Y2Storage
 
       # @see #mock
       def load_devicegraph
-        if devicegraph_path =~ /.ya?ml$/
-          Y2Storage::StorageManager.instance(mode: :rw).probe_from_yaml(devicegraph_path)
-        else
-          Y2Storage::StorageManager.instance(mode: :rw).probe_from_xml(devicegraph_path)
-        end
+        Y2Storage::StorageManager.instance(mode: :rw).probe_from_file(devicegraph_path)
       end
 
       # @see #mock

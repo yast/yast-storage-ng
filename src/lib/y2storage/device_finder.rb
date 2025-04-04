@@ -20,6 +20,7 @@
 require "pathname"
 require "y2storage/storage_manager"
 require "y2storage/blk_device"
+require "y2storage/storage_env"
 
 module Y2Storage
   # Utility class to find devices in a devicegraph
@@ -61,7 +62,7 @@ module Y2Storage
     # * It uses a system lookup only when necessary (i.e. all the cheaper
     #   methods for finding the device have been unsuccessful).
     # * It avoids system lookup in potentially risky scenarios (like an outdated
-    #   {StorageManager#probed}).
+    #   {StorageManager#probed} or when running in test mode).
     #
     # In case of LUKSes and MDs, the device might be found by using an alternative name,
     # see {#alternative_names}.
@@ -173,6 +174,8 @@ module Y2Storage
     #
     # @return [Boolean]
     def udev_lookup_possible?
+      return false if StorageEnv.instance.test_mode?
+
       # Checking when the operation is safe is quite tricky, since we must
       # ensure than the list of block devices in #probed matches 1:1 the list
       # of block devices in the system.

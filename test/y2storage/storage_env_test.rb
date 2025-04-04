@@ -100,4 +100,78 @@ describe Y2Storage::StorageEnv do
       end
     end
   end
+
+  describe "#test_mode?" do
+    context "YAST_STORAGE_TEST_MODE is not set" do
+      let(:env_vars) do
+        {}
+      end
+
+      it "returns false" do
+        expect(Y2Storage::StorageEnv.instance.test_mode?).to be false
+      end
+    end
+
+    context "YAST_STORAGE_TEST_MODE is empty" do
+      let(:env_vars) do
+        { "YAST_STORAGE_TEST_MODE" => "" }
+      end
+
+      it "returns true" do
+        expect(Y2Storage::StorageEnv.instance.test_mode?).to be true
+      end
+    end
+
+    context "YAST_STORAGE_TEST_MODE is set to '1'" do
+      let(:env_vars) do
+        { "YAST_STORAGE_TEST_MODE" => "1" }
+      end
+
+      it "returns true" do
+        expect(Y2Storage::StorageEnv.instance.test_mode?).to be true
+      end
+    end
+
+    context "YAST_STORAGE_TEST_MODE is set to '0'" do
+      let(:env_vars) do
+        { "YAST_STORAGE_TEST_MODE" => "0" }
+      end
+
+      it "returns false" do
+        expect(Y2Storage::StorageEnv.instance.test_mode?).to be false
+      end
+    end
+  end
+
+  describe "#devicegraph_file" do
+    context "YAST_DEVICEGRAPH_FILE is not set" do
+      let(:env_vars) do
+        {}
+      end
+
+      it "returns nil" do
+        expect(Y2Storage::StorageEnv.instance.devicegraph_file).to be_nil
+      end
+    end
+
+    context "YAST_DEVICEGRAPH_FILE is empty" do
+      let(:env_vars) do
+        { "YAST_DEVICEGRAPH_FILE" => "" }
+      end
+
+      it "returns nil" do
+        expect(Y2Storage::StorageEnv.instance.devicegraph_file).to be_nil
+      end
+    end
+
+    context "YAST_DEVICEGRAPH_FILE contains a file path" do
+      let(:env_vars) do
+        { "YAST_DEVICEGRAPH_FILE" => "/tmp/mock.xml" }
+      end
+
+      it "returns the path" do
+        expect(Y2Storage::StorageEnv.instance.devicegraph_file).to eq "/tmp/mock.xml"
+      end
+    end
+  end
 end
