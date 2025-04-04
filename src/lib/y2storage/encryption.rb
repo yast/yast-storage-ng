@@ -343,6 +343,20 @@ module Y2Storage
       @encryption_process = value
     end
 
+    # Returns the encryption authentication type
+    #
+    # @return [EncryptionAuth, nil] nil if such value does not exist
+    def encryption_auth
+      userdata_value(:encryption_auth)
+    end
+
+    # Saves the given encryption authentication type
+    #
+    # @param value [EncryptionAuth]
+    def encryption_auth=(value)
+      save_userdata(:encryption_auth, value)
+    end
+
     # Executes the actions that must be performed right before the devicegraph is
     # committed to the system
     def pre_commit
