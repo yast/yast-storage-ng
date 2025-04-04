@@ -490,6 +490,7 @@ module Y2Storage
       }
 
       content["pbkdf"] = encryption.pbkdf_value unless encryption.pbkdf_value.empty?
+      content["authentication"] = encryption.encryption_auth.value if encryption.encryption_auth
 
       if !encryption.password.empty?
         content["password"] = @record_passwords ? encryption.password : "***"
