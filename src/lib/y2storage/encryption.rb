@@ -491,6 +491,13 @@ module Y2Storage
       type.is?(:luks2)
     end
 
+    # Whether the attribute #auth makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_auth?
+      type.is?(:systemd_fde)
+    end
+
     # Whether the attribute #cipher makes sense for this object
     #
     # @return [Boolean]

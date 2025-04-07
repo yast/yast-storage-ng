@@ -185,7 +185,7 @@ module Y2Storage
 
     # Encryption authentication like password, tpm2, fido2,.....
     #
-    # @return [String]
+    # @return [EncryptionAuth]
     attr_accessor :encryption_authentication
 
     # When the user decides to use LVM, strategy to decide the size of the volume
@@ -406,7 +406,7 @@ module Y2Storage
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
-      encryption_authentication:  "password",
+      encryption_authentication:  EncryptionAuth::PASSWORD,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,

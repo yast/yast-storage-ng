@@ -176,7 +176,7 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
-          settings.encryption_authentication = widget_value(:authentication)
+          settings.encryption_authentication = EncryptionAuth.find(widget_value(:authentication))
           if settings.encryption_authentication != "password"
             settings.encryption_method = EncryptionMethod::SYSTEMD_FDE
             settings.encryption_pbkdf = PbkdFunction.find("argon2id")

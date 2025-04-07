@@ -69,6 +69,11 @@ module Y2Storage
       # @return [EncryptionMethod]
       attr_accessor :pvs_encryption_method
 
+      # Returns the encryption authentication type
+      #
+      # @return [EncryptionAuth]
+      attr_accessor :pvs_encryption_auth      
+
       # PBKDF used to encrypt the newly created physical volumes if {#pvs_encryption_password} is set
       # and LUKS2 is used
       #
@@ -291,6 +296,7 @@ module Y2Storage
 
         planned_pv.encryption_password = pvs_encryption_password
         planned_pv.encryption_method = pvs_encryption_method
+        planned_pv.encryption_auth = pvs_encryption_auth
         planned_pv.encryption_pbkdf = pvs_encryption_pbkdf
       end
 
