@@ -235,7 +235,7 @@ module Y2Storage
 
         vg.pvs_encryption_password = settings.encryption_password
         vg.pvs_encryption_method = settings.encryption_method
-        vg.pvs_encryption_auth = settings.encryption_authentication
+        vg.pvs_encryption_authentication = settings.encryption_authentication
         vg.pvs_encryption_pbkdf = settings.encryption_pbkdf
       end
 
@@ -275,7 +275,7 @@ module Y2Storage
 
         planned_device.encryption_password = settings.encryption_password
         planned_device.encryption_method = settings.encryption_method
-        planned_device.encryption_auth = settings.encryption_authentication
+        planned_device.encryption_authentication = settings.encryption_authentication
         planned_device.encryption_pbkdf = settings.encryption_pbkdf
       end
 

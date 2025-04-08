@@ -22,7 +22,7 @@ require "y2partitioner/actions/controllers/base"
 require "y2storage/encryption_type"
 require "y2storage/encryption_processes/secure_key"
 require "y2storage/encryption_processes/apqn"
-require "y2storage/encryption_auth"
+require "y2storage/encryption_authentication"
 
 module Y2Partitioner
   module Actions
@@ -64,8 +64,8 @@ module Y2Partitioner
         # @return [PbkdFunction] Password-based key derivation function (PBKDF) for the LUKS2 device
         attr_accessor :pbkdf
 
-        # @return [EncryptionAuth] Authentication for systemd_fde devices
-        attr_accessor :encryption_auth
+        # @return [EncryptionAuthentication] Authentication for systemd_fde devices
+        attr_accessor :encryption_authentication
 
         # Contructor
         #
@@ -82,7 +82,7 @@ module Y2Partitioner
           @apqns = initial_apqns
           @secure_key_type = initial_secure_key_type
           @label = initial_label
-          @encryption_auth = initial_encryption_auth
+          @encryption_authentication = initial_encryption_authentication
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -274,10 +274,10 @@ module Y2Partitioner
 
         # Authentication method when the device is encrypted.
         #
-        # @return [EncryptionAuth, nil] nil if the method does not support it.
-        def initial_encryption_auth
-          return nil unless encryption.respond_to?(:encryption_auth)
-          encryption.encryption_auth
+        # @return [EncryptionAuthentication, nil] nil if the method does not support it.
+        def initial_encryption_authentication
+          return nil unless encryption.respond_to?(:encryption_authentication)
+          encryption.encryption_authentication
         end
 
         # Calculate actions that make sense for the block device
@@ -399,7 +399,7 @@ module Y2Partitioner
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
             method: method, password: password, label: label, pbkdf: pbkdf,
-            apqns: apqns, key_type: secure_key_type, encryption_auth: encryption_auth
+            apqns: apqns, key_type: secure_key_type, encryption_authentication: encryption_authentication
           )
         end
 

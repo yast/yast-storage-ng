@@ -21,7 +21,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 require "y2storage/partitioning_features"
-require "y2storage/encryption_auth"
+require "y2storage/encryption_authentication"
 
 Yast.import "Popup"
 Yast.import "Arch"
@@ -127,7 +127,7 @@ module Y2Storage
         end
 
         def authentication
-          items = Y2Storage::EncryptionAuth.all.map do |auth|
+          items = Y2Storage::EncryptionAuthentication.all.map do |auth|
             Item(Id(auth.value), auth.name, auth.value == settings.encryption_authentication)
           end
 
@@ -176,7 +176,7 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
-          settings.encryption_authentication = EncryptionAuth.find(widget_value(:authentication))
+          settings.encryption_authentication = EncryptionAuthentication.find(widget_value(:authentication))
           if settings.encryption_authentication != "password"
             settings.encryption_method = EncryptionMethod::SYSTEMD_FDE
             settings.encryption_pbkdf = PbkdFunction.find("argon2id")

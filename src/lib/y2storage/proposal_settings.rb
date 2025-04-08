@@ -27,7 +27,7 @@ require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
 require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
-require "y2storage/encryption_auth"
+require "y2storage/encryption_authentication"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
 require "y2storage/storage_env"
@@ -186,7 +186,7 @@ module Y2Storage
 
     # Encryption authentication like password, tpm2, fido2,.....
     #
-    # @return [EncryptionAuth]
+    # @return [EncryptionAuthentication]
     attr_accessor :encryption_authentication
 
     # When the user decides to use LVM, strategy to decide the size of the volume
@@ -407,7 +407,7 @@ module Y2Storage
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
-      encryption_authentication:  EncryptionAuth::PASSWORD,
+      encryption_authentication:  EncryptionAuthentication::PASSWORD,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,

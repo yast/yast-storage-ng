@@ -22,7 +22,7 @@ Yast.import "Arch"
 
 module Y2Storage
   # Class for describing an authentication type of encrypted block devices.
-  class EncryptionAuth
+  class EncryptionAuthentication
     include Yast::I18n
     extend Yast::I18n
 
@@ -61,7 +61,7 @@ module Y2Storage
     # Finds a function by its value
     #
     # @param value [#to_s]
-    # @return [EncryptionAuth, nil] nil if such value does not exist
+    # @return [EncryptionAuthentication, nil] nil if such value does not exist
     def self.find(value)
       ALL.find { |opt| opt.value == value.to_s }
     end

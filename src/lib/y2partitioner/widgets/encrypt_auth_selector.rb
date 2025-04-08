@@ -19,7 +19,7 @@
 
 require "yast"
 require "cwm"
-require "y2storage/encryption_auth"
+require "y2storage/encryption_authentication"
 
 module Y2Partitioner
   module Widgets
@@ -46,19 +46,17 @@ module Y2Partitioner
       # Sets the initial value
       def init
         enable_on_init ? enable : disable
-        self.value = @controller.encryption_auth&.value
+        self.value = @controller.encryption_authentication&.value
       end
 
       # @macro seeItemsSelection
       def items
-        Y2Storage::EncryptionAuth.all.map { |opt| [opt.value, opt.name] }
+        Y2Storage::EncryptionAuthentication.all.map { |opt| [opt.value, opt.name] }
       end
 
       # @macro seeAbstractWidget
       def store
-        log.info("xxxxxxxxxxxxxx #{value}.... #{Y2Storage::EncryptionAuth.find(value)}")
-        
-        @controller.encryption_auth = Y2Storage::EncryptionAuth.find(value)
+        @controller.encryption_authentication = Y2Storage::EncryptionAuthentication.find(value)
       end
 
       private

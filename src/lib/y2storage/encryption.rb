@@ -339,16 +339,16 @@ module Y2Storage
 
     # Returns the encryption authentication type
     #
-    # @return [EncryptionAuth, nil] nil if such value does not exist
-    def encryption_auth
-      userdata_value(:encryption_auth)
+    # @return [EncryptionAuthentication, nil] nil if such value does not exist
+    def encryption_authentication
+      userdata_value(:encryption_authentication)
     end
 
     # Saves the given encryption authentication type
     #
-    # @param value [EncryptionAuth]
-    def encryption_auth=(value)
-      save_userdata(:encryption_auth, value)
+    # @param value [EncryptionAuthentication]
+    def encryption_authentication=(value)
+      save_userdata(:encryption_authentication, value)
     end
 
     # Executes the actions that must be performed right before the devicegraph is

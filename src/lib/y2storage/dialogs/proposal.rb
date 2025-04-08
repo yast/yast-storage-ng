@@ -142,7 +142,7 @@ module Y2Storage
           # Reuse the exact string "Changes to partitioning" from the partitioner
           _("<p>Changes to partitioning:</p>") +
           @actions_presenter.to_html +
-          encryption_auth
+          encryption_authentication
       end
 
       def boss_html
@@ -310,13 +310,13 @@ module Y2Storage
         Yast::HTML.List(items)
       end
 
-      def encryption_auth
+      def encryption_authentication
         return "" unless @devicegraph.encryptions&.length
         ret = para(_("Authentication for encrypted devices:"))
         auth_list = []
         @devicegraph.encryptions&.each do |d|
-          if d.encryption_auth && d.blk_device
-            auth_list << ("using " + d.encryption_auth.name + " for " + d.blk_device.name)
+          if d.encryption_authentication && d.blk_device
+            auth_list << ("using " + d.encryption_authentication.name + " for " + d.blk_device.name)
           end
         end
         if auth_list.size > 0
