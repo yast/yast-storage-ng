@@ -491,10 +491,10 @@ module Y2Storage
       type.is?(:luks2)
     end
 
-    # Whether the attribute #auth makes sense for this object
+    # Whether the attribute #authentication makes sense for this object
     #
     # @return [Boolean]
-    def supports_auth?
+    def supports_authentication?
       type.is?(:systemd_fde)
     end
 
