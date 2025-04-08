@@ -46,7 +46,7 @@ module Y2Partitioner
       # Sets the initial value
       def init
         enable_on_init ? enable : disable
-        self.value = @controller.encryption_authentication&.value
+        self.value = @controller.authentication&.value
       end
 
       # @macro seeItemsSelection
@@ -56,7 +56,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def store
-        @controller.encryption_authentication = Y2Storage::EncryptionAuthentication.find(value)
+        @controller.authentication = Y2Storage::EncryptionAuthentication.find(value)
       end
 
       private

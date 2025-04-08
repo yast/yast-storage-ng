@@ -65,7 +65,7 @@ module Y2Partitioner
         attr_accessor :pbkdf
 
         # @return [EncryptionAuthentication] Authentication for systemd_fde devices
-        attr_accessor :encryption_authentication
+        attr_accessor :authentication
 
         # Contructor
         #
@@ -82,7 +82,7 @@ module Y2Partitioner
           @apqns = initial_apqns
           @secure_key_type = initial_secure_key_type
           @label = initial_label
-          @encryption_authentication = initial_encryption_authentication
+          @authentication = initial_authentication
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -275,9 +275,9 @@ module Y2Partitioner
         # Authentication method when the device is encrypted.
         #
         # @return [EncryptionAuthentication, nil] nil if the method does not support it.
-        def initial_encryption_authentication
-          return nil unless encryption.respond_to?(:encryption_authentication)
-          encryption.encryption_authentication
+        def initial_authentication
+          return nil unless encryption.respond_to?(:authentication)
+          encryption.authentication
         end
 
         # Calculate actions that make sense for the block device
@@ -399,7 +399,7 @@ module Y2Partitioner
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
             method: method, password: password, label: label, pbkdf: pbkdf,
-            apqns: apqns, key_type: secure_key_type, encryption_authentication: encryption_authentication
+            apqns: apqns, key_type: secure_key_type, authentication: authentication
           )
         end
 
