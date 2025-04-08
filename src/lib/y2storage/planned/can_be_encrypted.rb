@@ -141,7 +141,7 @@ module Y2Storage
           log.info "      pbkdf: #{result.pbkdf}"
           log.info "      cipher: #{result.cipher}"
           log.info "      label: #{result.label}"
-          log.info "      authentication: #{result.encryption_authentication}"
+          log.info "      authentication: #{result.authentication}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"
         end

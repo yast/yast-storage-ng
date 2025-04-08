@@ -490,8 +490,8 @@ module Y2Storage
       }
 
       content["pbkdf"] = encryption.pbkdf_value unless encryption.pbkdf_value.empty?
-      if encryption.encryption_authentication
-        content["authentication"] = encryption.encryption_authentication.value
+      if encryption.authentication
+        content["authentication"] = encryption.authentication.value
       end
 
       if !encryption.password.empty?

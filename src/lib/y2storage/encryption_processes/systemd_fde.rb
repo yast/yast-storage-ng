@@ -31,14 +31,14 @@ module Y2Storage
       # @param dm_name [String]
       # @param pbkdf [PbkdFunction] PBKDF of the LUKS device, only relevant for LUKS2
       # @param label [String, nil] label of the LUKS device, only relevant for LUKS2
-      # @param encryption_authentication [EncryptionAuthentication] authentications for the crypted device
+      # @param authentication [EncryptionAuthentication] authentications for the crypted device
       #
       # @return [Encryption]
-      def create_device(blk_device, dm_name, encryption_authentication, pbkdf: nil, label: nil)
+      def create_device(blk_device, dm_name, authentication, pbkdf: nil, label: nil)
         enc = super(blk_device, dm_name)
         enc.label = label if label
         enc.pbkdf = pbkdf if pbkdf
-        enc.encryption_authentication = encryption_authentication
+        enc.authentication = authentication
         enc
       end
 

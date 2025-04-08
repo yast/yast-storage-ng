@@ -340,14 +340,14 @@ module Y2Storage
     # Returns the encryption authentication type
     #
     # @return [EncryptionAuthentication, nil] nil if such value does not exist
-    def encryption_authentication
+    def authentication
       userdata_value(:encryption_authentication)
     end
 
     # Saves the given encryption authentication type
     #
     # @param value [EncryptionAuthentication]
-    def encryption_authentication=(value)
+    def authentication=(value)
       save_userdata(:encryption_authentication, value)
     end
 
@@ -495,7 +495,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def supports_authentication?
-      type.is?(:systemd_fde)
+      method.id == :systemd_fde
     end
 
     # Whether the attribute #cipher makes sense for this object
