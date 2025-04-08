@@ -57,7 +57,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def available?
-        tpm_system?
+        Y2Storage::Arch.new.efiboot?
       end
 
       # Creates an encryption device for the given block device
@@ -76,13 +76,6 @@ module Y2Storage
       end
 
       private
-
-      # Whether the system is capable of using the encryption method
-      #
-      # @return [Boolean]
-      def tpm_system?
-        Y2Storage::Arch.new.efiboot? && Yast::Arch.has_tpm2
-      end
 
       # @see Base#encryption_process
       def encryption_process
