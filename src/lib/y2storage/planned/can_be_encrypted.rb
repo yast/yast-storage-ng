@@ -138,6 +138,10 @@ module Y2Storage
           assign_enc_attr(result, :auth)
           assign_enc_attr(result, :key_size) { |value| value / 8 }
           log.info "Device encrypted. Returning the new device #{result.inspect}"
+          log.info "      encryption_pbkdf: #{result.encryption_pbkdf}"
+          log.info "      encryption_cipher: #{result.encryption_pbkdf}"
+          log.info "      encryption_label: #{result.encryption_label}"
+          log.info "      encryption_auth: #{result.encryption_auth}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"
         end
