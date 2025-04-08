@@ -74,6 +74,10 @@ module Y2Partitioner
         controller.method = value
       end
 
+      def opt
+        [:hstretch]
+      end
+
       private
 
       # @return [Actions::Controllers::Encryption] controller for the encryption device
