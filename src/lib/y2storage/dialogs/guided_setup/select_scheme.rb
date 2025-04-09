@@ -127,6 +127,8 @@ module Y2Storage
         end
 
         def authentication
+          return Empty() unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+
           items = Y2Storage::EncryptionAuthentication.all.map do |auth|
             Item(Id(auth.value), auth.name, auth.value == settings.encryption_authentication)
           end
@@ -176,16 +178,11 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
-          settings.encryption_authentication = EncryptionAuthentication.find(widget_value(:authentication))
-          if settings.encryption_authentication != "password"
-            settings.encryption_method = EncryptionMethod::SYSTEMD_FDE
-            settings.encryption_pbkdf = PbkdFunction.find("argon2id")
-          else
-            enc_method = EncryptionMethod.find(feature(:proposal, :encryption_method).to_s)
-            settings.encryption_method = (enc_method || EncryptionMethod::LUKS2)
-            enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
-            settings.encryption_pbkdf = (enc_pbkdf || "pbkdf2")
-          end
+          return unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+
+          settings.encryption_authentication = EncryptionAuthentication.find(
+            widget_value(:authentication)
+          )
         end
 
         def help_text
