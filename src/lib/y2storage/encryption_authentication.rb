@@ -43,7 +43,7 @@ module Y2Storage
     # TRANSLATORS: authentication type for encrypted devices.
     TPM2 = new("tpm2", N_("TPM2"))
     # TRANSLATORS: authentication type for encrypted devices.
-    TPM2PIN = new("tpm2Pin", N_("TPM2 and PIN"))
+    TPM2PIN = new("tpm2+Pin", N_("TPM2 and PIN"))
     # TRANSLATORS: authenticationtype for encrypted devices.
     FIDO2 = new("fido2", N_("FIDO2"))    
 
