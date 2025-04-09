@@ -64,15 +64,15 @@ module Y2Storage
       #
       # @param blk_device [Y2Storage::BlkDevice]
       # @param dm_name [String]
+      # @param authentication [EncryptionAuthentication] authentications for the crypted device
       # @param pbkdf [PbkdFunction, nil] password-based key derivation function to be used by the created
       #   LUKS2 device
       # @param label [String] optional LUKS label
-      # @param authentication [EncryptionAuthentication] authentications for the crypted device
       #
       # @return [Y2Storage::Encryption]
       def create_device(blk_device, dm_name, authentication: nil, pbkdf: nil, label: "")
         encryption_process.create_device(blk_device, dm_name, authentication,
-                                         pbkdf: pbkdf, label: label)
+          pbkdf: pbkdf, label: label)
       end
 
       private
