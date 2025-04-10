@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2022] SUSE LLC
+# Copyright (c) [2015-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -342,6 +342,9 @@ module Y2Storage
       storage.commit(commit_options, callbacks)
       staging.post_commit
 
+      # Make sure /etc/lvm/devices is written in case it is missing
+      add_missing_lvm_devices
+
       @committed = true
     rescue Storage::Exception
       false
@@ -553,6 +556,16 @@ module Y2Storage
 
       log.info "Configure Snapper? #{root.configure_snapper}"
       root.configure_snapper
+    end
+
+    # Generates the files at /etc/lvm/devices if they are not there but libstorage-ng considers
+    # they should be.
+    #
+    # See jsc#PED-7355
+    def add_missing_lvm_devices
+      return unless Storage::LvmDevicesFile.status == Storage::LvmDevicesFile::Status_MISSING
+
+      Storage::LvmDevicesFile.create(staging.to_storage_value)
     end
 
     # Class methods
