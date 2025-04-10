@@ -49,6 +49,11 @@ module Y2Partitioner
         self.value = @controller.authentication&.value
       end
 
+      # @macro seeAbstractWidget
+      def opt
+        [:hstretch]
+      end
+
       # @macro seeItemsSelection
       def items
         Y2Storage::EncryptionAuthentication.all.map { |opt| [opt.value, opt.name] }

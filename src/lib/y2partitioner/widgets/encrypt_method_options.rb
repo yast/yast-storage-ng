@@ -223,7 +223,7 @@ module Y2Partitioner
         super.concat([pbkdf_widget, auth_widget])
       end
 
-      # Widget to set the aauthentication function
+      # Widget to set the authentication function
       #
       # @return [Widgets::EncryptPbkdf]
       def pbkdf_widget
