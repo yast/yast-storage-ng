@@ -1,4 +1,4 @@
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,9 +17,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "fileutils"
 require "yast"
 require "installation/finish_client"
 require "y2storage/used_filesystems"
+Yast.import "Mode"
 
 module Y2Storage
   module Clients
@@ -47,6 +49,7 @@ module Y2Storage
         enable_multipath
         update_sysconfig
         finish_devices
+        copy_lvm_devices
         true
       end
 
@@ -79,6 +82,23 @@ module Y2Storage
       # Executes the finish installation actions for all devices
       def finish_devices
         staging.finish_installation
+      end
+
+      LVM_DEVICES_DIR = "/etc/lvm/devices".freeze
+
+      # Copies the files from /etc/lvm/devices to the target system, if needed
+      def copy_lvm_devices
+        # No files should be generated during a system upgrade, since libstorage-ng is not
+        # involved. But better be safe and skip this in the update case.
+        return unless Yast::Mode.installation
+
+        files = Dir.glob(File.join(LVM_DEVICES_DIR, "*"))
+        target_path = File.join(Installation.destdir, LVM_DEVICES_DIR)
+        target_exists = File.exist?(target_path)
+        log.info("Trying to copy LVM devices files. Target: #{target_exists}. Files: #{files}")
+        return unless target_exists
+
+        files.each { |f| ::FileUtils.cp_r(f, target_path) }
       end
 
       # Staging devicegraph
