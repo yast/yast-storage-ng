@@ -25,8 +25,8 @@ Url:            https://github.com/yast/yast-storage-ng
 
 Source:         %{name}-%{version}.tar.bz2
 
-# Encryption#use_key_file_in_commit
-BuildRequires:	libstorage-ng-ruby >= 4.5.144
+# LvmDevicesFile
+BuildRequires:	libstorage-ng-ruby >= 4.5.234
 BuildRequires:  update-desktop-files
 # Replace PackageSystem with Package
 BuildRequires:  yast2 >= 4.4.38
@@ -47,8 +47,8 @@ BuildRequires:  rubygem(%{rb_default_ruby_abi}:parallel_tests)
 
 # findutils for xargs
 Requires:       findutils
-# Encryption#use_key_file_in_commit
-Requires:       libstorage-ng-ruby >= 4.5.144
+# LvmDevicesFile
+Requires:       libstorage-ng-ruby >= 4.5.234
 # Require libstorage bindings for the current Ruby version (bsc#1235598)
 Requires:       libstorage-ng-ruby-%{rb_ver}
 # Replace PackageSystem with Package
