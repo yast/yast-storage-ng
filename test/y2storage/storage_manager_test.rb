@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2017-2022] SUSE LLC
+# Copyright (c) [2017-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,9 +27,13 @@ describe Y2Storage::StorageManager do
 
   include Yast::Logger
 
+  let(:lvm_devs_disabled) { Storage::LvmDevicesFile::Status_DISABLED }
+  let(:lvm_devs_missing) { Storage::LvmDevicesFile::Status_MISSING }
+
   before do
     described_class.create_test_instance
     allow(Yast::Pkg).to receive(:SourceReleaseAll)
+    allow(Storage::LvmDevicesFile).to receive(:status).and_return lvm_devs_disabled
   end
 
   describe ".new" do
@@ -595,6 +599,22 @@ describe Y2Storage::StorageManager do
         expect(options.force_rw).to eq(true)
       end
       manager.commit(force_rw: true)
+    end
+
+    it "does not generate /etc/lvm/devices if not needed" do
+      expect(Storage::LvmDevicesFile).to_not receive(:create)
+      manager.commit
+    end
+
+    context "if there is a missing file at /etc/lvm/devices" do
+      before do
+        allow(Storage::LvmDevicesFile).to receive(:status).and_return lvm_devs_missing
+      end
+
+      it "generates the files at /etc/lvm/devices" do
+        expect(Storage::LvmDevicesFile).to receive(:create)
+        manager.commit
+      end
     end
 
     it "returns true if everything goes fine" do
