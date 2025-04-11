@@ -57,7 +57,8 @@ module Y2Storage
         RB_NO_SPACE_IN_LVM_VG:                             N_("No space left in the LVM volume group."),
         RB_MIN_SIZE_FOR_LVM_LV:                            N_("The LVM logical volume already has the minimum possible size."),
         RB_MAX_SIZE_FOR_LVM_LV_THIN:                       N_("The LVM thin logical volume already has the maximum size."),
-        RB_PASSWORD_REQUIRED:                              N_("The encryption password is required.")
+        RB_PASSWORD_REQUIRED:                              N_("The encryption password is required."),
+        RB_FILESYSTEM_MOUNT_READ_ONLY:                     N_("Filesystem mounted in read-only mode.")
       }.freeze
     # rubocop:enable Layout/LineLength
 
