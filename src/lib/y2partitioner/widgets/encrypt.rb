@@ -232,9 +232,16 @@ module Y2Partitioner
 
         format(
           # TRANSLATORS: help text for Regular Luks2 encryption method together wit TPM2 support
-          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2 and TPM2. "\
+          _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2. "\
             "You have to provide the encryption password and the password-based key derivation " \
-            "function (PBKDF) that will be used to protect that passphrase.</p>"),
+            "function (PBKDF) that will be used to protect that passphrase.</p>"\
+            "<p>Additional methods can be used for unlocking the device:</p>" \
+            "<ul>" \
+            "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
+            "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
+            "<li><i>FIDO2: </i>External key device.</li>" \
+            "</ul>"
+           ),
           label: encrypt_method.to_human_string
         )
       end
