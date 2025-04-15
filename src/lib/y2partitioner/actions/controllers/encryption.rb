@@ -32,7 +32,7 @@ module Y2Partitioner
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
         include Yast::I18n
-        include PartitioningFeatures
+        include Y2Storage::PartitioningFeatures
 
         # Action to perform when {#finish} is called
         #
