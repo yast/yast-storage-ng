@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018-2019] SUSE LLC
+# Copyright (c) [2018-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -46,7 +46,12 @@ describe Y2Storage::Clients::Finish do
 
     context "Write" do
       let(:args) { ["Write"] }
-      before { fake_scenario(scenario) }
+      before do
+        fake_scenario(scenario)
+        allow(Yast::Mode).to receive(:installation).and_return true
+        allow(Dir).to receive(:glob).and_call_original
+        allow(Dir).to receive(:glob).with("/etc/lvm/devices/*").and_return []
+      end
 
       let(:scenario) { "lvm-two-vgs" }
 
@@ -147,6 +152,40 @@ describe Y2Storage::Clients::Finish do
           it "raises no error" do
             expect { client.run }.to_not raise_error
           end
+        end
+      end
+
+      context "if there are files at /etc/lvm/devices" do
+        around do |example|
+          @orig_root = Dir.mktmpdir
+          @orig_dir_path = File.join(@orig_root, "etc", "lvm", "devices")
+          FileUtils.mkdir_p(@orig_dir_path)
+          @orig_file_name = "system"
+          FileUtils.touch(File.join(@orig_dir_path, @orig_file_name))
+
+          @dest_root = Dir.mktmpdir
+          @dest_dir_path = File.join(@dest_root, "etc", "lvm", "devices")
+          FileUtils.mkdir_p(@dest_dir_path)
+
+          example.run
+        ensure
+          FileUtils.remove_entry @orig_root
+          FileUtils.remove_entry @dest_root
+        end
+
+        before do
+          allow(Dir).to receive(:glob).with("/etc/lvm/devices/*") do
+            Dir.glob(File.join(@orig_dir_path, "*"))
+          end
+          allow(Yast::Installation).to receive(:destdir).and_return @dest_root
+        end
+
+        it "copies the files to the corresponding path at the target system" do
+          file = File.join(Yast::Installation.destdir, "etc", "lvm", "devices", @orig_file_name)
+
+          expect(File.exist?(file)).to eq false
+          client.run
+          expect(File.exist?(file)).to eq true
         end
       end
     end

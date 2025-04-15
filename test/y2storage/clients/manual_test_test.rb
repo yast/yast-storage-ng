@@ -31,7 +31,7 @@ describe Y2Storage::Clients::ManualTest do
       allow(Y2Storage::StorageManager).to receive(:instance).and_return storage_manager
     end
 
-    let(:storage_manager) { double("StorageManager", probe_from_yaml: nil, probe_from_xml: nil) }
+    let(:storage_manager) { double("StorageManager", probe_from_file: nil) }
     let(:partitioner_client) { double("Main", run: :next) }
     let(:proposal_client) { double("InstDiskProposal", run: :next) }
 
@@ -48,7 +48,7 @@ describe Y2Storage::Clients::ManualTest do
 
     RSpec.shared_examples "mock devicegraph" do
       it "mocks the devicegraph with the given file" do
-        expect(storage_manager).to receive(:probe_from_xml).with(args[1])
+        expect(storage_manager).to receive(:probe_from_file).with(args[1])
         described_class.run
       end
     end
@@ -97,7 +97,7 @@ describe Y2Storage::Clients::ManualTest do
       let(:args) { ["partitioner", "devicegraph.xml"] }
 
       it "mocks the devicegraph with the xml file" do
-        expect(storage_manager).to receive(:probe_from_xml).with("devicegraph.xml")
+        expect(storage_manager).to receive(:probe_from_file).with("devicegraph.xml")
         described_class.run
       end
 
@@ -111,7 +111,7 @@ describe Y2Storage::Clients::ManualTest do
       let(:args) { ["partitioner", "/path/to/devicegraph.yaml"] }
 
       it "mocks the devicegraph with the YAML file" do
-        expect(storage_manager).to receive(:probe_from_yaml).with("/path/to/devicegraph.yaml")
+        expect(storage_manager).to receive(:probe_from_file).with("/path/to/devicegraph.yaml")
         described_class.run
       end
 

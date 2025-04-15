@@ -1,4 +1,4 @@
-# Copyright (c) [2015-2022] SUSE LLC
+# Copyright (c) [2015-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -182,6 +182,9 @@ module Y2Storage
     #
     # @param callbacks [Callbacks::Probe, nil]
     def probe!(callbacks = nil)
+      graph_file = StorageEnv.instance.devicegraph_file
+      return probe_from_file(graph_file) if graph_file
+
       probe_callbacks = Callbacks::Probe.new(user_callbacks: callbacks)
 
       begin
@@ -339,6 +342,9 @@ module Y2Storage
       storage.commit(commit_options, callbacks)
       staging.post_commit
 
+      # Make sure /etc/lvm/devices is written in case it is missing
+      add_missing_lvm_devices
+
       @committed = true
     rescue Storage::Exception
       false
@@ -366,6 +372,15 @@ module Y2Storage
       storage.probed.copy(storage.system)
       probe_performed
       manage_probing_issues
+    end
+
+    # Probes from a file (XML or YAML) instead of doing a real probing
+    def probe_from_file(filename)
+      if filename =~ /.ya?ml$/i
+        probe_from_yaml(filename)
+      else
+        probe_from_xml(filename)
+      end
     end
 
     # Access mode in which the storage system was initialized (read-only or read-write)
@@ -543,6 +558,16 @@ module Y2Storage
       root.configure_snapper
     end
 
+    # Generates the files at /etc/lvm/devices if they are not there but libstorage-ng considers
+    # they should be.
+    #
+    # See jsc#PED-7355
+    def add_missing_lvm_devices
+      return unless Storage::LvmDevicesFile.status == Storage::LvmDevicesFile::Status_MISSING
+
+      Storage::LvmDevicesFile.create(staging.to_storage_value)
+    end
+
     # Class methods
     class << self
       # Initializes storage with a specific access mode (read-only or read-write)
@@ -606,6 +631,8 @@ module Y2Storage
 
           raise AccessModeError,
             "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
+        elsif StorageEnv.instance.test_mode?
+          create_test_instance
         else
           read_only = mode == :ro
           create_instance(Storage::Environment.new(read_only), callbacks)
