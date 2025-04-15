@@ -188,6 +188,7 @@ module Y2Storage
         def help_text
           help = [base_help_text]
           help << separate_vgs_help_text if settings.separate_vgs_relevant?
+          help << authentication_help_text if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
 
           help.join("\n\n")
         end
@@ -219,7 +220,7 @@ module Y2Storage
               "</li>" \
               "</ul>" \
               "</p><p>" \
-              "<b>%{disk_encryption_label}</b> (with or without LVM) adds a LUKS " \
+              "<b>%{disk_encryption_label}</b> (with or without LVM) adds a %{encrption_method} " \
               " disk encryption layer to the partitioning setup. " \
               "Notice that you will have to enter the correct password each time " \
               "you boot the system. " \
@@ -228,17 +229,30 @@ module Y2Storage
               "so make sure not to lose it!</i>" \
               "</p>"
             ),
-            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption])
+            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption]),
+            encrption_method: settings.encryption_method.to_human_string
           )
           # rubocop:enable Metrics/MethodLength
         end
 
+        def authentication_help_text
+          # TRANSLATORS: %{widget_label} refers to the label of the described widget
+          format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:</p>" \
+              "<ul>" \
+              "<li><i>Only password:</i> <p>Password is required.</p></li>" \
+              "<li><i>TPM2:</i> <p>A crypto-device that is already present in your system.</p></li>" \
+              "<li><i>TPM2 and PIN:</i> <p>Like TPM2, but a password must be enter together.</p></li>" \
+              "<li><i>FIDO2:</i> <p>External key device.</p></li>" \
+              "</ul>"
+                  ), widget_label: _(WIDGET_LABELS[:authentication])
+          )
+        end
+
         def separate_vgs_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
-          format(
-            _("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
-              "to put some of those special paths in an isolated Volume Group.</p>"),
-            widget_label: _(WIDGET_LABELS[:use_separate_vgs])
+          format(_("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
+                   "to put some of those special paths in an isolated Volume Group.</p>"),
+                 widget_label: _(WIDGET_LABELS[:use_separate_vgs])
           )
         end
 
