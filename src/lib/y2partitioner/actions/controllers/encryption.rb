@@ -239,7 +239,8 @@ module Y2Partitioner
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
 
-          feature(:proposal, :encryption_pbkdf) || Y2Storage::PbkdFunction::PBKDF2
+          Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
+            Y2Storage::PbkdFunction::PBKDF2
         end
 
         # Currently used APQNs when the device is encrypted with pervasive encryption
