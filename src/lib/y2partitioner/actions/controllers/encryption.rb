@@ -23,6 +23,7 @@ require "y2storage/encryption_type"
 require "y2storage/encryption_processes/secure_key"
 require "y2storage/encryption_processes/apqn"
 require "y2storage/encryption_authentication"
+require "y2storage/partitioning_features"
 
 module Y2Partitioner
   module Actions
@@ -31,6 +32,7 @@ module Y2Partitioner
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
         include Yast::I18n
+        include PartitioningFeatures
 
         # Action to perform when {#finish} is called
         #
@@ -237,9 +239,7 @@ module Y2Partitioner
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
 
-          # Hardcoded conservative default, we can either change it or make it configurable
-          # (see Y2Storage::Configuration) in the future if needed.
-          Y2Storage::PbkdFunction::PBKDF2
+          feature(:proposal, :encryption_pbkdf) || Y2Storage::PbkdFunction::PBKDF2
         end
 
         # Currently used APQNs when the device is encrypted with pervasive encryption
