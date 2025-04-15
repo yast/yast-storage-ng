@@ -54,9 +54,8 @@ module Y2Partitioner
     #     end
     #   end
     module FilesystemSteps
-
       include Yast::Logger
-      
+
       def self.included(base)
         base.skip_stack :filesystem_role
       end

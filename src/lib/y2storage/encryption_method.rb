@@ -52,7 +52,7 @@ module Y2Storage
     # Instance of the TpmFde method to be always returned by the module
     TPM_FDE = TpmFde.new
     # Instance of the SystemdFde method to be always returned by the module
-    SYSTEMD_FDE = SystemdFde.new    
+    SYSTEMD_FDE = SystemdFde.new
     # Instance of the RandomSwap method to be always returned by the module
     RANDOM_SWAP = RandomSwap.new
     # Instance of the ProtectedSwap method to be always returned by the module

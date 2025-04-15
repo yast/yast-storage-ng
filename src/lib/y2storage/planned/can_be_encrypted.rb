@@ -46,7 +46,6 @@ module Y2Storage
       #   @return [EncryptionAuthentication] encryption authentication type
       attr_accessor :encryption_authentication
 
-      
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the device.
       secret_attr :encryption_password

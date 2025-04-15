@@ -312,6 +312,7 @@ module Y2Storage
 
       def encryption_authentication
         return "" unless @devicegraph.encryptions&.length
+
         ret = para(_("Authentication for encrypted devices:"))
         auth_list = []
         @devicegraph.encryptions&.each do |d|
@@ -320,9 +321,9 @@ module Y2Storage
           end
         end
         if auth_list.size > 0
-          return ret + list(auth_list)
+          ret + list(auth_list)
         else
-          return ""
+          ""
         end
       end
 

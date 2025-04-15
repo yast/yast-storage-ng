@@ -230,30 +230,27 @@ module Y2Storage
               "</p>"
             ),
             disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption]),
-            encrption_method: settings.encryption_method.to_human_string
+            encrption_method:      settings.encryption_method.to_human_string
           )
           # rubocop:enable Metrics/MethodLength
         end
 
         def authentication_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
-          format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:</p>" \
-              "<ul>" \
-              "<li><i>Only password: </i>Password is required.</li>" \
-              "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
-              "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
-              "<li><i>FIDO2: </i>External key device.</li>" \
-              "</ul>"
-                  ), widget_label: _(WIDGET_LABELS[:authentication])
-          )
+          format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:" \
+                   "</p><ul>" \
+                   "<li><i>Only password: </i>Password is required.</li>" \
+                   "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
+                   "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
+                   "<li><i>FIDO2: </i>External key device.</li>" \
+                   "</ul>"), widget_label: _(WIDGET_LABELS[:authentication]))
         end
 
         def separate_vgs_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
           format(_("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
                    "to put some of those special paths in an isolated Volume Group.</p>"),
-                 widget_label: _(WIDGET_LABELS[:use_separate_vgs])
-          )
+            widget_label: _(WIDGET_LABELS[:use_separate_vgs]))
         end
 
         private

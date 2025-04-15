@@ -278,6 +278,7 @@ module Y2Partitioner
         # @return [EncryptionAuthentication, nil] nil if the method does not support it.
         def initial_authentication
           return nil unless encryption.respond_to?(:authentication)
+
           encryption.authentication
         end
 

@@ -45,12 +45,12 @@ module Y2Storage
     # TRANSLATORS: authentication type for encrypted devices.
     TPM2PIN = new("tpm2+pin", N_("TPM2 and PIN"))
     # TRANSLATORS: authenticationtype for encrypted devices.
-    FIDO2 = new("fido2", N_("FIDO2"))    
+    FIDO2 = new("fido2", N_("FIDO2"))
 
     # All possible instances
     ALL = [PASSWORD, TPM2, TPM2PIN, FIDO2].freeze
     private_constant :ALL
-    NONE_TPM = [PASSWORD, FIDO2].freeze    
+    NONE_TPM = [PASSWORD, FIDO2].freeze
     private_constant :NONE_TPM
 
     # Sorted list of all possible authentications
