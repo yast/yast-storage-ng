@@ -239,10 +239,10 @@ module Y2Storage
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
           format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:</p>" \
               "<ul>" \
-              "<li><i>Only password:</i> <p>Password is required.</p></li>" \
-              "<li><i>TPM2:</i> <p>A crypto-device that is already present in your system.</p></li>" \
-              "<li><i>TPM2 and PIN:</i> <p>Like TPM2, but a password must be enter together.</p></li>" \
-              "<li><i>FIDO2:</i> <p>External key device.</p></li>" \
+              "<li><i>Only password: </i>Password is required.</li>" \
+              "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
+              "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
+              "<li><i>FIDO2: </i>External key device.</li>" \
               "</ul>"
                   ), widget_label: _(WIDGET_LABELS[:authentication])
           )
