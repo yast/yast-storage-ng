@@ -240,9 +240,7 @@ module Y2Partitioner
             "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
             "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
             "<li><i>FIDO2: </i>External key device.</li>" \
-            "</ul>"
-           ),
-          label: encrypt_method.to_human_string
+            "</ul>"), label: encrypt_method.to_human_string
         )
       end
 
