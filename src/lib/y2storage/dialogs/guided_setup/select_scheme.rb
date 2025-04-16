@@ -55,7 +55,9 @@ module Y2Storage
         def encryption_handler(focus: true)
           widget_update(:password, using_encryption?, attr: :Enabled)
           widget_update(:repeat_password, using_encryption?, attr: :Enabled)
-          widget_update(:authentication, using_encryption?, attr: :Enabled)
+          if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+            widget_update(:authentication, using_encryption?, attr: :Enabled)
+          end
           return unless focus && using_encryption?
 
           Yast::UI.SetFocus(Id(:password))
@@ -170,6 +172,7 @@ module Y2Storage
 
           widget_update(:password, settings.encryption_password)
           widget_update(:repeat_password, settings.encryption_password)
+          return unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
           widget_update(:authentication, settings.encryption_authentication)
         end
 
