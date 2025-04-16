@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -134,33 +135,34 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       end
     end
 
-    describe "checkbox for #tpm2" do
+    describe "comboBox for #authentication" do
       before do
-        allow(subject).to receive(:CheckBox)
+        allow(subject).to receive(:ComboBox)
       end
 
-      context "and no TPM2 device is available" do
+      context "and encryption method is not systemd-fde" do
         before do
-          allow(Yast::Arch).to receive(:has_tpm2).and_return(false)
+          settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
         end
 
-        it "does not include an option to select TPM2 support for encryption" do
-          expect(subject).to_not receive(:CheckBox).with(Id(:tpm2), any_args)
+        it "does not include an option to select authentication method" do
+          expect(subject).to_not receive(:ComboBox).with(Id(:authentication), any_args)
 
           subject.run
         end
       end
 
-      context "and TPM2 device is available" do
+      context "and encryption method is systemd-fde" do
         before do
-          allow(Yast::Arch).to receive(:has_tpm2).and_return(true)
+          settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
         end
 
-        it "does include an option to select TPM2 support for encryption" do
-          expect(subject).to receive(:CheckBox).with(Id(:tpm2), any_args)
+        it "does include an option to select authentication method" do
+          expect(subject).to receive(:ComboBox).with(Id(:authentication), any_args)
 
           subject.run
         end
+
       end
     end
 
@@ -210,13 +212,13 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         select_widget(:password, value: password)
         select_widget(:repeat_password, value: repeat_password)
         settings.encryption_password = nil
-        allow(Yast::Arch).to receive(:has_tpm2).and_return(true)
+        settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
       end
 
-      it "enables password and TPM2 fields" do
+      it "enables password and authentication fields" do
         expect_enable(:password)
         expect_enable(:repeat_password)
-        expect_enable(:tpm2)
+        expect_enable(:authentication)
         subject.run
       end
 

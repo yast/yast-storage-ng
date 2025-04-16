@@ -47,7 +47,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) do
-      double("Storage::Devicegraph", actiongraph: actiongraph1, blk_devices: blk_devices)
+      double("Storage::Devicegraph", actiongraph: actiongraph1,
+        encryptions: encryptions, blk_devices: blk_devices)
     end
     let(:actiongraph1) { double("Storage::Actiongraph") }
     let(:actions_presenter1) do
@@ -425,9 +426,9 @@ describe Y2Storage::Dialogs::Proposal do
             dialog.run
           end
 
-          it "does not offer TPM2 selection" do
+          it "does not offer any authentication selection" do
             expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-              expect(content.to_s).to_not include("TPM2 device for encryption")
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
             end
             dialog.run
           end
@@ -446,7 +447,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "after adjusting the Guided Setup settings",
                 "do not adjust size of /"
               )
-              expect(content.to_s).to_not include("TPM2 device for encryption")
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
             end
             dialog.run
           end
@@ -467,39 +468,56 @@ describe Y2Storage::Dialogs::Proposal do
             dialog.run
           end
 
-          context "and the user has selected device encryption" do
-            context "and TPM2 devices for encryption" do
+          context "and the user has selected device encryption SYSTEMD_FDE" do
+            context "and FIDO2 authentication for encryption" do
               let(:settings) do
                 settings = Y2Storage::ProposalSettings.new_for_current_product
-                settings.encryption_use_tpm2 = true
+                settings.encryption_authentication = Y2Storage::EncryptionAuthentication::FIDO2
                 settings.encryption_password = "12345678"
-                settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+                settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
                 settings
               end
+              let(:encryptions) do
+                [
+                  double("Y2Storage::Encryption",
+                    authentication: Y2Storage::EncryptionAuthentication::FIDO2,
+                    blk_device:     double("Y2Storage::Disk", name: "/dev/sda")),
+                  double("Y2Storage::Encryption",
+                    authentication: Y2Storage::EncryptionAuthentication::FIDO2,
+                    blk_device:     double("Y2Storage::Disk", name: "/dev/sdb"))
+                ]
+              end
 
-              it "displays that available TPM2 will support encryption" do
+              it "displays that available FIDO2 key will support encryption" do
                 expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-                  expect(content.to_s).to include("Using TPM2 device for encryption")
+                  expect(content.to_s).to include("using FIDO2")
                 end
                 dialog.run
               end
             end
+          end
 
-            context "and has NOT selected TPM2 devices for encryption" do
-              let(:settings) do
-                settings = Y2Storage::ProposalSettings.new_for_current_product
-                settings.encryption_use_tpm2 = false
-                settings.encryption_password = "12345678"
-                settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
-                settings
-              end
+          context "and the user has selected device encryption LUKS2" do
+            let(:settings) do
+              settings = Y2Storage::ProposalSettings.new_for_current_product
+              settings.encryption_password = "12345678"
+              settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+              settings
+            end
+            let(:encryptions) do
+              [
+                double("Y2Storage::Encryption", authentication: nil,
+                  blk_device: double("Y2Storage::Disk", name: "/dev/sda")),
+                double("Y2Storage::Encryption", authentication: nil,
+                  blk_device: double("Y2Storage::Disk", name: "/dev/sdb"))
+              ]
+            end
 
-              it "displays that available TPM2 will NOT support encryption" do
-                expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-                  expect(content.to_s).to include("Do not use TPM2 device for encryption")
-                end
-                dialog.run
+            it "does not offer authentication selection" do
+              expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                expect(content.to_s).to_not include("Authentication for encrypted devices:")
               end
+              dialog.run
             end
           end
 
@@ -510,9 +528,9 @@ describe Y2Storage::Dialogs::Proposal do
               settings
             end
 
-            it "does not offer TPM2 selection" do
+            it "does not offer authentication selection" do
               expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-                expect(content.to_s).to_not include("TPM2 device for encryption")
+                expect(content.to_s).to_not include("Authentication for encrypted devices:")
               end
               dialog.run
             end
@@ -531,7 +549,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "not able to propose",
                 "using the provided settings"
               )
-              expect(content.to_s).to_not include("TPM2 device for encryption")
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
             end
             dialog.run
           end
