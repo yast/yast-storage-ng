@@ -118,7 +118,6 @@ module Y2Storage
       #
       # @param plain_device [BlkDevice]
       # @return [BlkDevice]
-      # rubocop:disable Metrics/AbcSize
       def final_device!(plain_device)
         result = super
         if create_encryption?
@@ -144,7 +143,6 @@ module Y2Storage
 
         result
       end
-      # rubocop:enable Metrics/AbcSize
 
       def self.included(base)
         base.extend(ClassMethods)
