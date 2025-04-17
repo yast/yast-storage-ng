@@ -42,6 +42,34 @@ describe Y2Storage::EncryptionAuthentication do
     end
   end
 
+  describe "#all" do
+    before do
+      allow(Yast::Arch).to receive(:has_tpm2).and_return(tpm2)
+    end
+
+    context "tpm2 is avalable" do
+      let(:tpm2) { true }
+
+      it "includes tpm2 and tpm2+pin" do
+        expect(Y2Storage::EncryptionAuthentication.all)
+          .to eq [Y2Storage::EncryptionAuthentication::PASSWORD,
+                  Y2Storage::EncryptionAuthentication::TPM2,
+                  Y2Storage::EncryptionAuthentication::TPM2PIN,
+                  Y2Storage::EncryptionAuthentication::FIDO2]
+      end
+    end
+
+    context "tpm2 is not avalable" do
+      let(:tpm2) { false }
+
+      it "includes not tpm2 and tpm2+pin" do
+        expect(Y2Storage::EncryptionAuthentication.all)
+          .to eq [Y2Storage::EncryptionAuthentication::PASSWORD,
+                  Y2Storage::EncryptionAuthentication::FIDO2]
+      end
+    end
+  end
+
   describe "#===" do
     it "returns true for the equivalent object" do
       value =
