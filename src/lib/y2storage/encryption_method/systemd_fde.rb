@@ -31,9 +31,9 @@ Yast.import "Arch"
 module Y2Storage
   module EncryptionMethod
     # Encryption method that allows to encrypt a device using LUKS2 and configure the unlocking
-    # process via the system TPM using the sdbootutil created by SUSE.
+    # process via the system TPM or FIDO2 using the sdbootutil created by SUSE.
     #
-    # Check the documentation of fde-tools for further information.
+    # Check the documentation of sdbootutil for further information.
     # https://github.com/openSUSE/sdbootutil
     class SystemdFde < Base
       def initialize

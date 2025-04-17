@@ -328,6 +328,7 @@ module Y2Storage
     # @return [Encryption]
     def encrypt(method: EncryptionMethod::LUKS1, dm_name: nil, password: nil, **method_args)
       enc = encrypt_with_method(method, dm_name, **method_args)
+
       enc.auto_dm_name = enc.dm_table_name.empty?
       enc.password = password if password
       enc.ensure_suitable_mount_by

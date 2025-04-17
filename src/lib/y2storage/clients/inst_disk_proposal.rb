@@ -48,7 +48,6 @@ module Y2Storage
 
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
-
         # Save staging revision to check later if the system was reprobed
         save_staging_revision
 
