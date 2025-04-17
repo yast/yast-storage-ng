@@ -173,6 +173,7 @@ module Y2Storage
           widget_update(:password, settings.encryption_password)
           widget_update(:repeat_password, settings.encryption_password)
           return unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+
           widget_update(:authentication, settings.encryption_authentication)
         end
 

@@ -30,7 +30,8 @@ describe Y2Partitioner::Widgets::EncryptAuthSelector do
 
   let(:initial_authentication) { "fido2" }
   let(:controller) do
-    double("Controllers::Encryption", authentication: Y2Storage::EncryptionAuthentication.find(initial_authentication))
+    double("Controllers::Encryption",
+      authentication: Y2Storage::EncryptionAuthentication.find(initial_authentication))
   end
 
   include_examples "CWM::ComboBox"
