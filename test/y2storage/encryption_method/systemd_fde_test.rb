@@ -54,10 +54,10 @@ describe Y2Storage::EncryptionMethod::SystemdFde do
       allow(Y2Storage::Arch).to receive(:new).and_return(arch)
     end
     let(:arch) { instance_double("Y2Storage::Arch", efiboot?: efi) }
-    
+
     context "if the system boots using EFI" do
       let(:efi) { true }
-      
+
       it "#available? returns true" do
         expect(subject.available?).to eq true
       end
