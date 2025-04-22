@@ -59,16 +59,15 @@ describe Y2Storage::EncryptionMethod do
       File.read(File.join(DATA_PATH, "lszcrypt", "#{file}.txt"))
     end
 
-    let(:storage_arch) { instance_double("::Storage::Arch") }
-
     before do
-      allow(storage_arch).to receive(:efiboot?).and_return(true)
+      allow(Y2Storage::Arch).to receive(:new).and_return(arch)
       allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything).and_return(lszcrypt)
       allow(File).to receive(:read).and_call_original
       allow(File).to receive(:read).with(/^\/sys\/bus\/ap\/devices\/card/).and_return mkvps_content
       mock_env(env_vars)
     end
 
+    let(:arch) { instance_double("Y2Storage::Arch", efiboot?: true) }
     let(:lszcrypt) { "" }
     let(:env_vars) { {} }
     let(:mkvps_content) { "" }

@@ -57,7 +57,6 @@ module Y2Storage
       #
       # @return [Boolean]
       def available?
-        puts ("xxxxxxxxxxxxxxx #{Y2Storage::Arch.new.efiboot?}")
         Y2Storage::Arch.new.efiboot?
       end
 
