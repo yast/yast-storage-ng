@@ -79,7 +79,7 @@ module Y2Storage
           "size", "start", "align", "name", "type", "id"
         ].concat(FILE_SYSTEM_PARAM),
         "file_system"     => [],
-        "encryption"      => ["name", "type", "password"],
+        "encryption"      => ["name", "type", "password", "pbkdf", "authentication"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
         "lvm_lv"          => [
