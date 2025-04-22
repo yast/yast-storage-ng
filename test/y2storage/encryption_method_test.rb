@@ -77,7 +77,7 @@ describe Y2Storage::EncryptionMethod do
       let(:lszcrypt) { lszcrypt_output("ok") }
 
       context "but none of them have a valid master key" do
-        it "returns methods for LUKS1, LUKS2 and random swap" do
+        it "returns methods for LUKS1, LUKS2, systemd_fde and random swap" do
           expect(described_class.available.map(&:to_sym))
             .to contain_exactly(:luks1, :luks2, :random_swap, :systemd_fde)
         end
