@@ -60,6 +60,7 @@ describe Y2Storage::EncryptionMethod do
     end
 
     before do
+      allow(storage_arch).to receive(:efiboot?).and_return(true)
       allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything).and_return(lszcrypt)
       allow(File).to receive(:read).and_call_original
       allow(File).to receive(:read).with(/^\/sys\/bus\/ap\/devices\/card/).and_return mkvps_content
