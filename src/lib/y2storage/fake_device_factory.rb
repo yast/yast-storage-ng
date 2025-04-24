@@ -684,18 +684,21 @@ module Y2Storage
         # Notify create_file_system that this partition is encrypted
         @file_system_data[parent]["encryption"] = encryption.name
       end
-      if args["pbkdf"]
-        name = args["pbkdf"]
+
+      name = args["pbkdf"]
+      if name
         pbkdf = PbkdFunction.find(name)
         raise ArgumentError, "Unsupported pbkdf type #{name}" unless pbkdf
 
         encryption.pbkdf = pbkdf
       end
-      if args["authentication"]
-        name = args["authentication"]
+      name = args["authentication"]
+      if name
         authentication = EncryptionAuthentication.find(name)
-        raise ArgumentError, "Unsupported authentication #{name}" unless authentication
-
+        unless authentication
+          raise ArgumentError,
+            "Unsupported authentication #{name}"
+        end
         encryption.authentication = authentication
       end
 
