@@ -316,9 +316,7 @@ module Y2Storage
 
         auth_list = []
         @devicegraph.encryptions&.each do |d|
-          puts("xxxxxxxxxx #{d.authentication} xx #{d.blk_device.name}")
           if d.authentication && d.blk_device
-            puts("   xxxx #{d.authentication.name} #{d.blk_device.name}")
             auth_list << ("using " + d.authentication.name + " for " + d.blk_device.name)
           end
         end

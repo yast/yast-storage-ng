@@ -109,6 +109,7 @@ module Y2Storage
         @reused_volume_group.pvs_encryption_password = settings.encryption_password
         @reused_volume_group.pvs_encryption_method = settings.encryption_method
         @reused_volume_group.pvs_encryption_pbkdf = settings.encryption_pbkdf
+        @reused_volume_group.pvs_encryption_authentication = settings.encryption_authentication
       end
 
       # Returns the planned volume group
@@ -143,6 +144,7 @@ module Y2Storage
         vg.pvs_encryption_password = settings.encryption_password
         vg.pvs_encryption_method = settings.encryption_method
         vg.pvs_encryption_pbkdf = settings.encryption_pbkdf
+        vg.pvs_encryption_authentication = settings.encryption_authentication
         vg.size_strategy = vg_strategy
         vg
       end
