@@ -215,19 +215,11 @@ module Y2Partitioner
     end
 
     # Internal widget to display the SystemdFde encryption options
-    class SystemdFdeOptions < LuksOptions
+    class SystemdFdeOptions < Luks2Options
       private
 
-      # @see LuksOptions#widgets
       def widgets
         super.concat([pbkdf_widget, auth_widget])
-      end
-
-      # Widget to set the authentication function
-      #
-      # @return [Widgets::EncryptPbkdf]
-      def pbkdf_widget
-        @pbkdf_widget ||= Widgets::PbkdfSelector.new(@controller, enable: enable_on_init)
       end
 
       # Widget to set the authentication type of the LUKS2 device
