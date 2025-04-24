@@ -219,7 +219,7 @@ module Y2Partitioner
       private
 
       def widgets
-        super.concat([pbkdf_widget, auth_widget])
+        [password_widget, pbkdf_widget, auth_widget]
       end
 
       # Widget to set the authentication type of the LUKS2 device
