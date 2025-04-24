@@ -688,12 +688,14 @@ module Y2Storage
         name = args["pbkdf"]
         pbkdf = PbkdFunction.find(name)
         raise ArgumentError, "Unsupported pbkdf type #{name}" unless pbkdf
+
         encryption.pbkdf = pbkdf
       end
       if args["authentication"]
         name = args["authentication"]
         authentication = EncryptionAuthentication.find(name)
         raise ArgumentError, "Unsupported authentication #{name}" unless authentication
+
         encryption.authentication = authentication
       end
 
