@@ -235,9 +235,11 @@ module Y2Partitioner
           _("<p><b>%{label}</b>: allows to encrypt the device using LUKS2. "\
             "You have to provide the encryption password and the password-based key derivation " \
             "function (PBKDF) that will be used to protect that passphrase.</p>" \
-            "<p>Additional <b>authentication</b> methods can be used for unlocking the device:</p>%{auth_list}"),
-          label: encrypt_method.to_human_string,
-          auth_list: Y2Storage::EncryptionAuthentication.auth_list_help_text)
+            "<p>Additional <b>authentication</b> methods can be used for unlocking the device:</p>" \
+            "%{auth_list}"),
+          label:     encrypt_method.to_human_string,
+          auth_list: Y2Storage::EncryptionAuthentication.auth_list_help_text
+        )
       end
 
       # Help text for the Random Swap encryption method
