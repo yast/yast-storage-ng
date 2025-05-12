@@ -67,6 +67,19 @@ module Y2Storage
       ALL.find { |opt| opt.value == value.to_s }
     end
 
+    # Help text with a list of all supported authentications.
+    #
+    # @return [String] help text
+    def self.auth_list_help_text
+      format(_("<ul>" \
+               "<li><i>%{only_password}: </i>Password is required.</li>" \
+               "<li><i>%{tpm2}: </i>A crypto-device that is already present in your system.</li>" \
+               "<li><i>%{tpm2_and_pin}: </i>Like TPM2, but a password must be enter together.</li>" \
+               "<li><i>%{fido2}: </i>External key device.</li>" \
+               "</ul>", only_password: PASSWORD.name, tpm2: TPM2.name,
+               tpm2_and_pin: TPM2PIN.name, fido2: FIDO2.name))
+    end
+
     # @return [String] value
     attr_reader :value
 

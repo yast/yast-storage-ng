@@ -243,12 +243,9 @@ module Y2Storage
         def authentication_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
           format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:" \
-                   "</p><ul>" \
-                   "<li><i>Only password: </i>Password is required.</li>" \
-                   "<li><i>TPM2: </i>A crypto-device that is already present in your system.</li>" \
-                   "<li><i>TPM2 and PIN: </i>Like TPM2, but a password must be enter together.</li>" \
-                   "<li><i>FIDO2: </i>External key device.</li>" \
-                   "</ul>"), widget_label: _(WIDGET_LABELS[:authentication]))
+                   "</p>%{auth_list}",
+                   widget_label: _(WIDGET_LABELS[:authentication]),
+                   auth_list: Y2Storage::EncryptionAuthentication.auth_list_help_text))
         end
 
         def separate_vgs_help_text
