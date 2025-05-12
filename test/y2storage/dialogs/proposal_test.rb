@@ -37,7 +37,7 @@ describe Y2Storage::Dialogs::Proposal do
 
   describe "#run" do
     let(:devicegraph0) do
-      double("Storage::Devicegraph", encryptions: encryptions,
+      instance_double(Storage::Devicegraph, encryptions: encryptions,
         actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
