@@ -312,19 +312,14 @@ module Y2Storage
       end
 
       def encryption_authentication
-        return "" unless @devicegraph.encryptions&.length
-
-        auth_list = []
-        @devicegraph.encryptions&.each do |d|
-          if d.authentication && d.blk_device
-            auth_list << ("using " + d.authentication.name + " for " + d.blk_device.name)
-          end
-        end
-        if auth_list.size > 0
-          para(_("Authentication for encrypted devices:")) + list(auth_list)
-        else
-          ""
-        end
+        auth_list = @devicegraph.encryptions
+          .select(&:supports_authentication?)
+          .map { |e| format(_("using %s for %s"), e.authentication.name,
+                            e.blk_device.name) }
+          
+        return "" if auth_list.none?
+        
+        para(_("Authentication for encrypted devices:")) + list(auth_list)
       end
 
       # Actions needed to reach the desired devicegraph

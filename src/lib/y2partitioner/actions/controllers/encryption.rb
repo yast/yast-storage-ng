@@ -66,7 +66,7 @@ module Y2Partitioner
         # @return [PbkdFunction] Password-based key derivation function (PBKDF) for the LUKS2 device
         attr_accessor :pbkdf
 
-        # @return [EncryptionAuthentication] Authentication for systemd_fde devices
+        # @return [EncryptionAuthentication, nil] Authentication for systemd_fde devices
         attr_accessor :authentication
 
         # Contructor
@@ -277,7 +277,7 @@ module Y2Partitioner
         #
         # @return [EncryptionAuthentication, nil] nil if the method does not support it.
         def initial_authentication
-          return nil unless encryption.respond_to?(:authentication)
+          return nil unless encryption&.supports_authentication?
 
           encryption.authentication
         end
