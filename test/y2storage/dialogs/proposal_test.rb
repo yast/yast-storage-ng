@@ -47,7 +47,7 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) do
-      double("Storage::Devicegraph", actiongraph: actiongraph1,
+      instance_double(Storage::Devicegraph, actiongraph: actiongraph1,
         encryptions: encryptions, blk_devices: blk_devices)
     end
     let(:actiongraph1) { double("Storage::Actiongraph") }
