@@ -127,7 +127,7 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal",
+      instance_double("Y2Storage::GuidedProposal",
         settings:                 settings,
         proposed?:                proposed,
         auto_settings_adjustment: adjustment)
