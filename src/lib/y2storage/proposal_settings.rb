@@ -166,8 +166,8 @@ module Y2Storage
     # @return [Array<String>, nil]
     attr_reader :explicit_candidate_devices
 
-    # TODO: it makes sense to encapsulate #encryption_password, #encryption_method and
-    # #encryption_pbkdf #encryption_authentication in some new class (eg. EncryptionSettings),
+    # TODO: it makes sense to encapsulate #encryption_password, #encryption_method,
+    # #encryption_pbkdf and #encryption_authentication in some new class (eg. EncryptionSettings),
     # posponed for now
 
     # @!attribute encryption_password

@@ -79,8 +79,8 @@ module Y2Storage
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if mount_efivars?
-        devicegraph = Y2Storage::StorageManager.instance.staging
-        if devicegraph.encryptions&.any? { |e| e.method.id == :systemd_fde }
+        devicegraph = manager.staging
+        if devicegraph.encryptions.any? { |e| e.method&.is?(:systemd_fde) }
           mount_in_target("/sys/kernel/security", "securityfs", "-t securityfs")
         end
         # systemd makes default for mount bind sharable, but it causes troubles with

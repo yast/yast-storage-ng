@@ -495,7 +495,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def supports_authentication?
-      method.id == :systemd_fde
+      method.is?(:systemd_fde)
     end
 
     # Whether the attribute #cipher makes sense for this object

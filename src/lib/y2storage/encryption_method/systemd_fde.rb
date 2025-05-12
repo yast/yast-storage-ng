@@ -23,6 +23,7 @@ require "y2storage/encryption_method/base"
 require "y2storage/encryption_processes/systemd_fde"
 require "y2storage/pbkd_function"
 require "y2storage/yast_feature"
+require "y2storage/arch"
 
 Yast.import "Mode"
 Yast.import "Package"

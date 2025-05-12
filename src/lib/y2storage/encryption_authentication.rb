@@ -25,6 +25,7 @@ module Y2Storage
   class EncryptionAuthentication
     include Yast::I18n
     extend Yast::I18n
+    include Yast2::Equatable
 
     # Constructor, to be used internally by the class
     #
@@ -91,16 +92,5 @@ module Y2Storage
       names.any? { |n| n.to_sym == to_sym }
     end
 
-    # @return [Boolean]
-    def ==(other)
-      other.class == self.class && other.value == value
-    end
-
-    alias_method :eql?, :==
-
-    # @return [Boolean]
-    def ===(other)
-      other.instance_of?(self.class) && is?(other)
-    end
   end
 end

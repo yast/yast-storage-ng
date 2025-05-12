@@ -30,7 +30,7 @@ module Y2Storage
       # @param blk_device [Y2Storage::BlkDevice]
       # @param dm_name [String]
       # @param authentication [EncryptionAuthentication] authentications for the crypted device
-      # @param pbkdf [PbkdFunction] PBKDF of the LUKS device, only relevant for LUKS2
+      # @param pbkdf [PbkdFunction, nil] PBKDF of the LUKS device, only relevant for LUKS2
       # @param label [String, nil] label of the LUKS device, only relevant for LUKS2
       #
       # @return [Encryption]
