@@ -482,7 +482,7 @@ describe Y2Storage::Dialogs::Proposal do
                   double("Y2Storage::Encryption",
                     authentication: Y2Storage::EncryptionAuthentication::FIDO2,
                     blk_device:     double("Y2Storage::Disk", name: "/dev/sda")),
-                  double("Y2Storage::Encryption",
+                  instance_double(Y2Storage::Encryption,
                     authentication: Y2Storage::EncryptionAuthentication::FIDO2,
                     blk_device:     double("Y2Storage::Disk", name: "/dev/sdb"))
                 ]
