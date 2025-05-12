@@ -88,8 +88,8 @@ module Y2Storage
           error_message =
             _(
               "The grub boot loader cannot access the file system mounted at /boot. " \
-              "Only LUKS1 and LUKS2 with PBKDF2 encryption is supported. An options would be to use "\
-              "another bootloader like systemd_boot or grub2_bls in the boot loader section."
+              "Only LUKS1 and LUKS2 with PBKDF2 encryption is supported. Another boot loader can be "\
+              "selected in the boot loader section, for example systemd_boot or grub2_bls."
             )
           res << SetupError.new(message: error_message)
         end
