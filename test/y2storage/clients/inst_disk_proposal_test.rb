@@ -564,7 +564,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
       let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
-      let(:settings) { double("Storage::ProposalSettings") }
+      let(:settings) { instance_double(Storage::ProposalSettings) }
       let(:proposal) { double("Y2Storage::GuidedProposal", settings: settings) }
       let(:expert_dialog) { double("Y2Partitioner::Dialogs::Main") }
       let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
