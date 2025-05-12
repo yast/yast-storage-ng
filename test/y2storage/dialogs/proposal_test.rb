@@ -508,7 +508,7 @@ describe Y2Storage::Dialogs::Proposal do
               [
                 double("Y2Storage::Encryption", authentication: nil,
                   blk_device: double("Y2Storage::Disk", name: "/dev/sda")),
-                double("Y2Storage::Encryption", authentication: nil,
+                instance_double(Y2Storage::Encryption, authentication: nil,
                   blk_device: double("Y2Storage::Disk", name: "/dev/sdb"))
               ]
             end
