@@ -119,7 +119,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     context "after receiving :next from the proposal dialog" do
       let(:new_devicegraph) { double("Y2Storage::Devicegraph", used_features: 0) }
-      let(:settings) { double("Storage::ProposalSettings") }
+      let(:settings) { instance_double(Storage::ProposalSettings) }
       let(:new_proposal) do
         double("Y2Storage::GuidedProposal",
           devices:  new_devicegraph,
