@@ -487,11 +487,11 @@ describe Y2Storage::Dialogs::Proposal do
                   instance_double(Y2Storage::Encryption,
                     authentication:           Y2Storage::EncryptionAuthentication::FIDO2,
                     supports_authentication?: true,
-                    blk_device:               double("Y2Storage::Disk", name: "/dev/sda")),
+                    blk_device:               instance_double("Y2Storage::Disk", name: "/dev/sda")),
                   instance_double(Y2Storage::Encryption,
                     authentication:           Y2Storage::EncryptionAuthentication::FIDO2,
                     supports_authentication?: true,
-                    blk_device:               double("Y2Storage::Disk", name: "/dev/sdb"))
+                    blk_device:               instance_double("Y2Storage::Disk", name: "/dev/sdb"))
                 ]
               end
 
@@ -515,10 +515,10 @@ describe Y2Storage::Dialogs::Proposal do
               [
                 instance_double(Y2Storage::Encryption, authentication: nil,
                   supports_authentication?: false,
-                  blk_device: double("Y2Storage::Disk", name: "/dev/sda")),
+                  blk_device: instance_double("Y2Storage::Disk", name: "/dev/sda")),
                 instance_double(Y2Storage::Encryption, authentication: nil,
                   supports_authentication?: false,
-                  blk_device: double("Y2Storage::Disk", name: "/dev/sdb"))
+                  blk_device: instance_double("Y2Storage::Disk", name: "/dev/sdb"))
               ]
             end
 
