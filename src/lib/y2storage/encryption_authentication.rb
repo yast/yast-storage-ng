@@ -22,6 +22,10 @@ Yast.import "Arch"
 
 module Y2Storage
   # Class for describing an authentication type of encrypted block devices.
+  #
+  # The value will only be used for systemd_fde encryption. It will be
+  # set in yast-storage-ng BUT will be only used in yast-bootmanager after the
+  # bootmanager has been installed.
   class EncryptionAuthentication
     include Yast::I18n
     extend Yast::I18n
