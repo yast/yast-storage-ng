@@ -243,9 +243,9 @@ module Y2Storage
         def authentication_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
           format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:" \
-                   "</p>%{auth_list}",
+                   "</p>%{auth_list}"),
             widget_label: _(WIDGET_LABELS[:authentication]),
-            auth_list:    Y2Storage::EncryptionAuthentication.auth_list_help_text))
+            auth_list:    Y2Storage::EncryptionAuthentication.auth_list_help_text)
         end
 
         def separate_vgs_help_text

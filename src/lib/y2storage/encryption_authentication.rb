@@ -71,6 +71,8 @@ module Y2Storage
     #
     # @return [String] help text
     def self.auth_list_help_text
+      textdomain "storage"
+
       format(_("<ul>" \
                "<li><i>%{only_password}: </i>Password is required.</li>" \
                "<li><i>%{tpm2}: </i>A crypto-device that is already present in your system.</li>" \
