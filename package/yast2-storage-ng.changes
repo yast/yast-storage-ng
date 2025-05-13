@@ -1,8 +1,15 @@
 -------------------------------------------------------------------
-Tue Apr 15 12:59:48 UTC 2025 - Stefan Schubert <schubi@suse.de>
+Tue May 13 15:01:47 UTC 2025 - Stefan Schubert <schubi@suse.de>
 
 - Supporting systemd-fde encryption and TPM2/FIDO2
   (jsc#PED-10703).
+- 5.0.31
+
+-------------------------------------------------------------------
+Tue May 13 13:29:23 UTC 2025 - José Iván López González <jlopez@suse.com>
+
+- Make method DiskAnalyzer#candidate_device? public
+  (gh#agama-project/agama#2338).
 - 5.0.30
 
 -------------------------------------------------------------------
