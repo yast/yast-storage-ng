@@ -155,6 +155,7 @@ describe Y2Partitioner::Actions::Controllers::Encryption do
 
           before do
             allow(encryption).to receive(:exists_in_devicegraph?).and_return in_system
+            allow(encryption).to receive(:supports_authentication?).and_return false
           end
 
           context "with a preexisting encryption" do

@@ -37,7 +37,7 @@ describe Y2Storage::Dialogs::Proposal do
 
   describe "#run" do
     let(:devicegraph0) do
-      instance_double(Storage::Devicegraph, encryptions: encryptions,
+      instance_double(Y2Storage::Devicegraph, encryptions: encryptions,
         actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
@@ -47,7 +47,7 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) do
-      instance_double(Storage::Devicegraph, actiongraph: actiongraph1,
+      instance_double(Y2Storage::Devicegraph, actiongraph: actiongraph1,
         encryptions: encryptions, blk_devices: blk_devices)
     end
     let(:actiongraph1) { double("Storage::Actiongraph") }
@@ -470,6 +470,9 @@ describe Y2Storage::Dialogs::Proposal do
 
           context "and the user has selected device encryption SYSTEMD_FDE" do
             context "and FIDO2 authentication for encryption" do
+              before do
+                allow_any_instance_of(Y2Storage::Encryption).to receive(:supports_authentication?).and_return true
+	      end
               let(:settings) do
                 settings = Y2Storage::ProposalSettings.new_for_current_product
                 settings.encryption_authentication = Y2Storage::EncryptionAuthentication::FIDO2
@@ -479,11 +482,13 @@ describe Y2Storage::Dialogs::Proposal do
               end
               let(:encryptions) do
                 [
-                  double("Y2Storage::Encryption",
+                  instance_double(Y2Storage::Encryption,
                     authentication: Y2Storage::EncryptionAuthentication::FIDO2,
+                    supports_authentication?: true,
                     blk_device:     double("Y2Storage::Disk", name: "/dev/sda")),
                   instance_double(Y2Storage::Encryption,
                     authentication: Y2Storage::EncryptionAuthentication::FIDO2,
+                    supports_authentication?: true,
                     blk_device:     double("Y2Storage::Disk", name: "/dev/sdb"))
                 ]
               end
@@ -506,9 +511,11 @@ describe Y2Storage::Dialogs::Proposal do
             end
             let(:encryptions) do
               [
-                double("Y2Storage::Encryption", authentication: nil,
+                instance_double(Y2Storage::Encryption, authentication: nil,
+		  supports_authentication?: false,
                   blk_device: double("Y2Storage::Disk", name: "/dev/sda")),
                 instance_double(Y2Storage::Encryption, authentication: nil,
+                  supports_authentication?: false,
                   blk_device: double("Y2Storage::Disk", name: "/dev/sdb"))
               ]
             end
