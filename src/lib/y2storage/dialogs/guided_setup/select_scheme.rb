@@ -168,14 +168,15 @@ module Y2Storage
           widget_update(:separate_vgs, settings.separate_vgs)
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
+          if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+            widget_update(:authentication,
+              settings.encryption_authentication.value)
+          end
+
           return unless settings.use_encryption
 
           widget_update(:password, settings.encryption_password)
           widget_update(:repeat_password, settings.encryption_password)
-          return unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
-
-          widget_update(:authentication,
-            settings.encryption_authentication.value)
         end
 
         def update_settings!
