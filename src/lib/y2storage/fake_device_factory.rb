@@ -79,7 +79,7 @@ module Y2Storage
           "size", "start", "align", "name", "type", "id"
         ].concat(FILE_SYSTEM_PARAM),
         "file_system"     => [],
-        "encryption"      => ["name", "type", "password"],
+        "encryption"      => ["name", "type", "password", "pbkdf", "authentication"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
         "lvm_lv"          => [
@@ -684,6 +684,24 @@ module Y2Storage
         # Notify create_file_system that this partition is encrypted
         @file_system_data[parent]["encryption"] = encryption.name
       end
+
+      name = args["pbkdf"]
+      if name
+        pbkdf = PbkdFunction.find(name)
+        raise ArgumentError, "Unsupported pbkdf type #{name}" unless pbkdf
+
+        encryption.pbkdf = pbkdf
+      end
+      name = args["authentication"]
+      if name
+        authentication = EncryptionAuthentication.find(name)
+        unless authentication
+          raise ArgumentError,
+            "Unsupported authentication #{name}"
+        end
+        encryption.authentication = authentication
+      end
+
       encryption
     end
 

@@ -27,6 +27,7 @@ require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
 require "y2storage/volume_specifications_set"
 require "y2storage/encryption_method"
+require "y2storage/encryption_authentication"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
 require "y2storage/storage_env"
@@ -165,8 +166,9 @@ module Y2Storage
     # @return [Array<String>, nil]
     attr_reader :explicit_candidate_devices
 
-    # TODO: it makes sense to encapsulate #encryption_password, #encryption_method and
-    # #encryption_pbkdf in some new class (eg. EncryptionSettings), posponed for now
+    # TODO: it makes sense to encapsulate #encryption_password, #encryption_method,
+    # #encryption_pbkdf and #encryption_authentication in some new class (eg. EncryptionSettings),
+    # posponed for now
 
     # @!attribute encryption_password
     #   @return [String] password to use when creating new encryption devices
@@ -181,6 +183,11 @@ module Y2Storage
     #
     # @return [PbkdFunction, nil] nil to use the default
     attr_accessor :encryption_pbkdf
+
+    # Encryption authentication like password, tpm2, fido2,.....
+    #
+    # @return [EncryptionAuthentication]
+    attr_accessor :encryption_authentication
 
     # When the user decides to use LVM, strategy to decide the size of the volume
     # group (and, thus, the number and size of created physical volumes).
@@ -400,6 +407,7 @@ module Y2Storage
       lvm_vg_strategy:            :use_available,
       lvm_vg_reuse:               true,
       encryption_method:          EncryptionMethod::LUKS1,
+      encryption_authentication:  EncryptionAuthentication::PASSWORD,
       multidisk_first:            false,
       other_delete_mode:          :ondemand,
       resize_windows:             true,
@@ -458,6 +466,9 @@ module Y2Storage
 
       enc_pbkdf = PbkdFunction.find(feature(:proposal, :encryption_pbkdf))
       self.encryption_pbkdf = enc_pbkdf if enc_pbkdf
+
+      enc_authentication = EncryptionAuthentication.find(feature(:proposal, :encryption_authentication))
+      self.encryption_authentication = enc_authentication if enc_authentication
 
       # Password potentially injected by a previous step
       enc = feature(:proposal, :encryption)

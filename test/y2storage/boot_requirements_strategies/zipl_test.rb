@@ -44,14 +44,14 @@ describe Y2Storage::BootRequirementsStrategies::ZIPL do
 
       it "returns a warning" do
         messages = subject.warnings.map(&:message)
-        expect(messages).to include(/The boot loader cannot access the file system/)
+        expect(messages).to include(/The grub boot loader cannot access the file system/)
       end
     end
 
     context "and the zipl partition is unencrypted" do
       it "does not return any warning" do
         messages = subject.warnings.map(&:message)
-        expect(messages).to_not include(/The boot loader cannot access the file system/)
+        expect(messages).to_not include(/The grub boot loader cannot access the file system/)
       end
     end
 
@@ -60,7 +60,7 @@ describe Y2Storage::BootRequirementsStrategies::ZIPL do
 
       it "returns a warning" do
         messages = subject.warnings.map(&:message)
-        expect(messages).to include(/The boot loader cannot access the file system/)
+        expect(messages).to include(/The grub boot loader cannot access the file system/)
       end
     end
   end

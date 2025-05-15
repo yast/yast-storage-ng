@@ -22,6 +22,8 @@ require "y2partitioner/actions/controllers/base"
 require "y2storage/encryption_type"
 require "y2storage/encryption_processes/secure_key"
 require "y2storage/encryption_processes/apqn"
+require "y2storage/encryption_authentication"
+require "y2storage/partitioning_features"
 
 module Y2Partitioner
   module Actions
@@ -29,8 +31,8 @@ module Y2Partitioner
       # This class adds or removes an encryption layer on top of the block
       # device that has been edited by the given Filesystem controller.
       class Encryption < Base
-        include Yast::Logger
         include Yast::I18n
+        include Y2Storage::PartitioningFeatures
 
         # Action to perform when {#finish} is called
         #
@@ -64,6 +66,9 @@ module Y2Partitioner
         # @return [PbkdFunction] Password-based key derivation function (PBKDF) for the LUKS2 device
         attr_accessor :pbkdf
 
+        # @return [EncryptionAuthentication, nil] Authentication for systemd_fde devices
+        attr_accessor :authentication
+
         # Contructor
         #
         # @param fs_controller [Filesystem] see {#fs_controller}
@@ -79,6 +84,7 @@ module Y2Partitioner
           @apqns = initial_apqns
           @secure_key_type = initial_secure_key_type
           @label = initial_label
+          @authentication = initial_authentication
         end
 
         # Whether the dialog to select and configure the action makes sense
@@ -233,9 +239,8 @@ module Y2Partitioner
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
 
-          # Hardcoded conservative default, we can either change it or make it configurable
-          # (see Y2Storage::Configuration) in the future if needed.
-          Y2Storage::PbkdFunction::PBKDF2
+          Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
+            Y2Storage::PbkdFunction::PBKDF2
         end
 
         # Currently used APQNs when the device is encrypted with pervasive encryption
@@ -266,6 +271,15 @@ module Y2Partitioner
           return nil unless encryption.respond_to?(:label)
 
           encryption.label
+        end
+
+        # Authentication method when the device is encrypted.
+        #
+        # @return [EncryptionAuthentication, nil] nil if the method does not support it.
+        def initial_authentication
+          return nil unless encryption&.supports_authentication?
+
+          encryption.authentication
         end
 
         # Calculate actions that make sense for the block device
@@ -387,7 +401,7 @@ module Y2Partitioner
           blk_device.remove_encryption if blk_device.encrypted?
           blk_device.encrypt(
             method: method, password: password, label: label, pbkdf: pbkdf,
-            apqns: apqns, key_type: secure_key_type
+            apqns: apqns, key_type: secure_key_type, authentication: authentication
           )
         end
 

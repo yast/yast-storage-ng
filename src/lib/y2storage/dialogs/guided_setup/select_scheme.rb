@@ -20,21 +20,27 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
+require "y2storage/partitioning_features"
+require "y2storage/encryption_authentication"
 
 Yast.import "Popup"
+Yast.import "Arch"
 
 module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
+        include PartitioningFeatures
         extend Yast::I18n
 
         WIDGET_LABELS = {
           # TRANSLATORS: label for the widget that allows to enable the disk encryption
           enable_disk_encryption: N_("Enable Disk Encryption"),
           # TRANSLATORS: label for the widget that allows to use separated volume groups
-          use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze
+          use_separate_vgs:       N_("Use Separate LVM Volume Groups for Some Special Paths").freeze,
+          # TRANSLATORS: label for the widget to set authentication type for encrypted devices.
+          authentication:         N_("Authentication").freeze
         }
         private_constant :WIDGET_LABELS
 
@@ -49,6 +55,9 @@ module Y2Storage
         def encryption_handler(focus: true)
           widget_update(:password, using_encryption?, attr: :Enabled)
           widget_update(:repeat_password, using_encryption?, attr: :Enabled)
+          if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+            widget_update(:authentication, using_encryption?, attr: :Enabled)
+          end
           return unless focus && using_encryption?
 
           Yast::UI.SetFocus(Id(:password))
@@ -119,6 +128,21 @@ module Y2Storage
           )
         end
 
+        def authentication
+          return Empty() unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+
+          items = Y2Storage::EncryptionAuthentication.all.map do |auth|
+            Item(Id(auth.value), auth.name, auth.value == settings.encryption_authentication)
+          end
+
+          Left(
+            HBox(
+              HSpacing(2),
+              ComboBox(Id(:authentication), Opt(:hstretch), _(WIDGET_LABELS[:authentication]), items)
+            )
+          )
+        end
+
         def enable_disk_encryption
           VBox(
             Left(CheckBox(Id(:encryption), Opt(:notify), _(WIDGET_LABELS[:enable_disk_encryption]))),
@@ -134,7 +158,8 @@ module Y2Storage
                 HSpacing(2),
                 Password(Id(:repeat_password), Opt(:hstretch), _("Verify Password"))
               )
-            )
+            ),
+            authentication
           )
         end
 
@@ -143,6 +168,11 @@ module Y2Storage
           widget_update(:separate_vgs, settings.separate_vgs)
           widget_update(:encryption, settings.use_encryption)
           encryption_handler(focus: false)
+          if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+            widget_update(:authentication,
+              settings.encryption_authentication.value)
+          end
+
           return unless settings.use_encryption
 
           widget_update(:password, settings.encryption_password)
@@ -154,11 +184,17 @@ module Y2Storage
           settings.separate_vgs = widget_value(:separate_vgs)
           password = using_encryption? ? widget_value(:password) : nil
           settings.encryption_password = password
+          return unless settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
+
+          settings.encryption_authentication = EncryptionAuthentication.find(
+            widget_value(:authentication)
+          )
         end
 
         def help_text
           help = [base_help_text]
           help << separate_vgs_help_text if settings.separate_vgs_relevant?
+          help << authentication_help_text if settings.encryption_method == EncryptionMethod::SYSTEMD_FDE
 
           help.join("\n\n")
         end
@@ -190,7 +226,7 @@ module Y2Storage
               "</li>" \
               "</ul>" \
               "</p><p>" \
-              "<b>%{disk_encryption_label}</b> (with or without LVM) adds a LUKS " \
+              "<b>%{disk_encryption_label}</b> (with or without LVM) adds a %{encrption_method} " \
               " disk encryption layer to the partitioning setup. " \
               "Notice that you will have to enter the correct password each time " \
               "you boot the system. " \
@@ -199,18 +235,25 @@ module Y2Storage
               "so make sure not to lose it!</i>" \
               "</p>"
             ),
-            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption])
+            disk_encryption_label: _(WIDGET_LABELS[:enable_disk_encryption]),
+            encrption_method:      settings.encryption_method.to_human_string
           )
           # rubocop:enable Metrics/MethodLength
         end
 
+        def authentication_help_text
+          # TRANSLATORS: %{widget_label} refers to the label of the described widget
+          format(_("<p><b>%{widget_label}:</b> Which method will be used for unlocking the devices:" \
+                   "</p>%{auth_list}"),
+            widget_label: _(WIDGET_LABELS[:authentication]),
+            auth_list:    Y2Storage::EncryptionAuthentication.auth_list_help_text)
+        end
+
         def separate_vgs_help_text
           # TRANSLATORS: %{widget_label} refers to the label of the described widget
-          format(
-            _("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
-              "to put some of those special paths in an isolated Volume Group.</p>"),
-            widget_label: _(WIDGET_LABELS[:use_separate_vgs])
-          )
+          format(_("<p><b>%{widget_label}:</b> indicates to the <i>Guided Setup</i> that you want " \
+                   "to put some of those special paths in an isolated Volume Group.</p>"),
+            widget_label: _(WIDGET_LABELS[:use_separate_vgs]))
         end
 
         private

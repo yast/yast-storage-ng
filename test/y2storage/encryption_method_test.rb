@@ -60,12 +60,14 @@ describe Y2Storage::EncryptionMethod do
     end
 
     before do
+      allow(Y2Storage::Arch).to receive(:new).and_return(arch)
       allow(Yast::Execute).to receive(:locally!).with(/lszcrypt/, anything).and_return(lszcrypt)
       allow(File).to receive(:read).and_call_original
       allow(File).to receive(:read).with(/^\/sys\/bus\/ap\/devices\/card/).and_return mkvps_content
       mock_env(env_vars)
     end
 
+    let(:arch) { instance_double("Y2Storage::Arch", efiboot?: true) }
     let(:lszcrypt) { "" }
     let(:env_vars) { {} }
     let(:mkvps_content) { "" }
@@ -74,9 +76,9 @@ describe Y2Storage::EncryptionMethod do
       let(:lszcrypt) { lszcrypt_output("ok") }
 
       context "but none of them have a valid master key" do
-        it "returns methods for LUKS1, LUKS2 and random swap" do
+        it "returns methods for LUKS1, LUKS2, systemd_fde and random swap" do
           expect(described_class.available.map(&:to_sym))
-            .to contain_exactly(:luks1, :luks2, :random_swap)
+            .to contain_exactly(:luks1, :luks2, :random_swap, :systemd_fde)
         end
       end
 
@@ -89,7 +91,7 @@ describe Y2Storage::EncryptionMethod do
 
         it "returns methods for LUKS1, LUKS2, pervasive LUKS2 and random swap" do
           expect(described_class.available.map(&:to_sym))
-            .to contain_exactly(:luks1, :luks2, :pervasive_luks2, :random_swap)
+            .to contain_exactly(:luks1, :luks2, :pervasive_luks2, :random_swap, :systemd_fde)
         end
       end
     end
@@ -99,7 +101,7 @@ describe Y2Storage::EncryptionMethod do
 
       it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :luks2, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap, :systemd_fde)
       end
     end
 
@@ -108,7 +110,7 @@ describe Y2Storage::EncryptionMethod do
 
       it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :luks2, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap, :systemd_fde)
       end
     end
 
@@ -120,7 +122,7 @@ describe Y2Storage::EncryptionMethod do
 
       it "returns methods for LUKS1, LUKS2 and random swap" do
         expect(described_class.available.map(&:to_sym))
-          .to contain_exactly(:luks1, :luks2, :random_swap)
+          .to contain_exactly(:luks1, :luks2, :random_swap, :systemd_fde)
       end
     end
 

@@ -260,7 +260,7 @@ module Y2Storage
 
     # System devicegraph
     #
-    # It is used to perform actions beforme the commit phase (e.g., immediate unmount).
+    # It is used to perform actions before the commit phase (e.g., immediate unmount).
     #
     # @return [Y2Storage::Devicegraph]
     def system

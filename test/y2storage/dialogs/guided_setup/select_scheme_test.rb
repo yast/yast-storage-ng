@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+
 # Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
@@ -134,6 +135,37 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
       end
     end
 
+    describe "comboBox for #authentication" do
+      before do
+        allow(subject).to receive(:ComboBox)
+      end
+
+      context "and encryption method is not systemd-fde" do
+        before do
+          settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+        end
+
+        it "does not include an option to select authentication method" do
+          expect(subject).to_not receive(:ComboBox).with(Id(:authentication), any_args)
+
+          subject.run
+        end
+      end
+
+      context "and encryption method is systemd-fde" do
+        before do
+          settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
+        end
+
+        it "does include an option to select authentication method" do
+          expect(subject).to receive(:ComboBox).with(Id(:authentication), any_args)
+
+          subject.run
+        end
+
+      end
+    end
+
     context "when settings has not encryption password" do
       before do
         settings.encryption_password = nil
@@ -180,11 +212,13 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         select_widget(:password, value: password)
         select_widget(:repeat_password, value: repeat_password)
         settings.encryption_password = nil
+        settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
       end
 
-      it "enables password fields" do
+      it "enables password and authentication fields" do
         expect_enable(:password)
         expect_enable(:repeat_password)
+        expect_enable(:authentication)
         subject.run
       end
 

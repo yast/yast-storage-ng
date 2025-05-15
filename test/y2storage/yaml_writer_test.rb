@@ -235,7 +235,7 @@ describe Y2Storage::YamlWriter do
                   - acl
                   - user_xattr
                   encryption:
-                    type: luks
+                    type: LUKS1
                     name: "/dev/mapper/cr_system"
                     password: vry!s3cret
               - free:
@@ -294,7 +294,7 @@ describe Y2Storage::YamlWriter do
                   type: primary
                   id: lvm
                   encryption:
-                    type: luks
+                    type: LUKS1
                     name: "/dev/mapper/cr_sda1"
                     password: s3cr3t
           - lvm_vg:
@@ -374,7 +374,7 @@ describe Y2Storage::YamlWriter do
                   file_system: xfs
                   mount_point: "/"
                   encryption:
-                    type: luks
+                    type: LUKS1
                     name: "/dev/mapper/cr_sda1"
                     password: s3cr3t
               lvm_pvs:
@@ -440,7 +440,7 @@ describe Y2Storage::YamlWriter do
               file_system: xfs
               mount_point: "/data"
               encryption:
-                type: luks
+                type: LUKS1
                 name: "/dev/mapper/cr_data"
                 password: s3cr3t)
       end
@@ -541,7 +541,7 @@ describe Y2Storage::YamlWriter do
               file_system: xfs
               mount_point: "/data"
               encryption:
-                type: luks
+                type: LUKS1
                 name: "/dev/mapper/cr_data"
                 password: "***")
       end

@@ -42,6 +42,10 @@ module Y2Storage
       #     it means the device will not be encrypted
       attr_accessor :encryption_method
 
+      # @!attribute encryption_authentication
+      #   @return [EncryptionAuthentication] encryption authentication type
+      attr_accessor :encryption_authentication
+
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the device.
       secret_attr :encryption_password
@@ -130,11 +134,13 @@ module Y2Storage
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)
           assign_enc_attr(result, :cipher)
+          assign_enc_attr(result, :authentication)
           assign_enc_attr(result, :key_size) { |value| value / 8 }
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"
         end
+
         result
       end
 

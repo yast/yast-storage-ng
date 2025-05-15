@@ -337,6 +337,20 @@ module Y2Storage
       @encryption_process = value
     end
 
+    # Returns the encryption authentication type
+    #
+    # @return [EncryptionAuthentication, nil] nil if such value does not exist
+    def authentication
+      userdata_value(:encryption_authentication)
+    end
+
+    # Saves the given encryption authentication type
+    #
+    # @param value [EncryptionAuthentication]
+    def authentication=(value)
+      save_userdata(:encryption_authentication, value)
+    end
+
     # Executes the actions that must be performed right before the devicegraph is
     # committed to the system
     def pre_commit
@@ -475,6 +489,13 @@ module Y2Storage
     # @return [Boolean]
     def supports_label?
       type.is?(:luks2)
+    end
+
+    # Whether the attribute #authentication makes sense for this object
+    #
+    # @return [Boolean]
+    def supports_authentication?
+      method.is?(:systemd_fde)
     end
 
     # Whether the attribute #cipher makes sense for this object

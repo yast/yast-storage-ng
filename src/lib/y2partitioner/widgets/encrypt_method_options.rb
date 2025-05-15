@@ -22,6 +22,7 @@ require "cwm"
 require "yast2/popup"
 require "y2partitioner/widgets/encrypt_password"
 require "y2partitioner/widgets/encrypt_label"
+require "y2partitioner/widgets/encrypt_auth_selector"
 require "y2partitioner/widgets/pbkdf_selector"
 require "y2partitioner/widgets/pervasive_key"
 require "y2partitioner/widgets/pervasive_key_selector"
@@ -87,6 +88,8 @@ module Y2Partitioner
           LuksOptions.new(controller, enable: enabled?)
         when :luks2
           Luks2Options.new(controller, enable: enabled?)
+        when :systemd_fde
+          SystemdFdeOptions.new(controller, enable: enabled?)
         when :pervasive_luks2
           PervasiveOptions.new(controller, enable: enabled?)
         end
@@ -208,6 +211,22 @@ module Y2Partitioner
       # @return [Widgets::EncryptLabel]
       def label_widget
         @label_widget ||= Widgets::EncryptLabel.new(@controller, enable: enable_on_init)
+      end
+    end
+
+    # Internal widget to display the SystemdFde encryption options
+    class SystemdFdeOptions < Luks2Options
+      private
+
+      def widgets
+        [password_widget, pbkdf_widget, auth_widget]
+      end
+
+      # Widget to set the authentication type of the LUKS2 device
+      #
+      # @return [Widgets::EncryptAuthSelector]
+      def auth_widget
+        @auth_widget ||= Widgets::EncryptAuthSelector.new(@controller, enable: enable_on_init)
       end
     end
 

@@ -37,7 +37,8 @@ describe Y2Storage::Dialogs::Proposal do
 
   describe "#run" do
     let(:devicegraph0) do
-      double("Storage::Devicegraph", actiongraph: actiongraph0, blk_devices: blk_devices)
+      instance_double(Y2Storage::Devicegraph, encryptions: encryptions,
+        actiongraph: actiongraph0, blk_devices: blk_devices)
     end
     let(:actiongraph0) { double("Storage::Actiongraph") }
     let(:actions_presenter0) do
@@ -46,7 +47,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) do
-      double("Storage::Devicegraph", actiongraph: actiongraph1, blk_devices: blk_devices)
+      instance_double(Y2Storage::Devicegraph, actiongraph: actiongraph1,
+        encryptions: encryptions, blk_devices: blk_devices)
     end
     let(:actiongraph1) { double("Storage::Actiongraph") }
     let(:actions_presenter1) do
@@ -57,6 +59,8 @@ describe Y2Storage::Dialogs::Proposal do
     let(:actions_presenter2) { double(Y2Storage::ActionsPresenter, to_html: nil) }
 
     let(:blk_devices) { [] }
+
+    let(:encryptions) { [] }
 
     let(:setup_checker0) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid0) }
     let(:setup_checker1) { instance_double(Y2Storage::SetupChecker, valid?: setup_checker_valid1) }
@@ -123,11 +127,16 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: adjustment)
+      instance_double("Y2Storage::GuidedProposal",
+        settings:                 settings,
+        proposed?:                proposed,
+        auto_settings_adjustment: adjustment)
     end
     let(:adjustment) { nil }
 
     let(:proposed) { true }
+
+    let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
     shared_examples "partitioner from proposal" do
       context "and the button for partitioner from proposal is not excluded" do
@@ -416,6 +425,13 @@ describe Y2Storage::Dialogs::Proposal do
             end
             dialog.run
           end
+
+          it "does not offer any authentication selection" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
+            end
+            dialog.run
+          end
         end
 
         context "and there is no resulting devicegraph" do
@@ -431,6 +447,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "after adjusting the Guided Setup settings",
                 "do not adjust size of /"
               )
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
             end
             dialog.run
           end
@@ -450,6 +467,83 @@ describe Y2Storage::Dialogs::Proposal do
             end
             dialog.run
           end
+
+          context "and the user has selected device encryption SYSTEMD_FDE" do
+            context "and FIDO2 authentication for encryption" do
+              before do
+                allow_any_instance_of(Y2Storage::Encryption).to receive(
+                                                                  :supports_authentication?
+                                                                ).and_return true
+              end
+              let(:settings) do
+                settings = Y2Storage::ProposalSettings.new_for_current_product
+                settings.encryption_authentication = Y2Storage::EncryptionAuthentication::FIDO2
+                settings.encryption_password = "12345678"
+                settings.encryption_method = Y2Storage::EncryptionMethod::SYSTEMD_FDE
+                settings
+              end
+              let(:encryptions) do
+                [
+                  instance_double(Y2Storage::Encryption,
+                    authentication:           Y2Storage::EncryptionAuthentication::FIDO2,
+                    supports_authentication?: true,
+                    blk_device:               instance_double("Y2Storage::Disk", name: "/dev/sda")),
+                  instance_double(Y2Storage::Encryption,
+                    authentication:           Y2Storage::EncryptionAuthentication::FIDO2,
+                    supports_authentication?: true,
+                    blk_device:               instance_double("Y2Storage::Disk", name: "/dev/sdb"))
+                ]
+              end
+
+              it "displays that available FIDO2 key will support encryption" do
+                expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                  expect(content.to_s).to include("using FIDO2")
+                end
+                dialog.run
+              end
+            end
+          end
+
+          context "and the user has selected device encryption LUKS2" do
+            let(:settings) do
+              settings = Y2Storage::ProposalSettings.new_for_current_product
+              settings.encryption_password = "12345678"
+              settings.encryption_method = Y2Storage::EncryptionMethod::LUKS2
+              settings
+            end
+            let(:encryptions) do
+              [
+                instance_double(Y2Storage::Encryption, authentication: nil,
+                  supports_authentication?: false,
+                  blk_device: instance_double("Y2Storage::Disk", name: "/dev/sda")),
+                instance_double(Y2Storage::Encryption, authentication: nil,
+                  supports_authentication?: false,
+                  blk_device: instance_double("Y2Storage::Disk", name: "/dev/sdb"))
+              ]
+            end
+
+            it "does not offer authentication selection" do
+              expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                expect(content.to_s).to_not include("Authentication for encrypted devices:")
+              end
+              dialog.run
+            end
+          end
+
+          context "and the user does not want device encryption" do
+            let(:settings) do
+              settings = Y2Storage::ProposalSettings.new_for_current_product
+              settings.encryption_password = nil
+              settings
+            end
+
+            it "does not offer authentication selection" do
+              expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+                expect(content.to_s).to_not include("Authentication for encrypted devices:")
+              end
+              dialog.run
+            end
+          end
         end
 
         context "and there is no resulting devicegraph" do
@@ -464,6 +558,7 @@ describe Y2Storage::Dialogs::Proposal do
                 "not able to propose",
                 "using the provided settings"
               )
+              expect(content.to_s).to_not include("Authentication for encrypted devices:")
             end
             dialog.run
           end
