@@ -159,6 +159,23 @@ module Y2Storage
         !device.name.match?(/^\/dev\/ram\d+$/)
     end
 
+    # Checks whether the given software RAID can be considered a valid candidate for a Linux
+    # installation
+    #
+    # Apart from matching conditions of #candidate_device?, a valid software RAID candidate must
+    # either, have a partition table or do not have children.
+    #
+    # See {#candidate_disks} for extra explanations (e.g. the relevance of EFI) and for
+    # Fate/Bugzilla references.
+    #
+    # @param md [Md]
+    # @return [Boolean]
+    def candidate_software_raid?(md)
+      return false unless arch.efiboot?
+
+      (md.partition_table? || md.children.empty?) && candidate_device?(md)
+    end
+
     # Look up devicegraph element by device name.
     #
     # @return [Device]
@@ -259,19 +276,11 @@ module Y2Storage
 
     # Finds software RAIDs that are considered valid candidates for a Linux installation
     #
-    # Apart from matching conditions of #candidate_device?, a valid software RAID candidate must
-    # either, have a partition table or do not have children.
-    #
-    # See {#candidate_disks} for extra explanations (e.g. the relevance of EFI) and for
-    # Fate/Bugzilla references.
+    # @see #candidate_software_raid?
     #
     # @return [Array<Md>]
     def candidate_software_raids
-      return [] unless arch.efiboot?
-
-      devicegraph.software_raids.select do |md|
-        (md.partition_table? || md.children.empty?) && candidate_device?(md)
-      end
+      devicegraph.software_raids.select { |md| candidate_software_raid?(md) }
     end
 
     # Finds disk devices that are considered valid candidates
