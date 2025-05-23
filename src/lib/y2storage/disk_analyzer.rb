@@ -144,19 +144,34 @@ module Y2Storage
       @candidate_disks
     end
 
-    # Checks whether a device can be used as candidate for installation
+    # Checks whether a device can be used for the installation
     #
-    # A device is candidate for installation if no filesystem belonging to the device is mounted and the
-    # device does not contain a repository for installation.
+    # A device is visible for installation purposes if no filesystem belonging to the device is
+    # mounted and the device does not contain a repository for installation.
     #
     # Moreover, RAM disks are also discarded.
     #
     # @param device [BlkDevice]
     # @return [Boolean]
-    def candidate_device?(device)
+    def available_device?(device)
       !contain_mounted_filesystem?(device) &&
         !contain_installation_repository?(device) &&
         !device.name.match?(/^\/dev\/ram\d+$/)
+    end
+
+    # Checks whether it makes sense to create the boot-related partitions at the given device
+    #
+    # Apart from the disk devices, some software RAIDs are considered as acceptable under some
+    # circumstances. See {#candidate_disks} for extra explanations (e.g. the relevance of EFI) and for
+    # Fate/Bugzilla references.
+    #
+    # @param device [BlkDevice]
+    # @return [Boolean]
+    def supports_boot_partitions?(device)
+      return true if device.is?(:disk_device)
+      return false unless arch.efiboot?
+
+      device.is?(:software_raid) && (device.partition_table? || device.children.empty?)
     end
 
     # Look up devicegraph element by device name.
@@ -259,19 +274,11 @@ module Y2Storage
 
     # Finds software RAIDs that are considered valid candidates for a Linux installation
     #
-    # Apart from matching conditions of #candidate_device?, a valid software RAID candidate must
-    # either, have a partition table or do not have children.
-    #
-    # See {#candidate_disks} for extra explanations (e.g. the relevance of EFI) and for
-    # Fate/Bugzilla references.
+    # @see #candidate_software_raid?
     #
     # @return [Array<Md>]
     def candidate_software_raids
-      return [] unless arch.efiboot?
-
-      devicegraph.software_raids.select do |md|
-        (md.partition_table? || md.children.empty?) && candidate_device?(md)
-      end
+      devicegraph.software_raids.select { |md| available_device?(md) && supports_boot_partitions?(md) }
     end
 
     # Finds disk devices that are considered valid candidates
@@ -281,7 +288,7 @@ module Y2Storage
     # @return [Array<BlkDevice>]
     def candidate_disk_devices
       rejected_disk_devices = candidate_software_raids.map(&:ancestors).flatten
-      candidate_disk_devices = devicegraph.disk_devices.select { |d| candidate_device?(d) }
+      candidate_disk_devices = devicegraph.disk_devices.select { |d| available_device?(d) }
 
       candidate_disk_devices - rejected_disk_devices
     end
