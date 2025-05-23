@@ -1,8 +1,8 @@
 -------------------------------------------------------------------
 Fri May 23 08:06:05 UTC 2025 - Ancor Gonzalez Sosa <ancor@suse.com>
 
-- Make method DiskAnalyzer#candidate_software_raid? public
-  (gh#agama-project/agama#2388).
+- Reorganize public methods of DiskAnalyzer (needed by
+  gh#agama-project/agama#2388).
 - 5.0.32
 
 -------------------------------------------------------------------
