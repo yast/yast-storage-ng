@@ -42,6 +42,14 @@ module Y2Storage
         end
         @efi_volume
       end
+
+      # @return [VolumeSpecification]
+      def boot_volume
+        super
+        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
+        @boot_volume
+      end
+
     end
   end
 end
