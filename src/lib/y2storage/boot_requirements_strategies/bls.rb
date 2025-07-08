@@ -40,6 +40,7 @@ module Y2Storage
           @efi_volume.desired_size = DiskSize.GiB(1)
           @efi_volume.max_size = DiskSize.GiB(1)
         end
+        log.info "xxxxxxxxxxx evi_volume disk: #{@evi_volume.inspect}"        
         @efi_volume
       end
 
