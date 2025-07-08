@@ -40,17 +40,18 @@ module Y2Storage
           @efi_volume.desired_size = DiskSize.GiB(1)
           @efi_volume.max_size = DiskSize.GiB(1)
         end
-        log.info "xxxxxxxxxxx evi_volume disk: #{@evi_volume.inspect}"        
+        log.info "xxxxxxxxxxx efi_volume disk: #{@efi_volume.inspect}"        
         @efi_volume
       end
 
       # @return [VolumeSpecification]
-#      def boot_volume
-#        super
-#        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
-#        @boot_volume
-#      end
-
+      def boot_volume
+        if @boot_volume.nil?
+          @boot_volume = volume_specification_for("/boot")
+        end
+        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
+        @boot_volume
+      end
     end
   end
 end
