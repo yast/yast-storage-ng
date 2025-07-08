@@ -45,11 +45,11 @@ module Y2Storage
       end
 
       # @return [VolumeSpecification]
-      def boot_volume
-        super
-        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
-        @boot_volume
-      end
+#      def boot_volume
+#        super
+#        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
+#        @boot_volume
+#      end
 
     end
   end
