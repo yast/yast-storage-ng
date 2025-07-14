@@ -29,11 +29,11 @@ module Y2Storage
       end
 
       # @see Base#needed_partitions
-      def needed_partitions(target)
-        planned_partitions = super
-        log.info "xxxxxxxxxxx needed_partitions: #{planned_partitions.inspect}"
-        planned_partitions        
-      end
+      #def needed_partitions(target)
+      #  planned_partitions = super
+      #  log.info "xxxxxxxxxxx needed_partitions: #{planned_partitions.inspect}"
+      #  planned_partitions        
+      #end
       
       protected
 
@@ -52,13 +52,13 @@ module Y2Storage
       end
 
       # @return [VolumeSpecification]
-      def boot_volume
-        if @boot_volume.nil?
-          @boot_volume = volume_specification_for("/boot")
-        end
-        log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
-        @boot_volume
-      end
+      #def boot_volume
+      #  if @boot_volume.nil?
+      #    @boot_volume = volume_specification_for("/boot")
+      #  end
+      #  log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
+      #  @boot_volume
+      #end
     end
   end
 end

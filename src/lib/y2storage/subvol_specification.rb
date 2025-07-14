@@ -244,7 +244,10 @@ module Y2Storage
       subvols.concat(
         NO_COW_SUBVOL_PATHS.map { |path| SubvolSpecification.new(path, copy_on_write: false) }
       )
-      subvols.each { |subvol| subvol.archs = SUBVOL_ARCHS[subvol.path] }
+      subvols.each do |subvol|
+        log.info("xxxxxxxxxxxxxx #{subvol}")
+        subvol.archs = SUBVOL_ARCHS[subvol.path]
+      end
       subvols.sort!
     end
 
