@@ -31,7 +31,7 @@ module Y2Storage
       # @see Base#needed_partitions
       def needed_partitions(target)
         planned_partitions = super
-        log.info "xxxxxxxxxxx planned_partitions: #{planned_partitions.inspect}"
+        log.info "xxxxxxxxxxx needed_partitions: #{planned_partitions.inspect}"
         planned_partitions        
       end
       
