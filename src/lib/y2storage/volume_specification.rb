@@ -30,7 +30,7 @@ module Y2Storage
   class VolumeSpecification
     include PartitioningFeatures
     include EqualByInstanceVariables
-    include Yast::Logger    
+    include Yast::Logger
 
     # @return [PartitionId] when the volume needs to be a partition with a specific id
     attr_accessor :partition_id
@@ -418,8 +418,14 @@ module Y2Storage
       if Y2Storage::Arch.new.efiboot? && preferred_bootloader != "grub2"
         # Removing grub2 specific subvolumes because they are not needed.
         # It is only needed for none efi system, or grub2 has been set in the control.xml file
-        log.info "Removing grub2 specific subvolumes /boot/grub2/*"
-        @subvolumes.delete_if { |subvol| SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path) }
+        @subvolumes.delete_if do |subvol|
+          if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
+            log.info "Removing not needed grub2 specific subvolumes #{subvol.path}"
+            true
+          else
+            false
+          end
+        end
       end
       log.info("xxxxxxxxxxxxxx22 #{@subvolumes}")
     end
