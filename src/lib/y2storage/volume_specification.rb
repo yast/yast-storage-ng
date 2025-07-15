@@ -412,12 +412,11 @@ module Y2Storage
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
 
-      log.info("xxxxxxxxxxxxxx22 #{@subvolumes}")
       preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
         "preferred_bootloader")
       if Y2Storage::Arch.new.efiboot? && preferred_bootloader != "grub2"
         # Removing grub2 specific subvolumes because they are not needed.
-        # It is only needed for none efi system, or grub2 has been set in the control.xml file
+        # It is only needed for none efi system, or grub2 has been set in the control.xml file.
         @subvolumes.delete_if do |subvol|
           if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
             log.info "Removing not needed grub2 specific subvolumes #{subvol.path}"
@@ -427,7 +426,6 @@ module Y2Storage
           end
         end
       end
-      log.info("xxxxxxxxxxxxxx22 #{@subvolumes}")
     end
 
     def validated_fs_type(type)
