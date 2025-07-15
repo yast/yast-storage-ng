@@ -23,6 +23,7 @@ require "y2storage/subvol_specification"
 require "y2storage/equal_by_instance_variables"
 
 Yast.import "Kernel"
+Yast.import "ProductFeatures"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -222,7 +223,7 @@ module Y2Storage
     def initialize(volume_features)
       apply_defaults
       load_features(volume_features)
-print("xxxxxxxxxxxxxx #{volume_features}")      
+      log.info("xxxxxxxxxxxxxx #{volume_features}")
       adjust_features
     end
 
@@ -410,12 +411,16 @@ print("xxxxxxxxxxxxxx #{volume_features}")
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
 
-      print("xxxxxxxxxxxxxx22 #{@subvolumes}")      
-      
-#      if Y2Storage::Arch.new.efiboot? &&
-#          subvols.each { |subvol| subvol.archs = SUBVOL_GRUB2_ARCHS[subvol.path] }
-#
-#      end     
+      log.info("xxxxxxxxxxxxxx22 #{@subvolumes}")
+      preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
+        "preferred_bootloader")
+      if Y2Storage::Arch.new.efiboot? && preferred_bootloader != "grub2"
+        # Removing grub2 specific subvolumes because they are not needed.
+        # It is only needed for none efi system, or grub2 has been set in the control.xml file
+        log.info "Removing grub2 specific subvolumes /boot/grub2/*"
+        @subvolumes.delete_if { |subvol| SUBVOL_GRUB2_ARCHS.key?(subvol.path) }
+      end
+      log.info("xxxxxxxxxxxxxx22 #{@subvolumes}")
     end
 
     def validated_fs_type(type)
