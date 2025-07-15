@@ -224,7 +224,6 @@ module Y2Storage
     def initialize(volume_features)
       apply_defaults
       load_features(volume_features)
-      log.info("xxxxxxxxxxxxxx #{volume_features}")
       adjust_features
     end
 
