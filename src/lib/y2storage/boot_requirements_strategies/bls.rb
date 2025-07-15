@@ -28,13 +28,6 @@ module Y2Storage
         super
       end
 
-      # @see Base#needed_partitions
-      #def needed_partitions(target)
-      #  planned_partitions = super
-      #  log.info "xxxxxxxxxxx needed_partitions: #{planned_partitions.inspect}"
-      #  planned_partitions        
-      #end
-      
       protected
 
       # @return [VolumeSpecification]
@@ -47,18 +40,9 @@ module Y2Storage
           @efi_volume.desired_size = DiskSize.GiB(1)
           @efi_volume.max_size = DiskSize.GiB(1)
         end
-        log.info "xxxxxxxxxxx efi_volume disk: #{@efi_volume.inspect}"        
         @efi_volume
       end
 
-      # @return [VolumeSpecification]
-      #def boot_volume
-      #  if @boot_volume.nil?
-      #    @boot_volume = volume_specification_for("/boot")
-      #  end
-      #  log.info "xxxxxxxxxxx boot_volume disk: #{@boot_volume.inspect}"
-      #  @boot_volume
-      #end
     end
   end
 end

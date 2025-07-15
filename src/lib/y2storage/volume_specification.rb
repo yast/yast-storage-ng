@@ -222,6 +222,7 @@ module Y2Storage
     def initialize(volume_features)
       apply_defaults
       load_features(volume_features)
+print("xxxxxxxxxxxxxx #{volume_features}")      
       adjust_features
     end
 
@@ -408,6 +409,13 @@ module Y2Storage
     # the architecture does not support to resume from swap (i.e., for s390).
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
+
+      print("xxxxxxxxxxxxxx22 #{@subvolumes}")      
+      
+#      if Y2Storage::Arch.new.efiboot? &&
+#          subvols.each { |subvol| subvol.archs = SUBVOL_GRUB2_ARCHS[subvol.path] }
+#
+#      end     
     end
 
     def validated_fs_type(type)
