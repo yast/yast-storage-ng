@@ -411,7 +411,7 @@ module Y2Storage
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
 
-      return unless BLS.bls_bootloader_proposed?
+      return unless Y2Storage::BootRequirementsStrategies::BLS.bls_bootloader_proposed?
       # Removing grub2/grub2-efi specific subvolumes because they are not needed.
       @subvolumes.delete_if do |subvol|
         if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
