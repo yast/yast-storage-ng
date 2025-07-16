@@ -23,6 +23,7 @@ require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
 require "y2storage/boot_requirements_strategies/analyzer"
+require "y2storage/boot_requirements_strategies/bls"
 require "y2storage/exceptions"
 require "y2storage/volume_specification"
 require "y2storage/setup_error"
@@ -84,7 +85,8 @@ module Y2Storage
       def warnings
         res = []
 
-        if !boot_readable_by_grub?
+        if !boot_readable_by_grub? &&
+            !Y2Storage::BootRequirementsStrategies::BLS.bls_bootloader_proposed?
           error_message =
             _(
               "The grub boot loader cannot access the file system mounted at /boot. " \
