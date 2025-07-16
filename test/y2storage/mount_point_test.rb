@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2018-2021] SUSE LLC
+
+# Copyright (c) [2018-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -655,7 +656,7 @@ describe Y2Storage::MountPoint do
       subject(:mount_point) { mountable.create_mount_point(path) }
 
       context "if the disk uses a driver that depends on a systemd service" do
-        let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi-tcp", "iscsi"]) }
+        let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi_tcp", "iscsi"]) }
 
         context "and the filesystem is mounted at /" do
           let(:path) { "/" }
