@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2021] SUSE LLC
+
+# Copyright (c) [2021-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -159,7 +160,7 @@ describe Y2Storage::GuidedProposal do
           let(:home_fstype) { "ext3" }
 
           context "if the disk uses a driver that depends on a systemd service" do
-            let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi-tcp"]) }
+            let(:hwinfo) { Y2Storage::HWInfoDisk.new(driver: ["iscsi_tcp"]) }
 
             it "sets #mount_options to an array containing the 'data' and '_netdev' options" do
               proposal.propose
