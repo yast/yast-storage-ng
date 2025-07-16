@@ -19,6 +19,9 @@
 
 require "y2storage/boot_requirements_strategies/uefi"
 
+Yast.import "ProductFeatures"
+Yast.import "Arch"
+
 module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in BLS/UEFI systems
@@ -26,6 +29,15 @@ module Y2Storage
       def initialize(*args)
         textdomain "storage"
         super
+      end
+
+      def self.bls_bootloader_proposed?
+        preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
+          "preferred_bootloader")
+        Y2Storage::Arch.new.efiboot? &&
+          (Yast::Arch.x86_64 || Yast::Arch.aarch64) &&
+          !StorageEnv.instance.no_bls_bootloader &&
+          ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
       end
 
       protected
@@ -42,7 +54,6 @@ module Y2Storage
         end
         @efi_volume
       end
-
     end
   end
 end

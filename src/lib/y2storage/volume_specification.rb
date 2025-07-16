@@ -21,10 +21,9 @@ require "yast"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
 require "y2storage/equal_by_instance_variables"
+require "y2storage/boot_requirements_strategies/bls"
 
 Yast.import "Kernel"
-Yast.import "ProductFeatures"
-Yast.import "Arch"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -409,30 +408,21 @@ module Y2Storage
     #
     # For example, {#adjust_by_ram} should be set to `false` by default for the swap partition when
     # the architecture does not support to resume from swap (i.e., for s390).
-    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
 
-      preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
-        "preferred_bootloader")
-      if Y2Storage::Arch.new.efiboot? &&
-          (Yast::Arch.x86_64 || Yast::Arch.aarch64) &&
-          !StorageEnv.instance.no_bls_bootloader &&
-          ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
-        # Removing grub2 specific subvolumes because they are not needed.
-        # It is only needed for none efi system, or grub2/grub2-efi has been set in the control.xml file.
-        @subvolumes.delete_if do |subvol|
-          if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
-            log.info "Removing grub2 specific subvolumes #{subvol.path} " \
-                     "because a BLS bootloader is default."
-            true
-          else
-            false
-          end
+      return unless BLS.bls_bootloader_proposed?
+      # Removing grub2/grub2-efi specific subvolumes because they are not needed.
+      @subvolumes.delete_if do |subvol|
+        if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
+          log.info "Removing grub2/grub2-efi specific subvolumes #{subvol.path} " \
+                   "because a BLS bootloader is default."
+          true
+        else
+          false
         end
       end
     end
-    # rubocop:enable all
 
     def validated_fs_type(type)
       raise(ArgumentError, "Filesystem cannot be nil") unless type
