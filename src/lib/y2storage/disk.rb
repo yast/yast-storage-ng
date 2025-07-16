@@ -1,4 +1,4 @@
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2025] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -84,7 +84,7 @@ module Y2Storage
     end
 
     # @see #systemd_remote?
-    SYSTEMD_REMOTE_DRIVERS = ["iscsi-tcp", "bnx2i", "qedi", "fcoe", "bnx2fc", "qedf"].freeze
+    SYSTEMD_REMOTE_DRIVERS = ["iscsi_tcp", "bnx2i", "qedi", "fcoe", "bnx2fc", "qedf"].freeze
     private_constant :SYSTEMD_REMOTE_DRIVERS
 
     # @see BlkDevice#systemd_remote?
