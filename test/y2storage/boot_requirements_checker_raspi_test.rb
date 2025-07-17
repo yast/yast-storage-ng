@@ -25,6 +25,10 @@ require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
   describe "#needed_partitions in a Raspberry Pi" do
+    before do
+      allow_any_instance_of(Y2Storage::Arch).to receive(:efiboot?).and_return(false)
+    end
+
     using Y2Storage::Refinements::SizeCasts
 
     include_context "boot requirements"
