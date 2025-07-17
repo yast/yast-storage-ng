@@ -73,7 +73,7 @@ describe Y2Storage::BootRequirementsStrategies::BLS do
 
       context "when architectue is x86_64" do
         before do
-          allow(Yast::Arch).to receive(:x86_64).and_return(false)
+          allow(Yast::Arch).to receive(:x86_64).and_return(true)
         end
         it "returns true" do
           expect(subject.bls_bootloader_proposed?).to eq true
