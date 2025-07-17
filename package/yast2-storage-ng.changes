@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 17 06:39:11 UTC 2025 - Stefan Schubert <schubi@suse.de>
+
+- Fixed grub2 error messages and proposals. (bsc#1244755)
+- 5.0.34
+
+-------------------------------------------------------------------
 Wed Jul 16 13:00:00 UTC 2025 - José Iván López González <jlopez@suse.com>
 
 - Use correct iSCSI driver name (related to bsc#1244935).
