@@ -53,13 +53,11 @@ module Y2Storage
       def efi_volume
         if @efi_volume.nil?
           @efi_volume = volume_specification_for("/boot/efi")
-          if Yast::ProductFeatures.GetStringFeature("globals", "preferred_bootloader") == "grub2-bls"
-            # BLS suggests 1GiB for boot partition
-            # https://uapi-group.org/specifications/specs/boot_loader_specification/
-            @efi_volume.min_size = DiskSize.MiB(512)
-            @efi_volume.desired_size = DiskSize.GiB(1)
-            @efi_volume.max_size = DiskSize.GiB(1)
-          end
+          # BLS suggests 1GiB for boot partition
+          # https://uapi-group.org/specifications/specs/boot_loader_specification/
+          @efi_volume.min_size = DiskSize.MiB(512)
+          @efi_volume.desired_size = DiskSize.GiB(1)
+          @efi_volume.max_size = DiskSize.GiB(1)
         end
         @efi_volume
       end
