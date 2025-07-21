@@ -40,17 +40,26 @@ module Y2Storage
           ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
       end
 
+      # No extra /boot partition which is needed by grub2 only
+      def needed_partitions(target)
+        planned_partitions = []
+        planned_partitions << efi_partition(target) if efi_missing?
+        planned_partitions
+      end
+
       protected
 
       # @return [VolumeSpecification]
       def efi_volume
         if @efi_volume.nil?
           @efi_volume = volume_specification_for("/boot/efi")
-          # BLS suggests 1GiB for boot partition
-          # https://uapi-group.org/specifications/specs/boot_loader_specification/
-          @efi_volume.min_size = DiskSize.MiB(512)
-          @efi_volume.desired_size = DiskSize.GiB(1)
-          @efi_volume.max_size = DiskSize.GiB(1)
+          if preferred_bootloader == "grub2-bls"
+            # BLS suggests 1GiB for boot partition
+            # https://uapi-group.org/specifications/specs/boot_loader_specification/
+            @efi_volume.min_size = DiskSize.MiB(512)
+            @efi_volume.desired_size = DiskSize.GiB(1)
+            @efi_volume.max_size = DiskSize.GiB(1)
+          end
         end
         @efi_volume
       end
