@@ -78,7 +78,21 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings + security_policy_warnings
+      boot_warnings + product_warnings + mount_warnings + security_policy_warnings + encryption_warnings
+    end
+
+    # All encryption warnings detected in the setup
+    #
+    # Argion2id needs at least 4GByte momory
+    #
+    # @return [Array<SetupError>]
+    def encryption_warnings
+      @encryption_warnings ||= @devicegraph.encryptions
+        .select(&:supports_authentication?)
+        .map do |e|
+        SetupError.new(message: format(_("using %s for %s"), e.pbkdf.name,
+          e.blk_device.name))
+      end
     end
 
     # All boot errors detected in the setup
