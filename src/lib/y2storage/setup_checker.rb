@@ -87,12 +87,11 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      puts "yyyyyyyyyyy"
       @devicegraph.encryptions.each do |e|
-        puts "xxxxx #{e.pbkdf.name}"
+        puts "xxxxx #{e.pbkdf.name} #{e.supports_pbkdf?}"
       end
       @encryption_warnings ||= @devicegraph.encryptions
-        .select(&:supports_authentication?)
+        .select(&:supports_pbkdf?)
         .map do |e|
         SetupError.new(message: format(_("using %s for %s"), e.pbkdf.name,
           e.blk_device.name))
