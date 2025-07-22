@@ -24,6 +24,8 @@ require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
 require "y2storage/with_security_policies"
+# memory size detection
+require "yast2/hw_detection"
 
 # This 'import' is necessary to load the control file (/etc/YaST/control.xml)
 # when running in an installed system. During installation, this module
@@ -87,11 +89,13 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def encryption_warnings
+      return [] if Yast2::HwDetection.memory >= 4 << 30
+
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
         .map do |e|
         puts "lllll"
-        SetupError.new(message: format(_("Using %s for %s but this needs 4GByte memory at lease."),
+        SetupError.new(message: format(_("Using %s for %s but this needs 4GByte memory at least."),
           e.pbkdf.name, e.blk_device.name))
       end
     end
