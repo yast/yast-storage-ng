@@ -78,7 +78,6 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      puts "jjjjjjjjjjj #{encryption_warnings}"
       boot_warnings + product_warnings + mount_warnings + security_policy_warnings + encryption_warnings
     end
 
@@ -88,15 +87,12 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      @devicegraph.encryptions.each do |e|
-        puts "xxxxx #{e.pbkdf.name} #{e.supports_pbkdf?}"
-      end
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
         .map do |e|
         puts "lllll"
-        SetupError.new(message: format(_("using %s for %s"), e.pbkdf.name,
-          e.blk_device.name))
+        SetupError.new(message: format(_("Using %s for %s but this needs 4GByte memory at lease."),
+          e.pbkdf.name, e.blk_device.name))
       end
     end
 
