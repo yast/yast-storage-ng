@@ -94,7 +94,6 @@ module Y2Storage
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
         .map do |e|
-        puts "lllll"
         SetupError.new(message: format(_("Using %s for %s but this needs 4GByte memory at least."),
           e.pbkdf.name, e.blk_device.name))
       end
