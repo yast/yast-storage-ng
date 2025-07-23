@@ -85,17 +85,21 @@ module Y2Storage
 
     # All encryption warnings detected in the setup
     #
-    # Argion2id needs at least 4GByte momory
+    # Argion2* needs at least 4GByte momory
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      return [] if Yast2::HwDetection.memory >= 4 << 30
+      m = (4 << 20)
+      puts "xxxxx #{Yast2::HwDetection.memory} : #{m}"
+      return [] if Yast2::HwDetection.memory >= (4 << 20)
 
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
         .map do |e|
-        SetupError.new(message: format(_("Using %s for %s but this needs 4GByte memory at least."),
-          e.pbkdf.name, e.blk_device.name))
+        if ["argon2id", "argon2i"].include?(e.pbkdf.name)
+          SetupError.new(message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
+            e.pbkdf.name, e.blk_device.name))
+        end
       end
     end
 
