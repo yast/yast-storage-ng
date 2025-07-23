@@ -96,12 +96,14 @@ module Y2Storage
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
         .map do |e|
+        ret = nil
         if ["argon2id", "argon2i"].include?(e.pbkdf.name)
-          SetupError.new(message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
+          ret = SetupError.new(message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
             e.pbkdf.name, e.blk_device.name))
         end
+        ret
       end
-      @encryption_warnings.compact
+      @encryption_warnings.compact!
     end
 
     # All boot errors detected in the setup
