@@ -91,16 +91,18 @@ module Y2Storage
     # @return [Array<SetupError>]
     def encryption_warnings
       return [] if Yast2::HwDetection.memory >= ((4000 - 64) << 20)
+
       unless @encryption_warnings
         @encryption_warnings = []
         @devicegraph.encryptions
           .select(&:supports_pbkdf?)
           .each do |e|
-          if ["argon2id", "argon2i"].include?(e.pbkdf.value)
-            @encryption_warnings << SetupError.new(message:
-                                                     format(_("Using %s for %s but this needs 4 GByte RAM at least."),
-                                                            e.pbkdf.name, e.blk_device.name))
-          end
+          next unless ["argon2id", "argon2i"].include?(e.pbkdf.value)
+
+          @encryption_warnings << SetupError.new(
+            message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
+              e.pbkdf.name, e.blk_device.name)
+          )
         end
       end
       @encryption_warnings
