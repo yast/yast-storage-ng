@@ -89,9 +89,9 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      m = (4 << 20)
+      m = ((4000 - 64) << 20)
       puts "xxxxx #{Yast2::HwDetection.memory} : #{m}"
-      return [] if Yast2::HwDetection.memory >= (4 << 20)
+      return [] if Yast2::HwDetection.memory >= ((4000 - 64) << 20)
 
       @encryption_warnings ||= @devicegraph.encryptions
         .select(&:supports_pbkdf?)
