@@ -101,6 +101,7 @@ module Y2Storage
             e.pbkdf.name, e.blk_device.name))
         end
       end
+      @encryption_warnings.compact
     end
 
     # All boot errors detected in the setup
