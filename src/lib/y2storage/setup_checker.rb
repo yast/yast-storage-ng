@@ -93,17 +93,19 @@ module Y2Storage
       puts "xxxxx #{Yast2::HwDetection.memory} : #{m}"
       return [] if Yast2::HwDetection.memory >= ((4000 - 64) << 20)
 
-      @encryption_warnings ||= @devicegraph.encryptions
-        .select(&:supports_pbkdf?)
-        .map do |e|
-        ret = nil
-        if ["argon2id", "argon2i"].include?(e.pbkdf.name)
-          ret = SetupError.new(message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
-            e.pbkdf.name, e.blk_device.name))
+      unless @encryption_warnings
+        @encryption_warnings = []
+        @devicegraph.encryptions
+          .select(&:supports_pbkdf?)
+          .each do |e|
+          if ["argon2id", "argon2i"].include?(e.pbkdf.name)
+            @encryption_warnings << SetupError.new(message:
+                                                     format(_("Using %s for %s but this needs 4 GByte RAM at least."),
+                                                            e.pbkdf.name, e.blk_device.name))
+          end
         end
-        ret
       end
-      @encryption_warnings.compact!
+      @encryption_warnings
     end
 
     # All boot errors detected in the setup
