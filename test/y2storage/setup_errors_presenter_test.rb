@@ -33,6 +33,7 @@ describe Y2Storage::SetupErrorsPresenter do
     allow(setup_checker).to receive(:boot_warnings).and_return(boot_errors)
     allow(setup_checker).to receive(:product_warnings).and_return(product_errors)
     allow(setup_checker).to receive(:mount_warnings).and_return(mount_errors)
+    allow(setup_checker).to receive(:encryption_warnings).and_return(encryption_errors)
     allow(setup_checker).to receive(:security_policy).and_return(policy)
     allow(setup_checker).to receive(:security_policy_failing_rules).and_return(policy_errors)
     allow(setup_checker).to receive(:errors).and_return(fatal_errors)
@@ -48,6 +49,8 @@ describe Y2Storage::SetupErrorsPresenter do
   let(:product_errors) { [] }
 
   let(:mount_errors) { [] }
+
+  let(:encryption_errors) { [] }
 
   let(:policy) { double("Y2Security::SecurityPolicies::DisaStigPolicy", name: "STIG") }
 
