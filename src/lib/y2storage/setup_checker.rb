@@ -85,14 +85,12 @@ module Y2Storage
 
     # All encryption warnings detected in the setup
     #
-    # Argion2* needs at least 4GByte momory
+    # Argion2* needs at least 4GByte momory. cryptsetup could crash with less than 4GByte
+    # RAM.(bsc#1246876)
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      m = ((4000 - 64) << 20)
-      puts "xxxxx #{Yast2::HwDetection.memory} : #{m}"
       return [] if Yast2::HwDetection.memory >= ((4000 - 64) << 20)
-
       unless @encryption_warnings
         @encryption_warnings = []
         @devicegraph.encryptions
