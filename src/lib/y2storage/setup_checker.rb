@@ -96,7 +96,7 @@ module Y2Storage
         @devicegraph.encryptions
           .select(&:supports_pbkdf?)
           .each do |e|
-          if ["argon2id", "argon2i"].include?(e.pbkdf.name)
+          if ["argon2id", "argon2i"].include?(e.pbkdf.value)
             @encryption_warnings << SetupError.new(message:
                                                      format(_("Using %s for %s but this needs 4 GByte RAM at least."),
                                                             e.pbkdf.name, e.blk_device.name))
