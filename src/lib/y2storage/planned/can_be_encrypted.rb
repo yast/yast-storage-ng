@@ -130,6 +130,7 @@ module Y2Storage
             args[:apqns] = encryption_pervasive_apqns
             args[:key_type] = encryption_pervasive_key_type
           end
+          plain_device.remove_descendants
           result = plain_device.encrypt(method: method, password: encryption_password, **args)
           assign_enc_attr(result, :pbkdf)
           assign_enc_attr(result, :label)

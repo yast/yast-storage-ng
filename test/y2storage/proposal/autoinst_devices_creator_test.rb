@@ -677,5 +677,46 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         expect(home.size).to eq(3.GiB)
       end
     end
+
+    context "formatting a whole disk" do
+      let(:disk) do
+        Y2Storage::Planned::Disk.new.tap do |d|
+          d.mount_point = "/"
+          d.reuse_name = "/dev/sda"
+          d.reformat = true
+          d.filesystem_type = filesystem_type
+          d.encryption_method = encryption_method
+          d.encryption_password = encryption_password
+        end
+      end
+
+      context "if the new filesystem is not encrypted" do
+        let(:encryption_method) { nil }
+        let(:encryption_password) { nil }
+
+        it "it produces the correct result even if the disk contained partitions" do
+          result = creator.populated_devicegraph(planned_devices, [])
+          devicegraph = result.devicegraph
+          disk = devicegraph.disks.first
+          expect(disk.encrypted?).to eq false
+          expect(disk.filesystem_mountpoint).to eq "/"
+        end
+      end
+
+      context "if the new filesystem is encrypted" do
+        let(:encryption_method) { Y2Storage::EncryptionMethod::LUKS1 }
+        let(:encryption_password) { "secret" }
+
+        # Regression test for bsc#1246970. This raised an exception storage::DeviceHasWrongType
+        # "what():  device has wrong type, seen 'Luks', expected 'Partitionable'"
+        it "it produces the correct result even if the disk contained partitions" do
+          result = creator.populated_devicegraph(planned_devices, [])
+          devicegraph = result.devicegraph
+          disk = devicegraph.disks.first
+          expect(disk.encrypted?).to eq true
+          expect(disk.filesystem_mountpoint).to eq "/"
+        end
+      end
+    end
   end
 end
