@@ -64,6 +64,7 @@ describe Y2Storage::SetupErrorsPresenter do
       let(:product_errors) { [] }
       let(:mount_errors) { [] }
       let(:policy_errors) { [] }
+      let(:encryption_errors) { [] }
 
       it "returns an empty string" do
         expect(subject.to_html).to be_empty
@@ -85,15 +86,19 @@ describe Y2Storage::SetupErrorsPresenter do
       let(:product_error2) { instance_double(Y2Storage::SetupError, message: "product error 2") }
       let(:product_error3) { instance_double(Y2Storage::SetupError, message: "product error 3") }
       let(:mount_error1) { instance_double(Y2Storage::SetupError, message: "missing option 1") }
+      let(:encryption_error) do
+        instance_double(Y2Storage::SetupError, message: "encryption error")
+      end
 
       let(:policy_errors) { [] }
 
       let(:boot_errors) { [boot_error1, boot_error2] }
       let(:product_errors) { [product_error1, product_error2, product_error3] }
       let(:mount_errors) { [mount_error1] }
+      let(:encryption_errors) { [encryption_error] }
 
       it "contains a message for each error" do
-        expect(subject.to_html.scan(/<li>/).size).to eq(6)
+        expect(subject.to_html.scan(/<li>/).size).to eq(7)
       end
 
       context "and there are boot errors" do
@@ -101,6 +106,7 @@ describe Y2Storage::SetupErrorsPresenter do
         let(:product_errors) { [] }
         let(:mount_errors) { [] }
         let(:policy_errors) { [] }
+        let(:encryption_errors) { [] }
 
         it "contains a general error message for boot errors" do
           expect(subject.to_html).to match(/not be able to boot/)
@@ -117,6 +123,10 @@ describe Y2Storage::SetupErrorsPresenter do
         it "does not contain a general error message for policy errors" do
           expect(subject.to_html).to_not match(/does not comply with the STIG policy/)
         end
+
+        it "does not contain a general error message for encryption errors" do
+          expect(subject.to_html).to_not match(/problems while encrypting devices/)
+        end
       end
 
       context "and there are product errors" do
@@ -124,6 +134,7 @@ describe Y2Storage::SetupErrorsPresenter do
         let(:product_errors) { [product_error1] }
         let(:mount_errors) { [] }
         let(:policy_errors) { [] }
+        let(:encryption_errors) { [] }
 
         it "contains a general error message for product errors" do
           expect(subject.to_html).to match(/could not work/)
@@ -140,6 +151,10 @@ describe Y2Storage::SetupErrorsPresenter do
         it "does not contain a general error message for policy errors" do
           expect(subject.to_html).to_not match(/does not comply with the STIG policy/)
         end
+
+        it "does not contain a general error message for encryption errors" do
+          expect(subject.to_html).to_not match(/problems while encrypting devices/)
+        end
       end
 
       context "and there are mount errors" do
@@ -147,6 +162,7 @@ describe Y2Storage::SetupErrorsPresenter do
         let(:product_errors) { [] }
         let(:mount_errors) { [mount_error1] }
         let(:policy_errors) { [] }
+        let(:encryption_errors) { [] }
 
         it "contains a general error message for mount errors" do
           expect(subject.to_html).to match(/mount point during boot/)
@@ -169,6 +185,7 @@ describe Y2Storage::SetupErrorsPresenter do
         let(:boot_errors) { [] }
         let(:product_errors) { [] }
         let(:mount_errors) { [] }
+        let(:encryption_errors) { [] }
         let(:policy_errors) { [double("Y2Security::SecurityPolicies::Rule")] }
 
         it "contains a general error message for the policy" do
@@ -186,12 +203,49 @@ describe Y2Storage::SetupErrorsPresenter do
         it "does not contain a general error message for mount errors" do
           expect(subject.to_html).to_not match(/mount point during boot/)
         end
+
+        it "does not contain a general error message for encryption errors" do
+          expect(subject.to_html).to_not match(/problems while encrypting devices/)
+        end
       end
 
-      context "and there are boot, product, mount errors and policies errors" do
+      context "and there are encryption errors" do
+        let(:boot_errors) { [] }
+        let(:product_errors) { [] }
+        let(:mount_errors) { [] }
+        let(:encryption_errors) { [encryption_error] }
+        let(:policy_errors) { [] }
+
+        it "contains a general error message for encryption" do
+          expect(subject.to_html).to match(/problems while encrypting devices/)
+        end
+
+        it "contains not a general error message for the policy" do
+          expect(subject.to_html).to_not match(/does not comply with the STIG policy/)
+        end
+
+        it "does not contain a general error message for boot errors" do
+          expect(subject.to_html).to_not match(/not be able to boot/)
+        end
+
+        it "does not contain a general error message for product errors" do
+          expect(subject.to_html).to_not match(/could not work/)
+        end
+
+        it "does not contain a general error message for mount errors" do
+          expect(subject.to_html).to_not match(/mount point during boot/)
+        end
+
+        it "does not contain a general error message for encryption errors" do
+          expect(subject.to_html).to_not match(/problems while encrypting devices/)
+        end
+      end
+
+      context "and there are boot, product, mount errors, encryption errors and policies errors" do
         let(:boot_errors) { [boot_error1] }
         let(:product_errors) { [product_error1] }
         let(:mount_errors) { [mount_error1] }
+        let(:encryption_errors) { [encryption_error] }
         let(:policy_errors) { [instance_double(Y2Storage::SetupError, message: "policy error")] }
 
         it "contains a general error message for boot errors" do
@@ -208,6 +262,10 @@ describe Y2Storage::SetupErrorsPresenter do
 
         it "contains a general error message for the policy" do
           expect(subject.to_html).to match(/does not comply with the STIG policy/)
+        end
+
+        it "contains a general error message for encryption" do
+          expect(subject.to_html).to match(/problems while encrypting devices/)
         end
       end
     end
