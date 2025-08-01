@@ -911,7 +911,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
   end
 
   describe ".bls_bootloader_proposed?" do
-    subject { described_class }
+    subject { Y2Storage::BootRequirementsStrategies::Analyzer }
 
     describe "checking suggested bootloader" do
       before do
