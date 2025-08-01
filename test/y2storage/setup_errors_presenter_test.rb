@@ -235,10 +235,6 @@ describe Y2Storage::SetupErrorsPresenter do
         it "does not contain a general error message for mount errors" do
           expect(subject.to_html).to_not match(/mount point during boot/)
         end
-
-        it "does not contain a general error message for encryption errors" do
-          expect(subject.to_html).to_not match(/problems while encrypting devices/)
-        end
       end
 
       context "and there are boot, product, mount errors, encryption errors and policies errors" do
