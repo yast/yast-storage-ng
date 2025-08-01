@@ -141,7 +141,7 @@ module Y2Storage
     # @return [BootRequirementsStrategies::Base]
     def arch_strategy_class
       if arch.efiboot?
-        if Y2Storage::BootRequirementsStrategies::BLS.bls_bootloader_proposed?
+        if Y2Storage::BootRequirementsStrategies::Analyzer.bls_bootloader_proposed?
           BootRequirementsStrategies::BLS
         else
           BootRequirementsStrategies::UEFI

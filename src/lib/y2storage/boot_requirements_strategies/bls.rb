@@ -19,9 +19,6 @@
 
 require "y2storage/boot_requirements_strategies/uefi"
 
-Yast.import "ProductFeatures"
-Yast.import "Arch"
-
 module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in BLS/UEFI systems
@@ -31,20 +28,18 @@ module Y2Storage
         super
       end
 
-      def self.bls_bootloader_proposed?
-        preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
-          "preferred_bootloader")
-        Y2Storage::Arch.new.efiboot? &&
-          (Yast::Arch.x86_64 || Yast::Arch.aarch64) &&
-          !StorageEnv.instance.no_bls_bootloader &&
-          ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
-      end
-
       # No extra /boot partition which is needed by grub2 only
       def needed_partitions(target)
         planned_partitions = []
         planned_partitions << efi_partition(target) if efi_missing?
         planned_partitions
+      end
+
+      # Checks if it makes sense to show grub warnings
+      #
+      # @return [Boolean]
+      def grub_warning?
+        false
       end
 
       protected

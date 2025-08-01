@@ -85,8 +85,7 @@ module Y2Storage
       def warnings
         res = []
 
-        if !boot_readable_by_grub? &&
-            !Y2Storage::BootRequirementsStrategies::BLS.bls_bootloader_proposed?
+        if grub_warning? && !boot_readable_by_grub?
           error_message =
             _(
               "The grub boot loader cannot access the file system mounted at /boot. " \
@@ -109,6 +108,13 @@ module Y2Storage
         end
 
         res
+      end
+
+      # Checks if it makes sense to show grub warnings
+      #
+      # @return [Boolean]
+      def grub_warning?
+        true
       end
 
       # All fatal boot errors detected in the setup, for example, when a / partition

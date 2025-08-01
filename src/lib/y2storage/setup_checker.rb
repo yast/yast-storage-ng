@@ -24,8 +24,7 @@ require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
 require "y2storage/with_security_policies"
-# memory size detection
-require "yast2/hw_detection"
+require "y2storage/storage_manager"
 
 # This 'import' is necessary to load the control file (/etc/YaST/control.xml)
 # when running in an installed system. During installation, this module
@@ -90,7 +89,7 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def encryption_warnings
-      return [] if Yast2::HwDetection.memory >= ((4000 - 64) << 20)
+      return [] if DiskSize.new(StorageManager.instance.arch.ram_size) >= DiskSize.GiB(4)
 
       unless @encryption_warnings
         @encryption_warnings = []
@@ -100,7 +99,7 @@ module Y2Storage
           next unless ["argon2id", "argon2i"].include?(e.pbkdf.value)
 
           @encryption_warnings << SetupError.new(
-            message: format(_("Using %s for %s but this needs 4 GByte RAM at least."),
+            message: format(_("Using %s for %s but this needs 4 GiB RAM at least."),
               e.pbkdf.name, e.blk_device.name)
           )
         end
