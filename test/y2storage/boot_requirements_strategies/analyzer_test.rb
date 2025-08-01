@@ -911,6 +911,8 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
   end
 
   describe ".bls_bootloader_proposed?" do
+    subject { described_class }
+
     describe "checking suggested bootloader" do
       before do
         allow_any_instance_of(Y2Storage::Arch).to receive(:efiboot?).and_return(true)
