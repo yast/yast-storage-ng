@@ -54,7 +54,7 @@ describe Y2Storage::BootRequirementsChecker do
 
       context "and BLS bootloader is explicitly disabled" do
         before do
-          allow(Y2Storage::BootRequirementsStrategies::BLS).to receive(
+          allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
                                                                  :bls_bootloader_proposed?
                                                                ).and_return(false)
         end
