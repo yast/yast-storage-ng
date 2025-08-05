@@ -21,6 +21,23 @@ require_relative "../spec_helper"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsStrategies::BLS do
-  subject { described_class }
+  subject { described_class.new(fake_devicegraph, [], "/dev/sda1") }
 
+  before do
+    fake_scenario("empty_disks")
+    allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:new).and_return(analyzer)
+    allow(analyzer).to receive(:free_mountpoint?).and_return(false)
+  end
+
+  let(:analyzer) do
+    Y2Storage::BootRequirementsStrategies::Analyzer.new(fake_devicegraph, [], "/dev/sda1")
+  end
+
+  describe ".needed_partitions" do
+    let(:target) { :desired }
+    it "does not return own /boot partition" do
+      ret = subject.needed_partitions(target)
+      expect(ret.any? { |p| p.mount_point == "/boot" }).to eq(false)
+    end
+  end
 end
