@@ -84,8 +84,7 @@ module Y2Storage
 
     # All encryption warnings detected in the setup
     #
-    # Argion2* needs at least 4GByte momory. cryptsetup could crash with less than 4GByte
-    # RAM.(bsc#1246876)
+    # Argion2* needs at least 4GiB of memory. Otherwise cryptsetup could crash (bsc#1246876).
     #
     # @return [Array<SetupError>]
     def encryption_warnings
