@@ -220,7 +220,7 @@ describe Y2Storage::SetupErrorsPresenter do
           expect(subject.to_html).to match(/problems while encrypting devices/)
         end
 
-        it "contains not a general error message for the policy" do
+        it "does not contain a general error message for the policy" do
           expect(subject.to_html).to_not match(/does not comply with the STIG policy/)
         end
 
