@@ -21,6 +21,7 @@ require "yast"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
 require "y2storage/equal_by_instance_variables"
+require "y2storage/boot_requirements_strategies/bls"
 
 Yast.import "Kernel"
 
@@ -29,6 +30,7 @@ module Y2Storage
   class VolumeSpecification
     include PartitioningFeatures
     include EqualByInstanceVariables
+    include Yast::Logger
 
     # @return [PartitionId] when the volume needs to be a partition with a specific id
     attr_accessor :partition_id
@@ -408,6 +410,24 @@ module Y2Storage
     # the architecture does not support to resume from swap (i.e., for s390).
     def adjust_features
       self.adjust_by_ram = false if swap? && !resume_supported?
+
+      return unless Y2Storage::BootRequirementsStrategies::Analyzer.bls_bootloader_proposed?
+
+      # Removing grub2/grub2-efi specific subvolumes because they are not needed.
+      # Currently, the subvolumes needed for booting are directly defined in the control.xml file (or
+      # provided  by the fallback list).  But such subvolumes depend on the selected boot strategy.
+      # In the future, each strategy could provide its own list of subvolumes (similar to what
+      # happens now with the required partitions for booting). With that, control files do not have
+      # to provide the subvolumes for booting and there is no need for removing subvolumes here.
+      @subvolumes.delete_if do |subvol|
+        if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
+          log.info "Removing grub2/grub2-efi specific subvolumes #{subvol.path} " \
+                   "because a BLS bootloader is default."
+          true
+        else
+          false
+        end
+      end
     end
 
     def validated_fs_type(type)

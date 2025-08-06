@@ -64,8 +64,8 @@ module Y2Storage
       "var/lib/pgsql"
     ]
 
-    # Subvolumes, from the lists above, that contain architecture modifiers
-    SUBVOL_ARCHS = {
+    # Grub2 subvolumes, from the lists above, that contain architecture modifiers
+    SUBVOL_GRUB2_ARCHS = {
       "boot/grub2/i386-pc"          => ["i386", "x86_64"],
       "boot/grub2/x86_64-efi"       => ["x86_64"],
       "boot/grub2/powerpc-ieee1275" => ["ppc", "!board_powernv"],
@@ -244,7 +244,8 @@ module Y2Storage
       subvols.concat(
         NO_COW_SUBVOL_PATHS.map { |path| SubvolSpecification.new(path, copy_on_write: false) }
       )
-      subvols.each { |subvol| subvol.archs = SUBVOL_ARCHS[subvol.path] }
+
+      subvols.each { |subvol| subvol.archs = SUBVOL_GRUB2_ARCHS[subvol.path] }
       subvols.sort!
     end
 

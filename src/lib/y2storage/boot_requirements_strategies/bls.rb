@@ -28,6 +28,20 @@ module Y2Storage
         super
       end
 
+      # No extra /boot partition which is needed by grub2 only
+      def needed_partitions(target)
+        planned_partitions = []
+        planned_partitions << efi_partition(target) if efi_missing?
+        planned_partitions
+      end
+
+      # Checks if it makes sense to show grub warnings
+      #
+      # @return [Boolean]
+      def grub_warning?
+        false
+      end
+
       protected
 
       # @return [VolumeSpecification]

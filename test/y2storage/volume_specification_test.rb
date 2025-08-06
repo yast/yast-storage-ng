@@ -411,6 +411,32 @@ describe Y2Storage::VolumeSpecification do
           expect(subject.subvolumes).to_not be_empty
           expect(subject.subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
         end
+        context "and a BLS bootloader is not default" do
+          before do
+            allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
+                                                                   :bls_bootloader_proposed?
+                                                                 ).and_return(false)
+          end
+
+          it "subvolumes contains grub2 specific entries" do
+            ret = subject.subvolumes.any? { |s| s.path.include?("boot/grub2") }
+            expect(ret).to eq(true)
+          end
+        end
+
+        context "and a BLS bootloader is default" do
+          before do
+            allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
+                                                                   :bls_bootloader_proposed?
+                                                                 ).and_return(true)
+          end
+
+          it "does not contain grub2 specific subvolumes" do
+            ret = subject.subvolumes.any? { |s| s.path.include?("boot/grub2") }
+            expect(ret).to eq(false)
+          end
+        end
+
       end
     end
 

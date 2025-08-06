@@ -28,6 +28,10 @@ describe Y2Storage::GuidedProposal do
   describe "#propose in a system with pre-existing swap partitions" do
     subject(:proposal) { described_class.new(settings: settings) }
 
+    before do
+      allow_any_instance_of(Y2Storage::Arch).to receive(:efiboot?).and_return(false)
+    end
+
     include_context "proposal"
     let(:architecture) { :x86 }
     let(:settings_format) { :ng }

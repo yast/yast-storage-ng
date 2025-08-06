@@ -28,6 +28,11 @@ describe Y2Storage::SetupChecker do
 
   before do
     fake_scenario(scenario)
+
+    allow(Yast::SCR).to receive(:Read)
+    # Let's assume 8 GiB of RAM
+    allow(Yast::SCR).to receive(:Read).with(path(".proc.meminfo"))
+      .and_return("memtotal" => 8388608)
   end
 
   let(:scenario) { "empty_hard_disk_gpt_50GiB" }

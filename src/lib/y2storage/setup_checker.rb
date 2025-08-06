@@ -24,6 +24,7 @@ require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
 require "y2storage/with_security_policies"
+require "y2storage/storage_manager"
 
 # This 'import' is necessary to load the control file (/etc/YaST/control.xml)
 # when running in an installed system. During installation, this module
@@ -78,7 +79,31 @@ module Y2Storage
     #
     # @return [Array<SetupError>]
     def warnings
-      boot_warnings + product_warnings + mount_warnings + security_policy_warnings
+      boot_warnings + product_warnings + mount_warnings + security_policy_warnings + encryption_warnings
+    end
+
+    # All encryption warnings detected in the setup
+    #
+    # Argion2* needs at least 4GiB of memory. Otherwise cryptsetup could crash (bsc#1246876).
+    #
+    # @return [Array<SetupError>]
+    def encryption_warnings
+      return [] if DiskSize.new(StorageManager.instance.arch.ram_size) >= DiskSize.GiB(4)
+
+      unless @encryption_warnings
+        @encryption_warnings = []
+        @devicegraph.encryptions
+          .select(&:supports_pbkdf?)
+          .each do |e|
+          next unless ["argon2id", "argon2i"].include?(e.pbkdf.value)
+
+          @encryption_warnings << SetupError.new(
+            message: format(_("Using %s for %s but this needs 4 GiB RAM at least."),
+              e.pbkdf.name, e.blk_device.name)
+          )
+        end
+      end
+      @encryption_warnings
     end
 
     # All boot errors detected in the setup

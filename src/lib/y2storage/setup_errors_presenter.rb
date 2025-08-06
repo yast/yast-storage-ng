@@ -60,12 +60,23 @@ module Y2Storage
         boot_warnings_html,
         product_warnings_html,
         mount_warnings_html,
-        security_policy_warnings_html
+        security_policy_warnings_html,
+        encryption_warnings_html
       ].compact
 
       return nil if warnings.empty?
 
       warnings.join(Yast::HTML.Newline)
+    end
+
+    # HTML representation for encryption warnings
+    #
+    # @return [String, nil] nil if there is no encryption warning
+    def encryption_warnings_html
+      warnings = setup_checker.encryption_warnings
+      header = _("There could be problems while encrypting devices:\n")
+
+      create_html(header, warnings)
     end
 
     # HTML representation for boot warnings

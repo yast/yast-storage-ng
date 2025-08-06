@@ -23,6 +23,7 @@ require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
 require "y2storage/boot_requirements_strategies/analyzer"
+require "y2storage/boot_requirements_strategies/bls"
 require "y2storage/exceptions"
 require "y2storage/volume_specification"
 require "y2storage/setup_error"
@@ -84,7 +85,7 @@ module Y2Storage
       def warnings
         res = []
 
-        if !boot_readable_by_grub?
+        if grub_warning? && !boot_readable_by_grub?
           error_message =
             _(
               "The grub boot loader cannot access the file system mounted at /boot. " \
@@ -107,6 +108,13 @@ module Y2Storage
         end
 
         res
+      end
+
+      # Checks if it makes sense to show grub warnings
+      #
+      # @return [Boolean]
+      def grub_warning?
+        true
       end
 
       # All fatal boot errors detected in the setup, for example, when a / partition
