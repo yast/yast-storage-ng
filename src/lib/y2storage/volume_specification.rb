@@ -416,9 +416,9 @@ module Y2Storage
       # Removing grub2/grub2-efi specific subvolumes because they are not needed.
       # Currently, the subvolumes needed for booting are directly defined in the control.xml file (or
       # provided  by the fallback list).  But such subvolumes depend on the selected boot strategy.
-      # In the future, each strategy could provide its own list of subvolumes (similar to what happens now
-      # with the required partitions for booting). With that, control files do not have to provide the
-      # subvolumes for booting and there is no need for removing subvolumes here. 
+      # In the future, each strategy could provide its own list of subvolumes (similar to what
+      # happens now with the required partitions for booting). With that, control files do not have
+      # to provide the subvolumes for booting and there is no need for removing subvolumes here.
       @subvolumes.delete_if do |subvol|
         if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
           log.info "Removing grub2/grub2-efi specific subvolumes #{subvol.path} " \
