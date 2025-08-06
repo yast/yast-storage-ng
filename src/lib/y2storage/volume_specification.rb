@@ -414,6 +414,9 @@ module Y2Storage
       return unless Y2Storage::BootRequirementsStrategies::Analyzer.bls_bootloader_proposed?
 
       # Removing grub2/grub2-efi specific subvolumes because they are not needed.
+      # Often these subvolumes are defined in the control.xml file. So, currently it makes
+      # no sense to define it in the SubvolSpecification.fallback_list method because this
+      # will be called only if no entry is in the control.xml file.
       @subvolumes.delete_if do |subvol|
         if SubvolSpecification::SUBVOL_GRUB2_ARCHS.key?(subvol.path)
           log.info "Removing grub2/grub2-efi specific subvolumes #{subvol.path} " \
