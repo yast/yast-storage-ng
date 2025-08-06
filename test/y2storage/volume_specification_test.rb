@@ -431,7 +431,7 @@ describe Y2Storage::VolumeSpecification do
                                                                  ).and_return(true)
           end
 
-          it "subvolumes contains grub2 specific entries" do
+          it "does not contain grub2 specific subvolumes" do
             ret = subject.subvolumes.any? { |s| s.path.include?("boot/grub2") }
             expect(ret).to eq(false)
           end
