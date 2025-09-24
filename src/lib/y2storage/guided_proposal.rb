@@ -76,6 +76,19 @@ module Y2Storage
         log.error("Initial proposal failed")
         proposal
       end
+
+      # Checks if the given pbkdf can be used for the installation.
+      #
+      # @param pbkdf [PbkdFunction]
+      # @returns new PbkdFunction
+      def check_pbkdf(pbkdf)
+        # none efi system has to use PBKDF2
+        unless Y2Storage::Arch.new.efiboot?
+          log.info "Using PBKDF2 because it is not a EFI system."
+          return PbkdFunction::PBKDF2
+        end
+        pbkdf
+      end
     end
 
     # Constructor
@@ -391,19 +404,6 @@ module Y2Storage
           true
         end
       end
-    end
-
-    # Checks if the given pbkdf can be used for the installation.
-    #
-    # @param pbkdf [PbkdFunction]
-    # @returns new PbkdFunction
-    def self.check_pbkdf(pbkdf)
-      # none efi system has to use PBKDF2
-      unless Y2Storage::Arch.new.efiboot?
-        log.info "Using PBKDF2 because it is not a EFI system."
-        return PbkdFunction::PBKDF2
-      end
-      pbkdf
     end
   end
 end
