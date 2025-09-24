@@ -79,8 +79,8 @@ module Y2Storage
 
       # Checks if the given pbkdf can be used for the installation.
       #
-      # @param pbkdf [PbkdFunction]
-      # @returns new PbkdFunction
+      # @param pbkdf which has to be checked [PbkdFunction]
+      # @return updated PbkdFunction
       def check_pbkdf(pbkdf)
         # none efi system has to use PBKDF2
         unless Y2Storage::Arch.new.efiboot?
