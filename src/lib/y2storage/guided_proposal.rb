@@ -63,7 +63,7 @@ module Y2Storage
       #
       # @return [InitialGuidedProposal]
       def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
-        settings.encryption_pbkdf = check_pbkdf(settings.encryption_pbkdf) if settings
+        settings.encryption_pbkdf = GuidedProposal.check_pbkdf(settings.encryption_pbkdf) if settings
         proposal = InitialGuidedProposal.new(
           settings:      settings,
           devicegraph:   devicegraph,
@@ -90,7 +90,7 @@ module Y2Storage
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
 
       @settings = settings || ProposalSettings.new_for_current_product
-      @settings.encryption_pbkdf = check_pbkdf(@settings.encryption_pbkdf)
+      @settings.encryption_pbkdf = GuidedProposal.check_pbkdf(@settings.encryption_pbkdf)
     end
 
     private
@@ -397,7 +397,7 @@ module Y2Storage
     #
     # @param pbkdf [PbkdFunction]
     # @returns new PbkdFunction
-    def check_pbkdf(pbkdf)
+    def self.check_pbkdf(pbkdf)
       # none efi system has to use PBKDF2
       unless Y2Storage::Arch.new.efiboot?
         log.info "Using PBKDF2 because it is not a EFI system."
