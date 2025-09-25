@@ -68,69 +68,51 @@ describe Y2Storage::GuidedProposal do
       expect(encs.map(&:pbkdf)).to all(eq pbkdf)
     end
 
-    RSpec.shared_examples "/boot unless PBKDF2" do
-      context "using Argon2id as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
-
-        it "proposes a separate unencrypted /boot partition" do
-          proposal.propose
-          boot_fs = proposal.devices.filesystems.find { |fs| fs.mount_path == "/boot" }
-          expect(boot_fs.encrypted?).to eq false
-        end
-      end
-
-      context "using PBKDF2 as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
-
-        it "does not propose a separate /boot partition" do
-          proposal.propose
-          boot_fs = proposal.devices.filesystems.find { |fs| fs.mount_path == "/boot" }
-          expect(boot_fs).to be_nil
-        end
+    RSpec.shared_examples "proposes /boot" do
+      it "does propose a separate /boot partition" do
+        proposal.propose
+        boot_fs = proposal.devices.filesystems.find { |fs| fs.mount_path == "/boot" }
+        expect(boot_fs.encrypted?).to eq false
       end
     end
 
-    RSpec.shared_examples "correct PBKDF encrypted partitions" do
-      context "using Argon2id as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
-
-        it "proposes LUKS2 encrypted partitions with Argon2 for all system partitions" do
-          proposal.propose
-          expect_luks2_fs("/", Y2Storage::PbkdFunction::ARGON2ID)
-          expect_luks2_fs("swap", Y2Storage::PbkdFunction::ARGON2ID)
-        end
-      end
-
-      context "using PBKDF2 as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
-
-        it "proposes LUKS2 encrypted partitions with PBKDF2 for all system partitions" do
-          proposal.propose
-          expect_luks2_fs("/", Y2Storage::PbkdFunction::PBKDF2)
-          expect_luks2_fs("swap", Y2Storage::PbkdFunction::PBKDF2)
-        end
+    RSpec.shared_examples "not proposes /boot" do
+      it "does not propose a separate /boot partition" do
+        proposal.propose
+        boot_fs = proposal.devices.filesystems.find { |fs| fs.mount_path == "/boot" }
+        expect(boot_fs).to be_nil
       end
     end
 
-    RSpec.shared_examples "correct PBKDF encrypted LVM" do
-      context "using Argon2id as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
-
-        it "proposes LUKS2 encrypted LVM with Argon2 for all system volumes" do
-          proposal.propose
-          expect_luks2_lvm_fs("/", Y2Storage::PbkdFunction::ARGON2ID)
-          expect_luks2_lvm_fs("swap", Y2Storage::PbkdFunction::ARGON2ID)
-        end
+    RSpec.shared_examples "correct Argon2id encrypted partitions" do
+      it "proposes LUKS2 encrypted partitions with Argon2 for all system partitions" do
+        proposal.propose
+        expect_luks2_fs("/", Y2Storage::PbkdFunction::ARGON2ID)
+        expect_luks2_fs("swap", Y2Storage::PbkdFunction::ARGON2ID)
       end
+    end
 
-      context "using PBKDF2 as key derivation function" do
-        let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
+    RSpec.shared_examples "correct PBKDF2 encrypted partitions" do
+      it "proposes LUKS2 encrypted partitions with PBKDF2 for all system partitions" do
+        proposal.propose
+        expect_luks2_fs("/", Y2Storage::PbkdFunction::PBKDF2)
+        expect_luks2_fs("swap", Y2Storage::PbkdFunction::PBKDF2)
+      end
+    end
 
-        it "proposes LUKS2 encrypted LVM with PBKDF2 for all system volumes" do
-          proposal.propose
-          expect_luks2_lvm_fs("/", Y2Storage::PbkdFunction::PBKDF2)
-          expect_luks2_lvm_fs("swap", Y2Storage::PbkdFunction::PBKDF2)
-        end
+    RSpec.shared_examples "correct Argon2id encrypted LVM" do
+      it "proposes LUKS2 encrypted LVM with Argon2 for all system volumes" do
+        proposal.propose
+        expect_luks2_lvm_fs("/", Y2Storage::PbkdFunction::ARGON2ID)
+        expect_luks2_lvm_fs("swap", Y2Storage::PbkdFunction::ARGON2ID)
+      end
+    end
+
+    RSpec.shared_examples "correct PBKDF2 encrypted LVM" do
+      it "proposes LUKS2 encrypted LVM with PBKDF2 for all system volumes" do
+        proposal.propose
+        expect_luks2_lvm_fs("/", Y2Storage::PbkdFunction::PBKDF2)
+        expect_luks2_lvm_fs("swap", Y2Storage::PbkdFunction::PBKDF2)
       end
     end
 
@@ -140,16 +122,32 @@ describe Y2Storage::GuidedProposal do
       context "proposing LVM" do
         let(:lvm) { true }
 
-        # FIXME: commented out because the combination of LVM + LUKS2 with Argon2 doesn't work yet
-        # include_examples "/boot unless PBKDF2"
-        include_examples "correct PBKDF encrypted LVM"
+        context "default ARGON2ID" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
+          # FIXME: commented out because the combination of LVM + LUKS2 with Argon2 doesn't work yet
+          # include_examples "proposes /boot"
+          include_examples "correct Argon2id encrypted LVM"
+        end
+        context "default PBKDF2" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
+          include_examples "correct PBKDF2 encrypted LVM"
+          include_examples "not proposes /boot"
+        end
       end
 
       context "proposing partitions (no LVM)" do
         let(:lvm) { false }
 
-        include_examples "/boot unless PBKDF2"
-        include_examples "correct PBKDF encrypted partitions"
+        context "default ARGON2ID" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
+          include_examples "correct Argon2id encrypted partitions"
+          include_examples "proposes /boot"
+        end
+        context "default PBKDF2" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
+          include_examples "correct PBKDF2 encrypted partitions"
+          include_examples "not proposes /boot"
+        end
       end
     end
 
@@ -159,16 +157,37 @@ describe Y2Storage::GuidedProposal do
       context "proposing LVM" do
         let(:lvm) { true }
 
-        # FIXME: commented out because the combination of LVM + LUKS2 with Argon2 doesn't work yet
-        # include_examples "/boot unless PBKDF2"
-        include_examples "correct PBKDF encrypted LVM"
+        context "default ARGON2ID" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
+          # proposes PBKDF2 although ARGON2ID has been set in the
+          # control.xml file because grub2 in a none EFI system can
+          # only handle PBKDF2 (bnc#1249670).
+          include_examples "correct PBKDF2 encrypted LVM"
+          include_examples "not proposes /boot"
+        end
+        context "default PBKDF2" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
+          include_examples "correct PBKDF2 encrypted LVM"
+          include_examples "not proposes /boot"
+        end
       end
 
       context "proposing partitions (no LVM)" do
         let(:lvm) { false }
 
-        include_examples "/boot unless PBKDF2"
-        include_examples "correct PBKDF encrypted partitions"
+        context "default ARGON2ID" do
+          # proposes PBKDF2 although ARGON2ID has been set in the
+          # control.xml file because grub2 in a none EFI system can
+          # only handle PBKDF2 (bnc#1249670).
+          let(:pbkdf) { Y2Storage::PbkdFunction::ARGON2ID }
+          include_examples "correct PBKDF2 encrypted partitions"
+          include_examples "not proposes /boot"
+        end
+        context "default PBKDF2" do
+          let(:pbkdf) { Y2Storage::PbkdFunction::PBKDF2 }
+          include_examples "correct PBKDF2 encrypted partitions"
+          include_examples "not proposes /boot"
+        end
       end
     end
   end
