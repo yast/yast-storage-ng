@@ -524,7 +524,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
 
       context "if the guided setup returns :next" do
-        let(:new_settings) { double("Y2Storage::ProposalSettings") }
+        let(:new_settings) { Y2Storage::ProposalSettings.new() }
 
         before do
           allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
