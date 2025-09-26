@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Wed Sep 24 10:34:05 UTC 2025 - Stefan Schubert <schubi@suse.de>
 
-- Using PbkdFunction::PBKDF2 for efi systems (bsc#1249670).
+- Using PbkdFunction::PBKDF2 for none efi systems (bsc#1249670).
 - 5.0.36
 
 -------------------------------------------------------------------
