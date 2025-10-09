@@ -32,7 +32,7 @@ module Y2Storage
     # ClassLength cop.
     class Type
       include StorageEnumWrapper
-
+      include Yast::Logger
       wrap_enum "FsType"
 
       # See "man mount" for all those options.
@@ -411,6 +411,7 @@ module Y2Storage
       # @return [Array<String>] changed fstab options
       #
       def boot_fstab_options(opt)
+        log.info("1111111111111 #{to_sym} #{opt}")
         case to_sym
         when :vfat
           # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731)

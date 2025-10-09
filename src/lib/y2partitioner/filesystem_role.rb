@@ -26,9 +26,10 @@ module Y2Partitioner
   # Class to represent each one of the roles presented to the user when creating
   # a new partition, LVM logical volume or MD RAID.
   class FilesystemRole
-    include Yast::I18n
+    include Yast::I18n    
     extend Yast::I18n
 
+    include Yast::Logger    
     # Constructor, to be used internally by the class
     #
     # @param id [Symbol] id of the role
@@ -90,6 +91,7 @@ module Y2Partitioner
     # @param paths [Array<String>] list of paths that are offered by the UI
     # @return [String, nil] nil if the device must not be mounted by default
     def mount_path(paths)
+      log.info("1111111111111 #{paths}")
       case id
       when :swap
         "swap"

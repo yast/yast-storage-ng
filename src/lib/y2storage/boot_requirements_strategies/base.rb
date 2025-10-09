@@ -185,6 +185,7 @@ module Y2Storage
 
       # @return [VolumeSpecification,nil]
       def volume_specification_for(mount_point)
+        log.info("1111111111111 #{mount_point} -> #{VolumeSpecificationBuilder.new.for(mount_point)}")
         VolumeSpecificationBuilder.new.for(mount_point)
       end
 
