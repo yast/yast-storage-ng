@@ -134,7 +134,7 @@ module Y2Storage
         },
         vfat:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
-          default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS + ["dmask=077"],
+          default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS,
           default_partition_id:  PartitionId::DOS32,
           name:                  "FAT"
         },
@@ -384,7 +384,7 @@ module Y2Storage
         if mount_path == "/"
           root_fstab_options(opt)
         elsif mount_path == "/boot" || mount_path&.start_with?("/boot/")
-          boot_fstab_options(opt)
+          boot_fstab_options(mount_path, opt)
         else
           opt
         end
@@ -408,17 +408,21 @@ module Y2Storage
       # Modify fstab options for /boot*
       #
       # @param opt [Array<String>] fstab options
+      # @param mount_path [String] path where this filesystem will be mounted
       # @return [Array<String>] changed fstab options
       #
-      def boot_fstab_options(opt)
-        log.info("1111111111111 #{to_sym} #{opt}")
+      def boot_fstab_options(mount_path, opt)
+        ret = []
         case to_sym
         when :vfat
           # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731)
-          opt.reject { |o| o == "iocharset=utf8" }
+          ret = opt.reject { |o| o == "iocharset=utf8" }
         else
-          opt
+          ret = opt
         end
+        ret =+ ["dmask=077"] if mount_path == "/boot/efi"
+        log.info("1111111111111 #{to_sym} #{ret}")
+        ret
       end
 
       # Best fitting partition id for this filesystem type
