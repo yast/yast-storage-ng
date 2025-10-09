@@ -420,8 +420,8 @@ module Y2Storage
         else
           ret = opt
         end
-        ret += ["dmask=077"] if mount_path == "/boot/efi"
-        log.info("1111111111111 #{to_sym} #{ret}")
+        
+        ret += ["dmask=0077"] if mount_path == "/boot/efi"
         ret
       end
 
