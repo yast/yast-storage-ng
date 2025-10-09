@@ -134,7 +134,7 @@ module Y2Storage
         },
         vfat:      {
           fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
-          default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS,
+          default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS + ["dmask=077"],
           default_partition_id:  PartitionId::DOS32,
           name:                  "FAT"
         },
