@@ -412,13 +412,12 @@ module Y2Storage
       # @return [Array<String>] changed fstab options
       #
       def boot_fstab_options(mount_path, opt)
-        ret = []
-        case to_sym
+        ret = case to_sym
         when :vfat
           # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731)
-          ret = opt.reject { |o| o == "iocharset=utf8" }
+          opt.reject { |o| o == "iocharset=utf8" }
         else
-          ret = opt
+          opt
         end
         # Protecting /boot/efi in order to prevent security holes (bsc#1250510)
         ret += ["dmask=0077"] if mount_path == "/boot/efi"
