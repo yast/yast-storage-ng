@@ -26,10 +26,9 @@ module Y2Partitioner
   # Class to represent each one of the roles presented to the user when creating
   # a new partition, LVM logical volume or MD RAID.
   class FilesystemRole
-    include Yast::I18n    
+    include Yast::I18n
     extend Yast::I18n
 
-    include Yast::Logger    
     # Constructor, to be used internally by the class
     #
     # @param id [Symbol] id of the role
