@@ -202,7 +202,6 @@ module Y2Partitioner
           @encrypt = false
 
           return if role.nil?
-log.info("1111111111111 #{role}")
 
           self.partition_id = role.partition_id
 

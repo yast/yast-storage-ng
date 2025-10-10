@@ -91,7 +91,6 @@ module Y2Partitioner
     # @param paths [Array<String>] list of paths that are offered by the UI
     # @return [String, nil] nil if the device must not be mounted by default
     def mount_path(paths)
-      log.info("1111111111111 #{paths}")
       case id
       when :swap
         "swap"

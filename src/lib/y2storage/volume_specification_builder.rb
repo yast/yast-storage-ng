@@ -115,7 +115,6 @@ module Y2Storage
         # automatically use FAT32 if no FAT size is specified
         v.max_size = DiskSize.MiB(512)
       end
-      log.info("1111111111111 #{ret}")
       ret
     end
 

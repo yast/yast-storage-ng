@@ -208,7 +208,6 @@ module Y2Storage
       # @param proposal_settings [ProposalSettings] Proposal settings
       # @return [VolumeSpecification,nil] Volume specification or nil if not found
       def for(mount_point, proposal_settings: nil)
-        log.info("1111111111111 #{@cache[mount_point]}")
         clear_cache unless @cache
         @cache[mount_point] ||= VolumeSpecificationBuilder.new(proposal_settings).for(mount_point)
       end

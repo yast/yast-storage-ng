@@ -420,7 +420,7 @@ module Y2Storage
         else
           ret = opt
         end
-        
+        # Protecting /boot/efi in order to prevent security holes (bsc#1250510)
         ret += ["dmask=0077"] if mount_path == "/boot/efi"
         ret
       end
