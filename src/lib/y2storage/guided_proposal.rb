@@ -63,6 +63,7 @@ module Y2Storage
       #
       # @return [InitialGuidedProposal]
       def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
+        settings.encryption_pbkdf = GuidedProposal.check_pbkdf(settings.encryption_pbkdf) if settings
         proposal = InitialGuidedProposal.new(
           settings:      settings,
           devicegraph:   devicegraph,
@@ -74,6 +75,19 @@ module Y2Storage
       rescue Y2Storage::Error
         log.error("Initial proposal failed")
         proposal
+      end
+
+      # Checks if the given pbkdf can be used for the installation.
+      #
+      # @param pbkdf which has to be checked [PbkdFunction]
+      # @return updated PbkdFunction
+      def check_pbkdf(pbkdf)
+        # none efi system has to use PBKDF2
+        unless Y2Storage::Arch.new.efiboot?
+          log.info "Using PBKDF2 because it is not a EFI system."
+          return PbkdFunction::PBKDF2
+        end
+        pbkdf
       end
     end
 
@@ -89,6 +103,7 @@ module Y2Storage
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
 
       @settings = settings || ProposalSettings.new_for_current_product
+      @settings.encryption_pbkdf = GuidedProposal.check_pbkdf(@settings.encryption_pbkdf)
     end
 
     private
