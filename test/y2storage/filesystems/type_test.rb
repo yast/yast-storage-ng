@@ -211,7 +211,8 @@ describe Y2Storage::Filesystems::Type do
           Yast::Encoding.SetUtf8Lang(false)
           Yast::Encoding.SetEncLang("de_DE")
           # "codepage=437" is default and thus omitted
-          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to include("iocharset=iso8859-15")
+          expect(described_class::VFAT.default_fstab_options("/boot/efi"))
+            .to include("iocharset=iso8859-15")
         end
       end
 
