@@ -32,7 +32,7 @@ module Y2Storage
     # ClassLength cop.
     class Type
       include StorageEnumWrapper
-      include Yast::Logger
+
       wrap_enum "FsType"
 
       # See "man mount" for all those options.

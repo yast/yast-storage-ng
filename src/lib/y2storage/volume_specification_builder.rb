@@ -35,9 +35,7 @@ module Y2Storage
   #   builder = VolumeSpecificationBuilder.new
   #   builder.for("/some/mount/point") #=> nil
   class VolumeSpecificationBuilder
-    include Yast::Logger
     attr_reader :proposal_settings
-    
 
     # Constructor
     #
@@ -105,7 +103,7 @@ module Y2Storage
     #
     # @return [VolumeSpecification]
     def fallback_for_boot_efi
-      ret = VolumeSpecification.new({}).tap do |v|
+      VolumeSpecification.new({}).tap do |v|
         v.mount_point = "/boot/efi"
         v.fs_types = [Filesystems::Type::VFAT]
         v.fs_type = Filesystems::Type::VFAT
@@ -115,7 +113,6 @@ module Y2Storage
         # automatically use FAT32 if no FAT size is specified
         v.max_size = DiskSize.MiB(512)
       end
-      ret
     end
 
     # Volume specification fallback for /boot/zipl
