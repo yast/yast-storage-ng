@@ -216,7 +216,7 @@ describe Y2Storage::Filesystems::Type do
         end
       end
 
-      context "for /boot/efi" do
+      context "for /boot/efi which is a vfat partition" do
         it "vfat has the correct fstab options for revoking permissions of normal user" do
           expect(described_class::VFAT.default_fstab_options("/boot/efi")).to include("dmask=0077")
         end
