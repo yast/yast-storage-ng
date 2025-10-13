@@ -1,8 +1,8 @@
 -------------------------------------------------------------------
 Fri Oct 10 09:44:39 UTC 2025 - Stefan Schubert <schubi@suse.de>
 
-- Add umask=0077 fstab option to /boot/efi in order to prevent
-  security holes (bsc#1250510).
+- Add umask=0077 fstab option to vfat partitions in order to reduce
+  security risks (bsc#1250510).
 - 5.0.37
 
 -------------------------------------------------------------------
