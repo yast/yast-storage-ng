@@ -202,9 +202,10 @@ describe Y2Storage::Filesystems::Type do
         it "vfat has the correct fstab options for a utf8 locale" do
           Yast::Encoding.SetUtf8Lang(true)
           Yast::Encoding.SetEncLang("de_DE")
-          expect(described_class::VFAT.default_fstab_options("/boot")).to eq ["utf8"]
-          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to include("utf8")
-          expect(described_class::VFAT.default_fstab_options("/boot/whatever")).to eq ["utf8"]
+          expect(described_class::VFAT.default_fstab_options("/boot")).to eq ["utf8", "dmask=0077"]
+          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq ["utf8", "dmask=0077"]
+          expect(described_class::VFAT.default_fstab_options("/boot/whatever")).to eq ["utf8",
+                                                                                       "dmask=0077"]
         end
 
         it "vfat has the correct fstab options for a non-utf8 de_DE locale" do
@@ -213,12 +214,6 @@ describe Y2Storage::Filesystems::Type do
           # "codepage=437" is default and thus omitted
           expect(described_class::VFAT.default_fstab_options("/boot/efi"))
             .to include("iocharset=iso8859-15")
-        end
-      end
-
-      context "for /boot/efi which is a vfat partition" do
-        it "vfat has the correct fstab options for revoking permissions of normal user" do
-          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to include("dmask=0077")
         end
       end
 
