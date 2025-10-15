@@ -417,7 +417,7 @@ module Y2Storage
           ret = opt.reject { |o| o == "iocharset=utf8" }
           # Protecting vfat partitions in order to reduce security risks
           # (bsc#1250510).
-          ret += ["dmask=0077"] unless ret.include?("dmask=0077")
+          ret += ["dmask=0077"] unless ret.find_index { |x| x.start_with?("dmask=") }
           ret
         else
           opt
