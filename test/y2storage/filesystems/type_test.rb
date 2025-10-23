@@ -202,16 +202,18 @@ describe Y2Storage::Filesystems::Type do
         it "vfat has the correct fstab options for a utf8 locale" do
           Yast::Encoding.SetUtf8Lang(true)
           Yast::Encoding.SetEncLang("de_DE")
-          expect(described_class::VFAT.default_fstab_options("/boot")).to eq ["utf8"]
-          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq ["utf8"]
-          expect(described_class::VFAT.default_fstab_options("/boot/whatever")).to eq ["utf8"]
+          expect(described_class::VFAT.default_fstab_options("/boot")).to eq ["utf8", "dmask=0077"]
+          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq ["utf8", "dmask=0077"]
+          expect(described_class::VFAT.default_fstab_options("/boot/whatever")).to eq ["utf8",
+                                                                                       "dmask=0077"]
         end
 
         it "vfat has the correct fstab options for a non-utf8 de_DE locale" do
           Yast::Encoding.SetUtf8Lang(false)
           Yast::Encoding.SetEncLang("de_DE")
           # "codepage=437" is default and thus omitted
-          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq ["iocharset=iso8859-15"]
+          expect(described_class::VFAT.default_fstab_options("/boot/efi"))
+            .to include("iocharset=iso8859-15")
         end
       end
 
@@ -226,7 +228,8 @@ describe Y2Storage::Filesystems::Type do
           Yast::Encoding.SetUtf8Lang(false)
           Yast::Encoding.SetEncLang("de_DE")
           # "codepage=437" is default and thus omitted
-          expect(described_class::VFAT.default_fstab_options("/bootme")).to eq ["iocharset=iso8859-15"]
+          expect(described_class::VFAT.default_fstab_options("/bootme"))
+            .to eq ["iocharset=iso8859-15"]
         end
       end
     end

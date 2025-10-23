@@ -10,8 +10,7 @@
         type: primary
         id: dos32
         file_system: vfat
-        fstab_options:
-          - utf8
+        fstab_options: ["utf8", "dmask=0077"]
         mount_point: /boot/efi
     - partition:
         size: 40 GiB

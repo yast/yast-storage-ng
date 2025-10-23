@@ -414,7 +414,11 @@ module Y2Storage
         case to_sym
         when :vfat
           # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731)
-          opt.reject { |o| o == "iocharset=utf8" }
+          ret = opt.reject { |o| o == "iocharset=utf8" }
+          # Protecting vfat partitions in order to reduce security risks
+          # (bsc#1250510).
+          ret += ["dmask=0077"] unless ret.find_index { |x| x.start_with?("dmask=") }
+          ret
         else
           opt
         end
