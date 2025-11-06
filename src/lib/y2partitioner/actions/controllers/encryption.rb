@@ -242,7 +242,7 @@ module Y2Partitioner
 
           unless Y2Storage::Arch.new.efiboot?
             log.info "Using PBKDF2 because it is not a EFI system."
-            return PbkdFunction::PBKDF2
+            return Y2Storage::PbkdFunction::PBKDF2
           end
 
           Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
