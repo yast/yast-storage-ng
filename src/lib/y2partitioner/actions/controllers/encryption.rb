@@ -237,11 +237,12 @@ module Y2Partitioner
         #
         # @return [Y2Storage::PbkdFunction, nil]
         def initial_pbkdf
-          log.warn("xxxxxxxxxxx #{encryption&.pbkdf}")
+          log.warn("xxxxxxxxxxx begi #{encryption&.pbkdf}")
           log.warn("xxxxxxxxxxx #{method}")          
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
           log.warn("xxxxxxxxxxx out")
+          log.warn("xxxxxxxxxxx #{Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf))}")          
           Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
             Y2Storage::PbkdFunction::PBKDF2
         end
