@@ -33,6 +33,7 @@ module Y2Partitioner
       class Encryption < Base
         include Yast::I18n
         include Y2Storage::PartitioningFeatures
+        include Yast::Logger
 
         # Action to perform when {#finish} is called
         #
@@ -236,9 +237,11 @@ module Y2Partitioner
         #
         # @return [Y2Storage::PbkdFunction, nil]
         def initial_pbkdf
+          log.warn("xxxxxxxxxxx #{encryption&.pbkdf}")
+          log.warn("xxxxxxxxxxx #{method}")          
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
-
+          log.warn("xxxxxxxxxxx out")
           Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
             Y2Storage::PbkdFunction::PBKDF2
         end
