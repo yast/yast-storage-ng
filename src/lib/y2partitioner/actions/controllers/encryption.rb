@@ -33,6 +33,7 @@ module Y2Partitioner
       class Encryption < Base
         include Yast::I18n
         include Y2Storage::PartitioningFeatures
+        include Yast::Logger
 
         # Action to perform when {#finish} is called
         #
@@ -238,6 +239,11 @@ module Y2Partitioner
         def initial_pbkdf
           function = encryption&.pbkdf
           return function unless function.nil? && method.is?(:luks2)
+
+          unless Y2Storage::Arch.new.efiboot?
+            log.info "Using PBKDF2 because it is not a EFI system."
+            return Y2Storage::PbkdFunction::PBKDF2
+          end
 
           Y2Storage::PbkdFunction.find(feature(:proposal, :encryption_pbkdf)) ||
             Y2Storage::PbkdFunction::PBKDF2
