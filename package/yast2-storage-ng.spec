@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        5.0.38
+Version:        5.0.39
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
@@ -57,8 +57,13 @@ Requires:       yast2 >= 5.0.13
 Requires:       yast2-packager >= 3.3.7
 # for AbortException and handle direct abort
 Requires:       yast2-ruby-bindings >= 4.0.6
+
+# require the yast2-ycp-ui-bindings package only in openSUSE Tumbleweed or Leap
+%if 0%{?suse_version} == 1699 || 0%{?is_opensuse}
 # OpenItems for (nested) tables
 Requires:       yast2-ycp-ui-bindings >= 4.3.4
+%endif
+
 # communicate with udisks
 Requires:       rubygem(%{rb_default_ruby_abi}:ruby-dbus)
 Requires(post): %fillup_prereq
