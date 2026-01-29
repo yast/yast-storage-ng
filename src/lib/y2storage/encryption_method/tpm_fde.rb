@@ -80,8 +80,8 @@ module Y2Storage
         false
       end
 
-      # Whether both the target system and the product being installed meet the requisites
-      # to setup devices using this encryption method.
+      # Whether the target system meets the requisites to setup devices using this
+      # encryption method.
       #
       # The encryption method must be used at least for the root filesystem (eg. is not possible to
       # use it for /var but not for /), but that can't hardly be controlled here. A separate
@@ -89,7 +89,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def possible?
-        tpm_system? && tpm_product?
+        Y2Storage::Arch.new.efiboot? && tpm_present?
       end
 
       # Creates an encryption device for the given block device
@@ -109,15 +109,6 @@ module Y2Storage
         EncryptionProcesses::TpmFdeTools.new(self)
       end
 
-      # Whether the system is capable of using the encryption method
-      #
-      # @see #possible?
-      #
-      # @return [Boolean]
-      def tpm_system?
-        Y2Storage::Arch.new.efiboot? && tpm_present?
-      end
-
       # Whether a TPM2 chip is present and working
       #
       # @see #possible?
@@ -127,20 +118,6 @@ module Y2Storage
         return @tpm_present unless @tpm_present.nil?
 
         @tpm_present = EncryptionProcesses::FdeTools.new.tpm_present?
-      end
-
-      # Whether the product being installed has the ability to configure the encryption method
-      #
-      # @see #possible?
-      #
-      # @return [Boolean]
-      def tpm_product?
-        # TODO: We should likely do some memoization of the result. But it is not clear when
-        # such memoization would be invalidated (eg. new packages available due to some change
-        # in selected product or to new repositories).
-
-        # Beware: apart from true and false, AvailableAll can return nil if things go wrong
-        !!Yast::Package.AvailableAll(YastFeature::ENCRYPTION_TPM_FDE.pkg_list)
       end
     end
   end
