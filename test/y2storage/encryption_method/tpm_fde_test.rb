@@ -70,8 +70,6 @@ describe Y2Storage::EncryptionMethod::TpmFde do
       end
 
       allow(Y2Storage::Arch).to receive(:new).and_return(arch)
-
-      allow(Yast::Package).to receive(:AvailableAll).and_return pkgs_available
     end
 
     let(:arch) { instance_double("Y2Storage::Arch", efiboot?: efi) }
@@ -89,36 +87,16 @@ describe Y2Storage::EncryptionMethod::TpmFde do
       context "and there is a working TPM2 chip" do
         let(:tpm_present) { true }
 
-        context "and the needed packages can be installed in the target system" do
-          let(:pkgs_available) { true }
-
-          it "#possible? returns true and #available? returns false" do
-            expect(subject.available?).to eq false
-            expect(subject.possible?).to eq true
-          end
-        end
-
-        context "and the needed packages can not be installed in the target system" do
-          let(:pkgs_available) { false }
-
-          include_examples "TPM_FDE impossible and not available"
+        it "#possible? returns true and #available? returns false" do
+          expect(subject.available?).to eq false
+          expect(subject.possible?).to eq true
         end
       end
 
       context "and there is no TPM2 chip" do
         let(:tpm_present) { false }
 
-        context "and the needed packages can be installed in the target system" do
-          let(:pkgs_available) { true }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
-
-        context "and the needed packages can not be installed in the target system" do
-          let(:pkgs_available) { false }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
+        include_examples "TPM_FDE impossible and not available"
       end
     end
 
@@ -128,33 +106,13 @@ describe Y2Storage::EncryptionMethod::TpmFde do
       context "and there is a working TPM2 chip" do
         let(:tpm_present) { true }
 
-        context "and the needed packages can be installed in the target system" do
-          let(:pkgs_available) { true }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
-
-        context "and the needed packages can not be installed in the target system" do
-          let(:pkgs_available) { false }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
+        include_examples "TPM_FDE impossible and not available"
       end
 
       context "and there is no TPM2 chip" do
         let(:tpm_present) { false }
 
-        context "and the needed packages can be installed in the target system" do
-          let(:pkgs_available) { true }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
-
-        context "and the needed packages can not be installed in the target system" do
-          let(:pkgs_available) { false }
-
-          include_examples "TPM_FDE impossible and not available"
-        end
+        include_examples "TPM_FDE impossible and not available"
       end
     end
   end

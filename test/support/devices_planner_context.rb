@@ -44,6 +44,10 @@ RSpec.shared_context "devices planner" do
 
     Yast::ProductFeatures.Import("partitioning" => control_file_content)
 
+    # Needed because of the more than questionable implementation of preferred_bootloader
+    allow(Y2Storage::BootRequirementsStrategies::Analyzer)
+      .to receive(:bls_bootloader_proposed?).and_return false
+
     allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
     allow(boot_checker).to receive(:needed_partitions).and_return(
       [
