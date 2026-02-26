@@ -204,6 +204,9 @@ module Y2Storage
           new_lv = create_logical_volume(volume_group, planned_lv)
           devices_map[new_lv.name] = planned_lv
         end
+      rescue RuntimeError => e
+        log.info "The logical volumes do not fit into the volume group: #{e}"
+        raise NoDiskSpaceError
       end
 
       # Creates a logical volume in a volume group
