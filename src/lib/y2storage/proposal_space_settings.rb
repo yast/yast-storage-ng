@@ -128,5 +128,23 @@ module Y2Storage
     end
 
     alias_method :delete_forced?, :delete_forced
+
+    # All delete actions
+    #
+    # @see #actions
+    #
+    # @return [Array<SpaceActions::Delete>]
+    def delete_actions
+      actions.select { |a| a.is?(:delete) }
+    end
+
+    # All resize actions
+    #
+    # @see #actions
+    #
+    # @return [Array<SpaceActions::Resize>]
+    def resize_actions
+      actions.select { |a| a.is?(:resize) }
+    end
   end
 end

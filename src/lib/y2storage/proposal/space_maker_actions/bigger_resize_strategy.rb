@@ -251,12 +251,12 @@ module Y2Storage
 
         # All delete actions from the settings
         def delete_actions
-          settings.actions.select { |a| a.is?(:delete) }
+          settings.delete_actions
         end
 
         # All resize actions from the settings
         def resize_actions
-          settings.actions.select { |a| a.is?(:resize) }
+          settings.resize_actions
         end
       end
     end
