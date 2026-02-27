@@ -40,8 +40,9 @@ module Y2Storage
       # Constructor
       #
       # @param original_devicegraph [Devicegraph] Initial devicegraph
-      def initialize(original_devicegraph)
+      def initialize(original_devicegraph, space_settings = nil)
         @original_devicegraph = original_devicegraph
+        @space_settings = space_settings
       end
 
       # Returns a copy of the original devicegraph in which the volume
@@ -135,7 +136,7 @@ module Y2Storage
       # @param volume_group [LvmVg] volume group to clean-up
       # @param planned_vg   [Planned::LvmVg] planned logical volume
       def make_space(volume_group, planned_vg)
-        space_maker = LvmSpaceMaker.new(volume_group, planned_vg)
+        space_maker = LvmSpaceMaker.new(volume_group, planned_vg, @space_settings)
         space_maker.provide_space
       end
 
