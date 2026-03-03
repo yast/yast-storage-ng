@@ -196,7 +196,7 @@ module Y2Storage
       # @return [Hash{String => Planned::LvmLv}] planned LVs indexed by the
       #   device name of the real LV devices that were created
       def create_logical_volumes(volume_group, planned_lvs)
-        adjusted_lvs = planned_lvs_in_vg(planned_lvs, volume_group)
+        adjusted_lvs = planned_lvs_in_vg(planned_lvs, volume_group).reject(&:reuse?)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(adjusted_lvs, vg_size, rounding: volume_group.extent_size)
         all_lvs = lvs + lvs.map(&:thin_lvs).flatten
