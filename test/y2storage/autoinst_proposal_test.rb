@@ -1228,6 +1228,33 @@ describe Y2Storage::AutoinstProposal do
             expect(issue).to_not be_nil
           end
         end
+
+        context "creating a new thin volume in the existing pool" do
+          let(:pool_spec) do
+            { "lv_name" => "pool0", "size" => "200GiB", "pool" => true, "create" => false }
+          end
+
+          let(:home_spec) do
+            {
+              "mount" => "/home", "filesystem" => "ext4", "lv_name" => "home", "size" => "100GiB",
+              "used_pool" => "pool0"
+            }
+          end
+
+          let(:lvs) { [pool_spec, root_spec, home_spec] }
+
+          it "reuses the thin pool and create the new thin volumes" do
+            proposal.propose
+            devicegraph = proposal.devices
+            thin_vols = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }.lvm_lvs
+            expect(thin_vols.size).to eq 2
+            filesystems = thin_vols.map(&:filesystem)
+            expect(filesystems.map(&:mount_path)).to contain_exactly("/", "/home")
+            root_fs = filesystems.find { |f| f.mount_path == "/" }
+            # keep the same filesystem type
+            expect(root_fs.type).to eq(Y2Storage::Filesystems::Type::EXT4)
+          end
+        end
       end
     end
 

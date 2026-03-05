@@ -199,7 +199,7 @@ module Y2Storage
         adjusted_lvs = planned_lvs_in_vg(planned_lvs, volume_group).reject(&:reuse?)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(adjusted_lvs, vg_size, rounding: volume_group.extent_size)
-        all_lvs = lvs + lvs.map(&:thin_lvs).flatten
+        all_lvs = lvs + lvs.map(&:thin_lvs).flatten + thin_lvs_from_reused_pools(planned_lvs)
         all_lvs.reject(&:reuse?).each_with_object({}) do |planned_lv, devices_map|
           new_lv = create_logical_volume(volume_group, planned_lv)
           devices_map[new_lv.name] = planned_lv
@@ -311,6 +311,15 @@ module Y2Storage
           new_lv.max = new_lv.min = lv.size_in(vg)
           new_lv
         end
+      end
+
+      # Returns a list of planned logical thin volumes that should be created in thin pools
+      # that already exist.
+      #
+      # @param lvs [Array<Planned::LvmLv>] List of planned logical volumes
+      # @return [Array<Planned::LvmLv]
+      def thin_lvs_from_reused_pools(lvs)
+        lvs.select(&:reuse?).flat_map(&:thin_lvs)
       end
 
       # Helper method to set stripes attributes
