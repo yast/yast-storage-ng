@@ -52,6 +52,20 @@ describe Y2Storage::Proposal::LvmCreator do
 
     let(:vg) { planned_vg(volume_group_name: "system", lvs: volumes) }
 
+    context "if a non-valid strategy is configured at the proposal space settings" do
+      subject(:creator) { described_class.new(fake_devicegraph, space_settings) }
+
+      let(:space_settings) do
+        Y2Storage::ProposalSpaceSettings.new.tap do |settings|
+          settings.strategy = :invented
+        end
+      end
+
+      it "raises an exception" do
+        expect { creator.create_volumes(vg, pv_partitions) }.to raise_exception(ArgumentError)
+      end
+    end
+
     context "if no volume group is reused" do
       it "creates a new volume group" do
         devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph

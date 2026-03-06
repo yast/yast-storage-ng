@@ -135,6 +135,20 @@ module Y2Storage
         self.reuse_name = real_vg.vg_name
       end
 
+      # Redefines the corresponding method from the base class
+      #
+      # @see Device#assign_reuse
+      #
+      # For some reason (maybe just a historical mistake), the usage of #reuse_name is inconsistent
+      # in this class compared to the rest. Instead of using the device name, it uses the volume
+      # group name.
+      #
+      # @param device [Y2Storage::LvmVg]
+      def assign_reuse(device)
+        super(device)
+        @reuse_name = device.vg_name
+      end
+
       # Min size that a partition (or any other block device) must have to be useful as PV
       #
       # @return [DiskSize]
