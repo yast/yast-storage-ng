@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2026] SUSE LLC
+# Copyright (c) [2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -28,7 +28,7 @@ module Y2Storage
       class BiggerResize < Base
         # Makes space for planned logical volumes
         #
-        # This method modifies the volume group received as first argument.
+        # @see Base#provide_space
         def provide_space
           delete_mandatory
           shrink_mandatory
@@ -111,6 +111,8 @@ module Y2Storage
         end
 
         # Compares two shrinking operations to decide which one should be executed first
+        #
+        # @return [Integer] -1, 0, or 1 just like the <=> ruby operator
         def preferred_shrink(shrink1, shrink2)
           result = shrink1[:recoverable] <=> shrink2[:recoverable]
           return result unless result.zero?
@@ -123,6 +125,8 @@ module Y2Storage
         # restrictions imposed by its Resize action
         #
         # @see #shrink_optional
+        #
+        # @return [DiskSize]
         def recoverable_size(lv, resize)
           min = min_for(resize)
           recoverable = lv.recoverable_size.floor(volume_group.extent_size)

@@ -30,6 +30,8 @@ module Y2Storage
         #
         # @param volume_group [LvmVg] volume group to clean-up
         # @param planned_vg   [Planned::LvmVg] planned logical volume
+        # @param space_settings [ProposalSpaceSettings, nil] Optional settings. See
+        #   {LvmCreator#initialize}.
         def initialize(volume_group, planned_vg, space_settings)
           @volume_group = volume_group
           @planned_vg = planned_vg
@@ -38,7 +40,7 @@ module Y2Storage
 
         # Makes space for planned logical volumes
         #
-        # This method modifies the volume group received as first argument.
+        # This method modifies the volume group assigned to the strategy object.
         #
         def provide_space
           raise NotImplementedError

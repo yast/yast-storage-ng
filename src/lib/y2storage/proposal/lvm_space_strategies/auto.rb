@@ -29,14 +29,14 @@ module Y2Storage
       class Auto < Base
         # Makes space for planned logical volumes
         #
-        # This method modifies the volume group received as first argument.
-        #
         # When making free space, three different policies can be followed:
         #
         # * :needed: remove logical volumes until there's enough space for
         #            planned ones.
         # * :remove: remove all logical volumes.
         # * :keep:   keep all logical volumes.
+        #
+        # @see Base#provide_space
         def provide_space
           return if planned_vg.make_space_policy == :keep
 
@@ -56,7 +56,7 @@ module Y2Storage
         #
         # This method modifies the volume group received as first argument.
         #
-        # FIXME: the current implementation does not guarantee than the freed
+        # FIXME: the current implementation does not guarantee that the freed
         # space is the minimum valid one.
         def make_space_until_fit
           while missing_vg_space > DiskSize.zero

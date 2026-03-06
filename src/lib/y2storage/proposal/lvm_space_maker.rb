@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2026] SUSE LLC
+# Copyright (c) [2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -37,6 +37,8 @@ module Y2Storage
       #
       # @param volume_group [LvmVg] volume group to clean-up
       # @param planned_vg   [Planned::LvmVg] planned logical volume
+      # @param space_settings [ProposalSpaceSettings, nil] Optional settings. See
+      #   {LvmCreator#initialize}.
       def initialize(volume_group, planned_vg, space_settings)
         @volume_group = volume_group
         @planned_vg = planned_vg

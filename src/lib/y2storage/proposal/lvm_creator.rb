@@ -40,6 +40,9 @@ module Y2Storage
       # Constructor
       #
       # @param original_devicegraph [Devicegraph] Initial devicegraph
+      # @param space_settings [ProposalSpaceSettings, nil] Optional settings to customize what to do
+      #   with every existing logical volume. If omitted, the traditional YaST approach is used
+      #   (ie. the strategy "auto" is used, see {LvmSpaceStrategies::Auto}).
       def initialize(original_devicegraph, space_settings = nil)
         @original_devicegraph = original_devicegraph
         @space_settings = space_settings
