@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-storage-ng
-Version:        5.0.41
+Version:        5.0.42
 Release:        0
 Summary:        YaST2 - Storage Configuration
 License:        GPL-2.0-only OR GPL-3.0-only
@@ -27,7 +27,6 @@ Source:         %{name}-%{version}.tar.bz2
 
 # RB_FILESYSTEM_MOUNT_READ_ONLY
 BuildRequires:	libstorage-ng-ruby >= 4.5.246
-BuildRequires:  update-desktop-files
 # Arch.has_tpm2
 BuildRequires:  yast2 >= 5.0.13
 BuildRequires:  yast2-devtools >= 4.2.2
