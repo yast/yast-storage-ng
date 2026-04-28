@@ -139,8 +139,10 @@ module Y2Storage
         BootRequirementsStrategies::NfsRoot
       when BootloaderType::GRUB2
         grub2_strategy_class
-      else
+      when BootloaderType::BLS_LEGACY
         BootRequirementsStrategies::BLS
+      else
+        BootRequirementsStrategies::BlsEfi
       end
     end
 

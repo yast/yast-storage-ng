@@ -3,56 +3,151 @@
 
 # Y2Storage::BootRequirementsChecker
 ## needed partitions in an aarch64 system
-- with a partitions-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+- when the Grub2 bootloader is going to be installed
+	- with a partitions-based proposal
+		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- and it is on the boot disk
-				- **only requires to use the existing EFI partition**
-			- and it is not on the boot disk
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
 				- **requires only a new /boot/efi partition**
-- with a LVM-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with a LVM-based proposal
+		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- and it is on the boot disk
-				- **only requires to use the existing EFI partition**
-			- and it is not on the boot disk
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
 				- **requires only a new /boot/efi partition**
-- with an encrypted proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with an encrypted proposal
+		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
-		- and it is a suitable EFI partition (enough size, valid filesystem)
-			- and it is on the boot disk
-				- **only requires to use the existing EFI partition**
-			- and it is not on the boot disk
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
 				- **requires only a new /boot/efi partition**
-- with an AutoYaST profile that places '/' in a LUKS2 device
-	- if there are no EFI partitions
-		- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
-	- if there is already a suitable EFI partition in the boot disk
-		- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
-- when proposing a new EFI partition
-	- and BLS installation is not explicitly disabled
-		- when aiming for the recommended size
-			- **requires /boot/efi to use FAT32**
-			- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
-	- and BLS installation is explicitly disabled
-		- when aiming for the recommended size
-			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
-			- **requires /boot/efi to be exactly 128 MiB large**
-		- when aiming for the minimal size
-			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
-			- **requires /boot/efi to be exactly 128 MiB large**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with an AutoYaST profile that places '/' in a LUKS2 device
+		- if there are no EFI partitions
+			- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+		- if there is already a suitable EFI partition in the boot disk
+			- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+- when a BLS bootloader is going to be installed by YaST
+	- with a partitions-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with a LVM-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+	- with an encrypted proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it is not a suitable EFI partition (invalid filesystem)
+				- **requires only a new /boot/efi partition**
+			- and it is a suitable EFI partition (enough size, valid filesystem)
+				- and it is on the boot disk
+					- **only requires to use the existing EFI partition**
+				- and it is not on the boot disk
+					- **requires only a new /boot/efi partition**
+- when a BLS bootloader is going to be installed by Agama
+	- with a partitions-based proposal
+		- if there are no EFI partitions
+			- **requires only a new EFI partition mounted at /boot**
+		- if there is already an EFI partition
+			- and it is not suitable (invalid filesystem)
+				- **requires a new EFI partition mounted at /boot**
+			- and it is usable but too small to allocate several kernels
+				- **requires creating a XBOOTLDR partition at /boot**
+				- **requires to mount the existing EFI partition at /efi**
+			- and it is usable and big enough
+				- **only requires to mount the existing EFI partition at /boot**
+	- with a LVM-based proposal
+		- if there are no EFI partitions
+			- **requires only a new EFI partition mounted at /boot**
+		- if there is already an EFI partition
+			- and it is not suitable (invalid filesystem)
+				- **requires a new EFI partition mounted at /boot**
+			- and it is usable but too small to allocate several kernels
+				- **requires creating a XBOOTLDR partition at /boot**
+				- **requires to mount the existing EFI partition at /efi**
+			- and it is usable and big enough
+				- **only requires to mount the existing EFI partition at /boot**
+	- with an encrypted proposal
+		- if there are no EFI partitions
+			- **requires only a new EFI partition mounted at /boot**
+		- if there is already an EFI partition
+			- and it is not suitable (invalid filesystem)
+				- **requires a new EFI partition mounted at /boot**
+			- and it is usable but too small to allocate several kernels
+				- **requires creating a XBOOTLDR partition at /boot**
+				- **requires to mount the existing EFI partition at /efi**
+			- and it is usable and big enough
+				- **only requires to mount the existing EFI partition at /boot**
+- when proposing a new EFI partition for the Grub2 bootloader
+	- **requires /boot/efi to be on the boot disk**
+	- **requires /boot/efi to be a non-encrypted vfat partition**
+	- **requires /boot/efi to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
+	- when aiming for the minimal size
+		- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+		- **requires /boot/efi to be exactly 128 MiB large**
+- when proposing a new EFI partition for a BLS bootloader in YaST
+	- **requires /boot/efi to be on the boot disk**
+	- **requires /boot/efi to be a non-encrypted vfat partition**
+	- **requires /boot/efi to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **requires /boot/efi to use FAT32**
+		- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
+	- when aiming for the minimal size
+		- **requires /boot/efi to use FAT32**
+		- **requires it to be at least 512 MiB**
+		- **requires it to be at most 1 GiB (enough space for several kernels)**
+- when proposing a new EFI partition for a BLS bootloader in Agama
+	- **requires /boot to be on the boot disk**
+	- **requires /boot to be a non-encrypted vfat partition**
+	- **requires /boot to be close enough to the beginning of disk**
+	- when aiming for the recommended size
+		- **requires /boot to use FAT32**
+		- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+	- when aiming for the minimal size
+		- **requires /boot to use FAT32**
+		- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+- when proposing a new XBOOTLDR partition
+	- **requires /boot to be on the boot disk**
+	- **requires /boot to be a non-encrypted vfat partition**
+	- when aiming for the recommended size
+		- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+	- when aiming for the minimal size
+		- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
 
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
@@ -227,44 +322,113 @@
 
 ## needed partitions in a x86 system
 - using UEFI
-	- with a partitions-based proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+	- when the Grub2 bootloader is going to be installed
+		- with a partitions-based proposal
+			- if there are no EFI partitions
 				- **requires only a new /boot/efi partition**
-			- and it is a suitable EFI partition (enough size, valid filesystem)
-				- and it is on the boot disk
-					- **only requires to use the existing EFI partition**
-				- and it is not on the boot disk
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
 					- **requires only a new /boot/efi partition**
-	- with a LVM-based proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+		- with a LVM-based proposal
+			- if there are no EFI partitions
 				- **requires only a new /boot/efi partition**
-			- and it is a suitable EFI partition (enough size, valid filesystem)
-				- and it is on the boot disk
-					- **only requires to use the existing EFI partition**
-				- and it is not on the boot disk
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
 					- **requires only a new /boot/efi partition**
-	- with an encrypted proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+		- with an encrypted proposal
+			- if there are no EFI partitions
 				- **requires only a new /boot/efi partition**
-			- and it is a suitable EFI partition (enough size, valid filesystem)
-				- and it is on the boot disk
-					- **only requires to use the existing EFI partition**
-				- and it is not on the boot disk
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
 					- **requires only a new /boot/efi partition**
-	- with an AutoYaST profile that places '/' in a LUKS2 device
-		- if there are no EFI partitions
-			- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
-		- if there is already a suitable EFI partition in the boot disk
-			- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+		- with an AutoYaST profile that places '/' in a LUKS2 device
+			- if there are no EFI partitions
+				- **requires new partitions for /boot/efi and for /boot (Grub2 auto-config cannot handle LUKS2)**
+			- if there is already a suitable EFI partition in the boot disk
+				- **requires to reuse EFI and create a /boot partition (Grub2 auto-config cannot handle LUKS2)**
+	- when a BLS bootloader is going to be installed by YaST
+		- with a partitions-based proposal
+			- if there are no EFI partitions
+				- **requires only a new /boot/efi partition**
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
+					- **requires only a new /boot/efi partition**
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+		- with a LVM-based proposal
+			- if there are no EFI partitions
+				- **requires only a new /boot/efi partition**
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
+					- **requires only a new /boot/efi partition**
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+		- with an encrypted proposal
+			- if there are no EFI partitions
+				- **requires only a new /boot/efi partition**
+			- if there is already an EFI partition
+				- and it is not a suitable EFI partition (invalid filesystem)
+					- **requires only a new /boot/efi partition**
+				- and it is a suitable EFI partition (enough size, valid filesystem)
+					- and it is on the boot disk
+						- **only requires to use the existing EFI partition**
+					- and it is not on the boot disk
+						- **requires only a new /boot/efi partition**
+	- when a BLS bootloader is going to be installed by Agama
+		- with a partitions-based proposal
+			- if there are no EFI partitions
+				- **requires only a new EFI partition mounted at /boot**
+			- if there is already an EFI partition
+				- and it is not suitable (invalid filesystem)
+					- **requires a new EFI partition mounted at /boot**
+				- and it is usable but too small to allocate several kernels
+					- **requires creating a XBOOTLDR partition at /boot**
+					- **requires to mount the existing EFI partition at /efi**
+				- and it is usable and big enough
+					- **only requires to mount the existing EFI partition at /boot**
+		- with a LVM-based proposal
+			- if there are no EFI partitions
+				- **requires only a new EFI partition mounted at /boot**
+			- if there is already an EFI partition
+				- and it is not suitable (invalid filesystem)
+					- **requires a new EFI partition mounted at /boot**
+				- and it is usable but too small to allocate several kernels
+					- **requires creating a XBOOTLDR partition at /boot**
+					- **requires to mount the existing EFI partition at /efi**
+				- and it is usable and big enough
+					- **only requires to mount the existing EFI partition at /boot**
+		- with an encrypted proposal
+			- if there are no EFI partitions
+				- **requires only a new EFI partition mounted at /boot**
+			- if there is already an EFI partition
+				- and it is not suitable (invalid filesystem)
+					- **requires a new EFI partition mounted at /boot**
+				- and it is usable but too small to allocate several kernels
+					- **requires creating a XBOOTLDR partition at /boot**
+					- **requires to mount the existing EFI partition at /efi**
+				- and it is usable and big enough
+					- **only requires to mount the existing EFI partition at /boot**
 - not using UEFI (legacy PC)
 	- with GPT partition table
 		- in a partitions-based proposal
@@ -341,20 +505,43 @@
 		- when aiming for the minimal size
 			- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
 			- **requires it to be at most 8 MiB (or optimal I/O size, bsc#1192448) for firmware to load it**
-	- when proposing a new EFI partition
+	- when proposing a new EFI partition for the Grub2 bootloader
 		- **requires /boot/efi to be on the boot disk**
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
-		- and BLS installation is not explicitly disabled
-			- when aiming for the recommended size
-				- **requires /boot/efi to use FAT32**
-				- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
-		- and BLS installation is explicitly disabled
-			- when aiming for the recommended size
-				- **requires /boot/efi to use FAT32**
-				- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
-				- **requires it to be at most 512 MiB (enough space for several operating systems)**
-			- when aiming for the minimal size
-				- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
-				- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
-				- **requires it to be at most 512 MiB (enough space for several operating systems)**
+		- when aiming for the recommended size
+			- **requires /boot/efi to use FAT32**
+			- **requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
+		- when aiming for the minimal size
+			- **does not enforce FAT32 or 16 for /boot/efi (FAT size will be decided by mkfs.vfat)**
+			- **requires it to be at least 128 MiB (MS Windows requires 100 MiB for itself)**
+			- **requires it to be at most 512 MiB (enough space for several operating systems)**
+	- when proposing a new EFI partition for a BLS bootloader in YaST
+		- **requires /boot/efi to be on the boot disk**
+		- **requires /boot/efi to be a non-encrypted vfat partition**
+		- **requires /boot/efi to be close enough to the beginning of disk**
+		- when aiming for the recommended size
+			- **requires /boot/efi to use FAT32**
+			- **requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)**
+		- when aiming for the minimal size
+			- **requires /boot/efi to use FAT32**
+			- **requires it to be at least 512 MiB**
+			- **requires it to be at most 1 GiB (enough space for several kernels)**
+	- when proposing a new EFI partition for a BLS bootloader in Agama
+		- **requires /boot to be on the boot disk**
+		- **requires /boot to be a non-encrypted vfat partition**
+		- **requires /boot to be close enough to the beginning of disk**
+		- when aiming for the recommended size
+			- **requires /boot to use FAT32**
+			- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+		- when aiming for the minimal size
+			- **requires /boot to use FAT32**
+			- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+	- when proposing a new XBOOTLDR partition
+		- **requires /boot to be on the boot disk**
+		- **requires /boot to be a non-encrypted vfat partition**
+		- when aiming for the recommended size
+			- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**
+		- when aiming for the minimal size
+			- **requires /boot to have exactly 1 GiB (enough space for all BLS entries)**

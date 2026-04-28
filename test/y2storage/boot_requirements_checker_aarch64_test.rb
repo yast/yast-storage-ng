@@ -22,6 +22,7 @@ require_relative "spec_helper"
 require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require_relative "#{TEST_PATH}/support/boot_requirements_uefi"
+require_relative "#{TEST_PATH}/support/boot_requirements_bls"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
@@ -46,15 +47,63 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
     end
 
-    include_context "plain UEFI"
+    context "when the Grub2 bootloader is going to be installed" do
+      let(:bootloader) { Y2Storage::BootloaderType::GRUB2 }
 
-    context "when proposing a new EFI partition" do
+      include_context "plain UEFI"
+      include_context "plain UEFI with LUKS2"
+    end
+
+    context "when a BLS bootloader is going to be installed by YaST" do
+      let(:bootloader) { Y2Storage::BootloaderType::BLS_LEGACY }
+
+      include_context "plain UEFI"
+    end
+
+    context "when a BLS bootloader is going to be installed by Agama" do
+      let(:bootloader) { Y2Storage::BootloaderType::SYSTEMD_BOOT }
+
+      include_context "BLS scenarios"
+    end
+
+    context "when proposing a new EFI partition for the Grub2 bootloader" do
+      let(:bootloader) { Y2Storage::BootloaderType::GRUB2 }
       let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
-      let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
 
-      context "and BLS bootloader is not explicitly enabled" do
-        include_examples "minimalistic EFI partition"
+      include_examples "proposed EFI partition basics"
+      include_examples "minimalistic EFI partition"
+    end
+
+    context "when proposing a new EFI partition for a BLS bootloader in YaST" do
+      let(:bootloader) { Y2Storage::BootloaderType::BLS_LEGACY }
+      let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
+
+      include_examples "proposed EFI partition basics"
+      include_examples "legacy EFI partition for BLS bootloaders"
+    end
+
+    context "when proposing a new EFI partition for a BLS bootloader in Agama" do
+      let(:bootloader) { Y2Storage::BootloaderType::SYSTEMD_BOOT }
+      let(:efi_part) { find_vol("/boot", checker.needed_partitions(target)) }
+
+      include_examples "proposed BLS EFI partition"
+    end
+
+    context "when proposing a new XBOOTLDR partition" do
+      let(:bootloader) { Y2Storage::BootloaderType::SYSTEMD_BOOT }
+      let(:xbootldr_part) { find_vol("/boot", checker.needed_partitions(target)) }
+      # Default values to ensure proposal of XBOOTLDR partition
+      let(:efi_partition) { partition_double("/dev/sda1", 128.MiB) }
+      let(:efi_partitions) { [efi_partition] }
+      before do
+        allow(efi_partition).to receive(:match_volume?).and_return(true)
+        allow(efi_partition).to receive(:id).and_return(Y2Storage::PartitionId::ESP)
+        allow(efi_partition).to receive(:filesystem_mountpoint).and_return(nil)
+        allow(efi_partition).to receive(:sid).and_return(42)
+        allow(devicegraph).to receive(:find_device).with(42).and_return(efi_partition)
       end
+
+      include_examples "proposed XBOOTLDR partition"
     end
   end
 end

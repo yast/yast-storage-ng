@@ -148,7 +148,7 @@ RSpec.shared_examples "flexible size EFI partition" do
   end
 end
 
-RSpec.shared_examples "EFI partition for BLS bootloaders" do
+RSpec.shared_examples "legacy EFI partition for BLS bootloaders" do
   using Y2Storage::Refinements::SizeCasts
 
   context "when aiming for the recommended size" do
@@ -161,6 +161,21 @@ RSpec.shared_examples "EFI partition for BLS bootloaders" do
     it "requires /boot/efi to have exactly 1 GiB (enough space for all BLS entries)" do
       expect(efi_part.min_size).to eq 1.GiB
       expect(efi_part.max_size).to eq 1.GiB
+    end
+  end
+
+  context "when aiming for the minimal size" do
+    let(:target) { :min }
+    it "requires /boot/efi to use FAT32" do
+      expect(efi_part.mkfs_options).to include "-F32"
+    end
+
+    it "requires it to be at least 512 MiB" do
+      expect(efi_part.min).to eq 512.MiB
+    end
+
+    it "requires it to be at most 1 GiB (enough space for several kernels)" do
+      expect(efi_part.max).to eq 1.GiB
     end
   end
 end
@@ -191,6 +206,86 @@ RSpec.shared_examples "minimalistic EFI partition" do
     it "requires /boot/efi to be exactly 128 MiB large" do
       expect(efi_part.min_size).to eq 128.MiB
       expect(efi_part.max_size).to eq 128.MiB
+    end
+  end
+end
+
+RSpec.shared_examples "proposed BLS EFI partition" do
+  using Y2Storage::Refinements::SizeCasts
+
+  let(:target) { nil }
+
+  it "requires /boot to be on the boot disk" do
+    expect(efi_part.disk).to eq boot_disk.name
+  end
+
+  it "requires /boot to be a non-encrypted vfat partition" do
+    expect(efi_part).to be_a Y2Storage::Planned::Partition
+    expect(efi_part.encrypt?).to eq false
+    expect(efi_part.filesystem_type.is?(:vfat)).to eq true
+  end
+
+  it "requires /boot to be close enough to the beginning of disk" do
+    expect(efi_part.max_start_offset).to be <= 2.TiB
+  end
+
+  context "when aiming for the recommended size" do
+    let(:target) { :desired }
+
+    it "requires /boot to use FAT32" do
+      expect(efi_part.mkfs_options).to include "-F32"
+    end
+
+    it "requires /boot to have exactly 1 GiB (enough space for all BLS entries)" do
+      expect(efi_part.min_size).to eq 1.GiB
+      expect(efi_part.max_size).to eq 1.GiB
+    end
+  end
+
+  context "when aiming for the minimal size" do
+    let(:target) { :min }
+
+    it "requires /boot to use FAT32" do
+      expect(efi_part.mkfs_options).to include "-F32"
+    end
+
+    it "requires /boot to have exactly 1 GiB (enough space for all BLS entries)" do
+      expect(efi_part.min_size).to eq 1.GiB
+      expect(efi_part.max_size).to eq 1.GiB
+    end
+  end
+end
+
+RSpec.shared_examples "proposed XBOOTLDR partition" do
+  using Y2Storage::Refinements::SizeCasts
+
+  let(:target) { nil }
+
+  it "requires /boot to be on the boot disk" do
+    expect(xbootldr_part.disk).to eq boot_disk.name
+  end
+
+  it "requires /boot to be a non-encrypted vfat partition" do
+    expect(xbootldr_part).to be_a Y2Storage::Planned::Partition
+    expect(xbootldr_part.encrypt?).to eq false
+    expect(xbootldr_part.filesystem_type.is?(:vfat)).to eq true
+  end
+
+  context "when aiming for the recommended size" do
+    let(:target) { :desired }
+
+    it "requires /boot to have exactly 1 GiB (enough space for all BLS entries)" do
+      expect(xbootldr_part.min_size).to eq 1.GiB
+      expect(xbootldr_part.max_size).to eq 1.GiB
+    end
+  end
+
+  context "when aiming for the minimal size" do
+    let(:target) { :min }
+
+    it "requires /boot to have exactly 1 GiB (enough space for all BLS entries)" do
+      expect(xbootldr_part.min_size).to eq 1.GiB
+      expect(xbootldr_part.max_size).to eq 1.GiB
     end
   end
 end

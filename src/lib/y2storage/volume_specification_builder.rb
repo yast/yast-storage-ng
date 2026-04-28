@@ -115,6 +115,18 @@ module Y2Storage
       end
     end
 
+    # Volume specification fallback for /efi
+    #
+    # @return [VolumeSpecification]
+    def fallback_for_efi
+      fallback_for_boot_efi.tap do |v|
+        v.mount_point = "/efi"
+        v.min_size = DiskSize.GiB(1)
+        v.desired_size = DiskSize.GiB(1)
+        v.max_size = DiskSize.GiB(1)
+      end
+    end
+
     # Volume specification fallback for /boot/zipl
     #
     # @return [VolumeSpecification]

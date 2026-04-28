@@ -42,11 +42,18 @@ module Y2Storage
 
     # Instance of the bootloader type to be always returned by the class
     #
+    # Special value used to specify a BLS-capable bootloader that must be installed in a way that is
+    # backwards compatible with Grub2. Used by YaST to ensure things keep working with its partial
+    # and debatable implementation of BLS.
+    BLS_LEGACY = new("bls-legacy")
+
+    # Instance of the bootloader type to be always returned by the class
+    #
     # Special value to specify that no bootloader will be installed.
     NONE = new("none")
 
     # All possible instances
-    ALL = [GRUB2, SYSTEMD_BOOT, GRUB2_BLS, NONE].freeze
+    ALL = [GRUB2, SYSTEMD_BOOT, GRUB2_BLS, BLS_LEGACY, NONE].freeze
     private_constant :ALL
 
     # List of all possible types

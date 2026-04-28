@@ -317,6 +317,13 @@ module Y2Storage
         planned_partitions_with_id(PartitionId::PREP)
       end
 
+      # Subset of the planned devices that are configured as ESP
+      #
+      # @return [Array<Planned::Partition>]
+      def planned_esp_partitions
+        planned_partitions_with_id(PartitionId::ESP)
+      end
+
       # Subset of the planned devices that are suitable as BIOS boot partitions
       #
       # @return [Array<Planned::Partition>]

@@ -176,36 +176,34 @@ module Y2Storage
       end
 
       def reusable_efi
-        @reusable_efi ||= biggest_efi_in_boot_device
+        @reusable_efi ||= biggest_efi_in_boot_device(PartitionId::ESP)
       end
 
-      def biggest_efi_in_boot_device
-        biggest_partition(suitable_efi_partitions(boot_disk))
+      # Partition in the boot disk that can be re-used to setup EFI booting
+      #
+      # @param id [PartitionId]
+      def biggest_efi_in_boot_device(id = PartitionId::ESP)
+        biggest_partition(suitable_efi_partitions(boot_disk, id))
       end
 
-      # Devices on the given disk that are usable as ESP for our purposes
+      # Devices on the given disk that are usable as ESP or XBOOTLDR for our purposes
       #
       # @param device [Y2Storage::Partitionable] disk device
+      # @param id [PartitionId]
       # @return [Array<Y2Storage::Partition>]
-      def suitable_efi_partitions(device)
-        device.partitions.select { |part| suitable_efi_partition?(part) }
+      def suitable_efi_partitions(device, id)
+        device.partitions.select { |part| suitable_efi_partition?(part, id) }
       end
 
-      # Whether the given partition is usable as ESP for our purposes
+      # Whether the given partition is usable as ESP or XBOOTLDR for our purposes
       #
       # @param partition [Y2Storage::Partition]
+      # @param id [PartitionId]
       # @return [Boolean]
-      def suitable_efi_partition?(partition)
+      def suitable_efi_partition?(partition, id)
         # Note that checking the partition id is needed because #efi_volume does not
         # include that id as part of the mandatory specification
-        suitable_id?(partition) && suitable_filesystem?(partition)
-      end
-
-      # @see #suitable_efi_partition?
-      #
-      # @return [Boolean]
-      def suitable_id?(partition)
-        partition.id == PartitionId::ESP
+        partition.id == id && suitable_filesystem?(partition)
       end
 
       # @see #suitable_efi_partition?

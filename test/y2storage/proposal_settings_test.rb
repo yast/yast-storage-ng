@@ -478,7 +478,7 @@ describe Y2Storage::ProposalSettings do
 
           it "sets 'bootloader' to SYSTEMD_BOOT" do
             settings.for_current_product
-            expect(settings.bootloader).to eq Y2Storage::BootloaderType::SYSTEMD_BOOT
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::BLS_LEGACY
           end
         end
 
@@ -487,7 +487,7 @@ describe Y2Storage::ProposalSettings do
 
           it "sets 'bootloader' to GRUB2_BLS" do
             settings.for_current_product
-            expect(settings.bootloader).to eq Y2Storage::BootloaderType::GRUB2_BLS
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::BLS_LEGACY
           end
         end
 

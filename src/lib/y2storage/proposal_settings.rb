@@ -498,11 +498,10 @@ module Y2Storage
       # There used to be also a check for StorageEnv.instance.no_bls_bootloader, but the corresponding
       # env variable was removed since its only purpose was to avoid the usage of BLS in the initial
       # versions of Agama.
-      id = feature(:preferred_bootloader, source: Yast::ProductFeatures.GetSection("globals"))
-      preferred = BootloaderType.find(id)
-      return unless preferred
+      preferred = feature(:preferred_bootloader, source: Yast::ProductFeatures.GetSection("globals"))
+      return unless ["systemd-boot", "grub2-bls"].include?(preferred)
 
-      self.bootloader = preferred
+      self.bootloader = BootloaderType::BLS_LEGACY
     end
 
     # Loads the list of volumes
