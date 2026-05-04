@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2025] SUSE LLC
+# Copyright (c) [2019-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -140,7 +140,9 @@ module Y2Storage
       #
       # Copies the keys from the zkey repository of the inst-sys to the
       # repository of the target system.
-      def finish_installation
+      #
+      # @param _device [Encryption]
+      def finish_installation(_device)
         secure_key.copy_to_repository(Yast::Installation.destdir)
       end
 

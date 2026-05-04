@@ -1,4 +1,4 @@
-# Copyright (c) [2017-2020] SUSE LLC
+# Copyright (c) [2017-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -373,7 +373,7 @@ module Y2Storage
     # before unmounting the target system, when all the so-called finish clients
     # are executed
     def finish_installation
-      encryption_process&.finish_installation
+      encryption_process&.finish_installation(self)
     end
 
     # Features that must be supported in the target system to finish the encryption

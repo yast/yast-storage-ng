@@ -1,4 +1,4 @@
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2023-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -122,7 +122,9 @@ module Y2Storage
       end
 
       # @see Base#finish_installation
-      def finish_installation
+      #
+      # @param _device [Encryption]
+      def finish_installation(_device)
         # This procedure is only needed once
         return if self.class.devices.empty?
 
