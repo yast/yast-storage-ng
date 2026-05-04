@@ -1,4 +1,4 @@
-# Copyright (c) [2019-2023] SUSE LLC
+# Copyright (c) [2019-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -76,7 +76,9 @@ module Y2Storage
 
       # Executes the actions that must be performed at the end of the installation,
       # before unmounting the target system
-      def finish_installation; end
+      #
+      # @param _device [Encryption]
+      def finish_installation(_device); end
 
       # Open options for the encryption device
       #
