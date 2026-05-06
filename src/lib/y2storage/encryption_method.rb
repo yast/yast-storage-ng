@@ -1,4 +1,4 @@
-# Copyright (c) [2019] SUSE LLC
+# Copyright (c) [2019-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,6 +21,7 @@ require "y2storage/encryption_method/luks1"
 require "y2storage/encryption_method/pervasive_luks2"
 require "y2storage/encryption_method/luks2"
 require "y2storage/encryption_method/tpm_fde"
+require "y2storage/encryption_method/tpm_bls"
 require "y2storage/encryption_method/systemd_fde"
 require "y2storage/encryption_method/random_swap"
 require "y2storage/encryption_method/protected_swap"
@@ -51,6 +52,8 @@ module Y2Storage
     LUKS2 = Luks2.new
     # Instance of the TpmFde method to be always returned by the module
     TPM_FDE = TpmFde.new
+    # Instance of the TpmBls method to be always returned by the module
+    TPM_BLS = TpmBls.new
     # Instance of the SystemdFde method to be always returned by the module
     SYSTEMD_FDE = SystemdFde.new
     # Instance of the RandomSwap method to be always returned by the module
@@ -63,7 +66,8 @@ module Y2Storage
     # Sorted list of all the method instances
     # @see .all
     ALL = [
-      LUKS1, PERVASIVE_LUKS2, LUKS2, TPM_FDE, SYSTEMD_FDE, RANDOM_SWAP, PROTECTED_SWAP, SECURE_SWAP
+      LUKS1, PERVASIVE_LUKS2, LUKS2, TPM_FDE, TPM_BLS, SYSTEMD_FDE, RANDOM_SWAP, PROTECTED_SWAP,
+      SECURE_SWAP
     ]
     private_constant :ALL
 
