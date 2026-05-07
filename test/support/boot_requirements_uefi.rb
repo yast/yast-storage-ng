@@ -136,10 +136,8 @@ end
 
 RSpec.shared_context "BLS bootloader proposed" do
   context "and BLS bootloader is proposed and possible" do
-    before do
-      allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
-                                                                  :bls_bootloader_proposed?
-                                                                ).and_return(true)
+    subject(:checker) do
+      described_class.new(devicegraph, bootloader: Y2Storage::BootloaderType::SYSTEMD_BOOT)
     end
 
     include_examples "EFI partition for BLS bootloaders"

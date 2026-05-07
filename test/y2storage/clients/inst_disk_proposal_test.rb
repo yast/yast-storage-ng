@@ -40,6 +40,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning")
         .and_return(partitioning_section)
+      allow(Yast::ProductFeatures).to receive(:GetSection).with("globals")
     end
 
     let(:initial_proposal) { double("Y2Storage::GuidedProposal", devices: initial_devicegraph) }

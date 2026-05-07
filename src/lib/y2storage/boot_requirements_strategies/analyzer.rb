@@ -377,15 +377,6 @@ module Y2Storage
         encrypted?(device_for_zipl)
       end
 
-      def self.bls_bootloader_proposed?
-        preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
-          "preferred_bootloader")
-        Y2Storage::Arch.new.efiboot? &&
-          (Yast::Arch.x86_64 || Yast::Arch.aarch64) &&
-          !StorageEnv.instance.no_bls_bootloader &&
-          ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
-      end
-
       protected
 
       attr_reader :devicegraph

@@ -28,8 +28,6 @@ describe Y2Storage::BootRequirementsChecker do
   subject(:checker) { described_class.new(fake_devicegraph) }
 
   before do
-    fake_scenario(scenario)
-
     allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
     allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
     allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:boot_in_thin_lvm?)
@@ -39,6 +37,8 @@ describe Y2Storage::BootRequirementsChecker do
     allow_any_instance_of(Y2Storage::BootRequirementsStrategies::Analyzer)
       .to receive(:boot_encryption_type)
       .and_return(enc_type)
+
+    fake_scenario(scenario)
   end
 
   let(:storage_arch) { instance_double(Storage::Arch) }

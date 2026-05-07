@@ -52,13 +52,7 @@ describe Y2Storage::BootRequirementsChecker do
       let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
       let(:desired_efi_part) { find_vol("/boot/efi", checker.needed_partitions(:desired)) }
 
-      context "and BLS bootloader is explicitly disabled" do
-        before do
-          allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
-                                                                 :bls_bootloader_proposed?
-                                                               ).and_return(false)
-        end
-
+      context "and BLS bootloader is not explicitly enabled" do
         include_examples "minimalistic EFI partition"
       end
     end
