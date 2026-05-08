@@ -27,7 +27,7 @@ require "yast2/execute"
 
 module Y2Storage
   module EncryptionProcesses
-    # Encryption process that allows to setup device unlocking based on the sdbootutil provied by
+    # Encryption process that allows to setup device unlocking based on the sdbootutil provided by
     # SUSE.
     #
     # Check the documentation of sdbootutil for further information:
@@ -58,7 +58,7 @@ module Y2Storage
       # @see Base#finish_installation
       # @param device [Encryption]
       def finish_installation(device)
-        # Only TPM unlucking is supported by Agama so far.
+        # Only TPM unlocking is supported by Agama so far.
         return unless authentication&.is?(:tpm2)
 
         # Password used by systemd-cryptenroll to unlock the device (LUKS2)
