@@ -21,6 +21,7 @@
 
 require_relative "../spec_helper"
 require "y2storage"
+require "cheetah"
 
 describe Y2Storage::EncryptionProcesses::Sdboot do
   let(:method) { Y2Storage::EncryptionMethod::TPM_BLS }
@@ -141,7 +142,7 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
       before do
         allow(Yast::Execute).to receive(:on_target!)
           .with("keyctl", any_args)
-          .and_raise(Cheetah::ExecutionFailed.new("", "", "", "keyctl error"))
+          .and_raise(Cheetah::ExecutionFailed.new(["keyctl"], 1, "", "keyctl error"))
       end
 
       it "still attempts to enroll authentication" do
@@ -156,7 +157,7 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
       before do
         allow(Yast::Execute).to receive(:on_target!)
           .with("/usr/bin/sdbootutil", any_args)
-          .and_raise(Cheetah::ExecutionFailed.new("", "", "", "enrollment error"))
+          .and_raise(Cheetah::ExecutionFailed.new(["/usr/bin/sdbootutil"], 1, "", "enrollment error"))
         allow(subject).to receive(:log).and_return(logger)
       end
 
@@ -168,7 +169,7 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
       end
     end
 
-    context "when method is not tpm_bls" do
+    context "when method is not TPM BLS" do
       let(:method) { Y2Storage::EncryptionMethod::Luks2.new }
 
       it "returns early without executing commands" do

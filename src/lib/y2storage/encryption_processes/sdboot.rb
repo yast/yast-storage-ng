@@ -19,7 +19,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/encryption_authentication"
 require "y2storage/encryption_processes/base"
 require "y2storage/encryption_type"
 require "yast"
@@ -59,7 +58,7 @@ module Y2Storage
       # @param device [Encryption]
       def finish_installation(device)
         # Only TPM unlocking is supported by Agama so far.
-        return unless authentication&.is?(:tpm2)
+        return unless method.is?(:tpm_bls)
 
         # Password used by systemd-cryptenroll to unlock the device (LUKS2)
         export_password(device.password, "cryptenroll")
@@ -67,7 +66,7 @@ module Y2Storage
         # Password used by sdbootutil as a recovery PIN
         export_password(device.password, "sdbootutil")
 
-        enroll_authentication(device)
+        enroll_tpm_authentication(device)
       end
 
       private
@@ -119,13 +118,11 @@ module Y2Storage
       end
 
       # @param device [Encryption]
-      def enroll_authentication(device)
-        return unless authentication
-
+      def enroll_tpm_authentication(device)
         Yast::Execute.on_target!(
           SDBOOTUTIL,
           "enroll",
-          "--method=#{authentication.value}",
+          "--method=tpm2",
           "--devices=#{device.blk_device.name}"
         )
       rescue Cheetah::ExecutionFailed => e
@@ -138,13 +135,6 @@ module Y2Storage
             stderr:  e.stderr
           )
         )
-      end
-
-      # @return [EncryptionAuthentication, nil]
-      def authentication
-        return unless method.is?(:tpm_bls)
-
-        EncryptionAuthentication::TPM2
       end
     end
   end
