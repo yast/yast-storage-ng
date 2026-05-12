@@ -57,9 +57,6 @@ module Y2Storage
       # @see Base#finish_installation
       # @param device [Encryption]
       def finish_installation(device)
-        # Only TPM unlocking is supported by Agama so far.
-        return unless method.is?(:tpm_bls)
-
         # Password used by systemd-cryptenroll to unlock the device (LUKS2)
         export_password(device.password, "cryptenroll")
 

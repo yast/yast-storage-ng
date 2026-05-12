@@ -168,18 +168,5 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
         expect { subject.finish_installation(device) }.not_to raise_error
       end
     end
-
-    context "when method is not TPM BLS" do
-      let(:method) { Y2Storage::EncryptionMethod::Luks2.new }
-
-      it "returns early without executing commands" do
-        expect(Yast::Execute).not_to receive(:on_target!)
-          .with("keyctl", any_args)
-        expect(Yast::Execute).not_to receive(:on_target!)
-          .with("/usr/bin/sdbootutil", any_args)
-
-        expect { subject.finish_installation(device) }.not_to raise_error
-      end
-    end
   end
 end
