@@ -54,45 +54,48 @@ describe Y2Storage::EncryptionMethod::TpmBls do
   end
 
   describe "#possible?" do
+    subject { described_class.new }
+
     before do
       Y2Storage::StorageManager.create_test_instance
 
-      allow(Yast::Arch).to receive(:has_tpm2).and_return(tpm_present)
+      allow(Y2Storage::Tpm).to receive(:instance).and_return(tpm)
       allow(Y2Storage::Arch).to receive(:new).and_return(arch)
     end
 
+    let(:tpm) { instance_double(Y2Storage::Tpm, policy_authorize_nv?: policy_authorize_nv) }
     let(:arch) { instance_double(Y2Storage::Arch, efiboot?: efi) }
 
-    context "when the system boots using EFI and has TPM2" do
+    context "when the system boots using EFI and has usable TPM2" do
       let(:efi) { true }
-      let(:tpm_present) { true }
+      let(:policy_authorize_nv) { true }
 
       it "returns true" do
         expect(subject.possible?).to eq(true)
       end
     end
 
-    context "when the system boots using EFI but has no TPM2" do
+    context "when the system boots using EFI but TPM does not support PolicyAuthorizeNV" do
       let(:efi) { true }
-      let(:tpm_present) { false }
+      let(:policy_authorize_nv) { false }
 
       it "returns false" do
         expect(subject.possible?).to eq(false)
       end
     end
 
-    context "when the system has TPM2 but does not use EFI" do
+    context "when the system has usable TPM2 but does not use EFI" do
       let(:efi) { false }
-      let(:tpm_present) { true }
+      let(:policy_authorize_nv) { true }
 
       it "returns false" do
         expect(subject.possible?).to eq(false)
       end
     end
 
-    context "when the system does not use EFI and has no TPM2" do
+    context "when the system does not use EFI and has no usable TPM2" do
       let(:efi) { false }
-      let(:tpm_present) { false }
+      let(:policy_authorize_nv) { false }
 
       it "returns false" do
         expect(subject.possible?).to eq(false)

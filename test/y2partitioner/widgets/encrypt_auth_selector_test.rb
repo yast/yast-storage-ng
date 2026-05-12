@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
-# Copyright (c) [2025] SUSE LLC
+
+# Copyright (c) [2025-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,11 +20,10 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
-
 require "cwm/rspec"
 require "y2partitioner/widgets/encrypt_auth_selector"
 require "y2storage/encryption_authentication"
-Yast.import "Arch"
+require "y2storage/tpm"
 
 describe Y2Partitioner::Widgets::EncryptAuthSelector do
   subject(:widget) { described_class.new(controller) }
@@ -33,6 +33,12 @@ describe Y2Partitioner::Widgets::EncryptAuthSelector do
     double("Controllers::Encryption",
       authentication: Y2Storage::EncryptionAuthentication.find(initial_authentication))
   end
+
+  before do
+    allow(Y2Storage::Tpm).to receive(:instance).and_return(tpm)
+  end
+
+  let(:tpm) { instance_double(Y2Storage::Tpm, policy_authorize_nv?: true) }
 
   include_examples "CWM::ComboBox"
 
@@ -59,10 +65,6 @@ describe Y2Partitioner::Widgets::EncryptAuthSelector do
   end
 
   describe "#items" do
-    before do
-      allow(Yast::Arch).to receive(:has_tpm2).and_return(true)
-    end
-
     it "includes all available authentication" do
       items = widget.items.map(&:first)
 

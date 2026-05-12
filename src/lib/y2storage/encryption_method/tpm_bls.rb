@@ -21,15 +21,17 @@
 
 require "y2storage/encryption_method/base"
 require "y2storage/encryption_processes/sdboot"
+require "y2storage/tpm"
 require "yast"
-
-Yast.import "Arch"
+require "yast2/execute"
 
 module Y2Storage
   module EncryptionMethod
     # BLS compliant encryption method that allows to encrypt a device using LUKS2 and configure the
     # unlocking process via the system TPM.
     class TpmBls < Base
+      include Yast
+
       def initialize
         textdomain "storage"
 
@@ -51,7 +53,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def possible?
-        arch.efiboot? && Yast::Arch.has_tpm2
+        arch.efiboot? && tpm.policy_authorize_nv?
       end
 
       # Creates an encryption device for the given block device.
@@ -70,12 +72,19 @@ module Y2Storage
       private
 
       # @see Base#encryption_process
+      # @return [EncryptionProcesses::Sdboot]
       def encryption_process
         EncryptionProcesses::Sdboot.new(self)
       end
 
+      # @return [Y2Storage::Arch]
       def arch
         StorageManager.instance.arch
+      end
+
+      # @return [Y2Storage::Tpm]
+      def tpm
+        Tpm.instance
       end
     end
   end

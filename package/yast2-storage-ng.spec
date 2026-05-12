@@ -27,7 +27,6 @@ Source:         %{name}-%{version}.tar.bz2
 
 # RB_FILESYSTEM_MOUNT_READ_ONLY
 BuildRequires:	libstorage-ng-ruby >= 4.5.246
-# Arch.has_tpm2
 BuildRequires:  yast2 >= 5.0.13
 BuildRequires:  yast2-devtools >= 4.2.2
 # yast/rspec/helpers.rb
@@ -50,7 +49,6 @@ Requires:       findutils
 Requires:       libstorage-ng-ruby >= 4.5.246
 # Require libstorage bindings for the current Ruby version (bsc#1235598)
 Requires:       libstorage-ng-ruby-%{rb_ver}
-# Arch.has_tpm2
 Requires:       yast2 >= 5.0.13
 # Y2Packager::Repository
 Requires:       yast2-packager >= 3.3.7

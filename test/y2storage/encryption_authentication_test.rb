@@ -44,11 +44,13 @@ describe Y2Storage::EncryptionAuthentication do
 
   describe "#all" do
     before do
-      allow(Yast::Arch).to receive(:has_tpm2).and_return(tpm2)
+      allow(Y2Storage::Tpm).to receive(:instance).and_return(tpm)
     end
 
-    context "tpm2 is avalable" do
-      let(:tpm2) { true }
+    let(:tpm) { instance_double(Y2Storage::Tpm, policy_authorize_nv?: policy_authorize_nv) }
+
+    context "tpm2 is available" do
+      let(:policy_authorize_nv) { true }
 
       it "includes tpm2 and tpm2+pin" do
         expect(Y2Storage::EncryptionAuthentication.all)
@@ -59,8 +61,8 @@ describe Y2Storage::EncryptionAuthentication do
       end
     end
 
-    context "tpm2 is not avalable" do
-      let(:tpm2) { false }
+    context "tpm2 is not available" do
+      let(:policy_authorize_nv) { false }
 
       it "includes not tpm2 and tpm2+pin" do
         expect(Y2Storage::EncryptionAuthentication.all)
