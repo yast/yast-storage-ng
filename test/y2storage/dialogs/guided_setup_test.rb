@@ -96,6 +96,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
   before do
     allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning")
       .and_return(partitioning_section)
+    allow(Yast::ProductFeatures).to receive(:GetSection).with("globals")
   end
 
   let(:partitioning_section) do

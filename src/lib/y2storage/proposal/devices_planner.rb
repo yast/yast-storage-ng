@@ -97,7 +97,10 @@ module Y2Storage
           dev.respond_to?(:lvs) ? dev.lvs : dev
         end
         checker = BootRequirementsChecker.new(
-          devicegraph, planned_devices: flat, boot_disk_name: settings.root_device
+          devicegraph,
+          planned_devices: flat,
+          boot_disk_name:  settings.root_device,
+          bootloader:      settings.bootloader
         )
         checker.needed_partitions(target)
       rescue BootRequirementsChecker::Error => e

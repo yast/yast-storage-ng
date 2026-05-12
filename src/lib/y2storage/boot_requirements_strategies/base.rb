@@ -23,7 +23,6 @@ require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
 require "y2storage/boot_requirements_strategies/analyzer"
-require "y2storage/boot_requirements_strategies/bls"
 require "y2storage/exceptions"
 require "y2storage/volume_specification"
 require "y2storage/setup_error"
@@ -131,10 +130,7 @@ module Y2Storage
       def errors
         res = []
 
-        if root_filesystem_missing?
-          error_message = _("There is no device mounted at '/'")
-          res << SetupError.new(message: error_message)
-        end
+        res << no_root_error if root_filesystem_missing?
 
         if too_small_boot?
           error_message =
@@ -244,6 +240,16 @@ module Y2Storage
         return boot_luks2_pbkdf == PbkdFunction::PBKDF2 if t.is?(:luks2)
 
         t.is?(:none) || t.is?(:luks1)
+      end
+
+      # Error describing a setup with no root filesystem
+      #
+      # @see #errors
+      #
+      # @return SetupError
+      def no_root_error
+        error_message = _("There is no device mounted at '/'")
+        SetupError.new(message: error_message)
       end
     end
   end

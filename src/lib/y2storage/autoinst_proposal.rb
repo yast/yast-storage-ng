@@ -170,7 +170,11 @@ module Y2Storage
     def boot_devices(devicegraph, devices)
       return unless root?(devices.mountable_devices)
 
-      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable_devices)
+      checker = BootRequirementsChecker.new(
+        devicegraph,
+        planned_devices: devices.mountable_devices,
+        bootloader:      bootloader
+      )
       begin
         result = checker.needed_partitions
       rescue BootRequirementsChecker::Error => e
@@ -291,6 +295,14 @@ module Y2Storage
       drives.use_snapshots? ? settings.force_enable_snapshots : settings.force_disable_snapshots
       settings.candidate_devices = drives.disk_names
       settings
+    end
+
+    # Bootloader type to use when calculating the boot partitions
+    #
+    # @return [BootloaderType]
+    def bootloader
+      settings = @proposal_settings || ProposalSettings.new_for_current_product
+      settings.bootloader
     end
   end
 end

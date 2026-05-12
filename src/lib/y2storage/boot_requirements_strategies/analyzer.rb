@@ -317,6 +317,13 @@ module Y2Storage
         planned_partitions_with_id(PartitionId::PREP)
       end
 
+      # Subset of the planned devices that are configured as ESP
+      #
+      # @return [Array<Planned::Partition>]
+      def planned_esp_partitions
+        planned_partitions_with_id(PartitionId::ESP)
+      end
+
       # Subset of the planned devices that are suitable as BIOS boot partitions
       #
       # @return [Array<Planned::Partition>]
@@ -375,15 +382,6 @@ module Y2Storage
       #   the planned devices or in the devicegraph) or is not encrypted.
       def encrypted_zipl?
         encrypted?(device_for_zipl)
-      end
-
-      def self.bls_bootloader_proposed?
-        preferred_bootloader = Yast::ProductFeatures.GetStringFeature("globals",
-          "preferred_bootloader")
-        Y2Storage::Arch.new.efiboot? &&
-          (Yast::Arch.x86_64 || Yast::Arch.aarch64) &&
-          !StorageEnv.instance.no_bls_bootloader &&
-          ["systemd-boot", "grub2-bls"].include?(preferred_bootloader)
       end
 
       protected

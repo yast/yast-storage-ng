@@ -42,7 +42,7 @@ RSpec.shared_context "plain UEFI" do
         allow(efi_partition).to receive(:id).and_return(Y2Storage::PartitionId::ESP)
       end
 
-      context "and it is not a suitable EFI partition (not enough size, invalid filesystem)" do
+      context "and it is not a suitable EFI partition (invalid filesystem)" do
         let(:match) { false }
 
         it "requires only a new /boot/efi partition" do
@@ -96,7 +96,9 @@ RSpec.shared_context "plain UEFI" do
 
     include_context "UEFI partition"
   end
+end
 
+RSpec.shared_context "plain UEFI with LUKS2" do
   # See https://lists.opensuse.org/archives/list/factory@lists.opensuse.org/message/5L6XAYM2JFBP5RJOIFKFM34D3BK7VHWS/
   context "with an AutoYaST profile that places '/' in a LUKS2 device" do
     let(:use_lvm) { false }
@@ -131,17 +133,5 @@ RSpec.shared_context "plain UEFI" do
         )
       end
     end
-  end
-end
-
-RSpec.shared_context "BLS bootloader proposed" do
-  context "and BLS bootloader is proposed and possible" do
-    before do
-      allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(
-                                                                  :bls_bootloader_proposed?
-                                                                ).and_return(true)
-    end
-
-    include_examples "EFI partition for BLS bootloaders"
   end
 end

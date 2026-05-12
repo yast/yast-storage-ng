@@ -66,6 +66,7 @@ require "y2storage/storage_features_list"
 require "y2storage/pbkd_function"
 
 require "y2storage/exceptions"
+require "y2storage/bootloader_type"
 require "y2storage/boot_requirements_checker"
 require "y2storage/disk_analyzer"
 require "y2storage/filesystem_reader"

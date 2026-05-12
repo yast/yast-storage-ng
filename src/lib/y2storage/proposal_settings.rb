@@ -30,6 +30,7 @@ require "y2storage/encryption_method"
 require "y2storage/encryption_authentication"
 require "y2storage/equal_by_instance_variables"
 require "y2storage/proposal_space_settings"
+require "y2storage/bootloader_type"
 require "y2storage/storage_env"
 
 module Y2Storage
@@ -224,6 +225,9 @@ module Y2Storage
     #   possibly needed for booting the system.
     attr_accessor :boot
 
+    # @return [BootloaderType] bootloader that will be installed
+    attr_accessor :bootloader
+
     # @return [ProposalSpaceSettings]
     attr_reader :space_settings
 
@@ -414,7 +418,8 @@ module Y2Storage
       separate_vgs:               false,
       swap_reuse:                 :any,
       volumes:                    [],
-      windows_delete_mode:        :ondemand
+      windows_delete_mode:        :ondemand,
+      bootloader:                 BootloaderType::GRUB2
     }
     private_constant :DEFAULTS
 
@@ -450,7 +455,8 @@ module Y2Storage
       load_feature(:proposal, :allocate_volume_mode)
       load_feature(:proposal, :multidisk_first)
       load_size_feature(:proposal, :lvm_vg_size)
-      load_volumes_feature(:volumes)
+      load_bootloader
+      load_volumes
       load_encryption
     end
 
@@ -480,6 +486,41 @@ module Y2Storage
       return if passwd.nil? || passwd.empty?
 
       self.encryption_password = passwd
+    end
+
+    # Loads the bootloader to use
+    #
+    # In some situations (eg. using EFI in certain architectures), the bootloader to use can be
+    # modified based on some values of the control file.
+    def load_bootloader
+      return unless Y2Storage::Arch.new.efiboot? && (Yast::Arch.x86_64 || Yast::Arch.aarch64)
+
+      # There used to be also a check for StorageEnv.instance.no_bls_bootloader, but the corresponding
+      # env variable was removed since its only purpose was to avoid the usage of BLS in the initial
+      # versions of Agama.
+      preferred = feature(:preferred_bootloader, source: Yast::ProductFeatures.GetSection("globals"))
+      return unless ["systemd-boot", "grub2-bls"].include?(preferred)
+
+      self.bootloader = BootloaderType::BLS_LEGACY
+    end
+
+    # Loads the list of volumes
+    #
+    # In some situations the list of subvolumes from the control file needs to get adjusted.
+    def load_volumes
+      load_volumes_feature(:volumes)
+      root_vol = volumes.find { |v| v.mount_point == "/" }
+      return unless root_vol
+      return if bootloader.is?(:grub2)
+
+      # Removing grub2/grub2-efi specific subvolumes because they are not needed.
+      # Currently, the subvolumes needed for booting are directly defined in the control.xml file (or
+      # provided by the fallback list). But such subvolumes depend on the selected bootloader.
+      # Ideally, the list of boot-related subvolumes should be calculated on runtime, similar to what
+      # happens now with the required partitions for booting. Then the control files would not have
+      # to provide the subvolumes for booting and there would be no need for removing subvolumes here.
+      delete_paths = BootloaderType::GRUB2.root_subvolumes.map(&:path)
+      root_vol.subvolumes.delete_if { |subvol| delete_paths.include?(subvol.path) }
     end
 
     def validated_delete_mode(mode)

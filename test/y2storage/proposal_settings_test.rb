@@ -406,8 +406,13 @@ describe Y2Storage::ProposalSettings do
 
     context "when reading the 'volumes' section" do
       before do
-        stub_partitioning_features
+        stub_features(
+          "globals"      => { "preferred_bootloader" => bootloader },
+          "partitioning" => initial_partitioning_features
+        )
       end
+
+      let(:bootloader) { nil }
 
       context "and the list of volumes is empty" do
         let(:volumes_features) { [] }
@@ -423,9 +428,155 @@ describe Y2Storage::ProposalSettings do
           [{ "mount_point" => "/" }, { "mount_point" => "/home", "min_size" => "5 GiB" }]
         end
 
+        before do
+          allow_any_instance_of(Y2Storage::Arch).to receive(:efiboot?).and_return(true)
+          allow(Yast::Arch).to receive(:x86_64).and_return(true)
+          allow(Yast::Arch).to receive(:aarch64).and_return(true)
+        end
+
         it "creates a VolumeSpecification for each volume in the list" do
           settings.for_current_product
           expect(settings.volumes.map(&:class)).to eq([Y2Storage::VolumeSpecification] * 2)
+        end
+
+        context "and the default bootloader is Grub2" do
+          let(:bootloader) { nil }
+
+          it "the root volume specification contains grub2 specific subvolumes" do
+            settings.for_current_product
+            subvolumes = settings.volumes.flat_map(&:subvolumes)
+            ret = subvolumes.any? { |s| s.path.include?("boot/grub2") }
+            expect(ret).to eq(true)
+          end
+        end
+
+        context "and the default bootloader is a BLS one" do
+          let(:bootloader) { "systemd-boot" }
+
+          it "the root volume does not contain grub2 specific subvolumes" do
+            settings.for_current_product
+            subvolumes = settings.volumes.flat_map(&:subvolumes)
+            ret = subvolumes.any? { |s| s.path.include?("boot/grub2") }
+            expect(ret).to eq(false)
+          end
+        end
+      end
+    end
+
+    context "setting the 'bootloader' property" do
+      before do
+        allow_any_instance_of(Y2Storage::Arch).to receive(:efiboot?).and_return(efi)
+        allow(Yast::Arch).to receive(:x86_64).and_return(x86)
+        allow(Yast::Arch).to receive(:aarch64).and_return(aarch)
+
+        stub_features("globals" => { "preferred_bootloader" => preferred })
+      end
+
+      RSpec.shared_examples "bls_legacy if configured" do
+        context "with preferred_bootloader configured as 'systemd-boot'" do
+          let(:preferred) { "systemd-boot" }
+
+          it "sets 'bootloader' to SYSTEMD_BOOT" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::BLS_LEGACY
+          end
+        end
+
+        context "with preferred_bootloader configured as 'grub2-bls'" do
+          let(:preferred) { "grub2-bls" }
+
+          it "sets 'bootloader' to GRUB2_BLS" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::BLS_LEGACY
+          end
+        end
+
+        context "with not defined preferred_bootloader" do
+          let(:preferred) { nil }
+
+          it "sets 'bootloader' to GRUB2" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::GRUB2
+          end
+        end
+      end
+
+      RSpec.shared_examples "grub2 in any case" do
+        context "with preferred_bootloader configured as 'systemd-boot'" do
+          let(:preferred) { "systemd-boot" }
+
+          it "sets 'bootloader' to GRUB2" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::GRUB2
+          end
+        end
+
+        context "with preferred_bootloader configured as 'grub2-bls'" do
+          let(:preferred) { "grub2-bls" }
+
+          it "sets 'bootloader' to GRUB2" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::GRUB2
+          end
+        end
+
+        context "with not defined preferred_bootloader" do
+          let(:preferred) { nil }
+
+          it "sets 'bootloader' to GRUB2" do
+            settings.for_current_product
+            expect(settings.bootloader).to eq Y2Storage::BootloaderType::GRUB2
+          end
+        end
+      end
+
+      context "when booting in EFI mode" do
+        let(:efi) { true }
+
+        context "in a x86 system" do
+          let(:x86) { true }
+          let(:aarch) { false }
+
+          include_examples "bls_legacy if configured"
+        end
+
+        context "in a aarch64 system" do
+          let(:x86) { false }
+          let(:aarch) { true }
+
+          include_examples "bls_legacy if configured"
+        end
+
+        context "in any other architecture" do
+          let(:x86) { false }
+          let(:aarch) { false }
+
+          include_examples "grub2 in any case"
+        end
+      end
+
+      context "when not booting in EFI mode" do
+        let(:efi) { false }
+
+        context "in a x86 system" do
+          let(:x86) { true }
+          let(:aarch) { false }
+
+          include_examples "grub2 in any case"
+        end
+
+        context "in a aarch64 system" do
+          let(:x86) { false }
+          let(:aarch) { true }
+
+          include_examples "grub2 in any case"
+        end
+
+        context "in any other architecture" do
+          let(:x86) { false }
+          let(:aarch) { false }
+
+          include_examples "grub2 in any case"
         end
       end
     end

@@ -194,7 +194,7 @@ module Y2Storage
     def product_volumes
       # ProposalSettings#volumes is initialized to nil when using old settings format
       # because this attribute does not exist with old format
-      volumes = ProposalSettings.new_for_current_product.volumes || []
+      volumes = proposal_settings.volumes || []
       volumes.select { |v| mandatory?(v) }
     end
 
@@ -260,7 +260,15 @@ module Y2Storage
     # @return [BootRequirementsChecker] shortcut for boot requirements checker
     # with given device graph
     def boot_requirements_checker
-      @boot_requirements_checker ||= BootRequirementsChecker.new(devicegraph)
+      @boot_requirements_checker ||= BootRequirementsChecker.new(
+        devicegraph,
+        bootloader: proposal_settings.bootloader
+      )
+    end
+
+    # @return [ProposalSettings] shortcut for the default settings
+    def proposal_settings
+      @proposal_settings ||= ProposalSettings.new_for_current_product
     end
   end
 end

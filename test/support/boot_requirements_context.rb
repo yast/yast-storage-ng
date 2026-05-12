@@ -28,7 +28,7 @@ RSpec.shared_context "boot requirements" do
     volumes.find { |p| p.mount_point == mount_point }
   end
 
-  subject(:checker) { described_class.new(devicegraph) }
+  subject(:checker) { described_class.new(devicegraph, bootloader: bootloader) }
 
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:devicegraph) { double("Y2Storage::Devicegraph") }
@@ -38,6 +38,7 @@ RSpec.shared_context "boot requirements" do
   let(:boot_disk) { dev_sda }
   let(:boot_partition_table) { instance_double(Y2Storage::PartitionTables::Base) }
   let(:root_filesystem) { instance_double(Y2Storage::Filesystems::Base) }
+  let(:bootloader) { Y2Storage::BootloaderType::GRUB2 }
 
   let(:analyzer) do
     double(
@@ -56,6 +57,7 @@ RSpec.shared_context "boot requirements" do
       boot_filesystem_type:    boot_fs,
       planned_prep_partitions: planned_prep_partitions,
       planned_grub_partitions: planned_grub_partitions,
+      planned_esp_partitions:  planned_esp_partitions,
       planned_devices:         planned_grub_partitions + planned_prep_partitions,
       max_planned_weight:      0.0,
       boot_fs_can_embed_grub?: embed_grub,
@@ -90,6 +92,7 @@ RSpec.shared_context "boot requirements" do
   # Assume the needed partitions are not already planned in advance
   let(:planned_prep_partitions) { [] }
   let(:planned_grub_partitions) { [] }
+  let(:planned_esp_partitions) { [] }
 
   before do
     Y2Storage::StorageManager.create_test_instance

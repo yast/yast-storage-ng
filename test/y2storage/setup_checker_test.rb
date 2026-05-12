@@ -57,6 +57,7 @@ describe Y2Storage::SetupChecker do
 
     allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product).and_return(settings)
     allow(settings).to receive(:volumes).and_return(product_volumes)
+    allow(settings).to receive(:bootloader).and_return(Y2Storage::BootloaderType::GRUB2)
 
     # We have to use allow_any_instance due to the nature of libstorage-ng bindings (they return
     # a different object for each query to the devicegraph)

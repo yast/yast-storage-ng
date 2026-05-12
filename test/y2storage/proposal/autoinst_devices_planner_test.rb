@@ -48,6 +48,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
     # Do not read from running system
     allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning").and_return(nil)
+    allow(Yast::ProductFeatures).to receive(:GetSection).with("globals").and_return(nil)
 
     Y2Storage::VolumeSpecification.clear_cache
   end

@@ -19,9 +19,9 @@
 
 require "yast"
 require "y2storage/boot_requirements_strategies"
-require "y2storage/boot_requirements_strategies/bls"
 require "y2storage/storage_manager"
 require "y2storage/storage_env"
+require "y2storage/bootloader_type"
 
 Yast.import "Arch"
 
@@ -44,10 +44,14 @@ module Y2Storage
     # @see #devicegraph
     # @see #planned_devices
     # @see #boot_disk_name
-    def initialize(devicegraph, planned_devices: [], boot_disk_name: nil)
+    # @see #bootloader
+    def initialize(
+      devicegraph, planned_devices: [], boot_disk_name: nil, bootloader: BootloaderType::GRUB2
+    )
       @devicegraph = devicegraph
       @planned_devices = planned_devices
       @boot_disk_name = boot_disk_name
+      @bootloader = bootloader
     end
 
     # Partitions needed in order to be able to boot the system
@@ -115,6 +119,9 @@ module Y2Storage
     #   See {BootRequirementsStrategies::Analyzer#boot_disk}.
     attr_reader :boot_disk_name
 
+    # @return [BootloaderType] type of bootloader that will be installed
+    attr_reader :bootloader
+
     def arch
       @arch ||= StorageManager.instance.arch
     end
@@ -127,25 +134,28 @@ module Y2Storage
     #
     # @return [BootRequirementsStrategies::Base]
     def strategy_class
-      if nfs_root?
+      case bootloader
+      when BootloaderType::NONE
         BootRequirementsStrategies::NfsRoot
-      elsif raspberry_pi?
-        BootRequirementsStrategies::Raspi
+      when BootloaderType::GRUB2
+        grub2_strategy_class
+      when BootloaderType::BLS_LEGACY
+        BootRequirementsStrategies::BLS
       else
-        arch_strategy_class
+        BootRequirementsStrategies::BlsEfi
       end
     end
 
     # @see #strategy
     #
     # @return [BootRequirementsStrategies::Base]
-    def arch_strategy_class
-      if arch.efiboot?
-        if Y2Storage::BootRequirementsStrategies::Analyzer.bls_bootloader_proposed?
-          BootRequirementsStrategies::BLS
-        else
-          BootRequirementsStrategies::UEFI
-        end
+    def grub2_strategy_class
+      if nfs_root?
+        BootRequirementsStrategies::NfsRoot
+      elsif raspberry_pi?
+        BootRequirementsStrategies::Raspi
+      elsif arch.efiboot?
+        BootRequirementsStrategies::UEFI
       elsif arch.s390?
         BootRequirementsStrategies::ZIPL
       elsif arch.ppc?
