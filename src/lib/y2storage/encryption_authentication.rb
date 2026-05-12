@@ -1,4 +1,4 @@
-# Copyright (c) [2025] SUSE LLC
+# Copyright (c) [2025-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -17,8 +17,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/tpm"
 require "yast"
-Yast.import "Arch"
 
 module Y2Storage
   # Class for describing an authentication type of encrypted block devices.
@@ -60,7 +60,7 @@ module Y2Storage
 
     # Sorted list of all possible authentications
     def self.all
-      Yast::Arch.has_tpm2 ? ALL.dup : NONE_TPM.dup
+      Tpm.instance.policy_authorize_nv? ? ALL.dup : NONE_TPM.dup
     end
 
     # Finds a function by its value

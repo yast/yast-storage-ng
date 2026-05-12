@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2019-2020] SUSE LLC
+# Copyright (c) [2019-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -51,6 +51,10 @@ describe Y2Storage::EncryptionMethod do
 
     it "contains a method for TPM full-disk encryption" do
       expect(described_class.all.map(&:to_sym)).to include(:tpm_fde)
+    end
+
+    it "contains a BLS-compliant method with TPM unlocking" do
+      expect(described_class.all.map(&:to_sym)).to include(:tpm_bls)
     end
   end
 

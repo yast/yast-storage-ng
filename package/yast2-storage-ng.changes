@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue May 12 15:49:27 UTC 2026 - José Iván López González <jlopez@suse.com>
+
+- Add TPM BLS encrytion method (related to jsc#PED-10703).
+
+-------------------------------------------------------------------
 Mon May  4 11:06:16 UTC 2026 - José Iván López González <jlopez@suse.com>
 
 - Add device parameter to EncryptionProcess#finish_installation
