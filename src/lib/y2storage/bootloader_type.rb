@@ -81,7 +81,9 @@ module Y2Storage
       value.to_sym
     end
 
-    # Whether it is a BLS bootloader.
+    # Whether it is a BLS-compliant bootloader.
+    #
+    # @see https://uapi-group.org/specifications/specs/boot_loader_specification
     #
     # @return [Boolean]
     def bls?
