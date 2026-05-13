@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May 13 08:50:12 UTC 2026 - José Iván López González <jlopez@suse.com>
+
+- Allow checking if a bootloader type is BLS-compliant (related to
+  jsc#PED-10703).
+- 5.0.45
+
+-------------------------------------------------------------------
 Tue May 12 15:58:21 UTC 2026 - Ancor Gonzalez Sosa <ancor@suse.com>
 
 - New BlsEfi strategy to be used by Agama to create partitions for
