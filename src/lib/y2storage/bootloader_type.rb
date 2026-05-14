@@ -47,7 +47,7 @@ module Y2Storage
     # Special value used to specify a BLS-capable bootloader that must be installed in a way that is
     # backwards compatible with Grub2. Used by YaST to ensure things keep working with its partial
     # and debatable implementation of BLS.
-    BLS_LEGACY = new("bls-legacy")
+    BLS_LEGACY = new("bls-legacy", bls: true)
 
     # Instance of the bootloader type to be always returned by the class
     #
