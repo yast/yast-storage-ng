@@ -97,7 +97,7 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
       it "exports password for cryptenroll" do
         expect(Yast::Execute).to receive(:on_target!)
           .with(
-            "keyctl", "padd", "user", "cryptenroll", "@u",
+            "keyctl", "padd", "user", "cryptenroll", "@s",
             hash_including(stdin: password)
           )
 
@@ -107,7 +107,7 @@ describe Y2Storage::EncryptionProcesses::Sdboot do
       it "exports password for sdbootutil" do
         expect(Yast::Execute).to receive(:on_target!)
           .with(
-            "keyctl", "padd", "user", "sdbootutil", "@u",
+            "keyctl", "padd", "user", "sdbootutil", "@s",
             hash_including(stdin: password)
           )
 
