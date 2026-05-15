@@ -52,12 +52,12 @@ describe "TPM BLS encryption" do
     it "adds password used by systemd-cryptenroll" do
       expect(Yast::Execute)
         .to(receive(:on_target!))
-        .with("keyctl", "padd", "user", "cryptenroll", "@u",
+        .with("keyctl", "padd", "user", "cryptenroll", "@s",
           hash_including(stdin: "notsecret-sda1"))
 
       expect(Yast::Execute)
         .to(receive(:on_target!))
-        .with("keyctl", "padd", "user", "cryptenroll", "@u",
+        .with("keyctl", "padd", "user", "cryptenroll", "@s",
           hash_including(stdin: "notsecret-sda2"))
 
       manager.staging.finish_installation
@@ -66,12 +66,12 @@ describe "TPM BLS encryption" do
     it "adds password used by sdbootutil" do
       expect(Yast::Execute)
         .to(receive(:on_target!))
-        .with("keyctl", "padd", "user", "sdbootutil", "@u",
+        .with("keyctl", "padd", "user", "sdbootutil", "@s",
           hash_including(stdin: "notsecret-sda1"))
 
       expect(Yast::Execute)
         .to(receive(:on_target!))
-        .with("keyctl", "padd", "user", "sdbootutil", "@u",
+        .with("keyctl", "padd", "user", "sdbootutil", "@s",
           hash_including(stdin: "notsecret-sda2"))
 
       manager.staging.finish_installation

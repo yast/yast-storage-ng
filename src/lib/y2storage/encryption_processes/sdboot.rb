@@ -99,7 +99,7 @@ module Y2Storage
           return
         end
 
-        Yast::Execute.on_target!("keyctl", "padd", "user", kind, "@u",
+        Yast::Execute.on_target!("keyctl", "padd", "user", kind, "@s",
           recorder: Yast::ReducedRecorder.new(skip: :stdin),
           stdin:    password)
       rescue Cheetah::ExecutionFailed => e
