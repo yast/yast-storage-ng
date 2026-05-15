@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May 15 10:59:55 UTC 2026 - Ancor Gonzalez Sosa <ancor@suse.com>
+
+- Make sure to mount sys/kernel/security for the final steps of
+  the installation (related to jsc#PED-10703).
+- 5.0.47
+
+-------------------------------------------------------------------
 Thu May 14 08:03:48 UTC 2026 - José Iván López González <jlopez@suse.com>
 
 - Set BLS LEGACY bootloader as BLS (related to jsc#PED-10703).
