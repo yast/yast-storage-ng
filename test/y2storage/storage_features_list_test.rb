@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017-2023] SUSE LLC
+# Copyright (c) [2017-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -123,6 +123,86 @@ describe Y2Storage::StorageFeaturesList do
 
       it "includes the packages related to both kind of features" do
         expect(list.pkg_list).to include("device-mapper", "cryptsetup", "fde-tools")
+      end
+    end
+  end
+
+  describe "#packages" do
+    subject(:list) { described_class.from_bitfield(bits) }
+
+    context "if several features require the same package" do
+      let(:bits) do
+        Storage::UF_EXT2 | Storage::UF_LUKS | Storage::UF_EXT3 | Storage::UF_PLAIN_ENCRYPTION
+      end
+
+      it "returns an array of Feature::Package objects" do
+        expect(list.packages).to all(be_a(Y2Storage::Feature::Package))
+      end
+
+      it "includes the package only once (no duplicates)" do
+        package_names = list.packages.map(&:name).sort
+        expect(package_names).to eq ["cryptsetup", "device-mapper", "e2fsprogs"]
+      end
+    end
+
+    context "if some packages are optional" do
+      let(:bits) { Storage::UF_NTFS | Storage::UF_EXT3 }
+
+      before do
+        Y2Storage::StorageFeature.drop_cache
+        allow(Yast::Package).to receive(:Available).and_return false
+        allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return true
+      end
+
+      it "returns Feature::Package objects with correct optional flag" do
+        packages = list.packages
+        e2fsprogs = packages.find { |p| p.name == "e2fsprogs" }
+        ntfsprogs = packages.find { |p| p.name == "ntfsprogs" }
+
+        expect(e2fsprogs.optional?).to be false
+        expect(ntfsprogs.optional?).to be true
+      end
+
+      it "includes the non-optional packages even if they are not available" do
+        package_names = list.packages.map(&:name)
+        expect(package_names).to include "e2fsprogs"
+      end
+
+      it "includes the optional packages that are available" do
+        package_names = list.packages.map(&:name)
+        expect(package_names).to include "ntfsprogs"
+      end
+
+      it "does not include the optional packages that are not available" do
+        package_names = list.packages.map(&:name)
+        expect(package_names).to_not include "ntfs-3g"
+      end
+    end
+
+    context "for a list created with a zero bit-field" do
+      let(:bits) { 0 }
+
+      it "returns an empty array" do
+        expect(list.packages).to eq []
+      end
+    end
+
+    context "when the list includes both storage and YaST features" do
+      let(:bits) { Storage::UF_LUKS }
+
+      before do
+        Y2Storage::YastFeature.drop_cache
+
+        list.concat(Y2Storage::YastFeature.all)
+      end
+
+      it "returns Feature::Package objects from both kinds of features" do
+        expect(list.packages).to all(be_a(Y2Storage::Feature::Package))
+      end
+
+      it "includes the packages related to both kind of features" do
+        package_names = list.packages.map(&:name)
+        expect(package_names).to include("device-mapper", "cryptsetup", "fde-tools")
       end
     end
   end

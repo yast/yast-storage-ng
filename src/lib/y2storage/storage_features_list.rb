@@ -72,6 +72,13 @@ module Y2Storage
       @pkg_list
     end
 
+    # Returns the list of required packages.
+    #
+    # @return [Array<Feature::Package>]
+    def packages
+      @features.flat_map(&:packages).uniq(&:name)
+    end
+
     # Concatenate the give features into the current list
     #
     # @param other_list [#to_a]
