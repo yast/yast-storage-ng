@@ -1,4 +1,4 @@
-# Copyright (c) [2023] SUSE LLC
+# Copyright (c) [2023-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,60 +31,7 @@ module Y2Storage
   #
   # This is the abstract base class for both.
   class Feature
-    include Yast::Logger
-
-    # Constructor
-    #
-    # @param id [Symbol] see {#id}
-    # @param packages [Array<Package>] see {#all_packages}
-    def initialize(id, packages)
-      @id = id
-      @all_packages = packages
-    end
-
-    # Symbol representation of the feature
-    #
-    # For StorageFeature objects, this has the same form than the corresponding constant
-    # name in libstorage-ng, eg. :UF_NTFS
-    #
-    # @return [Symbol]
-    attr_reader :id
-
-    alias_method :to_sym, :id
-
-    # Names of the packages that should be installed if the feature is going to be used
-    #
-    # @return [Array<String>]
-    def pkg_list
-      packages.map(&:name)
-    end
-
-    # Drop the cache about which packages related to the feature are available
-    def drop_cache
-      @packages = nil
-    end
-
-    private
-
-    # All packages that would be relevant for the feature, no matter if they are really available
-    # @return [Array<Feature::Package>]
-    attr_reader :all_packages
-
-    # List of available packages associated to the feature
-    #
-    # @return [Array<Feature::Package>]
-    def packages
-      return @packages unless @packages.nil?
-
-      unavailable, @packages = all_packages.partition(&:unavailable_optional?)
-      if unavailable.any?
-        log.warn("WARNING: Skipping unavailable support packages #{unavailable.map(&:name)}")
-      end
-
-      @packages
-    end
-
-    # Internal class to represent a package associated to a feature
+    # Nested class to represent a package associated to a feature
     class Package
       Yast.import "Package"
 
@@ -119,5 +66,57 @@ module Y2Storage
         optional? && !Yast::Package.Available(name)
       end
     end
+
+    include Yast::Logger
+
+    # Constructor
+    #
+    # @param id [Symbol] see {#id}
+    # @param packages [Array<Package>] see {#all_packages}
+    def initialize(id, packages)
+      @id = id
+      @all_packages = packages
+    end
+
+    # Symbol representation of the feature
+    #
+    # For StorageFeature objects, this has the same form than the corresponding constant
+    # name in libstorage-ng, eg. :UF_NTFS
+    #
+    # @return [Symbol]
+    attr_reader :id
+    alias_method :to_sym, :id
+
+    # List of available packages associated to the feature
+    #
+    # @return [Array<Feature::Package>]
+    def packages
+      return @packages unless @packages.nil?
+
+      unavailable, @packages = all_packages.partition(&:unavailable_optional?)
+      if unavailable.any?
+        log.warn("WARNING: Skipping unavailable support packages #{unavailable.map(&:name)}")
+      end
+
+      @packages
+    end
+
+    # Names of the packages that should be installed if the feature is going to be used
+    #
+    # @return [Array<String>]
+    def pkg_list
+      packages.map(&:name)
+    end
+
+    # Drop the cache about which packages related to the feature are available
+    def drop_cache
+      @packages = nil
+    end
+
+    private
+
+    # All packages that would be relevant for the feature, no matter if they are really available
+    # @return [Array<Feature::Package>]
+    attr_reader :all_packages
   end
 end
