@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 
-# Copyright (c) [2018-2021] SUSE LLC
+# Copyright (c) [2018-2026] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -130,6 +130,21 @@ describe Y2Storage::Encryption do
           end
 
           include_examples "repeated dm name", "cr_disk-1122-part2"
+        end
+
+        context "and udev ids are too long" do
+          let(:udev_ids) do
+            [
+              "cr_nvme-nvme.1c5c-465341434e343332393130313043423356-534b2068796e69782050433731312" \
+              "048465335313247444539583037334e-00000001-part2"
+            ]
+          end
+
+          it "generates an encryption name based on the underlying device name" do
+            expect(subject.auto_dm_table_name).to eq("cr_sda2")
+          end
+
+          include_examples "repeated dm name", "cr_sda2"
         end
 
         context "and no udev ids are recognized for the underlying device" do

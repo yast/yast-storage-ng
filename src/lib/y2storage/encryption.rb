@@ -53,6 +53,11 @@ module Y2Storage
     #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
     storage_class_forward :all, as: "Encryption"
 
+    # @!method self.valid_dm_table_name?(dm_table_name)
+    #   @param dm_table_name [String]
+    #   @return [Boolean]
+    storage_class_forward :valid_dm_table_name?
+
     # @!method in_etc_crypttab?
     #   @return [Boolean] whether the device is included in /etc/crypttab
     storage_forward :in_etc_crypttab?
@@ -193,36 +198,16 @@ module Y2Storage
       super
     end
 
-    # Generates an unused device mapper name for the encryption device
+    # Generates a device mapper name for the encryption device
     #
     # This name is used for devices with auto dm names, see {.update_dm_names}.
     #
+    # @note If there is no valid candidate name, then a fallback name like "cr_device_1" is used
+    #
     # @return [String]
     def auto_dm_table_name
-      # TODO: Better encryption names can be generated for indirectly used encryption devices (e.g., an
-      # encrypted device used as LVM PV). But this implies to update the auto generated device mapper
-      # names at some quite points, for example, when a device is added/removed to a LVM VG, MD RAID,
-      # etc.
-      #
-      # Another option could be to update the encryption names just before the commit action, but in that
-      # case, the devicegraph would contain temporary encryption names all the time. Temporary names are
-      # a problem if they are presented to the user in the UI.
-      #
-      # Note that any change to the encryption name generation could affect to the pervasive encryption
-      # key generation, specially when probed encryption names are modified. Right now, probed names are
-      # not touched.
-      name =
-        if !blk_device.dm_table_name.empty?
-          blk_device.dm_table_name
-        elsif !mount_point.nil?
-          mount_point_to_dm_name
-        elsif blk_device.udev_ids.any?
-          blk_device.udev_ids.first
-        else
-          blk_device.basename
-        end
-
-      self.class.ensure_unused_dm_name(devicegraph, "cr_#{name}")
+      name = candidate_auto_dm_table_names.find { |c| self.class.valid_dm_table_name?(c) }
+      name || generate_auto_dm_table_name("device")
     end
 
     # Whether {#dm_table_name} was automatically set by YaST.
@@ -568,6 +553,38 @@ module Y2Storage
       elsif !in_mount_points && in_encryption
         self.crypt_options = crypt_options - [crypttab_option]
       end
+    end
+
+    # Candidate device mapper names for the encryption device
+    #
+    # TODO: Better encryption names can be generated for indirectly used encryption devices (e.g., an
+    # encrypted device used as LVM PV). But this implies to update the auto generated device mapper
+    # names at some quite points, for example, when a device is added/removed to a LVM VG, MD RAID,
+    # etc.
+    #
+    # Another option could be to update the encryption names just before the commit action, but in that
+    # case, the devicegraph would contain temporary encryption names all the time. Temporary names are
+    # a problem if they are presented to the user in the UI.
+    #
+    # Note that any change to the encryption name generation could affect to the pervasive encryption
+    # key generation, specially when probed encryption names are modified. Right now, probed names are
+    # not touched.
+    def candidate_auto_dm_table_names
+      candidates = []
+      candidates << blk_device.dm_table_name unless blk_device.dm_table_name.empty?
+      candidates << mount_point_to_dm_name unless mount_point.nil?
+      candidates += blk_device.udev_ids if blk_device.udev_ids.any?
+      candidates << blk_device.basename
+
+      candidates.map { |c| generate_auto_dm_table_name(c) }
+    end
+
+    # Generates an unused device mapper name for the encryption device based on the given name
+    #
+    # @param name [String]
+    # @return [String]
+    def generate_auto_dm_table_name(name)
+      self.class.ensure_unused_dm_name(devicegraph, "cr_#{name}")
     end
 
     # Generates a base dm name from the mount point path
