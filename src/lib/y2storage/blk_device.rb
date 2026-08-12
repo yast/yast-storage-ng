@@ -29,7 +29,7 @@ module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
   #
   # This is a wrapper for Storage::BlkDevice
-  class BlkDevice < Device
+  class BlkDevice < Device # rubocop:disable Metrics/ClassLength
     wrap_class Storage::BlkDevice,
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv", "StrayBlkDevice"]
 
