@@ -193,6 +193,11 @@ module Y2Storage
       super
     end
 
+    # Base name to use as fallback for the auto generated DM name when none of the candidate names
+    # is valid, see {#auto_dm_table_name}.
+    DM_BASE_NAME_FALLBACK = "device".freeze
+    private_constant :DM_BASE_NAME_FALLBACK
+
     # Generates a device mapper name for the encryption device
     #
     # This name is used for devices with auto dm names, see {.update_dm_names}.
@@ -202,7 +207,7 @@ module Y2Storage
     # @return [String]
     def auto_dm_table_name
       name = candidate_auto_dm_table_names.find { |c| self.class.valid_dm_table_name?(c) }
-      name || generate_auto_dm_table_name("device")
+      name || generate_auto_dm_table_name(DM_BASE_NAME_FALLBACK)
     end
 
     # Whether {#dm_table_name} was automatically set by YaST.
