@@ -64,6 +64,11 @@ module Y2Storage
     #   @return [BlkDevice] nil if there is no such block device
     storage_class_forward :find_by_any_name, as: "BlkDevice"
 
+    # @!method self.valid_dm_table_name?(dm_table_name)
+    #   @param dm_table_name [String]
+    #   @return [Boolean]
+    storage_class_forward :valid_dm_table_name?
+
     # @!attribute name
     #   @return [String] kernel-style device name
     #     (e.g. "/dev/sda2" or "/dev/vg_name/lv_name")

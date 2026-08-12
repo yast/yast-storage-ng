@@ -53,11 +53,6 @@ module Y2Storage
     #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
     storage_class_forward :all, as: "Encryption"
 
-    # @!method self.valid_dm_table_name?(dm_table_name)
-    #   @param dm_table_name [String]
-    #   @return [Boolean]
-    storage_class_forward :valid_dm_table_name?
-
     # @!method in_etc_crypttab?
     #   @return [Boolean] whether the device is included in /etc/crypttab
     storage_forward :in_etc_crypttab?
