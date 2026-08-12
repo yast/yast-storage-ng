@@ -573,7 +573,7 @@ module Y2Storage
       candidates = []
       candidates << blk_device.dm_table_name unless blk_device.dm_table_name.empty?
       candidates << mount_point_to_dm_name unless mount_point.nil?
-      candidates += blk_device.udev_ids if blk_device.udev_ids.any?
+      candidates += blk_device.udev_ids
       candidates << blk_device.basename
 
       candidates.map { |c| generate_auto_dm_table_name(c) }
