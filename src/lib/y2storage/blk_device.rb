@@ -29,7 +29,7 @@ module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
   #
   # This is a wrapper for Storage::BlkDevice
-  class BlkDevice < Device
+  class BlkDevice < Device # rubocop:disable Metrics/ClassLength
     wrap_class Storage::BlkDevice,
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv", "StrayBlkDevice"]
 
@@ -63,6 +63,11 @@ module Y2Storage
     #   @param name [String] any kind of device name
     #   @return [BlkDevice] nil if there is no such block device
     storage_class_forward :find_by_any_name, as: "BlkDevice"
+
+    # @!method self.valid_dm_table_name?(dm_table_name)
+    #   @param dm_table_name [String]
+    #   @return [Boolean]
+    storage_class_forward :valid_dm_table_name?
 
     # @!attribute name
     #   @return [String] kernel-style device name
